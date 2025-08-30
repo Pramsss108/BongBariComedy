@@ -319,17 +319,17 @@ const Home = () => {
           {/* Collaboration Form */}
           <ParallaxSection speed={0.2} delay={0.4}>
             <section className="mb-20 mt-24 pt-16" data-testid="collaboration-section">
-            <div className="max-w-3xl mx-auto px-4">
+            <div className="max-w-4xl mx-auto px-6">
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
                 className="text-center mb-12"
               >
-                <h3 className="text-5xl md:text-6xl font-bold text-center text-brand-blue mb-8" data-testid="collaboration-title-english">
+                <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center text-brand-blue mb-6 px-4" data-testid="collaboration-title-english">
                   Work with Us
                 </h3>
-                <h4 className="text-4xl md:text-5xl font-bold text-center text-gray-800 mb-6 bangla-text" data-testid="collaboration-title-bengali">
+                <h4 className="text-2xl md:text-3xl lg:text-4xl font-bold text-center text-gray-800 mb-6 bangla-text px-4" data-testid="collaboration-title-bengali">
                   আমাদের সাথে কাজ করুন
                 </h4>
                 <div className="w-24 h-1 bg-gradient-to-r from-brand-yellow to-brand-red mx-auto rounded-full"></div>
@@ -343,10 +343,10 @@ const Home = () => {
                     transition={{ duration: 0.6, delay: 0.2 }}
                     className="text-center mb-8"
                   >
-                    <p className="text-lg md:text-xl text-gray-700 mb-6 leading-relaxed font-medium">
+                    <p className="text-base md:text-lg lg:text-xl text-gray-700 mb-6 leading-relaxed font-medium px-4">
                       Ready to collaborate? Let's create some amazing Bengali comedy content together!
                     </p>
-                    <p className="text-lg md:text-xl text-gray-700 mb-8 bangla-text leading-relaxed font-medium">
+                    <p className="text-base md:text-lg lg:text-xl text-gray-700 mb-8 bangla-text leading-relaxed font-medium px-4">
                       কোলাবোরেট করতে প্রস্তুত? চলুন একসাথে দুর্দান্ত বাংলা কমেডি কন্টেন্ট তৈরি করি!
                     </p>
                   </motion.div>

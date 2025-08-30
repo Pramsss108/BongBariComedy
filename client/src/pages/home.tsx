@@ -1,8 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import YouTubeShort from "@/components/youtube-short";
 import SEOHead from "@/components/seo-head";
-import { Youtube, Instagram, Phone } from "lucide-react";
+import { Youtube, Instagram, Phone, Mail, Twitter, Send } from "lucide-react";
 
 const Home = () => {
   const videoData = [
@@ -110,6 +113,7 @@ const Home = () => {
                 size="lg" 
                 className="bg-brand-red text-white hover:bg-red-600 px-8 py-4 rounded-full font-semibold text-lg hover-lift"
                 data-testid="button-youtube"
+                onClick={() => window.open('https://youtube.com/@bongbari', '_blank')}
               >
                 <Youtube className="mr-2 h-5 w-5" />
                 Subscribe on YouTube
@@ -118,23 +122,156 @@ const Home = () => {
                 size="lg" 
                 className="bg-brand-blue text-white hover:bg-blue-700 px-8 py-4 rounded-full font-semibold text-lg hover-lift"
                 data-testid="button-instagram"
+                onClick={() => window.open('https://instagram.com/bongbari', '_blank')}
               >
                 <Instagram className="mr-2 h-5 w-5" />
                 Follow on Instagram
               </Button>
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="border-2 border-brand-blue text-brand-blue hover:bg-brand-blue hover:text-white px-8 py-4 rounded-full font-semibold text-lg hover-lift"
-                data-testid="button-contact"
-                onClick={() => window.location.href = '/contact'}
-              >
-                <Phone className="mr-2 h-5 w-5" />
-                Contact Us
-              </Button>
+            </div>
+          </section>
+          
+          {/* Collaboration Form */}
+          <section className="mb-16" data-testid="collaboration-section">
+            <div className="max-w-2xl mx-auto">
+              <h3 className="text-3xl font-bold text-center text-brand-blue mb-4" data-testid="collaboration-title-english">
+                Work with Us
+              </h3>
+              <h4 className="text-2xl font-bold text-center text-gray-800 mb-8 bangla-text" data-testid="collaboration-title-bengali">
+                আমাদের সাথে কাজ করুন
+              </h4>
+              
+              <Card className="bg-white shadow-lg">
+                <CardContent className="p-8">
+                  <p className="text-center text-gray-700 mb-6">
+                    Ready to collaborate? Let's create some amazing Bengali comedy content together!
+                  </p>
+                  <p className="text-center text-gray-700 mb-8 bangla-text">
+                    কোলাবোরেট করতে প্রস্তুত? চলুন একসাথে দুর্দান্ত বাংলা কমেডি কন্টেন্ট তৈরি করি!
+                  </p>
+                  
+                  <form className="space-y-6" data-testid="collaboration-form">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="name">Name / নাম</Label>
+                        <Input 
+                          id="name" 
+                          placeholder="Your Name"
+                          data-testid="input-name"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="email">Email</Label>
+                        <Input 
+                          id="email" 
+                          type="email" 
+                          placeholder="your@email.com"
+                          data-testid="input-email"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="company">Company / Brand</Label>
+                      <Input 
+                        id="company" 
+                        placeholder="Your Company or Brand"
+                        data-testid="input-company"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="message">Message / বার্তা</Label>
+                      <Textarea 
+                        id="message" 
+                        rows={4}
+                        placeholder="Tell us about your collaboration idea..."
+                        data-testid="textarea-message"
+                      />
+                    </div>
+                    
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-brand-red text-white hover:bg-red-600 py-3 rounded-full font-semibold text-lg hover-lift"
+                      data-testid="button-submit-collaboration"
+                    >
+                      <Send className="mr-2 h-5 w-5" />
+                      Send Message
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+          
+          {/* Contact Information */}
+          <section className="mb-16" data-testid="contact-section">
+            <div className="max-w-4xl mx-auto">
+              <h3 className="text-3xl font-bold text-center text-brand-blue mb-4" data-testid="contact-title-english">
+                Get in Touch
+              </h3>
+              <h4 className="text-2xl font-bold text-center text-gray-800 mb-12 bangla-text" data-testid="contact-title-bengali">
+                যোগাযোগ করুন
+              </h4>
+              
+              <div className="grid md:grid-cols-3 gap-8">
+                {/* Email */}
+                <Card className="bg-white hover-lift shadow-lg">
+                  <CardContent className="p-6 text-center">
+                    <div className="w-16 h-16 bg-brand-blue rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Mail className="w-8 h-8 text-white" />
+                    </div>
+                    <h5 className="font-semibold text-brand-blue mb-2">Email</h5>
+                    <p className="text-gray-700">hello@bongbari.com</p>
+                  </CardContent>
+                </Card>
+                
+                {/* WhatsApp */}
+                <Card className="bg-white hover-lift shadow-lg">
+                  <CardContent className="p-6 text-center">
+                    <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Phone className="w-8 h-8 text-white" />
+                    </div>
+                    <h5 className="font-semibold text-brand-blue mb-2">WhatsApp</h5>
+                    <p className="text-gray-700">+91 98765 43210</p>
+                  </CardContent>
+                </Card>
+                
+                {/* Social Media */}
+                <Card className="bg-white hover-lift shadow-lg">
+                  <CardContent className="p-6 text-center">
+                    <div className="w-16 h-16 bg-brand-red rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Instagram className="w-8 h-8 text-white" />
+                    </div>
+                    <h5 className="font-semibold text-brand-blue mb-2">Follow Us</h5>
+                    <div className="flex justify-center space-x-3 mt-3">
+                      <a href="https://youtube.com/@bongbari" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-brand-red rounded-full flex items-center justify-center hover:bg-red-600 transition-colors">
+                        <Youtube className="w-4 h-4 text-white" />
+                      </a>
+                      <a href="https://instagram.com/bongbari" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-pink-500 rounded-full flex items-center justify-center hover:bg-pink-600 transition-colors">
+                        <Instagram className="w-4 h-4 text-white" />
+                      </a>
+                      <a href="https://twitter.com/bongbari" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors">
+                        <Twitter className="w-4 h-4 text-white" />
+                      </a>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </section>
         </div>
+        
+        {/* Footer */}
+        <footer className="bg-brand-blue text-white py-8 mt-16" data-testid="footer">
+          <div className="container mx-auto px-4 text-center">
+            <p className="text-lg font-medium" data-testid="footer-text">
+              © Bong Bari 2025 Kolkata
+            </p>
+            <p className="text-sm opacity-80 mt-2 bangla-text" data-testid="footer-text-bengali">
+              © বং বাড়ি ২০২৫ কলকাতা
+            </p>
+          </div>
+        </footer>
       </main>
     </>
   );

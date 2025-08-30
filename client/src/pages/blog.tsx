@@ -89,7 +89,7 @@ const Blog = () => {
                         className="text-gray-600 mb-4"
                         data-testid={`blog-post-excerpt-${post.id}`}
                       >
-                        {'excerpt' in post ? post.excerpt : (post.content?.substring(0, 100) + '...')}
+                        {'excerpt' in post ? post.excerpt : (post.content ? post.content.substring(0, 100) + '...' : '')}
                       </p>
                       <div className="flex justify-between items-center">
                         <div className="flex items-center text-sm text-gray-500">

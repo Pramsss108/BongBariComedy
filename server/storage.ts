@@ -91,6 +91,7 @@ export class MemStorage implements IStorage {
       id,
       createdAt: now,
       updatedAt: now,
+      excerpt: insertPost.excerpt || null,
     };
     this.blogPosts.set(id, post);
     return post;

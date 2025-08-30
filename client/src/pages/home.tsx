@@ -123,8 +123,8 @@ const Home = () => {
           {/* Hero Banner */}
           <section className="text-center mb-16" data-testid="hero-section">
             <img 
-              src="https://images.unsplash.com/photo-1609220136736-443140cffec6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400" 
-              alt="Bengali family comedy" 
+              src={videoData[0]?.thumbnail || "https://images.unsplash.com/photo-1609220136736-443140cffec6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400"} 
+              alt={videoData[0]?.title || "Bengali family comedy"} 
               className="w-full h-64 md:h-80 object-cover rounded-2xl shadow-lg mb-8"
               data-testid="hero-image"
             />

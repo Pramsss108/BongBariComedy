@@ -27,6 +27,20 @@ export class MemStorage implements IStorage {
     
     // Initialize with some sample blog posts
     this.initializeSampleData();
+    // Initialize default admin user
+    this.initializeAdminUser();
+  }
+
+  private async initializeAdminUser() {
+    // Create default admin user if it doesn't exist
+    const existingAdmin = await this.getUserByUsername('admin');
+    if (!existingAdmin) {
+      await this.createUser({
+        username: 'admin',
+        password: 'bongbari2025'
+      });
+      console.log('Default admin user created: username=admin, password=bongbari2025');
+    }
   }
 
   private async initializeSampleData() {

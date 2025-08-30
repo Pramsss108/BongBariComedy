@@ -13,7 +13,6 @@ const Navigation = () => {
     { href: "/work-with-us", label: "Work with us" },
     { href: "/contact", label: "Contact" },
     { href: "/blog", label: "Blog" },
-    { href: "/admin", label: "Admin" },
   ];
 
   const isActive = (href: string) => {

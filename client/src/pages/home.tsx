@@ -14,6 +14,9 @@ import { useToast } from "@/hooks/use-toast";
 import YouTubeShort from "@/components/youtube-short";
 import SEOHead from "@/components/seo-head";
 import { ParallaxSection, ParallaxContainer } from "@/components/parallax-section";
+import { AdvancedHoverElement } from "@/components/advanced-hover-element";
+import { ProfessionalParallaxScene } from "@/components/professional-parallax-scene";
+import { useAdvancedScrollAnimations } from "@/hooks/useAdvancedScrollAnimations";
 import { Youtube, Instagram, Phone, Mail, Twitter, Send } from "lucide-react";
 import { insertCollaborationRequestSchema, type InsertCollaborationRequest } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
@@ -126,14 +129,25 @@ const Home = () => {
         <main className="py-16">
           <div className="container mx-auto px-4">
             {/* Hero Banner */}
-            <ParallaxSection speed={0.3} delay={0.1}>
-              <section className="text-center mb-16" data-testid="hero-section">
+            <ProfessionalParallaxScene
+              layers={5}
+              intensity="dramatic"
+              type="hero"
+              className="mb-16"
+            >
+              <section className="text-center" data-testid="hero-section">
+            <AdvancedHoverElement
+              animationType="popOut"
+              hoverScale={1.03}
+              depth={30}
+              glowColor="rgba(255, 204, 0, 0.4)"
+              perspective={true}
+            >
             <motion.div 
               className="w-full h-64 md:h-80 bg-gradient-to-r from-brand-yellow via-brand-red to-brand-blue rounded-2xl shadow-lg mb-8 flex items-center justify-center relative overflow-hidden"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1, ease: [0.25, 0.25, 0.25, 1] }}
-              whileHover={{ scale: 1.02 }}
             >
               {/* Background pattern */}
               <div className="absolute inset-0 opacity-10">
@@ -180,9 +194,15 @@ const Home = () => {
               <div className="absolute bottom-4 right-4 w-12 h-12 bg-white/20 rounded-full"></div>
               <div className="absolute top-1/2 right-8 w-8 h-8 bg-white/20 rounded-full"></div>
             </motion.div>
-            
+            </AdvancedHoverElement>
             
             {/* Intro Text */}
+            <AdvancedHoverElement
+              animationType="slideLeft"
+              hoverScale={1.02}
+              depth={15}
+              glowColor="rgba(68, 68, 255, 0.2)"
+            >
             <motion.div
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
@@ -203,12 +223,19 @@ const Home = () => {
               </CardContent>
             </Card>
             </motion.div>
+            </AdvancedHoverElement>
               </section>
-            </ParallaxSection>
+            </ProfessionalParallaxScene>
           
           {/* YouTube Shorts Grid */}
-          <ParallaxSection speed={0.4} delay={0.2}>
-            <section className="mb-16" data-testid="videos-section">
+          <ProfessionalParallaxScene
+            layers={4}
+            intensity="moderate"
+            type="content"
+            className="mb-16"
+          >
+            <section data-testid="videos-section">
+            <AdvancedHoverElement animationType="popOut" hoverScale={1.05} depth={20}>
             <motion.h3 
               className="text-3xl font-bold text-center text-brand-blue mb-8" 
               data-testid="videos-title-english"
@@ -218,6 +245,8 @@ const Home = () => {
             >
               Latest Comedy Shorts
             </motion.h3>
+            </AdvancedHoverElement>
+            <AdvancedHoverElement animationType="slideRight" hoverScale={1.03} depth={15}>
             <motion.h4 
               className="text-2xl font-bold text-center text-gray-800 mb-12 bangla-text" 
               data-testid="videos-title-bengali"
@@ -227,6 +256,7 @@ const Home = () => {
             >
               সর্বশেষ কমেডি শর্টস
             </motion.h4>
+            </AdvancedHoverElement>
             
             {isLoading ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6" data-testid="videos-grid-loading">
@@ -239,18 +269,21 @@ const Home = () => {
             ) : (
               <motion.div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6" data-testid="videos-grid">
                 {videoData.map((video, index) => (
-                  <motion.div
+                  <AdvancedHoverElement
                     key={video.videoId}
+                    animationType="morph"
+                    hoverScale={1.08}
+                    depth={25}
+                    glowColor="rgba(255, 68, 68, 0.3)"
+                    perspective={true}
+                  >
+                  <motion.div
                     initial={{ opacity: 0, y: 50, scale: 0.9 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ 
                       duration: 0.6, 
                       delay: index * 0.1,
                       ease: [0.25, 0.25, 0.25, 1]
-                    }}
-                    whileHover={{ 
-                      y: -10, 
-                      transition: { duration: 0.3 }
                     }}
                   >
                     <YouTubeShort
@@ -259,11 +292,12 @@ const Home = () => {
                       title={video.title}
                     />
                   </motion.div>
+                  </AdvancedHoverElement>
                 ))}
               </motion.div>
             )}
             </section>
-          </ParallaxSection>
+          </ProfessionalParallaxScene>
           
           {/* CTA Buttons */}
           <ParallaxSection speed={0.3} delay={0.3}>
@@ -313,16 +347,32 @@ const Home = () => {
           </ParallaxSection>
           
           {/* Collaboration Form */}
-          <ParallaxSection speed={0.2} delay={0.4}>
-            <section className="mb-16" data-testid="collaboration-section">
+          <ProfessionalParallaxScene
+            layers={3}
+            intensity="subtle"
+            type="content"
+            className="mb-16"
+          >
+            <section data-testid="collaboration-section">
             <div className="max-w-2xl mx-auto">
+              <AdvancedHoverElement animationType="popOut" hoverScale={1.04} depth={20}>
               <h3 className="text-3xl font-bold text-center text-brand-blue mb-4" data-testid="collaboration-title-english">
                 Work with Us
               </h3>
+              </AdvancedHoverElement>
+              <AdvancedHoverElement animationType="slideLeft" hoverScale={1.02} depth={15}>
               <h4 className="text-2xl font-bold text-center text-gray-800 mb-8 bangla-text" data-testid="collaboration-title-bengali">
                 আমাদের সাথে কাজ করুন
               </h4>
+              </AdvancedHoverElement>
               
+              <AdvancedHoverElement 
+                animationType="morph" 
+                hoverScale={1.02} 
+                depth={25}
+                glowColor="rgba(255, 204, 0, 0.2)"
+                perspective={true}
+              >
               <Card className="bg-white shadow-lg">
                 <CardContent className="p-8">
                   <p className="text-center text-gray-700 mb-6">
@@ -423,21 +473,40 @@ const Home = () => {
                   </Form>
                 </CardContent>
               </Card>
+              </AdvancedHoverElement>
             </div>
-          </section>
+            </section>
+          </ProfessionalParallaxScene>
           
           {/* Contact Information */}
-          <section className="mb-16" data-testid="contact-section">
+          <ProfessionalParallaxScene
+            layers={4}
+            intensity="moderate"
+            type="floating"
+            className="mb-16"
+          >
+          <section data-testid="contact-section">
             <div className="max-w-4xl mx-auto">
+              <AdvancedHoverElement animationType="popOut" hoverScale={1.05} depth={25}>
               <h3 className="text-3xl font-bold text-center text-brand-blue mb-4" data-testid="contact-title-english">
                 Get in Touch
               </h3>
+              </AdvancedHoverElement>
+              <AdvancedHoverElement animationType="slideRight" hoverScale={1.03} depth={15}>
               <h4 className="text-2xl font-bold text-center text-gray-800 mb-12 bangla-text" data-testid="contact-title-bengali">
                 যোগাযোগ করুন
               </h4>
+              </AdvancedHoverElement>
               
               <div className="grid md:grid-cols-3 gap-8">
                 {/* Email */}
+                <AdvancedHoverElement 
+                  animationType="morph" 
+                  hoverScale={1.06} 
+                  depth={20}
+                  glowColor="rgba(68, 68, 255, 0.3)"
+                  perspective={true}
+                >
                 <Card className="bg-white hover-lift shadow-lg">
                   <CardContent className="p-6 text-center">
                     <div className="w-16 h-16 bg-brand-blue rounded-full flex items-center justify-center mx-auto mb-4">
@@ -447,8 +516,16 @@ const Home = () => {
                     <p className="text-gray-700 text-[15px]">bongbariofficial@gmail.com</p>
                   </CardContent>
                 </Card>
+                </AdvancedHoverElement>
                 
                 {/* WhatsApp */}
+                <AdvancedHoverElement 
+                  animationType="popOut" 
+                  hoverScale={1.08} 
+                  depth={25}
+                  glowColor="rgba(34, 197, 94, 0.3)"
+                  perspective={true}
+                >
                 <Card className="bg-white hover-lift shadow-lg">
                   <CardContent className="p-6 text-center">
                     <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -458,8 +535,16 @@ const Home = () => {
                     <p className="text-gray-700">+91 8777849865</p>
                   </CardContent>
                 </Card>
+                </AdvancedHoverElement>
                 
                 {/* Social Media */}
+                <AdvancedHoverElement 
+                  animationType="slideLeft" 
+                  hoverScale={1.07} 
+                  depth={22}
+                  glowColor="rgba(255, 68, 68, 0.3)"
+                  perspective={true}
+                >
                 <Card className="bg-white hover-lift shadow-lg">
                   <CardContent className="p-6 text-center">
                     <div className="w-16 h-16 bg-brand-red rounded-full flex items-center justify-center mx-auto mb-4">
@@ -479,10 +564,11 @@ const Home = () => {
                     </div>
                   </CardContent>
                 </Card>
+                </AdvancedHoverElement>
               </div>
             </div>
             </section>
-          </ParallaxSection>
+          </ProfessionalParallaxScene>
           </div>
         </main>
         

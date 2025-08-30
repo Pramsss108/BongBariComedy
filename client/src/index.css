@@ -417,8 +417,8 @@ header:hover {
 }
 
 [data-testid="videos-section"] {
-  margin-bottom: 80px !important;
-  padding-bottom: 40px !important;
+  margin-bottom: 120px !important;
+  padding-bottom: 60px !important;
   position: relative;
   z-index: 1;
 }
@@ -437,13 +437,13 @@ header:hover {
   transform: scale(1.15) translateZ(10px) !important;
 }
 
-/* CTA Section with Extra Bottom Space */
+/* CTA Section with Space from Videos Above */
 [data-testid="cta-section"] {
   display: block !important;
   text-align: center;
-  padding: 50px 20px 100px 20px !important;
-  margin: 40px 0 80px 0 !important;
-  min-height: 220px !important;
+  padding: 80px 20px 100px 20px !important;
+  margin: 60px 0 80px 0 !important;
+  min-height: 240px !important;
   position: relative !important;
   z-index: 100 !important;
   background: transparent;

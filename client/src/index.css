@@ -406,15 +406,15 @@ header:hover {
   z-index: 1;
 }
 
-/* Proper spacing - English separated from Bengali */
+/* Minimal gap - Bengali just above form */
 [data-testid="collaboration-section"] h3 {
-  margin-bottom: 1.5rem !important;
+  margin-bottom: 0.75rem !important;
   display: block !important;
   visibility: visible !important;
 }
 
 [data-testid="collaboration-section"] h4 {
-  margin-bottom: 1rem !important;
+  margin-bottom: 0.5rem !important;
   margin-top: 0rem !important;
   display: block !important;
   visibility: visible !important;

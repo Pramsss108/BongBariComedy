@@ -466,6 +466,8 @@ header:hover {
   padding: 20px !important;
   position: relative;
   z-index: 99;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 [data-testid="cta-section"] .magnetic-button {
@@ -490,37 +492,102 @@ header:hover {
 
 /* Complete Responsive Design */
 
-/* Mobile (320px - 480px) */
+/* Mobile (320px - 480px) - Fixed Overlap */
 @media (max-width: 480px) {
   [data-testid="cta-section"] {
-    padding: 40px 15px 50px 15px !important;
-    margin: 30px 0 40px 0 !important;
+    padding: 30px 10px 60px 10px !important;
+    margin: 20px 0 50px 0 !important;
+    min-height: 300px !important;
+  }
+  
+  [data-testid="cta-section"] > div {
+    flex-direction: column !important;
+    gap: 30px !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 350px !important;
+  }
+  
+  [data-testid="cta-section"] .magnetic-button {
+    width: 100% !important;
+    max-width: 300px !important;
+    margin: 15px auto !important;
+    min-width: 280px !important;
+    display: block !important;
+    position: relative !important;
+    transform: none !important;
+  }
+  
+  [data-testid="cta-section"] .magnetic-button:hover {
+    margin: 20px auto !important;
+    transform: scale(1.02) !important;
+  }
+  
+  [data-testid="collaboration-section"] {
+    margin-top: 100px !important;
+    padding-top: 40px !important;
+  }
+  
+  /* Mobile heading sizes */
+  [data-testid="collaboration-section"] h3 {
+    font-size: 1.875rem !important;
+    line-height: 2.25rem !important;
+  }
+  
+  [data-testid="collaboration-section"] h4 {
+    font-size: 1.5rem !important;
+    line-height: 2rem !important;
+  }
+  
+  /* Mobile video section */
+  [data-testid="videos-section"] {
+    margin-bottom: 40px !important;
+    padding: 20px 10px !important;
+  }
+  
+  /* Mobile hero text */
+  .hero-section h1 {
+    font-size: 2.5rem !important;
+    line-height: 3rem !important;
+  }
+  
+  .hero-section p {
+    font-size: 1rem !important;
+    line-height: 1.5rem !important;
+  }
+  
+  /* Mobile form spacing */
+  .collaboration-form {
+    padding: 20px !important;
+  }
+  
+  /* Mobile card content */
+  .card {
+    margin: 10px !important;
+    padding: 15px !important;
+  }
+}
+
+/* Mobile Large (481px - 768px) - Stack Buttons */
+@media (min-width: 481px) and (max-width: 768px) {
+  [data-testid="cta-section"] {
+    padding: 40px 20px 80px 20px !important;
+    margin: 25px 0 60px 0 !important;
   }
   
   [data-testid="cta-section"] > div {
     flex-direction: column !important;
     gap: 25px !important;
+    max-width: 400px !important;
     margin: 0 auto !important;
   }
   
   [data-testid="cta-section"] .magnetic-button {
-    width: 95% !important;
-    max-width: 280px !important;
+    width: 90% !important;
+    max-width: 320px !important;
     margin: 12px auto !important;
-    min-width: 260px !important;
+    min-width: 280px !important;
   }
-  
-  [data-testid="cta-section"] .magnetic-button:hover {
-    margin: 15px auto !important;
-  }
-  
-  [data-testid="collaboration-section"] {
-    margin-top: 80px !important;
-  }
-}
-
-/* Mobile Large (481px - 768px) */
-@media (min-width: 481px) and (max-width: 768px) {
   [data-testid="cta-section"] {
     padding: 45px 20px 55px 20px !important;
     margin: 35px 0 45px 0 !important;
@@ -548,7 +615,32 @@ header:hover {
 }
 
 /* Tablet (769px - 1024px) */
+/* Tablet (769px - 1024px) - Side by Side */
 @media (min-width: 769px) and (max-width: 1024px) {
+  [data-testid="cta-section"] {
+    padding: 50px 30px 100px 30px !important;
+  }
+  
+  [data-testid="cta-section"] > div {
+    flex-direction: row !important;
+    gap: 30px !important;
+    max-width: 600px !important;
+  }
+  
+  [data-testid="cta-section"] .magnetic-button {
+    width: 45% !important;
+    max-width: 280px !important;
+    min-width: 250px !important;
+  }
+  
+  /* Tablet heading sizes */
+  [data-testid="collaboration-section"] h3 {
+    font-size: 2.25rem !important;
+  }
+  
+  [data-testid="collaboration-section"] h4 {
+    font-size: 1.875rem !important;
+  }
   [data-testid="cta-section"] > div {
     gap: 35px !important;
   }
@@ -565,7 +657,32 @@ header:hover {
 }
 
 /* Desktop Large (1025px+) */
+/* Desktop (1025px+) - Full Layout */
 @media (min-width: 1025px) {
+  [data-testid="cta-section"] {
+    padding: 60px 40px 120px 40px !important;
+  }
+  
+  [data-testid="cta-section"] > div {
+    flex-direction: row !important;
+    gap: 40px !important;
+    max-width: 700px !important;
+  }
+  
+  [data-testid="cta-section"] .magnetic-button {
+    width: auto !important;
+    max-width: 320px !important;
+    min-width: 280px !important;
+  }
+  
+  /* Desktop heading sizes */
+  [data-testid="collaboration-section"] h3 {
+    font-size: 3rem !important;
+  }
+  
+  [data-testid="collaboration-section"] h4 {
+    font-size: 2rem !important;
+  }
   [data-testid="cta-section"] > div {
     gap: 45px !important;
   }
@@ -664,6 +781,178 @@ section:nth-child(odd) {
 /* Ultra-smooth interactions across all devices */
 [data-testid="cta-section"] .magnetic-button:hover {
   transition: all 0.2s ease-out !important;
+}
+
+/* ALL PAGES RESPONSIVE DESIGN */
+
+/* About Page Responsive */
+@media (max-width: 480px) {
+  /* About page headings */
+  [data-testid="page-title-english"] {
+    font-size: 2rem !important;
+    line-height: 2.5rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  [data-testid="page-title-bengali"] {
+    font-size: 1.75rem !important;
+    line-height: 2.25rem !important;
+    margin-bottom: 2rem !important;
+  }
+  
+  /* About content cards */
+  .about-content .card {
+    margin: 15px 0 !important;
+    padding: 20px !important;
+  }
+  
+  /* About grid layout */
+  .about-content .grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+}
+
+/* Contact Page Responsive */
+@media (max-width: 480px) {
+  /* Contact methods */
+  .contact-methods {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  
+  /* Social links */
+  .social-links {
+    flex-direction: column !important;
+    gap: 1rem !important;
+    align-items: center !important;
+  }
+  
+  .social-links a {
+    width: 100% !important;
+    max-width: 200px !important;
+    justify-content: center !important;
+  }
+}
+
+/* Blog Page Responsive */
+@media (max-width: 480px) {
+  /* Blog grid */
+  .blog-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+  
+  /* Blog cards */
+  .blog-card {
+    margin: 10px !important;
+    padding: 15px !important;
+  }
+  
+  /* Blog featured cards */
+  .featured-posts {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+  
+  /* Blog titles */
+  .blog-title {
+    font-size: 1.25rem !important;
+    line-height: 1.75rem !important;
+  }
+}
+
+/* Work with Us Page Responsive */
+@media (max-width: 480px) {
+  /* Work form */
+  .work-form {
+    padding: 20px !important;
+    margin: 15px !important;
+  }
+  
+  /* Work grid layouts */
+  .work-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+}
+
+/* Universal Mobile Typography */
+@media (max-width: 480px) {
+  h1 {
+    font-size: 2rem !important;
+    line-height: 2.5rem !important;
+  }
+  
+  h2 {
+    font-size: 1.75rem !important;
+    line-height: 2.25rem !important;
+  }
+  
+  h3 {
+    font-size: 1.5rem !important;
+    line-height: 2rem !important;
+  }
+  
+  h4 {
+    font-size: 1.25rem !important;
+    line-height: 1.75rem !important;
+  }
+  
+  p {
+    font-size: 1rem !important;
+    line-height: 1.5rem !important;
+  }
+  
+  /* Universal container padding */
+  .container {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+  
+  /* Universal card spacing */
+  .card {
+    margin: 0.75rem !important;
+    padding: 1rem !important;
+  }
+  
+  /* Universal button spacing */
+  .magnetic-button {
+    width: 100% !important;
+    max-width: 300px !important;
+    margin: 0.5rem auto !important;
+  }
+}
+
+/* Tablet Responsive (481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+  /* All pages container */
+  .container {
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+  }
+  
+  /* Grid layouts for tablets */
+  .grid-cols-2 {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .grid-cols-3 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  /* Typography for tablets */
+  h1 {
+    font-size: 2.5rem !important;
+  }
+  
+  h2 {
+    font-size: 2rem !important;
+  }
+  
+  h3 {
+    font-size: 1.75rem !important;
+  }
 }
 
 /* GPU acceleration for mobile performance */

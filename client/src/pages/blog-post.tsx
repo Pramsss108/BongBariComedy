@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRoute } from "wouter";
+import { motion } from "framer-motion";
 import SEOHead from "@/components/seo-head";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ParallaxSection, ParallaxContainer } from "@/components/parallax-section";
 import { Calendar, ArrowLeft } from "lucide-react";
 import { useLocation } from "wouter";
 import type { BlogPost } from "@shared/schema";

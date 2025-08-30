@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import YouTubeShort from "@/components/youtube-short";
 import SEOHead from "@/components/seo-head";
+import { ParallaxSection, ParallaxContainer } from "@/components/parallax-section";
 import { Youtube, Instagram, Phone, Mail, Twitter, Send } from "lucide-react";
 import { insertCollaborationRequestSchema, type InsertCollaborationRequest } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
@@ -118,40 +120,73 @@ const Home = () => {
         ogTitle="Bong Bari - Bengali Comedy Shorts"
         ogDescription="Hilarious Bengali mother-son comedy shorts from Kolkata"
       />
-      <main className="py-16">
-        <div className="container mx-auto px-4">
-          {/* Hero Banner */}
-          <section className="text-center mb-16" data-testid="hero-section">
-            <div className="w-full h-64 md:h-80 bg-gradient-to-r from-brand-yellow via-brand-red to-brand-blue rounded-2xl shadow-lg mb-8 flex items-center justify-center relative overflow-hidden">
+      <ParallaxContainer>
+        <main className="py-16">
+          <div className="container mx-auto px-4">
+            {/* Hero Banner */}
+            <ParallaxSection speed={0.3} delay={0.1}>
+              <section className="text-center mb-16" data-testid="hero-section">
+            <motion.div 
+              className="w-full h-64 md:h-80 bg-gradient-to-r from-brand-yellow via-brand-red to-brand-blue rounded-2xl shadow-lg mb-8 flex items-center justify-center relative overflow-hidden"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1, ease: [0.25, 0.25, 0.25, 1] }}
+              whileHover={{ scale: 1.02 }}
+            >
               {/* Background pattern */}
               <div className="absolute inset-0 opacity-10">
                 <div className="w-full h-full bg-gradient-to-br from-transparent via-white to-transparent"></div>
               </div>
               
               {/* Main content */}
-              <div className="text-center z-10">
-                <div className="mb-4">
+              <motion.div 
+                className="text-center z-10"
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.5 }}
+              >
+                <motion.div 
+                  className="mb-4"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.7 }}
+                >
                   <span className="text-6xl md:text-8xl font-bold text-white bangla-text drop-shadow-lg">
                     বং বাড়ি
                   </span>
-                </div>
-                <div className="text-xl md:text-2xl font-semibold text-white drop-shadow-md">
+                </motion.div>
+                <motion.div 
+                  className="text-xl md:text-2xl font-semibold text-white drop-shadow-md"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.9 }}
+                >
                   Bengali Comedy That Hits Home!
-                </div>
-                <div className="text-lg md:text-xl text-white/90 mt-2 bangla-text">
+                </motion.div>
+                <motion.div 
+                  className="text-lg md:text-xl text-white/90 mt-2 bangla-text"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 1.1 }}
+                >
                   কলকাতার ঘরোয়া কমেডি
-                </div>
-              </div>
+                </motion.div>
+              </motion.div>
               
               {/* Decorative elements */}
               <div className="absolute top-4 left-4 w-16 h-16 bg-white/20 rounded-full"></div>
               <div className="absolute bottom-4 right-4 w-12 h-12 bg-white/20 rounded-full"></div>
               <div className="absolute top-1/2 right-8 w-8 h-8 bg-white/20 rounded-full"></div>
-            </div>
+            </motion.div>
             
             
             {/* Intro Text */}
-            <Card className="max-w-4xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 1.3 }}
+            >
+              <Card className="max-w-4xl mx-auto">
               <CardContent className="p-8">
                 <p className="text-lg md:text-xl text-gray-700 mb-6 leading-relaxed" data-testid="intro-english">
                   Welcome to <strong>Bong Bari</strong> - where every Bengali family finds their story! 
@@ -165,16 +200,31 @@ const Home = () => {
                 </p>
               </CardContent>
             </Card>
-          </section>
+            </motion.div>
+              </section>
+            </ParallaxSection>
           
           {/* YouTube Shorts Grid */}
-          <section className="mb-16" data-testid="videos-section">
-            <h3 className="text-3xl font-bold text-center text-brand-blue mb-8" data-testid="videos-title-english">
+          <ParallaxSection speed={0.4} delay={0.2}>
+            <section className="mb-16" data-testid="videos-section">
+            <motion.h3 
+              className="text-3xl font-bold text-center text-brand-blue mb-8" 
+              data-testid="videos-title-english"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
               Latest Comedy Shorts
-            </h3>
-            <h4 className="text-2xl font-bold text-center text-gray-800 mb-12 bangla-text" data-testid="videos-title-bengali">
+            </motion.h3>
+            <motion.h4 
+              className="text-2xl font-bold text-center text-gray-800 mb-12 bangla-text" 
+              data-testid="videos-title-bengali"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
               সর্বশেষ কমেডি শর্টস
-            </h4>
+            </motion.h4>
             
             {isLoading ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6" data-testid="videos-grid-loading">
@@ -185,45 +235,84 @@ const Home = () => {
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6" data-testid="videos-grid">
-                {videoData.map((video) => (
-                  <YouTubeShort
+              <motion.div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6" data-testid="videos-grid">
+                {videoData.map((video, index) => (
+                  <motion.div
                     key={video.videoId}
-                    videoId={video.videoId}
-                    thumbnail={video.thumbnail}
-                    title={video.title}
-                  />
+                    initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ 
+                      duration: 0.6, 
+                      delay: index * 0.1,
+                      ease: [0.25, 0.25, 0.25, 1]
+                    }}
+                    whileHover={{ 
+                      y: -10, 
+                      transition: { duration: 0.3 }
+                    }}
+                  >
+                    <YouTubeShort
+                      videoId={video.videoId}
+                      thumbnail={video.thumbnail}
+                      title={video.title}
+                    />
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             )}
-          </section>
+            </section>
+          </ParallaxSection>
           
           {/* CTA Buttons */}
-          <section className="text-center mb-16" data-testid="cta-section">
-            <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
-              <Button 
-                size="lg" 
-                className="bg-brand-red text-white hover:bg-red-600 px-8 py-4 rounded-full font-semibold text-lg hover-lift"
-                data-testid="button-youtube"
-                onClick={() => window.open('https://youtube.com/@bongbari', '_blank')}
+          <ParallaxSection speed={0.3} delay={0.3}>
+            <section className="text-center mb-16" data-testid="cta-section">
+            <motion.div 
+              className="flex flex-col md:flex-row gap-4 justify-center items-center"
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+            >
+              <motion.div
+                initial={{ opacity: 0, x: -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <Youtube className="mr-2 h-5 w-5" />
-                Subscribe on YouTube
-              </Button>
-              <Button 
-                size="lg" 
-                className="bg-brand-blue text-white hover:bg-blue-700 px-8 py-4 rounded-full font-semibold text-lg hover-lift"
-                data-testid="button-instagram"
-                onClick={() => window.open('https://instagram.com/thebongbari', '_blank')}
+                <Button 
+                  size="lg" 
+                  className="bg-brand-red text-white hover:bg-red-600 px-8 py-4 rounded-full font-semibold text-lg hover-lift"
+                  data-testid="button-youtube"
+                  onClick={() => window.open('https://youtube.com/@bongbari', '_blank')}
+                >
+                  <Youtube className="mr-2 h-5 w-5" />
+                  Subscribe on YouTube
+                </Button>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <Instagram className="mr-2 h-5 w-5" />
-                Follow on Instagram
-              </Button>
-            </div>
-          </section>
+                <Button 
+                  size="lg" 
+                  className="bg-brand-blue text-white hover:bg-blue-700 px-8 py-4 rounded-full font-semibold text-lg hover-lift"
+                  data-testid="button-instagram"
+                  onClick={() => window.open('https://instagram.com/thebongbari', '_blank')}
+                >
+                  <Instagram className="mr-2 h-5 w-5" />
+                  Follow on Instagram
+                </Button>
+              </motion.div>
+            </motion.div>
+            </section>
+          </ParallaxSection>
           
           {/* Collaboration Form */}
-          <section className="mb-16" data-testid="collaboration-section">
+          <ParallaxSection speed={0.2} delay={0.4}>
+            <section className="mb-16" data-testid="collaboration-section">
             <div className="max-w-2xl mx-auto">
               <h3 className="text-3xl font-bold text-center text-brand-blue mb-4" data-testid="collaboration-title-english">
                 Work with Us
@@ -389,8 +478,10 @@ const Home = () => {
                 </Card>
               </div>
             </div>
-          </section>
-        </div>
+            </section>
+          </ParallaxSection>
+          </div>
+        </main>
         
         {/* Footer */}
         <footer className="bg-brand-blue text-white py-8 mt-16" data-testid="footer">
@@ -403,7 +494,7 @@ const Home = () => {
             </p>
           </div>
         </footer>
-      </main>
+      </ParallaxContainer>
     </>
   );
 };

@@ -1,6 +1,8 @@
+import { motion } from "framer-motion";
 import SEOHead from "@/components/seo-head";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ParallaxSection, ParallaxContainer } from "@/components/parallax-section";
 import { FileText } from "lucide-react";
 
 const WorkWithUs = () => {
@@ -32,15 +34,33 @@ const WorkWithUs = () => {
         canonical="/work-with-us"
       />
       
-      <main className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-4xl font-bold text-center text-brand-blue mb-4" data-testid="page-title-english">
-              Work with Us
-            </h1>
-            <h2 className="text-3xl font-bold text-center text-brand-blue mb-12 bangla-text" data-testid="page-title-bengali">
-              আমাদের সাথে কাজ করুন
-            </h2>
+      <ParallaxContainer>
+        <main className="py-16">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto">
+              <ParallaxSection speed={0.3} delay={0.1}>
+                <motion.h1 
+                  className="text-4xl font-bold text-center text-brand-blue mb-4" 
+                  data-testid="page-title-english"
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8 }}
+                >
+                  Work with Us
+                </motion.h1>
+              </ParallaxSection>
+              
+              <ParallaxSection speed={0.4} delay={0.2}>
+                <motion.h2 
+                  className="text-3xl font-bold text-center text-brand-blue mb-12 bangla-text" 
+                  data-testid="page-title-bengali"
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.2 }}
+                >
+                  আমাদের সাথে কাজ করুন
+                </motion.h2>
+              </ParallaxSection>
             
             <Card className="mb-12">
               <CardContent className="p-8">
@@ -95,9 +115,10 @@ const WorkWithUs = () => {
                 </div>
               </CardContent>
             </Card>
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </ParallaxContainer>
     </>
   );
 };

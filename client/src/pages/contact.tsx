@@ -1,5 +1,7 @@
+import { motion } from "framer-motion";
 import SEOHead from "@/components/seo-head";
 import { Card, CardContent } from "@/components/ui/card";
+import { ParallaxSection, ParallaxContainer } from "@/components/parallax-section";
 import { Mail, Phone, Youtube, Instagram, Twitter } from "lucide-react";
 
 const Contact = () => {
@@ -44,15 +46,33 @@ const Contact = () => {
         canonical="/contact"
       />
       
-      <main className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-4xl font-bold text-center text-brand-blue mb-4" data-testid="page-title-english">
-              Contact Us
-            </h1>
-            <h2 className="text-3xl font-bold text-center text-brand-blue mb-12 bangla-text" data-testid="page-title-bengali">
-              যোগাযোগ
-            </h2>
+      <ParallaxContainer>
+        <main className="py-16 bg-white">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto">
+              <ParallaxSection speed={0.3} delay={0.1}>
+                <motion.h1 
+                  className="text-4xl font-bold text-center text-brand-blue mb-4" 
+                  data-testid="page-title-english"
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8 }}
+                >
+                  Contact Us
+                </motion.h1>
+              </ParallaxSection>
+              
+              <ParallaxSection speed={0.4} delay={0.2}>
+                <motion.h2 
+                  className="text-3xl font-bold text-center text-brand-blue mb-12 bangla-text" 
+                  data-testid="page-title-bengali"
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.2 }}
+                >
+                  যোগাযোগ
+                </motion.h2>
+              </ParallaxSection>
             
             <div className="grid md:grid-cols-2 gap-12">
               <div>
@@ -121,9 +141,10 @@ const Contact = () => {
                 </Card>
               </div>
             </div>
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </ParallaxContainer>
     </>
   );
 };

@@ -147,3 +147,12 @@
   background: var(--brand-blue);
   border-radius: 4px;
 }
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-red);
+}
+
+/* Global smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}

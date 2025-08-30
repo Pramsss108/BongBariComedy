@@ -285,7 +285,7 @@ const Home = () => {
                   className="bg-brand-red text-white hover:bg-red-600 px-8 py-4 rounded-full font-semibold text-lg hover-lift shadow-2xl"
                   data-testid="button-youtube"
                   onClick={() => window.open('https://youtube.com/@bongbari', '_blank')}
-                  strength={1.5}
+                  strength={0.5}
                 >
                   <Youtube className="mr-2 h-5 w-5" />
                   Subscribe on YouTube
@@ -302,7 +302,7 @@ const Home = () => {
                   className="bg-brand-blue text-white hover:bg-blue-700 px-8 py-4 rounded-full font-semibold text-lg hover-lift shadow-2xl"
                   data-testid="button-instagram"
                   onClick={() => window.open('https://instagram.com/thebongbari', '_blank')}
-                  strength={1.5}
+                  strength={0.5}
                 >
                   <Instagram className="mr-2 h-5 w-5" />
                   Follow on Instagram

@@ -9,19 +9,42 @@ export const useMagneticEffect = (strength: number = 0.3) => {
 
     const handleMouseMove = (e: MouseEvent) => {
       const rect = element.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
       
-      const deltaX = (e.clientX - centerX) * strength * 0.3; // Strong magnetic pull
-      const deltaY = (e.clientY - centerY) * strength * 0.3; // Strong magnetic pull
+      // Find or create circle element
+      let circle = element.querySelector('.hover-circle') as HTMLElement;
+      if (!circle) {
+        circle = document.createElement('div');
+        circle.className = 'hover-circle';
+        circle.style.cssText = `
+          position: absolute;
+          width: 20px;
+          height: 20px;
+          background: rgba(255, 255, 255, 0.3);
+          border-radius: 50%;
+          pointer-events: none;
+          transition: all 0.1s ease;
+          z-index: 10;
+        `;
+        element.appendChild(circle);
+      }
       
-      element.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(1.15) rotate(${deltaX * 0.1}deg)`; // Dramatic scale + rotation
-      element.style.filter = `brightness(1.2) saturate(1.3) drop-shadow(0 0 20px rgba(255, 204, 0, 0.6))`;
+      circle.style.left = `${x - 10}px`;
+      circle.style.top = `${y - 10}px`;
+      circle.style.opacity = '1';
     };
 
     const handleMouseLeave = () => {
-      element.style.transform = 'translate(0px, 0px) scale(1) rotate(0deg)';
-      element.style.filter = 'brightness(1) saturate(1) drop-shadow(none)';
+      const circle = element.querySelector('.hover-circle') as HTMLElement;
+      if (circle) {
+        circle.style.opacity = '0';
+        setTimeout(() => {
+          if (circle.parentNode) {
+            circle.parentNode.removeChild(circle);
+          }
+        }, 100);
+      }
     };
 
     element.addEventListener('mousemove', handleMouseMove);

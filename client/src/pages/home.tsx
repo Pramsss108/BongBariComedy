@@ -49,7 +49,6 @@ const Home = () => {
         ogTitle="Bong Bari - Bengali Comedy Shorts"
         ogDescription="Hilarious Bengali mother-son comedy shorts from Kolkata"
       />
-      
       <main className="py-16">
         <div className="container mx-auto px-4">
           {/* Hero Banner */}
@@ -221,7 +220,7 @@ const Home = () => {
                       <Mail className="w-8 h-8 text-white" />
                     </div>
                     <h5 className="font-semibold text-brand-blue mb-2">Email</h5>
-                    <p className="text-gray-700">hello@bongbari.com</p>
+                    <p className="text-gray-700 text-[15px]">bongbariofficial@gmail.com</p>
                   </CardContent>
                 </Card>
                 

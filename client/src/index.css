@@ -212,11 +212,24 @@ input, textarea, [contenteditable] {
   cursor: text !important;
 }
 
-/* Professional hover targets */
+/* Professional hover targets - ALL interactive elements */
 .hover-target,
 button,
 a,
+input,
+textarea,
+select,
 [role="button"],
-.magnetic-button {
+.magnetic-button,
+.card,
+.youtube-short,
+nav a,
+.blog-post,
+.form-control,
+[data-testid*="button"],
+[data-testid*="link"],
+[data-testid*="card"],
+.clickable,
+.interactive {
   cursor: none !important;
 }

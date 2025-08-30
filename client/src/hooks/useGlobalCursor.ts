@@ -52,20 +52,28 @@ export const useGlobalCursor = () => {
       cursorGlow.style.top = `${clientY}px`;
       cursorGlow.style.opacity = '0.7';
 
-      // Check if hovering over interactive elements
+      // Check if hovering over interactive elements - catch EVERYTHING
       const target = e.target as HTMLElement;
-      const isInteractive = target.matches('button, a, input, textarea, [role="button"], .magnetic-button, .hover-target');
+      const isInteractive = target.matches('button, a, input, textarea, select, [role="button"], .magnetic-button, .hover-target, .card, .youtube-short, nav a, .blog-post, .form-control, [data-testid*="button"], [data-testid*="link"], [data-testid*="card"], .clickable, .interactive') || 
+                           target.closest('button, a, .card, .youtube-short, nav, .blog-post, .magnetic-button, [role="button"]');
       
       if (isInteractive) {
-        // MASSIVE hover effect - 3x bigger!
+        // PREMIUM ₹1 MILLION WEBSITE EFFECT!
         cursor.style.transform = 'translate(-50%, -50%) scale(3)';
-        cursor.style.background = 'radial-gradient(circle, rgba(0, 0, 0, 0.8) 0%, rgba(68, 68, 68, 0.6) 40%, rgba(255, 204, 0, 0.4) 100%)';
-        cursor.style.boxShadow = '0 0 40px rgba(0, 0, 0, 0.5), 0 0 80px rgba(255, 204, 0, 0.3), 0 0 120px rgba(255, 68, 68, 0.2)';
-        cursor.style.border = '3px solid rgba(255, 204, 0, 0.5)';
+        cursor.style.background = 'radial-gradient(circle, rgba(0, 0, 0, 0.9) 0%, rgba(255, 204, 0, 0.8) 20%, rgba(255, 215, 0, 0.6) 40%, rgba(255, 68, 68, 0.4) 70%, rgba(68, 68, 255, 0.3) 100%)';
+        cursor.style.boxShadow = `
+          0 0 60px rgba(255, 204, 0, 0.8),
+          0 0 120px rgba(255, 215, 0, 0.6),
+          0 0 180px rgba(255, 68, 68, 0.4),
+          0 0 240px rgba(68, 68, 255, 0.3),
+          inset 0 0 30px rgba(255, 255, 255, 0.2)
+        `;
+        cursor.style.border = '4px solid rgba(255, 215, 0, 0.8)';
         
-        cursorGlow.style.transform = 'translate(-50%, -50%) scale(2.5)';
-        cursorGlow.style.background = 'radial-gradient(circle, rgba(0, 0, 0, 0.2) 0%, rgba(255, 204, 0, 0.2) 30%, rgba(255, 68, 68, 0.1) 60%, transparent 80%)';
-        cursorGlow.style.filter = 'blur(5px)';
+        cursorGlow.style.transform = 'translate(-50%, -50%) scale(3.5)';
+        cursorGlow.style.background = 'radial-gradient(circle, rgba(255, 204, 0, 0.4) 0%, rgba(255, 215, 0, 0.3) 20%, rgba(255, 68, 68, 0.2) 40%, rgba(68, 68, 255, 0.15) 60%, transparent 80%)';
+        cursorGlow.style.filter = 'blur(8px)';
+        cursorGlow.style.boxShadow = '0 0 200px rgba(255, 204, 0, 0.5), 0 0 400px rgba(255, 215, 0, 0.3)';
       } else {
         cursor.style.transform = 'translate(-50%, -50%) scale(1)';
         cursor.style.background = 'radial-gradient(circle, rgba(0, 0, 0, 0.6) 0%, rgba(68, 68, 68, 0.4) 50%, rgba(255, 204, 0, 0.2) 100%)';

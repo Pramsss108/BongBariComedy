@@ -46,10 +46,14 @@ export const useParallaxScroll = () => {
         el.style.transform = `translateY(${floatSpeed}px) scale(${1 + Math.abs(floatSpeed) * 0.002})`;
       });
 
-      // Background sections depth - Faster depth movement
-      const sections = document.querySelectorAll('section');
+      // Background sections depth - Exclude CTA section completely
+      const sections = document.querySelectorAll('section:not([data-testid="cta-section"])');
       sections.forEach((element, index) => {
         const el = element as HTMLElement;
+        // Skip if this is the CTA section or contains CTA buttons
+        if (el.querySelector('[data-testid="button-youtube"]') || el.querySelector('[data-testid="button-instagram"]')) {
+          return;
+        }
         const depth = rate * (0.2 + index * 0.1);
         el.style.transform = `translateY(${depth * 0.06}px) scale(${1 + Math.abs(depth) * 0.0002})`;
       });

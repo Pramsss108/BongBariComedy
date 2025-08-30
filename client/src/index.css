@@ -386,12 +386,27 @@ header:hover {
   transform: none !important;
 }
 
-/* CTA Section Exclusion from Parallax */
+/* Complete CTA Section Isolation from All Effects */
 [data-testid="cta-section"],
 [data-testid="cta-section"] *,
-[data-testid="cta-section"] .magnetic-button {
+[data-testid="cta-section"] .magnetic-button,
+[data-testid="cta-section"] > div {
   transform: none !important;
   transition: transform 0.3s ease, margin 0.3s ease, box-shadow 0.3s ease !important;
+  position: static !important;
+  will-change: auto !important;
+}
+
+/* Massive Section Spacing to Prevent Overlap */
+[data-testid="collaboration-section"] {
+  margin-top: 150px !important;
+  padding-top: 80px !important;
+  clear: both;
+}
+
+[data-testid="videos-section"] {
+  margin-bottom: 120px !important;
+  padding-bottom: 60px !important;
 }
 
 /* Buttons maintain their own effects */
@@ -408,14 +423,18 @@ header:hover {
   transform: scale(1.15) translateZ(10px) !important;
 }
 
-/* Professional CTA Section Layout - Anti-Merging System */
+/* Ultra-Strong CTA Section Isolation - Complete Anti-Overlap System */
 [data-testid="cta-section"] {
   display: block !important;
   text-align: center;
-  padding: 40px 20px !important;
-  min-height: 200px;
-  position: relative;
-  z-index: 1000;
+  padding: 100px 20px !important;
+  margin: 80px 0 !important;
+  min-height: 300px !important;
+  position: relative !important;
+  z-index: 9999 !important;
+  background: transparent;
+  isolation: isolate;
+  clear: both;
 }
 
 [data-testid="cta-section"] > div {
@@ -423,59 +442,71 @@ header:hover {
   flex-direction: row !important;
   justify-content: center !important;
   align-items: center !important;
-  gap: 60px !important;
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
+  gap: 100px !important;
+  max-width: 900px;
+  margin: 50px auto !important;
+  padding: 40px 20px !important;
+  position: relative;
+  z-index: 9998;
 }
 
 [data-testid="cta-section"] .magnetic-button {
   display: inline-block !important;
-  margin: 30px !important;
-  min-width: 300px !important;
-  max-width: 350px !important;
+  margin: 50px !important;
+  min-width: 320px !important;
+  max-width: 380px !important;
   flex-shrink: 0 !important;
   position: relative !important;
-  z-index: 50 !important;
+  z-index: 9997 !important;
   transform: none !important;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.25) !important;
+  isolation: isolate;
 }
 
 [data-testid="cta-section"] .magnetic-button:hover {
-  margin: 35px !important;
-  z-index: 200 !important;
-  transform: scale(1.05) !important;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+  margin: 55px !important;
+  z-index: 9999 !important;
+  transform: scale(1.03) !important;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.35) !important;
 }
 
-/* Mobile Layout - Stack Vertically */
+/* Mobile Layout - Extra Spacing */
 @media (max-width: 768px) {
+  [data-testid="cta-section"] {
+    padding: 80px 20px !important;
+    margin: 60px 0 !important;
+  }
+  
   [data-testid="cta-section"] > div {
     flex-direction: column !important;
-    gap: 40px !important;
+    gap: 60px !important;
+    margin: 40px auto !important;
   }
   
   [data-testid="cta-section"] .magnetic-button {
     width: 90% !important;
-    max-width: 350px !important;
-    margin: 20px auto !important;
+    max-width: 380px !important;
+    margin: 30px auto !important;
   }
   
   [data-testid="cta-section"] .magnetic-button:hover {
-    margin: 25px auto !important;
+    margin: 35px auto !important;
   }
 }
 
-/* Override Parallax Effects on CTA Section */
+/* Complete Parallax Isolation */
+[data-testid="cta-section"],
 [data-testid="cta-section"] *,
 [data-testid="cta-section"] .magnetic-button,
 [data-testid="cta-section"] button {
   transform: none !important;
   will-change: auto !important;
+  position: static !important;
 }
 
 [data-testid="cta-section"] .magnetic-button:hover {
-  transform: scale(1.05) !important;
+  transform: scale(1.03) !important;
+  position: relative !important;
 }
 
 /* Fast Parallax Scroll Base Styles */

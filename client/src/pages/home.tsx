@@ -267,7 +267,7 @@ const Home = () => {
           
           {/* CTA Buttons */}
           <ParallaxSection speed={0.3} delay={0.3}>
-            <section className="text-center mb-24" data-testid="cta-section">
+            <section className="text-center mb-32 pb-16" data-testid="cta-section">
             <motion.div 
               className="flex flex-col lg:flex-row gap-12 justify-center items-center px-4 max-w-4xl mx-auto"
               initial={{ opacity: 0, y: 50 }}
@@ -318,7 +318,7 @@ const Home = () => {
           
           {/* Collaboration Form */}
           <ParallaxSection speed={0.2} delay={0.4}>
-            <section className="mb-20 mt-16" data-testid="collaboration-section">
+            <section className="mb-20 mt-24 pt-16" data-testid="collaboration-section">
             <div className="max-w-3xl mx-auto px-4">
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
@@ -326,10 +326,10 @@ const Home = () => {
                 transition={{ duration: 0.8 }}
                 className="text-center mb-12"
               >
-                <h3 className="text-4xl md:text-5xl font-bold text-center text-brand-blue mb-6" data-testid="collaboration-title-english">
+                <h3 className="text-5xl md:text-6xl font-bold text-center text-brand-blue mb-8" data-testid="collaboration-title-english">
                   Work with Us
                 </h3>
-                <h4 className="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-4 bangla-text" data-testid="collaboration-title-bengali">
+                <h4 className="text-4xl md:text-5xl font-bold text-center text-gray-800 mb-6 bangla-text" data-testid="collaboration-title-bengali">
                   আমাদের সাথে কাজ করুন
                 </h4>
                 <div className="w-24 h-1 bg-gradient-to-r from-brand-yellow to-brand-red mx-auto rounded-full"></div>

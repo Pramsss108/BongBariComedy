@@ -400,14 +400,25 @@ header:hover {
 }
 
 /* Enhanced button spacing and layout */
+[data-testid="cta-section"] {
+  padding-bottom: 4rem;
+  margin-bottom: 4rem;
+}
+
 [data-testid="cta-section"] .magnetic-button {
-  margin: 8px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
+  margin: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18) !important;
 }
 
 [data-testid="cta-section"] .magnetic-button:hover {
-  margin: 12px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25) !important;
+  margin: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Work with Us section spacing */
+[data-testid="collaboration-section"] {
+  margin-top: 6rem;
+  padding-top: 4rem;
 }
 
 /* Fast Parallax Scroll Base Styles */

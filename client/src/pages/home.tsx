@@ -10,34 +10,34 @@ import { Youtube, Instagram, Phone, Mail, Twitter, Send } from "lucide-react";
 const Home = () => {
   const videoData = [
     {
-      videoId: "demo1",
-      thumbnail: "https://images.unsplash.com/photo-1577563908411-5077b6dc7624?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=533",
-      title: "Bengali Mom's Kitchen Comedy"
+      videoId: "pdjQpcVqxMU",
+      thumbnail: "https://img.youtube.com/vi/pdjQpcVqxMU/hqdefault.jpg",
+      title: "Bong Bari Comedy Short 1"
     },
     {
-      videoId: "demo2", 
-      thumbnail: "https://images.unsplash.com/photo-1511895426328-dc8714191300?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=533",
-      title: "Son's Funny Faces During Meal"
+      videoId: "8gdxQ_dgFv8", 
+      thumbnail: "https://img.youtube.com/vi/8gdxQ_dgFv8/hqdefault.jpg",
+      title: "Bong Bari Comedy Short 2"
     },
     {
-      videoId: "demo3",
-      thumbnail: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=533",
-      title: "Family Discussion Comedy"
+      videoId: "rGOvg5PJtXA",
+      thumbnail: "https://img.youtube.com/vi/rGOvg5PJtXA/hqdefault.jpg",
+      title: "Bong Bari Comedy Short 3"
     },
     {
-      videoId: "demo4",
-      thumbnail: "https://images.unsplash.com/photo-1566492031773-4f4e44671d66?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=533",
-      title: "Bengali Mother's Expressions"
+      videoId: "Gyo_QpZQuPU",
+      thumbnail: "https://img.youtube.com/vi/Gyo_QpZQuPU/hqdefault.jpg",
+      title: "Bong Bari Comedy Short 4"
     },
     {
-      videoId: "demo5",
-      thumbnail: "https://images.unsplash.com/photo-1552058544-f2b08422138a?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=533",
-      title: "Young Man's Laughter"
+      videoId: "GJfHWL0ro_A",
+      thumbnail: "https://img.youtube.com/vi/GJfHWL0ro_A/hqdefault.jpg",
+      title: "Bong Bari Comedy Short 5"
     },
     {
-      videoId: "demo6",
-      thumbnail: "https://images.unsplash.com/photo-1609220136736-443140cffec6?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=533",
-      title: "Family Celebration Joy"
+      videoId: "NRdGq7Ncqw0",
+      thumbnail: "https://img.youtube.com/vi/NRdGq7Ncqw0/hqdefault.jpg",
+      title: "Bong Bari Comedy Short 6"
     }
   ];
 

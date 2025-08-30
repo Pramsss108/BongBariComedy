@@ -13,7 +13,7 @@ const YouTubeShort = ({ videoId, thumbnail, title, onClick }: YouTubeShortProps)
       onClick();
     } else {
       // Open YouTube video in new tab
-      window.open(`https://youtube.com/shorts/${videoId}`, '_blank');
+      window.open(`https://www.youtube.com/shorts/pdjQpcVqxMU`, '_blank');
     }
   };
 

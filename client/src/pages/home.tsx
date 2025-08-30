@@ -122,19 +122,33 @@ const Home = () => {
         <div className="container mx-auto px-4">
           {/* Hero Banner */}
           <section className="text-center mb-16" data-testid="hero-section">
-            <img 
-              src={videoData[0]?.thumbnail || "https://images.unsplash.com/photo-1609220136736-443140cffec6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400"} 
-              alt={videoData[0]?.title || "Bengali family comedy"} 
-              className="w-full h-64 md:h-80 object-cover rounded-2xl shadow-lg mb-8"
-              data-testid="hero-image"
-            />
+            <div className="w-full h-64 md:h-80 bg-gradient-to-r from-brand-yellow via-brand-red to-brand-blue rounded-2xl shadow-lg mb-8 flex items-center justify-center relative overflow-hidden">
+              {/* Background pattern */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="w-full h-full bg-gradient-to-br from-transparent via-white to-transparent"></div>
+              </div>
+              
+              {/* Main content */}
+              <div className="text-center z-10">
+                <div className="mb-4">
+                  <span className="text-6xl md:text-8xl font-bold text-white bangla-text drop-shadow-lg">
+                    বং বাড়ি
+                  </span>
+                </div>
+                <div className="text-xl md:text-2xl font-semibold text-white drop-shadow-md">
+                  Bengali Comedy That Hits Home!
+                </div>
+                <div className="text-lg md:text-xl text-white/90 mt-2 bangla-text">
+                  কলকাতার ঘরোয়া কমেডি
+                </div>
+              </div>
+              
+              {/* Decorative elements */}
+              <div className="absolute top-4 left-4 w-16 h-16 bg-white/20 rounded-full"></div>
+              <div className="absolute bottom-4 right-4 w-12 h-12 bg-white/20 rounded-full"></div>
+              <div className="absolute top-1/2 right-8 w-8 h-8 bg-white/20 rounded-full"></div>
+            </div>
             
-            <h1 className="text-4xl md:text-6xl font-bold text-brand-blue mb-4 bangla-text" data-testid="main-title">
-              বং বাড়ি
-            </h1>
-            <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-6" data-testid="subtitle">
-              Bengali Comedy That Hits Home!
-            </h2>
             
             {/* Intro Text */}
             <Card className="max-w-4xl mx-auto">

@@ -269,7 +269,7 @@ const Home = () => {
           <ParallaxSection speed={0.3} delay={0.3}>
             <section className="text-center mb-16" data-testid="cta-section">
             <motion.div 
-              className="flex flex-col md:flex-row gap-4 justify-center items-center"
+              className="flex flex-col lg:flex-row gap-8 justify-center items-center px-4"
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
@@ -278,33 +278,37 @@ const Home = () => {
                 initial={{ opacity: 0, x: -50 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
-                className="inline-block"
+                className="w-full sm:w-auto"
               >
                 <MagneticButton 
                   size="lg" 
-                  className="bg-brand-red text-white hover:bg-red-600 px-8 py-4 rounded-full font-semibold text-lg hover-lift shadow-2xl"
+                  className="bg-brand-red text-white hover:bg-red-600 px-10 py-5 rounded-full font-semibold text-lg hover-lift shadow-2xl w-full sm:w-auto min-w-[280px]"
                   data-testid="button-youtube"
                   onClick={() => window.open('https://youtube.com/@bongbari', '_blank')}
                   strength={0.5}
                 >
-                  <Youtube className="mr-2 h-5 w-5" />
+                  <Youtube className="mr-3 h-6 w-6" />
                   Subscribe on YouTube
                 </MagneticButton>
               </motion.div>
+              
+              {/* Separator for desktop */}
+              <div className="hidden lg:block w-px h-16 bg-gray-300 opacity-50"></div>
+              
               <motion.div
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
-                className="inline-block"
+                className="w-full sm:w-auto"
               >
                 <MagneticButton 
                   size="lg" 
-                  className="bg-brand-blue text-white hover:bg-blue-700 px-8 py-4 rounded-full font-semibold text-lg hover-lift shadow-2xl"
+                  className="bg-brand-blue text-white hover:bg-blue-700 px-10 py-5 rounded-full font-semibold text-lg hover-lift shadow-2xl w-full sm:w-auto min-w-[280px]"
                   data-testid="button-instagram"
                   onClick={() => window.open('https://instagram.com/thebongbari', '_blank')}
                   strength={0.5}
                 >
-                  <Instagram className="mr-2 h-5 w-5" />
+                  <Instagram className="mr-3 h-6 w-6" />
                   Follow on Instagram
                 </MagneticButton>
               </motion.div>

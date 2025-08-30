@@ -320,7 +320,7 @@ const Home = () => {
           <ParallaxSection speed={0.2} delay={0.4}>
             <section className="mb-16" data-testid="collaboration-section">
             <div className="max-w-2xl mx-auto">
-              <h3 className="text-3xl font-bold text-center text-brand-blue mb-1" data-testid="collaboration-title-english">
+              <h3 className="text-3xl font-bold text-center text-brand-blue mb-0" data-testid="collaboration-title-english">
                 Work with Us
               </h3>
               <h4 className="text-2xl font-bold text-center text-gray-800 mb-8 bangla-text tracking-wide" data-testid="collaboration-title-bengali">

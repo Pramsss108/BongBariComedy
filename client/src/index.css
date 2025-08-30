@@ -406,9 +406,9 @@ header:hover {
   z-index: 1;
 }
 
-/* Minimal gap - Bengali just above form */
+/* Super close headings - Bengali very close to English */
 [data-testid="collaboration-section"] h3 {
-  margin-bottom: 0.75rem !important;
+  margin-bottom: 0.25rem !important;
   display: block !important;
   visibility: visible !important;
 }

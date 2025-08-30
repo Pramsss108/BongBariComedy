@@ -397,16 +397,20 @@ header:hover {
   will-change: auto !important;
 }
 
-/* Balanced Section Spacing */
+/* Strong Section Separation - No Overlap */
 [data-testid="collaboration-section"] {
-  margin-top: 60px !important;
-  padding-top: 40px !important;
+  margin-top: 100px !important;
+  padding-top: 60px !important;
   clear: both;
+  position: relative;
+  z-index: 1;
 }
 
 [data-testid="videos-section"] {
-  margin-bottom: 40px !important;
-  padding-bottom: 20px !important;
+  margin-bottom: 80px !important;
+  padding-bottom: 40px !important;
+  position: relative;
+  z-index: 1;
 }
 
 /* Buttons maintain their own effects */
@@ -427,9 +431,9 @@ header:hover {
 [data-testid="cta-section"] {
   display: block !important;
   text-align: center;
-  padding: 40px 20px !important;
-  margin: 30px 0 !important;
-  min-height: 160px !important;
+  padding: 50px 20px 60px 20px !important;
+  margin: 40px 0 50px 0 !important;
+  min-height: 180px !important;
   position: relative !important;
   z-index: 100 !important;
   background: transparent;
@@ -470,11 +474,42 @@ header:hover {
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3) !important;
 }
 
-/* Mobile Layout - Compact Spacing */
-@media (max-width: 768px) {
+/* Complete Responsive Design */
+
+/* Mobile (320px - 480px) */
+@media (max-width: 480px) {
   [data-testid="cta-section"] {
-    padding: 30px 20px !important;
-    margin: 20px 0 !important;
+    padding: 40px 15px 50px 15px !important;
+    margin: 30px 0 40px 0 !important;
+  }
+  
+  [data-testid="cta-section"] > div {
+    flex-direction: column !important;
+    gap: 25px !important;
+    margin: 0 auto !important;
+  }
+  
+  [data-testid="cta-section"] .magnetic-button {
+    width: 95% !important;
+    max-width: 280px !important;
+    margin: 12px auto !important;
+    min-width: 260px !important;
+  }
+  
+  [data-testid="cta-section"] .magnetic-button:hover {
+    margin: 15px auto !important;
+  }
+  
+  [data-testid="collaboration-section"] {
+    margin-top: 80px !important;
+  }
+}
+
+/* Mobile Large (481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+  [data-testid="cta-section"] {
+    padding: 45px 20px 55px 20px !important;
+    margin: 35px 0 45px 0 !important;
   }
   
   [data-testid="cta-section"] > div {
@@ -484,13 +519,45 @@ header:hover {
   }
   
   [data-testid="cta-section"] .magnetic-button {
-    width: 90% !important;
+    width: 85% !important;
     max-width: 320px !important;
     margin: 15px auto !important;
   }
   
   [data-testid="cta-section"] .magnetic-button:hover {
     margin: 20px auto !important;
+  }
+  
+  [data-testid="collaboration-section"] {
+    margin-top: 90px !important;
+  }
+}
+
+/* Tablet (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  [data-testid="cta-section"] > div {
+    gap: 35px !important;
+  }
+  
+  [data-testid="cta-section"] .magnetic-button {
+    min-width: 270px !important;
+    max-width: 300px !important;
+    margin: 18px !important;
+  }
+  
+  [data-testid="collaboration-section"] {
+    margin-top: 95px !important;
+  }
+}
+
+/* Desktop Large (1025px+) */
+@media (min-width: 1025px) {
+  [data-testid="cta-section"] > div {
+    gap: 45px !important;
+  }
+  
+  [data-testid="collaboration-section"] {
+    margin-top: 100px !important;
   }
 }
 
@@ -571,4 +638,24 @@ section:nth-child(even) {
 section:nth-child(odd) {
   position: relative;
   z-index: 2;
+}
+
+/* Performance Optimization for Smooth Experience */
+[data-testid="cta-section"] .magnetic-button {
+  contain: layout style paint !important;
+  backface-visibility: hidden !important;
+  perspective: 1000px !important;
+}
+
+/* Ultra-smooth interactions across all devices */
+[data-testid="cta-section"] .magnetic-button:hover {
+  transition: all 0.2s ease-out !important;
+}
+
+/* GPU acceleration for mobile performance */
+@media (max-width: 768px) {
+  [data-testid="cta-section"] .magnetic-button {
+    transform: translateZ(0) !important;
+    will-change: transform, box-shadow !important;
+  }
 }

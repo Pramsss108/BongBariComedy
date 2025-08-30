@@ -406,9 +406,9 @@ header:hover {
   z-index: 1;
 }
 
-/* Super close headings - Bengali very close to English */
+/* Ultra close headings - 2mm distance */
 [data-testid="collaboration-section"] h3 {
-  margin-bottom: 0.25rem !important;
+  margin-bottom: 0.1rem !important;
   display: block !important;
   visibility: visible !important;
 }

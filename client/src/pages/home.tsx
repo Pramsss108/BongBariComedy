@@ -121,7 +121,7 @@ const Home = () => {
                 size="lg" 
                 className="bg-brand-blue text-white hover:bg-blue-700 px-8 py-4 rounded-full font-semibold text-lg hover-lift"
                 data-testid="button-instagram"
-                onClick={() => window.open('https://instagram.com/bongbari', '_blank')}
+                onClick={() => window.open('https://instagram.com/thebongbari', '_blank')}
               >
                 <Instagram className="mr-2 h-5 w-5" />
                 Follow on Instagram

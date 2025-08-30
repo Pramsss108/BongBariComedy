@@ -4,16 +4,16 @@ export const useParallaxScroll = () => {
   useEffect(() => {
     const handleScroll = () => {
       const scrolled = window.pageYOffset;
-      const rate = scrolled * -0.8;
-      const fastRate = scrolled * -1.5;
-      const superFastRate = scrolled * -2.2;
+      const rate = scrolled * -0.5;
+      const fastRate = scrolled * -0.8;
+      const superFastRate = scrolled * -1.2;
 
-      // Fast parallax for YouTube shorts - Much faster movement
+      // Smooth parallax for YouTube shorts
       const youtubeShorts = document.querySelectorAll('.youtube-short');
       youtubeShorts.forEach((element, index) => {
         const el = element as HTMLElement;
         const speed = index % 2 === 0 ? fastRate : superFastRate;
-        el.style.transform = `translateY(${speed * 0.25}px) scale(${1 + Math.abs(speed) * 0.0002})`;
+        el.style.transform = `translateY(${speed * 0.15}px) scale(${1 + Math.abs(speed) * 0.0001})`;
       });
 
       // Blog cards parallax - Faster movement
@@ -38,12 +38,12 @@ export const useParallaxScroll = () => {
         el.style.transform = `translateY(${speed * 0.08}px) scale(${1 + Math.abs(speed) * 0.0003})`;
       });
 
-      // Buttons floating effect - Enhanced movement (exclude CTA section)
+      // Smooth buttons floating effect (exclude CTA section)
       const buttons = document.querySelectorAll('button:not([data-testid="button-youtube"]):not([data-testid="button-instagram"]), .magnetic-button:not([data-testid="button-youtube"]):not([data-testid="button-instagram"])');
       buttons.forEach((element, index) => {
         const el = element as HTMLElement;
-        const floatSpeed = Math.sin(scrolled * 0.02 + index) * 4;
-        el.style.transform = `translateY(${floatSpeed}px) scale(${1 + Math.abs(floatSpeed) * 0.002})`;
+        const floatSpeed = Math.sin(scrolled * 0.01 + index) * 2;
+        el.style.transform = `translateY(${floatSpeed}px) scale(${1 + Math.abs(floatSpeed) * 0.001})`;
       });
 
       // Background sections depth - Exclude CTA section completely

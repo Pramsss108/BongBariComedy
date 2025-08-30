@@ -320,10 +320,10 @@ const Home = () => {
           <ParallaxSection speed={0.2} delay={0.4}>
             <section className="mb-16" data-testid="collaboration-section">
             <div className="max-w-2xl mx-auto">
-              <h3 className="text-3xl font-bold text-center text-brand-blue mb-2" data-testid="collaboration-title-english">
+              <h3 className="text-3xl font-bold text-center text-brand-blue mb-1" data-testid="collaboration-title-english">
                 Work with Us
               </h3>
-              <h4 className="text-2xl font-bold text-center text-gray-800 mb-8 bangla-text tracking-wide" data-testid="collaboration-title-bengali">
+              <h4 className="text-2xl font-bold text-center text-gray-800 mb-6 bangla-text tracking-wide" data-testid="collaboration-title-bengali">
                 আমাদের সাথে কাজ করুন
               </h4>
               
@@ -429,63 +429,6 @@ const Home = () => {
               </Card>
             </div>
           </section>
-          
-          {/* Contact Information */}
-          <section className="mb-16" data-testid="contact-section">
-            <div className="max-w-4xl mx-auto">
-              <h3 className="text-3xl font-bold text-center text-brand-blue mb-4" data-testid="contact-title-english">
-                Get in Touch
-              </h3>
-              <h4 className="text-2xl font-bold text-center text-gray-800 mb-12 bangla-text" data-testid="contact-title-bengali">
-                যোগাযোগ করুন
-              </h4>
-              
-              <div className="grid md:grid-cols-3 gap-8">
-                {/* Email */}
-                <Card className="bg-white hover-lift shadow-lg">
-                  <CardContent className="p-6 text-center">
-                    <div className="w-16 h-16 bg-brand-blue rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Mail className="w-8 h-8 text-white" />
-                    </div>
-                    <h5 className="font-semibold text-brand-blue mb-2">Email</h5>
-                    <p className="text-gray-700 text-[15px]">bongbariofficial@gmail.com</p>
-                  </CardContent>
-                </Card>
-                
-                {/* WhatsApp */}
-                <Card className="bg-white hover-lift shadow-lg">
-                  <CardContent className="p-6 text-center">
-                    <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Phone className="w-8 h-8 text-white" />
-                    </div>
-                    <h5 className="font-semibold text-brand-blue mb-2">WhatsApp</h5>
-                    <p className="text-gray-700">+91 8777849865</p>
-                  </CardContent>
-                </Card>
-                
-                {/* Social Media */}
-                <Card className="bg-white hover-lift shadow-lg">
-                  <CardContent className="p-6 text-center">
-                    <div className="w-16 h-16 bg-brand-red rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Instagram className="w-8 h-8 text-white" />
-                    </div>
-                    <h5 className="font-semibold text-brand-blue mb-2">Follow Us</h5>
-                    <div className="flex justify-center space-x-3 mt-3">
-                      <a href="https://youtube.com/@bongbari" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-brand-red rounded-full flex items-center justify-center hover:bg-red-600 transition-colors">
-                        <Youtube className="w-4 h-4 text-white" />
-                      </a>
-                      <a href="https://instagram.com/thebongbari" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-pink-500 rounded-full flex items-center justify-center hover:bg-pink-600 transition-colors">
-                        <Instagram className="w-4 h-4 text-white" />
-                      </a>
-                      <a href="https://twitter.com/bongbari" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors">
-                        <Twitter className="w-4 h-4 text-white" />
-                      </a>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-            </section>
           </ParallaxSection>
           </div>
         </main>

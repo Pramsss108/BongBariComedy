@@ -231,7 +231,7 @@ const Home = () => {
                       <Phone className="w-8 h-8 text-white" />
                     </div>
                     <h5 className="font-semibold text-brand-blue mb-2">WhatsApp</h5>
-                    <p className="text-gray-700">+91 98765 43210</p>
+                    <p className="text-gray-700">+91 8777849865</p>
                   </CardContent>
                 </Card>
                 

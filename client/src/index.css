@@ -272,14 +272,33 @@ form button:hover:not(.magnetic-button) {
   transition: all 0.2s ease !important;
 }
 
-/* Form elements - Clean and simple hover */
+/* Form elements - Clean white background with professional styling */
+input,
+textarea,
+select {
+  background-color: white !important;
+  border: 2px solid #e5e7eb !important;
+  color: #374151 !important;
+  transition: all 0.2s ease !important;
+}
+
 input:hover,
 textarea:hover,
 select:hover {
   transform: scale(1.01) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
   border-color: rgba(255, 204, 0, 0.5) !important;
+  background-color: white !important;
   transition: all 0.2s ease !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  background-color: white !important;
+  border-color: #FFCC00 !important;
+  box-shadow: 0 0 0 3px rgba(255, 204, 0, 0.1) !important;
+  outline: none !important;
 }
 
 /* Form buttons (like show/hide password) - Minimal effects */

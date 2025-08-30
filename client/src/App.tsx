@@ -7,6 +7,7 @@ import Navigation from "@/components/navigation";
 import { ScrollProgress } from "@/components/scroll-progress";
 import { FloatingElements } from "@/components/floating-elements";
 import { useGlobalCursor } from "@/hooks/useGlobalCursor";
+import { useParallaxScroll } from "@/hooks/useParallaxScroll";
 import Home from "@/pages/home";
 import About from "@/pages/about";
 import WorkWithUs from "@/pages/work-with-us";
@@ -20,6 +21,9 @@ import NotFound from "@/pages/not-found";
 function Router() {
   // Initialize professional site-wide cursor effect
   useGlobalCursor();
+  
+  // Initialize fast engaging parallax scroll effects
+  useParallaxScroll();
   
   return (
     <div className="min-h-screen bg-brand-yellow relative">

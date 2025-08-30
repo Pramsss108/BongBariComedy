@@ -234,7 +234,7 @@ nav a,
   cursor: none !important;
 }
 
-/* Container-Level Apple Zoom Effect */
+/* BIG Smooth Container Zoom Effect - Engaging & Eye-catching */
 .youtube-short,
 .card,
 .blog-post,
@@ -244,41 +244,41 @@ button,
 .collaboration-form,
 section,
 .content-container {
-  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+  transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1) !important;
   transform-origin: center !important;
   will-change: transform;
 }
 
-/* Unified Container Zoom - Everything inside scales together */
+/* BIG Unified Container Zoom - More Engaging */
 .youtube-short:hover {
-  transform: scale(1.06) !important;
+  transform: scale(1.12) !important;
 }
 
 .card:hover {
-  transform: scale(1.05) !important;
+  transform: scale(1.10) !important;
 }
 
 .blog-post:hover {
-  transform: scale(1.05) !important;
+  transform: scale(1.10) !important;
 }
 
 .magnetic-button:hover {
-  transform: scale(1.08) !important;
+  transform: scale(1.15) !important;
 }
 
 button:hover {
-  transform: scale(1.06) !important;
+  transform: scale(1.12) !important;
 }
 
 .contact-form:hover,
 .collaboration-form:hover {
-  transform: scale(1.02) !important;
+  transform: scale(1.05) !important;
 }
 
 /* Navigation containers */
 nav:hover,
 header:hover {
-  transform: scale(1.01) !important;
+  transform: scale(1.03) !important;
 }
 
 /* Disable individual element scaling - container handles it */
@@ -290,4 +290,38 @@ button:hover *,
 .contact-form:hover *,
 .collaboration-form:hover * {
   transform: none !important;
+}
+
+/* Fast Parallax Scroll Base Styles */
+.youtube-short,
+.blog-post,
+.card,
+h1, h2, h3,
+button,
+.magnetic-button,
+section {
+  will-change: transform;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Enhanced engagement styles */
+body {
+  overflow-x: hidden;
+}
+
+/* Depth effect for sections */
+section:nth-child(even) {
+  position: relative;
+  z-index: 1;
+}
+
+section:nth-child(odd) {
+  position: relative;
+  z-index: 2;
 }

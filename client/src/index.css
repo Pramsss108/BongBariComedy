@@ -406,15 +406,15 @@ header:hover {
   z-index: 1;
 }
 
-/* Visible close headings - both English and Bengali */
+/* Proper spacing - English separated from Bengali */
 [data-testid="collaboration-section"] h3 {
-  margin-bottom: 0.5rem !important;
+  margin-bottom: 1.5rem !important;
   display: block !important;
   visibility: visible !important;
 }
 
 [data-testid="collaboration-section"] h4 {
-  margin-bottom: 2rem !important;
+  margin-bottom: 1rem !important;
   margin-top: 0rem !important;
   display: block !important;
   visibility: visible !important;

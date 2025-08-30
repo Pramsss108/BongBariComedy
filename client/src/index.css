@@ -399,11 +399,21 @@ header:hover {
 
 /* Strong Section Separation - No Overlap */
 [data-testid="collaboration-section"] {
-  margin-top: 100px !important;
-  padding-top: 60px !important;
+  margin-top: 80px !important;
+  padding-top: 40px !important;
   clear: both;
   position: relative;
   z-index: 1;
+}
+
+/* Compact heading spacing for collaboration section */
+[data-testid="collaboration-section"] h3 {
+  margin-bottom: 0.5rem !important;
+}
+
+[data-testid="collaboration-section"] h4 {
+  margin-bottom: 1.5rem !important;
+  margin-top: 0.25rem !important;
 }
 
 [data-testid="videos-section"] {

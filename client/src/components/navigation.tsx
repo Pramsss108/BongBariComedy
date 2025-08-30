@@ -25,30 +25,37 @@ const Navigation = () => {
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50" data-testid="main-navigation">
       <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center py-4">
-          {/* Logo */}
+        <div className="flex justify-between items-center py-3 md:py-5">
+          {/* Logo - Responsive Design */}
           <Link href="/" data-testid="logo-link">
             <div className="flex items-center space-x-3 cursor-pointer">
               <img 
                 src="/logo.png" 
                 alt="Bong Bari Logo" 
-                className="w-12 h-12 rounded-lg"
+                className="w-10 h-10 md:w-12 md:h-12 rounded-lg"
               />
-              <div>
-                <h1 className="text-2xl font-bold text-brand-blue bangla-text">বং বাড়ি</h1>
-                <p className="text-sm text-gray-600">Bong Bari</p>
+              {/* Mobile Logo - Compact */}
+              <div className="md:hidden">
+                <h1 className="text-xl font-bold text-brand-blue bangla-text leading-tight">বং বাড়ি</h1>
+              </div>
+              {/* Desktop Logo - Full */}
+              <div className="hidden md:block">
+                <h1 className="text-3xl font-bold text-brand-blue bangla-text leading-none">বং বাড়ি</h1>
+                <p className="text-base text-gray-600 -mt-1">Bengali Comedy</p>
               </div>
             </div>
           </Link>
           
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex space-x-8">
+          {/* Desktop Navigation - Improved Layout */}
+          <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`font-medium transition-colors hover:text-brand-blue ${
-                  isActive(item.href) ? "text-brand-blue" : "text-gray-700"
+                className={`font-semibold text-lg transition-all duration-200 hover:text-brand-blue hover:scale-105 ${
+                  isActive(item.href) 
+                    ? "text-brand-blue border-b-2 border-brand-blue pb-1" 
+                    : "text-gray-700 hover:border-b-2 hover:border-brand-blue pb-1"
                 }`}
                 data-testid={`nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
               >

@@ -12,10 +12,10 @@ export const useMagneticEffect = (strength: number = 0.3) => {
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
       
-      const deltaX = (e.clientX - centerX) * strength;
-      const deltaY = (e.clientY - centerY) * strength;
+      const deltaX = (e.clientX - centerX) * strength * 0.05; // Much smaller movement
+      const deltaY = (e.clientY - centerY) * strength * 0.05; // Much smaller movement
       
-      element.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(1.05)`;
+      element.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(1.01)`; // Subtle scale
     };
 
     const handleMouseLeave = () => {

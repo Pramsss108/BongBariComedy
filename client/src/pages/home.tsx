@@ -278,15 +278,14 @@ const Home = () => {
                 initial={{ opacity: 0, x: -50 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                className="inline-block"
               >
                 <MagneticButton 
                   size="lg" 
                   className="bg-brand-red text-white hover:bg-red-600 px-8 py-4 rounded-full font-semibold text-lg hover-lift"
                   data-testid="button-youtube"
                   onClick={() => window.open('https://youtube.com/@bongbari', '_blank')}
-                  strength={0.4}
+                  strength={0.2}
                 >
                   <Youtube className="mr-2 h-5 w-5" />
                   Subscribe on YouTube
@@ -296,15 +295,14 @@ const Home = () => {
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                className="inline-block"
               >
                 <MagneticButton 
                   size="lg" 
                   className="bg-brand-blue text-white hover:bg-blue-700 px-8 py-4 rounded-full font-semibold text-lg hover-lift"
                   data-testid="button-instagram"
                   onClick={() => window.open('https://instagram.com/thebongbari', '_blank')}
-                  strength={0.4}
+                  strength={0.2}
                 >
                   <Instagram className="mr-2 h-5 w-5" />
                   Follow on Instagram

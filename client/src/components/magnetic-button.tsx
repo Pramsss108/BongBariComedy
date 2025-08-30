@@ -25,15 +25,16 @@ export const MagneticButton = ({
   return (
     <motion.div
       ref={magneticRef as any}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
       transition={{
         type: "spring",
-        stiffness: 400,
-        damping: 17
+        stiffness: 300,
+        damping: 25
       }}
+      className="inline-block"
       style={{
-        transition: "transform 0.3s cubic-bezier(0.23, 1, 0.32, 1)"
+        transition: "transform 0.2s cubic-bezier(0.23, 1, 0.32, 1)"
       }}
     >
       <Button

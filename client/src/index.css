@@ -234,9 +234,10 @@ nav a,
   cursor: none !important;
 }
 
-/* Viral 2025 Advanced Button Effects - Excluding Form Elements */
-button:not(.absolute):not([type="button"]),
-.magnetic-button {
+/* Viral 2025 Advanced Button Effects - Only for CTA buttons */
+.magnetic-button,
+[data-testid="button-youtube"],
+[data-testid="button-instagram"] {
   position: relative;
   isolation: isolate;
   overflow: hidden;
@@ -247,9 +248,10 @@ button:not(.absolute):not([type="button"]),
   z-index: 1;
 }
 
-/* Prevent button merging with individual scaling - Exclude small form buttons */
-button:not(.absolute):not([type="button"]):hover,
-.magnetic-button:hover {
+/* Viral scaling only for main CTA buttons */
+.magnetic-button:hover,
+[data-testid="button-youtube"]:hover,
+[data-testid="button-instagram"]:hover {
   transform: scale(1.15) translateZ(10px) !important;
   box-shadow: 
     0 20px 40px rgba(0, 0, 0, 0.3),
@@ -258,6 +260,16 @@ button:not(.absolute):not([type="button"]):hover,
   z-index: 100;
   background: linear-gradient(135deg, #FFCC00 0%, #FF6B35 50%, #FFCC00 100%) !important;
   border: 2px solid rgba(255, 255, 255, 0.4) !important;
+}
+
+/* Login and form buttons - Clean contained hover */
+[data-testid="button-login"]:hover,
+button[type="submit"]:hover,
+form button:hover:not(.magnetic-button) {
+  transform: scale(1.02) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  background: linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%) !important;
+  transition: all 0.2s ease !important;
 }
 
 /* Form elements - Clean and simple hover */
@@ -278,9 +290,10 @@ button.absolute:hover {
   transition: all 0.2s ease !important;
 }
 
-/* Viral glow pulse effect - Only for main buttons */
-button:not(.absolute):not([type="button"])::before,
-.magnetic-button::before {
+/* Viral glow pulse effect - Only for CTA buttons */
+.magnetic-button::before,
+[data-testid="button-youtube"]::before,
+[data-testid="button-instagram"]::before {
   content: '';
   position: absolute;
   top: -2px;
@@ -296,8 +309,9 @@ button:not(.absolute):not([type="button"])::before,
   transition: opacity 0.3s ease;
 }
 
-button:not(.absolute):not([type="button"]):hover::before,
-.magnetic-button:hover::before {
+.magnetic-button:hover::before,
+[data-testid="button-youtube"]:hover::before,
+[data-testid="button-instagram"]:hover::before {
   opacity: 1;
 }
 
@@ -306,9 +320,10 @@ button:not(.absolute):not([type="button"]):hover::before,
   50% { background-position: 100% 50%; }
 }
 
-/* Shimmer effect - Only for main buttons */
-button:not(.absolute):not([type="button"])::after,
-.magnetic-button::after {
+/* Shimmer effect - Only for CTA buttons */
+.magnetic-button::after,
+[data-testid="button-youtube"]::after,
+[data-testid="button-instagram"]::after {
   content: '';
   position: absolute;
   top: 0;
@@ -319,8 +334,9 @@ button:not(.absolute):not([type="button"])::after,
   transition: left 0.6s ease;
 }
 
-button:not(.absolute):not([type="button"]):hover::after,
-.magnetic-button:hover::after {
+.magnetic-button:hover::after,
+[data-testid="button-youtube"]:hover::after,
+[data-testid="button-instagram"]:hover::after {
   left: 100%;
 }
 

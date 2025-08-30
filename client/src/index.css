@@ -201,3 +201,22 @@ a:focus-visible {
   outline-offset: 2px;
   box-shadow: 0 0 0 4px rgba(255, 204, 0, 0.2);
 }
+
+/* Professional Custom Cursor */
+* {
+  cursor: none !important;
+}
+
+/* Show cursor on inputs and text areas */
+input, textarea, [contenteditable] {
+  cursor: text !important;
+}
+
+/* Professional hover targets */
+.hover-target,
+button,
+a,
+[role="button"],
+.magnetic-button {
+  cursor: none !important;
+}

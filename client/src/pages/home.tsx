@@ -246,7 +246,7 @@ const Home = () => {
                       <a href="https://youtube.com/@bongbari" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-brand-red rounded-full flex items-center justify-center hover:bg-red-600 transition-colors">
                         <Youtube className="w-4 h-4 text-white" />
                       </a>
-                      <a href="https://instagram.com/bongbari" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-pink-500 rounded-full flex items-center justify-center hover:bg-pink-600 transition-colors">
+                      <a href="https://instagram.com/thebongbari" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-pink-500 rounded-full flex items-center justify-center hover:bg-pink-600 transition-colors">
                         <Instagram className="w-4 h-4 text-white" />
                       </a>
                       <a href="https://twitter.com/bongbari" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors">

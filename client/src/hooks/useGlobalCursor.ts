@@ -55,12 +55,12 @@ export const useGlobalCursor = () => {
                            target.closest('button, a, .card, .youtube-short, nav, .blog-post, .magnetic-button, [role="button"], label[for]');
       
       if (isInteractive) {
-        // Professional zoom hover - clean and responsive
-        cursor.style.transform = 'translate(-50%, -50%) scale(2)';
+        // Professional zoom hover - bigger but not too big
+        cursor.style.transform = 'translate(-50%, -50%) scale(2.8)';
         cursor.style.background = 'rgba(0, 0, 0, 0.15)';
         cursor.style.border = '2px solid rgba(0, 0, 0, 0.4)';
         
-        cursorRing.style.transform = 'translate(-50%, -50%) scale(2.5)';
+        cursorRing.style.transform = 'translate(-50%, -50%) scale(3.5)';
         cursorRing.style.border = '1px solid rgba(0, 0, 0, 0.3)';
         cursorRing.style.opacity = '0.6';
       } else {

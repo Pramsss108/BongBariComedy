@@ -237,47 +237,45 @@ nav a,
 /* Apple Dock-style Magnification Effect */
 button,
 a,
-.card,
 .youtube-short,
-nav a,
+.magnetic-button,
+.card,
 .blog-post,
-[data-testid*="button"],
-[data-testid*="link"],
-[data-testid*="card"],
-.clickable,
-.interactive,
-.magnetic-button {
+input,
+textarea,
+select {
   transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
   transform-origin: center !important;
 }
 
-button:hover,
-a:hover,
-.card:hover,
-.youtube-short:hover,
-nav a:hover,
-.blog-post:hover,
-[data-testid*="button"]:hover,
-[data-testid*="link"]:hover,
-[data-testid*="card"]:hover,
-.clickable:hover,
-.interactive:hover,
+/* Main interactive elements zoom on hover */
+button:hover {
+  transform: scale(1.08) !important;
+}
+
+a:hover {
+  transform: scale(1.05) !important;
+}
+
+.youtube-short:hover {
+  transform: scale(1.08) !important;
+}
+
 .magnetic-button:hover {
   transform: scale(1.08) !important;
 }
 
-/* Special handling for smaller elements like text links */
-nav a:hover,
-.text-link:hover,
-span.interactive:hover {
-  transform: scale(1.05) !important;
+.card:hover {
+  transform: scale(1.08) !important;
 }
 
-/* Form elements get subtle magnification */
+.blog-post:hover {
+  transform: scale(1.08) !important;
+}
+
+/* Form elements get subtle zoom */
 input:hover,
 textarea:hover,
-select:hover,
-.form-control:hover {
+select:hover {
   transform: scale(1.02) !important;
-  transition: transform 0.2s ease-out !important;
 }

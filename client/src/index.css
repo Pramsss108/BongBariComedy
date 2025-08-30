@@ -1157,44 +1157,43 @@ section:nth-child(odd) {
 
 /* NAVIGATION HEADER RESPONSIVE DESIGN */
 
-/* Desktop Navigation Enhancement */
+/* Desktop Navigation - Centered Header Style */
 @media (min-width: 769px) {
   [data-testid="main-navigation"] {
     background: white !important;
-    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1) !important;
-    padding: 1rem 0 !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+    padding: 0 !important;
   }
   
   [data-testid="main-navigation"] .container {
-    max-width: 1200px !important;
-    padding: 0 2rem !important;
+    max-width: 1400px !important;
+    padding: 0 3rem !important;
   }
   
   /* Desktop logo styling */
   [data-testid="logo-link"] {
-    transition: transform 0.2s ease !important;
+    transition: all 0.3s ease !important;
   }
   
   [data-testid="logo-link"]:hover {
-    transform: scale(1.02) !important;
+    transform: scale(1.05) !important;
   }
   
-  /* Clean navigation links */
+  /* Navigation pills styling */
   [data-testid="main-navigation"] a[data-testid*="nav-link"] {
-    font-size: 1.1rem !important;
+    display: inline-block !important;
+    transition: all 0.3s ease !important;
     font-weight: 600 !important;
-    padding: 0.5rem 1rem !important;
-    border-radius: 8px !important;
-    transition: all 0.2s ease !important;
+    letter-spacing: 0.5px !important;
   }
   
   [data-testid="main-navigation"] a[data-testid*="nav-link"]:hover {
-    background: #f8f9fa !important;
-    transform: translateY(-1px) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px rgba(0, 123, 255, 0.2) !important;
   }
 }
 
-/* Mobile Navigation Optimization */
+/* Mobile Navigation Optimization - Keep Same */
 @media (max-width: 768px) {
   [data-testid="main-navigation"] {
     position: sticky !important;
@@ -1202,7 +1201,7 @@ section:nth-child(odd) {
     z-index: 100 !important;
     background: white !important;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
-    padding: 0.5rem 0 !important;
+    padding: 0 !important;
   }
   
   [data-testid="main-navigation"] .container {

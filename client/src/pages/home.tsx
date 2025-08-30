@@ -149,6 +149,17 @@ const Home = () => {
               <div className="absolute top-1/2 right-8 w-8 h-8 bg-white/20 rounded-full"></div>
             </div>
             
+            {/* Profile Section */}
+            <div className="flex justify-center mb-8">
+              <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden shadow-lg bg-white p-2">
+                <img 
+                  src="/profile-image.png" 
+                  alt="Bong Bari Profile" 
+                  className="w-full h-full object-contain rounded-full"
+                  data-testid="profile-image"
+                />
+              </div>
+            </div>
             
             {/* Intro Text */}
             <Card className="max-w-4xl mx-auto">

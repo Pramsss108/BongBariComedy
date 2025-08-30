@@ -16,14 +16,14 @@ export const useMagneticEffect = (strength: number = 0.3) => {
           position: fixed;
           width: 40px;
           height: 40px;
-          background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, rgba(255, 204, 0, 0.2) 100%);
+          background: radial-gradient(circle, rgba(0, 0, 0, 0.4) 0%, rgba(68, 68, 68, 0.3) 100%);
           border-radius: 50%;
           pointer-events: none;
           z-index: 9999;
           transform: translate(-50%, -50%) scale(0);
           transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
           backdrop-filter: blur(2px);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(0, 0, 0, 0.2);
         `;
         document.body.appendChild(globalCircle);
       }

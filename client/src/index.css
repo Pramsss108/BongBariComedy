@@ -406,9 +406,9 @@ header:hover {
   z-index: 1;
 }
 
-/* Ultra close headings - 2mm distance */
+/* Touching headings - no gap */
 [data-testid="collaboration-section"] h3 {
-  margin-bottom: 0.1rem !important;
+  margin-bottom: 0rem !important;
   display: block !important;
   visibility: visible !important;
 }

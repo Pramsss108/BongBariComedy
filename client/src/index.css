@@ -822,18 +822,19 @@ section:nth-child(odd) {
     padding-top: 50px !important;
   }
   
-  /* iPhone text sizing - EXTREMELY CLOSE headings */
+  /* iPhone text sizing - TITLE-SUBTITLE SUPER CLOSE */
   [data-testid="collaboration-section"] h3 {
     font-size: 1.5rem !important;
-    line-height: 1.5rem !important;
+    line-height: 1.3rem !important;
     margin-bottom: 0 !important;
   }
   
   [data-testid="collaboration-section"] h4 {
-    font-size: 1.25rem !important;
-    line-height: 1.4rem !important;
-    margin-top: 0.1rem !important;
+    font-size: 1rem !important;
+    line-height: 1.2rem !important;
+    margin-top: -0.1rem !important;
     margin-bottom: 1rem !important;
+    font-weight: 500 !important;
   }
 }
 
@@ -869,6 +870,20 @@ section:nth-child(odd) {
 
 /* MASSIVE OVERLAP FIX - GET IN TOUCH */
 @media (max-width: 480px) {
+  /* COLLABORATION HEADINGS - TITLE-SUBTITLE SUPER CLOSE */
+  [data-testid="collaboration-title-english"] {
+    margin-bottom: 0 !important;
+    line-height: 1.1 !important;
+  }
+  
+  [data-testid="collaboration-title-bengali"] {
+    margin-top: -0.3rem !important;
+    margin-bottom: 1.5rem !important;
+    line-height: 1.1 !important;
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+  }
+  
   /* CLEAN PROFESSIONAL SECTION SPACING */
   [data-testid="contact-section"] {
     margin-top: 4rem !important;

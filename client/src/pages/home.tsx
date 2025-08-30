@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,39 +8,60 @@ import YouTubeShort from "@/components/youtube-short";
 import SEOHead from "@/components/seo-head";
 import { Youtube, Instagram, Phone, Mail, Twitter, Send } from "lucide-react";
 
+interface YouTubeVideo {
+  videoId: string;
+  title: string;
+  thumbnail: string;
+  publishedAt: string;
+}
+
 const Home = () => {
-  const videoData = [
+  const { data: youtubeVideos, isLoading } = useQuery<YouTubeVideo[]>({
+    queryKey: ['/api/youtube/latest'],
+    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+  });
+
+  // Fallback data in case API fails
+  const fallbackVideoData = [
     {
       videoId: "pdjQpcVqxMU",
       thumbnail: "https://img.youtube.com/vi/pdjQpcVqxMU/hqdefault.jpg",
-      title: "Bong Bari Comedy Short 1"
+      title: "Bong Bari Comedy Short 1",
+      publishedAt: "2024-01-01T00:00:00Z"
     },
     {
       videoId: "8gdxQ_dgFv8", 
       thumbnail: "https://img.youtube.com/vi/8gdxQ_dgFv8/hqdefault.jpg",
-      title: "Bong Bari Comedy Short 2"
+      title: "Bong Bari Comedy Short 2",
+      publishedAt: "2024-01-01T00:00:00Z"
     },
     {
       videoId: "rGOvg5PJtXA",
       thumbnail: "https://img.youtube.com/vi/rGOvg5PJtXA/hqdefault.jpg",
-      title: "Bong Bari Comedy Short 3"
+      title: "Bong Bari Comedy Short 3",
+      publishedAt: "2024-01-01T00:00:00Z"
     },
     {
       videoId: "Gyo_QpZQuPU",
       thumbnail: "https://img.youtube.com/vi/Gyo_QpZQuPU/hqdefault.jpg",
-      title: "Bong Bari Comedy Short 4"
+      title: "Bong Bari Comedy Short 4",
+      publishedAt: "2024-01-01T00:00:00Z"
     },
     {
       videoId: "GJfHWL0ro_A",
       thumbnail: "https://img.youtube.com/vi/GJfHWL0ro_A/hqdefault.jpg",
-      title: "Bong Bari Comedy Short 5"
+      title: "Bong Bari Comedy Short 5",
+      publishedAt: "2024-01-01T00:00:00Z"
     },
     {
       videoId: "NRdGq7Ncqw0",
       thumbnail: "https://img.youtube.com/vi/NRdGq7Ncqw0/hqdefault.jpg",
-      title: "Bong Bari Comedy Short 6"
+      title: "Bong Bari Comedy Short 6",
+      publishedAt: "2024-01-01T00:00:00Z"
     }
   ];
+
+  const videoData = youtubeVideos || fallbackVideoData;
 
   return (
     <>
@@ -93,16 +115,26 @@ const Home = () => {
               সর্বশেষ কমেডি শর্টস
             </h4>
             
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6" data-testid="videos-grid">
-              {videoData.map((video) => (
-                <YouTubeShort
-                  key={video.videoId}
-                  videoId={video.videoId}
-                  thumbnail={video.thumbnail}
-                  title={video.title}
-                />
-              ))}
-            </div>
+            {isLoading ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6" data-testid="videos-grid-loading">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="video-container">
+                    <div className="w-full h-full bg-gray-200 rounded-lg animate-pulse" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6" data-testid="videos-grid">
+                {videoData.map((video) => (
+                  <YouTubeShort
+                    key={video.videoId}
+                    videoId={video.videoId}
+                    thumbnail={video.thumbnail}
+                    title={video.title}
+                  />
+                ))}
+              </div>
+            )}
           </section>
           
           {/* CTA Buttons */}

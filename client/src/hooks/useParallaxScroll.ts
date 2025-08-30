@@ -58,10 +58,21 @@ export const useParallaxScroll = () => {
       const sections = document.querySelectorAll('section');
       sections.forEach((element, index) => {
         const el = element as HTMLElement;
-        const depth = rate * (0.15 + index * 0.08);
-        const yOffset = depth * 0.05;
-        const scale = 1 + Math.abs(depth) * 0.00015;
-        el.style.transform = `translate3d(0, ${yOffset}px, 0) scale(${scale})`;
+        const isCollaborationSection = el.getAttribute('data-testid') === 'collaboration-section';
+        
+        if (isCollaborationSection) {
+          // Make "Work with Us" section scroll much faster to appear sooner
+          const fastDepth = rate * -2.5;
+          const yOffset = fastDepth * 0.15;
+          const scale = 1 + Math.abs(fastDepth) * 0.0002;
+          el.style.transform = `translate3d(0, ${yOffset}px, 0) scale(${scale})`;
+        } else {
+          // Normal speed for other sections
+          const depth = rate * (0.15 + index * 0.08);
+          const yOffset = depth * 0.05;
+          const scale = 1 + Math.abs(depth) * 0.00015;
+          el.style.transform = `translate3d(0, ${yOffset}px, 0) scale(${scale})`;
+        }
       });
     };
 

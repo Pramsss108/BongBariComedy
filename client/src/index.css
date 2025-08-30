@@ -155,4 +155,49 @@
 /* Global smooth scrolling */
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+/* Ultra-smooth momentum scrolling for mobile and desktop */
+* {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+body {
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar with brand colors */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(45deg, #FFCC00, #FF4444, #4444FF);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(45deg, #FFD700, #FF6666, #6666FF);
+  box-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+}
+
+/* Smooth transitions for all elements */
+* {
+  transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Enhanced focus states for accessibility */
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid #FFCC00;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(255, 204, 0, 0.2);
 }

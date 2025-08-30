@@ -5,6 +5,9 @@ import { motion } from "framer-motion";
 import SEOHead from "@/components/seo-head";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { MagneticButton } from "@/components/magnetic-button";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
+import { MorphingCard } from "@/components/sticky-scroll-section";
 import { Calendar, ArrowRight, Loader2 } from "lucide-react";
 import { ParallaxSection, ParallaxContainer } from "@/components/parallax-section";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
@@ -178,7 +181,7 @@ const Blog = () => {
                                   whileHover={{ x: 5 }}
                                   transition={{ duration: 0.2 }}
                                 >
-                                  <Button
+                                  <MagneticButton
                                     variant="ghost"
                                     size="sm"
                                     className="text-brand-red hover:text-red-600 p-0"
@@ -187,10 +190,11 @@ const Blog = () => {
                                       setLocation(`/blog/${slug}`);
                                     }}
                                     data-testid={`blog-post-read-more-${post.id}`}
+                                    strength={0.6}
                                   >
                                     Read More
                                     <ArrowRight className="w-4 h-4 ml-1" />
-                                  </Button>
+                                  </MagneticButton>
                                 </motion.div>
                               </div>
                             </CardContent>

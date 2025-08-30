@@ -3,6 +3,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { MagneticButton } from "@/components/magnetic-button";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -279,15 +281,16 @@ const Home = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Button 
+                <MagneticButton 
                   size="lg" 
                   className="bg-brand-red text-white hover:bg-red-600 px-8 py-4 rounded-full font-semibold text-lg hover-lift"
                   data-testid="button-youtube"
                   onClick={() => window.open('https://youtube.com/@bongbari', '_blank')}
+                  strength={0.4}
                 >
                   <Youtube className="mr-2 h-5 w-5" />
                   Subscribe on YouTube
-                </Button>
+                </MagneticButton>
               </motion.div>
               <motion.div
                 initial={{ opacity: 0, x: 50 }}
@@ -296,15 +299,16 @@ const Home = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Button 
+                <MagneticButton 
                   size="lg" 
                   className="bg-brand-blue text-white hover:bg-blue-700 px-8 py-4 rounded-full font-semibold text-lg hover-lift"
                   data-testid="button-instagram"
                   onClick={() => window.open('https://instagram.com/thebongbari', '_blank')}
+                  strength={0.4}
                 >
                   <Instagram className="mr-2 h-5 w-5" />
                   Follow on Instagram
-                </Button>
+                </MagneticButton>
               </motion.div>
             </motion.div>
             </section>
@@ -407,15 +411,16 @@ const Home = () => {
                         )}
                       />
                       
-                      <Button 
+                      <MagneticButton 
                         type="submit" 
                         disabled={collaborationMutation.isPending}
                         className="w-full bg-brand-red text-white hover:bg-red-600 py-3 rounded-full font-semibold text-lg hover-lift disabled:opacity-50"
                         data-testid="button-submit-collaboration"
+                        strength={0.5}
                       >
                         <Send className="mr-2 h-5 w-5" />
                         {collaborationMutation.isPending ? "Sending..." : "Send Message"}
-                      </Button>
+                      </MagneticButton>
                     </form>
                   </Form>
                 </CardContent>

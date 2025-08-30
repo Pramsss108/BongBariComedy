@@ -6,13 +6,13 @@ export const useGlobalCursor = () => {
     const existingCursors = document.querySelectorAll('.global-cursor-follower, .global-cursor-ring');
     existingCursors.forEach(el => el.remove());
 
-    // Create single clean cursor - size stays constant
+    // Create BIG cursor circle - 3x bigger!
     const cursor = document.createElement('div');
     cursor.className = 'global-cursor-follower';
     cursor.style.cssText = `
       position: fixed;
-      width: 20px;
-      height: 20px;
+      width: 60px;
+      height: 60px;
       background: rgba(0, 0, 0, 0.4);
       border-radius: 50%;
       pointer-events: none;

@@ -25,12 +25,12 @@ export const MagneticButton = ({
   return (
     <div
       ref={magneticRef as any}
-      className="inline-block relative"
+      className="inline-block relative hover:scale-110 transition-transform duration-300 ease-out"
     >
       <Button
         variant={variant}
         size={size}
-        className={`relative overflow-hidden ${className}`}
+        className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-brand-yellow/30 ${className}`}
         onClick={onClick}
       >
         {children}

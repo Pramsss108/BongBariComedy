@@ -869,87 +869,52 @@ section:nth-child(odd) {
 
 /* MASSIVE OVERLAP FIX - GET IN TOUCH */
 @media (max-width: 480px) {
-  /* FORCE HUGE SPACING - NO OVERLAP ALLOWED */
+  /* CLEAN PROFESSIONAL SECTION SPACING */
   [data-testid="contact-section"] {
-    margin-top: 8rem !important;
-    margin-bottom: 5rem !important;
-    padding-top: 4rem !important;
-    padding-bottom: 3rem !important;
+    margin-top: 4rem !important;
+    margin-bottom: 2rem !important;
+    padding-top: 2rem !important;
+    padding-bottom: 1rem !important;
     clear: both !important;
     position: relative !important;
-    z-index: 10 !important;
-    background: transparent !important;
-    min-height: 200px !important;
+    z-index: 2 !important;
   }
   
-  /* MASSIVE SPACING FOR GET IN TOUCH HEADINGS */
+  /* CLEAN PROFESSIONAL SPACING FOR HEADINGS */
   [data-testid="contact-title-english"] {
-    margin-top: 6rem !important;
-    margin-bottom: 3rem !important;
-    padding-top: 4rem !important;
-    padding-bottom: 2rem !important;
+    margin-top: 3rem !important;
+    margin-bottom: 1rem !important;
+    padding-top: 1rem !important;
+    padding-bottom: 0.5rem !important;
     clear: both !important;
     position: relative !important;
-    z-index: 15 !important;
-    background: #FFCC00 !important;
-    display: block !important;
-    width: 100% !important;
-    text-align: center !important;
-    border-radius: 10px !important;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+    z-index: 2 !important;
   }
   
   [data-testid="contact-title-bengali"] {
-    margin-top: 2rem !important;
-    margin-bottom: 4rem !important;
-    padding-top: 2rem !important;
-    padding-bottom: 3rem !important;
+    margin-top: 0.5rem !important;
+    margin-bottom: 2.5rem !important;
+    padding-bottom: 1rem !important;
     clear: both !important;
     position: relative !important;
-    z-index: 15 !important;
-    background: #FFCC00 !important;
-    display: block !important;
-    width: 100% !important;
-    text-align: center !important;
-    border-radius: 10px !important;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+    z-index: 2 !important;
   }
   
-  /* CONTACT CARDS - MASSIVE SEPARATION */
+  /* CLEAN CONTACT CARDS LAYOUT */
   [data-testid="contact-section"] .grid {
-    margin-top: 5rem !important;
-    padding-top: 3rem !important;
+    margin-top: 2rem !important;
+    padding-top: 1rem !important;
     clear: both !important;
-    position: relative !important;
-    z-index: 5 !important;
   }
   
   /* Individual contact cards */
   [data-testid="contact-section"] .grid > * {
-    margin-top: 2rem !important;
-    margin-bottom: 2rem !important;
-    padding: 2rem !important;
-    position: relative !important;
-    z-index: 5 !important;
+    margin-bottom: 1.5rem !important;
   }
   
-  /* FORCE SINGLE COLUMN LAYOUT */
+  /* CLEAN SINGLE COLUMN LAYOUT */
   [data-testid="contact-section"] .grid {
     grid-template-columns: 1fr !important;
-    gap: 3rem !important;
-    margin-top: 4rem !important;
-    padding: 2rem 1rem !important;
-  }
-  
-  /* SOCIAL LINKS - FAR BELOW */
-  [data-testid="contact-section"] .grid > *:last-child {
-    margin-top: 4rem !important;
-    padding-top: 3rem !important;
-  }
-  
-  /* Social icons spacing */
-  [data-testid="contact-section"] .flex {
-    margin-top: 2rem !important;
     gap: 1.5rem !important;
   }
 }
@@ -1109,29 +1074,22 @@ section:nth-child(odd) {
       transform: translateZ(0);
     }
     
-    /* iOS SAFARI - MASSIVE SPACING TO STOP OVERLAP */
+    /* iOS SAFARI - CLEAN SPACING */
     [data-testid="contact-section"] {
-      margin-top: 12rem !important;
-      padding-top: 6rem !important;
-      min-height: 400px !important;
+      margin-top: 5rem !important;
+      padding-top: 2rem !important;
     }
     
     [data-testid="contact-title-english"] {
-      margin-top: 10rem !important;
-      padding: 4rem 1rem !important;
-      margin-bottom: 5rem !important;
-      background: #FFCC00 !important;
-      border-radius: 15px !important;
-      display: block !important;
+      margin-top: 4rem !important;
+      margin-bottom: 1.5rem !important;
+      padding-top: 1rem !important;
     }
     
     [data-testid="contact-title-bengali"] {
-      margin-top: 3rem !important;
-      margin-bottom: 8rem !important;
-      padding: 4rem 1rem !important;
-      background: #FFCC00 !important;
-      border-radius: 15px !important;
-      display: block !important;
+      margin-top: 0.5rem !important;
+      margin-bottom: 3rem !important;
+      padding-bottom: 1rem !important;
     }
     
     /* iOS Safari form improvements */
@@ -1162,31 +1120,22 @@ section:nth-child(odd) {
       padding-top: 60px !important;
     }
     
-    /* IPHONE SE - EXTREME SPACING TO PREVENT OVERLAP */
+    /* IPHONE SE - CLEAN PROFESSIONAL SPACING */
     [data-testid="contact-section"] {
-      margin-top: 15rem !important;
-      padding-top: 8rem !important;
-      min-height: 500px !important;
+      margin-top: 6rem !important;
+      padding-top: 2.5rem !important;
     }
     
     [data-testid="contact-title-english"] {
-      margin-top: 12rem !important;
-      padding: 5rem 1rem !important;
-      margin-bottom: 6rem !important;
-      background: #FFCC00 !important;
-      border-radius: 20px !important;
-      display: block !important;
-      transform: translateZ(0) !important;
+      margin-top: 5rem !important;
+      margin-bottom: 1.5rem !important;
+      padding-top: 1.5rem !important;
     }
     
     [data-testid="contact-title-bengali"] {
-      margin-top: 4rem !important;
-      margin-bottom: 10rem !important;
-      padding: 5rem 1rem !important;
-      background: #FFCC00 !important;
-      border-radius: 20px !important;
-      display: block !important;
-      transform: translateZ(0) !important;
+      margin-top: 0.5rem !important;
+      margin-bottom: 4rem !important;
+      padding-bottom: 1.5rem !important;
     }
   }
 }

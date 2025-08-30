@@ -867,12 +867,59 @@ section:nth-child(odd) {
   }
 }
 
-/* Contact Page Responsive */
+/* Contact Page Responsive - CRITICAL OVERLAP FIX */
 @media (max-width: 480px) {
+  /* Get in Touch section - NO OVERLAP */
+  [data-testid="contact-section"] {
+    margin-top: 4rem !important;
+    margin-bottom: 3rem !important;
+    padding-top: 2rem !important;
+    padding-bottom: 2rem !important;
+    clear: both !important;
+    position: relative !important;
+    z-index: 1 !important;
+  }
+  
+  /* Get in Touch headings - EXACT TARGETING */
+  [data-testid="contact-title-english"] {
+    margin-top: 3rem !important;
+    margin-bottom: 1.5rem !important;
+    padding-top: 2rem !important;
+    padding-bottom: 0.5rem !important;
+    clear: both !important;
+    position: relative !important;
+    z-index: 1 !important;
+  }
+  
+  [data-testid="contact-title-bengali"] {
+    margin-top: 0.5rem !important;
+    margin-bottom: 2rem !important;
+    padding-bottom: 1rem !important;
+    clear: both !important;
+    position: relative !important;
+    z-index: 1 !important;
+  }
+  
+  /* Contact form sections */
+  .contact-form, [data-testid*="contact-form"] {
+    margin-top: 2rem !important;
+    padding-top: 1.5rem !important;
+    clear: both !important;
+  }
+  
+  /* Contact form fields */
+  .contact-form input,
+  .contact-form textarea,
+  .contact-form select {
+    margin-top: 1rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
   /* Contact methods */
   .contact-methods {
     grid-template-columns: 1fr !important;
     gap: 1rem !important;
+    margin-top: 2rem !important;
   }
   
   /* Social links */
@@ -880,6 +927,7 @@ section:nth-child(odd) {
     flex-direction: column !important;
     gap: 1rem !important;
     align-items: center !important;
+    margin-top: 2rem !important;
   }
   
   .social-links a {
@@ -1044,6 +1092,23 @@ section:nth-child(odd) {
       transform: translateZ(0);
     }
     
+    /* Contact section - even more spacing on iOS */
+    [data-testid="contact-section"] {
+      margin-top: 5rem !important;
+      padding-top: 3rem !important;
+    }
+    
+    [data-testid="contact-title-english"] {
+      margin-top: 4rem !important;
+      padding-top: 2.5rem !important;
+      margin-bottom: 2rem !important;
+    }
+    
+    [data-testid="contact-title-bengali"] {
+      margin-bottom: 3rem !important;
+      padding-bottom: 1.5rem !important;
+    }
+    
     /* iOS Safari form improvements */
     input, textarea, select {
       -webkit-appearance: none !important;
@@ -1070,6 +1135,23 @@ section:nth-child(odd) {
     [data-testid="collaboration-section"] {
       margin-top: 180px !important;
       padding-top: 60px !important;
+    }
+    
+    /* iPhone SE - extra spacing for Contact section */
+    [data-testid="contact-section"] {
+      margin-top: 6rem !important;
+      padding-top: 4rem !important;
+    }
+    
+    [data-testid="contact-title-english"] {
+      margin-top: 5rem !important;
+      padding-top: 3rem !important;
+      margin-bottom: 2.5rem !important;
+    }
+    
+    [data-testid="contact-title-bengali"] {
+      margin-bottom: 4rem !important;
+      padding-bottom: 2rem !important;
     }
   }
 }

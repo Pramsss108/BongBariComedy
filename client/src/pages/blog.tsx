@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import SEOHead from "@/components/seo-head";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,7 @@ import { Calendar, ArrowRight } from "lucide-react";
 import type { BlogPost } from "@shared/schema";
 
 const Blog = () => {
+  const [, setLocation] = useLocation();
   const { data: blogPosts, isLoading } = useQuery<BlogPost[]>({
     queryKey: ['/api/blog']
   });
@@ -102,6 +104,11 @@ const Blog = () => {
                           variant="ghost"
                           size="sm"
                           className="text-brand-red hover:text-red-600 p-0"
+                          onClick={() => {
+                            // Navigate to individual blog post
+                            const slug = 'slug' in post ? post.slug : post.id;
+                            setLocation(`/blog/${slug}`);
+                          }}
                           data-testid={`blog-post-read-more-${post.id}`}
                         >
                           Read More
@@ -114,15 +121,21 @@ const Blog = () => {
               </div>
             )}
             
-            <div className="text-center mt-12">
-              <Button 
-                size="lg"
-                className="bg-brand-blue text-white hover:bg-blue-700 px-8 py-3 rounded-full font-semibold hover-lift"
-                data-testid="button-view-all"
-              >
-                View All Posts
-              </Button>
-            </div>
+            {blogPosts && blogPosts.length > 6 && (
+              <div className="text-center mt-12">
+                <Button 
+                  size="lg"
+                  className="bg-brand-blue text-white hover:bg-blue-700 px-8 py-3 rounded-full font-semibold hover-lift"
+                  onClick={() => {
+                    // Scroll to top to see more posts or implement pagination
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  data-testid="button-view-all"
+                >
+                  Back to Top
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </main>

@@ -11,6 +11,7 @@ import Contact from "@/pages/contact";
 import Blog from "@/pages/blog";
 import Admin from "@/pages/admin";
 import Login from "@/pages/login";
+import BlogPost from "@/pages/blog-post";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -23,6 +24,7 @@ function Router() {
         <Route path="/work-with-us" component={WorkWithUs} />
         <Route path="/contact" component={Contact} />
         <Route path="/blog" component={Blog} />
+        <Route path="/blog/:slug" component={BlogPost} />
         <Route path="/admin" component={Admin} />
         <Route path="/login" component={Login} />
         <Route component={NotFound} />

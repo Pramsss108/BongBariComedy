@@ -397,16 +397,16 @@ header:hover {
   will-change: auto !important;
 }
 
-/* Massive Section Spacing to Prevent Overlap */
+/* Balanced Section Spacing */
 [data-testid="collaboration-section"] {
-  margin-top: 150px !important;
-  padding-top: 80px !important;
+  margin-top: 60px !important;
+  padding-top: 40px !important;
   clear: both;
 }
 
 [data-testid="videos-section"] {
-  margin-bottom: 120px !important;
-  padding-bottom: 60px !important;
+  margin-bottom: 40px !important;
+  padding-bottom: 20px !important;
 }
 
 /* Buttons maintain their own effects */
@@ -423,15 +423,15 @@ header:hover {
   transform: scale(1.15) translateZ(10px) !important;
 }
 
-/* Ultra-Strong CTA Section Isolation - Complete Anti-Overlap System */
+/* Balanced CTA Section Layout - Professional Spacing */
 [data-testid="cta-section"] {
   display: block !important;
   text-align: center;
-  padding: 100px 20px !important;
-  margin: 80px 0 !important;
-  min-height: 300px !important;
+  padding: 40px 20px !important;
+  margin: 30px 0 !important;
+  min-height: 160px !important;
   position: relative !important;
-  z-index: 9999 !important;
+  z-index: 100 !important;
   background: transparent;
   isolation: isolate;
   clear: both;
@@ -442,55 +442,55 @@ header:hover {
   flex-direction: row !important;
   justify-content: center !important;
   align-items: center !important;
-  gap: 100px !important;
-  max-width: 900px;
-  margin: 50px auto !important;
-  padding: 40px 20px !important;
+  gap: 40px !important;
+  max-width: 700px;
+  margin: 0 auto !important;
+  padding: 20px !important;
   position: relative;
-  z-index: 9998;
+  z-index: 99;
 }
 
 [data-testid="cta-section"] .magnetic-button {
   display: inline-block !important;
-  margin: 50px !important;
-  min-width: 320px !important;
-  max-width: 380px !important;
+  margin: 20px !important;
+  min-width: 280px !important;
+  max-width: 320px !important;
   flex-shrink: 0 !important;
   position: relative !important;
-  z-index: 9997 !important;
+  z-index: 98 !important;
   transform: none !important;
-  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.25) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
   isolation: isolate;
 }
 
 [data-testid="cta-section"] .magnetic-button:hover {
-  margin: 55px !important;
-  z-index: 9999 !important;
-  transform: scale(1.03) !important;
-  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.35) !important;
+  margin: 25px !important;
+  z-index: 101 !important;
+  transform: scale(1.05) !important;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3) !important;
 }
 
-/* Mobile Layout - Extra Spacing */
+/* Mobile Layout - Compact Spacing */
 @media (max-width: 768px) {
   [data-testid="cta-section"] {
-    padding: 80px 20px !important;
-    margin: 60px 0 !important;
+    padding: 30px 20px !important;
+    margin: 20px 0 !important;
   }
   
   [data-testid="cta-section"] > div {
     flex-direction: column !important;
-    gap: 60px !important;
-    margin: 40px auto !important;
+    gap: 30px !important;
+    margin: 0 auto !important;
   }
   
   [data-testid="cta-section"] .magnetic-button {
     width: 90% !important;
-    max-width: 380px !important;
-    margin: 30px auto !important;
+    max-width: 320px !important;
+    margin: 15px auto !important;
   }
   
   [data-testid="cta-section"] .magnetic-button:hover {
-    margin: 35px auto !important;
+    margin: 20px auto !important;
   }
 }
 
@@ -542,8 +542,8 @@ body {
 
 /* Professional spacing for sections */
 section {
-  margin-bottom: 4rem;
-  padding: 2rem 1rem;
+  margin-bottom: 2.5rem;
+  padding: 1.5rem 1rem;
 }
 
 /* Better text spacing */

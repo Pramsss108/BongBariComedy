@@ -29,9 +29,11 @@ const Navigation = () => {
           {/* Logo */}
           <Link href="/" data-testid="logo-link">
             <div className="flex items-center space-x-3 cursor-pointer">
-              <div className="w-12 h-12 bg-brand-red rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-xl bangla-text">বং</span>
-              </div>
+              <img 
+                src="/logo.png" 
+                alt="Bong Bari Logo" 
+                className="w-12 h-12 rounded-lg"
+              />
               <div>
                 <h1 className="text-2xl font-bold text-brand-blue bangla-text">বং বাড়ি</h1>
                 <p className="text-sm text-gray-600">Bong Bari</p>

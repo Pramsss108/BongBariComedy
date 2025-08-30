@@ -234,8 +234,8 @@ nav a,
   cursor: none !important;
 }
 
-/* Viral 2025 Advanced Button Effects */
-button,
+/* Viral 2025 Advanced Button Effects - Excluding Form Elements */
+button:not(.absolute):not([type="button"]),
 .magnetic-button {
   position: relative;
   isolation: isolate;
@@ -247,8 +247,8 @@ button,
   z-index: 1;
 }
 
-/* Prevent button merging with individual scaling */
-button:hover,
+/* Prevent button merging with individual scaling - Exclude small form buttons */
+button:not(.absolute):not([type="button"]):hover,
 .magnetic-button:hover {
   transform: scale(1.15) translateZ(10px) !important;
   box-shadow: 
@@ -260,8 +260,26 @@ button:hover,
   border: 2px solid rgba(255, 255, 255, 0.4) !important;
 }
 
-/* Viral glow pulse effect */
-button::before,
+/* Form elements - Clean and simple hover */
+input:hover,
+textarea:hover,
+select:hover {
+  transform: scale(1.01) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  border-color: rgba(255, 204, 0, 0.5) !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Form buttons (like show/hide password) - Minimal effects */
+button[type="button"]:hover,
+button.absolute:hover {
+  transform: scale(1.05) !important;
+  color: #FFCC00 !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Viral glow pulse effect - Only for main buttons */
+button:not(.absolute):not([type="button"])::before,
 .magnetic-button::before {
   content: '';
   position: absolute;
@@ -278,7 +296,7 @@ button::before,
   transition: opacity 0.3s ease;
 }
 
-button:hover::before,
+button:not(.absolute):not([type="button"]):hover::before,
 .magnetic-button:hover::before {
   opacity: 1;
 }
@@ -288,8 +306,8 @@ button:hover::before,
   50% { background-position: 100% 50%; }
 }
 
-/* Shimmer effect */
-button::after,
+/* Shimmer effect - Only for main buttons */
+button:not(.absolute):not([type="button"])::after,
 .magnetic-button::after {
   content: '';
   position: absolute;
@@ -301,7 +319,7 @@ button::after,
   transition: left 0.6s ease;
 }
 
-button:hover::after,
+button:not(.absolute):not([type="button"]):hover::after,
 .magnetic-button:hover::after {
   left: 100%;
 }

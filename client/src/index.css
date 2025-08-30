@@ -1192,6 +1192,14 @@ section:nth-child(odd) {
     -webkit-background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
     background-clip: text !important;
+    line-height: 0.9 !important;
+    margin-bottom: 0 !important;
+  }
+  
+  /* Desktop subtitle closer */
+  [data-testid="logo-link"] p {
+    margin-top: -0.3rem !important;
+    line-height: 1.1 !important;
   }
 }
 

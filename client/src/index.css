@@ -399,15 +399,47 @@ header:hover {
   transform: scale(1.15) translateZ(10px) !important;
 }
 
-/* Enhanced button spacing and layout */
+/* Enhanced button spacing and layout - Prevent merging */
+[data-testid="cta-section"] {
+  display: flex;
+  gap: 24px !important;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 20px;
+}
+
 [data-testid="cta-section"] .magnetic-button {
-  margin: 8px;
+  margin: 16px !important;
+  min-width: 280px !important;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
 }
 
 [data-testid="cta-section"] .magnetic-button:hover {
-  margin: 12px;
+  margin: 20px !important;
+  z-index: 100;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Ensure buttons don't overlap on mobile */
+@media (max-width: 768px) {
+  [data-testid="cta-section"] {
+    flex-direction: column;
+    gap: 32px !important;
+  }
+  
+  [data-testid="cta-section"] .magnetic-button {
+    width: 100%;
+    max-width: 320px;
+    margin: 16px 0 !important;
+  }
+  
+  [data-testid="cta-section"] .magnetic-button:hover {
+    margin: 20px 0 !important;
+  }
 }
 
 /* Fast Parallax Scroll Base Styles */

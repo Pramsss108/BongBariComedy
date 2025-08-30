@@ -9,6 +9,7 @@ import About from "@/pages/about";
 import WorkWithUs from "@/pages/work-with-us";
 import Contact from "@/pages/contact";
 import Blog from "@/pages/blog";
+import Admin from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -21,6 +22,7 @@ function Router() {
         <Route path="/work-with-us" component={WorkWithUs} />
         <Route path="/contact" component={Contact} />
         <Route path="/blog" component={Blog} />
+        <Route path="/admin" component={Admin} />
         <Route component={NotFound} />
       </Switch>
     </div>

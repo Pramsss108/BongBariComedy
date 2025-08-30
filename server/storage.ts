@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type BlogPost, type InsertBlogPost } from "@shared/schema";
+import { type User, type InsertUser, type BlogPost, type InsertBlogPost, type CollaborationRequest, type InsertCollaborationRequest } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -11,15 +11,19 @@ export interface IStorage {
   createBlogPost(post: InsertBlogPost): Promise<BlogPost>;
   updateBlogPost(id: string, post: Partial<InsertBlogPost>): Promise<BlogPost | undefined>;
   deleteBlogPost(id: string): Promise<boolean>;
+  getCollaborationRequests(): Promise<CollaborationRequest[]>;
+  createCollaborationRequest(request: InsertCollaborationRequest): Promise<CollaborationRequest>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private blogPosts: Map<string, BlogPost>;
+  private collaborationRequests: Map<string, CollaborationRequest>;
 
   constructor() {
     this.users = new Map();
     this.blogPosts = new Map();
+    this.collaborationRequests = new Map();
     
     // Initialize with some sample blog posts
     this.initializeSampleData();
@@ -112,6 +116,24 @@ export class MemStorage implements IStorage {
 
   async deleteBlogPost(id: string): Promise<boolean> {
     return this.blogPosts.delete(id);
+  }
+
+  async getCollaborationRequests(): Promise<CollaborationRequest[]> {
+    return Array.from(this.collaborationRequests.values()).sort(
+      (a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()
+    );
+  }
+
+  async createCollaborationRequest(insertRequest: InsertCollaborationRequest): Promise<CollaborationRequest> {
+    const id = randomUUID();
+    const now = new Date();
+    const request: CollaborationRequest = {
+      ...insertRequest,
+      id,
+      createdAt: now,
+    };
+    this.collaborationRequests.set(id, request);
+    return request;
   }
 }
 

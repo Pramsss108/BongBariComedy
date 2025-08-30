@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertBlogPostSchema } from "@shared/schema";
+import { insertBlogPostSchema, insertCollaborationRequestSchema } from "@shared/schema";
 import { z } from "zod";
 import { google } from "googleapis";
 
@@ -139,6 +139,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Blog post deleted successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete blog post" });
+    }
+  });
+
+  // Collaboration request routes
+  app.get("/api/collaboration-requests", async (_req, res) => {
+    try {
+      const requests = await storage.getCollaborationRequests();
+      res.json(requests);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch collaboration requests" });
+    }
+  });
+
+  app.post("/api/collaboration-requests", async (req, res) => {
+    try {
+      const validatedData = insertCollaborationRequestSchema.parse(req.body);
+      const request = await storage.createCollaborationRequest(validatedData);
+      res.status(201).json({ message: "Collaboration request submitted successfully", id: request.id });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid collaboration request data", errors: error.errors });
+      }
+      console.error('Collaboration request error:', error);
+      res.status(500).json({ message: "Failed to submit collaboration request" });
     }
   });
 

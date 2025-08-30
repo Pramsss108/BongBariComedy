@@ -1,12 +1,18 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useToast } from "@/hooks/use-toast";
 import YouTubeShort from "@/components/youtube-short";
 import SEOHead from "@/components/seo-head";
 import { Youtube, Instagram, Phone, Mail, Twitter, Send } from "lucide-react";
+import { insertCollaborationRequestSchema, type InsertCollaborationRequest } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
 
 interface YouTubeVideo {
   videoId: string;
@@ -16,10 +22,51 @@ interface YouTubeVideo {
 }
 
 const Home = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
   const { data: youtubeVideos, isLoading } = useQuery<YouTubeVideo[]>({
     queryKey: ['/api/youtube/latest'],
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });
+
+  const form = useForm<InsertCollaborationRequest>({
+    resolver: zodResolver(insertCollaborationRequestSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      company: "",
+      message: ""
+    }
+  });
+
+  const collaborationMutation = useMutation({
+    mutationFn: (data: InsertCollaborationRequest) => apiRequest('/api/collaboration-requests', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }),
+    onSuccess: () => {
+      toast({
+        title: "Success!",
+        description: "Your collaboration request has been submitted. We'll get back to you soon!"
+      });
+      form.reset();
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to submit your request. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const onSubmit = (data: InsertCollaborationRequest) => {
+    collaborationMutation.mutate(data);
+  };
 
   // Fallback data in case API fails
   const fallbackVideoData = [
@@ -180,55 +227,94 @@ const Home = () => {
                     কোলাবোরেট করতে প্রস্তুত? চলুন একসাথে দুর্দান্ত বাংলা কমেডি কন্টেন্ট তৈরি করি!
                   </p>
                   
-                  <form className="space-y-6" data-testid="collaboration-form">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="name">Name / নাম</Label>
-                        <Input 
-                          id="name" 
-                          placeholder="Your Name"
-                          data-testid="input-name"
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" data-testid="collaboration-form">
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Name / নাম</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="Your Name"
+                                  data-testid="input-name"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="email" 
+                                  placeholder="your@email.com"
+                                  data-testid="input-email"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
                       </div>
-                      <div>
-                        <Label htmlFor="email">Email</Label>
-                        <Input 
-                          id="email" 
-                          type="email" 
-                          placeholder="your@email.com"
-                          data-testid="input-email"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="company">Company / Brand</Label>
-                      <Input 
-                        id="company" 
-                        placeholder="Your Company or Brand"
-                        data-testid="input-company"
+                      
+                      <FormField
+                        control={form.control}
+                        name="company"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Company / Brand</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="Your Company or Brand"
+                                data-testid="input-company"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="message">Message / বার্তা</Label>
-                      <Textarea 
-                        id="message" 
-                        rows={4}
-                        placeholder="Tell us about your collaboration idea..."
-                        data-testid="textarea-message"
+                      
+                      <FormField
+                        control={form.control}
+                        name="message"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Message / বার্তা</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                rows={4}
+                                placeholder="Tell us about your collaboration idea..."
+                                data-testid="textarea-message"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
-                    </div>
-                    
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-brand-red text-white hover:bg-red-600 py-3 rounded-full font-semibold text-lg hover-lift"
-                      data-testid="button-submit-collaboration"
-                    >
-                      <Send className="mr-2 h-5 w-5" />
-                      Send Message
-                    </Button>
-                  </form>
+                      
+                      <Button 
+                        type="submit" 
+                        disabled={collaborationMutation.isPending}
+                        className="w-full bg-brand-red text-white hover:bg-red-600 py-3 rounded-full font-semibold text-lg hover-lift disabled:opacity-50"
+                        data-testid="button-submit-collaboration"
+                      >
+                        <Send className="mr-2 h-5 w-5" />
+                        {collaborationMutation.isPending ? "Sending..." : "Send Message"}
+                      </Button>
+                    </form>
+                  </Form>
                 </CardContent>
               </Card>
             </div>

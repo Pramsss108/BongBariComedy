@@ -38,8 +38,8 @@ export const useParallaxScroll = () => {
         el.style.transform = `translateY(${speed * 0.08}px) scale(${1 + Math.abs(speed) * 0.0003})`;
       });
 
-      // Buttons floating effect - Enhanced movement
-      const buttons = document.querySelectorAll('button, .magnetic-button');
+      // Buttons floating effect - Enhanced movement (exclude CTA section)
+      const buttons = document.querySelectorAll('button:not([data-testid="button-youtube"]):not([data-testid="button-instagram"]), .magnetic-button:not([data-testid="button-youtube"]):not([data-testid="button-instagram"])');
       buttons.forEach((element, index) => {
         const el = element as HTMLElement;
         const floatSpeed = Math.sin(scrolled * 0.02 + index) * 4;

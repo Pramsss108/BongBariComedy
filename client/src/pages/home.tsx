@@ -323,7 +323,7 @@ const Home = () => {
               <h3 className="text-3xl font-bold text-center text-brand-blue mb-4" data-testid="collaboration-title-english">
                 Work with Us
               </h3>
-              <h4 className="text-2xl font-bold text-center text-gray-800 mb-8 bangla-text" data-testid="collaboration-title-bengali">
+              <h4 className="text-2xl font-bold text-center text-gray-800 mb-8 bangla-text tracking-wide" data-testid="collaboration-title-bengali">
                 আমাদের সাথে কাজ করুন
               </h4>
               

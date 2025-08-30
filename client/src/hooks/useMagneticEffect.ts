@@ -18,9 +18,9 @@ export const useMagneticEffect = (strength: number = 0.3) => {
         circle.className = 'hover-circle';
         circle.style.cssText = `
           position: absolute;
-          width: 15px;
-          height: 15px;
-          background: rgba(255, 255, 255, 0.4);
+          width: 25px;
+          height: 25px;
+          background: rgba(255, 255, 255, 0.15);
           border-radius: 50%;
           pointer-events: none;
           z-index: 1;

@@ -4,75 +4,54 @@ export const useParallaxScroll = () => {
   useEffect(() => {
     const handleScroll = () => {
       const scrolled = window.pageYOffset;
-      const rate = scrolled * -0.6;
-      const fastRate = scrolled * -1.2;
-      const superFastRate = scrolled * -1.8;
+      const rate = scrolled * -0.8;
+      const fastRate = scrolled * -1.5;
+      const superFastRate = scrolled * -2.2;
 
-      // Optimized parallax for YouTube shorts - Smooth fast movement
+      // Fast parallax for YouTube shorts - Much faster movement
       const youtubeShorts = document.querySelectorAll('.youtube-short');
       youtubeShorts.forEach((element, index) => {
         const el = element as HTMLElement;
         const speed = index % 2 === 0 ? fastRate : superFastRate;
-        const yOffset = speed * 0.2;
-        const scale = 1 + Math.abs(speed) * 0.00015;
-        el.style.transform = `translate3d(0, ${yOffset}px, 0) scale(${scale})`;
+        el.style.transform = `translateY(${speed * 0.25}px) scale(${1 + Math.abs(speed) * 0.0002})`;
       });
 
-      // Blog cards parallax - Optimized movement
+      // Blog cards parallax - Faster movement
       const blogCards = document.querySelectorAll('.blog-post, .card');
       blogCards.forEach((element, index) => {
         const el = element as HTMLElement;
-        const speed = rate * (0.5 + index * 0.15);
-        const yOffset = speed * 0.12;
-        const rotateX = speed * 0.015;
-        el.style.transform = `translate3d(0, ${yOffset}px, 0) rotateX(${rotateX}deg)`;
+        const speed = rate * (0.6 + index * 0.2);
+        el.style.transform = `translateY(${speed * 0.15}px) rotateX(${speed * 0.02}deg)`;
       });
 
-      // Navigation parallax - Subtle movement
+      // Navigation parallax - Faster
       const nav = document.querySelector('nav');
       if (nav) {
-        const yOffset = rate * 0.15;
-        (nav as HTMLElement).style.transform = `translate3d(0, ${yOffset}px, 0)`;
+        (nav as HTMLElement).style.transform = `translateY(${rate * 0.2}px)`;
       }
 
-      // Header elements - Smooth movement
+      // Header elements - Much faster movement
       const headers = document.querySelectorAll('h1, h2, h3');
       headers.forEach((element, index) => {
         const el = element as HTMLElement;
-        const speed = fastRate * (0.3 + index * 0.08);
-        const yOffset = speed * 0.06;
-        const scale = 1 + Math.abs(speed) * 0.0002;
-        el.style.transform = `translate3d(0, ${yOffset}px, 0) scale(${scale})`;
+        const speed = fastRate * (0.4 + index * 0.1);
+        el.style.transform = `translateY(${speed * 0.08}px) scale(${1 + Math.abs(speed) * 0.0003})`;
       });
 
-      // Buttons floating effect - Optimized
+      // Buttons floating effect - Enhanced movement
       const buttons = document.querySelectorAll('button, .magnetic-button');
       buttons.forEach((element, index) => {
         const el = element as HTMLElement;
-        const floatSpeed = Math.sin(scrolled * 0.015 + index) * 3;
-        const scale = 1 + Math.abs(floatSpeed) * 0.0015;
-        el.style.transform = `translate3d(0, ${floatSpeed}px, 0) scale(${scale})`;
+        const floatSpeed = Math.sin(scrolled * 0.02 + index) * 4;
+        el.style.transform = `translateY(${floatSpeed}px) scale(${1 + Math.abs(floatSpeed) * 0.002})`;
       });
 
-      // Background sections depth - Optimized
+      // Background sections depth - Faster depth movement
       const sections = document.querySelectorAll('section');
       sections.forEach((element, index) => {
         const el = element as HTMLElement;
-        const isCollaborationSection = el.getAttribute('data-testid') === 'collaboration-section';
-        
-        if (isCollaborationSection) {
-          // Make "Work with Us" section scroll much faster to appear sooner
-          const fastDepth = rate * -2.5;
-          const yOffset = fastDepth * 0.15;
-          const scale = 1 + Math.abs(fastDepth) * 0.0002;
-          el.style.transform = `translate3d(0, ${yOffset}px, 0) scale(${scale})`;
-        } else {
-          // Normal speed for other sections
-          const depth = rate * (0.15 + index * 0.08);
-          const yOffset = depth * 0.05;
-          const scale = 1 + Math.abs(depth) * 0.00015;
-          el.style.transform = `translate3d(0, ${yOffset}px, 0) scale(${scale})`;
-        }
+        const depth = rate * (0.2 + index * 0.1);
+        el.style.transform = `translateY(${depth * 0.06}px) scale(${1 + Math.abs(depth) * 0.0002})`;
       });
     };
 

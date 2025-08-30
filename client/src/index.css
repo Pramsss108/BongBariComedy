@@ -272,33 +272,14 @@ form button:hover:not(.magnetic-button) {
   transition: all 0.2s ease !important;
 }
 
-/* Form elements - Clean white background with professional styling */
-input,
-textarea,
-select {
-  background-color: white !important;
-  border: 2px solid #e5e7eb !important;
-  color: #374151 !important;
-  transition: all 0.2s ease !important;
-}
-
+/* Form elements - Clean and simple hover */
 input:hover,
 textarea:hover,
 select:hover {
   transform: scale(1.01) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
   border-color: rgba(255, 204, 0, 0.5) !important;
-  background-color: white !important;
   transition: all 0.2s ease !important;
-}
-
-input:focus,
-textarea:focus,
-select:focus {
-  background-color: white !important;
-  border-color: #FFCC00 !important;
-  box-shadow: 0 0 0 3px rgba(255, 204, 0, 0.1) !important;
-  outline: none !important;
 }
 
 /* Form buttons (like show/hide password) - Minimal effects */
@@ -419,25 +400,14 @@ header:hover {
 }
 
 /* Enhanced button spacing and layout */
-[data-testid="cta-section"] {
-  padding-bottom: 4rem;
-  margin-bottom: 4rem;
-}
-
 [data-testid="cta-section"] .magnetic-button {
-  margin: 12px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18) !important;
+  margin: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
 }
 
 [data-testid="cta-section"] .magnetic-button:hover {
-  margin: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
-}
-
-/* Work with Us section spacing */
-[data-testid="collaboration-section"] {
-  margin-top: 6rem;
-  padding-top: 4rem;
+  margin: 12px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25) !important;
 }
 
 /* Fast Parallax Scroll Base Styles */

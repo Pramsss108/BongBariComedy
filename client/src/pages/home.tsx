@@ -267,9 +267,9 @@ const Home = () => {
           
           {/* CTA Buttons */}
           <ParallaxSection speed={0.3} delay={0.3}>
-            <section className="text-center mb-32 pb-16" data-testid="cta-section">
+            <section className="text-center mb-16" data-testid="cta-section">
             <motion.div 
-              className="flex flex-col lg:flex-row gap-12 justify-center items-center px-4 max-w-4xl mx-auto"
+              className="flex flex-col lg:flex-row gap-8 justify-center items-center px-4"
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
@@ -282,7 +282,7 @@ const Home = () => {
               >
                 <MagneticButton 
                   size="lg" 
-                  className="bg-brand-red text-white hover:bg-red-600 px-12 py-6 rounded-full font-semibold text-xl hover-lift shadow-2xl w-full sm:w-auto min-w-[320px] max-w-[380px]"
+                  className="bg-brand-red text-white hover:bg-red-600 px-10 py-5 rounded-full font-semibold text-lg hover-lift shadow-2xl w-full sm:w-auto min-w-[280px]"
                   data-testid="button-youtube"
                   onClick={() => window.open('https://youtube.com/@bongbari', '_blank')}
                   strength={0.5}
@@ -293,7 +293,7 @@ const Home = () => {
               </motion.div>
               
               {/* Separator for desktop */}
-              <div className="hidden lg:block w-px h-20 bg-gradient-to-b from-transparent via-gray-400 to-transparent opacity-60"></div>
+              <div className="hidden lg:block w-px h-16 bg-gray-300 opacity-50"></div>
               
               <motion.div
                 initial={{ opacity: 0, x: 50 }}
@@ -303,7 +303,7 @@ const Home = () => {
               >
                 <MagneticButton 
                   size="lg" 
-                  className="bg-brand-blue text-white hover:bg-blue-700 px-12 py-6 rounded-full font-semibold text-xl hover-lift shadow-2xl w-full sm:w-auto min-w-[320px] max-w-[380px]"
+                  className="bg-brand-blue text-white hover:bg-blue-700 px-10 py-5 rounded-full font-semibold text-lg hover-lift shadow-2xl w-full sm:w-auto min-w-[280px]"
                   data-testid="button-instagram"
                   onClick={() => window.open('https://instagram.com/thebongbari', '_blank')}
                   strength={0.5}
@@ -318,38 +318,23 @@ const Home = () => {
           
           {/* Collaboration Form */}
           <ParallaxSection speed={0.2} delay={0.4}>
-            <section className="mb-20 mt-24 pt-16" data-testid="collaboration-section">
-            <div className="max-w-4xl mx-auto px-6">
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
-                className="text-center mb-12"
-              >
-                <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center text-brand-blue mb-6 px-4" data-testid="collaboration-title-english">
-                  Work with Us
-                </h3>
-                <h4 className="text-2xl md:text-3xl lg:text-4xl font-bold text-center text-gray-800 mb-6 bangla-text px-4" data-testid="collaboration-title-bengali">
-                  আমাদের সাথে কাজ করুন
-                </h4>
-                <div className="w-24 h-1 bg-gradient-to-r from-brand-yellow to-brand-red mx-auto rounded-full"></div>
-              </motion.div>
+            <section className="mb-16" data-testid="collaboration-section">
+            <div className="max-w-2xl mx-auto">
+              <h3 className="text-3xl font-bold text-center text-brand-blue mb-4" data-testid="collaboration-title-english">
+                Work with Us
+              </h3>
+              <h4 className="text-2xl font-bold text-center text-gray-800 mb-8 bangla-text" data-testid="collaboration-title-bengali">
+                আমাদের সাথে কাজ করুন
+              </h4>
               
-              <Card className="bg-white shadow-2xl border-0 overflow-hidden">
-                <CardContent className="p-10 md:p-12">
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 0.2 }}
-                    className="text-center mb-8"
-                  >
-                    <p className="text-base md:text-lg lg:text-xl text-gray-700 mb-6 leading-relaxed font-medium px-4">
-                      Ready to collaborate? Let's create some amazing Bengali comedy content together!
-                    </p>
-                    <p className="text-base md:text-lg lg:text-xl text-gray-700 mb-8 bangla-text leading-relaxed font-medium px-4">
-                      কোলাবোরেট করতে প্রস্তুত? চলুন একসাথে দুর্দান্ত বাংলা কমেডি কন্টেন্ট তৈরি করি!
-                    </p>
-                  </motion.div>
+              <Card className="bg-white shadow-lg">
+                <CardContent className="p-8">
+                  <p className="text-center text-gray-700 mb-6">
+                    Ready to collaborate? Let's create some amazing Bengali comedy content together!
+                  </p>
+                  <p className="text-center text-gray-700 mb-8 bangla-text">
+                    কোলাবোরেট করতে প্রস্তুত? চলুন একসাথে দুর্দান্ত বাংলা কমেডি কন্টেন্ট তৈরি করি!
+                  </p>
                   
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" data-testid="collaboration-form">

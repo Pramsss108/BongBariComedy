@@ -4,54 +4,54 @@ export const useParallaxScroll = () => {
   useEffect(() => {
     const handleScroll = () => {
       const scrolled = window.pageYOffset;
-      const rate = scrolled * -0.5;
-      const fastRate = scrolled * -0.8;
-      const superFastRate = scrolled * -1.2;
+      const rate = scrolled * -0.8;
+      const fastRate = scrolled * -1.5;
+      const superFastRate = scrolled * -2.2;
 
-      // Fast parallax for YouTube shorts
+      // Fast parallax for YouTube shorts - Much faster movement
       const youtubeShorts = document.querySelectorAll('.youtube-short');
       youtubeShorts.forEach((element, index) => {
         const el = element as HTMLElement;
         const speed = index % 2 === 0 ? fastRate : superFastRate;
-        el.style.transform = `translateY(${speed * 0.1}px) scale(${1 + Math.abs(speed) * 0.0001})`;
+        el.style.transform = `translateY(${speed * 0.25}px) scale(${1 + Math.abs(speed) * 0.0002})`;
       });
 
-      // Blog cards parallax
+      // Blog cards parallax - Faster movement
       const blogCards = document.querySelectorAll('.blog-post, .card');
       blogCards.forEach((element, index) => {
         const el = element as HTMLElement;
-        const speed = rate * (0.3 + index * 0.1);
-        el.style.transform = `translateY(${speed * 0.05}px) rotateX(${speed * 0.01}deg)`;
+        const speed = rate * (0.6 + index * 0.2);
+        el.style.transform = `translateY(${speed * 0.15}px) rotateX(${speed * 0.02}deg)`;
       });
 
-      // Navigation parallax
+      // Navigation parallax - Faster
       const nav = document.querySelector('nav');
       if (nav) {
-        (nav as HTMLElement).style.transform = `translateY(${rate * 0.1}px)`;
+        (nav as HTMLElement).style.transform = `translateY(${rate * 0.2}px)`;
       }
 
-      // Header elements
+      // Header elements - Much faster movement
       const headers = document.querySelectorAll('h1, h2, h3');
       headers.forEach((element, index) => {
         const el = element as HTMLElement;
-        const speed = fastRate * (0.2 + index * 0.05);
-        el.style.transform = `translateY(${speed * 0.03}px) scale(${1 + Math.abs(speed) * 0.0002})`;
+        const speed = fastRate * (0.4 + index * 0.1);
+        el.style.transform = `translateY(${speed * 0.08}px) scale(${1 + Math.abs(speed) * 0.0003})`;
       });
 
-      // Buttons floating effect
+      // Buttons floating effect - Enhanced movement
       const buttons = document.querySelectorAll('button, .magnetic-button');
       buttons.forEach((element, index) => {
         const el = element as HTMLElement;
-        const floatSpeed = Math.sin(scrolled * 0.01 + index) * 2;
-        el.style.transform = `translateY(${floatSpeed}px) scale(${1 + Math.abs(floatSpeed) * 0.001})`;
+        const floatSpeed = Math.sin(scrolled * 0.02 + index) * 4;
+        el.style.transform = `translateY(${floatSpeed}px) scale(${1 + Math.abs(floatSpeed) * 0.002})`;
       });
 
-      // Background sections depth
+      // Background sections depth - Faster depth movement
       const sections = document.querySelectorAll('section');
       sections.forEach((element, index) => {
         const el = element as HTMLElement;
-        const depth = rate * (0.1 + index * 0.05);
-        el.style.transform = `translateY(${depth * 0.02}px) scale(${1 + Math.abs(depth) * 0.0001})`;
+        const depth = rate * (0.2 + index * 0.1);
+        el.style.transform = `translateY(${depth * 0.06}px) scale(${1 + Math.abs(depth) * 0.0002})`;
       });
     };
 

@@ -156,6 +156,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Blog routes
+  app.post("/api/blog", isAuthenticated, async (req, res) => {
+    try {
+      const blogData = insertBlogPostSchema.parse(req.body);
+      const newPost = await storage.createBlogPost(blogData);
+      res.json(newPost);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid blog post data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create blog post" });
+    }
+  });
+
   app.get("/api/blog", async (_req, res) => {
     try {
       const posts = await storage.getBlogPosts();
@@ -227,7 +240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/blog/:id", async (req, res) => {
+  app.delete("/api/blog/:id", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
       const deleted = await storage.deleteBlogPost(id);

@@ -1157,43 +1157,45 @@ section:nth-child(odd) {
 
 /* NAVIGATION HEADER RESPONSIVE DESIGN */
 
-/* Desktop Navigation - Centered Header Style */
+/* Desktop Navigation Enhancement */
 @media (min-width: 769px) {
   [data-testid="main-navigation"] {
-    background: white !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%) !important;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
-    padding: 0 !important;
+    backdrop-filter: blur(10px) !important;
+    padding: 0.75rem 0 !important;
   }
   
   [data-testid="main-navigation"] .container {
-    max-width: 1400px !important;
-    padding: 0 3rem !important;
+    max-width: 1200px !important;
+    padding: 0 2rem !important;
   }
   
-  /* Desktop logo styling */
+  /* Desktop logo hover effect */
   [data-testid="logo-link"] {
-    transition: all 0.3s ease !important;
+    transition: transform 0.2s ease !important;
   }
   
   [data-testid="logo-link"]:hover {
-    transform: scale(1.05) !important;
+    transform: scale(1.02) !important;
   }
   
-  /* Navigation pills styling */
+  /* Navigation links enhancement */
   [data-testid="main-navigation"] a[data-testid*="nav-link"] {
-    display: inline-block !important;
-    transition: all 0.3s ease !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.5px !important;
+    position: relative !important;
+    transition: all 0.2s ease !important;
   }
   
-  [data-testid="main-navigation"] a[data-testid*="nav-link"]:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 8px 25px rgba(0, 123, 255, 0.2) !important;
+  /* Logo gradient text on desktop */
+  [data-testid="logo-link"] h1 {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
   }
 }
 
-/* Mobile Navigation Optimization - Keep Same */
+/* Mobile Navigation Optimization */
 @media (max-width: 768px) {
   [data-testid="main-navigation"] {
     position: sticky !important;
@@ -1201,7 +1203,7 @@ section:nth-child(odd) {
     z-index: 100 !important;
     background: white !important;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
-    padding: 0 !important;
+    padding: 0.5rem 0 !important;
   }
   
   [data-testid="main-navigation"] .container {

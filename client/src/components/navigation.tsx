@@ -25,70 +25,55 @@ const Navigation = () => {
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50" data-testid="main-navigation">
       <div className="container mx-auto px-4">
-        {/* Mobile Layout */}
-        <div className="md:hidden flex justify-between items-center py-3">
+        <div className="flex justify-between items-center py-3 md:py-5">
+          {/* Logo - Responsive Design */}
           <Link href="/" data-testid="logo-link">
             <div className="flex items-center space-x-3 cursor-pointer">
               <img 
                 src="/logo.png" 
                 alt="Bong Bari Logo" 
-                className="w-10 h-10 rounded-lg"
+                className="w-10 h-10 md:w-12 md:h-12 rounded-lg"
               />
-              <div>
+              {/* Mobile Logo - Compact */}
+              <div className="md:hidden">
                 <h1 className="text-xl font-bold text-brand-blue bangla-text leading-tight">বং বাড়ি</h1>
-                <p className="text-xs text-gray-600 -mt-1">Bengali Comedy</p>
+              </div>
+              {/* Desktop Logo - Full */}
+              <div className="hidden md:block">
+                <h1 className="text-3xl font-bold text-brand-blue bangla-text leading-none">বং বাড়ি</h1>
+                <p className="text-base text-gray-600 -mt-1">Bengali Comedy</p>
               </div>
             </div>
           </Link>
           
+          {/* Desktop Navigation - Improved Layout */}
+          <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`font-semibold text-lg transition-all duration-200 hover:text-brand-blue hover:scale-105 ${
+                  isActive(item.href) 
+                    ? "text-brand-blue border-b-2 border-brand-blue pb-1" 
+                    : "text-gray-700 hover:border-b-2 hover:border-brand-blue pb-1"
+                }`}
+                data-testid={`nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+          
+          {/* Mobile Menu Button */}
           <Button
             variant="ghost"
             size="icon"
+            className="md:hidden"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             data-testid="mobile-menu-toggle"
           >
             {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </Button>
-        </div>
-        
-        {/* Desktop Layout - Completely Different */}
-        <div className="hidden md:block">
-          {/* Top Row: Logo */}
-          <div className="flex justify-center py-4 border-b border-gray-100">
-            <Link href="/" data-testid="logo-link">
-              <div className="flex items-center space-x-4 cursor-pointer">
-                <img 
-                  src="/logo.png" 
-                  alt="Bong Bari Logo" 
-                  className="w-16 h-16 rounded-xl shadow-md"
-                />
-                <div className="text-center">
-                  <h1 className="text-5xl font-bold text-brand-blue bangla-text leading-none">বং বাড়ি</h1>
-                  <p className="text-xl text-gray-600 font-medium mt-1">Bengali Comedy</p>
-                </div>
-              </div>
-            </Link>
-          </div>
-          
-          {/* Bottom Row: Navigation */}
-          <div className="flex justify-center py-4">
-            <div className="flex space-x-8">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`px-6 py-3 rounded-full font-semibold text-lg transition-all duration-200 ${
-                    isActive(item.href) 
-                      ? "bg-brand-blue text-white shadow-lg" 
-                      : "text-gray-700 hover:bg-gray-100 hover:text-brand-blue"
-                  }`}
-                  data-testid={`nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </div>
-          </div>
         </div>
         
         {/* Mobile Navigation */}

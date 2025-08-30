@@ -414,7 +414,7 @@ header:hover {
 }
 
 [data-testid="collaboration-section"] h4 {
-  margin-bottom: 0.5rem !important;
+  margin-bottom: 0.25rem !important;
   margin-top: 0rem !important;
   display: block !important;
   visibility: visible !important;

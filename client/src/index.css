@@ -397,28 +397,28 @@ header:hover {
   will-change: auto !important;
 }
 
-/* Much Larger Gap - Prevent Button Overlap */
+/* Safe Gap from Buttons - Prevent Overlap */
 [data-testid="collaboration-section"] {
-  margin-top: 200px !important;
-  padding-top: 80px !important;
+  margin-top: 160px !important;
+  padding-top: 60px !important;
   clear: both;
   position: relative;
   z-index: 1;
 }
 
-/* Ultra close headings - kacha kachi */
+/* Super close headings - kacha kachi */
 [data-testid="collaboration-section"] h3 {
-  margin-bottom: 0rem !important;
+  margin-bottom: -0.25rem !important;
 }
 
 [data-testid="collaboration-section"] h4 {
   margin-bottom: 2rem !important;
-  margin-top: -0.5rem !important;
+  margin-top: -0.75rem !important;
 }
 
 [data-testid="videos-section"] {
-  margin-bottom: 120px !important;
-  padding-bottom: 60px !important;
+  margin-bottom: 60px !important;
+  padding-bottom: 30px !important;
   position: relative;
   z-index: 1;
 }
@@ -437,13 +437,13 @@ header:hover {
   transform: scale(1.15) translateZ(10px) !important;
 }
 
-/* CTA Section with Space from Videos Above */
+/* CTA Section - Close to Videos, Safe from Work Section */
 [data-testid="cta-section"] {
   display: block !important;
   text-align: center;
-  padding: 80px 20px 100px 20px !important;
-  margin: 60px 0 80px 0 !important;
-  min-height: 240px !important;
+  padding: 40px 20px 120px 20px !important;
+  margin: 20px 0 100px 0 !important;
+  min-height: 200px !important;
   position: relative !important;
   z-index: 100 !important;
   background: transparent;

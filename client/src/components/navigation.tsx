@@ -34,14 +34,15 @@ const Navigation = () => {
                 alt="Bong Bari Logo" 
                 className="w-10 h-10 md:w-12 md:h-12 rounded-lg"
               />
-              {/* Mobile Logo - Compact */}
+              {/* Mobile Logo - Clean */}
               <div className="md:hidden">
                 <h1 className="text-xl font-bold text-brand-blue bangla-text leading-tight">বং বাড়ি</h1>
+                <p className="text-xs text-gray-600 -mt-1">Bengali Comedy</p>
               </div>
-              {/* Desktop Logo - Full */}
+              {/* Desktop Logo - Professional */}
               <div className="hidden md:block">
-                <h1 className="text-3xl font-bold text-brand-blue bangla-text leading-none">বং বাড়ি</h1>
-                <p className="text-base text-gray-600 -mt-1">Bengali Comedy</p>
+                <h1 className="text-4xl font-bold text-brand-blue bangla-text leading-tight">বং বাড়ি</h1>
+                <p className="text-lg text-gray-600 font-medium -mt-2">Bengali Comedy</p>
               </div>
             </div>
           </Link>

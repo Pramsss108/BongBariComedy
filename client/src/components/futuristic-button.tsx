@@ -39,21 +39,27 @@ export const FuturisticButton = ({
   const variantStyles = {
     youtube: {
       gradient: 'from-red-500 via-red-600 to-red-700',
+      rgbGradient: 'linear-gradient(45deg, #ff0000, #ff4444, #cc0000, #ff6666)',
+      borderGradient: 'conic-gradient(from 0deg, #ff0000, #ff4444, #cc0000, #ff6666, #ff0000)',
       glow: 'shadow-red-500/50',
-      neon: 'drop-shadow-[0_0_15px_rgba(239,68,68,0.8)]',
-      particles: ['🔥', '❤️', '⭐', '✨']
+      neon: 'drop-shadow-[0_0_25px_rgba(239,68,68,1)]',
+      particles: ['🔥', '❤️', '⭐', '✨', '😂']
     },
     instagram: {
       gradient: 'from-purple-500 via-pink-500 to-orange-500',
+      rgbGradient: 'linear-gradient(45deg, #833ab4, #fd1d1d, #fcb045, #833ab4)',
+      borderGradient: 'conic-gradient(from 0deg, #833ab4, #fd1d1d, #fcb045, #833ab4)',
       glow: 'shadow-purple-500/50',
-      neon: 'drop-shadow-[0_0_15px_rgba(168,85,247,0.8)]',
-      particles: ['💫', '🌟', '💖', '✨']
+      neon: 'drop-shadow-[0_0_25px_rgba(168,85,247,1)]',
+      particles: ['💫', '🌟', '💖', '✨', '😂']
     },
     default: {
       gradient: 'from-blue-500 via-cyan-500 to-teal-500',
+      rgbGradient: 'linear-gradient(45deg, #0066ff, #00ccff, #0099cc, #66ddff)',
+      borderGradient: 'conic-gradient(from 0deg, #0066ff, #00ccff, #0099cc, #66ddff, #0066ff)',
       glow: 'shadow-cyan-500/50',
-      neon: 'drop-shadow-[0_0_15px_rgba(6,182,212,0.8)]',
-      particles: ['⚡', '✨', '💎', '🌟']
+      neon: 'drop-shadow-[0_0_25px_rgba(6,182,212,1)]',
+      particles: ['⚡', '✨', '💎', '🌟', '😂']
     }
   };
 
@@ -68,11 +74,11 @@ export const FuturisticButton = ({
     
     const newParticles: Particle[] = [];
     
-    // Create 30 particles
-    for (let i = 0; i < 30; i++) {
-      const angle = (Math.PI * 2 * i) / 30;
-      const speed = 3 + Math.random() * 4;
-      const isEmoji = Math.random() < 0.3; // 30% chance for emoji
+    // Create 50 particles for bigger burst
+    for (let i = 0; i < 50; i++) {
+      const angle = (Math.PI * 2 * i) / 50;
+      const speed = 4 + Math.random() * 6;
+      const isEmoji = Math.random() < 0.4; // 40% chance for emoji
       
       newParticles.push({
         id: i,
@@ -85,7 +91,7 @@ export const FuturisticButton = ({
         opacity: 1,
         type: isEmoji ? 'emoji' : 'spark',
         emoji: isEmoji ? style.particles[Math.floor(Math.random() * style.particles.length)] : undefined,
-        color: isEmoji ? '' : ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4'][Math.floor(Math.random() * 5)]
+        color: isEmoji ? '' : ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FF1493', '#00FF7F', '#FF4500'][Math.floor(Math.random() * 8)]
       });
     }
     
@@ -101,14 +107,15 @@ export const FuturisticButton = ({
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
       
-      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.1);
+      // Create a more satisfying "pop" sound
+      oscillator.frequency.setValueAtTime(1200, audioContext.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.15);
       
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+      gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
       
       oscillator.start();
-      oscillator.stop(audioContext.currentTime + 0.1);
+      oscillator.stop(audioContext.currentTime + 0.15);
     } catch (e) {
       console.log('Audio not supported');
     }
@@ -133,57 +140,116 @@ export const FuturisticButton = ({
 
   return (
     <div className="relative inline-block">
+      {/* Animated Border Ring */}
+      <motion.div
+        className="absolute inset-0 rounded-full p-1"
+        style={{
+          background: style.borderGradient,
+          filter: 'blur(2px)'
+        }}
+        animate={{
+          rotate: 360
+        }}
+        transition={{
+          duration: 3,
+          repeat: Infinity,
+          ease: "linear"
+        }}
+      >
+        <div className="w-full h-full rounded-full bg-transparent" />
+      </motion.div>
+      
+      {/* Secondary glow ring */}
+      <motion.div
+        className="absolute inset-[-4px] rounded-full opacity-75"
+        style={{
+          background: style.borderGradient,
+          filter: 'blur(8px)'
+        }}
+        animate={{
+          rotate: -360,
+          scale: [1, 1.05, 1]
+        }}
+        transition={{
+          rotate: { duration: 4, repeat: Infinity, ease: "linear" },
+          scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+        }}
+      />
+      
       <AnimatePresence>
         {!isExploding && (
           <motion.button
             ref={buttonRef}
             className={`
-              relative overflow-hidden px-8 py-4 rounded-full text-white font-bold text-lg
-              bg-gradient-to-r ${style.gradient}
+              relative overflow-hidden px-12 py-6 rounded-full text-white font-bold text-xl
               shadow-2xl ${style.glow}
-              border-2 border-white/20
               backdrop-blur-sm
-              transition-all duration-300 ease-out
-              hover:scale-105 hover:shadow-3xl hover:${style.glow}
+              transition-all duration-500 ease-out
+              hover:scale-110 hover:shadow-3xl
               active:scale-95
               disabled:opacity-50 disabled:cursor-not-allowed
+              z-10
               ${className}
             `}
             style={{
+              background: style.rgbGradient,
               filter: style.neon,
-              background: `linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(255,255,255,0.1) 100%), linear-gradient(to right, var(--tw-gradient-stops))`
+              minWidth: '400px',
+              minHeight: '80px'
             }}
             onClick={handleClick}
             disabled={disabled}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.4 }}
             whileHover={{
               boxShadow: [
-                `0 0 20px rgba(255,255,255,0.3)`,
-                `0 0 40px rgba(255,255,255,0.2)`,
-                `0 0 20px rgba(255,255,255,0.3)`
+                `0 0 30px rgba(255,255,255,0.4)`,
+                `0 0 60px rgba(255,255,255,0.3)`,
+                `0 0 90px rgba(255,255,255,0.2)`,
+                `0 0 30px rgba(255,255,255,0.4)`
               ],
-              transition: { duration: 1.5, repeat: Infinity }
+              filter: [
+                style.neon,
+                `${style.neon} brightness(1.3)`,
+                style.neon
+              ],
+              transition: { duration: 1, repeat: Infinity }
             }}
           >
+            {/* Animated RGB background */}
+            <motion.div 
+              className="absolute inset-0 rounded-full opacity-80"
+              style={{
+                background: style.rgbGradient
+              }}
+              animate={{
+                backgroundPosition: ['0% 50%', '100% 50%', '0% 50%']
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "linear"
+              }}
+            />
+            
             {/* Glass overlay effect */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-white/20 via-transparent to-white/10" />
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-white/30 via-transparent to-white/20" />
             
-            {/* Inner glow */}
-            <div className="absolute inset-1 rounded-full bg-gradient-to-r from-white/10 via-transparent to-white/5" />
+            {/* Inner premium glow */}
+            <div className="absolute inset-2 rounded-full bg-gradient-to-r from-white/20 via-transparent to-white/15" />
             
-            {/* Shine effect */}
+            {/* Premium shine effect */}
             <motion.div
-              className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/30 to-transparent"
-              initial={{ x: '-100%' }}
-              animate={{ x: '100%' }}
-              transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+              className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/50 to-transparent"
+              initial={{ x: '-100%', skewX: -20 }}
+              animate={{ x: '200%', skewX: -20 }}
+              transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 2 }}
             />
             
             {/* Content */}
-            <span className="relative z-10 flex items-center justify-center gap-3">
+            <span className="relative z-20 flex items-center justify-center gap-4 text-2xl font-extrabold">
               {children}
             </span>
           </motion.button>
@@ -218,10 +284,10 @@ export const FuturisticButton = ({
                   <span className="text-2xl">{particle.emoji}</span>
                 ) : (
                   <div
-                    className="w-3 h-3 rounded-full"
+                    className="w-4 h-4 rounded-full"
                     style={{
                       backgroundColor: particle.color,
-                      boxShadow: `0 0 10px ${particle.color}`
+                      boxShadow: `0 0 15px ${particle.color}, 0 0 30px ${particle.color}`
                     }}
                   />
                 )}
@@ -231,9 +297,17 @@ export const FuturisticButton = ({
             {/* Central explosion flash */}
             <motion.div
               className="absolute inset-0 rounded-full bg-white"
-              initial={{ scale: 0, opacity: 0.8 }}
-              animate={{ scale: 3, opacity: 0 }}
-              transition={{ duration: 0.3 }}
+              initial={{ scale: 0, opacity: 0.9 }}
+              animate={{ scale: 5, opacity: 0 }}
+              transition={{ duration: 0.4 }}
+            />
+            
+            {/* Secondary explosion ring */}
+            <motion.div
+              className="absolute inset-0 rounded-full border-4 border-white"
+              initial={{ scale: 0, opacity: 0.6 }}
+              animate={{ scale: 8, opacity: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
             />
           </div>
         )}

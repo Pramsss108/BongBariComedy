@@ -94,7 +94,7 @@ export const homepageContent = pgTable("homepage_content", {
   sectionType: varchar("section_type", { length: 100 }).notNull(), // offer, greeting, announcement, banner
   title: varchar("title", { length: 255 }),
   content: text("content"),
-  imageUrl: varchar("image_url", { length: 500 }),
+  imageUrl: text("image_url"), // Changed to text to handle base64 image data
   linkUrl: varchar("link_url", { length: 500 }),
   buttonText: varchar("button_text", { length: 100 }),
   isActive: boolean("is_active").default(true),

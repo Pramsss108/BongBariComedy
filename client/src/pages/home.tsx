@@ -15,18 +15,25 @@ import { useToast } from "@/hooks/use-toast";
 import YouTubeShort from "@/components/youtube-short";
 import SEOHead from "@/components/seo-head";
 import { ParallaxSection, ParallaxContainer } from "@/components/parallax-section";
-import { Youtube, Instagram, Phone, Mail, Twitter, Send, Home as HomeIcon, Users, TrendingUp, Smile } from "lucide-react";
+import { Youtube, Instagram, Phone, Mail, Twitter, Send, Home as HomeIcon, Users, TrendingUp, Smile, Edit3 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { insertCollaborationRequestSchema, type InsertCollaborationRequest } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useFunnySubmissionSound } from "@/hooks/useFunnySubmissionSound";
 import { useState, useEffect } from "react";
+import { HomepageBannerEditor } from "@/components/HomepageBannerEditor";
 
 interface YouTubeVideo {
   videoId: string;
   title: string;
   thumbnail: string;
   publishedAt: string;
+}
+
+interface BannerData {
+  title?: string;
+  subtitle?: string;
+  bannerImage?: string;
 }
 
 const Home = () => {
@@ -36,9 +43,41 @@ const Home = () => {
   const [typewriterText, setTypewriterText] = useState("");
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [showCursor, setShowCursor] = useState(true);
+  const [showBannerEditor, setShowBannerEditor] = useState(false);
+  const [sessionTimeRemaining, setSessionTimeRemaining] = useState(300); // 5 minutes
+  const [isAdminMode, setIsAdminMode] = useState(false);
   
+  // Check admin status
+  const { data: authUser } = useQuery({
+    queryKey: ["/api/auth/me"],
+    retry: false,
+  });
+
+  // Auto-logout timer for homepage editing
+  useEffect(() => {
+    if (authUser && !window.location.pathname.includes('/admin')) {
+      setIsAdminMode(true);
+      const timer = setInterval(() => {
+        setSessionTimeRemaining(prev => {
+          if (prev <= 1) {
+            // Auto logout
+            fetch('/api/auth/logout', { method: 'POST' });
+            setIsAdminMode(false);
+            setShowBannerEditor(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    } else {
+      setIsAdminMode(false);
+    }
+  }, [authUser]);
+
   // 🎨 Fetch banner data from admin panel
-  const { data: bannerData } = useQuery({
+  const { data: bannerData } = useQuery<BannerData>({
     queryKey: ['/api/homepage-banner'],
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
@@ -176,13 +215,30 @@ const Home = () => {
         <main className="py-2 sm:py-3 relative z-10 mt-2">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             
-            {/* Dynamic Banner Image */}
+            {/* Dynamic Banner Image with Admin Edit */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="mb-1"
+              className="mb-1 relative"
             >
+              {/* Admin Quick Edit Button */}
+              {isAdminMode && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="absolute top-2 right-2 z-10"
+                >
+                  <Button
+                    onClick={() => setShowBannerEditor(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg text-xs px-2 py-1 h-auto"
+                  >
+                    <Edit3 className="h-3 w-3 mr-1" />
+                    Quick Edit
+                  </Button>
+                </motion.div>
+              )}
+              
               {bannerData?.bannerImage ? (
                 <div className="w-full h-20 md:h-24 rounded-md shadow-md overflow-hidden">
                   <img 
@@ -767,6 +823,15 @@ const Home = () => {
           </div>
         </footer>
       </ParallaxContainer>
+      
+      {/* Homepage Banner Editor Modal */}
+      {showBannerEditor && isAdminMode && (
+        <HomepageBannerEditor
+          currentBanner={bannerData || null}
+          onClose={() => setShowBannerEditor(false)}
+          timeRemaining={sessionTimeRemaining}
+        />
+      )}
     </>
   );
 };

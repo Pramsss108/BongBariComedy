@@ -134,32 +134,21 @@ export const FuturisticButton = ({
 
   return (
     <div className="relative inline-block">
-      {/* Instagram Reels-style rotating ring wrapper */}
-      <div className="relative inline-block p-1 rounded-full">
-        {/* Rotating gradient ring using border technique */}
-        <motion.div
-          className="absolute inset-0 rounded-full"
-          style={{
-            background: `${style.borderGradient}, #000`,
-            backgroundClip: 'padding-box, border-box',
-            border: '4px solid transparent'
-          }}
-          animate={{
-            rotate: 360
-          }}
-          transition={{
-            duration: 3,
-            repeat: Infinity,
-            ease: "linear"
-          }}
-        >
-          {/* Inner circle to create ring effect */}
-          <div 
-            className="absolute inset-1 rounded-full" 
-            style={{ background: '#FFCC00' }}
-          />
-        </motion.div>
-        
+      {/* Rotating gradient border wrapper */}
+      <motion.div
+        className="relative inline-block p-1 rounded-full"
+        style={{
+          background: style.borderGradient
+        }}
+        animate={{
+          rotate: 360
+        }}
+        transition={{
+          duration: 4,
+          repeat: Infinity,
+          ease: "linear"
+        }}
+      >
         <AnimatePresence>
           {!isExploding && (
             <motion.button
@@ -208,7 +197,7 @@ export const FuturisticButton = ({
             </motion.button>
           )}
         </AnimatePresence>
-      </div>
+      </motion.div>
 
       {/* Particle burst effect */}
       <AnimatePresence>

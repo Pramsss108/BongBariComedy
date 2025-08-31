@@ -220,12 +220,12 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
         <motion.div
           ref={headerRef}
           onMouseDown={handleMouseDown}
-          className="relative w-full h-16 bg-gradient-to-r from-[#1363DF]/60 via-[#FFCC00]/60 to-[#FF4D4D]/60 backdrop-blur-lg cursor-grab active:cursor-grabbing flex items-center justify-between px-4 border-b-2 border-white/40 shadow-lg rounded-t-2xl"
-          style={{ userSelect: 'none', marginTop: '-10px', paddingTop: '20px', paddingBottom: '2px' }}
+          className="relative w-full h-14 bg-gradient-to-r from-[#1363DF]/60 via-[#FFCC00]/60 to-[#FF4D4D]/60 backdrop-blur-lg cursor-grab active:cursor-grabbing flex items-center justify-between px-4 border-b-2 border-white/40 shadow-lg rounded-t-2xl"
+          style={{ userSelect: 'none', marginTop: '-10px' }}
           whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
         >
           {/* ANIMATED LOGO & TITLE */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <motion.div 
               className="w-8 h-8 bg-gradient-to-br from-[#FFCC00] to-[#FF4D4D] rounded-lg flex items-center justify-center shadow-lg"
               animate={{ rotate: isDragging ? 10 : 0 }}
@@ -233,11 +233,11 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
             >
               <Bot size={16} className="text-white drop-shadow-sm" />
             </motion.div>
-            <div className="flex flex-col justify-start">
-              <h3 className="text-white font-bold text-lg drop-shadow-lg tracking-wide leading-tight">Bong Bot</h3>
+            <div className="flex flex-col justify-center py-1">
+              <h3 className="text-white font-bold text-base drop-shadow-lg leading-5">Bong Bot</h3>
               <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-green-400 rounded-full shadow-sm"></div>
-                <p className="text-white/90 text-xs drop-shadow-sm font-normal tracking-wide">ami sob somoy online</p>
+                <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+                <p className="text-white/90 text-xs font-normal leading-3">ami sob somoy online</p>
               </div>
             </div>
           </div>

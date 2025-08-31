@@ -75,7 +75,7 @@ const MagicalCursor = () => {
         className="belan-cursor-responsive"
         style={{
           position: 'absolute',
-          transform: `translate3d(${cursorPosition.x - 8}px, ${cursorPosition.y - 4}px, 0) rotate(45deg) ${
+          transform: `translate3d(${cursorPosition.x - 10}px, ${cursorPosition.y - 2}px, 0) rotate(45deg) ${
             isClicking ? 'scale(1.3)' : isMoving ? 'scale(1.15)' : 'scale(1)'
           }`,
           opacity: isClicking ? 1 : isMoving ? 1 : 0.7,
@@ -137,16 +137,16 @@ const MagicalCursor = () => {
           }}
         />
         
-        {/* Precise front tip - 1cm responsive zone */}
+        {/* Sharp front tip - responsive click point */}
         <div
           style={{
             position: 'absolute',
-            width: isClicking ? '5px' : '3px',
-            height: isClicking ? '5px' : '3px',
+            width: isClicking ? '6px' : '4px',
+            height: isClicking ? '6px' : '4px',
             background: isClicking ? '#FF4500' : '#FFCC00',
             borderRadius: '50%',
-            left: isClicking ? '9px' : '10px',
-            top: isClicking ? '7px' : '8px',
+            left: isClicking ? '11px' : '12px',
+            top: isClicking ? '0px' : '1px',
             boxShadow: isClicking 
               ? '0 0 8px rgba(255, 69, 0, 0.9), 0 0 16px rgba(255, 69, 0, 0.4)'
               : '0 0 4px rgba(255, 204, 0, 0.6)',
@@ -155,35 +155,21 @@ const MagicalCursor = () => {
           }}
         />
         
-        {/* 5cm responsive zone around front tip - like arrow cursor */}
+        {/* Sharp front extension for precise pointing */}
         <div
           style={{
             position: 'absolute',
             width: '2px',
-            height: '6px',
+            height: '4px',
             background: isClicking ? '#FF6347' : '#D2691E',
             borderRadius: '1px',
-            left: '11px',
-            top: '2px',
+            left: '13px',
+            top: '-2px',
             opacity: isClicking ? 0.9 : 0.6,
             transition: 'all 0.005s ease'
           }}
         />
         
-        {/* 5cm responsive click zone around front tip - like arrow cursor */}
-        <div
-          style={{
-            position: 'absolute',
-            width: '60px',
-            height: '60px',
-            background: 'transparent',
-            left: '-20px',
-            top: '-30px',
-            pointerEvents: 'auto',
-            cursor: 'none',
-            borderRadius: '30px'
-          }}
-        />
       </div>
 
       {/* Long magical glittery trail */}

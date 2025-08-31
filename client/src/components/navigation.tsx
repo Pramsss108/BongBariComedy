@@ -51,7 +51,7 @@ const Navigation = () => {
               </div>
               {/* Desktop Logo - Fixed Layout */}
               <div className="hidden md:flex flex-col justify-start pt-1 min-w-[140px]">
-                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[26px] leading-tight mb-1">বং বাড়ি</h1>
+                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[26px] leading-tight mb-1 pt-[4px] pb-[4px]">বং বাড়ি</h1>
                 <p className="text-xs text-gray-600 leading-tight whitespace-nowrap">Bengali Comedy</p>
               </div>
             </div>

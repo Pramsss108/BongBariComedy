@@ -22,7 +22,7 @@ import Admin from "@/pages/admin";
 import Login from "@/pages/login";
 import BlogPost from "@/pages/blog-post";
 import NotFound from "@/pages/not-found";
-import Chatbot from "@/components/chatbot";
+import SimpleChatbot from "@/components/SimpleChatbot";
 
 function Router() {
   const [showCharmSelector, setShowCharmSelector] = useState(false);
@@ -65,7 +65,7 @@ function Router() {
       </Switch>
       
       {/* AI Chatbot - Available on all pages */}
-      <Chatbot />
+      <SimpleChatbot />
       
     </div>
   );

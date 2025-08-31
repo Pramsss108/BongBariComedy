@@ -32,6 +32,9 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [chatSize, setChatSize] = useState({ width: 400, height: 500 });
+  const [position, setPosition] = useState({ x: 0, y: 0 });
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -113,32 +116,36 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
     }
   }, [isOpen, isMinimized]);
 
-  // Dragging functionality
+  // Dragging and Resizing functionality
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging || !chatbotRef.current) return;
+      if (isDragging && chatbotRef.current) {
+        const newX = e.clientX - dragOffset.x;
+        const newY = e.clientY - dragOffset.y;
+        
+        // Keep within viewport bounds
+        const maxX = window.innerWidth - chatSize.width;
+        const maxY = window.innerHeight - chatSize.height;
+        
+        const boundedX = Math.max(16, Math.min(newX, maxX - 16));
+        const boundedY = Math.max(16, Math.min(newY, maxY - 16));
+        
+        setPosition({ x: boundedX, y: boundedY });
+      }
       
-      const newX = e.clientX - dragOffset.x;
-      const newY = e.clientY - dragOffset.y;
-      
-      // Keep within viewport bounds
-      const maxX = window.innerWidth - chatbotRef.current.offsetWidth;
-      const maxY = window.innerHeight - chatbotRef.current.offsetHeight;
-      
-      const boundedX = Math.max(0, Math.min(newX, maxX));
-      const boundedY = Math.max(0, Math.min(newY, maxY));
-      
-      chatbotRef.current.style.left = boundedX + 'px';
-      chatbotRef.current.style.top = boundedY + 'px';
-      chatbotRef.current.style.right = 'auto';
-      chatbotRef.current.style.bottom = 'auto';
+      if (isResizing) {
+        const newWidth = Math.max(320, Math.min(600, e.clientX - position.x + 50));
+        const newHeight = Math.max(400, Math.min(700, e.clientY - position.y + 50));
+        setChatSize({ width: newWidth, height: newHeight });
+      }
     };
 
     const handleMouseUp = () => {
       setIsDragging(false);
+      setIsResizing(false);
     };
 
-    if (isDragging) {
+    if (isDragging || isResizing) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
       
@@ -147,10 +154,11 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
         document.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, dragOffset]);
+  }, [isDragging, isResizing, dragOffset, position, chatSize]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (isMinimized) return;
+    e.preventDefault();
     setIsDragging(true);
     const rect = chatbotRef.current?.getBoundingClientRect();
     if (rect) {
@@ -159,6 +167,12 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
         y: e.clientY - rect.top
       });
     }
+  };
+
+  const handleResizeMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
   };
 
   const addMessage = (role: 'user' | 'assistant', content: string) => {
@@ -378,16 +392,18 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
   return (
     <motion.div
       ref={chatbotRef}
-      className={`no-rickshaw-sound fixed z-50 ${className} ${isDragging ? 'cursor-grabbing' : ''}`}
+      className={`no-rickshaw-sound fixed z-50 ${className} ${isDragging ? 'chatbot-dragging' : isResizing ? 'cursor-se-resize' : ''}`}
       style={{
-        bottom: 'max(1rem, env(safe-area-inset-bottom, 1rem))',
-        right: 'max(1rem, env(safe-area-inset-right, 1rem))',
-        maxWidth: 'calc(100vw - 2rem)',
-        maxHeight: 'calc(100vh - 2rem)',
+        left: position.x || 'unset',
+        top: position.y || 'unset',
+        bottom: position.x || position.y ? 'unset' : 'max(1rem, env(safe-area-inset-bottom, 1rem))',
+        right: position.x || position.y ? 'unset' : 'max(1rem, env(safe-area-inset-right, 1rem))',
+        width: `${chatSize.width}px`,
+        height: `${chatSize.height}px`,
         pointerEvents: 'auto',
-        touchAction: 'manipulation',
+        touchAction: 'none',
         isolation: 'isolate',
-        overscrollBehavior: 'contain'
+        userSelect: 'none'
       }}
       initial={{ scale: 0, opacity: 0, y: 100 }}
       animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -395,14 +411,10 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
       transition={{ type: "spring", stiffness: 200, damping: 25 }}
     >
       <div 
-        className={`relative transition-all duration-500 ease-out ${
-          isMinimized 
-            ? 'w-72 h-14' 
-            : 'w-80 sm:w-96 md:w-[400px] h-[450px] max-h-[80vh]'
+        className={`relative h-full w-full flex flex-col transition-all duration-300 ${
+          isMinimized ? 'h-16' : ''
         }`}
         style={{ 
-          minWidth: '280px',
-          maxWidth: 'min(400px, calc(100vw - 2rem))',
           contain: 'layout style paint',
           isolation: 'isolate'
         }}
@@ -428,14 +440,17 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
           </div>
         </div>
 
-        {/* NATURAL HEADER DESIGN - Fixed */}
-        <div className="relative z-10 flex flex-col bg-gradient-to-r from-[#1363DF]/95 to-[#FF4D4D]/95 backdrop-blur-md rounded-t-2xl border-b border-[#FFCC00]/30">
-          {/* Drag Handle */}
-          <div 
-            className="absolute left-1/2 top-2 transform -translate-x-1/2 cursor-grab active:cursor-grabbing transition-colors"
-            onMouseDown={handleMouseDown}
-          >
-            <GripVertical className="w-5 h-5 text-white/60 hover:text-white/80" />
+        {/* NATURAL HEADER DESIGN - Draggable */}
+        <div 
+          className="relative z-10 flex flex-col bg-gradient-to-r from-[#1363DF]/95 to-[#FF4D4D]/95 backdrop-blur-md rounded-t-2xl border-b border-[#FFCC00]/30 cursor-grab active:cursor-grabbing flex-shrink-0"
+          onMouseDown={handleMouseDown}
+          style={{ height: isMinimized ? '64px' : '80px' }}
+        >
+          {/* Drag Indicator */}
+          <div className="absolute left-1/2 top-1 transform -translate-x-1/2 flex gap-1">
+            <div className="w-1 h-1 bg-white/40 rounded-full"></div>
+            <div className="w-1 h-1 bg-white/40 rounded-full"></div>
+            <div className="w-1 h-1 bg-white/40 rounded-full"></div>
           </div>
           
           <div className="p-4 pt-6">
@@ -506,20 +521,27 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
           </div>
         </div>
 
+        {/* RESIZE HANDLE */}
+        <div 
+          className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize bg-[#FFCC00]/20 hover:bg-[#FFCC00]/40 transition-colors"
+          onMouseDown={handleResizeMouseDown}
+          style={{
+            background: 'linear-gradient(-45deg, transparent 30%, #FFCC00 30%, #FFCC00 40%, transparent 40%, transparent 60%, #FFCC00 60%, #FFCC00 70%, transparent 70%)'
+          }}
+        />
+
         <AnimatePresence>
           {!isMinimized && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.5 }}
-              className="relative z-10 flex flex-col"
-              style={{ height: 'calc(450px - 60px)' }}
+              transition={{ duration: 0.3 }}
+              className="relative z-10 flex flex-col flex-1 min-h-0"
             >
-              {/* SCROLLABLE MESSAGES AREA - Cursor Controlled */}
+              {/* SCROLLABLE MESSAGES AREA - ONLY THIS SCROLLS */}
               <div 
-                className="flex-1 overflow-hidden bg-gradient-to-b from-transparent via-[#101418]/20 to-transparent" 
-                style={{ height: '250px' }}
+                className="flex-1 overflow-hidden bg-gradient-to-b from-transparent via-[#101418]/20 to-transparent min-h-0" 
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
                 onTouchStart={() => setIsHovered(true)}
@@ -531,7 +553,8 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
                   style={{ 
                     touchAction: 'pan-y',
                     scrollBehavior: 'smooth',
-                    overscrollBehavior: 'contain'
+                    overscrollBehavior: 'contain',
+                    pointerEvents: 'auto'
                   }}
                 >
                   <div className="space-y-3">
@@ -584,8 +607,8 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
                 </ScrollArea>
               </div>
 
-              {/* Template Messages */}
-              <div className="px-4 py-2 border-t border-[#FFCC00]/20 bg-gradient-to-r from-[#101418]/60 to-[#101418]/80 backdrop-blur-sm">
+              {/* Template Messages - Fixed */}
+              <div className="px-4 py-2 border-t border-[#FFCC00]/20 bg-gradient-to-r from-[#101418]/60 to-[#101418]/80 backdrop-blur-sm flex-shrink-0">
                 <div className="space-y-1.5">
                   {templateMessages.map((template, index) => (
                     <motion.button
@@ -604,8 +627,8 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
                 </div>
               </div>
 
-              {/* FIXED WRITING BOX - Never Moves */}
-              <div className="mt-auto p-4 bg-gradient-to-t from-[#101418]/95 via-[#101418]/80 to-[#101418]/60 backdrop-blur-md border-t-2 border-[#FFCC00]/30 rounded-b-2xl">
+              {/* ABSOLUTELY FIXED WRITING BOX - NEVER MOVES */}
+              <div className="p-4 bg-gradient-to-t from-[#101418]/95 via-[#101418]/80 to-[#101418]/60 backdrop-blur-md border-t-2 border-[#FFCC00]/30 rounded-b-2xl flex-shrink-0">
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-r from-[#1363DF]/20 to-[#FF4D4D]/20 rounded-lg blur-sm" />
                   

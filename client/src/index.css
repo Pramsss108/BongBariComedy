@@ -1932,6 +1932,30 @@ section:nth-child(odd) {
   width: 100% !important;
 }
 
+/* Draggable chatbot cursor states */
+.chatbot-dragging {
+  cursor: grabbing !important;
+}
+
+.chatbot-dragging * {
+  cursor: grabbing !important;
+  user-select: none !important;
+}
+
+/* Resize handle styling */
+.resize-handle {
+  background: linear-gradient(-45deg, 
+    transparent 30%, 
+    #FFCC00 30%, 
+    #FFCC00 40%, 
+    transparent 40%, 
+    transparent 60%, 
+    #FFCC00 60%, 
+    #FFCC00 70%, 
+    transparent 70%
+  );
+}
+
 /* Improve touch targets for mobile */
 .touch-manipulation {
   touch-action: manipulation;

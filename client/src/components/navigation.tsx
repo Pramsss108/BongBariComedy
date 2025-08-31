@@ -45,11 +45,11 @@ const Navigation = () => {
                   <span className="emoji-float emoji-6 text-lg">🤣</span>
                 </div>
               </div>
-              {/* Mobile Logo - Clean & Professional */}
+              {/* Mobile Logo - Reorganized Layout */}
               <div className="md:hidden flex flex-col justify-center pl-1 min-w-0 flex-1">
-                <h1 className="text-xl font-bold text-brand-blue bangla-text leading-tight mb-1">বং বাড়ি</h1>
                 <p className="text-sm font-bold text-gray-800 leading-tight group-hover:text-brand-blue transition-colors duration-300">Every Home's Story</p>
-                <p className="text-xs text-gray-600 bangla-text font-medium leading-tight group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
+                <p className="text-xs text-gray-600 bangla-text font-medium leading-none mb-2 group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
+                <h1 className="text-lg font-bold text-brand-blue bangla-text leading-tight">বং বাড়ি</h1>
               </div>
               {/* Desktop Logo - Maximum Visibility */}
               <div className="hidden md:flex flex-col justify-center pl-3 min-w-[300px]">

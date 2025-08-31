@@ -290,7 +290,32 @@
   }
 }
 
-/* Clean video container styling */
+/* Thin rotating gradient border wrapper */
+.rotating-border-wrapper {
+  position: relative;
+  padding: 2px;
+  border-radius: 14px;
+  background: conic-gradient(
+    from 0deg,
+    #ff1493,  /* hot pink */
+    #ff6b35,  /* orange */
+    #ffd700,  /* yellow */
+    #00ff7f,  /* spring green */
+    #1e90ff,  /* blue */
+    #9370db,  /* purple */
+    #ff1493   /* back to hot pink */
+  );
+  animation: rotateBorder 3s linear infinite;
+}
+
+@keyframes rotateBorder {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /* Simple, performance-friendly spinning animation */
 @keyframes simpleSpin {

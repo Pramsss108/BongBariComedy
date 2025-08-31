@@ -44,23 +44,46 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
       setTimeout(() => {
         const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-content]');
         if (scrollContainer) {
-          scrollContainer.scrollTop = scrollContainer.scrollHeight;
+          scrollContainer.scrollTo({
+            top: scrollContainer.scrollHeight,
+            behavior: 'smooth'
+          });
         }
       }, 100);
     }
   }, [messages, isTyping]);
 
-  // Prevent page scrolling when chatbot is hovered
+  // Prevent page scrolling when chatbot is hovered with proper edge handling
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
       if (isHovered && chatbotRef.current?.contains(e.target as Node)) {
-        e.stopPropagation();
+        const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-content]');
+        if (scrollContainer) {
+          const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+          const isAtTop = scrollTop <= 0;
+          const isAtBottom = scrollTop >= scrollHeight - clientHeight;
+          
+          // Only prevent if scrolling within bounds or trying to scroll further when at edge
+          if ((!isAtTop && e.deltaY < 0) || (!isAtBottom && e.deltaY > 0)) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Smooth scroll within chatbot
+            scrollContainer.scrollTo({
+              top: scrollTop + e.deltaY,
+              behavior: 'auto'
+            });
+          }
+        }
       }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
       if (isHovered && chatbotRef.current?.contains(e.target as Node)) {
-        e.stopPropagation();
+        const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-content]');
+        if (scrollContainer) {
+          e.stopPropagation();
+        }
       }
     };
 
@@ -365,8 +388,9 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
         maxWidth: 'calc(100vw - 2rem)',
         maxHeight: 'calc(100vh - 2rem)',
         pointerEvents: 'auto',
-        touchAction: 'pan-y',
-        isolation: 'isolate'
+        touchAction: 'manipulation',
+        isolation: 'isolate',
+        overscrollBehavior: 'contain'
       }}
       initial={{ scale: 0, opacity: 0, y: 100 }}
       animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -489,14 +513,21 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
               <div 
                 className="flex-1 overflow-hidden" 
                 style={{ height: 'min(200px, 40vh)' }}
-                onWheel={(e) => {
-                  e.stopPropagation();
-                }}
               >
                 <ScrollArea 
                   ref={scrollAreaRef}
-                  className="h-full px-3 py-2 custom-scrollbar"
-                  style={{ touchAction: 'pan-y' }}
+                  className="h-full px-3 py-2 custom-scrollbar smooth-scroll"
+                  style={{ 
+                    touchAction: 'pan-y',
+                    scrollBehavior: 'smooth',
+                    overscrollBehavior: 'contain',
+                    scrollPadding: '8px',
+                    scrollMargin: '8px'
+                  }}
+                  onWheel={(e) => {
+                    // Let the improved wheel handler in useEffect manage this
+                    e.stopPropagation();
+                  }}
                 >
                   <div className="space-y-3">
                     {messages.map((message, index) => (

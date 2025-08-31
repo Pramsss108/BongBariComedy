@@ -44,6 +44,12 @@ const Home = () => {
     refetchInterval: 15 * 60 * 1000, // Refetch every 15 minutes (popular videos change less frequently)
   });
 
+  // Fetch active homepage content for promo/offers/greetings
+  const { data: activeContent = [] } = useQuery({
+    queryKey: ['/api/homepage-content/active'],
+    refetchInterval: 2 * 60 * 1000, // Refetch every 2 minutes
+  });
+
   const form = useForm<InsertCollaborationRequest>({
     resolver: zodResolver(insertCollaborationRequestSchema),
     defaultValues: {
@@ -164,63 +170,125 @@ const Home = () => {
         
         <main className="py-4 sm:py-6 lg:py-8 relative z-10">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            {/* Hero Banner */}
+            
+            {/* Dynamic Promo/Offer Section - Just under header */}
+            {activeContent.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                className="mb-4"
+              >
+                {activeContent
+                  .filter((content: any) => content.isActive)
+                  .sort((a: any, b: any) => a.displayOrder - b.displayOrder)
+                  .slice(0, 2) // Show max 2 promo sections
+                  .map((content: any) => (
+                    <motion.div
+                      key={content.id}
+                      className={`
+                        ${content.sectionType === 'offer' ? 'bg-gradient-to-r from-yellow-100 to-yellow-50 border-yellow-300' : ''}
+                        ${content.sectionType === 'greeting' ? 'bg-gradient-to-r from-blue-100 to-blue-50 border-blue-300' : ''}
+                        ${content.sectionType === 'announcement' ? 'bg-gradient-to-r from-red-100 to-red-50 border-red-300' : ''}
+                        ${content.sectionType === 'banner' ? 'bg-gradient-to-r from-purple-100 to-purple-50 border-purple-300' : ''}
+                        border-2 rounded-lg p-3 mb-2 text-center
+                      `}
+                      whileHover={{ scale: 1.02 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        {content.sectionType === 'offer' && <span className="text-yellow-600">🎁</span>}
+                        {content.sectionType === 'greeting' && <span className="text-blue-600">🙏</span>}
+                        {content.sectionType === 'announcement' && <span className="text-red-600">📢</span>}
+                        {content.sectionType === 'banner' && <span className="text-purple-600">✨</span>}
+                        
+                        <div className="flex-1">
+                          {content.title && (
+                            <h3 className="font-semibold text-sm md:text-base text-gray-800">
+                              {content.title}
+                            </h3>
+                          )}
+                          {content.content && (
+                            <p className="text-xs md:text-sm text-gray-600 mt-1">
+                              {content.content}
+                            </p>
+                          )}
+                        </div>
+                        
+                        {content.buttonText && content.linkUrl && (
+                          <a 
+                            href={content.linkUrl}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs md:text-sm font-medium transition-colors"
+                          >
+                            {content.buttonText}
+                          </a>
+                        )}
+                      </div>
+                    </motion.div>
+                  ))}
+              </motion.div>
+            )}
+
+            {/* Barir Mashla YouTube Video - Our Story */}
             <ParallaxSection speed={0.3} delay={0.1}>
               <section className="text-center mb-6 sm:mb-8 lg:mb-12" data-testid="hero-section">
-            <motion.div 
-              className="w-full h-72 sm:h-80 md:h-96 lg:h-[28rem] xl:h-[32rem] bg-gradient-to-r from-brand-yellow via-brand-red to-brand-blue rounded-xl sm:rounded-2xl shadow-lg mb-4 sm:mb-6 flex items-center justify-center relative overflow-hidden"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1, ease: [0.25, 0.25, 0.25, 1] }}
-              whileHover={{ 
-                scale: 1.02,
-                transition: { duration: 0.2 }
-              }}
+            {/* Barir Mashla Video - Our Story */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="text-center mb-6"
             >
-              {/* Background pattern */}
-              <div className="absolute inset-0 opacity-10">
-                <div className="w-full h-full bg-gradient-to-br from-transparent via-white to-transparent"></div>
-              </div>
-              
-              {/* Main content */}
-              <motion.div 
-                className="text-center z-10 mt-8"
-                initial={{ opacity: 0, y: 50 }}
+              <motion.h1 
+                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gray-800 mb-2 bangla-text"
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.5 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
               >
-                <motion.div 
-                  className="mb-8"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.7 }}
-                >
-                  <span className="text-5xl sm:text-6xl md:text-8xl lg:text-9xl xl:text-[10rem] font-bold text-white bangla-text drop-shadow-lg leading-none">
-                    বং বাড়ি
-                  </span>
-                </motion.div>
-                <motion.div 
-                  className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-semibold text-white drop-shadow-md mt-4 sm:mt-6 px-4"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.9 }}
-                >
-                  Bengali Comedy That Hits Home!
-                </motion.div>
-                <motion.div 
-                  className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl text-white/90 mt-2 sm:mt-4 bangla-text px-4"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 1.1 }}
-                >
-                  কলকাতার ঘরোয়া কমেডি
-                </motion.div>
-              </motion.div>
-              
-              {/* Decorative elements */}
-              <div className="absolute top-4 left-4 w-16 h-16 bg-white/20 rounded-full"></div>
-              <div className="absolute bottom-4 right-4 w-12 h-12 bg-white/20 rounded-full"></div>
-              <div className="absolute top-1/2 right-8 w-8 h-8 bg-white/20 rounded-full"></div>
+                বং বাড়ি
+              </motion.h1>
+              <motion.p 
+                className="text-lg sm:text-xl md:text-2xl text-gray-600 mb-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+              >
+                Bengali Comedy That Hits Home!
+              </motion.p>
+              <motion.p 
+                className="text-base sm:text-lg text-gray-500 mb-6 bangla-text"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.6 }}
+              >
+                কলকাতার ঘরোয়া কমেডি - আমাদের গল্প শুনুন
+              </motion.p>
+            </motion.div>
+
+            {/* YouTube Video Embed - Barir Mashla (Our Story) */}
+            <motion.div
+              className="w-full max-w-4xl mx-auto mb-8"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+            >
+              <div className="relative w-full aspect-video rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl">
+                <iframe
+                  src="https://www.youtube.com/embed/pdjQpcVqxMU?rel=0&modestbranding=1&showinfo=0"
+                  title="বং বাড়ি - Barir Mashla | Our Story | Bengali Comedy Channel"
+                  className="absolute inset-0 w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+              </div>
+              <motion.p 
+                className="text-center text-gray-600 mt-4 text-sm md:text-base"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 1 }}
+              >
+                🎬 আমাদের গল্প - কেন শুরু করলাম বং বাড়ি? | Why We Started Bong Bari?
+              </motion.p>
             </motion.div>
             
             

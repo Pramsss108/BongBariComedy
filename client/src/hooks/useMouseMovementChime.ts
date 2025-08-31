@@ -56,46 +56,68 @@ export function useMouseMovementChime(options: MouseMovementChimeOptions = {}) {
   }, [enabled, audioFile]);
 
   const startChime = useCallback(() => {
-    if (!enabled || !audioContextRef.current || !audioBufferRef.current || isPlayingRef.current) return;
+    if (!enabled || !audioContextRef.current || !audioBufferRef.current) return;
 
-    try {
-      const audioContext = audioContextRef.current;
-      
-      // Create audio source from your custom charm sound
-      const audioSource = audioContext.createBufferSource();
-      const gainNode = audioContext.createGain();
-      
-      // Connect nodes
-      audioSource.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      // Set the custom charm sound buffer
-      audioSource.buffer = audioBufferRef.current;
-      audioSource.loop = true; // Loop the charm sound while cursor moves
-      
-      // Set initial volume to 0 and smoothly fade in
-      gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + fadeInTime);
-      
-      // Start playing your custom charm sound
-      audioSource.start(audioContext.currentTime);
-      
-      // Store references
-      audioSourceRef.current = audioSource;
-      gainNodeRef.current = gainNode;
-      isPlayingRef.current = true;
-      
-    } catch (error) {
-      console.log('Failed to play custom charm sound');
+    // Stop any existing sound first
+    if (isPlayingRef.current) {
+      stopChime();
+      // Wait a moment for cleanup
+      setTimeout(() => {
+        startNewSound();
+      }, 50);
+      return;
+    }
+
+    startNewSound();
+
+    function startNewSound() {
+      try {
+        const audioContext = audioContextRef.current;
+        if (!audioContext || !audioBufferRef.current) return;
+        
+        // Create audio source from your custom charm sound
+        const audioSource = audioContext.createBufferSource();
+        const gainNode = audioContext.createGain();
+        
+        // Connect nodes
+        audioSource.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        // Set the custom charm sound buffer
+        audioSource.buffer = audioBufferRef.current;
+        audioSource.loop = true; // Loop the charm sound while cursor moves
+        
+        // Set initial volume to 0 and smoothly fade in
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + fadeInTime);
+        
+        // Start playing your custom charm sound
+        audioSource.start(audioContext.currentTime);
+        
+        // Store references
+        audioSourceRef.current = audioSource;
+        gainNodeRef.current = gainNode;
+        isPlayingRef.current = true;
+        
+      } catch (error) {
+        console.log('Failed to play custom charm sound');
+        isPlayingRef.current = false;
+      }
     }
   }, [enabled, volume, fadeInTime]);
 
   const stopChime = useCallback(() => {
-    if (!isPlayingRef.current || !gainNodeRef.current || !audioSourceRef.current) return;
+    if (!isPlayingRef.current) return;
 
     try {
       const audioContext = audioContextRef.current;
-      if (!audioContext) return;
+      if (!audioContext || !gainNodeRef.current || !audioSourceRef.current) {
+        // Force cleanup if references are missing
+        audioSourceRef.current = null;
+        gainNodeRef.current = null;
+        isPlayingRef.current = false;
+        return;
+      }
 
       // Gracefully fade out your custom charm sound (like emoji trail fading)
       gainNodeRef.current.gain.cancelScheduledValues(audioContext.currentTime);
@@ -105,21 +127,30 @@ export function useMouseMovementChime(options: MouseMovementChimeOptions = {}) {
       // Stop the audio source after fade out
       audioSourceRef.current.stop(audioContext.currentTime + fadeOutTime);
       
-      // Clean up references
+      // Immediately mark as not playing
+      isPlayingRef.current = false;
+      
+      // Clean up references after fade
       setTimeout(() => {
         audioSourceRef.current = null;
         gainNodeRef.current = null;
-        isPlayingRef.current = false;
       }, (fadeOutTime * 1000) + 100);
       
     } catch (error) {
       console.log('Failed to stop custom charm sound');
+      // Force cleanup on error
+      audioSourceRef.current = null;
+      gainNodeRef.current = null;
+      isPlayingRef.current = false;
     }
   }, [fadeOutTime]);
 
   // Handle mouse movement
   useEffect(() => {
     if (!enabled) return;
+
+    let isMoving = false;
+    let stopTimer: number | null = null;
 
     const handleMouseMove = (event: MouseEvent) => {
       const currentPos = { x: event.clientX, y: event.clientY };
@@ -130,66 +161,49 @@ export function useMouseMovementChime(options: MouseMovementChimeOptions = {}) {
         Math.pow(currentPos.x - lastPos.x, 2) + Math.pow(currentPos.y - lastPos.y, 2)
       );
       
-      // Only play if movement is significant enough
+      // Only respond to significant movement
       if (distance >= movementThreshold) {
-        // Start chime if not already playing
+        // Mark as moving
+        isMoving = true;
+        
+        // Start sound if not playing
         if (!isPlayingRef.current) {
           startChime();
         }
         
-        // Clear existing timeout to keep playing while moving
-        if (movementTimeoutRef.current) {
-          clearTimeout(movementTimeoutRef.current);
-          movementTimeoutRef.current = null;
+        // Clear any stop timer
+        if (stopTimer) {
+          clearTimeout(stopTimer);
+          stopTimer = null;
         }
+        
+        // Set a new stop timer
+        stopTimer = window.setTimeout(() => {
+          isMoving = false;
+          if (isPlayingRef.current) {
+            stopChime();
+          }
+        }, 300); // Stop after 300ms of no significant movement
         
         lastMousePosRef.current = currentPos;
       }
     };
 
-    const handleMouseStop = () => {
-      // Clear any existing timeout
-      if (movementTimeoutRef.current) {
-        clearTimeout(movementTimeoutRef.current);
-      }
-      
-      // Set timeout to stop charm when movement stops
-      movementTimeoutRef.current = window.setTimeout(() => {
-        if (isPlayingRef.current) {
-          stopChime();
-        }
-      }, 200); // Stop after 200ms of no movement
-    };
-
     // Add mouse move listener
     document.addEventListener('mousemove', handleMouseMove, { passive: true });
-    
-    // Add mouse stop detection (when not moving for a bit)
-    let mouseMoveTimer: number | null = null;
-    
-    const detectMouseStop = () => {
-      if (mouseMoveTimer) {
-        clearTimeout(mouseMoveTimer);
-      }
-      mouseMoveTimer = window.setTimeout(handleMouseStop, 100);
-    };
-    
-    document.addEventListener('mousemove', detectMouseStop, { passive: true });
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mousemove', detectMouseStop);
       
-      // Clean up timeouts
-      if (movementTimeoutRef.current) {
-        clearTimeout(movementTimeoutRef.current);
-      }
-      if (mouseMoveTimer) {
-        clearTimeout(mouseMoveTimer);
+      // Clean up timer
+      if (stopTimer) {
+        clearTimeout(stopTimer);
       }
       
       // Stop any playing sound
-      stopChime();
+      if (isPlayingRef.current) {
+        stopChime();
+      }
     };
   }, [enabled, startChime, stopChime, movementThreshold]);
 

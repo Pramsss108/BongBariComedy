@@ -388,7 +388,7 @@ const Home = () => {
           
           {/* CTA Buttons */}
           <ParallaxSection speed={0.3} delay={0.3}>
-            <section className="text-center mb-0 pb-4 pt-8" data-testid="cta-section">
+            <section className="text-center mb-0 pb-2 pt-4" data-testid="cta-section">
             <motion.div 
               className="flex flex-col lg:flex-row gap-8 justify-center items-center px-8 max-w-6xl mx-auto"
               initial={{ opacity: 0, y: 50 }}
@@ -429,6 +429,61 @@ const Home = () => {
                 </FuturisticButton>
               </motion.div>
             </motion.div>
+            </section>
+          </ParallaxSection>
+          
+          {/* Fun Facts Section to Fill Space */}
+          <ParallaxSection speed={0.1} delay={0.1}>
+            <section className="py-8 bg-gradient-to-b from-brand-yellow to-yellow-300" data-testid="fun-facts-section">
+              <div className="max-w-4xl mx-auto px-4 text-center">
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6 }}
+                >
+                  <h3 className="text-4xl md:text-5xl font-bold text-brand-blue mb-6" data-testid="fun-facts-title">
+                    Why Bong Bari? 🎭
+                  </h3>
+                  <h4 className="text-3xl md:text-4xl font-bold text-gray-800 bangla-text mb-8" data-testid="fun-facts-title-bengali">
+                    কেন বং বাড়ি?
+                  </h4>
+                  
+                  <div className="grid md:grid-cols-3 gap-6">
+                    <motion.div 
+                      className="bg-white/80 rounded-2xl p-6 shadow-lg"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.5, delay: 0.1 }}
+                    >
+                      <div className="text-4xl mb-3">😂</div>
+                      <h5 className="font-bold text-lg text-brand-blue mb-2">Pure Bengali Humor</h5>
+                      <p className="text-gray-700 bangla-text">খাঁটি বাংলা হাসির গল্প</p>
+                    </motion.div>
+                    
+                    <motion.div 
+                      className="bg-white/80 rounded-2xl p-6 shadow-lg"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.5, delay: 0.2 }}
+                    >
+                      <div className="text-4xl mb-3">👨‍👦</div>
+                      <h5 className="font-bold text-lg text-brand-blue mb-2">Mother-Son Comedy</h5>
+                      <p className="text-gray-700 bangla-text">মা-ছেলের মজার জুটি</p>
+                    </motion.div>
+                    
+                    <motion.div 
+                      className="bg-white/80 rounded-2xl p-6 shadow-lg"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.5, delay: 0.3 }}
+                    >
+                      <div className="text-4xl mb-3">🏙️</div>
+                      <h5 className="font-bold text-lg text-brand-blue mb-2">Kolkata Vibes</h5>
+                      <p className="text-gray-700 bangla-text">কলকাতার আড্DA মেজাজ</p>
+                    </motion.div>
+                  </div>
+                </motion.div>
+              </div>
             </section>
           </ParallaxSection>
           </div>

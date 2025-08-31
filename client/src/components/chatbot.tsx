@@ -302,7 +302,7 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
       exit={{ scale: 0, opacity: 0, y: 100 }}
       transition={{ type: "spring", stiffness: 200, damping: 25 }}
     >
-      <div className={`relative ${isMinimized ? 'w-80 h-20' : 'w-[420px] h-[650px]'} transition-all duration-700 ease-out`}>
+      <div className={`relative ${isMinimized ? 'w-80 h-20' : 'w-[420px] h-[580px]'} transition-all duration-700 ease-out`}>
         {/* Premium Background with advanced glass morphism */}
         <div className="absolute inset-0 bg-gradient-to-br from-purple-900/90 via-blue-900/90 to-pink-900/90 backdrop-blur-2xl rounded-3xl border-2 border-white/40 shadow-2xl overflow-hidden">
           {/* Advanced animated gradient overlay */}
@@ -422,7 +422,7 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
               className="relative z-10"
             >
               {/* Premium Messages Area */}
-              <ScrollArea className="h-[380px] px-5 py-4">
+              <ScrollArea className="h-[280px] px-5 py-4">
                 <div className="space-y-6">
                   {messages.map((message, index) => (
                     <motion.div
@@ -504,21 +504,6 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
                 </div>
               </div>
 
-              {/* Premium Quick Action */}
-              <div className="px-5 pb-3">
-                <motion.button
-                  onClick={getComedyTips}
-                  disabled={isTyping}
-                  className="no-rickshaw-sound w-full py-3 px-4 bg-gradient-to-r from-yellow-500/25 to-red-500/25 backdrop-blur-sm rounded-lg border border-white/30 text-white text-sm font-medium hover:from-yellow-500/35 hover:to-red-500/35 transition-all duration-300 flex items-center justify-center gap-3"
-                  whileHover={{ scale: 1.02, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                  data-testid="quick-action-tips"
-                >
-                  <Zap className="w-4 h-4 text-yellow-400" />
-                  <span>Comedy Magic Tips / কমেডি টিপস</span>
-                  <Star className="w-4 h-4 text-yellow-400" />
-                </motion.button>
-              </div>
 
               {/* Premium Input Area - Significantly Expanded */}
               <div className="p-5 pt-3 border-t border-white/20">

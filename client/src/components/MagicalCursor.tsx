@@ -21,20 +21,53 @@ const MagicalCursor = () => {
 
   return (
     <div className="fixed inset-0 pointer-events-none z-50 hidden sm:block">
-      {/* Faint transparent rolling pin that follows cursor smoothly */}
-      <img
-        src="@assets/rolling-pin_1756659784180.png"
-        alt="Rolling Pin Cursor"
+      {/* Authentic CSS Belan with wooden body and handles */}
+      <div
         className="absolute pointer-events-none"
         style={{
-          width: '24px',
-          height: '24px',
-          transform: `translate3d(${cursorPosition.x - 12}px, ${cursorPosition.y - 12}px, 0) rotate(45deg)`,
-          opacity: isMoving ? 0.15 : 0.03,
+          transform: `translate3d(${cursorPosition.x - 12}px, ${cursorPosition.y - 4}px, 0) rotate(45deg)`,
+          opacity: isMoving ? 0.3 : 0.1,
           transition: 'opacity 0.1s ease',
           willChange: 'transform, opacity'
         }}
-      />
+      >
+        {/* Main wooden body */}
+        <div
+          className="absolute"
+          style={{
+            width: '20px',
+            height: '6px',
+            backgroundColor: '#D2691E',
+            borderRadius: '3px',
+            left: '2px',
+            top: '0px'
+          }}
+        />
+        {/* Left handle */}
+        <div
+          className="absolute"
+          style={{
+            width: '4px',
+            height: '3px',
+            backgroundColor: '#8B4513',
+            borderRadius: '2px',
+            left: '-1px',
+            top: '1.5px'
+          }}
+        />
+        {/* Right handle */}
+        <div
+          className="absolute"
+          style={{
+            width: '4px',
+            height: '3px',
+            backgroundColor: '#8B4513',
+            borderRadius: '2px',
+            left: '21px',
+            top: '1.5px'
+          }}
+        />
+      </div>
 
       {/* Long magical glittery trail */}
       {particles.map(particle => {

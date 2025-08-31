@@ -59,14 +59,12 @@ export const FloatingElements = () => {
         />
       ))}
       
-      {/* Mouse follower - Rolling Pin */}
-      <motion.img
-        src="@assets/rolling-pin_1756659784180.png"
-        alt="Rolling Pin Cursor"
+      {/* Mouse follower - CSS Belan */}
+      <motion.div
         className="absolute pointer-events-none opacity-30"
         style={{
           width: '20px',
-          height: '20px',
+          height: '6px',
           transform: 'rotate(45deg)'
         }}
         animate={{
@@ -78,7 +76,44 @@ export const FloatingElements = () => {
           stiffness: 150,
           damping: 15,
         }}
-      />
+      >
+        {/* Main wooden body */}
+        <div
+          className="absolute"
+          style={{
+            width: '16px',
+            height: '4px',
+            backgroundColor: '#D2691E',
+            borderRadius: '2px',
+            left: '2px',
+            top: '1px'
+          }}
+        />
+        {/* Left handle */}
+        <div
+          className="absolute"
+          style={{
+            width: '3px',
+            height: '2px',
+            backgroundColor: '#8B4513',
+            borderRadius: '1px',
+            left: '0px',
+            top: '2px'
+          }}
+        />
+        {/* Right handle */}
+        <div
+          className="absolute"
+          style={{
+            width: '3px',
+            height: '2px',
+            backgroundColor: '#8B4513',
+            borderRadius: '1px',
+            left: '17px',
+            top: '2px'
+          }}
+        />
+      </motion.div>
     </div>
   );
 };

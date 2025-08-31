@@ -15,21 +15,59 @@ export const useGlobalCursor = () => {
     const existingCursors = document.querySelectorAll('.global-cursor-follower, .global-cursor-ring');
     existingCursors.forEach(el => el.remove());
 
-    // Create BIG rolling pin cursor!
-    const cursor = document.createElement('img');
+    // Create BIG CSS Belan cursor!
+    const cursor = document.createElement('div');
     cursor.className = 'global-cursor-follower';
-    cursor.src = '@assets/rolling-pin_1756659784180.png';
-    cursor.alt = 'Rolling Pin Cursor';
     cursor.style.cssText = `
       position: fixed;
       width: 48px;
-      height: 48px;
+      height: 16px;
       pointer-events: none;
       z-index: 9999;
       transform: translate(-50%, -50%) rotate(45deg);
       transition: opacity 0.2s ease;
       opacity: 0;
     `;
+    
+    // Create main wooden body
+    const body = document.createElement('div');
+    body.style.cssText = `
+      position: absolute;
+      width: 40px;
+      height: 12px;
+      background-color: #D2691E;
+      border-radius: 6px;
+      left: 4px;
+      top: 2px;
+    `;
+    
+    // Create left handle
+    const leftHandle = document.createElement('div');
+    leftHandle.style.cssText = `
+      position: absolute;
+      width: 8px;
+      height: 6px;
+      background-color: #8B4513;
+      border-radius: 3px;
+      left: -2px;
+      top: 5px;
+    `;
+    
+    // Create right handle
+    const rightHandle = document.createElement('div');
+    rightHandle.style.cssText = `
+      position: absolute;
+      width: 8px;
+      height: 6px;
+      background-color: #8B4513;
+      border-radius: 3px;
+      left: 42px;
+      top: 5px;
+    `;
+    
+    cursor.appendChild(body);
+    cursor.appendChild(leftHandle);
+    cursor.appendChild(rightHandle);
 
     document.body.appendChild(cursor);
 

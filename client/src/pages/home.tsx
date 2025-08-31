@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import YouTubeShort from "@/components/youtube-short";
 import SEOHead from "@/components/seo-head";
 import { ParallaxSection, ParallaxContainer } from "@/components/parallax-section";
-import { Youtube, Instagram, Phone, Mail, Twitter, Send } from "lucide-react";
+import { Youtube, Instagram, Phone, Mail, Twitter, Send, Home as HomeIcon, Users, TrendingUp, Smile } from "lucide-react";
 import { insertCollaborationRequestSchema, type InsertCollaborationRequest } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -364,6 +364,137 @@ const Home = () => {
                 ))}
               </motion.div>
             )}
+            </section>
+          </ParallaxSection>
+
+          {/* Why Bong Bari Section */}
+          <ParallaxSection speed={0.3} delay={0.1}>
+            <section className="mb-8 sm:mb-12 lg:mb-16 px-4" data-testid="why-bong-bari-section">
+              <motion.div
+                className="max-w-6xl mx-auto"
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+              >
+                {/* Section Header */}
+                <motion.h3 
+                  className="text-3xl sm:text-4xl lg:text-5xl font-bold text-center text-brand-blue mb-3 sm:mb-4 hover-wobble cursor-pointer transition-all duration-300" 
+                  data-testid="why-bong-bari-title-english"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6 }}
+                >
+                  Why Bong Bari?
+                </motion.h3>
+                <motion.h4 
+                  className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-gray-800 mb-8 sm:mb-12 bangla-text hover-bounce cursor-pointer transition-all duration-300" 
+                  data-testid="why-bong-bari-title-bengali"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.2 }}
+                >
+                  কেন বং বাড়ি?
+                </motion.h4>
+
+                {/* Bullet Points Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
+                  {/* Point 1: Every home relates instantly */}
+                  <motion.div
+                    className="flex items-start space-x-4 p-4 sm:p-6 bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300"
+                    initial={{ opacity: 0, x: -50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 0.1 }}
+                    whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+                    data-testid="why-point-1"
+                  >
+                    <div className="flex-shrink-0">
+                      <div className="w-12 h-12 bg-brand-yellow rounded-full flex items-center justify-center">
+                        <HomeIcon className="w-6 h-6 text-brand-blue" />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">
+                        Every home relates instantly
+                      </p>
+                      <p className="text-base sm:text-lg text-gray-600 bangla-text">
+                        প্রতিটা বাড়ি নিজেকে খুঁজে পায়।
+                      </p>
+                    </div>
+                  </motion.div>
+
+                  {/* Point 2: Comedy that feels real */}
+                  <motion.div
+                    className="flex items-start space-x-4 p-4 sm:p-6 bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300"
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
+                    whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+                    data-testid="why-point-2"
+                  >
+                    <div className="flex-shrink-0">
+                      <div className="w-12 h-12 bg-brand-red rounded-full flex items-center justify-center">
+                        <Smile className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">
+                        Comedy that feels real, not acted
+                      </p>
+                      <p className="text-base sm:text-lg text-gray-600 bangla-text">
+                        কমেডি যা লাগে একেবারে আসল।
+                      </p>
+                    </div>
+                  </motion.div>
+
+                  {/* Point 3: Maa-chele dynamic */}
+                  <motion.div
+                    className="flex items-start space-x-4 p-4 sm:p-6 bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300"
+                    initial={{ opacity: 0, x: -50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 0.3 }}
+                    whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+                    data-testid="why-point-3"
+                  >
+                    <div className="flex-shrink-0">
+                      <div className="w-12 h-12 bg-brand-blue rounded-full flex items-center justify-center">
+                        <Users className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">
+                        Maa–chele dynamic everyone connects with
+                      </p>
+                      <p className="text-base sm:text-lg text-gray-600 bangla-text">
+                        মা–ছেলের কচাল, সবার চেনা।
+                      </p>
+                    </div>
+                  </motion.div>
+
+                  {/* Point 4: Perfect partner for brands */}
+                  <motion.div
+                    className="flex items-start space-x-4 p-4 sm:p-6 bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300"
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 0.4 }}
+                    whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+                    data-testid="why-point-4"
+                  >
+                    <div className="flex-shrink-0">
+                      <div className="w-12 h-12 bg-gradient-to-r from-brand-yellow to-brand-red rounded-full flex items-center justify-center">
+                        <TrendingUp className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">
+                        Perfect partner for brands entering Bengali homes
+                      </p>
+                      <p className="text-base sm:text-lg text-gray-600 bangla-text">
+                        প্রতিটা বাঙালি বাড়িতে ব্র্যান্ড পৌঁছতে পারবে।
+                      </p>
+                    </div>
+                  </motion.div>
+                </div>
+              </motion.div>
             </section>
           </ParallaxSection>
           

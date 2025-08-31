@@ -34,31 +34,24 @@ export const FuturisticButton = ({
   const [isExploding, setIsExploding] = useState(false);
   const [particles, setParticles] = useState<Particle[]>([]);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
 
   const variantStyles = {
     youtube: {
-      gradient: 'from-red-500 via-red-600 to-red-700',
-      rgbGradient: 'linear-gradient(45deg, #ff0000, #ff4444, #cc0000, #ff6666)',
-      borderGradient: 'conic-gradient(from 0deg, #ff0000, #ff4444, #cc0000, #ff6666, #ff0000)',
-      glow: 'shadow-red-500/50',
-      neon: 'drop-shadow-[0_0_25px_rgba(239,68,68,1)]',
+      background: 'linear-gradient(135deg, #ff0000 0%, #ff4444 50%, #cc0000 100%)',
+      shadow: '0 10px 30px rgba(255, 0, 0, 0.4)',
+      hoverShadow: '0 15px 40px rgba(255, 0, 0, 0.6)',
       particles: ['🔥', '❤️', '⭐', '✨', '😂']
     },
     instagram: {
-      gradient: 'from-purple-500 via-pink-500 to-orange-500',
-      rgbGradient: 'linear-gradient(45deg, #833ab4, #fd1d1d, #fcb045, #833ab4)',
-      borderGradient: 'conic-gradient(from 0deg, #833ab4, #fd1d1d, #fcb045, #833ab4)',
-      glow: 'shadow-purple-500/50',
-      neon: 'drop-shadow-[0_0_25px_rgba(168,85,247,1)]',
+      background: 'linear-gradient(135deg, #833ab4 0%, #fd1d1d 50%, #fcb045 100%)',
+      shadow: '0 10px 30px rgba(131, 58, 180, 0.4)',
+      hoverShadow: '0 15px 40px rgba(131, 58, 180, 0.6)',
       particles: ['💫', '🌟', '💖', '✨', '😂']
     },
     default: {
-      gradient: 'from-blue-500 via-cyan-500 to-teal-500',
-      rgbGradient: 'linear-gradient(45deg, #0066ff, #00ccff, #0099cc, #66ddff)',
-      borderGradient: 'conic-gradient(from 0deg, #0066ff, #00ccff, #0099cc, #66ddff, #0066ff)',
-      glow: 'shadow-cyan-500/50',
-      neon: 'drop-shadow-[0_0_25px_rgba(6,182,212,1)]',
+      background: 'linear-gradient(135deg, #0066ff 0%, #00ccff 50%, #0099cc 100%)',
+      shadow: '0 10px 30px rgba(0, 102, 255, 0.4)',
+      hoverShadow: '0 15px 40px rgba(0, 102, 255, 0.6)',
       particles: ['⚡', '✨', '💎', '🌟', '😂']
     }
   };
@@ -74,9 +67,9 @@ export const FuturisticButton = ({
     
     const newParticles: Particle[] = [];
     
-    // Create 50 particles for bigger burst
-    for (let i = 0; i < 50; i++) {
-      const angle = (Math.PI * 2 * i) / 50;
+    // Create 40 particles for bigger burst
+    for (let i = 0; i < 40; i++) {
+      const angle = (Math.PI * 2 * i) / 40;
       const speed = 4 + Math.random() * 6;
       const isEmoji = Math.random() < 0.4; // 40% chance for emoji
       
@@ -97,9 +90,8 @@ export const FuturisticButton = ({
     
     setParticles(newParticles);
     
-    // Play sound effect (note: would need actual sound file)
+    // Play satisfying pop sound
     try {
-      // Create a simple beep sound using Web Audio API
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
@@ -107,7 +99,6 @@ export const FuturisticButton = ({
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
       
-      // Create a more satisfying "pop" sound
       oscillator.frequency.setValueAtTime(1200, audioContext.currentTime);
       oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.15);
       
@@ -140,42 +131,21 @@ export const FuturisticButton = ({
 
   return (
     <div className="relative inline-block">
-      {/* Animated Border Ring */}
-      <motion.div
-        className="absolute inset-0 rounded-full p-1"
-        style={{
-          background: style.borderGradient
-        }}
-        animate={{
-          rotate: 360
-        }}
-        transition={{
-          duration: 3,
-          repeat: Infinity,
-          ease: "linear"
-        }}
-      >
-        <div className="w-full h-full rounded-full bg-transparent" />
-      </motion.div>
-      
       <AnimatePresence>
         {!isExploding && (
           <motion.button
             ref={buttonRef}
             className={`
-              relative overflow-hidden px-12 py-6 rounded-full text-white font-bold text-xl
-              shadow-2xl ${style.glow}
-              backdrop-blur-sm
+              relative overflow-hidden px-12 py-6 rounded-full text-white font-extrabold text-2xl
               transition-all duration-500 ease-out
-              hover:scale-110 hover:shadow-3xl
-              active:scale-95
+              hover:scale-110 active:scale-95
               disabled:opacity-50 disabled:cursor-not-allowed
-              z-10
+              border-2 border-white/30
               ${className}
             `}
             style={{
-              background: style.rgbGradient,
-              filter: style.neon,
+              background: style.background,
+              boxShadow: style.shadow,
               minWidth: '400px',
               minHeight: '80px'
             }}
@@ -186,52 +156,24 @@ export const FuturisticButton = ({
             exit={{ opacity: 0, scale: 0.8 }}
             transition={{ duration: 0.4 }}
             whileHover={{
-              boxShadow: [
-                `0 0 30px rgba(255,255,255,0.4)`,
-                `0 0 60px rgba(255,255,255,0.3)`,
-                `0 0 90px rgba(255,255,255,0.2)`,
-                `0 0 30px rgba(255,255,255,0.4)`
-              ],
-              filter: [
-                style.neon,
-                `${style.neon} brightness(1.3)`,
-                style.neon
-              ],
-              transition: { duration: 1, repeat: Infinity }
+              boxShadow: style.hoverShadow,
+              filter: 'brightness(1.1)',
+              transition: { duration: 0.3 }
             }}
           >
-            {/* Animated RGB background */}
-            <motion.div 
-              className="absolute inset-0 rounded-full opacity-80"
-              style={{
-                background: style.rgbGradient
-              }}
-              animate={{
-                backgroundPosition: ['0% 50%', '100% 50%', '0% 50%']
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: "linear"
-              }}
-            />
-            
             {/* Glass overlay effect */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-white/30 via-transparent to-white/20" />
-            
-            {/* Inner premium glow */}
-            <div className="absolute inset-2 rounded-full bg-gradient-to-r from-white/20 via-transparent to-white/15" />
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-white/20 via-transparent to-white/10" />
             
             {/* Premium shine effect */}
             <motion.div
-              className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/50 to-transparent"
+              className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/40 to-transparent"
               initial={{ x: '-100%', skewX: -20 }}
               animate={{ x: '200%', skewX: -20 }}
               transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 2 }}
             />
             
             {/* Content */}
-            <span className="relative z-20 flex items-center justify-center gap-4 text-2xl font-extrabold">
+            <span className="relative z-20 flex items-center justify-center gap-4">
               {children}
             </span>
           </motion.button>
@@ -263,13 +205,13 @@ export const FuturisticButton = ({
                 transition={{ duration: 0.8, ease: "easeOut" }}
               >
                 {particle.type === 'emoji' ? (
-                  <span className="text-2xl">{particle.emoji}</span>
+                  <span className="text-3xl">{particle.emoji}</span>
                 ) : (
                   <div
                     className="w-4 h-4 rounded-full"
                     style={{
                       backgroundColor: particle.color,
-                      boxShadow: `0 0 15px ${particle.color}, 0 0 30px ${particle.color}`
+                      boxShadow: `0 0 15px ${particle.color}`
                     }}
                   />
                 )}
@@ -280,16 +222,8 @@ export const FuturisticButton = ({
             <motion.div
               className="absolute inset-0 rounded-full bg-white"
               initial={{ scale: 0, opacity: 0.9 }}
-              animate={{ scale: 5, opacity: 0 }}
+              animate={{ scale: 4, opacity: 0 }}
               transition={{ duration: 0.4 }}
-            />
-            
-            {/* Secondary explosion ring */}
-            <motion.div
-              className="absolute inset-0 rounded-full border-4 border-white"
-              initial={{ scale: 0, opacity: 0.6 }}
-              animate={{ scale: 8, opacity: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
             />
           </div>
         )}

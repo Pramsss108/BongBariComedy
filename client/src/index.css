@@ -1279,6 +1279,64 @@ section:nth-child(odd) {
     }
   }
 
+  /* Premium Button Shimmer Effect */
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  .premium-button {
+    background: linear-gradient(
+      90deg,
+      #667eea 0%,
+      #764ba2 25%, 
+      #f093fb 50%,
+      #f5576c 75%,
+      #4facfe 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 3s ease-in-out infinite;
+    position: relative;
+  }
+  
+  .premium-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.7s;
+  }
+  
+  .premium-button:hover::before {
+    left: 100%;
+  }
+
+  .premium-button:hover {
+    animation: shimmer 1s ease-in-out infinite;
+  }
+
+  /* Futuristic Glow Effects */
+  .glow-ring {
+    position: absolute;
+    inset: -4px;
+    padding: 4px;
+    background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #fecca7);
+    border-radius: inherit;
+    animation: rotate-glow 2s linear infinite;
+  }
+
+  @keyframes rotate-glow {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
   /* 3D Cursor particle sparkle effect */
   @keyframes sparkle {
     0% {

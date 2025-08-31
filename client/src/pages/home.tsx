@@ -431,55 +431,50 @@ const Home = () => {
             </motion.div>
             </section>
           </ParallaxSection>
-          
-          {/* Fun Facts Section to Fill Space */}
           <ParallaxSection speed={0.1} delay={0.1}>
-            <section className="py-8 bg-gradient-to-b from-brand-yellow to-yellow-300" data-testid="fun-facts-section">
+            <section className="py-2 bg-brand-yellow" data-testid="fun-facts-section">
               <div className="max-w-4xl mx-auto px-4 text-center">
                 <motion.div
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6 }}
                 >
-                  <h3 className="text-4xl md:text-5xl font-bold text-brand-blue mb-6" data-testid="fun-facts-title">
-                    Why Bong Bari? 🎭
+                  <h3 className="text-2xl md:text-3xl font-bold text-brand-blue mb-2" data-testid="fun-facts-title">
+                    Why Choose Bong Bari? 🎭
                   </h3>
-                  <h4 className="text-3xl md:text-4xl font-bold text-gray-800 bangla-text mb-8" data-testid="fun-facts-title-bengali">
-                    কেন বং বাড়ি?
-                  </h4>
                   
-                  <div className="grid md:grid-cols-3 gap-6">
+                  <div className="grid md:grid-cols-3 gap-4">
                     <motion.div 
-                      className="bg-white/80 rounded-2xl p-6 shadow-lg"
+                      className="bg-white/60 rounded-lg p-3 shadow-sm"
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.5, delay: 0.1 }}
                     >
-                      <div className="text-4xl mb-3">😂</div>
-                      <h5 className="font-bold text-lg text-brand-blue mb-2">Pure Bengali Humor</h5>
-                      <p className="text-gray-700 bangla-text">খাঁটি বাংলা হাসির গল্প</p>
+                      <div className="text-2xl mb-1">😂</div>
+                      <h5 className="font-bold text-sm text-brand-blue mb-1">Bengali Humor</h5>
+                      <p className="text-xs text-gray-700 bangla-text">খাঁটি বাংলা হাসি</p>
                     </motion.div>
                     
                     <motion.div 
-                      className="bg-white/80 rounded-2xl p-6 shadow-lg"
+                      className="bg-white/60 rounded-lg p-3 shadow-sm"
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.5, delay: 0.2 }}
                     >
-                      <div className="text-4xl mb-3">👨‍👦</div>
-                      <h5 className="font-bold text-lg text-brand-blue mb-2">Mother-Son Comedy</h5>
-                      <p className="text-gray-700 bangla-text">মা-ছেলের মজার জুটি</p>
+                      <div className="text-2xl mb-1">👨‍👦</div>
+                      <h5 className="font-bold text-sm text-brand-blue mb-1">Family Comedy</h5>
+                      <p className="text-xs text-gray-700 bangla-text">মা-ছেলের জুটি</p>
                     </motion.div>
                     
                     <motion.div 
-                      className="bg-white/80 rounded-2xl p-6 shadow-lg"
+                      className="bg-white/60 rounded-lg p-3 shadow-sm"
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.5, delay: 0.3 }}
                     >
-                      <div className="text-4xl mb-3">🏙️</div>
-                      <h5 className="font-bold text-lg text-brand-blue mb-2">Kolkata Vibes</h5>
-                      <p className="text-gray-700 bangla-text">কলকাতার আড্DA মেজাজ</p>
+                      <div className="text-2xl mb-1">🏙️</div>
+                      <h5 className="font-bold text-sm text-brand-blue mb-1">Kolkata Vibes</h5>
+                      <p className="text-xs text-gray-700 bangla-text">কলকাতার মেজাজ</p>
                     </motion.div>
                   </div>
                 </motion.div>

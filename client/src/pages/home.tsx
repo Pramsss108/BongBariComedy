@@ -388,7 +388,7 @@ const Home = () => {
           
           {/* CTA Buttons */}
           <ParallaxSection speed={0.3} delay={0.3}>
-            <section className="text-center mb-8 py-8" data-testid="cta-section">
+            <section className="text-center mb-0 pb-4 pt-8" data-testid="cta-section">
             <motion.div 
               className="flex flex-col lg:flex-row gap-8 justify-center items-center px-8 max-w-6xl mx-auto"
               initial={{ opacity: 0, y: 50 }}
@@ -435,7 +435,7 @@ const Home = () => {
         </main>
         
         {/* Footer */}
-        <footer className="bg-brand-blue text-white py-8 mt-16" data-testid="footer">
+        <footer className="bg-brand-blue text-white py-8 mt-0" data-testid="footer">
           <div className="container mx-auto px-4 text-center">
             <p className="text-lg font-medium" data-testid="footer-text">
               © Bong Bari 2025 Kolkata

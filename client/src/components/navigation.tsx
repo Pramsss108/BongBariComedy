@@ -24,8 +24,8 @@ const Navigation = () => {
 
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50" data-testid="main-navigation">
-      <div className="container mx-auto px-4 sm:px-6">
-        <div className="flex justify-between items-center py-1 px-2 sm:py-2">
+      <div className="container mx-auto px-2 sm:px-4">
+        <div className="flex justify-between items-center py-0.5 px-1 sm:py-1">
           {/* Logo - Optimized Layout */}
           <Link href="/" data-testid="logo-link">
             <div className="flex items-center space-x-3 cursor-pointer hover-logo-container group w-full">
@@ -33,7 +33,7 @@ const Navigation = () => {
                 <img 
                   src="/logo.png" 
                   alt="Bong Bari Logo" 
-                  className="w-12 h-12 sm:w-14 sm:h-14 md:w-18 md:h-18 lg:w-20 lg:h-20 xl:w-22 xl:h-22 rounded-lg transition-all duration-300 hover:scale-110 hover:rotate-6 hover:shadow-xl"
+                  className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 xl:w-18 xl:h-18 rounded-lg transition-all duration-300 hover:scale-110 hover:rotate-6 hover:shadow-xl"
                 />
                 {/* Animated Emojis on Hover - DESKTOP ONLY */}
                 <div className="absolute inset-0 pointer-events-none hidden lg:block">
@@ -46,18 +46,18 @@ const Navigation = () => {
                 </div>
               </div>
               {/* Mobile Logo - Professional Readable Layout */}
-              <div className="md:hidden flex flex-col justify-center pl-2 flex-1">
-                <h1 className="text-2xl font-bold text-brand-blue bangla-text leading-none mb-0">বং বাড়ি</h1>
+              <div className="md:hidden flex flex-col justify-center pl-1 flex-1">
+                <h1 className="text-lg font-bold text-brand-blue bangla-text leading-none mb-0">বং বাড়ি</h1>
                 <div className="space-y-0">
-                  <p className="text-sm font-semibold text-gray-800 leading-none group-hover:text-brand-blue transition-colors duration-300">Every Home's Story</p>
-                  <p className="text-sm text-gray-600 bangla-text font-medium leading-none group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
+                  <p className="text-xs font-semibold text-gray-800 leading-none group-hover:text-brand-blue transition-colors duration-300">Every Home's Story</p>
+                  <p className="text-xs text-gray-600 bangla-text font-medium leading-none group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
                 </div>
               </div>
               {/* Desktop Logo - Maximum Visibility */}
-              <div className="hidden md:flex flex-col justify-center pl-3 min-w-[300px]">
-                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[36px] lg:text-[42px] xl:text-[48px] leading-none mb-1">বং বাড়ি</h1>
-                <p className="text-lg lg:text-xl xl:text-2xl font-bold text-gray-800 leading-none whitespace-nowrap mb-0 group-hover:text-brand-blue transition-colors duration-300">Every Home's Story — Bong Bari</p>
-                <p className="text-base lg:text-lg xl:text-xl text-gray-600 bangla-text font-semibold leading-none whitespace-nowrap group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প — বং বাড়ি</p>
+              <div className="hidden md:flex flex-col justify-center pl-2 min-w-[250px]">
+                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[28px] lg:text-[32px] xl:text-[36px] leading-none mb-0">বং বাড়ি</h1>
+                <p className="text-sm lg:text-base xl:text-lg font-bold text-gray-800 leading-none whitespace-nowrap mb-0 group-hover:text-brand-blue transition-colors duration-300">Every Home's Story — Bong Bari</p>
+                <p className="text-xs lg:text-sm xl:text-base text-gray-600 bangla-text font-semibold leading-none whitespace-nowrap group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প — বং বাড়ি</p>
               </div>
             </div>
           </Link>

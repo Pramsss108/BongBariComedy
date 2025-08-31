@@ -171,9 +171,9 @@ const Home = () => {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="mb-2"
+              className="mb-1"
             >
-              <div className="w-full h-12 md:h-14 rounded-md shadow-md overflow-hidden bg-gradient-to-r from-brand-yellow via-yellow-400 to-orange-400">
+              <div className="w-full h-10 md:h-12 rounded-md shadow-md overflow-hidden bg-gradient-to-r from-brand-yellow via-yellow-400 to-orange-400">
               </div>
             </motion.div>
 
@@ -182,12 +182,12 @@ const Home = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.1 }}
-              className="text-center mb-2"
+              className="text-center mb-1"
             >
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-0 bangla-text leading-none">
+              <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-0 bangla-text leading-none">
                 বং বাড়ি
               </h1>
-              <p className="text-xs sm:text-sm md:text-base text-gray-600 bangla-text leading-none">
+              <p className="text-xs sm:text-sm md:text-sm text-gray-600 bangla-text leading-none">
                 কলকাতার ঘরোয়া কমেডি - আমাদের গল্প
               </p>
             </motion.div>

@@ -142,25 +142,25 @@ const Home = () => {
                 <div className="w-full h-full bg-gradient-to-br from-transparent via-white to-transparent"></div>
               </div>
               
-              {/* Main content */}
+              {/* Main content positioned in lower half */}
               <motion.div 
-                className="text-center z-10 mt-16 md:mt-20"
+                className="text-center z-10 absolute bottom-16 left-1/2 transform -translate-x-1/2 w-full"
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.5 }}
               >
                 <motion.div 
-                  className="mb-10 md:mb-12"
+                  className="mb-6"
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 0.7 }}
                 >
-                  <span className="text-8xl md:text-[8rem] lg:text-[12rem] xl:text-[14rem] font-bold text-white bangla-text drop-shadow-lg">
+                  <span className="text-6xl md:text-7xl lg:text-8xl font-bold text-white bangla-text drop-shadow-lg">
                     বং বাড়ি
                   </span>
                 </motion.div>
                 <motion.div 
-                  className="text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold text-white drop-shadow-md mt-8 md:mt-10"
+                  className="text-xl md:text-2xl lg:text-3xl font-semibold text-white drop-shadow-md mt-4"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 0.9 }}
@@ -168,7 +168,7 @@ const Home = () => {
                   Bengali Comedy That Hits Home!
                 </motion.div>
                 <motion.div 
-                  className="text-xl md:text-3xl lg:text-4xl xl:text-5xl text-white/90 mt-6 md:mt-8 bangla-text"
+                  className="text-lg md:text-xl lg:text-2xl text-white/90 mt-2 bangla-text"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 1.1 }}

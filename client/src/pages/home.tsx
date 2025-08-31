@@ -144,23 +144,23 @@ const Home = () => {
               
               {/* Main content */}
               <motion.div 
-                className="text-center z-10 mt-8"
+                className="text-center z-10 mt-16 md:mt-20"
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.5 }}
               >
                 <motion.div 
-                  className="mb-8"
+                  className="mb-10 md:mb-12"
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 0.7 }}
                 >
-                  <span className="text-7xl md:text-9xl lg:text-[10rem] font-bold text-white bangla-text drop-shadow-lg">
+                  <span className="text-8xl md:text-[8rem] lg:text-[12rem] xl:text-[14rem] font-bold text-white bangla-text drop-shadow-lg">
                     বং বাড়ি
                   </span>
                 </motion.div>
                 <motion.div 
-                  className="text-2xl md:text-3xl lg:text-4xl font-semibold text-white drop-shadow-md mt-6"
+                  className="text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold text-white drop-shadow-md mt-8 md:mt-10"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 0.9 }}
@@ -168,7 +168,7 @@ const Home = () => {
                   Bengali Comedy That Hits Home!
                 </motion.div>
                 <motion.div 
-                  className="text-xl md:text-2xl lg:text-3xl text-white/90 mt-4 bangla-text"
+                  className="text-xl md:text-3xl lg:text-4xl xl:text-5xl text-white/90 mt-6 md:mt-8 bangla-text"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 1.1 }}

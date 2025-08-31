@@ -53,7 +53,7 @@ const Navigation = () => {
               </div>
               {/* Desktop Logo - Maximum Visibility */}
               <div className="hidden md:flex flex-col justify-center pl-3 min-w-[300px]">
-                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[36px] lg:text-[42px] xl:text-[48px] leading-tight mb-2">বং বাড়ি</h1>
+                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[36px] lg:text-[42px] xl:text-[48px] leading-tight mb-2 pt-[2px] pb-[2px]">বং বাড়ি</h1>
                 <p className="text-lg lg:text-xl xl:text-2xl font-bold text-gray-800 leading-tight whitespace-nowrap mb-1 group-hover:text-brand-blue transition-colors duration-300">Every Home's Story — Bong Bari</p>
                 <p className="text-base lg:text-lg xl:text-xl text-gray-600 bangla-text font-semibold leading-tight whitespace-nowrap group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প — বং বাড়ি</p>
               </div>

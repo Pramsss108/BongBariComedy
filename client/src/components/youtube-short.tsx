@@ -19,7 +19,7 @@ const YouTubeShort = ({ videoId, thumbnail, title, onClick }: YouTubeShortProps)
 
   return (
     <div 
-      className="video-container hover-lift"
+      className="video-container mobile-tap-scale"
       onClick={handleClick}
       data-testid={`youtube-short-${videoId}`}
     >
@@ -33,9 +33,10 @@ const YouTubeShort = ({ videoId, thumbnail, title, onClick }: YouTubeShortProps)
           alt={title}
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-          <div className="w-16 h-16 bg-brand-red rounded-full flex items-center justify-center">
-            <Play className="w-8 h-8 text-white ml-1" fill="currentColor" />
+        {/* Trendy Mobile Play Button - Always Visible with Pulse */}
+        <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-brand-red rounded-full flex items-center justify-center pulse-animation shadow-lg">
+            <Play className="w-6 h-6 sm:w-8 sm:h-8 text-white ml-1" fill="currentColor" />
           </div>
         </div>
       </div>

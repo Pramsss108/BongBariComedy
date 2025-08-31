@@ -332,13 +332,52 @@
   animation-direction: reverse;
 }
 
-.hover-lift {
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
+/* Trendy mobile-first effects */
+.mobile-tap-scale {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.hover-lift:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+.mobile-tap-scale:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+}
+
+/* Pulse animation for play button */
+.pulse-animation {
+  animation: trendyPulse 2s ease-in-out infinite;
+}
+
+@keyframes trendyPulse {
+  0%, 100% { 
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% { 
+    transform: scale(1.05);
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+}
+
+/* Remove hover effects on mobile */
+@media (max-width: 640px) {
+  .mobile-tap-scale:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  
+  /* Add subtle floating animation for engagement */
+  .video-container {
+    animation: subtleFloat 3s ease-in-out infinite;
+  }
+  
+  .video-container:nth-child(even) {
+    animation-delay: -1.5s;
+  }
+}
+
+@keyframes subtleFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-2px); }
 }
 
 ::-webkit-scrollbar {

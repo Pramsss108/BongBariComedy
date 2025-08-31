@@ -178,11 +178,11 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
     }
   };
 
-  // Compact floating particles
+  // Brand colored floating particles
   const particles = Array.from({ length: 8 }, (_, i) => (
     <motion.div
       key={i}
-      className="absolute w-1 h-1 bg-gradient-to-r from-yellow-300 to-pink-300 rounded-full"
+      className="absolute w-1 h-1 bg-gradient-to-r from-[#FFCC00] to-[#FF4D4D] rounded-full"
       animate={{
         y: [-10, -60],
         x: [0, Math.sin(i) * 15],
@@ -211,17 +211,17 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
     >
       <div className="flex items-center gap-1">
         <motion.div
-          className="w-2 h-2 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full"
+          className="w-2 h-2 bg-gradient-to-r from-[#FFCC00] to-[#FF4D4D] rounded-full"
           animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }}
           transition={{ duration: 1, repeat: Infinity, delay: 0 }}
         />
         <motion.div
-          className="w-2 h-2 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full"
+          className="w-2 h-2 bg-gradient-to-r from-[#1363DF] to-[#FFCC00] rounded-full"
           animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }}
           transition={{ duration: 1, repeat: Infinity, delay: 0.2 }}
         />
         <motion.div
-          className="w-2 h-2 bg-gradient-to-r from-pink-400 to-yellow-400 rounded-full"
+          className="w-2 h-2 bg-gradient-to-r from-[#FF4D4D] to-[#1363DF] rounded-full"
           animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }}
           transition={{ duration: 1, repeat: Infinity, delay: 0.4 }}
         />
@@ -247,7 +247,7 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
         <div className="flex flex-col items-center">
           {/* Compact Bong Bot Label */}
           <motion.div
-            className="mb-2 px-3 py-1 bg-gradient-to-r from-purple-600/95 to-pink-600/95 backdrop-blur-md rounded-full text-white text-xs font-bold border border-white/30 shadow-xl"
+            className="mb-2 px-3 py-1 bg-gradient-to-r from-[#1363DF]/95 to-[#FF4D4D]/95 backdrop-blur-md rounded-full text-white text-xs font-bold border border-[#FFCC00]/40 shadow-xl"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.5 }}
@@ -259,7 +259,7 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
               >
                 🤖
               </motion.div>
-              <span className="bg-gradient-to-r from-yellow-200 to-white bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#FFCC00] to-white bg-clip-text text-transparent">
                 Bong Bot
               </span>
             </div>
@@ -271,15 +271,15 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-blue-500 to-pink-500 rounded-full blur-lg opacity-70 animate-pulse" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#FFCC00] via-[#1363DF] to-[#FF4D4D] rounded-full blur-lg opacity-70 animate-pulse" />
             
             <Button
               onClick={() => setIsOpen(true)}
-              className="no-rickshaw-sound relative w-16 h-16 rounded-full bg-gradient-to-br from-purple-600 via-blue-600 to-pink-600 hover:from-purple-700 hover:via-blue-700 hover:to-pink-700 text-white shadow-xl border-2 border-white/40 overflow-hidden"
+              className="no-rickshaw-sound relative w-16 h-16 rounded-full bg-gradient-to-br from-[#1363DF] via-[#FFCC00] to-[#FF4D4D] hover:from-[#1363DF]/90 hover:via-[#FFCC00]/90 hover:to-[#FF4D4D]/90 text-white shadow-xl border-2 border-[#FFCC00]/50 overflow-hidden"
               data-testid="chatbot-open-button"
             >
               <motion.div
-                className="absolute inset-1 border border-white/30 rounded-full"
+                className="absolute inset-1 border border-[#FFCC00]/40 rounded-full"
                 animate={{ rotate: 360 }}
                 transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
               />
@@ -287,7 +287,7 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
               <MessageCircle className="w-7 h-7 relative z-10" />
               
               <motion.div
-                className="absolute top-2 right-2 w-1.5 h-1.5 bg-yellow-300 rounded-full"
+                className="absolute top-2 right-2 w-1.5 h-1.5 bg-[#FFCC00] rounded-full"
                 animate={{ scale: [0, 1, 0], opacity: [0, 1, 0] }}
                 transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
               />
@@ -321,14 +321,14 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
         }`}
         style={{ minWidth: '280px' }}
       >
-        {/* Compact Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/90 via-blue-900/90 to-pink-900/90 backdrop-blur-xl rounded-2xl border border-white/30 shadow-2xl overflow-hidden">
+        {/* Brand Colors Glossy Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#101418]/95 via-[#1363DF]/20 to-[#101418]/95 backdrop-blur-xl rounded-2xl border border-[#FFCC00]/30 shadow-2xl overflow-hidden">
           <motion.div
-            className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-blue-500/20 to-pink-500/20"
+            className="absolute inset-0 bg-gradient-to-br from-[#FFCC00]/10 via-[#1363DF]/15 to-[#FF4D4D]/10"
             animate={{ 
               background: [
-                "linear-gradient(45deg, rgba(168, 85, 247, 0.2), rgba(59, 130, 246, 0.2), rgba(236, 72, 153, 0.2))",
-                "linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2))"
+                "linear-gradient(45deg, rgba(255, 204, 0, 0.1), rgba(19, 99, 223, 0.15), rgba(255, 77, 77, 0.1))",
+                "linear-gradient(135deg, rgba(19, 99, 223, 0.15), rgba(255, 204, 0, 0.1), rgba(255, 77, 77, 0.1))"
               ]
             }}
             transition={{ duration: 4, repeat: Infinity }}
@@ -340,23 +340,23 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
         </div>
 
         {/* Compact Header with Drag Handle */}
-        <div className="relative z-10 p-3 flex items-center justify-between border-b border-white/20">
+        <div className="relative z-10 p-3 flex items-center justify-between border-b border-[#FFCC00]/20">
           {/* Drag Handle */}
           <div 
             className="absolute left-1/2 top-1 transform -translate-x-1/2 cursor-grab active:cursor-grabbing hover:text-white/80 transition-colors"
             onMouseDown={handleMouseDown}
           >
-            <GripVertical className="w-4 h-4 text-white/50" />
+            <GripVertical className="w-4 h-4 text-[#FFCC00]/70" />
           </div>
           
           <div className="flex items-center gap-3">
             <motion.div
-              className="relative w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 via-blue-500 to-pink-500 flex items-center justify-center"
+              className="relative w-8 h-8 rounded-full bg-gradient-to-br from-[#FFCC00] via-[#1363DF] to-[#FF4D4D] flex items-center justify-center"
               animate={{ 
                 boxShadow: [
-                  "0 0 15px rgba(168, 85, 247, 0.5)", 
-                  "0 0 20px rgba(59, 130, 246, 0.6)", 
-                  "0 0 15px rgba(236, 72, 153, 0.5)"
+                  "0 0 15px rgba(255, 204, 0, 0.6)", 
+                  "0 0 20px rgba(19, 99, 223, 0.7)", 
+                  "0 0 15px rgba(255, 77, 77, 0.6)"
                 ]
               }}
               transition={{ duration: 2, repeat: Infinity }}
@@ -365,12 +365,12 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
             </motion.div>
             
             <div>
-              <h3 className="text-white font-bold text-sm bg-gradient-to-r from-yellow-300 to-pink-300 bg-clip-text text-transparent">
+              <h3 className="text-white font-bold text-sm bg-gradient-to-r from-[#FFCC00] to-[#FF4D4D] bg-clip-text text-transparent">
                 Bong Bot
               </h3>
               <div className="text-white/70 text-xs flex items-center gap-1">
                 <motion.div
-                  className="w-1.5 h-1.5 bg-green-400 rounded-full"
+                  className="w-1.5 h-1.5 bg-[#FFCC00] rounded-full"
                   animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
                   transition={{ duration: 1.5, repeat: Infinity }}
                 />
@@ -384,7 +384,7 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
               variant="ghost"
               size="sm"
               onClick={() => setIsMinimized(!isMinimized)}
-              className="no-rickshaw-sound h-7 w-7 p-0 rounded-full bg-white/10 hover:bg-white/20 text-white"
+              className="no-rickshaw-sound h-7 w-7 p-0 rounded-full bg-[#FFCC00]/10 hover:bg-[#FFCC00]/20 text-white border border-[#FFCC00]/30"
               data-testid="chatbot-minimize-button"
             >
               {isMinimized ? <Maximize2 className="w-3 h-3" /> : <Minimize2 className="w-3 h-3" />}
@@ -393,7 +393,7 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
               variant="ghost"
               size="sm"
               onClick={() => setIsOpen(false)}
-              className="no-rickshaw-sound h-7 w-7 p-0 rounded-full bg-white/10 hover:bg-white/20 text-white"
+              className="no-rickshaw-sound h-7 w-7 p-0 rounded-full bg-[#FF4D4D]/10 hover:bg-[#FF4D4D]/20 text-white border border-[#FF4D4D]/30"
               data-testid="chatbot-close-button"
             >
               <X className="w-3 h-3" />
@@ -426,13 +426,13 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
                         <div
                           className={`max-w-[85%] relative ${
                             message.role === 'user'
-                              ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-lg rounded-br-sm'
-                              : 'bg-white/15 backdrop-blur-sm text-white rounded-lg rounded-bl-sm border border-white/20'
+                              ? 'bg-gradient-to-br from-[#1363DF] to-[#FF4D4D] text-white rounded-lg rounded-br-sm shadow-lg border border-[#FFCC00]/20'
+                              : 'bg-[#101418]/60 backdrop-blur-sm text-white rounded-lg rounded-bl-sm border border-[#FFCC00]/30'
                           } p-2.5`}
                         >
                           <div className="flex items-start gap-2">
                             {message.role === 'assistant' && (
-                              <Sparkles className="w-3 h-3 text-yellow-300 flex-shrink-0 mt-0.5" />
+                              <Sparkles className="w-3 h-3 text-[#FFCC00] flex-shrink-0 mt-0.5" />
                             )}
                             
                             <div className="flex-1">
@@ -454,7 +454,7 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
                         animate={{ opacity: 1 }}
                         className="flex justify-start"
                       >
-                        <div className="bg-white/15 backdrop-blur-sm rounded-lg rounded-bl-sm border border-white/20">
+                        <div className="bg-[#101418]/60 backdrop-blur-sm rounded-lg rounded-bl-sm border border-[#FFCC00]/30">
                           <TypingIndicator />
                         </div>
                       </motion.div>
@@ -465,14 +465,14 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
               </div>
 
               {/* Compact Template Messages */}
-              <div className="px-3 py-2 border-t border-white/20">
+              <div className="px-3 py-2 border-t border-[#FFCC00]/20">
                 <div className="space-y-1.5">
                   {templateMessages.map((template, index) => (
                     <motion.button
                       key={index}
                       onClick={() => sendTemplateMessage(template.text)}
                       disabled={isTyping}
-                      className="no-rickshaw-sound w-full py-2 px-3 bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-lg border border-white/20 text-white text-xs font-medium hover:from-purple-500/30 hover:to-pink-500/30 transition-all duration-200 flex items-center justify-between"
+                      className="no-rickshaw-sound w-full py-2 px-3 bg-gradient-to-r from-[#1363DF]/20 to-[#FF4D4D]/20 backdrop-blur-sm rounded-lg border border-[#FFCC00]/30 text-white text-xs font-medium hover:from-[#1363DF]/30 hover:to-[#FF4D4D]/30 transition-all duration-200 flex items-center justify-between"
                       whileHover={{ scale: 1.01 }}
                       whileTap={{ scale: 0.99 }}
                       data-testid={`template-${index}`}
@@ -485,18 +485,18 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
               </div>
 
               {/* ALWAYS VISIBLE Input Area */}
-              <div className="p-3 bg-gradient-to-t from-purple-900/50 to-transparent">
+              <div className="p-3 bg-gradient-to-t from-[#101418]/50 to-transparent">
                 <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-lg blur-sm" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#1363DF]/20 to-[#FF4D4D]/20 rounded-lg blur-sm" />
                   
-                  <div className="relative bg-white/15 backdrop-blur-sm rounded-lg border border-white/30 p-2 flex gap-2 items-end">
+                  <div className="relative bg-[#101418]/40 backdrop-blur-sm rounded-lg border border-[#FFCC00]/30 p-2 flex gap-2 items-end">
                     <textarea
                       ref={inputRef}
                       value={inputMessage}
                       onChange={(e) => setInputMessage(e.target.value)}
                       onKeyDown={handleKeyPress}
                       placeholder="Ask me anything magical... ✨"
-                      className="flex-1 bg-transparent border-0 text-white placeholder:text-white/50 focus:ring-0 focus:outline-none text-xs resize-none"
+                      className="flex-1 bg-transparent border-0 text-white placeholder:text-[#FFCC00]/70 focus:ring-0 focus:outline-none text-xs resize-none"
                       disabled={isTyping}
                       rows={2}
                       style={{ maxHeight: '60px', minHeight: '32px' }}
@@ -506,7 +506,7 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
                       <Button
                         onClick={sendMessage}
                         disabled={!inputMessage.trim() || isTyping}
-                        className="no-rickshaw-sound w-8 h-8 p-0 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50"
+                        className="no-rickshaw-sound w-8 h-8 p-0 rounded-lg bg-gradient-to-br from-[#1363DF] to-[#FF4D4D] hover:from-[#1363DF]/80 hover:to-[#FF4D4D]/80 disabled:opacity-50 border border-[#FFCC00]/20"
                         data-testid="chatbot-send-button"
                       >
                         <Send className="w-3 h-3" />
@@ -515,7 +515,7 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
                   </div>
                   
                   <div className="flex justify-center mt-1">
-                    <span className="text-xs text-white/40">Press Enter to send • Drag handle to move</span>
+                    <span className="text-xs text-[#FFCC00]/60">Press Enter to send • Drag handle to move</span>
                   </div>
                 </div>
               </div>

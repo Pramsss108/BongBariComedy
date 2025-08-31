@@ -1181,24 +1181,32 @@ section:nth-child(odd) {
     transform: scale(1.02) !important;
   }
   
-  /* Logo hover wrapper */
+  /* Logo hover wrapper - DESKTOP ONLY */
   .logo-hover-wrapper {
     position: relative;
     overflow: visible;
   }
 
-  /* Emoji float animations */
+  /* Emoji float animations - DESKTOP ONLY */
   .emoji-float {
     position: absolute;
     opacity: 0;
     pointer-events: none;
     transition: all 0.3s ease;
     font-size: 1.2rem;
+    display: none; /* Hidden by default */
   }
 
-  .hover-logo-container:hover .emoji-float {
-    opacity: 1;
-    animation: floatEmoji 2s ease-in-out infinite;
+  /* Show emoji effects only on desktop hover */
+  @media (min-width: 1024px) {
+    .emoji-float {
+      display: block;
+    }
+    
+    .hover-logo-container:hover .emoji-float {
+      opacity: 1;
+      animation: floatEmoji 2s ease-in-out infinite;
+    }
   }
 
   /* Individual emoji positions and delays */
@@ -1262,9 +1270,11 @@ section:nth-child(odd) {
     }
   }
 
-  /* Glitter effect on text hover */
-  [data-testid="logo-link"]:hover h1 {
-    animation: textGlitter 1.5s ease-in-out infinite;
+  /* Glitter effect on text hover - DESKTOP ONLY */
+  @media (min-width: 1024px) {
+    [data-testid="logo-link"]:hover h1 {
+      animation: textGlitter 1.5s ease-in-out infinite;
+    }
   }
 
   @keyframes textGlitter {

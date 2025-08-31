@@ -40,7 +40,7 @@ const Navigation = () => {
               </div>
               {/* Desktop Logo - Full */}
               <div className="hidden md:block min-w-0" style={{marginTop: '0.75rem'}}>
-                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[19px] mt-[0.9px] mb-[0.9px] text-left">বং বাড়ি</h1>
+                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[19px] mt-[0.9px] mb-[0.9px] text-left pt-[2.5px] pb-[2.5px]">বং বাড়ি</h1>
                 <p className="text-xs text-gray-600 leading-tight whitespace-nowrap" style={{marginTop: '0.25rem', fontSize: '0.7rem'}}>Bengali Comedy</p>
               </div>
             </div>

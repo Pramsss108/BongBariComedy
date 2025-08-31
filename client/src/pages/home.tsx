@@ -307,9 +307,9 @@ const Home = () => {
           
           {/* CTA Buttons */}
           <ParallaxSection speed={0.3} delay={0.3}>
-            <section className="text-center mb-0" data-testid="cta-section">
+            <section className="text-center mb-16 py-8" data-testid="cta-section">
             <motion.div 
-              className="flex flex-col lg:flex-row gap-12 justify-center items-center px-4"
+              className="flex flex-col lg:flex-row gap-8 justify-center items-center px-8 max-w-6xl mx-auto"
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
@@ -318,15 +318,15 @@ const Home = () => {
                 initial={{ opacity: 0, x: -50 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
-                className="w-full sm:w-auto"
+                className="flex-shrink-0"
               >
                 <FuturisticButton 
                   variant="youtube"
-                  className="w-full sm:w-auto"
+                  className="max-w-full"
                   onClick={() => window.open('https://youtube.com/@bongbari', '_blank')}
                   data-testid="button-youtube"
                 >
-                  <Youtube className="h-8 w-8" />
+                  <Youtube className="h-6 w-6" />
                   Subscribe on YouTube
                 </FuturisticButton>
               </motion.div>
@@ -335,15 +335,15 @@ const Home = () => {
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
-                className="w-full sm:w-auto"
+                className="flex-shrink-0"
               >
                 <FuturisticButton 
                   variant="instagram"
-                  className="w-full sm:w-auto"
+                  className="max-w-full"
                   onClick={() => window.open('https://instagram.com/thebongbari', '_blank')}
                   data-testid="button-instagram"
                 >
-                  <Instagram className="h-8 w-8" />
+                  <Instagram className="h-6 w-6" />
                   Follow on Instagram
                 </FuturisticButton>
               </motion.div>

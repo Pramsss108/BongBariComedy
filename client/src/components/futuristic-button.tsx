@@ -154,18 +154,19 @@ export const FuturisticButton = ({
             <motion.button
             ref={buttonRef}
             className={`
-              relative overflow-hidden px-12 py-6 rounded-full text-white font-extrabold text-2xl
+              relative overflow-hidden px-8 py-4 rounded-full text-white font-extrabold text-xl
               transition-all duration-500 ease-out
               hover:scale-110 active:scale-95
               disabled:opacity-50 disabled:cursor-not-allowed
               border-2 border-white/30
+              max-w-full
               ${className}
             `}
             style={{
               background: style.background,
               boxShadow: style.shadow,
-              minWidth: '400px',
-              minHeight: '80px'
+              minWidth: '280px',
+              minHeight: '70px'
             }}
             onClick={handleClick}
             disabled={disabled}

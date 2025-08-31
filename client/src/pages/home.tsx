@@ -386,107 +386,32 @@ const Home = () => {
           </section>
           </ParallaxSection>
           
-          {/* CTA Buttons */}
-          <ParallaxSection speed={0.3} delay={0.3}>
-            <section className="text-center mb-0 pb-2 pt-4" data-testid="cta-section">
-            <motion.div 
-              className="flex flex-col lg:flex-row gap-8 justify-center items-center px-8 max-w-6xl mx-auto"
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-            >
-              <motion.div
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="flex-shrink-0"
-              >
-                <FuturisticButton 
-                  variant="youtube"
-                  className="max-w-full"
-                  onClick={() => window.open('https://youtube.com/@bongbari', '_blank')}
-                  data-testid="button-youtube"
-                >
-                  <Youtube className="h-5 w-5" />
-                  Subscribe on YouTube
-                </FuturisticButton>
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-                className="flex-shrink-0"
-              >
-                <FuturisticButton 
-                  variant="instagram"
-                  className="max-w-full"
-                  onClick={() => window.open('https://instagram.com/thebongbari', '_blank')}
-                  data-testid="button-instagram"
-                >
-                  <Instagram className="h-5 w-5" />
-                  Follow on Instagram
-                </FuturisticButton>
-              </motion.div>
-            </motion.div>
-            </section>
-          </ParallaxSection>
-          <ParallaxSection speed={0.1} delay={0.1}>
-            <section className="py-2 bg-brand-yellow" data-testid="fun-facts-section">
-              <div className="max-w-4xl mx-auto px-4 text-center">
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6 }}
-                >
-                  <h3 className="text-2xl md:text-3xl font-bold text-brand-blue mb-2" data-testid="fun-facts-title">
-                    Why Choose Bong Bari? 🎭
-                  </h3>
-                  
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <motion.div 
-                      className="bg-white/60 rounded-lg p-3 shadow-sm"
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.5, delay: 0.1 }}
-                    >
-                      <div className="text-2xl mb-1">😂</div>
-                      <h5 className="font-bold text-sm text-brand-blue mb-1">Bengali Humor</h5>
-                      <p className="text-xs text-gray-700 bangla-text">খাঁটি বাংলা হাসি</p>
-                    </motion.div>
-                    
-                    <motion.div 
-                      className="bg-white/60 rounded-lg p-3 shadow-sm"
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.5, delay: 0.2 }}
-                    >
-                      <div className="text-2xl mb-1">👨‍👦</div>
-                      <h5 className="font-bold text-sm text-brand-blue mb-1">Family Comedy</h5>
-                      <p className="text-xs text-gray-700 bangla-text">মা-ছেলের জুটি</p>
-                    </motion.div>
-                    
-                    <motion.div 
-                      className="bg-white/60 rounded-lg p-3 shadow-sm"
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.5, delay: 0.3 }}
-                    >
-                      <div className="text-2xl mb-1">🏙️</div>
-                      <h5 className="font-bold text-sm text-brand-blue mb-1">Kolkata Vibes</h5>
-                      <p className="text-xs text-gray-700 bangla-text">কলকাতার মেজাজ</p>
-                    </motion.div>
-                  </div>
-                </motion.div>
-              </div>
-            </section>
-          </ParallaxSection>
           </div>
         </main>
         
         {/* Footer */}
-        <footer className="bg-brand-blue text-white py-8 mt-0" data-testid="footer">
+        <footer className="bg-brand-blue text-white py-6 mt-0" data-testid="footer">
           <div className="container mx-auto px-4 text-center">
+            {/* Small Social Buttons */}
+            <div className="flex justify-center gap-4 mb-4">
+              <button 
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full text-sm flex items-center gap-2 transition-colors"
+                onClick={() => window.open('https://youtube.com/@bongbari', '_blank')}
+                data-testid="button-youtube-footer"
+              >
+                <Youtube className="h-4 w-4" />
+                YouTube
+              </button>
+              <button 
+                className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-full text-sm flex items-center gap-2 transition-colors"
+                onClick={() => window.open('https://instagram.com/thebongbari', '_blank')}
+                data-testid="button-instagram-footer"
+              >
+                <Instagram className="h-4 w-4" />
+                Instagram
+              </button>
+            </div>
+            
             <p className="text-lg font-medium" data-testid="footer-text">
               © Bong Bari 2025 Kolkata
             </p>

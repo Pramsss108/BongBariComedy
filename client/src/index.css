@@ -293,8 +293,8 @@
 /* Clean wrapper - no effects on content */
 .rotating-border-wrapper {
   position: relative;
-  border-radius: 14px;
-  border: 2px solid transparent;
+  border-radius: 16px;
+  border: 4px solid transparent;
   background: linear-gradient(white, white) padding-box,
     conic-gradient(
       from var(--angle, 0deg),

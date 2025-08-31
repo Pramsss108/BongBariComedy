@@ -125,13 +125,13 @@ const Home = () => {
       />
       <ParallaxContainer>
         
-        <main className="py-8 relative z-10">
-          <div className="container mx-auto px-4">
+        <main className="py-4 sm:py-6 lg:py-8 relative z-10">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             {/* Hero Banner */}
             <ParallaxSection speed={0.3} delay={0.1}>
-              <section className="text-center mb-8" data-testid="hero-section">
+              <section className="text-center mb-6 sm:mb-8 lg:mb-12" data-testid="hero-section">
             <motion.div 
-              className="w-full h-80 md:h-96 bg-gradient-to-r from-brand-yellow via-brand-red to-brand-blue rounded-2xl shadow-lg mb-6 flex items-center justify-center relative overflow-hidden"
+              className="w-full h-72 sm:h-80 md:h-96 lg:h-[28rem] xl:h-[32rem] bg-gradient-to-r from-brand-yellow via-brand-red to-brand-blue rounded-xl sm:rounded-2xl shadow-lg mb-4 sm:mb-6 flex items-center justify-center relative overflow-hidden"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1, ease: [0.25, 0.25, 0.25, 1] }}
@@ -155,12 +155,12 @@ const Home = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 0.7 }}
                 >
-                  <span className="text-7xl md:text-9xl lg:text-[10rem] font-bold text-white bangla-text drop-shadow-lg">
+                  <span className="text-5xl sm:text-6xl md:text-8xl lg:text-9xl xl:text-[10rem] font-bold text-white bangla-text drop-shadow-lg leading-none">
                     বং বাড়ি
                   </span>
                 </motion.div>
                 <motion.div 
-                  className="text-2xl md:text-3xl lg:text-4xl font-semibold text-white drop-shadow-md mt-6"
+                  className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-semibold text-white drop-shadow-md mt-4 sm:mt-6 px-4"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 0.9 }}
@@ -168,7 +168,7 @@ const Home = () => {
                   Bengali Comedy That Hits Home!
                 </motion.div>
                 <motion.div 
-                  className="text-xl md:text-2xl lg:text-3xl text-white/90 mt-4 bangla-text"
+                  className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl text-white/90 mt-2 sm:mt-4 bangla-text px-4"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 1.1 }}
@@ -190,15 +190,15 @@ const Home = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 1.3 }}
             >
-              <Card className="max-w-4xl mx-auto">
-              <CardContent className="p-8">
-                <p className="text-lg md:text-xl text-gray-700 mb-6 leading-relaxed" data-testid="intro-english">
+              <Card className="max-w-4xl mx-auto shadow-md">
+              <CardContent className="p-4 sm:p-6 lg:p-8">
+                <p className="text-base sm:text-lg lg:text-xl text-gray-700 mb-4 sm:mb-6 leading-relaxed" data-testid="intro-english">
                   Welcome to <strong>Bong Bari</strong> - where every Bengali family finds their story! 
                   Our hilarious mother-son comedy shorts capture the essence of Kolkata homes with relatable, 
                   heartwarming humor that'll make you laugh until your stomach hurts.
                 </p>
                 
-                <p className="text-lg md:text-xl text-gray-700 bangla-text leading-relaxed" data-testid="intro-bengali">
+                <p className="text-base sm:text-lg lg:text-xl text-gray-700 bangla-text leading-relaxed" data-testid="intro-bengali">
                   <strong>বং বাড়িতে</strong> স্বাগতম! আমাদের মা-ছেলের কমেডি শর্টস দেখে হাসতে হাসতে পেট ব্যথা হয়ে যাবে। 
                   কলকাতার ঘরোয়া পরিবেশের সাথে মিলিয়ে এমন সব মজার গল্প যা আপনার নিজের বাড়ির মতোই লাগবে।
                 </p>
@@ -210,9 +210,9 @@ const Home = () => {
           
           {/* YouTube Shorts Grid */}
           <ParallaxSection speed={0.4} delay={0.2}>
-            <section className="mb-8" data-testid="videos-section">
+            <section className="mb-6 sm:mb-8 lg:mb-12" data-testid="videos-section">
             <motion.h3 
-              className="text-3xl font-bold text-center text-brand-blue mb-6" 
+              className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-brand-blue mb-4 sm:mb-6" 
               data-testid="videos-title-english"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -221,7 +221,7 @@ const Home = () => {
               Latest Comedy Shorts
             </motion.h3>
             <motion.h4 
-              className="text-2xl font-bold text-center text-gray-800 mb-8 bangla-text" 
+              className="text-xl sm:text-2xl lg:text-3xl font-bold text-center text-gray-800 mb-6 sm:mb-8 bangla-text" 
               data-testid="videos-title-bengali"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -231,7 +231,7 @@ const Home = () => {
             </motion.h4>
             
             {isLoading ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6" data-testid="videos-grid-loading">
+              <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 lg:gap-6" data-testid="videos-grid-loading">
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="video-container">
                     <div className="w-full h-full bg-gray-200 rounded-lg animate-pulse" />
@@ -239,7 +239,7 @@ const Home = () => {
                 ))}
               </div>
             ) : (
-              <motion.div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6" data-testid="videos-grid">
+              <motion.div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 lg:gap-6" data-testid="videos-grid">
                 {videoData.map((video, index) => (
                   <motion.div
                     key={video.videoId}
@@ -269,30 +269,30 @@ const Home = () => {
           
           {/* Collaboration Form */}
           <ParallaxSection speed={0.2} delay={0.4}>
-            <section className="mb-8 py-8" data-testid="collaboration-section">
+            <section className="mb-6 sm:mb-8 py-4 sm:py-6 lg:py-8" data-testid="collaboration-section">
             <div className="max-w-4xl mx-auto">
               {/* Work with Us Header with Yellow Background */}
-              <div className="bg-brand-yellow rounded-2xl p-2 mb-0 text-center shadow-lg">
-                <h3 className="text-8xl md:text-9xl font-bold text-brand-blue mb-4" data-testid="collaboration-title-english" style={{fontSize: 'clamp(4rem, 12vw, 10rem)'}}>
+              <div className="bg-brand-yellow rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-6 mb-0 text-center shadow-lg">
+                <h3 className="font-bold text-brand-blue mb-2 sm:mb-4" data-testid="collaboration-title-english" style={{fontSize: 'clamp(2.5rem, 8vw, 8rem)'}}>
                   Work with Us
                 </h3>
-                <h4 className="text-6xl md:text-8xl font-bold text-gray-800 bangla-text" data-testid="collaboration-title-bengali" style={{fontSize: 'clamp(3rem, 10vw, 8rem)'}}>
+                <h4 className="font-bold text-gray-800 bangla-text" data-testid="collaboration-title-bengali" style={{fontSize: 'clamp(2rem, 6vw, 6rem)'}}>
                   আমাদের সাথে কাজ করুন
                 </h4>
               </div>
               
               <Card className="bg-white shadow-lg">
-                <CardContent className="p-8">
-                  <p className="text-center text-gray-700 mb-4 text-lg">
+                <CardContent className="p-4 sm:p-6 lg:p-8">
+                  <p className="text-center text-gray-700 mb-3 sm:mb-4 text-base sm:text-lg">
                     Ready to collaborate? Let's create some amazing Bengali comedy content together!
                   </p>
-                  <p className="text-center text-gray-700 mb-6 bangla-text text-lg">
+                  <p className="text-center text-gray-700 mb-4 sm:mb-6 bangla-text text-base sm:text-lg">
                     কোলাবোরেট করতে প্রস্তুত? চলুন একসাথে দুর্দান্ত বাংলা কমেডি কন্টেন্ট তৈরি করি!
                   </p>
                   
                   <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" data-testid="collaboration-form">
-                      <div className="grid md:grid-cols-2 gap-4">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6" data-testid="collaboration-form">
+                      <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
                         <FormField
                           control={form.control}
                           name="name"
@@ -358,6 +358,7 @@ const Home = () => {
                             <FormControl>
                               <Textarea 
                                 rows={4}
+                                className="min-h-[120px] resize-none text-base"
                                 placeholder="Tell us about your collaboration idea..."
                                 data-testid="textarea-message"
                                 {...field}
@@ -370,7 +371,7 @@ const Home = () => {
                       
                       <MagneticButton 
                         disabled={collaborationMutation.isPending}
-                        className="w-full bg-brand-red text-white hover:bg-red-600 py-3 rounded-full font-semibold text-lg hover-lift disabled:opacity-50"
+                        className="w-full bg-brand-red text-white hover:bg-red-600 py-4 sm:py-3 rounded-full font-semibold text-base sm:text-lg hover-lift disabled:opacity-50 min-h-[52px] touch-manipulation"
                         data-testid="button-submit-collaboration"
                         strength={0.5}
                         onClick={() => form.handleSubmit(onSubmit)()}
@@ -390,32 +391,32 @@ const Home = () => {
         </main>
         
         {/* Footer */}
-        <footer className="bg-brand-blue text-white py-6 mt-0" data-testid="footer">
-          <div className="container mx-auto px-4 text-center">
-            {/* Small Social Buttons */}
-            <div className="flex justify-center gap-4 mb-4">
+        <footer className="bg-brand-blue text-white py-4 sm:py-6 mt-0" data-testid="footer">
+          <div className="container mx-auto px-4 sm:px-6 text-center">
+            {/* Enhanced Social Buttons */}
+            <div className="flex justify-center gap-3 sm:gap-4 mb-4 sm:mb-6">
               <button 
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full text-sm flex items-center gap-2 transition-colors"
+                className="bg-red-500 hover:bg-red-600 active:bg-red-700 text-white px-4 sm:px-5 py-3 sm:py-2 rounded-full text-sm sm:text-base flex items-center gap-2 transition-all duration-200 hover:scale-105 active:scale-95 min-h-[44px] touch-manipulation shadow-md"
                 onClick={() => window.open('https://youtube.com/@bongbari', '_blank')}
                 data-testid="button-youtube-footer"
               >
-                <Youtube className="h-4 w-4" />
-                YouTube
+                <Youtube className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="hidden xs:inline">YouTube</span>
               </button>
               <button 
-                className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-full text-sm flex items-center gap-2 transition-colors"
+                className="bg-purple-500 hover:bg-purple-600 active:bg-purple-700 text-white px-4 sm:px-5 py-3 sm:py-2 rounded-full text-sm sm:text-base flex items-center gap-2 transition-all duration-200 hover:scale-105 active:scale-95 min-h-[44px] touch-manipulation shadow-md"
                 onClick={() => window.open('https://instagram.com/thebongbari', '_blank')}
                 data-testid="button-instagram-footer"
               >
-                <Instagram className="h-4 w-4" />
-                Instagram
+                <Instagram className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="hidden xs:inline">Instagram</span>
               </button>
             </div>
             
-            <p className="text-lg font-medium" data-testid="footer-text">
+            <p className="text-base sm:text-lg font-medium" data-testid="footer-text">
               © Bong Bari 2025 Kolkata
             </p>
-            <p className="text-sm opacity-80 mt-2 bangla-text" data-testid="footer-text-bengali">
+            <p className="text-sm sm:text-base opacity-80 mt-1 sm:mt-2 bangla-text" data-testid="footer-text-bengali">
               © বং বাড়ি ২০২৫ কলকাতা
             </p>
           </div>

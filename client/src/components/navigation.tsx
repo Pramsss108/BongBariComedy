@@ -24,8 +24,8 @@ const Navigation = () => {
 
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50" data-testid="main-navigation">
-      <div className="container mx-auto px-6">
-        <div className="flex justify-between items-center py-4 md:py-5">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="flex justify-between items-center py-3 sm:py-4 md:py-5">
           {/* Logo - Optimized Layout */}
           <Link href="/" data-testid="logo-link">
             <div className="flex items-start space-x-4 cursor-pointer hover-logo-container">
@@ -45,10 +45,10 @@ const Navigation = () => {
                   <span className="emoji-float emoji-6 text-lg">🤣</span>
                 </div>
               </div>
-              {/* Mobile Logo - Compact with Padding */}
-              <div className="md:hidden flex flex-col justify-start pt-1 pr-2 min-w-[100px]">
-                <h1 className="text-lg font-bold text-brand-blue bangla-text leading-tight mb-1 pt-[2px] pb-[2px]">বং বাড়ি</h1>
-                <p className="text-[10px] text-gray-600 leading-tight whitespace-nowrap">Family Comedy</p>
+              {/* Mobile Logo - Enhanced Responsive */}
+              <div className="md:hidden flex flex-col justify-start pt-1 pr-2 min-w-[110px]">
+                <h1 className="text-lg sm:text-xl font-bold text-brand-blue bangla-text leading-tight mb-1 pt-[2px] pb-[2px]">বং বাড়ি</h1>
+                <p className="text-[11px] sm:text-xs text-gray-600 leading-tight whitespace-nowrap">Family Comedy</p>
               </div>
               {/* Desktop Logo - Fixed Layout */}
               <div className="hidden md:flex flex-col justify-start pt-1 min-w-[140px]">
@@ -58,13 +58,13 @@ const Navigation = () => {
             </div>
           </Link>
           
-          {/* Desktop Navigation - Improved Layout */}
-          <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
+          {/* Desktop Navigation - Enhanced Responsive */}
+          <div className="hidden md:flex items-center space-x-4 lg:space-x-6 xl:space-x-8">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`font-semibold text-lg transition-colors duration-150 hover:text-brand-blue ${
+                className={`font-semibold text-base lg:text-lg xl:text-xl transition-all duration-200 hover:text-brand-blue hover:scale-105 ${
                   isActive(item.href) 
                     ? "text-brand-blue border-b-2 border-brand-blue pb-1" 
                     : "text-gray-700 hover:border-b-2 hover:border-brand-blue pb-1"
@@ -76,27 +76,27 @@ const Navigation = () => {
             ))}
           </div>
           
-          {/* Mobile Menu Button */}
+          {/* Mobile Menu Button - Enhanced Touch Target */}
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="md:hidden p-3 hover:bg-gray-100 transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             data-testid="mobile-menu-toggle"
           >
-            {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            {isMobileMenuOpen ? <X className="h-7 w-7" /> : <Menu className="h-7 w-7" />}
           </Button>
         </div>
         
-        {/* Mobile Navigation */}
+        {/* Mobile Navigation - Enhanced Touch Experience */}
         {isMobileMenuOpen && (
-          <div className="md:hidden pb-4" data-testid="mobile-menu">
+          <div className="md:hidden pb-4 border-t border-gray-200 mt-4" data-testid="mobile-menu">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`block py-2 font-medium transition-colors hover:text-brand-blue ${
-                  isActive(item.href) ? "text-brand-blue" : "text-gray-700"
+                className={`block py-4 px-2 font-medium text-lg transition-all duration-200 hover:text-brand-blue hover:bg-gray-50 rounded-lg mx-2 my-1 ${
+                  isActive(item.href) ? "text-brand-blue bg-blue-50" : "text-gray-700"
                 }`}
                 onClick={() => setIsMobileMenuOpen(false)}
                 data-testid={`mobile-nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}

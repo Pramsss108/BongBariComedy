@@ -214,14 +214,14 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
     >
       {/* GLASS MORPHISM CONTAINER */}
-      <div className="w-full h-full bg-gradient-to-br from-white/15 via-white/10 to-white/5 backdrop-blur-xl rounded-2xl border border-white/30 shadow-2xl overflow-hidden" style={{ marginTop: '10px' }}>
+      <div className="w-full h-full bg-gradient-to-br from-white/15 via-white/10 to-white/5 backdrop-blur-xl rounded-2xl border border-white/30 shadow-2xl overflow-visible" style={{ marginTop: '0px', paddingTop: '10px' }}>
         
         {/* PROFESSIONAL DRAGGABLE HEADER */}
         <motion.div
           ref={headerRef}
           onMouseDown={handleMouseDown}
-          className="relative w-full h-14 bg-gradient-to-r from-[#1363DF]/60 via-[#FFCC00]/60 to-[#FF4D4D]/60 backdrop-blur-lg cursor-grab active:cursor-grabbing flex items-center justify-between px-4 border-b-2 border-white/40 shadow-lg rounded-t-2xl"
-          style={{ userSelect: 'none' }}
+          className="relative w-full h-16 bg-gradient-to-r from-[#1363DF]/60 via-[#FFCC00]/60 to-[#FF4D4D]/60 backdrop-blur-lg cursor-grab active:cursor-grabbing flex items-center justify-between px-4 border-b-2 border-white/40 shadow-lg rounded-t-2xl"
+          style={{ userSelect: 'none', marginTop: '-10px', paddingTop: '12px', paddingBottom: '4px' }}
           whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
         >
           {/* ANIMATED LOGO & TITLE */}
@@ -352,7 +352,7 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
                           setMessage(template);
                           setShowTemplates(false);
                         }}
-                        className="px-2 py-1 bg-gradient-to-r from-[#FFCC00] to-[#FF4D4D] text-white text-xs font-semibold rounded-md shadow-lg border border-white/40 hover:shadow-xl transition-all"
+                        className="px-3 py-1.5 bg-slate-700/90 hover:bg-slate-600/90 text-white text-xs font-medium rounded-lg shadow-lg border border-slate-500/50 hover:border-slate-400/70 transition-all"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >

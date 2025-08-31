@@ -26,6 +26,10 @@ export const collaborationRequests = pgTable("collaboration_requests", {
   phone: text("phone"),
   company: text("company").notNull(),
   message: text("message"),
+  verificationToken: text("verification_token"),
+  isEmailVerified: text("is_email_verified").default("false"),
+  verificationExpiresAt: timestamp("verification_expires_at"),
+  status: text("status").default("pending"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

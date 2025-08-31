@@ -5,6 +5,7 @@ import { insertBlogPostSchema, insertCollaborationRequestSchema, insertUserSchem
 import { z } from "zod";
 import { google } from "googleapis";
 import { ObjectStorageService } from "./objectStorage";
+import { sendVerificationEmail, generateVerificationToken } from "./emailService";
 
 // Simple session middleware
 const sessions = new Map<string, { username: string; createdAt: Date }>();
@@ -334,11 +335,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Email verification routes
+  app.get("/verify-email", async (req, res) => {
+    try {
+      const { token } = req.query;
+      
+      if (!token || typeof token !== 'string') {
+        return res.status(400).send('<h1>Invalid verification link</h1><p>The verification link is invalid or missing.</p>');
+      }
+
+      const request = await storage.getCollaborationRequestByToken(token);
+      
+      if (!request) {
+        return res.status(404).send('<h1>Verification link not found</h1><p>This verification link may have expired or is invalid.</p>');
+      }
+
+      // Check if already verified
+      if (request.isEmailVerified === 'true') {
+        return res.send('<h1>Email Already Verified ✅</h1><p>Your collaboration request has already been verified and processed.</p>');
+      }
+
+      // Check if expired
+      if (request.verificationExpiresAt && new Date() > new Date(request.verificationExpiresAt)) {
+        return res.status(410).send('<h1>Verification link expired</h1><p>This verification link has expired. Please submit a new collaboration request.</p>');
+      }
+
+      // Verify the email
+      await storage.verifyCollaborationRequest(token);
+      
+      const successHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Email Verified - Bong Bari</title>
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #FCD34D, #F59E0B); margin: 0; padding: 20px; }
+            .container { max-width: 600px; margin: 50px auto; background: white; border-radius: 15px; padding: 40px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+            h1 { color: #1E40AF; margin-bottom: 20px; }
+            .emoji { font-size: 48px; margin: 20px 0; }
+            p { color: #374151; line-height: 1.6; margin-bottom: 15px; }
+            .footer { margin-top: 30px; color: #6B7280; font-size: 14px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="emoji">🎭✅</div>
+            <h1>Email Verified Successfully!</h1>
+            <p>Thank you for verifying your email address. Your collaboration request has been received and will be reviewed by our team.</p>
+            <p>We'll get back to you soon with exciting collaboration opportunities!</p>
+            <div class="footer">
+              <p>© 2025 Bong Bari - Bringing laughter to Bengali families</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+      
+      res.send(successHtml);
+    } catch (error) {
+      console.error('Email verification error:', error);
+      res.status(500).send('<h1>Verification Error</h1><p>Something went wrong during verification. Please try again later.</p>');
+    }
+  });
+
   app.post("/api/collaboration-requests", async (req, res) => {
     try {
       const validatedData = insertCollaborationRequestSchema.parse(req.body);
-      const request = await storage.createCollaborationRequest(validatedData);
-      res.status(201).json({ message: "Collaboration request submitted successfully", id: request.id });
+      
+      // Check if email is provided (required for verification)
+      if (!validatedData.email) {
+        return res.status(400).json({ message: "Email is required for collaboration requests" });
+      }
+
+      // Generate verification token and expiry
+      const verificationToken = generateVerificationToken();
+      const verificationExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+      
+      // Save request with verification data
+      const requestData = {
+        ...validatedData,
+        verificationToken,
+        verificationExpiresAt,
+        isEmailVerified: 'false',
+        status: 'pending_verification'
+      };
+      
+      const request = await storage.createCollaborationRequest(requestData);
+      
+      // Send verification email
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`
+        : `http://localhost:5000`;
+        
+      const emailSent = await sendVerificationEmail({
+        to: validatedData.email,
+        name: validatedData.name,
+        verificationToken,
+        baseUrl
+      });
+      
+      if (!emailSent) {
+        // If email fails, still save the request but inform user
+        return res.status(500).json({ 
+          message: "Request saved but verification email failed to send. Please contact us directly.",
+          id: request.id 
+        });
+      }
+      
+      res.status(201).json({ 
+        message: "Collaboration request submitted! Please check your email to verify your address.",
+        id: request.id,
+        requiresVerification: true
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid collaboration request data", errors: error.errors });

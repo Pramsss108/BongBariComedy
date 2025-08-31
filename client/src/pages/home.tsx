@@ -60,7 +60,7 @@ const Home = () => {
   const hasPhone = watchedValues.phone && watchedValues.phone.trim() !== "";
   const isFormValid = watchedValues.name && 
                      watchedValues.company && 
-                     (hasEmail || hasPhone) && // Either email OR phone required
+                     hasEmail && // Email is now required for verification
                      watchedValues.name.trim() !== "" &&
                      watchedValues.company.trim() !== "";
 
@@ -72,14 +72,23 @@ const Home = () => {
         'Content-Type': 'application/json'
       }
     }),
-    onSuccess: () => {
+    onSuccess: (response: any) => {
       // Play funny "sent successfully" sound
       playFunnySubmissionSound();
       
-      toast({
-        title: "Success!",
-        description: "Your collaboration request has been submitted. We'll get back to you soon!"
-      });
+      // Check if email verification is required
+      if (response.requiresVerification) {
+        toast({
+          title: "📧 Check Your Email!",
+          description: "We've sent you a verification email. Please click the link to confirm your collaboration request.",
+          duration: 8000
+        });
+      } else {
+        toast({
+          title: "Success!",
+          description: "Your collaboration request has been submitted. We'll get back to you soon!"
+        });
+      }
       form.reset();
     },
     onError: () => {
@@ -577,7 +586,7 @@ const Home = () => {
                           name="email"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Email {!hasPhone && <span className="text-red-500">*</span>} {hasPhone && <span className="text-gray-400">(Optional)</span>}</FormLabel>
+                              <FormLabel>Email <span className="text-red-500">*</span> <span className="text-gray-600 text-sm">(Required for verification)</span></FormLabel>
                               <FormControl>
                                 <Input 
                                   type="email" 
@@ -702,7 +711,7 @@ const Home = () => {
                         onClick={() => isFormValid && form.handleSubmit(onSubmit)()}
                       >
                         <Send className="mr-2 h-5 w-5" />
-                        {collaborationMutation.isPending ? "Sending..." : isFormValid ? "Send Message" : "Fill Name, Company & Email or Phone *"}
+                        {collaborationMutation.isPending ? "Sending..." : isFormValid ? "Send Message" : "Fill Name, Company & Email *"}
                       </MagneticButton>
                     </form>
                   </Form>

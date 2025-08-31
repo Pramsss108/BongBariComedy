@@ -221,7 +221,7 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
           ref={headerRef}
           onMouseDown={handleMouseDown}
           className="relative w-full h-16 bg-gradient-to-r from-[#1363DF]/60 via-[#FFCC00]/60 to-[#FF4D4D]/60 backdrop-blur-lg cursor-grab active:cursor-grabbing flex items-center justify-between px-4 border-b-2 border-white/40 shadow-lg rounded-t-2xl"
-          style={{ userSelect: 'none', marginTop: '-10px', paddingTop: '12px', paddingBottom: '4px' }}
+          style={{ userSelect: 'none', marginTop: '-10px', paddingTop: '20px', paddingBottom: '2px' }}
           whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
         >
           {/* ANIMATED LOGO & TITLE */}

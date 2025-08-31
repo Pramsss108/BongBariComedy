@@ -163,7 +163,7 @@ const Home = () => {
       
       <ParallaxContainer>
         
-        <main className="py-1 sm:py-2 relative z-10">
+        <main className="py-2 sm:py-3 relative z-10 mt-2">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             
             {/* Ultra-thin Banner */}

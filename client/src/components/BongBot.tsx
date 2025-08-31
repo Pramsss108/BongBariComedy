@@ -97,7 +97,7 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
     
     // Get real AI response from Gemini Pro
     try {
-      const response = await fetch('/api/chat', {
+      const response = await fetch('/api/chatbot/message', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

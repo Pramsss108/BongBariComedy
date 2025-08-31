@@ -28,12 +28,23 @@ const Navigation = () => {
         <div className="flex justify-between items-center py-3 md:py-10 pt-[20px] pb-[20px]">
           {/* Logo - Responsive Design */}
           <Link href="/" data-testid="logo-link">
-            <div className="flex items-center space-x-3 cursor-pointer" style={{marginTop: '1rem'}}>
-              <img 
-                src="/logo.png" 
-                alt="Bong Bari Logo" 
-                className="w-10 h-10 md:w-12 md:h-12 rounded-lg"
-              />
+            <div className="flex items-center space-x-3 cursor-pointer hover-logo-container" style={{marginTop: '1rem'}}>
+              <div className="relative logo-hover-wrapper">
+                <img 
+                  src="/logo.png" 
+                  alt="Bong Bari Logo" 
+                  className="w-10 h-10 md:w-12 md:h-12 rounded-lg transition-transform duration-300 hover:scale-110"
+                />
+                {/* Animated Emojis on Hover */}
+                <div className="absolute inset-0 pointer-events-none">
+                  <span className="emoji-float emoji-1 text-xl">😂</span>
+                  <span className="emoji-float emoji-2 text-lg">❤️</span>
+                  <span className="emoji-float emoji-3 text-lg">🎭</span>
+                  <span className="emoji-float emoji-4 text-sm">✨</span>
+                  <span className="emoji-float emoji-5 text-sm">🌟</span>
+                  <span className="emoji-float emoji-6 text-lg">🤣</span>
+                </div>
+              </div>
               {/* Mobile Logo - Compact */}
               <div className="md:hidden">
                 <h1 className="text-xl font-bold text-brand-blue bangla-text leading-tight">বং বাড়ি</h1>

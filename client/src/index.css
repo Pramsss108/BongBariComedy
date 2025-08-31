@@ -1181,6 +1181,107 @@ section:nth-child(odd) {
     transform: scale(1.02) !important;
   }
   
+  /* Logo hover wrapper */
+  .logo-hover-wrapper {
+    position: relative;
+    overflow: visible;
+  }
+
+  /* Emoji float animations */
+  .emoji-float {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    font-size: 1.2rem;
+  }
+
+  .hover-logo-container:hover .emoji-float {
+    opacity: 1;
+    animation: floatEmoji 2s ease-in-out infinite;
+  }
+
+  /* Individual emoji positions and delays */
+  .emoji-1 {
+    top: -15px;
+    left: -15px;
+    animation-delay: 0s;
+  }
+
+  .emoji-2 {
+    top: -20px;
+    right: -15px;
+    animation-delay: 0.3s;
+  }
+
+  .emoji-3 {
+    bottom: -15px;
+    left: -10px;
+    animation-delay: 0.6s;
+  }
+
+  .emoji-4 {
+    bottom: -20px;
+    right: -10px;
+    animation-delay: 0.9s;
+  }
+
+  .emoji-5 {
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    animation-delay: 1.2s;
+  }
+
+  .emoji-6 {
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    animation-delay: 1.5s;
+  }
+
+  /* Emoji float animation keyframes */
+  @keyframes floatEmoji {
+    0% {
+      transform: translateY(0px) scale(0.8);
+      opacity: 0;
+    }
+    20% {
+      opacity: 1;
+    }
+    50% {
+      transform: translateY(-10px) scale(1.1);
+      opacity: 1;
+    }
+    80% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(-20px) scale(0.8);
+      opacity: 0;
+    }
+  }
+
+  /* Glitter effect on text hover */
+  [data-testid="logo-link"]:hover h1 {
+    animation: textGlitter 1.5s ease-in-out infinite;
+  }
+
+  @keyframes textGlitter {
+    0%, 100% {
+      text-shadow: 0 0 5px rgba(255, 204, 0, 0.3);
+    }
+    25% {
+      text-shadow: 0 0 10px rgba(255, 204, 0, 0.6), 0 0 15px rgba(0, 123, 255, 0.3);
+    }
+    50% {
+      text-shadow: 0 0 15px rgba(255, 204, 0, 0.8), 0 0 20px rgba(0, 123, 255, 0.5);
+    }
+    75% {
+      text-shadow: 0 0 10px rgba(255, 204, 0, 0.6), 0 0 15px rgba(0, 123, 255, 0.3);
+    }
+  }
+
   /* Navigation links enhancement */
   [data-testid="main-navigation"] a[data-testid*="nav-link"] {
     position: relative !important;

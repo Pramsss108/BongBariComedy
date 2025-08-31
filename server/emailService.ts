@@ -73,9 +73,12 @@ export async function sendVerificationEmail(params: VerificationEmailParams): Pr
       </html>
     `;
 
+    // Use environment variable for sender email or fall back to a common domain
+    const fromEmail = process.env.SENDGRID_FROM_EMAIL || 'test@example.com';
+    
     await mailService.send({
       to: params.to,
-      from: 'noreply@bongbari.com', // You'll need to verify this domain in SendGrid
+      from: fromEmail,
       subject: '🎭 Verify Your Email - Bong Bari Collaboration',
       text: `Hello ${params.name}, please verify your email by visiting: ${verificationUrl}`,
       html: emailHtml,
@@ -147,9 +150,12 @@ export async function sendOTPEmail(params: OTPEmailParams): Promise<boolean> {
       </html>
     `;
 
+    // Use environment variable for sender email or fall back to a common domain
+    const fromEmail = process.env.SENDGRID_FROM_EMAIL || 'test@example.com';
+    
     await mailService.send({
       to: params.to,
-      from: 'noreply@bongbari.com',
+      from: fromEmail,
       subject: '🎭 Your Verification Code - Bong Bari',
       text: `Hello ${params.name}, your verification code is: ${params.otpCode}. This code expires in 10 minutes.`,
       html: emailHtml,

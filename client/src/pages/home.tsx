@@ -214,221 +214,39 @@ const Home = () => {
               </div>
             </motion.div>
           
-          {/* Intro Text - Marketing Enhanced with Trendy Animations */}
+          {/* Professional Intro Text */}
           <motion.div
-            initial={{ opacity: 0, y: 50 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
             className="mb-8"
           >
-            <Card className="max-w-4xl mx-auto shadow-lg transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] bg-gradient-to-br from-white via-yellow-50 to-orange-50">
-              <CardContent className="p-4 sm:p-6 lg:p-8 relative overflow-hidden">
-                {/* Floating Animation Background */}
-                <div className="absolute inset-0 opacity-10 pointer-events-none">
-                  <motion.div
-                    className="absolute top-4 left-4 w-8 h-8 bg-brand-yellow rounded-full"
-                    animate={{
-                      x: [0, 20, 0],
-                      y: [0, -10, 0],
-                      scale: [1, 1.2, 1]
-                    }}
-                    transition={{
-                      duration: 4,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
-                  />
-                  <motion.div
-                    className="absolute bottom-6 right-6 w-6 h-6 bg-brand-red rounded-full"
-                    animate={{
-                      x: [0, -15, 0],
-                      y: [0, 15, 0],
-                      scale: [1, 0.8, 1]
-                    }}
-                    transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                      delay: 1
-                    }}
-                  />
-                </div>
-
-                {/* English Welcome Text with Advanced Animations */}
-                <motion.div 
-                  className="text-base sm:text-lg lg:text-xl text-gray-700 mb-4 sm:mb-6 leading-relaxed" 
+            <Card className="max-w-4xl mx-auto shadow-lg bg-white border border-gray-100">
+              <CardContent className="p-6 sm:p-8 lg:p-10">
+                {/* Clean English Text */}
+                <motion.p 
+                  className="text-base sm:text-lg lg:text-xl text-gray-700 mb-6 leading-relaxed" 
                   data-testid="intro-english"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 1, delay: 0.8 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.8 }}
                 >
-                  <motion.span
-                    className="inline-block"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 1 }}
-                  >
-                    Welcome to 
-                  </motion.span>
-                  <motion.strong
-                    className="bg-gradient-to-r from-brand-blue via-brand-red to-brand-yellow bg-clip-text text-transparent font-black text-xl sm:text-2xl lg:text-3xl inline-block mx-2"
-                    initial={{ opacity: 0, scale: 0.5, rotateX: 90 }}
-                    animate={{ opacity: 1, scale: 1, rotateX: 0 }}
-                    transition={{ 
-                      duration: 0.8, 
-                      delay: 1.2,
-                      type: "spring",
-                      stiffness: 200
-                    }}
-                    whileHover={{ 
-                      scale: 1.1, 
-                      textShadow: "0px 0px 8px rgba(255,204,0,0.8)",
-                      transition: { duration: 0.2 }
-                    }}
-                  >
-                    Bong Bari
-                  </motion.strong>
-                  <motion.span
-                    className="inline-block"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 1.4 }}
-                  >
-                    - where every Bengali family finds their story!
-                  </motion.span>
-                  <br />
-                  <motion.span
-                    className="inline-block mt-2"
-                    initial={{ opacity: 0, x: -30 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.8, delay: 1.6 }}
-                  >
-                    Our 
-                  </motion.span>
-                  <motion.span
-                    className="font-bold text-brand-red hover:text-brand-yellow transition-colors duration-300 cursor-pointer inline-block"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.6, delay: 1.8 }}
-                    whileHover={{ 
-                      scale: 1.05,
-                      textShadow: "0px 0px 4px rgba(255,77,77,0.6)"
-                    }}
-                  >
-                    hilarious mother-son comedy shorts
-                  </motion.span>
-                  <motion.span
-                    className="inline-block ml-1"
-                    initial={{ opacity: 0, x: 30 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.8, delay: 2 }}
-                  >
-                    capture the essence of Kolkata homes with relatable, heartwarming humor that'll 
-                  </motion.span>
-                  <motion.span
-                    className="font-bold text-brand-blue hover:animate-pulse cursor-pointer inline-block"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 2.2 }}
-                    whileHover={{ 
-                      scale: 1.05,
-                      color: "#FF4D4D",
-                      transition: { duration: 0.2 }
-                    }}
-                  >
-                    make you laugh until your stomach hurts.
-                  </motion.span>
-                </motion.div>
+                  Welcome to <strong className="text-brand-blue font-bold">Bong Bari</strong> - where every Bengali family finds their story! 
+                  Our hilarious <span className="text-brand-red font-semibold">mother-son comedy shorts</span> capture the essence of Kolkata homes with relatable, 
+                  heartwarming humor that'll make you laugh until your stomach hurts.
+                </motion.p>
                 
-                {/* Bengali Text with Word-by-Word Animation */}
-                <motion.div 
+                {/* Clean Bengali Text */}
+                <motion.p 
                   className="text-base sm:text-lg lg:text-xl text-gray-700 bangla-text leading-relaxed" 
                   data-testid="intro-bengali"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 1, delay: 2.4 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 1 }}
                 >
-                  <motion.strong
-                    className="bg-gradient-to-r from-brand-yellow via-brand-red to-brand-blue bg-clip-text text-transparent font-black text-xl sm:text-2xl lg:text-3xl inline-block mr-2"
-                    initial={{ opacity: 0, rotateY: 180 }}
-                    animate={{ opacity: 1, rotateY: 0 }}
-                    transition={{ 
-                      duration: 0.8, 
-                      delay: 2.6,
-                      type: "spring"
-                    }}
-                    whileHover={{ 
-                      scale: 1.1,
-                      textShadow: "0px 0px 8px rgba(19,99,223,0.8)",
-                      transition: { duration: 0.2 }
-                    }}
-                  >
-                    বং বাড়িতে
-                  </motion.strong>
-                  <motion.span
-                    className="inline-block"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 2.8 }}
-                  >
-                    স্বাগতম! আমাদের 
-                  </motion.span>
-                  <motion.span
-                    className="font-bold text-brand-red hover:text-brand-yellow transition-colors duration-300 cursor-pointer inline-block"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.6, delay: 3 }}
-                    whileHover={{ 
-                      scale: 1.05,
-                      textShadow: "0px 0px 4px rgba(255,77,77,0.6)"
-                    }}
-                  >
-                    মা-ছেলের কমেডি শর্টস
-                  </motion.span>
-                  <motion.span
-                    className="inline-block ml-1"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.8, delay: 3.2 }}
-                  >
-                    দেখে 
-                  </motion.span>
-                  <motion.span
-                    className="font-bold text-brand-blue hover:animate-bounce cursor-pointer inline-block"
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.6, delay: 3.4 }}
-                    whileHover={{ 
-                      scale: 1.1,
-                      color: "#FFCC00",
-                      transition: { duration: 0.2 }
-                    }}
-                  >
-                    হাসতে হাসতে পেট ব্যথা
-                  </motion.span>
-                  <motion.span
-                    className="inline-block ml-1"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.8, delay: 3.6 }}
-                  >
-                    হয়ে যাবে। কলকাতার ঘরোয়া পরিবেশের সাথে মিলিয়ে এমন সব মজার গল্প যা আপনার নিজের বাড়ির মতোই লাগবে।
-                  </motion.span>
-                </motion.div>
-
-                {/* Interactive Call-to-Action Pulse */}
-                <motion.div
-                  className="absolute bottom-2 right-2 w-4 h-4 bg-brand-yellow rounded-full"
-                  animate={{
-                    scale: [1, 1.5, 1],
-                    opacity: [0.7, 1, 0.7]
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                />
+                  <strong className="text-brand-blue font-bold">বং বাড়িতে</strong> স্বাগতম! আমাদের <span className="text-brand-red font-semibold">মা-ছেলের কমেডি শর্টস</span> দেখে হাসতে হাসতে পেট ব্যথা হয়ে যাবে। 
+                  কলকাতার ঘরোয়া পরিবেশের সাথে মিলিয়ে এমন সব মজার গল্প যা আপনার নিজের বাড়ির মতোই লাগবে।
+                </motion.p>
               </CardContent>
             </Card>
           </motion.div>

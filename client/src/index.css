@@ -1211,9 +1211,10 @@ section:nth-child(odd) {
     min-width: max-content !important;
   }
   
-  /* Desktop logo text alignment */
+  /* Desktop logo text alignment - prevent cutoff */
   [data-testid="logo-link"] .hidden.md\\:block {
-    margin-top: 1rem !important;
+    margin-top: 1.25rem !important;
+    padding-top: 0.125rem !important;
   }
 }
 

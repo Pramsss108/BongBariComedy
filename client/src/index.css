@@ -68,6 +68,41 @@
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
 
+/* MEGA FUN Hover Effects for Maximum Moja! */
+.hover-bounce:hover {
+  animation: superBounce 0.6s ease-in-out;
+}
+
+.hover-wobble:hover {
+  animation: funWobble 0.8s ease-in-out;
+}
+
+.hover-pulse:hover {
+  animation: megaPulse 1s ease-in-out infinite;
+}
+
+@keyframes superBounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0) scale(1); }
+  40% { transform: translateY(-20px) scale(1.1); }
+  60% { transform: translateY(-10px) scale(1.05); }
+}
+
+@keyframes funWobble {
+  0% { transform: rotate(0deg) scale(1); }
+  15% { transform: rotate(5deg) scale(1.05); }
+  30% { transform: rotate(-5deg) scale(1.1); }
+  45% { transform: rotate(3deg) scale(1.05); }
+  60% { transform: rotate(-3deg) scale(1.08); }
+  75% { transform: rotate(1deg) scale(1.03); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+@keyframes megaPulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 99, 71, 0.7); }
+  50% { transform: scale(1.08); box-shadow: 0 0 0 20px rgba(255, 99, 71, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 99, 71, 0); }
+}
+
 /* Mobile Input Optimizations */
 @media (max-width: 640px) {
   input[type="text"], 

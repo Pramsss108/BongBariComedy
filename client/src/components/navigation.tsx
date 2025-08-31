@@ -35,8 +35,8 @@ const Navigation = () => {
                   alt="Bong Bari Logo" 
                   className="w-10 h-10 md:w-12 md:h-12 rounded-lg transition-transform duration-300 hover:scale-110"
                 />
-                {/* Animated Emojis on Hover */}
-                <div className="absolute inset-0 pointer-events-none">
+                {/* Animated Emojis on Hover - DESKTOP ONLY */}
+                <div className="absolute inset-0 pointer-events-none hidden lg:block">
                   <span className="emoji-float emoji-1 text-xl">😂</span>
                   <span className="emoji-float emoji-2 text-lg">❤️</span>
                   <span className="emoji-float emoji-3 text-lg">🎭</span>

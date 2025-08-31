@@ -116,94 +116,96 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
     }
   }, [isOpen, isMinimized]);
 
-  // WORKING DRAG SYSTEM - SIMPLIFIED
-  const [dragState, setDragState] = useState<{
-    isDragging: boolean;
-    startX: number;
-    startY: number;
-    initialLeft: number;
-    initialTop: number;
-  } | null>(null);
+  // DIRECT DOM DRAG SYSTEM
+  const dragHeaderRef = useRef<HTMLDivElement>(null);
+  let isDraggingNow = false;
+  let dragStartX = 0;
+  let dragStartY = 0;
+  let initialLeft = 0;
+  let initialTop = 0;
 
-  // Global mouse handlers
+  // Set up direct DOM event listeners
   useEffect(() => {
+    const headerElement = dragHeaderRef.current;
+    if (!headerElement) return;
+
+    const handleMouseDown = (e: MouseEvent) => {
+      if (isMinimized || !chatbotRef.current) return;
+      
+      console.log('💥 DIRECT DOM DRAG START!');
+      
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const rect = chatbotRef.current.getBoundingClientRect();
+      
+      isDraggingNow = true;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      initialLeft = rect.left;
+      initialTop = rect.top;
+      
+      // Force positioning
+      chatbotRef.current.style.position = 'fixed';
+      chatbotRef.current.style.left = rect.left + 'px';
+      chatbotRef.current.style.top = rect.top + 'px';
+      chatbotRef.current.style.right = 'unset';
+      chatbotRef.current.style.bottom = 'unset';
+      
+      document.body.style.cursor = 'grabbing';
+      document.body.style.userSelect = 'none';
+      
+      console.log('🎯 READY TO DRAG');
+    };
+    
     const handleMouseMove = (e: MouseEvent) => {
-      if (!dragState?.isDragging || !chatbotRef.current) return;
+      if (!isDraggingNow || !chatbotRef.current) return;
       
       e.preventDefault();
       
-      const deltaX = e.clientX - dragState.startX;
-      const deltaY = e.clientY - dragState.startY;
+      const deltaX = e.clientX - dragStartX;
+      const deltaY = e.clientY - dragStartY;
       
-      const newLeft = dragState.initialLeft + deltaX;
-      const newTop = dragState.initialTop + deltaY;
+      const newLeft = initialLeft + deltaX;
+      const newTop = initialTop + deltaY;
       
-      // Bounds checking
+      // Keep in bounds
       const maxX = window.innerWidth - chatbotRef.current.offsetWidth;
       const maxY = window.innerHeight - chatbotRef.current.offsetHeight;
       
       const boundedX = Math.max(0, Math.min(newLeft, maxX));
       const boundedY = Math.max(0, Math.min(newTop, maxY));
       
-      // Apply position directly
+      // Move it!
       chatbotRef.current.style.left = boundedX + 'px';
       chatbotRef.current.style.top = boundedY + 'px';
-      chatbotRef.current.style.right = 'unset';
-      chatbotRef.current.style.bottom = 'unset';
       
-      console.log('🚀 DRAGGING TO:', boundedX, boundedY);
+      console.log('🚀 MOVING NOW:', boundedX, boundedY);
     };
     
     const handleMouseUp = () => {
-      if (dragState?.isDragging) {
-        console.log('🏁 DRAG ENDED');
-        setDragState(null);
+      if (isDraggingNow) {
+        console.log('🏁 DRAG COMPLETE!');
+        isDraggingNow = false;
         document.body.style.cursor = '';
         document.body.style.userSelect = '';
       }
     };
     
-    if (dragState?.isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
-  }, [dragState]);
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (isMinimized || !chatbotRef.current) return;
+    // Add listeners directly to DOM
+    headerElement.addEventListener('mousedown', handleMouseDown);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
     
-    console.log('🔥 DRAG INITIATED!');
+    console.log('📌 DOM LISTENERS ADDED');
     
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const rect = chatbotRef.current.getBoundingClientRect();
-    
-    // Override positioning immediately
-    chatbotRef.current.style.position = 'fixed';
-    chatbotRef.current.style.left = rect.left + 'px';
-    chatbotRef.current.style.top = rect.top + 'px';
-    chatbotRef.current.style.right = 'unset';
-    chatbotRef.current.style.bottom = 'unset';
-    
-    setDragState({
-      isDragging: true,
-      startX: e.clientX,
-      startY: e.clientY,
-      initialLeft: rect.left,
-      initialTop: rect.top
-    });
-    
-    document.body.style.cursor = 'grabbing';
-    document.body.style.userSelect = 'none';
-    
-    console.log('✅ DRAG STATE SET');
-  };
+    return () => {
+      headerElement.removeEventListener('mousedown', handleMouseDown);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      console.log('🧹 DOM LISTENERS REMOVED');
+    };
+  }, [isMinimized]);
 
   const handleResizeMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -481,10 +483,10 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
           </div>
         </div>
 
-        {/* DRAG HEADER - CLICK ANYWHERE TO DRAG */}
+        {/* DRAG HEADER - DIRECT DOM EVENTS */}
         <div 
+          ref={dragHeaderRef}
           className="relative z-10 flex flex-col bg-gradient-to-r from-[#1363DF]/95 to-[#FF4D4D]/95 backdrop-blur-md rounded-t-2xl border-b border-[#FFCC00]/30 cursor-grab active:cursor-grabbing flex-shrink-0 select-none"
-          onMouseDown={handleMouseDown}
           style={{ height: isMinimized ? '64px' : '80px' }}
           data-testid="drag-header"
         >

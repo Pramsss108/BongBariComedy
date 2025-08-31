@@ -3,12 +3,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ZoomIn, ZoomOut, RotateCcw, Move } from "lucide-react";
 
 interface CropData {
   width: number;
   height: number;
   x: number;
   y: number;
+}
+
+interface ViewportData {
+  scale: number;
+  offsetX: number;
+  offsetY: number;
 }
 
 interface SimpleCropStudioProps {
@@ -30,9 +37,16 @@ export function SimpleCropStudio({ imageUrl, onCropChange, className = "" }: Sim
     y: 35
   });
   
+  const [viewport, setViewport] = useState<ViewportData>({
+    scale: 1,
+    offsetX: 0,
+    offsetY: 0
+  });
+  
   const [isDragging, setIsDragging] = useState(false);
-  const [dragMode, setDragMode] = useState<'move' | 'resize' | null>(null);
+  const [dragMode, setDragMode] = useState<'move' | 'resize' | 'pan' | null>(null);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [dragStartData, setDragStartData] = useState({ crop: cropData, viewport });
 
   // Load image and get dimensions
   useEffect(() => {
@@ -43,12 +57,15 @@ export function SimpleCropStudio({ imageUrl, onCropChange, className = "" }: Sim
         imageRef.current = img;
         setImageSize({ width: img.width, height: img.height });
         // Set initial crop to center of image
-        setCropData({
-          width: Math.min(585, img.width * 0.8),
-          height: Math.min(360, img.height * 0.8),
-          x: img.width * 0.1,
-          y: img.height * 0.1
-        });
+        const initialCrop = {
+          width: Math.min(585, img.width * 0.6),
+          height: Math.min(360, img.height * 0.6),
+          x: img.width * 0.2,
+          y: img.height * 0.2
+        };
+        setCropData(initialCrop);
+        // Reset viewport
+        setViewport({ scale: 1, offsetX: 0, offsetY: 0 });
       };
       img.src = imageUrl;
     }
@@ -84,29 +101,37 @@ export function SimpleCropStudio({ imageUrl, onCropChange, className = "" }: Sim
   }, [updateCroppedImage]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
     const rect = workspaceRef.current?.getBoundingClientRect();
     if (!rect) return;
 
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    const scale = rect.width / imageSize.width;
-    const cropLeft = cropData.x * scale;
-    const cropTop = cropData.y * scale;
-    const cropRight = cropLeft + cropData.width * scale;
-    const cropBottom = cropTop + cropData.height * scale;
+    const displayScale = Math.min(rect.width / imageSize.width, rect.height / imageSize.height) * viewport.scale;
+    const displayWidth = imageSize.width * displayScale;
+    const displayHeight = imageSize.height * displayScale;
+    
+    const imageLeft = (rect.width - displayWidth) / 2 + viewport.offsetX;
+    const imageTop = (rect.height - displayHeight) / 2 + viewport.offsetY;
+    
+    const cropLeft = imageLeft + (cropData.x * displayScale);
+    const cropTop = imageTop + (cropData.y * displayScale);
+    const cropRight = cropLeft + (cropData.width * displayScale);
+    const cropBottom = cropTop + (cropData.height * displayScale);
 
     // Check if clicking on resize handle (bottom-right corner)
-    if (Math.abs(x - cropRight) < 10 && Math.abs(y - cropBottom) < 10) {
+    if (Math.abs(x - cropRight) < 12 && Math.abs(y - cropBottom) < 12) {
       setDragMode('resize');
     } else if (x >= cropLeft && x <= cropRight && y >= cropTop && y <= cropBottom) {
       setDragMode('move');
     } else {
-      return;
+      setDragMode('pan');
     }
 
     setIsDragging(true);
     setDragStart({ x: e.clientX, y: e.clientY });
+    setDragStartData({ crop: cropData, viewport });
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -116,39 +141,57 @@ export function SimpleCropStudio({ imageUrl, onCropChange, className = "" }: Sim
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    const scale = rect.width / imageSize.width;
-    const cropRight = cropData.x * scale + cropData.width * scale;
-    const cropBottom = cropData.y * scale + cropData.height * scale;
+    const displayScale = Math.min(rect.width / imageSize.width, rect.height / imageSize.height) * viewport.scale;
+    const displayWidth = imageSize.width * displayScale;
+    const displayHeight = imageSize.height * displayScale;
+    
+    const imageLeft = (rect.width - displayWidth) / 2 + viewport.offsetX;
+    const imageTop = (rect.height - displayHeight) / 2 + viewport.offsetY;
+    
+    const cropLeft = imageLeft + (cropData.x * displayScale);
+    const cropTop = imageTop + (cropData.y * displayScale);
+    const cropRight = cropLeft + (cropData.width * displayScale);
+    const cropBottom = cropTop + (cropData.height * displayScale);
 
     // Update cursor
-    if (Math.abs(x - cropRight) < 10 && Math.abs(y - cropBottom) < 10) {
-      if (workspaceRef.current) workspaceRef.current.style.cursor = 'se-resize';
-    } else if (x >= cropData.x * scale && x <= cropRight && y >= cropData.y * scale && y <= cropBottom) {
-      if (workspaceRef.current) workspaceRef.current.style.cursor = 'move';
-    } else {
-      if (workspaceRef.current) workspaceRef.current.style.cursor = 'default';
+    if (!isDragging) {
+      if (Math.abs(x - cropRight) < 12 && Math.abs(y - cropBottom) < 12) {
+        if (workspaceRef.current) workspaceRef.current.style.cursor = 'se-resize';
+      } else if (x >= cropLeft && x <= cropRight && y >= cropTop && y <= cropBottom) {
+        if (workspaceRef.current) workspaceRef.current.style.cursor = 'move';
+      } else {
+        if (workspaceRef.current) workspaceRef.current.style.cursor = 'grab';
+      }
     }
 
     if (!isDragging || !dragMode) return;
 
-    const deltaX = (e.clientX - dragStart.x) / scale;
-    const deltaY = (e.clientY - dragStart.y) / scale;
+    const deltaX = e.clientX - dragStart.x;
+    const deltaY = e.clientY - dragStart.y;
 
     if (dragMode === 'move') {
+      const newX = dragStartData.crop.x + (deltaX / displayScale);
+      const newY = dragStartData.crop.y + (deltaY / displayScale);
       setCropData(prev => ({
         ...prev,
-        x: Math.max(0, Math.min(imageSize.width - prev.width, prev.x + deltaX)),
-        y: Math.max(0, Math.min(imageSize.height - prev.height, prev.y + deltaY))
+        x: Math.max(0, Math.min(imageSize.width - prev.width, newX)),
+        y: Math.max(0, Math.min(imageSize.height - prev.height, newY))
       }));
     } else if (dragMode === 'resize') {
+      const newWidth = dragStartData.crop.width + (deltaX / displayScale);
+      const newHeight = dragStartData.crop.height + (deltaY / displayScale);
       setCropData(prev => ({
         ...prev,
-        width: Math.max(50, Math.min(imageSize.width - prev.x, prev.width + deltaX)),
-        height: Math.max(50, Math.min(imageSize.height - prev.y, prev.height + deltaY))
+        width: Math.max(50, Math.min(imageSize.width - prev.x, newWidth)),
+        height: Math.max(50, Math.min(imageSize.height - prev.y, newHeight))
+      }));
+    } else if (dragMode === 'pan') {
+      setViewport(prev => ({
+        ...prev,
+        offsetX: dragStartData.viewport.offsetX + deltaX,
+        offsetY: dragStartData.viewport.offsetY + deltaY
       }));
     }
-
-    setDragStart({ x: e.clientX, y: e.clientY });
   };
 
   const handleMouseUp = () => {
@@ -176,6 +219,28 @@ export function SimpleCropStudio({ imageUrl, onCropChange, className = "" }: Sim
     });
   };
 
+  const handleZoom = (direction: 'in' | 'out') => {
+    setViewport(prev => ({
+      ...prev,
+      scale: direction === 'in' 
+        ? Math.min(prev.scale * 1.2, 3) 
+        : Math.max(prev.scale / 1.2, 0.5)
+    }));
+  };
+
+  const resetView = () => {
+    setViewport({ scale: 1, offsetX: 0, offsetY: 0 });
+  };
+
+  const fitToView = () => {
+    if (!workspaceRef.current || !imageSize.width) return;
+    const rect = workspaceRef.current.getBoundingClientRect();
+    const scaleX = (rect.width * 0.8) / cropData.width;
+    const scaleY = (rect.height * 0.8) / cropData.height;
+    const newScale = Math.min(scaleX, scaleY, 2);
+    setViewport({ scale: newScale, offsetX: 0, offsetY: 0 });
+  };
+
   return (
     <div className={`${className}`}>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -188,45 +253,107 @@ export function SimpleCropStudio({ imageUrl, onCropChange, className = "" }: Sim
                 ref={workspaceRef}
                 className="relative bg-white rounded-lg overflow-hidden shadow-inner mx-auto"
                 style={{ 
-                  maxWidth: '100%',
-                  aspectRatio: imageSize.width / imageSize.height || 1
+                  width: '100%',
+                  height: '400px'
                 }}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
               >
-                {imageUrl && (
-                  <>
-                    {/* Background Image */}
-                    <img 
-                      src={imageUrl}
-                      alt="Crop preview"
-                      className="w-full h-full object-contain"
-                      style={{ opacity: 0.3 }}
-                    />
-                    
-                    {/* Crop Overlay */}
-                    <div
-                      className="absolute border-2 border-dashed border-blue-500"
-                      style={{
-                        left: `${(cropData.x / imageSize.width) * 100}%`,
-                        top: `${(cropData.y / imageSize.height) * 100}%`,
-                        width: `${(cropData.width / imageSize.width) * 100}%`,
-                        height: `${(cropData.height / imageSize.height) * 100}%`,
-                        backgroundImage: `url(${imageUrl})`,
-                        backgroundSize: `${(imageSize.width / cropData.width) * 100}% ${(imageSize.height / cropData.height) * 100}%`,
-                        backgroundPosition: `-${cropData.x}px -${cropData.y}px`
-                      }}
-                    >
+                {imageUrl && (() => {
+                  const rect = workspaceRef.current?.getBoundingClientRect();
+                  if (!rect) return null;
+                  
+                  const displayScale = Math.min(rect.width / imageSize.width, rect.height / imageSize.height) * viewport.scale;
+                  const displayWidth = imageSize.width * displayScale;
+                  const displayHeight = imageSize.height * displayScale;
+                  
+                  const imageLeft = (rect.width - displayWidth) / 2 + viewport.offsetX;
+                  const imageTop = (rect.height - displayHeight) / 2 + viewport.offsetY;
+                  
+                  const cropLeft = imageLeft + (cropData.x * displayScale);
+                  const cropTop = imageTop + (cropData.y * displayScale);
+                  const cropWidth = cropData.width * displayScale;
+                  const cropHeight = cropData.height * displayScale;
+                  
+                  return (
+                    <>
+                      {/* Dark Overlay */}
+                      <div className="absolute inset-0 bg-black bg-opacity-50 pointer-events-none" />
+                      
+                      {/* Main Image */}
+                      <img 
+                        src={imageUrl}
+                        alt="Crop preview"
+                        className="absolute pointer-events-none"
+                        style={{
+                          width: `${displayWidth}px`,
+                          height: `${displayHeight}px`,
+                          left: `${imageLeft}px`,
+                          top: `${imageTop}px`,
+                          opacity: 0.8
+                        }}
+                      />
+                      
+                      {/* Crop Area - Clear View */}
+                      <div
+                        className="absolute pointer-events-none"
+                        style={{
+                          left: `${cropLeft}px`,
+                          top: `${cropTop}px`,
+                          width: `${cropWidth}px`,
+                          height: `${cropHeight}px`,
+                          backgroundImage: `url(${imageUrl})`,
+                          backgroundSize: `${displayWidth}px ${displayHeight}px`,
+                          backgroundPosition: `-${cropData.x * displayScale}px -${cropData.y * displayScale}px`,
+                          backgroundRepeat: 'no-repeat'
+                        }}
+                      />
+                      
+                      {/* Red Guide Lines */}
+                      <div
+                        className="absolute border-2 border-red-500 pointer-events-none"
+                        style={{
+                          left: `${cropLeft}px`,
+                          top: `${cropTop}px`,
+                          width: `${cropWidth}px`,
+                          height: `${cropHeight}px`
+                        }}
+                      >
+                        {/* Corner Markers */}
+                        <div className="absolute -top-1 -left-1 w-3 h-3 border-2 border-red-500 bg-red-500" />
+                        <div className="absolute -top-1 -right-1 w-3 h-3 border-2 border-red-500 bg-red-500" />
+                        <div className="absolute -bottom-1 -left-1 w-3 h-3 border-2 border-red-500 bg-red-500" />
+                        <div className="absolute -bottom-1 -right-1 w-3 h-3 border-2 border-red-500 bg-red-500" />
+                        
+                        {/* Center Lines */}
+                        <div className="absolute top-1/2 left-0 w-full h-0.5 bg-red-500 opacity-50" style={{ transform: 'translateY(-50%)' }} />
+                        <div className="absolute left-1/2 top-0 w-0.5 h-full bg-red-500 opacity-50" style={{ transform: 'translateX(-50%)' }} />
+                      </div>
+                      
                       {/* Resize Handle */}
                       <div 
-                        className="absolute bottom-0 right-0 w-4 h-4 bg-blue-500 cursor-se-resize"
-                        style={{ transform: 'translate(50%, 50%)' }}
+                        className="absolute w-4 h-4 bg-red-500 cursor-se-resize border-2 border-white shadow-lg"
+                        style={{ 
+                          left: `${cropLeft + cropWidth - 8}px`,
+                          top: `${cropTop + cropHeight - 8}px`
+                        }}
                       />
-                    </div>
-                  </>
-                )}
+                      
+                      {/* Dimension Labels */}
+                      <div 
+                        className="absolute text-xs bg-red-500 text-white px-2 py-1 rounded pointer-events-none"
+                        style={{
+                          left: `${cropLeft}px`,
+                          top: `${cropTop - 25}px`
+                        }}
+                      >
+                        {cropData.width} × {cropData.height}
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </CardContent>
           </Card>
@@ -304,9 +431,55 @@ export function SimpleCropStudio({ imageUrl, onCropChange, className = "" }: Sim
                 </div>
               </div>
 
+              {/* Zoom Controls */}
+              <div className="flex gap-2 mb-4">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => handleZoom('out')}
+                  className="flex-1"
+                >
+                  <ZoomOut className="w-4 h-4" />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={resetView}
+                  className="flex-1"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => handleZoom('in')}
+                  className="flex-1"
+                >
+                  <ZoomIn className="w-4 h-4" />
+                </Button>
+              </div>
+              
+              {/* Fit Controls */}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={fitToView}
+                className="w-full mb-4"
+              >
+                <Move className="w-4 h-4 mr-2" />
+                Fit to Crop
+              </Button>
+              
+              {/* Zoom Level */}
+              <div className="text-center mb-4">
+                <span className="text-sm text-gray-600">
+                  Zoom: {Math.round(viewport.scale * 100)}%
+                </span>
+              </div>
+
               {/* Crop Button */}
               <Button 
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-lg mt-6"
+                className="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-3 rounded-lg"
                 onClick={updateCroppedImage}
               >
                 Crop IMAGE 🎯
@@ -319,9 +492,12 @@ export function SimpleCropStudio({ imageUrl, onCropChange, className = "" }: Sim
               />
               
               {/* Info Text */}
-              <p className="text-xs text-gray-500 text-center mt-4">
-                Drag the image or use resize handle to adjust crop area
-              </p>
+              <div className="text-xs text-gray-500 text-center mt-4 space-y-1">
+                <p>• Drag inside red area to move crop</p>
+                <p>• Drag corner handle to resize</p>
+                <p>• Drag outside to pan image</p>
+                <p>• Use zoom controls to scale</p>
+              </div>
             </CardContent>
           </Card>
         </div>

@@ -12,6 +12,38 @@ const MagicalCursor = () => {
 
   useEffect(() => {
     setIsOnMobile(isMobile());
+    
+    // Force cursor to appear over iframes with JavaScript
+    const style = document.createElement('style');
+    style.id = 'magical-cursor-force';
+    style.textContent = `
+      .magical-belan-portal {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        pointer-events: none !important;
+        z-index: 2147483647 !important;
+        mix-blend-mode: multiply !important;
+      }
+      
+      iframe, video, embed, object {
+        z-index: 1 !important;
+        position: relative !important;
+      }
+    `;
+    
+    if (!document.getElementById('magical-cursor-force')) {
+      document.head.appendChild(style);
+    }
+    
+    return () => {
+      const existingStyle = document.getElementById('magical-cursor-force');
+      if (existingStyle) {
+        existingStyle.remove();
+      }
+    };
   }, []);
 
   // Don't render cursor on mobile devices
@@ -20,53 +52,77 @@ const MagicalCursor = () => {
   }
 
   return (
-    <div className="fixed inset-0 pointer-events-none hidden sm:block" style={{ zIndex: 2147483647 }}>
-      {/* Authentic CSS Belan with wooden body and handles */}
+    <div className="magical-belan-portal">
+      {/* Super Responsive CSS Belan - reacts like cursor arrow */}
       <div
-        className="absolute pointer-events-none"
+        className="belan-cursor-responsive"
         style={{
-          transform: `translate3d(${cursorPosition.x - 12}px, ${cursorPosition.y - 4}px, 0) rotate(45deg)`,
-          opacity: isMoving ? 0.8 : 0.4,
-          transition: 'opacity 0.1s ease',
+          position: 'absolute',
+          transform: `translate3d(${cursorPosition.x - 12}px, ${cursorPosition.y - 4}px, 0) rotate(45deg) ${isMoving ? 'scale(1.15)' : 'scale(1)'}`,
+          opacity: isMoving ? 1 : 0.7,
+          transition: 'opacity 0.05s ease, transform 0.05s ease',
           willChange: 'transform, opacity',
-          zIndex: 2147483647,
-          mixBlendMode: 'multiply'
+          filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.4))',
+          zIndex: 2147483647
         }}
       >
-        {/* Main wooden body */}
+        {/* Enhanced Main wooden body - more visible and responsive */}
         <div
-          className="absolute"
           style={{
-            width: '20px',
-            height: '6px',
-            backgroundColor: '#D2691E',
+            position: 'absolute',
+            width: '24px',
+            height: '8px',
+            background: 'linear-gradient(45deg, #CD853F 0%, #D2691E 40%, #8B4513 100%)',
+            borderRadius: '4px',
+            left: '0px',
+            top: '0px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
+            border: '1px solid #654321'
+          }}
+        />
+        
+        {/* Enhanced Left handle - more defined and clickable-looking */}
+        <div
+          style={{
+            position: 'absolute',
+            width: '6px',
+            height: '5px',
+            background: 'linear-gradient(45deg, #8B4513 0%, #654321 50%, #4A2C17 100%)',
             borderRadius: '3px',
-            left: '2px',
-            top: '0px'
+            left: '-3px',
+            top: '1.5px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+            border: '1px solid #3D2016'
           }}
         />
-        {/* Left handle */}
+        
+        {/* Enhanced Right handle - more defined and clickable-looking */}
         <div
-          className="absolute"
           style={{
-            width: '4px',
-            height: '3px',
-            backgroundColor: '#8B4513',
-            borderRadius: '2px',
-            left: '-1px',
-            top: '1.5px'
-          }}
-        />
-        {/* Right handle */}
-        <div
-          className="absolute"
-          style={{
-            width: '4px',
-            height: '3px',
-            backgroundColor: '#8B4513',
-            borderRadius: '2px',
+            position: 'absolute',
+            width: '6px',
+            height: '5px',
+            background: 'linear-gradient(45deg, #8B4513 0%, #654321 50%, #4A2C17 100%)',
+            borderRadius: '3px',
             left: '21px',
-            top: '1.5px'
+            top: '1.5px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+            border: '1px solid #3D2016'
+          }}
+        />
+        
+        {/* Cursor tip indicator - makes it feel more like a real cursor */}
+        <div
+          style={{
+            position: 'absolute',
+            width: '3px',
+            height: '3px',
+            background: '#FFCC00',
+            borderRadius: '50%',
+            left: '10.5px',
+            top: '2.5px',
+            boxShadow: '0 0 4px rgba(255, 204, 0, 0.6)',
+            opacity: isMoving ? 1 : 0.8
           }}
         />
       </div>
@@ -82,7 +138,8 @@ const MagicalCursor = () => {
             style={{
               transform: `translate3d(${particle.x}px, ${particle.y}px, 0) scale(${particle.scale}) rotate(${particle.rotation}deg)`,
               opacity: particle.opacity,
-              willChange: 'transform, opacity'
+              willChange: 'transform, opacity',
+              zIndex: 2147483647
             }}
           >
             {particle.type === 'laugh' ? (

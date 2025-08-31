@@ -1,10 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, Send, X, Bot, User, Search, Lightbulb, Minimize2 } from "lucide-react";
+import { MessageCircle, Send, X, Bot, User, Sparkles, Zap, Star, Minimize2, Maximize2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 interface ChatMessage {
@@ -25,7 +24,7 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
     {
       id: '1',
       role: 'assistant',
-      content: 'হ্যালো! আমি Bong Bari-র AI সহায়ক। আপনার কোন প্রশ্ন আছে? 🎭\n\nHello! I\'m Bong Bari\'s AI assistant. How can I help you today?',
+      content: 'হ্যালো! আমি Bong Bari-র AI সহায়ক। 🤖✨\n\nHello! I\'m your AI assistant with magical powers! Ask me anything about Bengali comedy! 🎭💫',
       timestamp: new Date()
     }
   ]);
@@ -97,38 +96,16 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
     }
   };
 
-  const searchWeb = async (query: string) => {
-    setIsTyping(true);
-    addMessage('user', `🔍 Search: ${query}`);
-
-    try {
-      const response = await apiRequest('/api/chatbot/search', {
-        method: 'POST',
-        body: JSON.stringify({ query }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      addMessage('assistant', `🌐 Search Results:\n\n${response.results}`);
-    } catch (error) {
-      console.error('Search error:', error);
-      addMessage('assistant', 'অনুসন্ধানে সমস্যা হয়েছে। 😔\n\nSearch encountered an error.');
-    } finally {
-      setIsTyping(false);
-    }
-  };
-
   const getComedyTips = async () => {
     setIsTyping(true);
-    addMessage('user', '💡 Bengali Comedy Tips');
+    addMessage('user', '✨ Bengali Comedy Magic Tips');
 
     try {
       const response = await apiRequest('/api/chatbot/tips', {
         method: 'GET'
       });
 
-      addMessage('assistant', `🎭 Bengali Comedy Tips:\n\n${response.tips}`);
+      addMessage('assistant', `🎭 Bengali Comedy Magic:\n\n${response.tips}`);
     } catch (error) {
       console.error('Tips error:', error);
       addMessage('assistant', 'টিপস দিতে সমস্যা হচ্ছে। 😅\n\nHaving trouble providing tips.');
@@ -137,82 +114,197 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
     }
   };
 
-  // Quick action buttons
-  const quickActions = [
-    {
-      label: "Comedy Tips",
-      bangla: "কমেডি টিপস",
-      action: getComedyTips,
-      icon: Lightbulb
-    },
-    {
-      label: "About Bong Bari",
-      bangla: "বং বাড়ি সম্পর্কে",
-      action: () => sendMessage(),
-      icon: MessageCircle
-    }
-  ];
+  // Floating particles animation
+  const particles = Array.from({ length: 20 }, (_, i) => (
+    <motion.div
+      key={i}
+      className="absolute w-1 h-1 bg-white/30 rounded-full"
+      animate={{
+        y: [-20, -100],
+        opacity: [0, 1, 0],
+        scale: [0, 1, 0],
+      }}
+      transition={{
+        duration: 3,
+        repeat: Infinity,
+        delay: i * 0.2,
+        ease: "easeOut"
+      }}
+      style={{
+        left: `${Math.random() * 100}%`,
+        top: "100%",
+      }}
+    />
+  ));
+
+  // Typing animation dots
+  const TypingIndicator = () => (
+    <div className="flex items-center gap-2 p-4">
+      <div className="flex items-center gap-1">
+        <motion.div
+          className="w-2 h-2 bg-purple-400 rounded-full"
+          animate={{ scale: [1, 1.5, 1], opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 1, repeat: Infinity, delay: 0 }}
+        />
+        <motion.div
+          className="w-2 h-2 bg-blue-400 rounded-full"
+          animate={{ scale: [1, 1.5, 1], opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 1, repeat: Infinity, delay: 0.2 }}
+        />
+        <motion.div
+          className="w-2 h-2 bg-pink-400 rounded-full"
+          animate={{ scale: [1, 1.5, 1], opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 1, repeat: Infinity, delay: 0.4 }}
+        />
+      </div>
+      <span className="text-white/70 text-sm font-medium">AI thinking...</span>
+    </div>
+  );
 
   if (!isOpen) {
     return (
       <motion.div
-        className={`fixed bottom-6 right-6 z-50 ${className}`}
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
+        className={`fixed bottom-20 right-6 z-40 ${className}`}
+        initial={{ scale: 0, rotate: -180 }}
+        animate={{ scale: 1, rotate: 0 }}
         transition={{ type: "spring", stiffness: 260, damping: 20 }}
       >
-        <Button
-          onClick={() => setIsOpen(true)}
-          className="w-14 h-14 rounded-full bg-brand-blue hover:bg-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
-          data-testid="chatbot-open-button"
+        <motion.div
+          className="relative"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
         >
-          <MessageCircle className="w-6 h-6" />
-        </Button>
+          {/* Glow effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-blue-500 to-pink-500 rounded-full blur-lg opacity-70 animate-pulse" />
+          
+          {/* Main button */}
+          <Button
+            onClick={() => setIsOpen(true)}
+            className="relative w-16 h-16 rounded-full bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 hover:from-purple-700 hover:via-blue-700 hover:to-pink-700 text-white shadow-2xl border-2 border-white/20 overflow-hidden group"
+            data-testid="chatbot-open-button"
+          >
+            {/* Sparkle overlay */}
+            <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 via-transparent to-pink-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            
+            {/* Rotating ring */}
+            <motion.div
+              className="absolute inset-1 border-2 border-white/30 rounded-full"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+            />
+            
+            <MessageCircle className="w-7 h-7 relative z-10" />
+            
+            {/* Floating mini sparkles */}
+            <motion.div
+              className="absolute top-2 right-2 w-1 h-1 bg-yellow-300 rounded-full"
+              animate={{ scale: [0, 1, 0], opacity: [0, 1, 0] }}
+              transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+            />
+            <motion.div
+              className="absolute bottom-2 left-2 w-1 h-1 bg-pink-300 rounded-full"
+              animate={{ scale: [0, 1, 0], opacity: [0, 1, 0] }}
+              transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+            />
+          </Button>
+
+          {/* Floating text */}
+          <motion.div
+            className="absolute -top-12 left-1/2 transform -translate-x-1/2 px-3 py-1 bg-black/80 backdrop-blur-sm rounded-lg text-white text-xs font-medium whitespace-nowrap border border-white/20"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 2, duration: 0.5 }}
+          >
+            চ্যাট করুন! Chat with AI! ✨
+          </motion.div>
+        </motion.div>
       </motion.div>
     );
   }
 
   return (
     <motion.div
-      className={`fixed bottom-6 right-6 z-50 ${className}`}
-      initial={{ scale: 0, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 260, damping: 20 }}
+      className={`fixed bottom-6 right-6 z-40 ${className}`}
+      initial={{ scale: 0, opacity: 0, y: 100 }}
+      animate={{ scale: 1, opacity: 1, y: 0 }}
+      exit={{ scale: 0, opacity: 0, y: 100 }}
+      transition={{ type: "spring", stiffness: 200, damping: 25 }}
     >
-      <Card className={`w-96 shadow-2xl border-2 border-brand-blue/20 ${isMinimized ? 'h-16' : 'h-[500px]'} transition-all duration-300`}>
-        <CardHeader className="p-3 bg-gradient-to-r from-brand-yellow to-brand-red text-brand-blue">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-brand-blue rounded-full flex items-center justify-center">
-                <Bot className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <CardTitle className="text-sm font-bold">Bong Bari Assistant</CardTitle>
-                <p className="text-xs opacity-80">বং বাড়ি সহায়ক</p>
-              </div>
-            </div>
-            <div className="flex gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsMinimized(!isMinimized)}
-                className="h-6 w-6 p-0 hover:bg-brand-blue/10"
-                data-testid="chatbot-minimize-button"
-              >
-                <Minimize2 className="w-3 h-3" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsOpen(false)}
-                className="h-6 w-6 p-0 hover:bg-brand-blue/10"
-                data-testid="chatbot-close-button"
-              >
-                <X className="w-3 h-3" />
-              </Button>
+      <div className={`relative ${isMinimized ? 'w-80 h-16' : 'w-96 h-[600px]'} transition-all duration-500 ease-out`}>
+        {/* Background with glass morphism */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/80 via-blue-900/80 to-pink-900/80 backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl overflow-hidden">
+          {/* Animated gradient overlay */}
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-blue-500/20 to-pink-500/20"
+            animate={{ 
+              background: [
+                "linear-gradient(45deg, rgba(168, 85, 247, 0.2), rgba(59, 130, 246, 0.2), rgba(236, 72, 153, 0.2))",
+                "linear-gradient(90deg, rgba(236, 72, 153, 0.2), rgba(168, 85, 247, 0.2), rgba(59, 130, 246, 0.2))",
+                "linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(236, 72, 153, 0.2), rgba(168, 85, 247, 0.2))"
+              ]
+            }}
+            transition={{ duration: 4, repeat: Infinity }}
+          />
+          
+          {/* Floating particles */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {particles}
+          </div>
+        </div>
+
+        {/* Header */}
+        <div className="relative z-10 p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* AI Avatar with glow */}
+            <motion.div
+              className="relative w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center"
+              animate={{ boxShadow: ["0 0 20px rgba(168, 85, 247, 0.6)", "0 0 30px rgba(236, 72, 153, 0.8)", "0 0 20px rgba(168, 85, 247, 0.6)"] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              <Bot className="w-6 h-6 text-white" />
+              <motion.div
+                className="absolute inset-0 rounded-full border-2 border-white/30"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+              />
+            </motion.div>
+            
+            <div>
+              <h3 className="text-white font-bold text-lg bg-gradient-to-r from-yellow-300 to-pink-300 bg-clip-text text-transparent">
+                AI Assistant
+              </h3>
+              <p className="text-white/70 text-xs flex items-center gap-1">
+                <motion.div
+                  className="w-2 h-2 bg-green-400 rounded-full"
+                  animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+                Online & Magical ✨
+              </p>
             </div>
           </div>
-        </CardHeader>
+          
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsMinimized(!isMinimized)}
+              className="h-8 w-8 p-0 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm"
+              data-testid="chatbot-minimize-button"
+            >
+              {isMinimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsOpen(false)}
+              className="h-8 w-8 p-0 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm"
+              data-testid="chatbot-close-button"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
 
         <AnimatePresence>
           {!isMinimized && (
@@ -220,106 +312,120 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              className="relative z-10"
             >
-              <CardContent className="p-0 flex flex-col h-[440px]">
-                {/* Messages Area */}
-                <ScrollArea className="flex-1 p-4">
-                  <div className="space-y-4">
-                    {messages.map((message) => (
+              {/* Messages Area */}
+              <ScrollArea className="h-[440px] px-4 pb-4">
+                <div className="space-y-6">
+                  {messages.map((message, index) => (
+                    <motion.div
+                      key={message.id}
+                      initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ duration: 0.4, delay: index * 0.1 }}
+                      className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
                       <div
-                        key={message.id}
-                        className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                        className={`max-w-[85%] relative ${
+                          message.role === 'user'
+                            ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-2xl rounded-br-md'
+                            : 'bg-white/15 backdrop-blur-sm text-white rounded-2xl rounded-bl-md border border-white/20'
+                        } p-4 shadow-xl`}
                       >
-                        <div
-                          className={`max-w-[80%] p-3 rounded-lg ${
-                            message.role === 'user'
-                              ? 'bg-brand-blue text-white rounded-br-sm'
-                              : 'bg-gray-100 text-gray-800 rounded-bl-sm'
-                          }`}
-                        >
-                          <div className="flex items-start gap-2">
-                            {message.role === 'assistant' && (
-                              <Bot className="w-4 h-4 mt-0.5 text-brand-blue" />
-                            )}
-                            {message.role === 'user' && (
-                              <User className="w-4 h-4 mt-0.5" />
-                            )}
-                            <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                        {/* Message glow effect */}
+                        {message.role === 'assistant' && (
+                          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl rounded-bl-md blur-sm" />
+                        )}
+                        
+                        <div className="relative z-10 flex items-start gap-3">
+                          {message.role === 'assistant' && (
+                            <motion.div
+                              animate={{ rotate: [0, 10, -10, 0] }}
+                              transition={{ duration: 2, repeat: Infinity, delay: Math.random() * 2 }}
+                            >
+                              <Sparkles className="w-5 h-5 text-yellow-300 flex-shrink-0 mt-0.5" />
+                            </motion.div>
+                          )}
+                          
+                          <div className="flex-1">
+                            <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">
                               {message.content}
                             </p>
+                            <span className="text-xs opacity-70 mt-2 block">
+                              {message.timestamp.toLocaleTimeString()}
+                            </span>
                           </div>
                         </div>
                       </div>
-                    ))}
+                    </motion.div>
+                  ))}
 
-                    {isTyping && (
-                      <div className="flex justify-start">
-                        <div className="bg-gray-100 p-3 rounded-lg rounded-bl-sm">
-                          <div className="flex items-center gap-2">
-                            <Bot className="w-4 h-4 text-brand-blue" />
-                            <div className="flex gap-1">
-                              <div className="w-2 h-2 bg-brand-blue rounded-full animate-bounce"></div>
-                              <div className="w-2 h-2 bg-brand-blue rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                              <div className="w-2 h-2 bg-brand-blue rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                            </div>
-                          </div>
-                        </div>
+                  {isTyping && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="flex justify-start"
+                    >
+                      <div className="bg-white/15 backdrop-blur-sm rounded-2xl rounded-bl-md border border-white/20 shadow-xl">
+                        <TypingIndicator />
                       </div>
-                    )}
-                  </div>
-                  <div ref={messagesEndRef} />
-                </ScrollArea>
-
-                {/* Quick Actions */}
-                <div className="p-2 border-t">
-                  <div className="flex gap-1 mb-2">
-                    {quickActions.map((action, index) => (
-                      <Button
-                        key={index}
-                        variant="outline"
-                        size="sm"
-                        onClick={action.action}
-                        className="text-xs h-7 px-2"
-                        disabled={isTyping}
-                        data-testid={`quick-action-${index}`}
-                      >
-                        <action.icon className="w-3 h-3 mr-1" />
-                        <span className="hidden sm:inline">{action.label}</span>
-                        <span className="sm:hidden">{action.bangla}</span>
-                      </Button>
-                    ))}
-                  </div>
+                    </motion.div>
+                  )}
                 </div>
+                <div ref={messagesEndRef} />
+              </ScrollArea>
 
-                {/* Input Area */}
-                <div className="p-3 border-t bg-gray-50">
-                  <div className="flex gap-2">
+              {/* Quick Actions */}
+              <div className="px-4 pb-2">
+                <motion.button
+                  onClick={getComedyTips}
+                  disabled={isTyping}
+                  className="w-full py-2 px-4 bg-gradient-to-r from-yellow-500/20 to-red-500/20 backdrop-blur-sm rounded-xl border border-white/20 text-white text-sm font-medium hover:from-yellow-500/30 hover:to-red-500/30 transition-all duration-300 flex items-center justify-center gap-2"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  data-testid="quick-action-tips"
+                >
+                  <Zap className="w-4 h-4 text-yellow-400" />
+                  Comedy Magic Tips / কমেডি টিপস
+                  <Star className="w-4 h-4 text-yellow-400" />
+                </motion.button>
+              </div>
+
+              {/* Input Area */}
+              <div className="p-4 pt-2">
+                <div className="relative">
+                  {/* Input glow */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl blur-sm" />
+                  
+                  <div className="relative bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-2 flex gap-2">
                     <Input
                       ref={inputRef}
                       value={inputMessage}
                       onChange={(e) => setInputMessage(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      placeholder="Type your message... / আপনার বার্তা লিখুন..."
-                      className="flex-1"
+                      placeholder="Ask me anything magical... ✨"
+                      className="flex-1 bg-transparent border-0 text-white placeholder:text-white/50 focus:ring-0 focus:outline-none font-medium"
                       disabled={isTyping}
                       data-testid="chatbot-input"
                     />
-                    <Button
-                      onClick={sendMessage}
-                      disabled={!inputMessage.trim() || isTyping}
-                      className="bg-brand-blue hover:bg-blue-600"
-                      data-testid="chatbot-send-button"
-                    >
-                      <Send className="w-4 h-4" />
-                    </Button>
+                    <motion.div whileTap={{ scale: 0.9 }}>
+                      <Button
+                        onClick={sendMessage}
+                        disabled={!inputMessage.trim() || isTyping}
+                        className="w-10 h-10 p-0 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 shadow-lg"
+                        data-testid="chatbot-send-button"
+                      >
+                        <Send className="w-4 h-4" />
+                      </Button>
+                    </motion.div>
                   </div>
                 </div>
-              </CardContent>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
-      </Card>
+      </div>
     </motion.div>
   );
 }

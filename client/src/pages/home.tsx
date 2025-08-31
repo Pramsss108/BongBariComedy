@@ -163,7 +163,7 @@ const Home = () => {
       
       <ParallaxContainer>
         
-        <main className="py-2 sm:py-3 relative z-10">
+        <main className="py-1 sm:py-2 relative z-10">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             
             {/* Ultra-thin Banner */}
@@ -194,7 +194,7 @@ const Home = () => {
 
             {/* Compact YouTube Video */}
             <motion.div
-              className="w-full max-w-3xl mx-auto mb-4"
+              className="w-full max-w-2xl mx-auto mb-2"
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.4, delay: 0.2 }}

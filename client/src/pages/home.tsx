@@ -378,7 +378,8 @@ const Home = () => {
               >
                 {/* Section Header */}
                 <motion.h3 
-                  className="text-3xl sm:text-4xl lg:text-5xl font-bold text-center text-brand-blue mb-3 sm:mb-4 hover-wobble cursor-pointer transition-all duration-300" 
+                  className="font-bold text-center text-brand-blue mb-3 sm:mb-4 hover-wobble cursor-pointer transition-all duration-300 px-2" 
+                  style={{ fontSize: 'clamp(1.8rem, 7vw, 3.5rem)' }}
                   data-testid="why-bong-bari-title-english"
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -387,7 +388,8 @@ const Home = () => {
                   Why Bong Bari?
                 </motion.h3>
                 <motion.h4 
-                  className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-gray-800 mb-8 sm:mb-12 bangla-text hover-bounce cursor-pointer transition-all duration-300" 
+                  className="font-bold text-center text-gray-800 mb-8 sm:mb-12 bangla-text hover-bounce cursor-pointer transition-all duration-300 px-2" 
+                  style={{ fontSize: 'clamp(1.5rem, 6vw, 2.8rem)' }}
                   data-testid="why-bong-bari-title-bengali"
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}

@@ -35,8 +35,8 @@ function Router() {
   // Initialize magical hover sounds to complement cursor effects
   useMagicalHoverSounds({ enabled: true, volume: 0.12 });
   
-  // Initialize continuous chime that follows mouse movement
-  useMouseMovementChime({ enabled: true, volume: 0.08, frequency: 900 });
+  // Initialize magical fairy dust charm that follows mouse movement
+  useMouseMovementChime({ enabled: true, volume: 0.06, frequency: 1200 });
   
   return (
     <div className="min-h-screen bg-brand-yellow relative">

@@ -307,7 +307,7 @@ const Home = () => {
           
           {/* CTA Buttons */}
           <ParallaxSection speed={0.3} delay={0.3}>
-            <section className="text-center mb-8" data-testid="cta-section">
+            <section className="text-center mb-3" data-testid="cta-section">
             <motion.div 
               className="flex flex-col lg:flex-row gap-8 justify-center items-center px-4"
               initial={{ opacity: 0, y: 50 }}
@@ -354,10 +354,10 @@ const Home = () => {
           
           {/* Collaboration Form */}
           <ParallaxSection speed={0.2} delay={0.4}>
-            <section className="mb-8" data-testid="collaboration-section">
+            <section className="mb-4" data-testid="collaboration-section">
             <div className="max-w-4xl mx-auto">
               {/* Work with Us Header with Yellow Background */}
-              <div className="bg-brand-yellow rounded-2xl p-6 mb-6 text-center shadow-lg">
+              <div className="bg-brand-yellow rounded-2xl p-4 mb-4 text-center shadow-lg">
                 <h3 className="text-4xl md:text-5xl font-bold text-brand-blue mb-4" data-testid="collaboration-title-english">
                   Work with Us
                 </h3>

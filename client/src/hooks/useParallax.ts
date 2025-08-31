@@ -1,16 +1,44 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
+
+// Mobile detection for performance optimization
+const isMobile = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+};
 
 export const useParallax = (speed: number = 0.5) => {
   const [offset, setOffset] = useState(0);
+  const rafId = useRef<number>();
+  const ticking = useRef(false);
+  const lastScrollY = useRef(0);
+  const mobile = useRef(isMobile());
+
+  const updateOffset = useCallback(() => {
+    // Reduce animation intensity on mobile for performance
+    const finalSpeed = mobile.current ? speed * 0.3 : speed;
+    setOffset(lastScrollY.current * finalSpeed);
+    ticking.current = false;
+  }, [speed]);
+
+  const handleScroll = useCallback(() => {
+    lastScrollY.current = window.pageYOffset;
+    
+    if (!ticking.current) {
+      rafId.current = requestAnimationFrame(updateOffset);
+      ticking.current = true;
+    }
+  }, [updateOffset]);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setOffset(window.pageYOffset * speed);
+    // Use passive listeners for better performance
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafId.current) {
+        cancelAnimationFrame(rafId.current);
+      }
     };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [speed]);
+  }, [handleScroll]);
 
   return offset;
 };

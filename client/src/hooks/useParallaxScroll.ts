@@ -4,6 +4,7 @@ export const useParallaxScroll = () => {
   const rafId = useRef<number>();
   const lastScrollY = useRef(0);
   const ticking = useRef(false);
+  const isMobile = useRef(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768);
 
   // Cache DOM elements for better performance
   const elementsCache = useRef<{
@@ -25,6 +26,9 @@ export const useParallaxScroll = () => {
   });
 
   const updateElements = useCallback(() => {
+    // Skip expensive DOM queries on mobile for better performance
+    if (isMobile.current) return;
+    
     const cache = elementsCache.current;
     cache.floating = Array.from(document.querySelectorAll('.floating-bg-element'));
     cache.youtubeShorts = Array.from(document.querySelectorAll('.youtube-short'));
@@ -36,32 +40,38 @@ export const useParallaxScroll = () => {
   }, []);
 
   const handleParallax = useCallback(() => {
+    // Disable complex parallax on mobile for buttery smooth performance
+    if (isMobile.current) {
+      ticking.current = false;
+      return;
+    }
+
     const scrolled = lastScrollY.current;
-    const rate = scrolled * -0.2; // Even more reduced for speed
-    const fastRate = scrolled * -0.3; // Even more reduced for speed
+    const rate = scrolled * -0.15; // Reduced for smoother performance
+    const fastRate = scrolled * -0.25; // Reduced for smoother performance
     const cache = elementsCache.current;
 
     // ULTRA FAST floating background elements - minimal calculations
     cache.floating.forEach((element, index) => {
       const el = element as HTMLElement;
-      const speed = (index % 2 + 1) * 0.1; // Much simpler speed calculation
-      const sideSpeed = (scrolled * 0.002 + index) * 8; // Simplified movement
+      const speed = (index % 2 + 1) * 0.08; // Even simpler speed calculation
+      const sideSpeed = (scrolled * 0.001 + index) * 6; // More simplified movement
       
       el.style.transform = `translate3d(${sideSpeed}px, ${scrolled * speed}px, 0)`;
-      el.style.opacity = `${0.08 + (index % 3) * 0.02}`;
+      el.style.opacity = `${0.06 + (index % 3) * 0.015}`;
     });
 
     // ULTRA FAST YouTube shorts - minimal calculations
     cache.youtubeShorts.forEach((element, index) => {
       const el = element as HTMLElement;
-      const speed = fastRate * 0.1;
+      const speed = fastRate * 0.08;
       el.style.transform = `translate3d(0, ${speed}px, 0)`;
     });
 
     // ULTRA FAST headers only
     cache.headers.forEach((element, index) => {
       const el = element as HTMLElement;
-      const speed = fastRate * 0.05;
+      const speed = fastRate * 0.04;
       el.style.transform = `translate3d(0, ${speed}px, 0)`;
     });
 

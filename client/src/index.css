@@ -419,6 +419,52 @@ body {
   scroll-behavior: smooth;
 }
 
+/* Mobile Performance Optimizations for Parallax */
+.parallax-mobile-optimized {
+  transform: translate3d(0, 0, 0) !important;
+  will-change: auto !important;
+  backface-visibility: hidden;
+  perspective: 1000px;
+  -webkit-transform: translate3d(0, 0, 0);
+  -webkit-backface-visibility: hidden;
+  -webkit-perspective: 1000px;
+}
+
+.parallax-desktop {
+  will-change: transform;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  -webkit-transform: translateZ(0);
+}
+
+/* Optimize all animated elements for mobile */
+@media (max-width: 768px) {
+  .rotating-gradient-border {
+    animation-duration: 4s !important;
+    animation-timing-function: linear !important;
+    will-change: auto;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+  
+  .video-container {
+    will-change: auto;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+  
+  /* Reduce complex animations on mobile */
+  .hover-lift:hover {
+    transform: translateY(-2px) !important;
+  }
+  
+  /* Disable parallax background elements on mobile */
+  .floating-bg-element {
+    display: none !important;
+  }
+}
+
 /* Custom scrollbar with brand colors */
 ::-webkit-scrollbar {
   width: 8px;

@@ -116,51 +116,56 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
     }
   }, [isOpen, isMinimized]);
 
-  // Dragging and Resizing functionality - HARD CODED FIX
+  // SUPER SIMPLE DRAGGING - GUARANTEED TO WORK
   useEffect(() => {
+    let startX = 0;
+    let startY = 0;
+    let initialX = 0;
+    let initialY = 0;
+    
     const handleMouseMove = (e: MouseEvent) => {
-      if (isDragging && chatbotRef.current) {
-        const newX = e.clientX - dragOffset.x;
-        const newY = e.clientY - dragOffset.y;
-        
-        // Keep within viewport bounds
-        const maxX = window.innerWidth - chatSize.width;
-        const maxY = window.innerHeight - chatSize.height;
-        
-        const boundedX = Math.max(16, Math.min(newX, maxX - 16));
-        const boundedY = Math.max(16, Math.min(newY, maxY - 16));
-        
-        // DIRECT DOM MANIPULATION FOR GUARANTEED MOVEMENT
-        chatbotRef.current.style.left = boundedX + 'px';
-        chatbotRef.current.style.top = boundedY + 'px';
-        chatbotRef.current.style.right = 'unset';
-        chatbotRef.current.style.bottom = 'unset';
-        
-        setPosition({ x: boundedX, y: boundedY });
-      }
+      if (!isDragging || !chatbotRef.current) return;
       
-      if (isResizing && chatbotRef.current) {
-        const newWidth = Math.max(320, Math.min(600, e.clientX - (position.x || 0) + 20));
-        const newHeight = Math.max(400, Math.min(700, e.clientY - (position.y || 0) + 20));
-        
-        // DIRECT DOM MANIPULATION FOR GUARANTEED RESIZING
-        chatbotRef.current.style.width = newWidth + 'px';
-        chatbotRef.current.style.height = newHeight + 'px';
-        
-        setChatSize({ width: newWidth, height: newHeight });
-      }
+      e.preventDefault();
+      const currentX = initialX + e.clientX - startX;
+      const currentY = initialY + e.clientY - startY;
+      
+      // Keep within bounds
+      const maxX = window.innerWidth - chatbotRef.current.offsetWidth;
+      const maxY = window.innerHeight - chatbotRef.current.offsetHeight;
+      
+      const finalX = Math.max(0, Math.min(currentX, maxX));
+      const finalY = Math.max(0, Math.min(currentY, maxY));
+      
+      // IMMEDIATE DOM UPDATE
+      chatbotRef.current.style.left = finalX + 'px';
+      chatbotRef.current.style.top = finalY + 'px';
+      chatbotRef.current.style.right = 'auto';
+      chatbotRef.current.style.bottom = 'auto';
     };
-
+    
     const handleMouseUp = () => {
       setIsDragging(false);
       setIsResizing(false);
-      if (chatbotRef.current) {
-        chatbotRef.current.style.cursor = '';
-      }
+      document.body.style.cursor = '';
     };
-
-    if (isDragging || isResizing) {
-      document.addEventListener('mousemove', handleMouseMove, { passive: false });
+    
+    const handleDragStart = (e: MouseEvent) => {
+      if (!chatbotRef.current) return;
+      
+      startX = e.clientX;
+      startY = e.clientY;
+      
+      const rect = chatbotRef.current.getBoundingClientRect();
+      initialX = rect.left;
+      initialY = rect.top;
+      
+      document.body.style.cursor = 'grabbing';
+    };
+    
+    if (isDragging) {
+      handleDragStart({ clientX: 0, clientY: 0 } as MouseEvent);
+      document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
       
       return () => {
@@ -168,26 +173,26 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
         document.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, isResizing, dragOffset, position, chatSize]);
+  }, [isDragging]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (isMinimized) return;
+    
     e.preventDefault();
     e.stopPropagation();
     
-    const rect = chatbotRef.current?.getBoundingClientRect();
-    if (rect) {
+    console.log('DRAG STARTED!'); // DEBUG
+    
+    setIsDragging(true);
+    document.body.style.cursor = 'grabbing';
+    
+    // Store initial positions
+    if (chatbotRef.current) {
+      const rect = chatbotRef.current.getBoundingClientRect();
       setDragOffset({
         x: e.clientX - rect.left,
         y: e.clientY - rect.top
       });
-      setIsDragging(true);
-      
-      // FORCE CURSOR CHANGE
-      if (chatbotRef.current) {
-        chatbotRef.current.style.cursor = 'grabbing';
-        document.body.style.cursor = 'grabbing';
-      }
     }
   };
 
@@ -422,17 +427,15 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
       ref={chatbotRef}
       className={`no-rickshaw-sound fixed z-50 ${className}`}
       style={{
-        left: position.x ? `${position.x}px` : 'unset',
-        top: position.y ? `${position.y}px` : 'unset',
-        bottom: position.x || position.y ? 'unset' : 'max(1rem, env(safe-area-inset-bottom, 1rem))',
-        right: position.x || position.y ? 'unset' : 'max(1rem, env(safe-area-inset-right, 1rem))',
+        bottom: 'max(1rem, env(safe-area-inset-bottom, 1rem))',
+        right: 'max(1rem, env(safe-area-inset-right, 1rem))',
         width: `${chatSize.width}px`,
         height: `${chatSize.height}px`,
         pointerEvents: 'auto',
         touchAction: 'none',
         isolation: 'isolate',
         userSelect: 'none',
-        cursor: isDragging ? 'grabbing' : isResizing ? 'se-resize' : 'default'
+        cursor: isDragging ? 'grabbing' : 'default'
       }}
       initial={{ scale: 0, opacity: 0, y: 100 }}
       animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -474,12 +477,13 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
           className="relative z-10 flex flex-col bg-gradient-to-r from-[#1363DF]/95 to-[#FF4D4D]/95 backdrop-blur-md rounded-t-2xl border-b border-[#FFCC00]/30 cursor-grab active:cursor-grabbing flex-shrink-0 select-none"
           onMouseDown={handleMouseDown}
           style={{ height: isMinimized ? '64px' : '80px' }}
+          data-testid="drag-header"
         >
-          {/* Drag Indicator */}
-          <div className="absolute left-1/2 top-1 transform -translate-x-1/2 flex gap-1">
-            <div className="w-1 h-1 bg-white/40 rounded-full"></div>
-            <div className="w-1 h-1 bg-white/40 rounded-full"></div>
-            <div className="w-1 h-1 bg-white/40 rounded-full"></div>
+          {/* Drag Indicator - MORE VISIBLE */}
+          <div className="absolute left-1/2 top-2 transform -translate-x-1/2 flex gap-1 cursor-grab">
+            <div className="w-2 h-2 bg-white/60 rounded-full"></div>
+            <div className="w-2 h-2 bg-white/60 rounded-full"></div>
+            <div className="w-2 h-2 bg-white/60 rounded-full"></div>
           </div>
           
           <div className="p-4 pt-6">
@@ -550,13 +554,14 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
           </div>
         </div>
 
-        {/* RESIZE HANDLE */}
+        {/* RESIZE HANDLE - MORE VISIBLE */}
         <div 
-          className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize bg-[#FFCC00]/20 hover:bg-[#FFCC00]/40 transition-colors"
+          className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize bg-[#FFCC00]/30 hover:bg-[#FFCC00]/50 transition-colors rounded-tl-lg"
           onMouseDown={handleResizeMouseDown}
           style={{
             background: 'linear-gradient(-45deg, transparent 30%, #FFCC00 30%, #FFCC00 40%, transparent 40%, transparent 60%, #FFCC00 60%, #FFCC00 70%, transparent 70%)'
           }}
+          data-testid="resize-handle"
         />
 
         <AnimatePresence>

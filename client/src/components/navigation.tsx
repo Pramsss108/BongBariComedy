@@ -25,7 +25,7 @@ const Navigation = () => {
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50" data-testid="main-navigation">
       <div className="container mx-auto px-1 sm:px-2">
-        <div className="flex justify-between items-center py-0 px-0 sm:py-0.5 mt-[6px] mb-[6px]">
+        <div className="flex justify-between items-center py-0 px-0 sm:py-1 lg:py-2 mt-[6px] mb-[6px]">
           {/* Logo - Optimized Layout */}
           <Link href="/" data-testid="logo-link">
             <div className="flex items-center space-x-1 cursor-pointer hover-logo-container group w-full">
@@ -33,7 +33,7 @@ const Navigation = () => {
                 <img 
                   src="/logo.png" 
                   alt="Bong Bari Logo" 
-                  className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 xl:w-14 xl:h-14 rounded-lg transition-all duration-300 hover:scale-110 hover:rotate-6 hover:shadow-xl"
+                  className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-16 lg:h-16 xl:w-20 xl:h-20 rounded-lg transition-all duration-300 hover:scale-110 hover:rotate-6 hover:shadow-xl"
                 />
                 {/* Animated Emojis on Hover - DESKTOP ONLY */}
                 <div className="absolute inset-0 pointer-events-none hidden lg:block">
@@ -54,24 +54,24 @@ const Navigation = () => {
                 </div>
               </div>
               {/* Desktop Logo - Maximum Visibility */}
-              <div className="hidden md:flex flex-col justify-center pl-0.5 min-w-[180px]">
-                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[18px] lg:text-[22px] xl:text-[26px] leading-none mb-0">বং বাড়ি</h1>
-                <p className="text-[10px] lg:text-xs xl:text-sm font-bold text-gray-800 leading-none whitespace-nowrap mb-0 group-hover:text-brand-blue transition-colors duration-300">Every Home's Story — Bong Bari</p>
-                <p className="text-[8px] lg:text-[10px] xl:text-xs text-gray-600 bangla-text font-semibold leading-none whitespace-nowrap group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প — বং বাড়ি</p>
+              <div className="hidden md:flex flex-col justify-center pl-2 min-w-[280px]">
+                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[18px] lg:text-[32px] xl:text-[40px] leading-none mb-0">বং বাড়ি</h1>
+                <p className="text-[10px] lg:text-base xl:text-lg font-bold text-gray-800 leading-none whitespace-nowrap mb-0 group-hover:text-brand-blue transition-colors duration-300">Every Home's Story — Bong Bari</p>
+                <p className="text-[8px] lg:text-sm xl:text-base text-gray-600 bangla-text font-semibold leading-none whitespace-nowrap group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প — বং বাড়ি</p>
               </div>
             </div>
           </Link>
           
           {/* Desktop Navigation - High Visibility All Devices */}
-          <div className="hidden md:flex items-center space-x-2 lg:space-x-3 xl:space-x-4">
+          <div className="hidden md:flex items-center space-x-2 lg:space-x-6 xl:space-x-8">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`font-semibold text-xs lg:text-sm xl:text-base transition-all duration-200 hover:text-brand-blue hover:scale-105 hover:font-bold ${
+                className={`font-semibold text-xs lg:text-base xl:text-lg transition-all duration-200 hover:text-brand-blue hover:scale-105 hover:font-bold ${
                   isActive(item.href) 
-                    ? "text-brand-blue border-b-2 border-brand-blue pb-0" 
-                    : "text-gray-700 hover:border-b-2 hover:border-brand-blue pb-0"
+                    ? "text-brand-blue border-b-2 border-brand-blue pb-1" 
+                    : "text-gray-700 hover:border-b-2 hover:border-brand-blue pb-1"
                 }`}
                 data-testid={`nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
               >

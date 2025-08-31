@@ -40,18 +40,21 @@ export const FuturisticButton = ({
       background: 'linear-gradient(135deg, #ff0000 0%, #ff4444 50%, #cc0000 100%)',
       shadow: '0 10px 30px rgba(255, 0, 0, 0.4)',
       hoverShadow: '0 15px 40px rgba(255, 0, 0, 0.6)',
+      borderGradient: 'conic-gradient(from 0deg, #ff0000, #ff4444, #cc0000, #ff6666, #ff0000)',
       particles: ['🔥', '❤️', '⭐', '✨', '😂']
     },
     instagram: {
       background: 'linear-gradient(135deg, #833ab4 0%, #fd1d1d 50%, #fcb045 100%)',
       shadow: '0 10px 30px rgba(131, 58, 180, 0.4)',
       hoverShadow: '0 15px 40px rgba(131, 58, 180, 0.6)',
+      borderGradient: 'conic-gradient(from 0deg, #833ab4, #fd1d1d, #fcb045, #ff7b00, #833ab4)',
       particles: ['💫', '🌟', '💖', '✨', '😂']
     },
     default: {
       background: 'linear-gradient(135deg, #0066ff 0%, #00ccff 50%, #0099cc 100%)',
       shadow: '0 10px 30px rgba(0, 102, 255, 0.4)',
       hoverShadow: '0 15px 40px rgba(0, 102, 255, 0.6)',
+      borderGradient: 'conic-gradient(from 0deg, #0066ff, #00ccff, #0099cc, #66ddff, #0066ff)',
       particles: ['⚡', '✨', '💎', '🌟', '😂']
     }
   };
@@ -131,9 +134,24 @@ export const FuturisticButton = ({
 
   return (
     <div className="relative inline-block">
-      <AnimatePresence>
-        {!isExploding && (
-          <motion.button
+      {/* Rotating gradient border wrapper */}
+      <motion.div
+        className="relative inline-block p-1 rounded-full"
+        style={{
+          background: style.borderGradient
+        }}
+        animate={{
+          rotate: 360
+        }}
+        transition={{
+          duration: 4,
+          repeat: Infinity,
+          ease: "linear"
+        }}
+      >
+        <AnimatePresence>
+          {!isExploding && (
+            <motion.button
             ref={buttonRef}
             className={`
               relative overflow-hidden px-12 py-6 rounded-full text-white font-extrabold text-2xl
@@ -176,9 +194,10 @@ export const FuturisticButton = ({
             <span className="relative z-20 flex items-center justify-center gap-4">
               {children}
             </span>
-          </motion.button>
-        )}
-      </AnimatePresence>
+            </motion.button>
+          )}
+        </AnimatePresence>
+      </motion.div>
 
       {/* Particle burst effect */}
       <AnimatePresence>

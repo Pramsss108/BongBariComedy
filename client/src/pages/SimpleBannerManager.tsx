@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { Upload, Image, Save } from "lucide-react";
-import { AdvancedBannerCrop } from "@/components/AdvancedBannerCrop";
+import { ProfessionalBannerStudio } from "@/components/ProfessionalBannerStudio";
 
 interface BannerData {
   title: string;
@@ -108,11 +108,14 @@ export function SimpleBannerManager() {
           <p className="text-gray-600">Upload banner, set title and subtitle - that's it!</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Panel - Controls */}
+        <div className="space-y-8">
+          {/* Text Settings Panel */}
           <Card>
             <CardHeader>
-              <CardTitle>Banner Settings</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                📝 Text Settings
+                <span className="text-sm text-gray-500 font-normal">Title and subtitle only</span>
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Title Input */}
@@ -165,17 +168,6 @@ export function SimpleBannerManager() {
                 </div>
               </div>
 
-              {/* Advanced Crop Tool */}
-              {bannerPreview && (
-                <div className="space-y-4">
-                  <AdvancedBannerCrop 
-                    imageUrl={bannerPreview}
-                    onCropChange={setCroppedImage}
-                    className=""
-                  />
-                </div>
-              )}
-
               {/* Save Button */}
               <Button 
                 onClick={handleSave}
@@ -188,10 +180,19 @@ export function SimpleBannerManager() {
             </CardContent>
           </Card>
 
-          {/* Right Panel - Preview */}
+          {/* Professional Banner Studio */}
+          {bannerPreview && (
+            <ProfessionalBannerStudio 
+              imageUrl={bannerPreview}
+              onCropChange={setCroppedImage}
+              className=""
+            />
+          )}
+          
+          {/* Live Preview Panel */}
           <Card>
             <CardHeader>
-              <CardTitle>Live Preview</CardTitle>
+              <CardTitle>🎯 Final Homepage Preview</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="bg-gradient-to-r from-brand-yellow to-brand-red p-6 rounded-lg text-center">

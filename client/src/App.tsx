@@ -26,6 +26,7 @@ import BongBot from "@/components/BongBot";
 
 function Router() {
   const [showCharmSelector, setShowCharmSelector] = useState(false);
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
   
   // Initialize professional site-wide cursor effect
   useGlobalCursor();
@@ -33,8 +34,8 @@ function Router() {
   // Initialize fast engaging parallax scroll effects
   useParallaxScroll();
   
-  // Initialize authentic Bengali rickshaw sound on taps
-  useRickshawSound({ enabled: true, volume: 0.3, cooldownMs: 200 });
+  // Initialize authentic Bengali rickshaw sound on taps (disabled when chatbot is open)
+  useRickshawSound({ enabled: !isChatbotOpen, volume: 0.3, cooldownMs: 200 });
   
   // Initialize magical hover sounds to complement cursor effects
   useMagicalHoverSounds({ enabled: true, volume: 0.12 });
@@ -65,7 +66,7 @@ function Router() {
       </Switch>
       
       {/* Professional Bong Bot - Available on all pages */}
-      <BongBot />
+      <BongBot onOpenChange={setIsChatbotOpen} />
       
     </div>
   );

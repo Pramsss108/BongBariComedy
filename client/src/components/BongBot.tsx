@@ -2,8 +2,12 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Bot, X, Minimize2, MessageCircle } from 'lucide-react';
 
-export default function BongBot() {
-  const [position, setPosition] = useState({ x: 20, y: 100 });
+interface BongBotProps {
+  onOpenChange?: (isOpen: boolean) => void;
+}
+
+export default function BongBot({ onOpenChange }: BongBotProps) {
+  const [position, setPosition] = useState({ x: 0, y: 100 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [isOpen, setIsOpen] = useState(false);
@@ -27,11 +31,35 @@ export default function BongBot() {
   const headerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // When opening chatbot, position it on the left side
+  // When opening chatbot, position it on the right side
   const handleOpenChatbot = () => {
-    setPosition({ x: 20, y: 100 });
+    const rightSideX = Math.max(0, window.innerWidth - 400); // Right side position with bounds check
+    setPosition({ x: rightSideX, y: 100 });
     setIsOpen(true);
     setIsMinimized(false);
+    
+    // Play glitter sound when opening
+    playGlitterSound();
+  };
+
+  // Sound effects
+  const playGlitterSound = () => {
+    const audio = new Audio('/public-objects/sounds/folder/glitter.mp3');
+    audio.volume = 0.3;
+    audio.play().catch(() => {}); // Ignore errors
+  };
+
+  const playSendSound = () => {
+    const audio = new Audio('/public-objects/sounds/folder/whatsapp-send.mp3');
+    audio.volume = 0.4;
+    audio.play().catch(() => {}); // Ignore errors
+  };
+
+  const playTypingSound = () => {
+    const audio = new Audio('/public-objects/sounds/folder/typing.mp3');
+    audio.volume = 0.2;
+    audio.loop = true;
+    return audio;
   };
 
   // Auto scroll to bottom when new messages arrive
@@ -39,9 +67,17 @@ export default function BongBot() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Notify parent component when chatbot opens/closes
+  useEffect(() => {
+    onOpenChange?.(isOpen);
+  }, [isOpen, onOpenChange]);
+
   // Handle sending message
   const handleSendMessage = async () => {
     if (!message.trim()) return;
+    
+    // Play WhatsApp send sound
+    playSendSound();
     
     const userMessage = {
       id: Date.now(),
@@ -54,8 +90,15 @@ export default function BongBot() {
     setMessage('');
     setIsTyping(true);
     
+    // Play typing sound when bot starts typing
+    const typingAudio = playTypingSound();
+    
     // Simulate AI response with Bengali flair
     setTimeout(() => {
+      // Stop typing sound
+      typingAudio.pause();
+      typingAudio.currentTime = 0;
+      
       const responses = [
         `🤖 Dhonnobad! You said: "${message}". As Bong Bot, I love discussing Bengali culture! আমি বাংলা এবং ইংরেজি দুটোতেই কথা বলতে পারি!`,
         `🎭 That's interesting! Bengali comedy has such rich traditions. আমাদের Bong Bari-তে আমরা এই ধরনের মজার গল্প শেয়ার করি!`,
@@ -73,6 +116,9 @@ export default function BongBot() {
       };
       setMessages(prev => [...prev, botResponse]);
       setIsTyping(false);
+      
+      // Play glitter sound when message appears
+      playGlitterSound();
     }, 1500);
   };
 
@@ -179,7 +225,7 @@ export default function BongBot() {
               <Bot size={16} className="text-white drop-shadow-sm" />
             </motion.div>
             <div>
-              <h3 className="text-white font-bold text-sm drop-shadow-lg">Bong Bot</h3>
+              <h3 className="text-white font-bold text-sm drop-shadow-lg">🤖 Bong Bot</h3>
               <p className="text-white/80 text-xs drop-shadow-sm">Bengali Comedy AI</p>
             </div>
           </div>
@@ -287,7 +333,7 @@ export default function BongBot() {
                   <textarea
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Type your message in Bengali or English..."
+                    placeholder="Kotha Hok Naki?"
                     className="flex-1 px-4 py-3 bg-white/90 backdrop-blur-sm border border-white/20 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1363DF]/50 focus:border-[#1363DF]/50 resize-none hide-scrollbar transition-all placeholder-gray-500"
                     style={{
                       minHeight: '44px',

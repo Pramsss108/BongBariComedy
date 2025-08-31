@@ -59,9 +59,10 @@ const Home = () => {
   const watchedValues = form.watch();
   const hasEmail = watchedValues.email && watchedValues.email.trim() !== "";
   const hasPhone = watchedValues.phone && watchedValues.phone.trim() !== "";
+  const hasContactMethod = hasEmail || hasPhone; // At least one contact method required
   const isFormValid = watchedValues.name && 
                      watchedValues.company && 
-                     hasEmail && // Email is now required for verification
+                     hasContactMethod && // Either email OR phone required
                      watchedValues.name.trim() !== "" &&
                      watchedValues.company.trim() !== "";
 
@@ -579,7 +580,7 @@ const Home = () => {
                           name="email"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Email <span className="text-red-500">*</span></FormLabel>
+                              <FormLabel>Email {!hasPhone ? <span className="text-red-500">*</span> : <span className="text-gray-400">(Optional)</span>}</FormLabel>
                               <FormControl>
                                 <Input 
                                   type="email" 
@@ -599,7 +600,7 @@ const Home = () => {
                           name="phone"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Phone / ফোন {!hasEmail && <span className="text-red-500">*</span>} {hasEmail && <span className="text-gray-400">(Optional)</span>}</FormLabel>
+                              <FormLabel>Phone / ফোন {!hasEmail ? <span className="text-red-500">*</span> : <span className="text-gray-400">(Optional)</span>}</FormLabel>
                               <FormControl>
                                 <div className="flex gap-2">
                                   <Select
@@ -704,7 +705,7 @@ const Home = () => {
                         onClick={() => isFormValid && form.handleSubmit(onSubmit)()}
                       >
                         <Send className="mr-2 h-5 w-5" />
-                        {collaborationMutation.isPending ? "Sending..." : isFormValid ? "Send Message" : "Fill Name, Company & Email *"}
+                        {collaborationMutation.isPending ? "Sending..." : isFormValid ? "Send Message" : "Fill Name, Company & Contact Info *"}
                       </MagneticButton>
                     </form>
                   </Form>

@@ -44,6 +44,12 @@ export const insertBlogPostSchema = createInsertSchema(blogPosts).omit({
 export const insertCollaborationRequestSchema = createInsertSchema(collaborationRequests).omit({
   id: true,
   createdAt: true,
+}).refine((data) => {
+  // At least one contact method (email or phone) must be provided
+  return data.email || data.phone;
+}, {
+  message: "Please provide either an email address or phone number",
+  path: ["email"] // This will show the error on the email field
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;

@@ -16,13 +16,7 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
   const [messages, setMessages] = useState([
     { 
       id: 1, 
-      text: '🙏 Namaskar! I am Bong Bot, your Bengali comedy companion! Ask me about Bong Bari, Bengali culture, or just chat in Bengali/English!', 
-      sender: 'bot', 
-      timestamp: new Date() 
-    },
-    { 
-      id: 2, 
-      text: 'I can help you with Bengali comedy, cultural insights, translate between Bengali and English, and discuss our amazing Bong Bari content!', 
+      text: '🙏 Namaskar! Ami Bong Bot, Bong Bari er official AI assistant! Bong Bari সম্পর্কে জানতে চান? Bengali comedy নিয়ে আড্ডা দিতে চান? Ask me anything!', 
       sender: 'bot', 
       timestamp: new Date() 
     }
@@ -101,24 +95,35 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
     // Play typing sound when bot starts typing
     const typingAudio = playTypingSound();
     
-    // Simulate AI response with Bengali flair
-    setTimeout(() => {
+    // Get real AI response from Gemini Pro
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          message,
+          conversationHistory: messages.slice(-6).map(msg => ({
+            role: msg.sender === 'user' ? 'user' : 'assistant',
+            content: msg.text
+          }))
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get response');
+      }
+
+      const data = await response.json();
+      
       // Stop typing sound
       typingAudio.pause();
       typingAudio.currentTime = 0;
       
-      const responses = [
-        `🤖 Dhonnobad! You said: "${message}". As Bong Bot, I love discussing Bengali culture! আমি বাংলা এবং ইংরেজি দুটোতেই কথা বলতে পারি!`,
-        `🎭 That's interesting! Bengali comedy has such rich traditions. আমাদের Bong Bari-তে আমরা এই ধরনের মজার গল্প শেয়ার করি!`,
-        `🍽️ Ah, reminds me of Bengali family conversations! মা-র রান্না নিয়ে আড্DA দিতে পারি ঘন্টার পর ঘন্টা!`,
-        `📚 Bengali literature and comedy go hand in hand! আপনি কি রবীন্দ্রনাথ বা সুকুমার রায়ের লেখা পড়েছেন?`
-      ];
-      
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-      
       const botResponse = {
         id: Date.now() + 1,
-        text: randomResponse,
+        text: data.response,
         sender: 'bot' as const,
         timestamp: new Date()
       };
@@ -127,7 +132,23 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
       
       // Play glitter sound when message appears
       playGlitterSound();
-    }, 1500);
+    } catch (error) {
+      console.error('Chat error:', error);
+      
+      // Stop typing sound
+      typingAudio.pause();
+      typingAudio.currentTime = 0;
+      
+      // Fallback response on error
+      const botResponse = {
+        id: Date.now() + 1,
+        text: "দুঃখিত, আমার একটু সমস্যা হচ্ছে। আবার চেষ্টা করুন! 😅",
+        sender: 'bot' as const,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, botResponse]);
+      setIsTyping(false);
+    }
   };
 
   // Drag functionality

@@ -1,118 +1,153 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 
 export const useParallaxScroll = () => {
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrolled = window.pageYOffset;
-      const rate = scrolled * -0.5;
-      const fastRate = scrolled * -0.8;
-      const superFastRate = scrolled * -1.2;
-      const windowHeight = window.innerHeight;
+  const rafId = useRef<number>();
+  const lastScrollY = useRef(0);
+  const ticking = useRef(false);
+
+  // Cache DOM elements for better performance
+  const elementsCache = useRef<{
+    floating: Element[];
+    youtubeShorts: Element[];
+    blogCards: Element[];
+    nav: Element | null;
+    headers: Element[];
+    buttons: Element[];
+    sections: Element[];
+  }>({
+    floating: [],
+    youtubeShorts: [],
+    blogCards: [],
+    nav: null,
+    headers: [],
+    buttons: [],
+    sections: []
+  });
+
+  const updateElements = useCallback(() => {
+    const cache = elementsCache.current;
+    cache.floating = Array.from(document.querySelectorAll('.floating-bg-element'));
+    cache.youtubeShorts = Array.from(document.querySelectorAll('.youtube-short'));
+    cache.blogCards = Array.from(document.querySelectorAll('.blog-post, .card'));
+    cache.nav = document.querySelector('nav');
+    cache.headers = Array.from(document.querySelectorAll('h1, h2, h3'));
+    cache.buttons = Array.from(document.querySelectorAll('button:not([data-testid="button-youtube"]):not([data-testid="button-instagram"]), .magnetic-button:not([data-testid="button-youtube"]):not([data-testid="button-instagram"])'));
+    cache.sections = Array.from(document.querySelectorAll('section:not([data-testid="cta-section"])'));
+  }, []);
+
+  const handleParallax = useCallback(() => {
+    const scrolled = lastScrollY.current;
+    const rate = scrolled * -0.3; // Reduced intensity
+    const fastRate = scrolled * -0.5; // Reduced intensity
+    const windowHeight = window.innerHeight;
+    const cache = elementsCache.current;
+
+    // Optimized floating background elements - reduced calculations
+    cache.floating.forEach((element, index) => {
+      const el = element as HTMLElement;
+      const speed = (index % 3 + 1) * 0.2; // Reduced speed
+      const sideSpeed = Math.sin(scrolled * 0.005 + index) * 15; // Reduced movement
+      const rotationSpeed = scrolled * 0.02 * (index % 2 === 0 ? 1 : -1); // Reduced rotation
       
-      // Dynamic floating background elements
-      const floatingElements = document.querySelectorAll('.floating-bg-element');
-      floatingElements.forEach((element, index) => {
-        const el = element as HTMLElement;
-        const speed = (index % 3 + 1) * 0.3; // Different speeds for each element
-        const sideSpeed = Math.sin(scrolled * 0.01 + index) * 30; // Side-to-side movement
-        const rotationSpeed = scrolled * 0.05 * (index % 2 === 0 ? 1 : -1); // Rotation
-        
-        el.style.transform = `
-          translateY(${scrolled * speed}px) 
-          translateX(${sideSpeed}px) 
-          rotate(${rotationSpeed}deg) 
-          scale(${1 + Math.sin(scrolled * 0.01 + index) * 0.1})
-        `;
-        el.style.opacity = `${0.1 + Math.sin(scrolled * 0.02 + index) * 0.05}`;
-      });
+      el.style.transform = `translate3d(${sideSpeed}px, ${scrolled * speed}px, 0) rotate(${rotationSpeed}deg) scale(${1 + Math.sin(scrolled * 0.005 + index) * 0.05})`;
+      el.style.opacity = `${0.1 + Math.sin(scrolled * 0.01 + index) * 0.03}`;
+    });
 
-      // Smooth parallax for YouTube shorts - faster movement
-      const youtubeShorts = document.querySelectorAll('.youtube-short');
-      youtubeShorts.forEach((element, index) => {
-        const el = element as HTMLElement;
-        const speed = index % 2 === 0 ? fastRate : superFastRate;
-        const floatOffset = Math.sin(scrolled * 0.02 + index) * 5; // Floating effect
-        el.style.transform = `translateY(${speed * 0.25 + floatOffset}px) scale(${1 + Math.abs(speed) * 0.0002}) rotate(${scrolled * 0.01}deg)`;
-      });
+    // Simplified YouTube shorts
+    cache.youtubeShorts.forEach((element, index) => {
+      const el = element as HTMLElement;
+      const speed = index % 2 === 0 ? fastRate : fastRate * 1.2;
+      const floatOffset = Math.sin(scrolled * 0.01 + index) * 3;
+      el.style.transform = `translate3d(0, ${speed * 0.15 + floatOffset}px, 0)`;
+    });
 
-      // Blog cards parallax - Faster movement
-      const blogCards = document.querySelectorAll('.blog-post, .card');
-      blogCards.forEach((element, index) => {
-        const el = element as HTMLElement;
-        const speed = rate * (0.6 + index * 0.2);
-        el.style.transform = `translateY(${speed * 0.15}px) rotateX(${speed * 0.02}deg)`;
-      });
+    // Simplified blog cards
+    cache.blogCards.forEach((element, index) => {
+      const el = element as HTMLElement;
+      const speed = rate * (0.4 + index * 0.1);
+      el.style.transform = `translate3d(0, ${speed * 0.1}px, 0)`;
+    });
 
-      // Navigation parallax - Faster
-      const nav = document.querySelector('nav');
-      if (nav) {
-        (nav as HTMLElement).style.transform = `translateY(${rate * 0.2}px)`;
+    // Simplified navigation
+    if (cache.nav) {
+      (cache.nav as HTMLElement).style.transform = `translate3d(0, ${rate * 0.1}px, 0)`;
+    }
+
+    // Simplified headers
+    cache.headers.forEach((element, index) => {
+      const el = element as HTMLElement;
+      const speed = fastRate * (0.3 + index * 0.05);
+      const floatY = Math.sin(scrolled * 0.005 + index) * 2;
+      el.style.transform = `translate3d(0, ${speed * 0.08 + floatY}px, 0)`;
+    });
+
+    // Simplified buttons
+    cache.buttons.forEach((element, index) => {
+      const el = element as HTMLElement;
+      const floatSpeed = Math.sin(scrolled * 0.005 + index) * 1;
+      el.style.transform = `translate3d(0, ${floatSpeed}px, 0)`;
+    });
+
+    // Simplified sections with reduced blur calculations
+    cache.sections.forEach((element, index) => {
+      const el = element as HTMLElement;
+      // Skip CTA sections
+      if (el.querySelector('[data-testid="button-youtube"]') || el.querySelector('[data-testid="button-instagram"]')) {
+        return;
       }
-
-      // Header elements - Much faster movement with floating
-      const headers = document.querySelectorAll('h1, h2, h3');
-      headers.forEach((element, index) => {
-        const el = element as HTMLElement;
-        const speed = fastRate * (0.4 + index * 0.1);
-        const floatY = Math.sin(scrolled * 0.01 + index) * 3;
-        const floatX = Math.cos(scrolled * 0.015 + index) * 2;
-        el.style.transform = `translateY(${speed * 0.12 + floatY}px) translateX(${floatX}px) scale(${1 + Math.abs(speed) * 0.0005})`;
-      });
-
-      // Smooth buttons floating effect (exclude CTA section)
-      const buttons = document.querySelectorAll('button:not([data-testid="button-youtube"]):not([data-testid="button-instagram"]), .magnetic-button:not([data-testid="button-youtube"]):not([data-testid="button-instagram"])');
-      buttons.forEach((element, index) => {
-        const el = element as HTMLElement;
-        const floatSpeed = Math.sin(scrolled * 0.01 + index) * 2;
-        el.style.transform = `translateY(${floatSpeed}px) scale(${1 + Math.abs(floatSpeed) * 0.001})`;
-      });
-
-      // Background sections depth with blur preview effect
-      const sections = document.querySelectorAll('section:not([data-testid="cta-section"])');
-      sections.forEach((element, index) => {
-        const el = element as HTMLElement;
-        // Skip if this is the CTA section or contains CTA buttons
-        if (el.querySelector('[data-testid="button-youtube"]') || el.querySelector('[data-testid="button-instagram"]')) {
-          return;
-        }
-        
+      
+      const depth = rate * (0.1 + index * 0.05);
+      el.style.transform = `translate3d(0, ${depth * 0.04}px, 0)`;
+      
+      // Simplified blur effect - less frequent calculations
+      if (index % 3 === 0) { // Only apply to every 3rd element
         const rect = el.getBoundingClientRect();
         const elementTop = rect.top;
-        const elementHeight = rect.height;
-        const depth = rate * (0.2 + index * 0.1);
         
-        // Calculate blur based on distance from viewport
-        let blurAmount = 0;
-        let opacity = 1;
-        
-        // If element is below viewport (upcoming section)
-        if (elementTop > windowHeight * 0.8) {
-          const distance = (elementTop - windowHeight * 0.8) / windowHeight;
-          blurAmount = Math.min(distance * 8, 6); // Max 6px blur
-          opacity = Math.max(0.4, 1 - distance * 0.3); // Min 40% opacity
+        if (elementTop > windowHeight * 0.9) {
+          el.style.filter = 'blur(2px)';
+          el.style.opacity = '0.7';
+        } else if (elementTop < windowHeight * 0.1) {
+          el.style.filter = 'blur(1px)';
+          el.style.opacity = '0.8';
+        } else {
+          el.style.filter = 'none';
+          el.style.opacity = '1';
         }
-        // If element is above viewport (past section)
-        else if (elementTop + elementHeight < windowHeight * 0.2) {
-          const distance = (windowHeight * 0.2 - (elementTop + elementHeight)) / windowHeight;
-          blurAmount = Math.min(distance * 4, 3); // Max 3px blur
-          opacity = Math.max(0.6, 1 - distance * 0.2); // Min 60% opacity
-        }
-        
-        el.style.transform = `translateY(${depth * 0.06}px) scale(${1 + Math.abs(depth) * 0.0002})`;
-        el.style.filter = `blur(${blurAmount}px)`;
-        el.style.opacity = opacity.toString();
-        el.style.transition = 'filter 0.3s ease, opacity 0.3s ease';
-      });
-    };
+      }
+    });
 
-    // Smooth scroll with momentum
+    ticking.current = false;
+  }, []);
+
+  const handleScroll = useCallback(() => {
+    lastScrollY.current = window.pageYOffset;
+    
+    if (!ticking.current) {
+      rafId.current = requestAnimationFrame(handleParallax);
+      ticking.current = true;
+    }
+  }, [handleParallax]);
+
+  useEffect(() => {
+    // Initial setup
+    updateElements();
+    
+    // Throttled scroll event
     window.addEventListener('scroll', handleScroll, { passive: true });
     
+    // Update elements cache periodically
+    const interval = setInterval(updateElements, 5000);
+    
     // Initial call
-    handleScroll();
+    handleParallax();
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
+      clearInterval(interval);
+      if (rafId.current) {
+        cancelAnimationFrame(rafId.current);
+      }
     };
-  }, []);
+  }, [handleScroll, handleParallax, updateElements]);
 };

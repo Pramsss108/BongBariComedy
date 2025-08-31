@@ -119,6 +119,24 @@
       hsl(48, 100%, 85%) 75%, 
       hsl(48, 100%, 80%) 100%);
     background-attachment: fixed;
+    /* Smooth scrolling optimizations */
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+  
+  /* Performance optimizations for all animated elements */
+  .floating-bg-element,
+  .youtube-short,
+  .blog-post,
+  .card,
+  nav,
+  h1, h2, h3,
+  button,
+  .magnetic-button,
+  section {
+    will-change: transform;
+    backface-visibility: hidden;
+    transform-style: preserve-3d;
   }
 }
 

@@ -116,66 +116,76 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
     }
   }, [isOpen, isMinimized]);
 
-  // SIMPLE GLOBAL MOUSE TRACKING
+  // GLOBAL DRAG SYSTEM - THIS WILL WORK
   useEffect(() => {
-    let startX = 0;
-    let startY = 0;
-    let startLeft = 0;
-    let startTop = 0;
+    if (!isDragging) return;
+    
+    console.log('Setting up drag listeners...'); // DEBUG
+    
+    let startX: number;
+    let startY: number;
+    let initialLeft: number;
+    let initialTop: number;
+    
+    // Get initial position when drag starts
+    if (chatbotRef.current) {
+      const rect = chatbotRef.current.getBoundingClientRect();
+      initialLeft = rect.left;
+      initialTop = rect.top;
+      
+      // Override all positioning to make it absolute
+      chatbotRef.current.style.position = 'fixed';
+      chatbotRef.current.style.left = initialLeft + 'px';
+      chatbotRef.current.style.top = initialTop + 'px';
+      chatbotRef.current.style.right = 'unset';
+      chatbotRef.current.style.bottom = 'unset';
+    }
+    
+    const handleFirstMove = (e: MouseEvent) => {
+      startX = e.clientX;
+      startY = e.clientY;
+      console.log('First move detected:', startX, startY); // DEBUG
+    };
     
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging || !chatbotRef.current) return;
+      if (!chatbotRef.current) return;
       
-      e.preventDefault();
-      e.stopPropagation();
+      if (startX === undefined) {
+        handleFirstMove(e);
+        return;
+      }
       
       const deltaX = e.clientX - startX;
       const deltaY = e.clientY - startY;
       
-      const newLeft = startLeft + deltaX;
-      const newTop = startTop + deltaY;
+      const newLeft = initialLeft + deltaX;
+      const newTop = initialTop + deltaY;
       
-      // Apply immediately to DOM
+      // Force DOM update
       chatbotRef.current.style.left = newLeft + 'px';
       chatbotRef.current.style.top = newTop + 'px';
-      chatbotRef.current.style.right = 'unset';
-      chatbotRef.current.style.bottom = 'unset';
       
-      console.log('MOVING:', newLeft, newTop); // DEBUG
+      console.log('MOVING TO:', newLeft, newTop); // DEBUG
     };
     
     const handleMouseUp = () => {
-      console.log('DRAG ENDED'); // DEBUG
+      console.log('DRAG FINISHED'); // DEBUG
       setIsDragging(false);
       document.body.style.cursor = '';
     };
     
-    if (isDragging && chatbotRef.current) {
-      // Get starting position
-      const rect = chatbotRef.current.getBoundingClientRect();
-      startLeft = rect.left;
-      startTop = rect.top;
-      startX = 0; // Will be set on first mouse move
-      startY = 0;
-      
-      // Set initial mouse position on first move
-      const initMousePos = (e: MouseEvent) => {
-        startX = e.clientX;
-        startY = e.clientY;
-        document.removeEventListener('mousemove', initMousePos);
-        document.addEventListener('mousemove', handleMouseMove);
-      };
-      
-      document.addEventListener('mousemove', initMousePos, { once: true });
-      document.addEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = 'grabbing';
-      
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mousemove', initMousePos);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
+    // Add listeners immediately
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.body.style.cursor = 'grabbing';
+    
+    console.log('Drag listeners added!'); // DEBUG
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      console.log('Drag listeners removed!'); // DEBUG
+    };
   }, [isDragging]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -184,9 +194,11 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
     e.preventDefault();
     e.stopPropagation();
     
-    console.log('DRAG STARTED!'); // DEBUG
+    console.log('🔥 DRAG BUTTON CLICKED!'); // DEBUG
+    console.log('Mouse position:', e.clientX, e.clientY); // DEBUG
     
     setIsDragging(true);
+    console.log('🔥 isDragging set to true'); // DEBUG
   };
 
   const handleResizeMouseDown = (e: React.MouseEvent) => {

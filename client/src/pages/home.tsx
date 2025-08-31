@@ -154,6 +154,13 @@ const Home = () => {
           <div className="floating-bg-element absolute w-5 h-5 rounded-full bg-white/25 blur-sm" 
                style={{ top: '85%', right: '20%' }} />
           
+          {/* Line elements for dynamic feel */}
+          <div className="floating-bg-element absolute w-px h-32 bg-gradient-to-b from-transparent via-white/20 to-transparent" 
+               style={{ top: '25%', left: '60%' }} />
+          <div className="floating-bg-element absolute w-px h-48 bg-gradient-to-b from-transparent via-brand-blue/15 to-transparent" 
+               style={{ top: '55%', left: '30%' }} />
+          <div className="floating-bg-element absolute w-px h-24 bg-gradient-to-b from-transparent via-brand-red/20 to-transparent" 
+               style={{ top: '75%', right: '40%' }} />
         </div>
         
         <main className="py-8 relative z-10">
@@ -323,6 +330,9 @@ const Home = () => {
                   Subscribe on YouTube
                 </FuturisticButton>
               </motion.div>
+              
+              {/* Separator for desktop */}
+              <div className="hidden lg:block w-px h-24 bg-gray-300 opacity-50"></div>
               
               <motion.div
                 initial={{ opacity: 0, x: 50 }}

@@ -40,8 +40,7 @@ export const FuturisticButton = ({
     youtube: {
       gradient: 'from-red-500 via-red-600 to-red-700',
       rgbGradient: 'linear-gradient(45deg, #ff0000, #ff4444, #cc0000, #ff6666)',
-      borderGradient: 'conic-gradient(from 0deg, #ff0000 0%, #ff4444 25%, #cc0000 50%, #ff6666 75%, #ff0000 100%)',
-      glowColors: '#ff0000, #ff4444, #cc0000',
+      borderGradient: 'conic-gradient(from 0deg, #ff0000, #ff4444, #cc0000, #ff6666, #ff0000)',
       glow: 'shadow-red-500/50',
       neon: 'drop-shadow-[0_0_25px_rgba(239,68,68,1)]',
       particles: ['🔥', '❤️', '⭐', '✨', '😂']
@@ -49,8 +48,7 @@ export const FuturisticButton = ({
     instagram: {
       gradient: 'from-purple-500 via-pink-500 to-orange-500',
       rgbGradient: 'linear-gradient(45deg, #833ab4, #fd1d1d, #fcb045, #833ab4)',
-      borderGradient: 'conic-gradient(from 0deg, #833ab4 0%, #fd1d1d 33%, #fcb045 66%, #833ab4 100%)',
-      glowColors: '#833ab4, #fd1d1d, #fcb045',
+      borderGradient: 'conic-gradient(from 0deg, #833ab4, #fd1d1d, #fcb045, #833ab4)',
       glow: 'shadow-purple-500/50',
       neon: 'drop-shadow-[0_0_25px_rgba(168,85,247,1)]',
       particles: ['💫', '🌟', '💖', '✨', '😂']
@@ -58,8 +56,7 @@ export const FuturisticButton = ({
     default: {
       gradient: 'from-blue-500 via-cyan-500 to-teal-500',
       rgbGradient: 'linear-gradient(45deg, #0066ff, #00ccff, #0099cc, #66ddff)',
-      borderGradient: 'conic-gradient(from 0deg, #0066ff 0%, #00ccff 33%, #0099cc 66%, #0066ff 100%)',
-      glowColors: '#0066ff, #00ccff, #0099cc',
+      borderGradient: 'conic-gradient(from 0deg, #0066ff, #00ccff, #0099cc, #66ddff, #0066ff)',
       glow: 'shadow-cyan-500/50',
       neon: 'drop-shadow-[0_0_25px_rgba(6,182,212,1)]',
       particles: ['⚡', '✨', '💎', '🌟', '😂']
@@ -143,18 +140,18 @@ export const FuturisticButton = ({
 
   return (
     <div className="relative inline-block">
-      {/* Main Animated Border Ring - Thick Glowing Circle */}
+      {/* Animated Border Ring */}
       <motion.div
-        className="absolute inset-[-8px] rounded-full p-3"
+        className="absolute inset-0 rounded-full p-1"
         style={{
           background: style.borderGradient,
-          filter: 'blur(0px)'
+          filter: 'blur(2px)'
         }}
         animate={{
           rotate: 360
         }}
         transition={{
-          duration: 1.5,
+          duration: 3,
           repeat: Infinity,
           ease: "linear"
         }}
@@ -162,54 +159,20 @@ export const FuturisticButton = ({
         <div className="w-full h-full rounded-full bg-transparent" />
       </motion.div>
       
-      {/* Secondary glow ring - Medium blur circle */}
+      {/* Secondary glow ring */}
       <motion.div
-        className="absolute inset-[-15px] rounded-full opacity-90"
+        className="absolute inset-[-4px] rounded-full opacity-75"
         style={{
           background: style.borderGradient,
-          filter: 'blur(12px)'
+          filter: 'blur(8px)'
         }}
         animate={{
           rotate: -360,
-          scale: [1, 1.08, 1]
+          scale: [1, 1.05, 1]
         }}
         transition={{
-          rotate: { duration: 2.5, repeat: Infinity, ease: "linear" },
+          rotate: { duration: 4, repeat: Infinity, ease: "linear" },
           scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-        }}
-      />
-      
-      {/* Third ring - Super glow circle */}
-      <motion.div
-        className="absolute inset-[-25px] rounded-full opacity-70"
-        style={{
-          background: style.borderGradient,
-          filter: 'blur(20px)'
-        }}
-        animate={{
-          rotate: 360,
-          scale: [1, 1.12, 1]
-        }}
-        transition={{
-          rotate: { duration: 3.5, repeat: Infinity, ease: "linear" },
-          scale: { duration: 2.8, repeat: Infinity, ease: "easeInOut" }
-        }}
-      />
-      
-      {/* Fourth ring - Massive outer glow */}
-      <motion.div
-        className="absolute inset-[-35px] rounded-full opacity-50"
-        style={{
-          background: style.borderGradient,
-          filter: 'blur(30px)'
-        }}
-        animate={{
-          rotate: -360,
-          scale: [1, 1.2, 1]
-        }}
-        transition={{
-          rotate: { duration: 5, repeat: Infinity, ease: "linear" },
-          scale: { duration: 4, repeat: Infinity, ease: "easeInOut" }
         }}
       />
       
@@ -231,8 +194,8 @@ export const FuturisticButton = ({
             style={{
               background: style.rgbGradient,
               filter: style.neon,
-              minWidth: '450px',
-              minHeight: '90px'
+              minWidth: '400px',
+              minHeight: '80px'
             }}
             onClick={handleClick}
             disabled={disabled}

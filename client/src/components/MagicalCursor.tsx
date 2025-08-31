@@ -1,10 +1,26 @@
 import { useMagicalCursor } from '@/hooks/useMagicalCursor';
+import { useState, useEffect } from 'react';
+
+// Mobile detection utility
+const isMobile = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+};
 
 const MagicalCursor = () => {
+  const [isOnMobile, setIsOnMobile] = useState(false);
   const { cursorPosition, particles, isMoving } = useMagicalCursor();
 
+  useEffect(() => {
+    setIsOnMobile(isMobile());
+  }, []);
+
+  // Don't render cursor on mobile devices
+  if (isOnMobile) {
+    return null;
+  }
+
   return (
-    <div className="fixed inset-0 pointer-events-none z-50">
+    <div className="fixed inset-0 pointer-events-none z-50 hidden sm:block">
       {/* Faint transparent grey circle that follows cursor smoothly */}
       <div
         className="absolute w-6 h-6 rounded-full bg-gray-400"

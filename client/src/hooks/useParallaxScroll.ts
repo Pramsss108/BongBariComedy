@@ -43,6 +43,10 @@ export const useParallaxScroll = () => {
     // Disable complex parallax on mobile for buttery smooth performance
     if (isMobile.current) {
       ticking.current = false;
+      // Apply minimal, smooth CSS transitions on mobile instead
+      requestAnimationFrame(() => {
+        document.body.style.setProperty('--scroll-y', `${lastScrollY.current}px`);
+      });
       return;
     }
 

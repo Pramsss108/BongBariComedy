@@ -231,7 +231,7 @@
   margin: 0 auto;
 }
 
-/* Mobile-specific video container optimizations */
+/* Mobile-specific optimizations for butter smooth performance */
 @media (max-width: 640px) {
   .video-container {
     max-width: 140px;
@@ -248,6 +248,40 @@
     border-width: 2px;
     inset: -2px;
     animation-duration: 6s !important;
+  }
+  
+  /* Disable all cursor-related styles on mobile */
+  .global-cursor-follower,
+  .cursor-trail,
+  [class*="cursor"] {
+    display: none !important;
+  }
+  
+  /* Ultra smooth mobile parallax with minimal GPU usage */
+  .parallax-mobile-optimized {
+    transform: translateZ(0) !important;
+    will-change: auto !important;
+    contain: layout style paint !important;
+  }
+  
+  /* Smooth mobile scrolling optimizations */
+  body {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  
+  /* Disable complex animations on mobile for better performance */
+  .rotating-gradient-border,
+  .floating-bg-element,
+  .parallax-element {
+    animation-play-state: paused;
+    transform: translateZ(0);
+  }
+  
+  /* Enable only essential animations */
+  .pulse-animation,
+  .mobile-tap-scale {
+    animation-play-state: running;
   }
 }
 

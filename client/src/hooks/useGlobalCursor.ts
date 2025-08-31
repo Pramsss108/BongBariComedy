@@ -1,7 +1,16 @@
 import { useEffect } from 'react';
 
+// Mobile detection utility
+const isMobile = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+};
+
 export const useGlobalCursor = () => {
   useEffect(() => {
+    // Don't create cursor on mobile devices
+    if (isMobile()) {
+      return;
+    }
     // Remove any existing cursors first to prevent multiple circles
     const existingCursors = document.querySelectorAll('.global-cursor-follower, .global-cursor-ring');
     existingCursors.forEach(el => el.remove());

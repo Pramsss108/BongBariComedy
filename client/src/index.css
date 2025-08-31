@@ -1211,10 +1211,10 @@ section:nth-child(odd) {
     min-width: max-content !important;
   }
   
-  /* Desktop logo text alignment - same line as nav */
+  /* Desktop logo text alignment - 1cm down */
   [data-testid="logo-link"] .hidden.md\\:block {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
+    margin-top: 0.75rem !important;
+    padding-top: 0.125rem !important;
   }
 }
 

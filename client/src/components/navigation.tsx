@@ -47,7 +47,7 @@ const Navigation = () => {
               </div>
               {/* Mobile Logo - Professional Readable Layout */}
               <div className="md:hidden flex flex-col justify-center pl-2 flex-1">
-                <h1 className="text-2xl font-bold text-brand-blue bangla-text leading-tight mb-1">বং বাড়ি</h1>
+                <h1 className="text-2xl font-bold text-brand-blue bangla-text leading-tight mb-1 pt-[1px] pb-[1px]">বং বাড়ি</h1>
                 <div className="space-y-0">
                   <p className="text-sm font-semibold text-gray-800 leading-tight group-hover:text-brand-blue transition-colors duration-300">Every Home's Story</p>
                   <p className="text-sm text-gray-600 bangla-text font-medium leading-tight group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>

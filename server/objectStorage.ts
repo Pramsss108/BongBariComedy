@@ -61,13 +61,18 @@ export class ObjectStorageService {
 
       // Full path format: /<bucket_name>/<object_name>
       const { bucketName, objectName } = parseObjectPath(fullPath);
+      
       const bucket = objectStorageClient.bucket(bucketName);
       const file = bucket.file(objectName);
 
       // Check if file exists
-      const [exists] = await file.exists();
-      if (exists) {
-        return file;
+      try {
+        const [exists] = await file.exists();
+        if (exists) {
+          return file;
+        }
+      } catch (error) {
+        console.error(`Error checking file existence: ${error}`);
       }
     }
 

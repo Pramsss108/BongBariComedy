@@ -43,7 +43,7 @@ function Router() {
   useMouseMovementChime({ 
     enabled: true, 
     volume: 0.06, 
-    audioFile: '/public-objects/sounds/charm.mp3', // Your custom charm sound
+    audioFile: '/public-objects/sounds/folder/charm.mp3', // Your custom charm sound
     fadeOutTime: 1.2 // Fades like emoji trail
   });
   

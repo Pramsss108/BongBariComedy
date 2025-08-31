@@ -163,104 +163,99 @@
   border-radius: 12px;
 }
 
-/* Circular rotating gradient border - like a colorful spinning wheel */
+/* Gradient train border - moves around the reel perimeter */
 .rotating-gradient-border {
   position: absolute;
-  inset: -4px;
-  border-radius: 16px;
-  background: conic-gradient(
-    from 0deg,
-    #ff1493,  /* Bright pink */
-    #ff6347,  /* Orange red */
-    #ffa500,  /* Orange */
-    #ffff00,  /* Yellow */
-    #32cd32,  /* Lime green */
-    #00bfff,  /* Deep sky blue */
-    #8a2be2,  /* Blue violet */
-    #9932cc,  /* Dark orchid */
-    #ff1493   /* Back to pink for seamless loop */
-  );
-  animation: spinColorWheel 4s linear infinite;
+  inset: -3px;
+  border-radius: 15px;
+  border: 3px solid transparent;
+  background: 
+    linear-gradient(white, white) padding-box,
+    conic-gradient(
+      from 0deg,
+      transparent 0%,
+      transparent 70%,
+      #ff1493 75%,
+      #ff6347 80%,
+      #ffa500 85%,
+      #ffff00 90%,
+      #32cd32 95%,
+      transparent 100%
+    ) border-box;
+  animation: gradientTrain 3s linear infinite;
   pointer-events: none;
-  z-index: 1;
-  filter: blur(1px) brightness(1.2);
+  z-index: 5;
 }
 
-/* Premium glow effect behind the border */
-.rotating-gradient-border::before {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: 18px;
-  background: conic-gradient(
-    from 0deg,
-    #ff1493,  /* Bright pink */
-    #ff6347,  /* Orange red */
-    #ffa500,  /* Orange */
-    #ffff00,  /* Yellow */
-    #32cd32,  /* Lime green */
-    #00bfff,  /* Deep sky blue */
-    #8a2be2,  /* Blue violet */
-    #9932cc,  /* Dark orchid */
-    #ff1493   /* Back to pink */
-  );
-  animation: spinColorWheel 4s linear infinite;
-  filter: blur(4px) brightness(0.8);
-  opacity: 0.7;
-  z-index: -1;
-}
-
-/* Inner clean container for reel content - STATIC and UNTOUCHED */
+/* Inner clean container for reel content - STATIC */
 .reel-content-container {
   position: absolute;
-  inset: 4px;
+  inset: 0;
   background: white;
   border-radius: 12px;
   overflow: hidden;
   z-index: 10;
 }
 
-/* Smooth colorful wheel spinning animation */
-@keyframes spinColorWheel {
+/* Gradient train animation - moves around border like a train */
+@keyframes gradientTrain {
   0% {
-    transform: rotate(0deg);
+    background: 
+      linear-gradient(white, white) padding-box,
+      conic-gradient(
+        from 0deg,
+        transparent 0%,
+        transparent 70%,
+        #ff1493 75%,
+        #ff6347 80%,
+        #ffa500 85%,
+        #ffff00 90%,
+        #32cd32 95%,
+        transparent 100%
+      ) border-box;
   }
   100% {
-    transform: rotate(360deg);
+    background: 
+      linear-gradient(white, white) padding-box,
+      conic-gradient(
+        from 360deg,
+        transparent 0%,
+        transparent 70%,
+        #ff1493 75%,
+        #ff6347 80%,
+        #ffa500 85%,
+        #ffff00 90%,
+        #32cd32 95%,
+        transparent 100%
+      ) border-box;
   }
 }
 
-/* Each reel gets different speeds and directions for premium variety */
-.video-container:nth-child(1) .rotating-gradient-border,
-.video-container:nth-child(1) .rotating-gradient-border::before {
-  animation-duration: 4s;
+/* Each reel gets different speeds for variety */
+.video-container:nth-child(1) .rotating-gradient-border {
+  animation-duration: 3s;
 }
 
-.video-container:nth-child(2) .rotating-gradient-border,
-.video-container:nth-child(2) .rotating-gradient-border::before {
+.video-container:nth-child(2) .rotating-gradient-border {
+  animation-duration: 2.5s;
+  animation-direction: reverse;
+}
+
+.video-container:nth-child(3) .rotating-gradient-border {
   animation-duration: 3.5s;
+}
+
+.video-container:nth-child(4) .rotating-gradient-border {
+  animation-duration: 2.8s;
   animation-direction: reverse;
 }
 
-.video-container:nth-child(3) .rotating-gradient-border,
-.video-container:nth-child(3) .rotating-gradient-border::before {
-  animation-duration: 4.5s;
+.video-container:nth-child(5) .rotating-gradient-border {
+  animation-duration: 3.2s;
 }
 
-.video-container:nth-child(4) .rotating-gradient-border,
-.video-container:nth-child(4) .rotating-gradient-border::before {
-  animation-duration: 3.8s;
-  animation-direction: reverse;
-}
-
-.video-container:nth-child(5) .rotating-gradient-border,
-.video-container:nth-child(5) .rotating-gradient-border::before {
-  animation-duration: 4.2s;
-}
-
-.video-container:nth-child(6) .rotating-gradient-border,
-.video-container:nth-child(6) .rotating-gradient-border::before {
-  animation-duration: 3.6s;
+.video-container:nth-child(6) .rotating-gradient-border {
+  animation-duration: 2.6s;
   animation-direction: reverse;
 }
 

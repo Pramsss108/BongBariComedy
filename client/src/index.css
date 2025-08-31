@@ -271,10 +271,15 @@
   }
   
   /* Disable complex animations on mobile for better performance */
-  .rotating-gradient-border,
   .floating-bg-element,
   .parallax-element {
     animation-play-state: paused;
+    transform: translateZ(0);
+  }
+  
+  /* Keep gradient borders spinning on mobile for trendy effect */
+  .rotating-gradient-border {
+    animation-play-state: running;
     transform: translateZ(0);
   }
   

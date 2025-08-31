@@ -37,6 +37,12 @@ const Home = () => {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [showCursor, setShowCursor] = useState(true);
   
+  // 🎨 Fetch banner data from admin panel
+  const { data: bannerData } = useQuery({
+    queryKey: ['/api/homepage-banner'],
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+  
   
   const { data: latestVideos, isLoading: isLoadingLatest } = useQuery<YouTubeVideo[]>({
     queryKey: ['/api/youtube/latest'],
@@ -170,18 +176,28 @@ const Home = () => {
         <main className="py-2 sm:py-3 relative z-10 mt-2">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             
-            {/* Ultra-thin Banner */}
+            {/* Dynamic Banner Image */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
               className="mb-1"
             >
-              <div className="w-full h-10 md:h-12 rounded-md shadow-md overflow-hidden bg-gradient-to-r from-brand-yellow via-yellow-400 to-orange-400">
-              </div>
+              {bannerData?.bannerImage ? (
+                <div className="w-full h-20 md:h-24 rounded-md shadow-md overflow-hidden">
+                  <img 
+                    src={bannerData.bannerImage} 
+                    alt="Bong Bari Banner"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-full h-10 md:h-12 rounded-md shadow-md overflow-hidden bg-gradient-to-r from-brand-yellow via-yellow-400 to-orange-400">
+                </div>
+              )}
             </motion.div>
 
-            {/* Very Compact Title Section */}
+            {/* Dynamic Title Section from Admin Panel */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -189,10 +205,10 @@ const Home = () => {
               className="text-center mb-1"
             >
               <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-0 bangla-text leading-none">
-                বং বাড়ি
+                {bannerData?.title || "বং বাড়ি"}
               </h1>
               <p className="text-xs sm:text-sm md:text-sm text-gray-600 bangla-text leading-none">
-                কলকাতার ঘরোয়া কমেডি - আমাদের গল্প
+                {bannerData?.subtitle || "কলকাতার ঘরোয়া কমেডি - আমাদের গল্প"}
               </p>
             </motion.div>
 

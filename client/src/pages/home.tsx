@@ -331,9 +331,6 @@ const Home = () => {
                 </FuturisticButton>
               </motion.div>
               
-              {/* Separator for desktop */}
-              <div className="hidden lg:block w-px h-24 bg-gray-300 opacity-50"></div>
-              
               <motion.div
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}

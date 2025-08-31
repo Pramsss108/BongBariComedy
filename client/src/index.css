@@ -1840,3 +1840,45 @@ section:nth-child(odd) {
     will-change: transform, box-shadow !important;
   }
 }
+
+/* Custom Scrollbar for Chatbot with Brand Colors */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 204, 0, 0.15);
+  border-radius: 4px;
+  margin: 4px;
+  border: 1px solid rgba(255, 204, 0, 0.2);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(45deg, #FFCC00, #FF4D4D);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 204, 0, 0.4);
+  min-height: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(45deg, #FFD700, #FF6B6B);
+  border: 1px solid rgba(255, 204, 0, 0.6);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(45deg, #FFC000, #E63946);
+  border: 1px solid rgba(255, 204, 0, 0.8);
+}
+
+.custom-scrollbar::-webkit-scrollbar-corner {
+  background: rgba(16, 20, 24, 0.5);
+}
+
+/* Firefox scrollbar styling */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #FFCC00 rgba(255, 204, 0, 0.15);
+}

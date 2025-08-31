@@ -38,8 +38,12 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (messagesEndRef.current) {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+      }, 100);
+    }
+  }, [messages, isTyping]);
 
   // Focus input when chatbot opens
   useEffect(() => {
@@ -411,9 +415,9 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
               className="relative z-10 flex flex-col"
               style={{ height: 'calc(450px - 60px)' }}
             >
-              {/* Fixed Scrollable Messages Area */}
-              <div className="flex-1 overflow-hidden" style={{ height: '200px' }}>
-                <ScrollArea className="h-full px-3 py-2">
+              {/* Fixed Scrollable Messages Area with Custom Scrollbar */}
+              <div className="flex-1 overflow-hidden custom-scrollbar" style={{ height: '200px' }}>
+                <ScrollArea className="h-full px-3 py-2 custom-scrollbar">
                   <div className="space-y-3">
                     {messages.map((message, index) => (
                       <motion.div
@@ -460,7 +464,7 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
                       </motion.div>
                     )}
                   </div>
-                  <div ref={messagesEndRef} />
+                  <div ref={messagesEndRef} className="h-2" />
                 </ScrollArea>
               </div>
 
@@ -484,8 +488,8 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
                 </div>
               </div>
 
-              {/* ALWAYS VISIBLE Input Area */}
-              <div className="p-3 bg-gradient-to-t from-[#101418]/50 to-transparent">
+              {/* ALWAYS VISIBLE Fixed Input Area */}
+              <div className="mt-auto p-3 bg-gradient-to-t from-[#101418]/80 via-[#101418]/40 to-transparent backdrop-blur-sm border-t border-[#FFCC00]/20">
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-r from-[#1363DF]/20 to-[#FF4D4D]/20 rounded-lg blur-sm" />
                   

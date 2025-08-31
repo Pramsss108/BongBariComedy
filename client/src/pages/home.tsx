@@ -218,39 +218,120 @@ const Home = () => {
               </section>
             </ParallaxSection>
           
-          {/* YouTube Shorts Grid */}
+          {/* Latest Comedy Section (FOMO) */}
           <ParallaxSection speed={0.4} delay={0.2}>
-            <section className="mb-3 sm:mb-4 lg:mb-6" data-testid="videos-section">
+            <section className="mb-6 sm:mb-8 lg:mb-10" data-testid="latest-comedy-section">
             <motion.h3 
-              className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-brand-blue mb-4 sm:mb-6 hover-wobble cursor-pointer transition-all duration-300" 
-              data-testid="videos-title-english"
+              className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-brand-blue mb-2 sm:mb-3 hover-wobble cursor-pointer transition-all duration-300" 
+              data-testid="latest-comedy-title-english"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              Latest Comedy Shorts
+              Latest Comedy
             </motion.h3>
             <motion.h4 
-              className="text-xl sm:text-2xl lg:text-3xl font-bold text-center text-gray-800 mb-6 sm:mb-8 bangla-text hover-bounce cursor-pointer transition-all duration-300" 
-              data-testid="videos-title-bengali"
+              className="text-xl sm:text-2xl lg:text-3xl font-bold text-center text-gray-800 mb-2 sm:mb-3 bangla-text hover-bounce cursor-pointer transition-all duration-300" 
+              data-testid="latest-comedy-title-bengali"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              সর্বশেষ কমেডি শর্টস
+              সর্বশেষ কমেডি
             </motion.h4>
+            <motion.p 
+              className="text-center text-gray-600 mb-6 sm:mb-8 text-sm sm:text-base italic" 
+              data-testid="latest-comedy-subtitle"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+            >
+              New content keeps them coming back - Don't miss out!
+            </motion.p>
             
             {isLoading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-4 lg:gap-6 px-2" data-testid="videos-grid-loading">
-                {[...Array(6)].map((_, i) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 px-2 max-w-6xl mx-auto" data-testid="latest-videos-grid-loading">
+                {[...Array(3)].map((_, i) => (
                   <div key={i} className="video-container mx-auto">
                     <div className="w-full h-full bg-gray-200 rounded-lg animate-pulse" />
                   </div>
                 ))}
               </div>
             ) : (
-              <motion.div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-4 lg:gap-6 px-2" data-testid="videos-grid">
-                {videoData.map((video, index) => (
+              <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 px-2 max-w-6xl mx-auto" data-testid="latest-videos-grid">
+                {videoData.slice(0, 3).map((video, index) => (
+                  <motion.div
+                    key={video.videoId}
+                    initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ 
+                      duration: 0.6, 
+                      delay: index * 0.1,
+                      ease: [0.25, 0.25, 0.25, 1]
+                    }}
+                    whileHover={{ 
+                      scale: 1.02,
+                      transition: { duration: 0.2 }
+                    }}
+                  >
+                    <YouTubeShort
+                      videoId={video.videoId}
+                      thumbnail={video.thumbnail}
+                      title={video.title}
+                    />
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+            </section>
+          </ParallaxSection>
+
+          {/* Most Loved Comedy Section (Social Proof) */}
+          <ParallaxSection speed={0.4} delay={0.3}>
+            <section className="mb-3 sm:mb-4 lg:mb-6" data-testid="loved-comedy-section">
+            <motion.h3 
+              className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-brand-red mb-2 sm:mb-3 hover-wobble cursor-pointer transition-all duration-300" 
+              data-testid="loved-comedy-title-english"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              ⭐ Most Loved Comedy
+            </motion.h3>
+            <motion.h4 
+              className="text-xl sm:text-2xl lg:text-3xl font-bold text-center text-gray-800 mb-2 sm:mb-3 bangla-text hover-bounce cursor-pointer transition-all duration-300" 
+              data-testid="loved-comedy-title-bengali"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              ⭐ সবচেয়ে প্রিয় কমেডি
+            </motion.h4>
+            <motion.p 
+              className="text-center text-gray-600 mb-6 sm:mb-8 text-sm sm:text-base italic" 
+              data-testid="loved-comedy-subtitle"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+            >
+              If others love it → you'll love it too!
+            </motion.p>
+            
+            {isLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 px-2 max-w-6xl mx-auto" data-testid="loved-videos-grid-loading">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="video-container mx-auto">
+                    <div className="w-full h-full bg-gray-200 rounded-lg animate-pulse" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 px-2 max-w-6xl mx-auto" data-testid="loved-videos-grid">
+                {[
+                  fallbackVideoData[1], // Popular video 1
+                  fallbackVideoData[4], // Popular video 2  
+                  fallbackVideoData[5]  // Popular video 3
+                ].map((video, index) => (
                   <motion.div
                     key={video.videoId}
                     initial={{ opacity: 0, y: 50, scale: 0.9 }}

@@ -11,7 +11,7 @@ import { useGlobalCursor } from "@/hooks/useGlobalCursor";
 import { useParallaxScroll } from "@/hooks/useParallaxScroll";
 import { useRickshawSound } from "@/hooks/useRickshawSound";
 import { useMagicalHoverSounds } from "@/hooks/useMagicalHoverSounds";
-import { useMouseMovementChime } from "@/hooks/useMouseMovementChime";
+import { useSimpleCharmSound } from "@/hooks/useSimpleCharmSound";
 import { CharmSoundSelector } from "@/components/CharmSoundSelector";
 import { useState } from "react";
 import Home from "@/pages/home";
@@ -40,11 +40,10 @@ function Router() {
   useMagicalHoverSounds({ enabled: true, volume: 0.12 });
   
   // Initialize custom charm sound that follows mouse movement
-  useMouseMovementChime({ 
+  useSimpleCharmSound({ 
     enabled: true, 
     volume: 0.06, 
-    audioFile: '/public-objects/sounds/folder/charm.mp3', // Your custom charm sound
-    fadeOutTime: 1.2 // Fades like emoji trail
+    audioFile: '/public-objects/sounds/folder/charm.mp3' // Your custom charm sound
   });
   
   

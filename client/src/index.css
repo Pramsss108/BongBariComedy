@@ -1292,6 +1292,70 @@ section:nth-child(odd) {
     position: relative !important;
     transition: all 0.2s ease !important;
   }
+
+  /* Magical Cursor Follower - Desktop Only */
+  @media (min-width: 1024px) {
+    .magic-cursor-circle {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: rgba(128, 128, 128, 0.15);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      position: relative;
+      animation: pulseCircle 2s ease-in-out infinite;
+    }
+  }
+
+  .glitter-1,
+  .glitter-2,
+  .glitter-3 {
+    position: absolute;
+    font-size: 8px;
+    opacity: 0;
+    animation: twinkle 2s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  .glitter-1 {
+    top: -5px;
+    left: 20px;
+    animation-delay: 0s;
+  }
+
+  .glitter-2 {
+    bottom: -5px;
+    right: 18px;
+    animation-delay: 0.7s;
+  }
+
+  .glitter-3 {
+    top: 15px;
+    left: -8px;
+    animation-delay: 1.4s;
+  }
+
+  @keyframes pulseCircle {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 0.6;
+    }
+    50% {
+      transform: scale(1.1);
+      opacity: 0.3;
+    }
+  }
+
+  @keyframes twinkle {
+    0%, 100% {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.2);
+    }
+  }
   
   /* Logo gradient text on desktop */
   [data-testid="logo-link"] h1 {

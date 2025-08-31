@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,17 @@ import { Button } from "@/components/ui/button";
 const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [location] = useLocation();
+  const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
+  const [isHovering, setIsHovering] = useState(false);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setCursorPos({ x: e.clientX, y: e.clientY });
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    return () => document.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   const navItems = [
     { href: "/", label: "Home" },
@@ -23,9 +34,27 @@ const Navigation = () => {
   };
 
   return (
-    <nav className="bg-white shadow-lg sticky top-0 z-50" data-testid="main-navigation">
+    <>
+      {/* Magical Cursor Follower - Desktop Only */}
+      {isHovering && (
+        <div 
+          className="fixed pointer-events-none z-[999] transition-opacity duration-300 hidden lg:block"
+          style={{
+            left: cursorPos.x - 15,
+            top: cursorPos.y - 15,
+          }}
+        >
+          <div className="magic-cursor-circle">
+            <div className="glitter-1">✨</div>
+            <div className="glitter-2">⭐</div>
+            <div className="glitter-3">💫</div>
+          </div>
+        </div>
+      )}
+      
+      <nav className="bg-white shadow-lg sticky top-0 z-50" data-testid="main-navigation">
       <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center py-3 md:py-10 pt-[20px] pb-[20px]">
+        <div className="flex justify-between items-center py-3 md:py-10">
           {/* Logo - Responsive Design */}
           <Link href="/" data-testid="logo-link">
             <div className="flex items-center space-x-3 cursor-pointer hover-logo-container" style={{marginTop: '1rem'}}>
@@ -51,14 +80,16 @@ const Navigation = () => {
               </div>
               {/* Desktop Logo - Full */}
               <div className="hidden md:block min-w-0" style={{marginTop: '0.75rem'}}>
-                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap mt-[0.9px] mb-[0.9px] text-left pt-[2.5px] pb-[2.5px] text-[29px]">বং বাড়ি</h1>
+                <h1 className="text-2xl font-bold text-brand-blue bangla-text leading-tight whitespace-nowrap">বং বাড়ি</h1>
                 <p className="text-xs text-gray-600 leading-tight whitespace-nowrap" style={{marginTop: '0.25rem', fontSize: '0.7rem'}}>Bengali Comedy</p>
               </div>
             </div>
           </Link>
           
           {/* Desktop Navigation - Improved Layout */}
-          <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
+          <div className="hidden md:flex items-center space-x-6 lg:space-x-8"
+               onMouseEnter={() => setIsHovering(true)}
+               onMouseLeave={() => setIsHovering(false)}>
             {navItems.map((item) => (
               <Link
                 key={item.href}
@@ -107,6 +138,7 @@ const Navigation = () => {
         )}
       </div>
     </nav>
+    </>
   );
 };
 

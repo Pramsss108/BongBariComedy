@@ -1163,7 +1163,8 @@ section:nth-child(odd) {
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%) !important;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
     backdrop-filter: blur(10px) !important;
-    padding: 0.75rem 0 !important;
+    padding: 1.5rem 0 !important;
+    min-height: 120px !important;
   }
   
   [data-testid="main-navigation"] .container {
@@ -1213,7 +1214,7 @@ section:nth-child(odd) {
   
   /* Desktop logo text alignment - prevent cutoff */
   [data-testid="logo-link"] .hidden.md\\:block {
-    margin-top: 2rem !important;
+    margin-top: 0.75rem !important;
     padding-top: 0.25rem !important;
   }
 }

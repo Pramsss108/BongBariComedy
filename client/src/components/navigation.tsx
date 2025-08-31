@@ -25,7 +25,7 @@ const Navigation = () => {
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50" data-testid="main-navigation">
       <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center py-3 md:py-5">
+        <div className="flex justify-between items-center py-3 md:py-8">
           {/* Logo - Responsive Design */}
           <Link href="/" data-testid="logo-link">
             <div className="flex items-center space-x-3 cursor-pointer">
@@ -39,7 +39,7 @@ const Navigation = () => {
                 <h1 className="text-xl font-bold text-brand-blue bangla-text leading-tight">বং বাড়ি</h1>
               </div>
               {/* Desktop Logo - Full */}
-              <div className="hidden md:block min-w-0" style={{marginTop: '2rem'}}>
+              <div className="hidden md:block min-w-0" style={{marginTop: '0.5rem'}}>
                 <h1 className="text-2xl font-bold text-brand-blue bangla-text leading-tight whitespace-nowrap">বং বাড়ি</h1>
                 <p className="text-xs text-gray-600 leading-tight whitespace-nowrap">Bengali Comedy</p>
               </div>

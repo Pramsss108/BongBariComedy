@@ -4,8 +4,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ParallaxSection, ParallaxContainer } from "@/components/parallax-section";
 import { FileText } from "lucide-react";
+import { useFunnySubmissionSound } from "@/hooks/useFunnySubmissionSound";
 
 const WorkWithUs = () => {
+  const { playFunnySubmissionSound } = useFunnySubmissionSound({ enabled: true, volume: 0.2 });
+  
   const collaborationTypes = [
     {
       title: "Product Integration",
@@ -22,6 +25,9 @@ const WorkWithUs = () => {
   ];
 
   const handleFormClick = () => {
+    // Play funny sound when opening collaboration form
+    playFunnySubmissionSound();
+    
     // This would open the actual Google Form
     window.open("https://forms.google.com/", "_blank");
   };

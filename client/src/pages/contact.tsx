@@ -3,8 +3,16 @@ import SEOHead from "@/components/seo-head";
 import { Card, CardContent } from "@/components/ui/card";
 import { ParallaxSection, ParallaxContainer } from "@/components/parallax-section";
 import { Mail, Phone, Youtube, Instagram, Twitter } from "lucide-react";
+import { useFunnySubmissionSound } from "@/hooks/useFunnySubmissionSound";
 
 const Contact = () => {
+  const { playFunnySubmissionSound } = useFunnySubmissionSound({ enabled: true, volume: 0.18 });
+  
+  const handleContactClick = (method: string) => {
+    // Play funny sound when someone tries to contact
+    playFunnySubmissionSound();
+  };
+  
   const contactMethods = [
     {
       icon: Mail,
@@ -99,7 +107,11 @@ const Contact = () => {
               <div className="space-y-6">
                 {/* Contact Methods */}
                 {contactMethods.map((method, index) => (
-                  <Card key={index} className="bg-brand-yellow hover-lift">
+                  <Card 
+                    key={index} 
+                    className="bg-brand-yellow hover-lift cursor-pointer magical-hover"
+                    onClick={() => handleContactClick(method.title)}
+                  >
                     <CardContent className="p-6">
                       <div 
                         className="flex items-center space-x-4"
@@ -130,8 +142,9 @@ const Contact = () => {
                           href={social.href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={`w-12 h-12 ${social.bgColor} rounded-full flex items-center justify-center transition-colors`}
+                          className={`w-12 h-12 ${social.bgColor} rounded-full flex items-center justify-center transition-colors magical-hover`}
                           data-testid={`social-link-${index}`}
+                          onClick={() => handleContactClick('social')}
                         >
                           <social.icon className="w-6 h-6 text-white" />
                         </a>

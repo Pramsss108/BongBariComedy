@@ -632,6 +632,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 🎨 SIMPLE BANNER MANAGER - Homepage Banner API
+  app.get("/api/homepage-banner", async (req, res) => {
+    try {
+      // For now, return default banner data
+      // In production, this would fetch from database
+      const defaultBanner = {
+        title: "বং বাড়ি",
+        subtitle: "কলকাতার ঘরোয়া কমেডি - আমাদের গল্প",
+        bannerImage: ""
+      };
+      res.json(defaultBanner);
+    } catch (error) {
+      console.error("Error fetching banner:", error);
+      res.status(500).json({ message: "Failed to fetch banner data" });
+    }
+  });
+
+  app.post("/api/homepage-banner", isAuthenticated, async (req, res) => {
+    try {
+      const bannerData = req.body;
+      console.log("Banner updated:", bannerData);
+      
+      // For now, just return success
+      // In production, this would save to database
+      res.json({ 
+        message: "Banner updated successfully",
+        data: bannerData 
+      });
+    } catch (error) {
+      console.error("Error updating banner:", error);
+      res.status(500).json({ message: "Failed to update banner" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

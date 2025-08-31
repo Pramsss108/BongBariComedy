@@ -17,7 +17,7 @@ import { Mail, Calendar, Building, User, LogOut, Plus, Users, FileText, Trash2, 
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { insertUserSchema, insertBlogPostSchema, type CollaborationRequest, type InsertUser, type InsertBlogPost, type BlogPost } from "@shared/schema";
-import { AdminHomepage } from "./AdminHomepage";
+import { SimpleBannerManager } from "./SimpleBannerManager";
 import { AdminChatbot } from "./AdminChatbot";
 
 const Admin = () => {
@@ -593,14 +593,7 @@ const Admin = () => {
               </TabsContent>
 
               <TabsContent value="homepage" className="mt-8">
-                <h3 className="text-2xl font-semibold text-brand-blue mb-6 flex items-center">
-                  <Home className="w-6 h-6 mr-2" />
-                  Homepage Content Manager
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  Manage your homepage banner images, titles, subtitles, and promotional content.
-                </p>
-                <AdminHomepage />
+                <SimpleBannerManager />
               </TabsContent>
 
               <TabsContent value="chatbot" className="mt-8">

@@ -305,6 +305,127 @@ const Home = () => {
             </section>
           </ParallaxSection>
           
+          {/* Instagram Reels Section */}
+          <ParallaxSection speed={0.4} delay={0.2}>
+            <section className="mb-12" data-testid="instagram-reels-section">
+              <motion.h3 
+                className="text-3xl font-bold text-center text-brand-blue mb-6" 
+                data-testid="instagram-title-english"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                Follow on Instagram
+              </motion.h3>
+              <motion.h4 
+                className="text-2xl font-bold text-center text-gray-800 mb-8 bangla-text" 
+                data-testid="instagram-title-bengali"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                ইনস্টাগ্রামে আমাদের ফলো করুন
+              </motion.h4>
+              
+              <motion.div 
+                className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-5xl mx-auto px-4"
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+              >
+                {/* Instagram Reel 1 */}
+                <motion.div
+                  className="instagram-reel-container"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.6, delay: 0.5 }}
+                  data-testid="instagram-reel-1"
+                >
+                  <div className="instagram-reel-inner">
+                    <iframe
+                      src="https://www.instagram.com/p/placeholder1/embed"
+                      className="w-full h-full border-0"
+                      allowFullScreen
+                      title="Bong Bari Instagram Reel 1"
+                    />
+                  </div>
+                </motion.div>
+
+                {/* Instagram Reel 2 */}
+                <motion.div
+                  className="instagram-reel-container"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.6, delay: 0.6 }}
+                  data-testid="instagram-reel-2"
+                >
+                  <div className="instagram-reel-inner">
+                    <iframe
+                      src="https://www.instagram.com/p/placeholder2/embed"
+                      className="w-full h-full border-0"
+                      allowFullScreen
+                      title="Bong Bari Instagram Reel 2"
+                    />
+                  </div>
+                </motion.div>
+
+                {/* Instagram Reel 3 */}
+                <motion.div
+                  className="instagram-reel-container"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.6, delay: 0.7 }}
+                  data-testid="instagram-reel-3"
+                >
+                  <div className="instagram-reel-inner">
+                    <iframe
+                      src="https://www.instagram.com/p/placeholder3/embed"
+                      className="w-full h-full border-0"
+                      allowFullScreen
+                      title="Bong Bari Instagram Reel 3"
+                    />
+                  </div>
+                </motion.div>
+
+                {/* Instagram Reel 4 */}
+                <motion.div
+                  className="instagram-reel-container"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.6, delay: 0.8 }}
+                  data-testid="instagram-reel-4"
+                >
+                  <div className="instagram-reel-inner">
+                    <iframe
+                      src="https://www.instagram.com/p/placeholder4/embed"
+                      className="w-full h-full border-0"
+                      allowFullScreen
+                      title="Bong Bari Instagram Reel 4"
+                    />
+                  </div>
+                </motion.div>
+              </motion.div>
+              
+              {/* Instagram Follow CTA */}
+              <motion.div 
+                className="text-center mt-8"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.9 }}
+              >
+                <FuturisticButton 
+                  variant="instagram"
+                  onClick={() => window.open('https://instagram.com/bongbari_comedy', '_blank')}
+                  data-testid="button-instagram-follow"
+                  className="mx-auto"
+                >
+                  <Instagram className="h-6 w-6" />
+                  Follow @bongbari_comedy
+                </FuturisticButton>
+              </motion.div>
+            </section>
+          </ParallaxSection>
+          
           {/* CTA Buttons */}
           <ParallaxSection speed={0.3} delay={0.3}>
             <section className="text-center mb-0" data-testid="cta-section">

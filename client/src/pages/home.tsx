@@ -678,7 +678,7 @@ const Home = () => {
                       
                       <MagneticButton 
                         disabled={collaborationMutation.isPending || !isFormValid}
-                        className={`w-full py-4 sm:py-3 rounded-full font-semibold text-base sm:text-lg hover-lift min-h-[52px] touch-manipulation transition-all duration-400 ${
+                        className={`w-full py-4 sm:py-3 rounded-full font-semibold text-base sm:text-lg hover-lift min-h-[52px] touch-manipulation transition-all duration-400 no-rickshaw-sound ${
                           !isFormValid 
                             ? 'bg-gray-400 text-gray-200 cursor-not-allowed opacity-60' 
                             : 'bg-brand-red text-white hover:bg-red-600 hover:scale-110 hover:-translate-y-3 hover:shadow-2xl'

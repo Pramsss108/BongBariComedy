@@ -25,8 +25,7 @@ import BlogPost from "@/pages/blog-post";
 import NotFound from "@/pages/not-found";
 
 function Router() {
-  const [showCharmSelector, setShowCharmSelector] = useState(true);
-  const [charmConfig, setCharmConfig] = useState({ enabled: false, volume: 0.06, frequency: 1200 });
+  const [showCharmSelector, setShowCharmSelector] = useState(false);
   
   // Initialize professional site-wide cursor effect
   useGlobalCursor();
@@ -40,22 +39,14 @@ function Router() {
   // Initialize magical hover sounds to complement cursor effects
   useMagicalHoverSounds({ enabled: true, volume: 0.12 });
   
-  // Initialize magical fairy dust charm that follows mouse movement
-  useMouseMovementChime(charmConfig);
+  // Initialize custom charm sound that follows mouse movement
+  useMouseMovementChime({ 
+    enabled: true, 
+    volume: 0.06, 
+    audioFile: '/public-objects/sounds/charm.mp3', // Your custom charm sound
+    fadeOutTime: 1.2 // Fades like emoji trail
+  });
   
-  const handleCharmSelect = (charm: any) => {
-    setCharmConfig({ 
-      enabled: true, 
-      volume: 0.06, 
-      frequency: charm.frequency 
-    });
-    setShowCharmSelector(false);
-  };
-  
-  const handleCharmDisable = () => {
-    setCharmConfig({ enabled: false, volume: 0.06, frequency: 1200 });
-    setShowCharmSelector(false);
-  };
   
   return (
     <div className="min-h-screen bg-brand-yellow relative">
@@ -75,13 +66,6 @@ function Router() {
         <Route component={NotFound} />
       </Switch>
       
-      {/* Charm Sound Selector */}
-      {showCharmSelector && (
-        <CharmSoundSelector 
-          onSelect={handleCharmSelect}
-          onDisable={handleCharmDisable}
-        />
-      )}
     </div>
   );
 }

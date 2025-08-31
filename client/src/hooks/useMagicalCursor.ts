@@ -34,10 +34,10 @@ export const useMagicalCursor = () => {
         clearTimeout(movementTimer.current);
       }
 
-      // Create smooth particle trail - ultra optimized
-      for (let i = 0; i < 2; i++) {
+      // Create sharp particle trail - ultra responsive
+      for (let i = 0; i < 3; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const speed = 0.3 + Math.random() * 1.2;
+        const speed = 0.8 + Math.random() * 2.0;
         const isLaughEmoji = Math.random() < 0.05; // 5% chance for laugh emoji
         
         const newParticle: Particle = {
@@ -48,8 +48,8 @@ export const useMagicalCursor = () => {
           vy: Math.sin(angle) * speed,
           opacity: 0.9,
           scale: 0.4 + Math.random() * 0.6,
-          life: 60 + Math.random() * 20, // Much shorter life: 1-1.3 seconds
-          maxLife: 60 + Math.random() * 20,
+          life: 40 + Math.random() * 15, // Sharp, fast life: 0.7-0.9 seconds
+          maxLife: 40 + Math.random() * 15,
           rotation: Math.random() * 360,
           rotationSpeed: (Math.random() - 0.5) * 4,
           type: isLaughEmoji ? 'laugh' : 'star',
@@ -59,10 +59,10 @@ export const useMagicalCursor = () => {
         setParticles(prev => [...prev, newParticle]);
       }
 
-      // Set timer to detect when movement stops
+      // Set timer to detect when movement stops - much faster response
       movementTimer.current = setTimeout(() => {
         setIsMoving(false);
-      }, 150);
+      }, 50);
     };
 
     const handleMouseDown = () => {

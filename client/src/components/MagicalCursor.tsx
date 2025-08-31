@@ -79,7 +79,7 @@ const MagicalCursor = () => {
             isClicking ? 'scale(1.3)' : isMoving ? 'scale(1.15)' : 'scale(1)'
           }`,
           opacity: isClicking ? 1 : isMoving ? 1 : 0.7,
-          transition: 'opacity 0.05s ease, transform 0.02s ease',
+          transition: 'opacity 0.01s ease, transform 0.005s ease',
           willChange: 'transform, opacity',
           filter: `drop-shadow(0 3px 6px rgba(0,0,0,0.4)) ${isClicking ? 'brightness(1.2)' : ''}`,
           zIndex: 2147483647,
@@ -103,7 +103,7 @@ const MagicalCursor = () => {
               ? '0 4px 8px rgba(255,215,0,0.6), inset 0 1px 0 rgba(255,255,255,0.4)'
               : '0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
             border: isClicking ? '1px solid #DAA520' : '1px solid #654321',
-            transition: 'all 0.02s ease'
+            transition: 'all 0.005s ease'
           }}
         />
         
@@ -151,7 +151,7 @@ const MagicalCursor = () => {
               ? '0 0 8px rgba(255, 69, 0, 0.9), 0 0 16px rgba(255, 69, 0, 0.4)'
               : '0 0 4px rgba(255, 204, 0, 0.6)',
             opacity: isClicking ? 1 : isMoving ? 1 : 0.8,
-            transition: 'all 0.02s ease'
+            transition: 'all 0.005s ease'
           }}
         />
         
@@ -166,7 +166,7 @@ const MagicalCursor = () => {
             left: '16.5px',
             top: '2px',
             opacity: isClicking ? 0.9 : 0.6,
-            transition: 'all 0.02s ease'
+            transition: 'all 0.005s ease'
           }}
         />
       </div>

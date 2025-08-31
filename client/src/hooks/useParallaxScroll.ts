@@ -8,13 +8,31 @@ export const useParallaxScroll = () => {
       const fastRate = scrolled * -0.8;
       const superFastRate = scrolled * -1.2;
       const windowHeight = window.innerHeight;
+      
+      // Dynamic floating background elements
+      const floatingElements = document.querySelectorAll('.floating-bg-element');
+      floatingElements.forEach((element, index) => {
+        const el = element as HTMLElement;
+        const speed = (index % 3 + 1) * 0.3; // Different speeds for each element
+        const sideSpeed = Math.sin(scrolled * 0.01 + index) * 30; // Side-to-side movement
+        const rotationSpeed = scrolled * 0.05 * (index % 2 === 0 ? 1 : -1); // Rotation
+        
+        el.style.transform = `
+          translateY(${scrolled * speed}px) 
+          translateX(${sideSpeed}px) 
+          rotate(${rotationSpeed}deg) 
+          scale(${1 + Math.sin(scrolled * 0.01 + index) * 0.1})
+        `;
+        el.style.opacity = `${0.1 + Math.sin(scrolled * 0.02 + index) * 0.05}`;
+      });
 
-      // Smooth parallax for YouTube shorts
+      // Smooth parallax for YouTube shorts - faster movement
       const youtubeShorts = document.querySelectorAll('.youtube-short');
       youtubeShorts.forEach((element, index) => {
         const el = element as HTMLElement;
         const speed = index % 2 === 0 ? fastRate : superFastRate;
-        el.style.transform = `translateY(${speed * 0.15}px) scale(${1 + Math.abs(speed) * 0.0001})`;
+        const floatOffset = Math.sin(scrolled * 0.02 + index) * 5; // Floating effect
+        el.style.transform = `translateY(${speed * 0.25 + floatOffset}px) scale(${1 + Math.abs(speed) * 0.0002}) rotate(${scrolled * 0.01}deg)`;
       });
 
       // Blog cards parallax - Faster movement
@@ -31,12 +49,14 @@ export const useParallaxScroll = () => {
         (nav as HTMLElement).style.transform = `translateY(${rate * 0.2}px)`;
       }
 
-      // Header elements - Much faster movement
+      // Header elements - Much faster movement with floating
       const headers = document.querySelectorAll('h1, h2, h3');
       headers.forEach((element, index) => {
         const el = element as HTMLElement;
         const speed = fastRate * (0.4 + index * 0.1);
-        el.style.transform = `translateY(${speed * 0.08}px) scale(${1 + Math.abs(speed) * 0.0003})`;
+        const floatY = Math.sin(scrolled * 0.01 + index) * 3;
+        const floatX = Math.cos(scrolled * 0.015 + index) * 2;
+        el.style.transform = `translateY(${speed * 0.12 + floatY}px) translateX(${floatX}px) scale(${1 + Math.abs(speed) * 0.0005})`;
       });
 
       // Smooth buttons floating effect (exclude CTA section)

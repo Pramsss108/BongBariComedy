@@ -124,7 +124,46 @@ const Home = () => {
         ogDescription="Hilarious Bengali mother-son comedy shorts from Kolkata"
       />
       <ParallaxContainer>
-        <main className="py-8">
+        {/* Dynamic Floating Background Elements */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden">
+          {/* Large floating shapes */}
+          <div className="floating-bg-element absolute w-64 h-64 rounded-full bg-gradient-to-br from-brand-red/10 to-brand-blue/10 blur-xl" 
+               style={{ top: '10%', left: '80%' }} />
+          <div className="floating-bg-element absolute w-96 h-96 rounded-full bg-gradient-to-br from-brand-blue/8 to-brand-yellow/8 blur-2xl" 
+               style={{ top: '30%', left: '-10%' }} />
+          <div className="floating-bg-element absolute w-48 h-48 rounded-full bg-gradient-to-br from-brand-yellow/12 to-brand-red/12 blur-lg" 
+               style={{ top: '60%', right: '85%' }} />
+          <div className="floating-bg-element absolute w-80 h-80 rounded-full bg-gradient-to-br from-brand-red/6 to-brand-blue/6 blur-3xl" 
+               style={{ top: '80%', left: '70%' }} />
+          
+          {/* Medium floating elements */}
+          <div className="floating-bg-element absolute w-32 h-32 rounded-full bg-gradient-to-br from-white/20 to-brand-blue/20 blur-md" 
+               style={{ top: '20%', left: '40%' }} />
+          <div className="floating-bg-element absolute w-24 h-24 rounded-full bg-gradient-to-br from-brand-red/15 to-white/15 blur-sm" 
+               style={{ top: '70%', left: '20%' }} />
+          <div className="floating-bg-element absolute w-40 h-40 rounded-full bg-gradient-to-br from-brand-blue/10 to-brand-yellow/10 blur-lg" 
+               style={{ top: '50%', right: '60%' }} />
+          
+          {/* Small sparkle elements */}
+          <div className="floating-bg-element absolute w-4 h-4 rounded-full bg-white/30 blur-sm" 
+               style={{ top: '15%', left: '25%' }} />
+          <div className="floating-bg-element absolute w-6 h-6 rounded-full bg-brand-blue/40 blur-sm" 
+               style={{ top: '45%', left: '75%' }} />
+          <div className="floating-bg-element absolute w-3 h-3 rounded-full bg-brand-red/50 blur-sm" 
+               style={{ top: '65%', left: '10%' }} />
+          <div className="floating-bg-element absolute w-5 h-5 rounded-full bg-white/25 blur-sm" 
+               style={{ top: '85%', right: '20%' }} />
+          
+          {/* Line elements for dynamic feel */}
+          <div className="floating-bg-element absolute w-px h-32 bg-gradient-to-b from-transparent via-white/20 to-transparent" 
+               style={{ top: '25%', left: '60%' }} />
+          <div className="floating-bg-element absolute w-px h-48 bg-gradient-to-b from-transparent via-brand-blue/15 to-transparent" 
+               style={{ top: '55%', left: '30%' }} />
+          <div className="floating-bg-element absolute w-px h-24 bg-gradient-to-b from-transparent via-brand-red/20 to-transparent" 
+               style={{ top: '75%', right: '40%' }} />
+        </div>
+        
+        <main className="py-8 relative z-10">
           <div className="container mx-auto px-4">
             {/* Hero Banner */}
             <ParallaxSection speed={0.3} delay={0.1}>

@@ -1213,8 +1213,8 @@ section:nth-child(odd) {
   
   /* Desktop logo text alignment - prevent cutoff */
   [data-testid="logo-link"] .hidden.md\\:block {
-    margin-top: 1.25rem !important;
-    padding-top: 0.125rem !important;
+    margin-top: 2rem !important;
+    padding-top: 0.25rem !important;
   }
 }
 

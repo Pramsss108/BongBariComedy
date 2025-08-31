@@ -116,90 +116,98 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
     }
   }, [isOpen, isMinimized]);
 
-  // GLOBAL DRAG SYSTEM - THIS WILL WORK
-  useEffect(() => {
-    if (!isDragging) return;
-    
-    console.log('Setting up drag listeners...'); // DEBUG
-    
-    let startX: number;
-    let startY: number;
-    let initialLeft: number;
-    let initialTop: number;
-    
-    // Get initial position when drag starts
-    if (chatbotRef.current) {
-      const rect = chatbotRef.current.getBoundingClientRect();
-      initialLeft = rect.left;
-      initialTop = rect.top;
-      
-      // Override all positioning to make it absolute
-      chatbotRef.current.style.position = 'fixed';
-      chatbotRef.current.style.left = initialLeft + 'px';
-      chatbotRef.current.style.top = initialTop + 'px';
-      chatbotRef.current.style.right = 'unset';
-      chatbotRef.current.style.bottom = 'unset';
-    }
-    
-    const handleFirstMove = (e: MouseEvent) => {
-      startX = e.clientX;
-      startY = e.clientY;
-      console.log('First move detected:', startX, startY); // DEBUG
-    };
-    
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!chatbotRef.current) return;
-      
-      if (startX === undefined) {
-        handleFirstMove(e);
-        return;
-      }
-      
-      const deltaX = e.clientX - startX;
-      const deltaY = e.clientY - startY;
-      
-      const newLeft = initialLeft + deltaX;
-      const newTop = initialTop + deltaY;
-      
-      // Force DOM update
-      chatbotRef.current.style.left = newLeft + 'px';
-      chatbotRef.current.style.top = newTop + 'px';
-      
-      console.log('MOVING TO:', newLeft, newTop); // DEBUG
-    };
-    
-    const handleMouseUp = () => {
-      console.log('DRAG FINISHED'); // DEBUG
-      setIsDragging(false);
-      document.body.style.cursor = '';
-    };
-    
-    // Add listeners immediately
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    document.body.style.cursor = 'grabbing';
-    
-    console.log('Drag listeners added!'); // DEBUG
-    
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      console.log('Drag listeners removed!'); // DEBUG
-    };
-  }, [isDragging]);
+  // DIRECT ELEMENT DRAGGING - NO CONFLICTS
+  const dragData = useRef<{
+    isDragging: boolean;
+    startX: number;
+    startY: number;
+    initialLeft: number;
+    initialTop: number;
+  } | null>(null);
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (isMinimized) return;
+    if (isMinimized || !chatbotRef.current) return;
     
     e.preventDefault();
     e.stopPropagation();
     
-    console.log('🔥 DRAG BUTTON CLICKED!'); // DEBUG
-    console.log('Mouse position:', e.clientX, e.clientY); // DEBUG
+    console.log('🔥 STARTING DIRECT DRAG'); // DEBUG
     
-    setIsDragging(true);
-    console.log('🔥 isDragging set to true'); // DEBUG
+    const rect = chatbotRef.current.getBoundingClientRect();
+    
+    // Store drag data
+    dragData.current = {
+      isDragging: true,
+      startX: e.clientX,
+      startY: e.clientY,
+      initialLeft: rect.left,
+      initialTop: rect.top
+    };
+    
+    // Force position immediately
+    chatbotRef.current.style.position = 'fixed';
+    chatbotRef.current.style.left = rect.left + 'px';
+    chatbotRef.current.style.top = rect.top + 'px';
+    chatbotRef.current.style.right = 'unset';
+    chatbotRef.current.style.bottom = 'unset';
+    
+    // Add global listeners
+    document.addEventListener('mousemove', handleGlobalMouseMove);
+    document.addEventListener('mouseup', handleGlobalMouseUp);
+    
+    document.body.style.cursor = 'grabbing';
+    document.body.style.userSelect = 'none';
+    
+    console.log('✅ Direct drag setup complete'); // DEBUG
   };
+  
+  const handleGlobalMouseMove = (e: MouseEvent) => {
+    if (!dragData.current?.isDragging || !chatbotRef.current) return;
+    
+    e.preventDefault();
+    
+    const deltaX = e.clientX - dragData.current.startX;
+    const deltaY = e.clientY - dragData.current.startY;
+    
+    const newLeft = dragData.current.initialLeft + deltaX;
+    const newTop = dragData.current.initialTop + deltaY;
+    
+    // Keep in bounds
+    const maxX = window.innerWidth - chatbotRef.current.offsetWidth;
+    const maxY = window.innerHeight - chatbotRef.current.offsetHeight;
+    
+    const boundedX = Math.max(0, Math.min(newLeft, maxX));
+    const boundedY = Math.max(0, Math.min(newTop, maxY));
+    
+    // Apply position
+    chatbotRef.current.style.left = boundedX + 'px';
+    chatbotRef.current.style.top = boundedY + 'px';
+    
+    console.log('🚀 MOVING:', boundedX, boundedY); // DEBUG
+  };
+  
+  const handleGlobalMouseUp = () => {
+    console.log('🏁 DRAG COMPLETE'); // DEBUG
+    
+    if (dragData.current) {
+      dragData.current.isDragging = false;
+      dragData.current = null;
+    }
+    
+    document.removeEventListener('mousemove', handleGlobalMouseMove);
+    document.removeEventListener('mouseup', handleGlobalMouseUp);
+    
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  };
+  
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, []);
 
   const handleResizeMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();

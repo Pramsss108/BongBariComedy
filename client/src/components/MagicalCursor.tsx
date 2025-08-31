@@ -33,7 +33,7 @@ const MagicalCursor = () => {
             {particle.type === 'laugh' ? (
               /* Funny laugh emoji */
               <div 
-                className="text-lg"
+                className="text-4xl"
                 style={{
                   filter: `drop-shadow(0 0 4px gold) brightness(${0.8 + 0.4 * sparkleIntensity})`
                 }}
@@ -45,7 +45,7 @@ const MagicalCursor = () => {
               <div
                 className="relative"
                 style={{
-                  fontSize: '12px',
+                  fontSize: '24px',
                   filter: `brightness(${0.8 + 0.4 * sparkleIntensity})`,
                   textShadow: '0 0 4px gold'
                 }}
@@ -56,7 +56,7 @@ const MagicalCursor = () => {
                   <div 
                     className="absolute inset-0"
                     style={{
-                      fontSize: '8px',
+                      fontSize: '18px',
                       filter: 'blur(1px)',
                       opacity: 0.6
                     }}

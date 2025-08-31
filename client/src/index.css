@@ -822,18 +822,18 @@ section:nth-child(odd) {
     padding-top: 50px !important;
   }
   
-  /* iPhone text sizing - TITLE-SUBTITLE SUPER CLOSE */
+  /* iPhone text sizing - TITLE-SUBTITLE CLOSE */
   [data-testid="collaboration-section"] h3 {
     font-size: 1.5rem !important;
-    line-height: 1.3rem !important;
-    margin-bottom: 0 !important;
+    line-height: 1.4rem !important;
+    margin-bottom: 0.2rem !important;
   }
   
   [data-testid="collaboration-section"] h4 {
     font-size: 1rem !important;
-    line-height: 1.2rem !important;
-    margin-top: -0.1rem !important;
-    margin-bottom: 1rem !important;
+    line-height: 1.3rem !important;
+    margin-top: 0 !important;
+    margin-bottom: 1.2rem !important;
     font-weight: 500 !important;
   }
 }
@@ -870,17 +870,17 @@ section:nth-child(odd) {
 
 /* MASSIVE OVERLAP FIX - GET IN TOUCH */
 @media (max-width: 480px) {
-  /* COLLABORATION HEADINGS - TITLE-SUBTITLE SUPER CLOSE */
+  /* COLLABORATION HEADINGS - TITLE-SUBTITLE ARRANGEMENT */
   [data-testid="collaboration-title-english"] {
-    margin-bottom: 0 !important;
-    line-height: 1.1 !important;
+    margin-bottom: 0.25rem !important;
+    line-height: 1.2 !important;
   }
   
   [data-testid="collaboration-title-bengali"] {
-    margin-top: -0.3rem !important;
+    margin-top: 0 !important;
     margin-bottom: 1.5rem !important;
-    line-height: 1.1 !important;
-    font-size: 0.9rem !important;
+    line-height: 1.2 !important;
+    font-size: 0.95rem !important;
     font-weight: 500 !important;
   }
   
@@ -1192,14 +1192,14 @@ section:nth-child(odd) {
     -webkit-background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
     background-clip: text !important;
-    line-height: 0.9 !important;
-    margin-bottom: 0 !important;
+    line-height: 1.2 !important;
+    margin-bottom: 0.2rem !important;
   }
   
-  /* Desktop subtitle closer */
+  /* Desktop subtitle professional spacing */
   [data-testid="logo-link"] p {
-    margin-top: -0.3rem !important;
-    line-height: 1.1 !important;
+    margin-top: 0 !important;
+    line-height: 1.2 !important;
   }
 }
 

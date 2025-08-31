@@ -40,8 +40,8 @@ const Navigation = () => {
               </div>
               {/* Desktop Logo - Full */}
               <div className="hidden md:block">
-                <h1 className="text-3xl font-bold text-brand-blue bangla-text leading-none mb-0">বং বাড়ি</h1>
-                <p className="text-base text-gray-600 -mt-2">Bengali Comedy</p>
+                <h1 className="text-3xl font-bold text-brand-blue bangla-text leading-tight">বং বাড়ি</h1>
+                <p className="text-sm text-gray-600 mt-0">Bengali Comedy</p>
               </div>
             </div>
           </Link>

@@ -320,10 +320,10 @@ const Home = () => {
           <ParallaxSection speed={0.2} delay={0.4}>
             <section className="mb-16" data-testid="collaboration-section">
             <div className="max-w-2xl mx-auto">
-              <h3 className="text-3xl font-bold text-center text-brand-blue mb-0 leading-tight" data-testid="collaboration-title-english">
+              <h3 className="text-3xl font-bold text-center text-brand-blue mb-1 leading-tight" data-testid="collaboration-title-english">
                 Work with Us
               </h3>
-              <h4 className="text-xl font-medium text-center text-gray-700 mb-4 bangla-text -mt-1" data-testid="collaboration-title-bengali" style={{lineHeight: '1.2'}}>
+              <h4 className="text-xl font-medium text-center text-gray-600 mb-6 bangla-text" data-testid="collaboration-title-bengali">
                 আমাদের সাথে কাজ করুন
               </h4>
               
@@ -387,6 +387,7 @@ const Home = () => {
                                 placeholder="Your Company or Brand"
                                 data-testid="input-company"
                                 {...field}
+                                value={field.value ?? ''}
                               />
                             </FormControl>
                             <FormMessage />
@@ -414,11 +415,11 @@ const Home = () => {
                       />
                       
                       <MagneticButton 
-                        type="submit" 
                         disabled={collaborationMutation.isPending}
                         className="w-full bg-brand-red text-white hover:bg-red-600 py-3 rounded-full font-semibold text-lg hover-lift disabled:opacity-50"
                         data-testid="button-submit-collaboration"
                         strength={0.5}
+                        onClick={() => form.handleSubmit(onSubmit)()}
                       >
                         <Send className="mr-2 h-5 w-5" />
                         {collaborationMutation.isPending ? "Sending..." : "Send Message"}

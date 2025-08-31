@@ -145,14 +145,35 @@ export function useMouseMovementChime(options: MouseMovementChimeOptions = {}) {
     }
   }, [fadeOutTime]);
 
+  // Force stop any playing sound
+  const forceStop = useCallback(() => {
+    try {
+      if (audioSourceRef.current) {
+        audioSourceRef.current.stop();
+      }
+    } catch (error) {
+      // Ignore errors
+    }
+    
+    audioSourceRef.current = null;
+    gainNodeRef.current = null;
+    isPlayingRef.current = false;
+  }, []);
+
   // Handle mouse movement
   useEffect(() => {
     if (!enabled) return;
 
-    let isMoving = false;
     let stopTimer: number | null = null;
+    let lastMoveTime = 0;
 
     const handleMouseMove = (event: MouseEvent) => {
+      const now = Date.now();
+      
+      // Ignore rapid events (like scrolling)
+      if (now - lastMoveTime < 50) return;
+      lastMoveTime = now;
+
       const currentPos = { x: event.clientX, y: event.clientY };
       const lastPos = lastMousePosRef.current;
       
@@ -161,11 +182,8 @@ export function useMouseMovementChime(options: MouseMovementChimeOptions = {}) {
         Math.pow(currentPos.x - lastPos.x, 2) + Math.pow(currentPos.y - lastPos.y, 2)
       );
       
-      // Only respond to significant movement
-      if (distance >= movementThreshold) {
-        // Mark as moving
-        isMoving = true;
-        
+      // Only respond to significant movement (ignore tiny movements from scrolling)
+      if (distance >= movementThreshold * 3) { // Increased threshold
         // Start sound if not playing
         if (!isPlayingRef.current) {
           startChime();
@@ -179,33 +197,52 @@ export function useMouseMovementChime(options: MouseMovementChimeOptions = {}) {
         
         // Set a new stop timer
         stopTimer = window.setTimeout(() => {
-          isMoving = false;
           if (isPlayingRef.current) {
             stopChime();
           }
-        }, 300); // Stop after 300ms of no significant movement
+        }, 400); // Longer timeout to prevent rapid start/stop
         
         lastMousePosRef.current = currentPos;
       }
     };
 
-    // Add mouse move listener
+    // Handle scroll to force stop sound (scrolling shouldn't play charm)
+    const handleScroll = () => {
+      if (isPlayingRef.current) {
+        forceStop();
+      }
+    };
+
+    // Handle mouse leave to stop sound
+    const handleMouseLeave = () => {
+      if (stopTimer) {
+        clearTimeout(stopTimer);
+        stopTimer = null;
+      }
+      if (isPlayingRef.current) {
+        stopChime();
+      }
+    };
+
+    // Add event listeners
     document.addEventListener('mousemove', handleMouseMove, { passive: true });
+    document.addEventListener('scroll', handleScroll, { passive: true });
+    document.addEventListener('mouseleave', handleMouseLeave, { passive: true });
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('mouseleave', handleMouseLeave);
       
       // Clean up timer
       if (stopTimer) {
         clearTimeout(stopTimer);
       }
       
-      // Stop any playing sound
-      if (isPlayingRef.current) {
-        stopChime();
-      }
+      // Force stop any playing sound
+      forceStop();
     };
-  }, [enabled, startChime, stopChime, movementThreshold]);
+  }, [enabled, startChime, stopChime, forceStop, movementThreshold]);
 
   return {
     isEnabled: enabled,

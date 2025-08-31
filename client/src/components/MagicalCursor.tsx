@@ -21,11 +21,14 @@ const MagicalCursor = () => {
 
   return (
     <div className="fixed inset-0 pointer-events-none z-50 hidden sm:block">
-      {/* Faint transparent grey circle that follows cursor smoothly */}
+      {/* Faint transparent belan (rolling pin) that follows cursor smoothly */}
       <div
-        className="absolute w-6 h-6 rounded-full bg-gray-400"
+        className="absolute bg-gray-400"
         style={{
-          transform: `translate3d(${cursorPosition.x - 12}px, ${cursorPosition.y - 12}px, 0)`,
+          width: '24px',
+          height: '8px',
+          borderRadius: '12px',
+          transform: `translate3d(${cursorPosition.x - 12}px, ${cursorPosition.y - 4}px, 0) rotate(45deg)`,
           opacity: isMoving ? 0.15 : 0.03,
           transition: 'opacity 0.1s ease',
           willChange: 'transform, opacity'

@@ -15,18 +15,18 @@ export const useGlobalCursor = () => {
     const existingCursors = document.querySelectorAll('.global-cursor-follower, .global-cursor-ring');
     existingCursors.forEach(el => el.remove());
 
-    // Create BIG cursor circle - 2x bigger!
+    // Create BIG belan (rolling pin) cursor!
     const cursor = document.createElement('div');
     cursor.className = 'global-cursor-follower';
     cursor.style.cssText = `
       position: fixed;
-      width: 40px;
-      height: 40px;
+      width: 48px;
+      height: 16px;
       background: rgba(0, 0, 0, 0.4);
-      border-radius: 50%;
+      border-radius: 24px;
       pointer-events: none;
       z-index: 9999;
-      transform: translate(-50%, -50%);
+      transform: translate(-50%, -50%) rotate(45deg);
       transition: opacity 0.2s ease;
       opacity: 0;
     `;

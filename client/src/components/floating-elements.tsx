@@ -59,9 +59,15 @@ export const FloatingElements = () => {
         />
       ))}
       
-      {/* Mouse follower */}
+      {/* Mouse follower - Belan shaped */}
       <motion.div
-        className="absolute w-4 h-4 rounded-full bg-brand-yellow/30 pointer-events-none"
+        className="absolute bg-brand-yellow/30 pointer-events-none"
+        style={{
+          width: '20px',
+          height: '6px',
+          borderRadius: '10px',
+          transform: 'rotate(45deg)'
+        }}
         animate={{
           x: `${mousePosition.x}vw`,
           y: `${mousePosition.y}vh`,

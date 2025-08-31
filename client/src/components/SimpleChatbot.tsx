@@ -2,54 +2,34 @@ import { useState, useRef, useEffect } from 'react';
 
 export default function SimpleChatbot() {
   const [position, setPosition] = useState({ x: 50, y: 50 });
-  const [size, setSize] = useState({ width: 300, height: 400 });
   const [isDragging, setIsDragging] = useState(false);
-  const [isResizing, setIsResizing] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, startWidth: 0, startHeight: 0 });
   const [isOpen, setIsOpen] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
-  const chatbotRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      
       e.preventDefault();
       
-      if (isDragging) {
-        const newX = position.x + (e.clientX - dragStart.x);
-        const newY = position.y + (e.clientY - dragStart.y);
-        
-        setPosition({ x: newX, y: newY });
-        setDragStart({ x: e.clientX, y: e.clientY });
-        
-        console.log('🤖 CHATBOT MOVING TO:', newX, newY);
-      }
+      const newX = position.x + (e.clientX - dragStart.x);
+      const newY = position.y + (e.clientY - dragStart.y);
       
-      if (isResizing) {
-        const deltaX = e.clientX - resizeStart.x;
-        const deltaY = e.clientY - resizeStart.y;
-        
-        const newWidth = Math.max(250, resizeStart.startWidth + deltaX);
-        const newHeight = Math.max(300, resizeStart.startHeight + deltaY);
-        
-        setSize({ width: newWidth, height: newHeight });
-        
-        console.log('🔄 CHATBOT RESIZING TO:', newWidth, 'x', newHeight);
-      }
+      setPosition({ x: newX, y: newY });
+      setDragStart({ x: e.clientX, y: e.clientY });
+      
+      console.log('🤖 SIMPLE CHATBOT MOVING TO:', newX, newY);
     };
 
     const handleMouseUp = () => {
       if (isDragging) {
-        console.log('🤖 CHATBOT DRAG ENDED');
+        console.log('🤖 SIMPLE CHATBOT DRAG ENDED');
         setIsDragging(false);
-      }
-      if (isResizing) {
-        console.log('🔄 CHATBOT RESIZE ENDED');
-        setIsResizing(false);
       }
     };
 
-    if (isDragging || isResizing) {
+    if (isDragging) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
       
@@ -58,32 +38,16 @@ export default function SimpleChatbot() {
         document.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, isResizing, position, dragStart, resizeStart, size]);
+  }, [isDragging, position, dragStart]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    console.log('🤖 CHATBOT DRAG STARTED!');
+    console.log('🤖 SIMPLE CHATBOT DRAG STARTED!');
     
     setIsDragging(true);
     setDragStart({ x: e.clientX, y: e.clientY });
-  };
-
-  const handleResizeStart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    console.log('🔄 CHATBOT RESIZE STARTED!');
-    
-    // Prevent chatbot from closing or disappearing
-    setIsResizing(true);
-    setResizeStart({ 
-      x: e.clientX, 
-      y: e.clientY, 
-      startWidth: size.width, 
-      startHeight: size.height 
-    });
   };
 
   if (!isOpen) {
@@ -100,13 +64,12 @@ export default function SimpleChatbot() {
 
   return (
     <div
-      ref={chatbotRef}
-      className="fixed bg-white rounded-lg shadow-xl border z-50 select-none relative"
+      className="fixed bg-white rounded-lg shadow-xl border z-50 select-none"
       style={{
         left: position.x + 'px',
         top: position.y + 'px',
-        width: size.width + 'px',
-        height: size.height + 'px'
+        width: '300px',
+        height: '400px'
       }}
     >
       {/* DRAGGABLE HEADER - EXACTLY LIKE RED CIRCLE */}
@@ -119,11 +82,10 @@ export default function SimpleChatbot() {
         <span>🤖 Bong Bot</span>
         <button
           onClick={(e) => {
-            e.preventDefault();
             e.stopPropagation();
             setIsOpen(false);
           }}
-          className="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center text-xs z-20"
+          className="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center text-xs"
         >
           ×
         </button>
@@ -132,12 +94,9 @@ export default function SimpleChatbot() {
       {/* CHAT AREA WITH SCROLLABLE MESSAGES */}
       <div className="flex flex-col h-full">
         {/* Scrollable Messages Area */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ height: `${size.height - 140}px` }}>
+        <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ height: 'calc(100% - 60px)' }}>
           <div className="text-sm text-gray-600 bg-gray-100 p-2 rounded">
-            🤖 Welcome to Bong Bot! I'm fully scalable now! 
-            <br />✨ Drag header to move
-            <br />📏 Drag bottom-right corner to resize  
-            <br />💬 Type messages below!
+            🤖 Welcome to Bong Bot! I'm moving perfectly now. Try typing a message below!
           </div>
           <div className="text-sm text-blue-600 bg-blue-50 p-2 rounded self-end ml-8">
             Hello! This chatbot is working great.
@@ -182,42 +141,6 @@ export default function SimpleChatbot() {
           </div>
         </div>
       </div>
-      
-      {/* RESIZE HANDLE - Bottom Right Corner */}
-      <div
-        onMouseDown={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          handleResizeStart(e);
-        }}
-        className="absolute bottom-0 right-0 w-4 h-4 cursor-nw-resize bg-gradient-to-br from-[#1363DF] to-[#FF4D4D] opacity-60 hover:opacity-100 transition-opacity z-10"
-        style={{
-          clipPath: 'polygon(100% 0%, 0% 100%, 100% 100%)'
-        }}
-        title="Drag to resize"
-      />
-      
-      {/* RESIZE HANDLE - Bottom Edge */}
-      <div
-        onMouseDown={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          handleResizeStart(e);
-        }}
-        className="absolute bottom-0 left-2 right-2 h-1 cursor-ns-resize bg-gradient-to-r from-[#1363DF] to-[#FF4D4D] opacity-40 hover:opacity-80 transition-opacity rounded-full z-10"
-        title="Drag to resize"
-      />
-      
-      {/* RESIZE HANDLE - Right Edge */}
-      <div
-        onMouseDown={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          handleResizeStart(e);
-        }}
-        className="absolute top-12 bottom-2 right-0 w-1 cursor-ew-resize bg-gradient-to-b from-[#1363DF] to-[#FF4D4D] opacity-40 hover:opacity-80 transition-opacity rounded-full z-10"
-        title="Drag to resize"
-      />
     </div>
   );
 }

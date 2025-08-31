@@ -20,7 +20,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { insertCollaborationRequestSchema, type InsertCollaborationRequest } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useFunnySubmissionSound } from "@/hooks/useFunnySubmissionSound";
-import DragTest from "@/components/DragTest";
 
 interface YouTubeVideo {
   videoId: string;
@@ -160,8 +159,6 @@ const Home = () => {
         ogDescription="Hilarious Bengali mother-son comedy shorts from Kolkata"
       />
       
-      {/* TEST DRAG CIRCLE */}
-      <DragTest />
       
       <ParallaxContainer>
         

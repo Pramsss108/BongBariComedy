@@ -116,94 +116,71 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
     }
   }, [isOpen, isMinimized]);
 
-  // SIMPLE TEST - JUST CLICK DETECTION
+  // WORKING DRAG SYSTEM - COPIED FROM RED CIRCLE
+  const [chatPosition, setChatPosition] = useState({ x: 0, y: 0 });
+  const [isDraggingChat, setIsDraggingChat] = useState(false);
+  const [chatDragStart, setChatDragStart] = useState({ x: 0, y: 0 });
+  const [hasBeenDragged, setHasBeenDragged] = useState(false);
   const dragHeaderRef = useRef<HTMLDivElement>(null);
-  
-  // Simple click test first
-  const testClick = () => {
-    console.log('🔥🔥🔥 CLICK TEST WORKS!');
-    alert('Click detected! Events are working.');
-  };
-  
-  // BASIC DRAGGING SETUP
+
   useEffect(() => {
-    console.log('🚀 SETTING UP DRAG...');
-    console.log('isOpen:', isOpen);
-    console.log('dragHeaderRef.current:', dragHeaderRef.current);
-    
-    if (!isOpen) {
-      console.log('⚠️ Chatbot not open, skipping drag setup');
-      return;
-    }
-    
-    const headerEl = dragHeaderRef.current;
-    if (!headerEl) {
-      console.log('⚠️ Header element not found!');
-      return;
-    }
-    
-    console.log('✅ Header element found, adding listeners...');
-    
-    let isDragging = false;
-    let startX = 0;
-    let startY = 0;
-    let startLeft = 0;
-    let startTop = 0;
-    
-    const onMouseDown = (e: MouseEvent) => {
-      console.log('💥 MOUSEDOWN DETECTED!');
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDraggingChat || !chatbotRef.current) return;
       
-      if (!chatbotRef.current) return;
+      e.preventDefault();
       
-      const rect = chatbotRef.current.getBoundingClientRect();
-      startX = e.clientX;
-      startY = e.clientY;
-      startLeft = rect.left;
-      startTop = rect.top;
-      isDragging = true;
+      const newX = chatPosition.x + (e.clientX - chatDragStart.x);
+      const newY = chatPosition.y + (e.clientY - chatDragStart.y);
       
-      // Force fixed positioning
-      chatbotRef.current.style.position = 'fixed';
-      chatbotRef.current.style.left = startLeft + 'px';
-      chatbotRef.current.style.top = startTop + 'px';
-      chatbotRef.current.style.right = 'unset';
-      chatbotRef.current.style.bottom = 'unset';
+      // Keep in bounds
+      const maxX = window.innerWidth - chatbotRef.current.offsetWidth;
+      const maxY = window.innerHeight - chatbotRef.current.offsetHeight;
       
-      console.log('🎯 DRAG STARTED AT:', startLeft, startTop);
+      const boundedX = Math.max(0, Math.min(newX, maxX));
+      const boundedY = Math.max(0, Math.min(newY, maxY));
+      
+      setChatPosition({ x: boundedX, y: boundedY });
+      setChatDragStart({ x: e.clientX, y: e.clientY });
+      
+      console.log('🤖 CHATBOT MOVING TO:', boundedX, boundedY);
     };
-    
-    const onMouseMove = (e: MouseEvent) => {
-      if (!isDragging || !chatbotRef.current) return;
-      
-      const newX = startLeft + (e.clientX - startX);
-      const newY = startTop + (e.clientY - startY);
-      
-      chatbotRef.current.style.left = newX + 'px';
-      chatbotRef.current.style.top = newY + 'px';
-      
-      console.log('🚀 DRAGGING TO:', newX, newY);
-    };
-    
-    const onMouseUp = () => {
-      if (isDragging) {
-        console.log('🏁 DRAG ENDED');
-        isDragging = false;
+
+    const handleMouseUp = () => {
+      if (isDraggingChat) {
+        console.log('🤖 CHATBOT DRAG ENDED');
+        setIsDraggingChat(false);
       }
     };
+
+    if (isDraggingChat) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDraggingChat, chatPosition, chatDragStart]);
+
+  const handleChatMouseDown = (e: React.MouseEvent) => {
+    if (isMinimized) return;
     
-    headerEl.addEventListener('mousedown', onMouseDown);
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+    e.preventDefault();
+    e.stopPropagation();
     
-    console.log('✅ EVENT LISTENERS ATTACHED!');
+    console.log('🤖 CHATBOT DRAG STARTED!');
     
-    return () => {
-      headerEl.removeEventListener('mousedown', onMouseDown);
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-      console.log('🧹 LISTENERS CLEANED UP');
-    };
-  }, [isOpen]); // Depend on isOpen so it runs when chatbot opens
+    // Get current position from DOM if not dragged before
+    if (!hasBeenDragged && chatbotRef.current) {
+      const rect = chatbotRef.current.getBoundingClientRect();
+      setChatPosition({ x: rect.left, y: rect.top });
+      setHasBeenDragged(true);
+    }
+    
+    setIsDraggingChat(true);
+    setChatDragStart({ x: e.clientX, y: e.clientY });
+  };
 
   const handleResizeMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -436,15 +413,17 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
       ref={chatbotRef}
       className={`no-rickshaw-sound fixed z-50 ${className}`}
       style={{
-        bottom: 'max(1rem, env(safe-area-inset-bottom, 1rem))',
-        right: 'max(1rem, env(safe-area-inset-right, 1rem))',
+        left: hasBeenDragged ? `${chatPosition.x}px` : 'unset',
+        top: hasBeenDragged ? `${chatPosition.y}px` : 'unset',
+        bottom: hasBeenDragged ? 'unset' : 'max(1rem, env(safe-area-inset-bottom, 1rem))',
+        right: hasBeenDragged ? 'unset' : 'max(1rem, env(safe-area-inset-right, 1rem))',
         width: `${chatSize.width}px`,
         height: `${chatSize.height}px`,
         pointerEvents: 'auto',
         touchAction: 'none',
         isolation: 'isolate',
         userSelect: 'none',
-        cursor: isDragging ? 'grabbing' : 'default'
+        cursor: isDraggingChat ? 'grabbing' : 'default'
       }}
       initial={{ scale: 0, opacity: 0, y: 100 }}
       animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -481,10 +460,10 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
           </div>
         </div>
 
-        {/* DRAG HEADER - WITH CLICK TEST */}
+        {/* DRAG HEADER - WORKING SYSTEM */}
         <div 
           ref={dragHeaderRef}
-          onClick={testClick}
+          onMouseDown={handleChatMouseDown}
           className="relative z-10 flex flex-col bg-gradient-to-r from-[#1363DF]/95 to-[#FF4D4D]/95 backdrop-blur-md rounded-t-2xl border-b border-[#FFCC00]/30 cursor-grab active:cursor-grabbing flex-shrink-0 select-none"
           style={{ height: isMinimized ? '64px' : '80px' }}
           data-testid="drag-header"

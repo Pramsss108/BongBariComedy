@@ -127,7 +127,7 @@ const WorkWithUs = () => {
                   <h4 className="text-xl font-semibold text-gray-800 mb-3">Ready to Collaborate?</h4>
                   <p className="text-gray-600 mb-8 max-w-md mx-auto leading-relaxed">Share your ideas and let's create something amazing together for the Bengali comedy community</p>
                   <Button 
-                    className="bg-gradient-to-r from-brand-blue to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 px-8 py-3 rounded-full font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg transform magical-hover"
+                    className="bg-gradient-to-r from-brand-blue to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 px-8 py-3 rounded-full font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg transform magical-hover no-rickshaw-sound"
                     onClick={handleFormClick}
                     data-testid="button-form"
                   >

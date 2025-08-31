@@ -74,6 +74,15 @@ export function useRickshawSound(options: RickshawSoundOptions = {}) {
         return;
       }
 
+      // Skip if element or its parent has no-rickshaw-sound class
+      let currentElement: HTMLElement | null = target;
+      while (currentElement && currentElement !== document.body) {
+        if (currentElement.classList?.contains('no-rickshaw-sound')) {
+          return;
+        }
+        currentElement = currentElement.parentElement;
+      }
+
       playRickshawSound();
     };
 

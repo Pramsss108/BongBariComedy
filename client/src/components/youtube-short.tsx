@@ -19,25 +19,30 @@ const YouTubeShort = ({ videoId, thumbnail, title, onClick }: YouTubeShortProps)
 
   return (
     <div 
-      className="video-container mobile-tap-scale"
+      className="video-container cursor-pointer group transition-all duration-300 hover:scale-105"
       onClick={handleClick}
       data-testid={`youtube-short-${videoId}`}
     >
-      {/* Rotating gradient border - ONLY the border rotates */}
-      <div className="rotating-gradient-border"></div>
-      
-      {/* Static reel content - NEVER rotates */}
-      <div className="reel-content-container">
+      <div className="relative w-full aspect-[9/16] rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300">
         <img 
           src={thumbnail} 
           alt={title}
           className="w-full h-full object-cover"
+          loading="lazy"
         />
-        {/* Trendy Mobile Play Button - Always Visible with Pulse */}
-        <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-brand-red rounded-full flex items-center justify-center pulse-animation shadow-lg">
-            <Play className="w-6 h-6 sm:w-8 sm:h-8 text-white ml-1" fill="currentColor" />
+        
+        {/* Play button overlay */}
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 group-hover:bg-opacity-30 transition-all duration-300">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-red-600 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+            <Play className="w-8 h-8 sm:w-10 sm:h-10 text-white ml-1" fill="currentColor" />
           </div>
+        </div>
+        
+        {/* Title overlay */}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent p-4">
+          <h3 className="text-white font-semibold text-sm line-clamp-2 leading-tight">
+            {title}
+          </h3>
         </div>
       </div>
     </div>

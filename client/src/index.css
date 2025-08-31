@@ -290,39 +290,7 @@
   }
 }
 
-/* Thick gradient spinning border for reels */
-.rotating-gradient-border {
-  position: absolute;
-  inset: -4px;
-  border-radius: 16px;
-  background: conic-gradient(
-    from 0deg,
-    #FFD700 0deg,
-    #FF6B35 60deg,
-    #F7931E 120deg,
-    #FFD700 180deg,
-    #FF6B35 240deg,
-    #F7931E 300deg,
-    #FFD700 360deg
-  );
-  animation: simpleSpin 4s linear infinite;
-  pointer-events: none;
-  z-index: 1;
-  will-change: transform;
-  transform: translateZ(0);
-}
-
-/* Inner clean container for reel content - STATIC, never moves */
-.reel-content-container {
-  position: absolute;
-  inset: 4px;
-  background: transparent;
-  border-radius: 12px;
-  overflow: hidden;
-  z-index: 2;
-  box-shadow: 
-    0 6px 20px rgba(0, 0, 0, 0.15);
-}
+/* Clean video container styling */
 
 /* Simple, performance-friendly spinning animation */
 @keyframes simpleSpin {

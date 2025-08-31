@@ -28,7 +28,7 @@ const Navigation = () => {
         <div className="flex justify-between items-center py-0 px-0 sm:py-1 lg:py-2 mt-[6px] mb-[6px]">
           {/* Logo - Optimized Layout */}
           <Link href="/" data-testid="logo-link">
-            <div className="flex items-center space-x-1 cursor-pointer hover-logo-container group w-full hover-belan">
+            <div className="flex items-center space-x-1 cursor-pointer hover-logo-container group w-full">
               <div className="relative logo-hover-wrapper">
                 <img 
                   src="/logo.png" 
@@ -68,7 +68,7 @@ const Navigation = () => {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`font-semibold text-xs lg:text-base xl:text-lg transition-all duration-200 hover:text-brand-blue hover:scale-105 hover:font-bold hover-belan ${
+                className={`font-semibold text-xs lg:text-base xl:text-lg transition-all duration-200 hover:text-brand-blue hover:scale-105 hover:font-bold ${
                   isActive(item.href) 
                     ? "text-brand-blue border-b-2 border-brand-blue pb-1" 
                     : "text-gray-700 hover:border-b-2 hover:border-brand-blue pb-1"

@@ -19,6 +19,7 @@ import { Youtube, Instagram, Phone, Mail, Twitter, Send, Home as HomeIcon, Users
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { insertCollaborationRequestSchema, type InsertCollaborationRequest } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
+import { useFunnySubmissionSound } from "@/hooks/useFunnySubmissionSound";
 
 interface YouTubeVideo {
   videoId: string;
@@ -30,6 +31,7 @@ interface YouTubeVideo {
 const Home = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { playFunnySubmissionSound } = useFunnySubmissionSound({ enabled: true, volume: 0.25 });
   
   const { data: latestVideos, isLoading: isLoadingLatest } = useQuery<YouTubeVideo[]>({
     queryKey: ['/api/youtube/latest'],
@@ -71,6 +73,9 @@ const Home = () => {
       }
     }),
     onSuccess: () => {
+      // Play funny "sent successfully" sound
+      playFunnySubmissionSound();
+      
       toast({
         title: "Success!",
         description: "Your collaboration request has been submitted. We'll get back to you soon!"

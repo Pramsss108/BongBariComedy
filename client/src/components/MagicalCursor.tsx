@@ -21,14 +21,15 @@ const MagicalCursor = () => {
 
   return (
     <div className="fixed inset-0 pointer-events-none z-50 hidden sm:block">
-      {/* Faint transparent belan (rolling pin) that follows cursor smoothly */}
-      <div
-        className="absolute bg-gray-400"
+      {/* Faint transparent rolling pin that follows cursor smoothly */}
+      <img
+        src="@assets/rolling-pin_1756659784180.png"
+        alt="Rolling Pin Cursor"
+        className="absolute pointer-events-none"
         style={{
           width: '24px',
-          height: '8px',
-          borderRadius: '12px',
-          transform: `translate3d(${cursorPosition.x - 12}px, ${cursorPosition.y - 4}px, 0) rotate(45deg)`,
+          height: '24px',
+          transform: `translate3d(${cursorPosition.x - 12}px, ${cursorPosition.y - 12}px, 0) rotate(45deg)`,
           opacity: isMoving ? 0.15 : 0.03,
           transition: 'opacity 0.1s ease',
           willChange: 'transform, opacity'

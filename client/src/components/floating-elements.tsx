@@ -59,13 +59,14 @@ export const FloatingElements = () => {
         />
       ))}
       
-      {/* Mouse follower - Belan shaped */}
-      <motion.div
-        className="absolute bg-brand-yellow/30 pointer-events-none"
+      {/* Mouse follower - Rolling Pin */}
+      <motion.img
+        src="@assets/rolling-pin_1756659784180.png"
+        alt="Rolling Pin Cursor"
+        className="absolute pointer-events-none opacity-30"
         style={{
           width: '20px',
-          height: '6px',
-          borderRadius: '10px',
+          height: '20px',
           transform: 'rotate(45deg)'
         }}
         animate={{

@@ -15,15 +15,15 @@ export const useGlobalCursor = () => {
     const existingCursors = document.querySelectorAll('.global-cursor-follower, .global-cursor-ring');
     existingCursors.forEach(el => el.remove());
 
-    // Create BIG belan (rolling pin) cursor!
-    const cursor = document.createElement('div');
+    // Create BIG rolling pin cursor!
+    const cursor = document.createElement('img');
     cursor.className = 'global-cursor-follower';
+    cursor.src = '@assets/rolling-pin_1756659784180.png';
+    cursor.alt = 'Rolling Pin Cursor';
     cursor.style.cssText = `
       position: fixed;
       width: 48px;
-      height: 16px;
-      background: rgba(0, 0, 0, 0.4);
-      border-radius: 24px;
+      height: 48px;
       pointer-events: none;
       z-index: 9999;
       transform: translate(-50%, -50%) rotate(45deg);

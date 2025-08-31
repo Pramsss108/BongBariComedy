@@ -35,12 +35,12 @@ CONTACT INFO:
 - Instagram: https://instagram.com/thebongbari
 - Website collaboration form available
 
-LANGUAGE POLICY:
-- Respond in the same language the user writes in
-- If user writes in Bengali, respond in Bengali
-- If user writes in English, respond in English
-- Mix languages naturally when appropriate
-- Use Bengali cultural context and humor when relevant
+CRITICAL LANGUAGE RULES:
+- If user writes in Bengali (বাংলা script), ALWAYS respond in Bengali script only
+- If user writes in Benglish (Bengali words in English script), ALWAYS respond in Benglish only
+- If user writes in English, ALWAYS respond in English only
+- NEVER mix languages in your response - match the user's language exactly
+- Analyze each message to detect language before responding
 
 PERSONALITY:
 - Friendly, warm, and humorous like a Bengali family member
@@ -67,7 +67,30 @@ export class ChatbotService {
         .map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
         .join('\n');
 
+      // Enhanced language detection
+      const hasBengaliScript = /[\u0980-\u09ff]/.test(userMessage);
+      const hasEnglishWords = /[a-zA-Z]/.test(userMessage);
+      
+      let languageInstruction = "";
+      if (hasBengaliScript && !hasEnglishWords) {
+        languageInstruction = "RESPOND ONLY IN BENGALI SCRIPT. Do not use any English words.";
+      } else if (hasEnglishWords && !hasBengaliScript) {
+        // Check if it's Benglish (Bengali words in English script)
+        const bengaliWords = ['ami', 'tumi', 'achi', 'kemon', 'bhalo', 'hobe', 'korbo', 'chai', 'khabo', 'jabo', 'asbo', 'dekho', 'bolo', 'shono', 'fuckka', 'cha', 'familir', 'ekjon'];
+        const isBenglish = bengaliWords.some(word => userMessage.toLowerCase().includes(word));
+        
+        if (isBenglish) {
+          languageInstruction = "RESPOND ONLY IN BENGLISH (Bengali words written in English script). Do not use Bengali script.";
+        } else {
+          languageInstruction = "RESPOND ONLY IN ENGLISH. Do not use Bengali words or script.";
+        }
+      } else {
+        languageInstruction = "RESPOND IN THE SAME LANGUAGE MIX AS THE USER.";
+      }
+
       const systemPrompt = `${BONG_BARI_CONTEXT}
+
+LANGUAGE INSTRUCTION: ${languageInstruction}
 
 Previous conversation:
 ${conversationContext}
@@ -75,12 +98,13 @@ ${conversationContext}
 Current user message: ${userMessage}
 
 Instructions:
-1. Respond helpfully and in character as Bong Bari's AI assistant
-2. If asked about collaboration, guide them to the website's collaboration form
-3. If asked about content, mention the YouTube and Instagram channels
-4. Keep responses conversational and engaging
-5. Use appropriate Bengali expressions and humor when suitable
-6. If you don't know something specific, be honest but helpful
+1. FIRST: Follow the language instruction exactly
+2. Respond helpfully and in character as Bong Bari's AI assistant
+3. If asked about collaboration, guide them to the website's collaboration form
+4. If asked about content, mention the YouTube and Instagram channels
+5. Keep responses conversational and engaging
+6. Use appropriate cultural expressions and humor when suitable
+7. If you don't know something specific, be honest but helpful
 
 Response:`;
 
@@ -93,7 +117,7 @@ Response:`;
         }
       });
 
-      return response.text || "আমি এখন কথা বলতে পারছি না। আবার চেষ্টা করুন! (I can't respond right now. Please try again!)";
+      return response.text || "আমি এখন কথা বলতে পারছি না। আবার চেষ্টা করুন!";
     } catch (error) {
       console.error('Chatbot error:', error);
       return "দুঃখিত, আমার একটু সমস্যা হচ্ছে। আবার চেষ্টা করুন! (Sorry, I'm having some trouble. Please try again!)";

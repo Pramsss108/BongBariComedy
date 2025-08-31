@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, Send, X, Bot, Sparkles, Minimize2, Maximize2 } from "lucide-react";
+import { MessageCircle, Send, X, Bot, Sparkles, Minimize2, Maximize2, GripVertical } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 interface ChatMessage {
@@ -23,14 +23,18 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
     {
       id: '1',
       role: 'assistant',
-      content: 'হ্যালো! আমি Bong Bot! 🤖✨\n\nHello! I\'m Bong Bot, your premium AI assistant! Ask me anything about Bengali comedy magic! 🎭💫',
+      content: 'Yes I am Bong Bot, Bong Barir Familir ekjon, Cha fuckka hobe nki? ☕🤖',
       timestamp: new Date()
     }
   ]);
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const chatbotRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -43,6 +47,54 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen, isMinimized]);
+
+  // Dragging functionality
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging || !chatbotRef.current) return;
+      
+      const newX = e.clientX - dragOffset.x;
+      const newY = e.clientY - dragOffset.y;
+      
+      // Keep within viewport bounds
+      const maxX = window.innerWidth - chatbotRef.current.offsetWidth;
+      const maxY = window.innerHeight - chatbotRef.current.offsetHeight;
+      
+      const boundedX = Math.max(0, Math.min(newX, maxX));
+      const boundedY = Math.max(0, Math.min(newY, maxY));
+      
+      chatbotRef.current.style.left = boundedX + 'px';
+      chatbotRef.current.style.top = boundedY + 'px';
+      chatbotRef.current.style.right = 'auto';
+      chatbotRef.current.style.bottom = 'auto';
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, dragOffset]);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (isMinimized) return;
+    setIsDragging(true);
+    const rect = chatbotRef.current?.getBoundingClientRect();
+    if (rect) {
+      setDragOffset({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      });
+    }
+  };
 
   const addMessage = (role: 'user' | 'assistant', content: string) => {
     const newMessage: ChatMessage = {
@@ -248,7 +300,8 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
 
   return (
     <motion.div
-      className={`no-rickshaw-sound fixed z-50 ${className}`}
+      ref={chatbotRef}
+      className={`no-rickshaw-sound fixed z-50 ${className} ${isDragging ? 'cursor-grabbing' : ''}`}
       style={{
         bottom: '1rem',
         right: '1rem',
@@ -286,8 +339,16 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
           </div>
         </div>
 
-        {/* Compact Header */}
+        {/* Compact Header with Drag Handle */}
         <div className="relative z-10 p-3 flex items-center justify-between border-b border-white/20">
+          {/* Drag Handle */}
+          <div 
+            className="absolute left-1/2 top-1 transform -translate-x-1/2 cursor-grab active:cursor-grabbing hover:text-white/80 transition-colors"
+            onMouseDown={handleMouseDown}
+          >
+            <GripVertical className="w-4 h-4 text-white/50" />
+          </div>
+          
           <div className="flex items-center gap-3">
             <motion.div
               className="relative w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 via-blue-500 to-pink-500 flex items-center justify-center"
@@ -350,56 +411,58 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
               className="relative z-10 flex flex-col"
               style={{ height: 'calc(450px - 60px)' }}
             >
-              {/* Compact Messages Area */}
-              <ScrollArea className="flex-1 px-3 py-2" style={{ maxHeight: '200px' }}>
-                <div className="space-y-3">
-                  {messages.map((message, index) => (
-                    <motion.div
-                      key={message.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.05 }}
-                      className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div
-                        className={`max-w-[85%] relative ${
-                          message.role === 'user'
-                            ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-lg rounded-br-sm'
-                            : 'bg-white/15 backdrop-blur-sm text-white rounded-lg rounded-bl-sm border border-white/20'
-                        } p-2.5`}
+              {/* Fixed Scrollable Messages Area */}
+              <div className="flex-1 overflow-hidden" style={{ height: '200px' }}>
+                <ScrollArea className="h-full px-3 py-2">
+                  <div className="space-y-3">
+                    {messages.map((message, index) => (
+                      <motion.div
+                        key={message.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.05 }}
+                        className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                       >
-                        <div className="flex items-start gap-2">
-                          {message.role === 'assistant' && (
-                            <Sparkles className="w-3 h-3 text-yellow-300 flex-shrink-0 mt-0.5" />
-                          )}
-                          
-                          <div className="flex-1">
-                            <p className="text-xs leading-relaxed whitespace-pre-wrap">
-                              {message.content}
-                            </p>
-                            <span className="text-xs opacity-60 mt-1 block font-mono">
-                              {message.timestamp.toLocaleTimeString()}
-                            </span>
+                        <div
+                          className={`max-w-[85%] relative ${
+                            message.role === 'user'
+                              ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-lg rounded-br-sm'
+                              : 'bg-white/15 backdrop-blur-sm text-white rounded-lg rounded-bl-sm border border-white/20'
+                          } p-2.5`}
+                        >
+                          <div className="flex items-start gap-2">
+                            {message.role === 'assistant' && (
+                              <Sparkles className="w-3 h-3 text-yellow-300 flex-shrink-0 mt-0.5" />
+                            )}
+                            
+                            <div className="flex-1">
+                              <p className="text-xs leading-relaxed whitespace-pre-wrap">
+                                {message.content}
+                              </p>
+                              <span className="text-xs opacity-60 mt-1 block font-mono">
+                                {message.timestamp.toLocaleTimeString()}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  ))}
+                      </motion.div>
+                    ))}
 
-                  {isTyping && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="flex justify-start"
-                    >
-                      <div className="bg-white/15 backdrop-blur-sm rounded-lg rounded-bl-sm border border-white/20">
-                        <TypingIndicator />
-                      </div>
-                    </motion.div>
-                  )}
-                </div>
-                <div ref={messagesEndRef} />
-              </ScrollArea>
+                    {isTyping && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="flex justify-start"
+                      >
+                        <div className="bg-white/15 backdrop-blur-sm rounded-lg rounded-bl-sm border border-white/20">
+                          <TypingIndicator />
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
+                  <div ref={messagesEndRef} />
+                </ScrollArea>
+              </div>
 
               {/* Compact Template Messages */}
               <div className="px-3 py-2 border-t border-white/20">
@@ -452,7 +515,7 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
                   </div>
                   
                   <div className="flex justify-center mt-1">
-                    <span className="text-xs text-white/40">Press Enter to send</span>
+                    <span className="text-xs text-white/40">Press Enter to send • Drag handle to move</span>
                   </div>
                 </div>
               </div>

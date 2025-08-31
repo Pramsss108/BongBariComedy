@@ -88,7 +88,7 @@ export const useParallaxScroll = () => {
       el.style.transform = `translate3d(0, ${floatSpeed}px, 0)`;
     });
 
-    // Simplified sections with reduced blur calculations
+    // Simplified sections - no blur effects for crisp text
     cache.sections.forEach((element, index) => {
       const el = element as HTMLElement;
       // Skip CTA sections
@@ -99,22 +99,9 @@ export const useParallaxScroll = () => {
       const depth = rate * (0.1 + index * 0.05);
       el.style.transform = `translate3d(0, ${depth * 0.04}px, 0)`;
       
-      // Simplified blur effect - less frequent calculations
-      if (index % 3 === 0) { // Only apply to every 3rd element
-        const rect = el.getBoundingClientRect();
-        const elementTop = rect.top;
-        
-        if (elementTop > windowHeight * 0.9) {
-          el.style.filter = 'blur(2px)';
-          el.style.opacity = '0.7';
-        } else if (elementTop < windowHeight * 0.1) {
-          el.style.filter = 'blur(1px)';
-          el.style.opacity = '0.8';
-        } else {
-          el.style.filter = 'none';
-          el.style.opacity = '1';
-        }
-      }
+      // Keep everything crisp and clear - no blur effects
+      el.style.filter = 'none';
+      el.style.opacity = '1';
     });
 
     ticking.current = false;

@@ -47,7 +47,7 @@ const About = () => {
                     initial={{ opacity: 0, x: -100 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.8, delay: 0.4 }}
-                    whileHover={{ scale: 1.05 }}
+                    whileHover={{ scale: 1.02 }}
                   >
                     <img 
                       src="https://images.unsplash.com/photo-1609220136736-443140cffec6?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 

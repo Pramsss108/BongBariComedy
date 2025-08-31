@@ -34,7 +34,7 @@ export const ScrollProgress = () => {
           opacity: scrollProgress > 0.1 ? 1 : 0,
           rotate: scrollProgress * 360
         }}
-        whileHover={{ scale: 1.1 }}
+        whileHover={{ scale: 1.03 }}
         transition={{ 
           type: "spring",
           stiffness: 300,

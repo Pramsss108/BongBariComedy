@@ -136,11 +136,8 @@ const Home = () => {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1, ease: [0.25, 0.25, 0.25, 1] }}
               whileHover={{ 
-                scale: 1.08, 
-                rotateX: 5, 
-                rotateY: 5,
-                y: -10,
-                transition: { duration: 0.5, type: "spring", stiffness: 200 }
+                scale: 1.02,
+                transition: { duration: 0.2 }
               }}
             >
               {/* Background pattern */}
@@ -198,10 +195,8 @@ const Home = () => {
             >
               <motion.div
                 whileHover={{ 
-                  scale: 1.06, 
-                  y: -12,
-                  rotateX: 3,
-                  transition: { duration: 0.4, type: "spring" }
+                  scale: 1.02,
+                  transition: { duration: 0.2 }
                 }}
               >
               <Card className="max-w-4xl mx-auto shadow-md transition-all duration-300 hover:shadow-2xl">
@@ -266,11 +261,8 @@ const Home = () => {
                       ease: [0.25, 0.25, 0.25, 1]
                     }}
                     whileHover={{ 
-                      y: -30, 
-                      scale: 1.15,
-                      rotateY: 10,
-                      rotateX: 5,
-                      transition: { duration: 0.5, type: "spring", stiffness: 200 }
+                      scale: 1.02,
+                      transition: { duration: 0.2 }
                     }}
                   >
                     <YouTubeShort
@@ -293,11 +285,8 @@ const Home = () => {
               <motion.div 
                 className="bg-brand-yellow rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-6 mb-0 text-center shadow-lg transition-all duration-400"
                 whileHover={{ 
-                  scale: 1.08, 
-                  rotate: 3,
-                  y: -15,
-                  boxShadow: "0 35px 70px -12px rgba(0, 0, 0, 0.35)",
-                  transition: { duration: 0.5, type: "spring", stiffness: 200 }
+                  scale: 1.02,
+                  transition: { duration: 0.2 }
                 }}
               >
                 <h3 className="font-bold text-brand-blue mb-2 sm:mb-4 hover-pulse cursor-pointer transition-all duration-300" data-testid="collaboration-title-english" style={{fontSize: 'clamp(2.5rem, 8vw, 8rem)'}}>
@@ -310,10 +299,8 @@ const Home = () => {
               
               <motion.div
                 whileHover={{ 
-                  scale: 1.06, 
-                  y: -12,
-                  rotateY: 2,
-                  transition: { duration: 0.4, type: "spring" }
+                  scale: 1.01,
+                  transition: { duration: 0.2 }
                 }}
               >
               <Card className="bg-white shadow-lg transition-all duration-300 hover:shadow-2xl">

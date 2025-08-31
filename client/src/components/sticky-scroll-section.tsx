@@ -64,9 +64,8 @@ export const MorphingCard = ({ children, className = "" }: { children: ReactNode
         scale,
       }}
       whileHover={{
-        scale: 1.05,
-        rotate: 5,
-        transition: { duration: 0.3 }
+        scale: 1.02,
+        transition: { duration: 0.2 }
       }}
     >
       {children}

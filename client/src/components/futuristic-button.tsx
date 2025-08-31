@@ -60,9 +60,8 @@ export const FuturisticButton = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       whileHover={{
-        scale: 1.05,
-        boxShadow: `${style.hoverShadow}, ${style.hoverGlow}`,
-        transition: { duration: 0.2 }
+        scale: 1.02,
+        transition: { duration: 0.15 }
       }}
       whileTap={{
         scale: 0.98,

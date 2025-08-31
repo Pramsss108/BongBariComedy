@@ -68,39 +68,32 @@
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
 
-/* MEGA FUN Hover Effects for Maximum Moja! */
+/* Subtle Professional Hover Effects */
 .hover-bounce:hover {
-  animation: superBounce 0.6s ease-in-out;
+  animation: subtleBounce 0.3s ease-out;
 }
 
 .hover-wobble:hover {
-  animation: funWobble 0.8s ease-in-out;
+  animation: subtleShift 0.2s ease-out;
 }
 
 .hover-pulse:hover {
-  animation: megaPulse 1s ease-in-out infinite;
+  animation: subtlePulse 0.4s ease-out;
 }
 
-@keyframes superBounce {
-  0%, 20%, 50%, 80%, 100% { transform: translateY(0) scale(1); }
-  40% { transform: translateY(-30px) scale(1.2); }
-  60% { transform: translateY(-15px) scale(1.1); }
+@keyframes subtleBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
 }
 
-@keyframes funWobble {
-  0% { transform: rotate(0deg) scale(1); }
-  15% { transform: rotate(8deg) scale(1.1); }
-  30% { transform: rotate(-8deg) scale(1.15); }
-  45% { transform: rotate(5deg) scale(1.1); }
-  60% { transform: rotate(-5deg) scale(1.12); }
-  75% { transform: rotate(2deg) scale(1.05); }
-  100% { transform: rotate(0deg) scale(1); }
+@keyframes subtleShift {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(1px); }
 }
 
-@keyframes megaPulse {
-  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 99, 71, 0.7); }
-  50% { transform: scale(1.15); box-shadow: 0 0 0 30px rgba(255, 99, 71, 0); }
-  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 99, 71, 0); }
+@keyframes subtlePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
 }
 
 /* Mobile Input Optimizations */
@@ -459,12 +452,12 @@
 }
 
 .hover-lift {
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
 
 .hover-lift:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 ::-webkit-scrollbar {
@@ -567,10 +560,7 @@ body {
   box-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
 }
 
-/* Smooth transitions for all elements */
-* {
-  transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-}
+/* Removed global transform transition - let components handle their own transitions */
 
 /* Enhanced focus states for accessibility */
 button:focus-visible,

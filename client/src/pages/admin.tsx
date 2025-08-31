@@ -13,10 +13,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Calendar, Building, User, LogOut, Plus, Users, FileText, Trash2 } from "lucide-react";
+import { Mail, Calendar, Building, User, LogOut, Plus, Users, FileText, Trash2, Home, Bot } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { insertUserSchema, insertBlogPostSchema, type CollaborationRequest, type InsertUser, type InsertBlogPost, type BlogPost } from "@shared/schema";
+import { AdminHomepage } from "./AdminHomepage";
+import { AdminChatbot } from "./AdminChatbot";
 
 const Admin = () => {
   const [, setLocation] = useLocation();
@@ -410,9 +412,17 @@ const Admin = () => {
             </div>
             
             <Tabs defaultValue="requests" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="requests">Collaboration Requests</TabsTrigger>
                 <TabsTrigger value="blog">Blog Management</TabsTrigger>
+                <TabsTrigger value="homepage">
+                  <Home className="w-4 h-4 mr-2" />
+                  Homepage Manager
+                </TabsTrigger>
+                <TabsTrigger value="chatbot">
+                  <Bot className="w-4 h-4 mr-2" />
+                  Chatbot Training
+                </TabsTrigger>
               </TabsList>
               
               <TabsContent value="requests" className="mt-8">
@@ -580,6 +590,28 @@ const Admin = () => {
                     </CardContent>
                   </Card>
                 )}
+              </TabsContent>
+
+              <TabsContent value="homepage" className="mt-8">
+                <h3 className="text-2xl font-semibold text-brand-blue mb-6 flex items-center">
+                  <Home className="w-6 h-6 mr-2" />
+                  Homepage Content Manager
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  Manage your homepage banner images, titles, subtitles, and promotional content.
+                </p>
+                <AdminHomepage />
+              </TabsContent>
+
+              <TabsContent value="chatbot" className="mt-8">
+                <h3 className="text-2xl font-semibold text-brand-blue mb-6 flex items-center">
+                  <Bot className="w-6 h-6 mr-2" />
+                  Bong Bot Training Center
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  Train your Gemini-powered chatbot with custom responses, keywords, and conversation flows.
+                </p>
+                <AdminChatbot />
               </TabsContent>
             </Tabs>
             

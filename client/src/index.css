@@ -1192,15 +1192,16 @@ section:nth-child(odd) {
     position: absolute;
     opacity: 0;
     pointer-events: none;
-    transition: all 0.3s ease;
+    transition: opacity 0.1s ease;
     font-size: 1.2rem;
+    will-change: transform, opacity;
   }
 
   /* Show emoji effects only on large desktop hover */
   @media (min-width: 1024px) {
     .hover-logo-container:hover .emoji-float {
       opacity: 1;
-      animation: floatEmoji 2s ease-in-out infinite;
+      animation: floatEmoji 1s ease-out infinite;
     }
   }
 
@@ -1214,61 +1215,52 @@ section:nth-child(odd) {
   .emoji-2 {
     top: -20px;
     right: -15px;
-    animation-delay: 0.3s;
+    animation-delay: 0.1s;
   }
 
   .emoji-3 {
     bottom: -15px;
     left: -10px;
-    animation-delay: 0.6s;
+    animation-delay: 0.15s;
   }
 
   .emoji-4 {
     bottom: -20px;
     right: -10px;
-    animation-delay: 0.9s;
+    animation-delay: 0.2s;
   }
 
   .emoji-5 {
     top: -25px;
     left: 50%;
     transform: translateX(-50%);
-    animation-delay: 1.2s;
+    animation-delay: 0.25s;
   }
 
   .emoji-6 {
     bottom: -25px;
     left: 50%;
     transform: translateX(-50%);
-    animation-delay: 1.5s;
+    animation-delay: 0.3s;
   }
 
   /* Emoji float animation keyframes */
   @keyframes floatEmoji {
     0% {
-      transform: translateY(0px) scale(0.8);
-      opacity: 0;
-    }
-    20% {
-      opacity: 1;
+      transform: translate3d(0, 0, 0) scale(0.95);
     }
     50% {
-      transform: translateY(-10px) scale(1.1);
-      opacity: 1;
-    }
-    80% {
-      opacity: 1;
+      transform: translate3d(0, -6px, 0) scale(1.02);
     }
     100% {
-      transform: translateY(-20px) scale(0.8);
-      opacity: 0;
+      transform: translate3d(0, 0, 0) scale(0.95);
     }
   }
 
   /* Glitter effect on text hover - DESKTOP ONLY */
   @media (min-width: 1024px) {
     [data-testid="logo-link"]:hover h1 {
-      animation: textGlitter 1.5s ease-in-out infinite;
+      animation: textGlitter 0.8s ease-out infinite;
     }
   }
 

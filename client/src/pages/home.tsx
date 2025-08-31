@@ -267,38 +267,9 @@ const Home = () => {
           
           {/* CTA Buttons */}
           <ParallaxSection speed={0.3} delay={0.3}>
-            <section className="text-center mb-8 relative overflow-hidden" data-testid="cta-section">
-            {/* Epic Background Effects */}
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-900/20 via-pink-900/20 to-blue-900/20 rounded-3xl"></div>
-            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-pink-500/10 rounded-3xl animate-pulse"></div>
-            
-            {/* Floating Particles Background */}
-            <div className="absolute inset-0 overflow-hidden">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <motion.div
-                  key={i}
-                  className="absolute w-2 h-2 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full opacity-40"
-                  animate={{
-                    x: [0, 100, 0],
-                    y: [0, -50, 0],
-                    scale: [0.5, 1, 0.5],
-                  }}
-                  transition={{
-                    duration: 4 + i,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    delay: i * 0.5
-                  }}
-                  style={{
-                    left: `${20 + i * 10}%`,
-                    top: `${30 + i * 5}%`,
-                  }}
-                />
-              ))}
-            </div>
-            
+            <section className="text-center mb-8" data-testid="cta-section">
             <motion.div 
-              className="flex flex-col lg:flex-row gap-8 justify-center items-center px-4 relative z-10"
+              className="flex flex-col lg:flex-row gap-8 justify-center items-center px-4"
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
@@ -311,11 +282,10 @@ const Home = () => {
               >
                 <MagneticButton 
                   size="lg" 
-                  premium={true}
-                  className="px-12 py-6 rounded-full font-bold text-xl w-full sm:w-auto min-w-[320px] relative z-20"
+                  className="bg-brand-red text-white hover:bg-red-600 px-10 py-5 rounded-full font-semibold text-lg hover-lift shadow-2xl w-full sm:w-auto min-w-[280px]"
                   data-testid="button-youtube"
                   onClick={() => window.open('https://youtube.com/@bongbari', '_blank')}
-                  strength={0.8}
+                  strength={0.5}
                 >
                   <Youtube className="mr-3 h-6 w-6" />
                   Subscribe on YouTube
@@ -333,11 +303,10 @@ const Home = () => {
               >
                 <MagneticButton 
                   size="lg" 
-                  premium={true}
-                  className="px-12 py-6 rounded-full font-bold text-xl w-full sm:w-auto min-w-[320px] relative z-20"
+                  className="bg-brand-blue text-white hover:bg-blue-700 px-10 py-5 rounded-full font-semibold text-lg hover-lift shadow-2xl w-full sm:w-auto min-w-[280px]"
                   data-testid="button-instagram"
                   onClick={() => window.open('https://instagram.com/thebongbari', '_blank')}
-                  strength={0.8}
+                  strength={0.5}
                 >
                   <Instagram className="mr-3 h-6 w-6" />
                   Follow on Instagram

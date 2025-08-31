@@ -241,15 +241,15 @@ const Home = () => {
             </motion.h4>
             
             {isLoading ? (
-              <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 lg:gap-6" data-testid="videos-grid-loading">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-4 lg:gap-6 px-2" data-testid="videos-grid-loading">
                 {[...Array(6)].map((_, i) => (
-                  <div key={i} className="video-container">
+                  <div key={i} className="video-container mx-auto">
                     <div className="w-full h-full bg-gray-200 rounded-lg animate-pulse" />
                   </div>
                 ))}
               </div>
             ) : (
-              <motion.div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 lg:gap-6" data-testid="videos-grid">
+              <motion.div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-4 lg:gap-6 px-2" data-testid="videos-grid">
                 {videoData.map((video, index) => (
                   <motion.div
                     key={video.videoId}

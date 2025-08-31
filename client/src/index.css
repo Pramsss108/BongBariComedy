@@ -112,11 +112,6 @@
     min-height: 48px;
   }
   
-  /* Mobile Performance Optimizations */
-  .rotating-gradient-border {
-    animation-duration: 4s; /* Slower animation on mobile for better performance */
-  }
-  
   /* Reduce motion for users who prefer it */
   @media (prefers-reduced-motion: reduce) {
     * {
@@ -227,11 +222,33 @@
 
 .video-container {
   aspect-ratio: 9 / 16;
-  max-width: 300px;
+  max-width: 280px;
+  width: 100%;
   position: relative;
   cursor: pointer;
   overflow: visible;
   border-radius: 12px;
+  margin: 0 auto;
+}
+
+/* Mobile-specific video container optimizations */
+@media (max-width: 640px) {
+  .video-container {
+    max-width: 140px;
+    border-radius: 10px;
+  }
+  
+  .reel-content-container {
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+  
+  .rotating-gradient-border {
+    border-radius: 12px;
+    border-width: 2px;
+    inset: -2px;
+    animation-duration: 6s !important;
+  }
 }
 
 /* Simplified rotating gradient border for better performance */

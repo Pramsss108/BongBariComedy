@@ -5,7 +5,7 @@ import { insertBlogPostSchema, insertCollaborationRequestSchema, insertUserSchem
 import { z } from "zod";
 import { google } from "googleapis";
 import { ObjectStorageService } from "./objectStorage";
-import { sendVerificationEmail, generateVerificationToken } from "./emailService";
+import { sendVerificationEmail, generateVerificationToken, sendOTPEmail, generateOTPCode } from "./emailService";
 
 // Simple session middleware
 const sessions = new Map<string, { username: string; createdAt: Date }>();
@@ -399,54 +399,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // OTP verification endpoint
+  app.post("/api/verify-otp", async (req, res) => {
+    try {
+      const { requestId, otpCode } = req.body;
+      
+      if (!requestId || !otpCode) {
+        return res.status(400).json({ message: "Request ID and OTP code are required" });
+      }
+
+      const isValid = await storage.verifyOTPCode(requestId, otpCode);
+      
+      if (!isValid) {
+        return res.status(400).json({ message: "Invalid or expired OTP code" });
+      }
+      
+      res.json({ message: "Email verified successfully! Your collaboration request has been submitted." });
+    } catch (error) {
+      console.error('OTP verification error:', error);
+      res.status(500).json({ message: "Failed to verify OTP code" });
+    }
+  });
+
   app.post("/api/collaboration-requests", async (req, res) => {
     try {
       const validatedData = insertCollaborationRequestSchema.parse(req.body);
       
-      // Check if email is provided (required for verification)
+      // Check if email is provided (required for OTP verification)
       if (!validatedData.email) {
         return res.status(400).json({ message: "Email is required for collaboration requests" });
       }
 
-      // Generate verification token and expiry
-      const verificationToken = generateVerificationToken();
-      const verificationExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-      
-      // Save request with verification data
+      // Save request with pending OTP verification status
       const requestData = {
         ...validatedData,
-        verificationToken,
-        verificationExpiresAt,
         isEmailVerified: 'false',
-        status: 'pending_verification'
+        status: 'pending_otp_verification'
       };
       
       const request = await storage.createCollaborationRequest(requestData);
       
-      // Send verification email
-      const baseUrl = process.env.NODE_ENV === 'production' 
-        ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`
-        : `http://localhost:5000`;
-        
-      const emailSent = await sendVerificationEmail({
+      // Generate OTP code (6 digits, expires in 10 minutes)
+      const otpCode = generateOTPCode();
+      const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+      
+      // Save OTP to the request
+      await storage.saveOTPCode(request.id, otpCode, otpExpiresAt);
+      
+      // Send OTP email
+      const emailSent = await sendOTPEmail({
         to: validatedData.email,
         name: validatedData.name,
-        verificationToken,
-        baseUrl
+        otpCode
       });
       
       if (!emailSent) {
-        // If email fails, still save the request but inform user
         return res.status(500).json({ 
-          message: "Request saved but verification email failed to send. Please contact us directly.",
+          message: "Request saved but OTP email failed to send. Please contact us directly.",
           id: request.id 
         });
       }
       
       res.status(201).json({ 
-        message: "Collaboration request submitted! Please check your email to verify your address.",
-        id: request.id,
-        requiresVerification: true
+        message: "OTP sent to your email! Please enter the 6-digit code to verify.",
+        requestId: request.id,
+        requiresOTP: true
       });
     } catch (error) {
       if (error instanceof z.ZodError) {

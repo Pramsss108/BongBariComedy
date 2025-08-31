@@ -15,6 +15,9 @@ export interface IStorage {
   createCollaborationRequest(request: InsertCollaborationRequest): Promise<CollaborationRequest>;
   getCollaborationRequestByToken(token: string): Promise<CollaborationRequest | undefined>;
   verifyCollaborationRequest(token: string): Promise<boolean>;
+  saveOTPCode(requestId: string, otpCode: string, expiresAt: Date): Promise<boolean>;
+  verifyOTPCode(requestId: string, otpCode: string): Promise<boolean>;
+  getCollaborationRequestById(id: string): Promise<CollaborationRequest | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -150,6 +153,8 @@ export class MemStorage implements IStorage {
       verificationToken: insertRequest.verificationToken || null,
       isEmailVerified: insertRequest.isEmailVerified || "false",
       verificationExpiresAt: insertRequest.verificationExpiresAt || null,
+      otpCode: insertRequest.otpCode || null,
+      otpExpiresAt: insertRequest.otpExpiresAt || null,
       status: insertRequest.status || "pending",
     };
     this.collaborationRequests.set(id, request);
@@ -173,6 +178,43 @@ export class MemStorage implements IStorage {
     };
     this.collaborationRequests.set(request.id, updatedRequest);
     return true;
+  }
+
+  async saveOTPCode(requestId: string, otpCode: string, expiresAt: Date): Promise<boolean> {
+    const request = this.collaborationRequests.get(requestId);
+    if (!request) return false;
+
+    const updatedRequest: CollaborationRequest = {
+      ...request,
+      otpCode,
+      otpExpiresAt: expiresAt,
+    };
+    this.collaborationRequests.set(requestId, updatedRequest);
+    return true;
+  }
+
+  async verifyOTPCode(requestId: string, otpCode: string): Promise<boolean> {
+    const request = this.collaborationRequests.get(requestId);
+    if (!request) return false;
+
+    // Check if OTP matches and hasn't expired
+    if (request.otpCode !== otpCode) return false;
+    if (!request.otpExpiresAt || new Date() > new Date(request.otpExpiresAt)) return false;
+
+    // Mark as verified and clear OTP
+    const updatedRequest: CollaborationRequest = {
+      ...request,
+      isEmailVerified: "true",
+      status: "verified",
+      otpCode: null,
+      otpExpiresAt: null,
+    };
+    this.collaborationRequests.set(requestId, updatedRequest);
+    return true;
+  }
+
+  async getCollaborationRequestById(id: string): Promise<CollaborationRequest | undefined> {
+    return this.collaborationRequests.get(id);
   }
 }
 

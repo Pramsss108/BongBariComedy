@@ -15,11 +15,12 @@ import { useToast } from "@/hooks/use-toast";
 import YouTubeShort from "@/components/youtube-short";
 import SEOHead from "@/components/seo-head";
 import { ParallaxSection, ParallaxContainer } from "@/components/parallax-section";
-import { Youtube, Instagram, Phone, Mail, Twitter, Send, Home as HomeIcon, Users, TrendingUp, Smile } from "lucide-react";
+import { Youtube, Instagram, Phone, Mail, Twitter, Send, Home as HomeIcon, Users, TrendingUp, Smile, Shield, Clock } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { insertCollaborationRequestSchema, type InsertCollaborationRequest } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useFunnySubmissionSound } from "@/hooks/useFunnySubmissionSound";
+import { useState } from "react";
 
 interface YouTubeVideo {
   videoId: string;
@@ -32,6 +33,12 @@ const Home = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { playFunnySubmissionSound } = useFunnySubmissionSound({ enabled: true, volume: 0.25 });
+  
+  // State for OTP verification
+  const [showOTPVerification, setShowOTPVerification] = useState(false);
+  const [pendingRequestId, setPendingRequestId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string>("");
+  const [otpCode, setOtpCode] = useState("");
   
   const { data: latestVideos, isLoading: isLoadingLatest } = useQuery<YouTubeVideo[]>({
     queryKey: ['/api/youtube/latest'],
@@ -76,11 +83,14 @@ const Home = () => {
       // Play funny "sent successfully" sound
       playFunnySubmissionSound();
       
-      // Check if email verification is required
-      if (response.requiresVerification) {
+      // Check if OTP verification is required
+      if (response.requiresOTP) {
+        setPendingRequestId(response.requestId);
+        setUserEmail(form.getValues('email'));
+        setShowOTPVerification(true);
         toast({
           title: "📧 Check Your Email!",
-          description: "We've sent you a verification email. Please click the link to confirm your collaboration request.",
+          description: "We've sent you a 6-digit verification code. Please enter it below.",
           duration: 8000
         });
       } else {
@@ -88,8 +98,8 @@ const Home = () => {
           title: "Success!",
           description: "Your collaboration request has been submitted. We'll get back to you soon!"
         });
+        form.reset();
       }
-      form.reset();
     },
     onError: () => {
       toast({
@@ -100,8 +110,58 @@ const Home = () => {
     }
   });
 
+  // OTP verification mutation
+  const otpVerificationMutation = useMutation({
+    mutationFn: (data: { requestId: string; otpCode: string }) => apiRequest('/api/verify-otp', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }),
+    onSuccess: (response: any) => {
+      // Play success sound
+      playFunnySubmissionSound();
+      
+      toast({
+        title: "✅ Verified Successfully!",
+        description: "Your collaboration request has been submitted. We'll get back to you soon!"
+      });
+      
+      // Reset everything
+      setShowOTPVerification(false);
+      setPendingRequestId(null);
+      setUserEmail("");
+      setOtpCode("");
+      form.reset();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "❌ Invalid Code",
+        description: "The verification code is incorrect or expired. Please check your email and try again.",
+        variant: "destructive"
+      });
+    }
+  });
+
   const onSubmit = (data: InsertCollaborationRequest) => {
     collaborationMutation.mutate(data);
+  };
+  
+  const handleOTPVerification = () => {
+    if (!pendingRequestId || !otpCode || otpCode.length !== 6) {
+      toast({
+        title: "Invalid Code",
+        description: "Please enter a valid 6-digit code.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    otpVerificationMutation.mutate({
+      requestId: pendingRequestId,
+      otpCode: otpCode.trim()
+    });
   };
 
   // Fallback data in case API fails
@@ -554,14 +614,16 @@ const Home = () => {
               >
               <Card className="bg-white shadow-lg transition-all duration-300 hover:shadow-2xl">
                 <CardContent className="p-3 sm:p-4 lg:p-6">
-                  <p className="text-center text-gray-700 mb-2 sm:mb-3 text-base sm:text-lg">
-                    Ready to collaborate? Let's create some amazing Bengali comedy content together!
-                  </p>
-                  <p className="text-center text-gray-700 mb-3 sm:mb-4 bangla-text text-base sm:text-lg">
-                    কোলাবোরেট করতে প্রস্তুত? চলুন একসাথে দুর্দান্ত বাংলা কমেডি কন্টেন্ট তৈরি করি!
-                  </p>
-                  
-                  <Form {...form}>
+                  {!showOTPVerification ? (
+                    <>
+                      <p className="text-center text-gray-700 mb-2 sm:mb-3 text-base sm:text-lg">
+                        Ready to collaborate? Let's create some amazing Bengali comedy content together!
+                      </p>
+                      <p className="text-center text-gray-700 mb-3 sm:mb-4 bangla-text text-base sm:text-lg">
+                        কোলাবোরেট করতে প্রস্তুত? চলুন একসাথে দুর্দান্ত বাংলা কমেডি কন্টেন্ট তৈরি করি!
+                      </p>
+                      
+                      <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6" data-testid="collaboration-form">
                       <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
                         <FormField
@@ -713,8 +775,87 @@ const Home = () => {
                         <Send className="mr-2 h-5 w-5" />
                         {collaborationMutation.isPending ? "Sending..." : isFormValid ? "Send Message" : "Fill Name, Company & Email *"}
                       </MagneticButton>
-                    </form>
-                  </Form>
+                      </form>
+                    </Form>
+                    </>
+                  ) : (
+                    // OTP Verification Step
+                    <div className="text-center space-y-6">
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <div className="flex justify-center mb-4">
+                          <div className="w-16 h-16 bg-brand-blue rounded-full flex items-center justify-center">
+                            <Shield className="w-8 h-8 text-white" />
+                          </div>
+                        </div>
+                        <h3 className="text-xl font-semibold text-brand-blue mb-2">
+                          Email Verification Required
+                        </h3>
+                        <p className="text-gray-700 mb-1">
+                          We've sent a 6-digit verification code to:
+                        </p>
+                        <p className="font-semibold text-brand-blue mb-4">{userEmail}</p>
+                        <p className="text-sm text-gray-600 mb-6 flex items-center justify-center gap-2">
+                          <Clock className="w-4 h-4" />
+                          Code expires in 10 minutes
+                        </p>
+                      </motion.div>
+
+                      <div className="max-w-xs mx-auto">
+                        <Label htmlFor="otp-input" className="block text-sm font-medium text-gray-700 mb-2">
+                          Enter 6-digit verification code
+                        </Label>
+                        <Input
+                          id="otp-input"
+                          type="text"
+                          placeholder="000000"
+                          value={otpCode}
+                          onChange={(e) => {
+                            // Only allow numbers and limit to 6 digits
+                            const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 6);
+                            setOtpCode(value);
+                          }}
+                          className="text-center text-lg font-mono tracking-widest"
+                          data-testid="input-otp"
+                          maxLength={6}
+                        />
+                      </div>
+
+                      <div className="space-y-3">
+                        <MagneticButton
+                          onClick={handleOTPVerification}
+                          disabled={otpVerificationMutation.isPending || otpCode.length !== 6}
+                          className={`w-full py-3 rounded-full font-semibold transition-all duration-300 ${
+                            otpCode.length === 6 && !otpVerificationMutation.isPending
+                              ? 'bg-brand-blue text-white hover:bg-blue-600 hover:scale-105'
+                              : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                          }`}
+                          data-testid="button-verify-otp"
+                          strength={otpCode.length === 6 ? 0.3 : 0}
+                        >
+                          {otpVerificationMutation.isPending ? 'Verifying...' : 'Verify Code'}
+                        </MagneticButton>
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => {
+                            setShowOTPVerification(false);
+                            setPendingRequestId(null);
+                            setUserEmail("");
+                            setOtpCode("");
+                          }}
+                          className="w-full text-gray-600 hover:text-gray-800"
+                          data-testid="button-back-to-form"
+                        >
+                          ← Back to form
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
               </motion.div>

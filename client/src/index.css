@@ -163,26 +163,28 @@
   border-radius: 12px;
 }
 
-/* Moving gradient border - visible rotating effect */
+/* Gradient train border - moves around the reel perimeter */
 .rotating-gradient-border {
   position: absolute;
-  inset: -4px;
-  border-radius: 16px;
-  background: conic-gradient(
-    from 0deg,
-    #ff1493,
-    #ff6347,
-    #ffa500,
-    #ffff00,
-    #32cd32,
-    #00bfff,
-    #8a2be2,
-    #ff1493
-  );
-  animation: spinBorder 3s linear infinite;
+  inset: -3px;
+  border-radius: 15px;
+  border: 3px solid transparent;
+  background: 
+    linear-gradient(white, white) padding-box,
+    conic-gradient(
+      from 0deg,
+      transparent 0%,
+      transparent 70%,
+      #ff1493 75%,
+      #ff6347 80%,
+      #ffa500 85%,
+      #ffff00 90%,
+      #32cd32 95%,
+      transparent 100%
+    ) border-box;
+  animation: gradientTrain 3s linear infinite;
   pointer-events: none;
   z-index: 5;
-  padding: 4px;
 }
 
 /* Inner clean container for reel content - STATIC */
@@ -195,17 +197,41 @@
   z-index: 10;
 }
 
-/* Simple spinning border animation */
-@keyframes spinBorder {
+/* Gradient train animation - moves around border like a train */
+@keyframes gradientTrain {
   0% {
-    transform: rotate(0deg);
+    background: 
+      linear-gradient(white, white) padding-box,
+      conic-gradient(
+        from 0deg,
+        transparent 0%,
+        transparent 70%,
+        #ff1493 75%,
+        #ff6347 80%,
+        #ffa500 85%,
+        #ffff00 90%,
+        #32cd32 95%,
+        transparent 100%
+      ) border-box;
   }
   100% {
-    transform: rotate(360deg);
+    background: 
+      linear-gradient(white, white) padding-box,
+      conic-gradient(
+        from 360deg,
+        transparent 0%,
+        transparent 70%,
+        #ff1493 75%,
+        #ff6347 80%,
+        #ffa500 85%,
+        #ffff00 90%,
+        #32cd32 95%,
+        transparent 100%
+      ) border-box;
   }
 }
 
-/* Different speeds for each reel */
+/* Each reel gets different speeds for variety */
 .video-container:nth-child(1) .rotating-gradient-border {
   animation-duration: 3s;
 }
@@ -216,7 +242,7 @@
 }
 
 .video-container:nth-child(3) .rotating-gradient-border {
-  animation-duration: 4s;
+  animation-duration: 3.5s;
 }
 
 .video-container:nth-child(4) .rotating-gradient-border {
@@ -225,11 +251,11 @@
 }
 
 .video-container:nth-child(5) .rotating-gradient-border {
-  animation-duration: 3.5s;
+  animation-duration: 3.2s;
 }
 
 .video-container:nth-child(6) .rotating-gradient-border {
-  animation-duration: 2.2s;
+  animation-duration: 2.6s;
   animation-direction: reverse;
 }
 

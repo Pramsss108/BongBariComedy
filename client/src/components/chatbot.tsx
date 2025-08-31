@@ -159,6 +159,7 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
   const handleMouseDown = (e: React.MouseEvent) => {
     if (isMinimized) return;
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(true);
     const rect = chatbotRef.current?.getBoundingClientRect();
     if (rect) {
@@ -442,7 +443,7 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
 
         {/* NATURAL HEADER DESIGN - Draggable */}
         <div 
-          className="relative z-10 flex flex-col bg-gradient-to-r from-[#1363DF]/95 to-[#FF4D4D]/95 backdrop-blur-md rounded-t-2xl border-b border-[#FFCC00]/30 cursor-grab active:cursor-grabbing flex-shrink-0"
+          className="relative z-10 flex flex-col bg-gradient-to-r from-[#1363DF]/95 to-[#FF4D4D]/95 backdrop-blur-md rounded-t-2xl border-b border-[#FFCC00]/30 cursor-grab active:cursor-grabbing flex-shrink-0 select-none"
           onMouseDown={handleMouseDown}
           style={{ height: isMinimized ? '64px' : '80px' }}
         >
@@ -613,22 +614,28 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
                   {templateMessages.map((template, index) => (
                     <motion.button
                       key={index}
-                      onClick={() => sendTemplateMessage(template.text)}
+                      onClick={() => {
+                        setInputMessage(template.text);
+                        setTimeout(() => sendMessage(), 100);
+                      }}
                       disabled={isTyping}
-                      className="no-rickshaw-sound w-full py-3 px-3 bg-gradient-to-r from-[#1363DF]/20 to-[#FF4D4D]/20 backdrop-blur-sm rounded-lg border border-[#FFCC00]/30 text-white text-xs sm:text-sm font-medium hover:from-[#1363DF]/30 hover:to-[#FF4D4D]/30 active:from-[#1363DF]/40 active:to-[#FF4D4D]/40 transition-all duration-200 flex items-center justify-between touch-manipulation"
+                      className="no-rickshaw-sound w-full py-2 px-3 bg-gradient-to-r from-[#1363DF]/20 to-[#FF4D4D]/20 backdrop-blur-sm rounded-lg border border-[#FFCC00]/30 text-white text-xs font-medium hover:from-[#1363DF]/30 hover:to-[#FF4D4D]/30 active:from-[#1363DF]/40 active:to-[#FF4D4D]/40 transition-all duration-200 flex items-center justify-between"
                       whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.97 }}
+                      whileTap={{ scale: 0.98 }}
                       data-testid={`template-${index}`}
                     >
-                      <span className="flex-1 text-left truncate">{template.text}</span>
-                      <span className="text-sm ml-2">{template.emoji}</span>
+                      <span className="flex items-center gap-2">
+                        <span>{template.emoji}</span>
+                        <span className="truncate">{template.text}</span>
+                      </span>
+                      <Send className="w-3 h-3 opacity-70 flex-shrink-0" />
                     </motion.button>
                   ))}
                 </div>
               </div>
 
-              {/* ABSOLUTELY FIXED WRITING BOX - NEVER MOVES */}
-              <div className="p-4 bg-gradient-to-t from-[#101418]/95 via-[#101418]/80 to-[#101418]/60 backdrop-blur-md border-t-2 border-[#FFCC00]/30 rounded-b-2xl flex-shrink-0">
+              {/* ABSOLUTELY FIXED WRITING BOX - SHORTER & SCROLLABLE */}
+              <div className="p-3 bg-gradient-to-t from-[#101418]/95 via-[#101418]/80 to-[#101418]/60 backdrop-blur-md border-t-2 border-[#FFCC00]/30 rounded-b-2xl flex-shrink-0">
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-r from-[#1363DF]/20 to-[#FF4D4D]/20 rounded-lg blur-sm" />
                   
@@ -639,12 +646,12 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
                       onChange={(e) => setInputMessage(e.target.value)}
                       onKeyDown={handleKeyPress}
                       placeholder="Ask me anything magical... ✨"
-                      className="flex-1 bg-transparent border-0 text-white placeholder:text-[#FFCC00]/70 focus:ring-0 focus:outline-none text-sm resize-none"
+                      className="flex-1 bg-transparent border-0 text-white placeholder:text-[#FFCC00]/70 focus:ring-0 focus:outline-none text-sm resize-none overflow-y-auto"
                       disabled={isTyping}
-                      rows={2}
+                      rows={1}
                       style={{ 
-                        maxHeight: '80px', 
-                        minHeight: '44px',
+                        maxHeight: '4rem', 
+                        minHeight: '1.5rem',
                         fontSize: '16px' // Prevent iOS zoom
                       }}
                       data-testid="chatbot-input"

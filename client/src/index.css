@@ -290,33 +290,24 @@
   }
 }
 
-/* Simplified rotating gradient border for better performance */
+/* Thick gradient spinning border for reels */
 .rotating-gradient-border {
   position: absolute;
-  inset: -3px;
-  border-radius: 15px;
-  border: 3px solid transparent;
+  inset: -4px;
+  border-radius: 16px;
   background: conic-gradient(
-    from var(--rotate, 0deg),
-    transparent 0%,
-    transparent 70%,
-    rgba(255, 99, 71, 0.8) 75%,
-    rgba(255, 165, 0, 0.9) 80%,
-    rgba(255, 255, 0, 0.8) 85%,
-    transparent 90%,
-    transparent 100%
-  ) border-box;
-  -webkit-mask: 
-    linear-gradient(#fff 0 0) padding-box, 
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: subtract;
-  mask: 
-    linear-gradient(#fff 0 0) padding-box, 
-    linear-gradient(#fff 0 0);
-  mask-composite: exclude;
+    from 0deg,
+    #FFD700 0deg,
+    #FF6B35 60deg,
+    #F7931E 120deg,
+    #FFD700 180deg,
+    #FF6B35 240deg,
+    #F7931E 300deg,
+    #FFD700 360deg
+  );
   animation: simpleSpin 4s linear infinite;
   pointer-events: none;
-  z-index: 5;
+  z-index: 1;
   will-change: transform;
   transform: translateZ(0);
 }
@@ -324,11 +315,11 @@
 /* Inner clean container for reel content - STATIC, never moves */
 .reel-content-container {
   position: absolute;
-  inset: 0px;
+  inset: 4px;
   background: transparent;
-  border-radius: 13px;
+  border-radius: 12px;
   overflow: hidden;
-  z-index: 10;
+  z-index: 2;
   box-shadow: 
     0 6px 20px rgba(0, 0, 0, 0.15);
 }

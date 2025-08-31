@@ -163,55 +163,57 @@
   border-radius: 12px;
 }
 
-/* Gradient train border - moves around the reel perimeter */
+/* Rotating gradient border - colorful wheel around reel frame */
 .rotating-gradient-border {
   position: absolute;
-  inset: -3px;
-  border-radius: 15px;
-  border: 3px solid transparent;
+  inset: -4px;
+  border-radius: 16px;
+  border: 4px solid transparent;
   background: 
     linear-gradient(white, white) padding-box,
     conic-gradient(
       from 0deg,
-      transparent 0%,
-      transparent 70%,
-      #ff1493 75%,
-      #ff6347 80%,
-      #ffa500 85%,
-      #ffff00 90%,
-      #32cd32 95%,
-      transparent 100%
+      #ff1493,  /* Hot pink */
+      #ff6347,  /* Orange red */
+      #ffa500,  /* Orange */
+      #ffff00,  /* Yellow */
+      #32cd32,  /* Lime green */
+      #00bfff,  /* Deep sky blue */
+      #8a2be2,  /* Blue violet */
+      #ff1493   /* Back to hot pink for seamless loop */
     ) border-box;
-  animation: gradientTrain 3s linear infinite;
+  animation: rotateGradientWheel 3s linear infinite;
   pointer-events: none;
   z-index: 5;
+  filter: brightness(1.2) saturate(1.3);
 }
 
-/* Inner clean container for reel content - STATIC */
+/* Inner clean container for reel content - STATIC, never rotates */
 .reel-content-container {
   position: absolute;
-  inset: 0;
+  inset: 4px;
   background: white;
   border-radius: 12px;
   overflow: hidden;
   z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* Gradient train animation - moves around border like a train */
-@keyframes gradientTrain {
+/* Smooth gradient wheel rotation animation */
+@keyframes rotateGradientWheel {
   0% {
     background: 
       linear-gradient(white, white) padding-box,
       conic-gradient(
         from 0deg,
-        transparent 0%,
-        transparent 70%,
-        #ff1493 75%,
-        #ff6347 80%,
-        #ffa500 85%,
-        #ffff00 90%,
-        #32cd32 95%,
-        transparent 100%
+        #ff1493,  /* Hot pink */
+        #ff6347,  /* Orange red */
+        #ffa500,  /* Orange */
+        #ffff00,  /* Yellow */
+        #32cd32,  /* Lime green */
+        #00bfff,  /* Deep sky blue */
+        #8a2be2,  /* Blue violet */
+        #ff1493   /* Back to hot pink */
       ) border-box;
   }
   100% {
@@ -219,19 +221,19 @@
       linear-gradient(white, white) padding-box,
       conic-gradient(
         from 360deg,
-        transparent 0%,
-        transparent 70%,
-        #ff1493 75%,
-        #ff6347 80%,
-        #ffa500 85%,
-        #ffff00 90%,
-        #32cd32 95%,
-        transparent 100%
+        #ff1493,  /* Hot pink */
+        #ff6347,  /* Orange red */
+        #ffa500,  /* Orange */
+        #ffff00,  /* Yellow */
+        #32cd32,  /* Lime green */
+        #00bfff,  /* Deep sky blue */
+        #8a2be2,  /* Blue violet */
+        #ff1493   /* Back to hot pink */
       ) border-box;
   }
 }
 
-/* Each reel gets different speeds for variety */
+/* Each reel gets different rotation speeds for variety */
 .video-container:nth-child(1) .rotating-gradient-border {
   animation-duration: 3s;
 }
@@ -242,20 +244,20 @@
 }
 
 .video-container:nth-child(3) .rotating-gradient-border {
-  animation-duration: 3.5s;
+  animation-duration: 3.8s;
 }
 
 .video-container:nth-child(4) .rotating-gradient-border {
-  animation-duration: 2.8s;
+  animation-duration: 2.2s;
   animation-direction: reverse;
 }
 
 .video-container:nth-child(5) .rotating-gradient-border {
-  animation-duration: 3.2s;
+  animation-duration: 3.4s;
 }
 
 .video-container:nth-child(6) .rotating-gradient-border {
-  animation-duration: 2.6s;
+  animation-duration: 2.7s;
   animation-direction: reverse;
 }
 

@@ -1287,6 +1287,22 @@ section:nth-child(odd) {
     }
   }
 
+  /* 3D Cursor particle sparkle effect */
+  @keyframes sparkle {
+    0% {
+      transform: scale(0.5) rotate(0deg);
+      opacity: 0.8;
+    }
+    50% {
+      transform: scale(1.2) rotate(180deg);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(0.8) rotate(360deg);
+      opacity: 0.4;
+    }
+  }
+
   /* Navigation links enhancement */
   [data-testid="main-navigation"] a[data-testid*="nav-link"] {
     position: relative !important;

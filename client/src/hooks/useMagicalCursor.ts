@@ -36,10 +36,10 @@ export const useMagicalCursor = () => {
       }
 
       // Create 3D particle trail when moving
-      if (Math.random() < 0.4) { // 40% chance to create particle
+      if (Math.random() < 0.8) { // 80% chance to create particle
         const angle = Math.random() * Math.PI * 2;
         const speed = 0.5 + Math.random() * 1.5;
-        const colors = ['#FFD700', '#87CEEB', '#FF69B4', '#98FB98', '#DDA0DD'];
+        const colors = ['#FFD700', '#00BFFF', '#FF1493', '#32CD32', '#DA70D6', '#FF4500'];
         
         const newParticle: Particle = {
           id: particleId.current++,

@@ -191,83 +191,39 @@ const Home = () => {
               </motion.div>
             </motion.div>
 
-            {/* Title and Subtitle Section */}
+            {/* Compact Title Section */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-center mb-6"
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="text-center mb-4"
             >
               <motion.h1 
-                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gray-800 mb-2 bangla-text"
+                className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-1 bangla-text"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.3 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
               >
                 বং বাড়ি
               </motion.h1>
               <motion.p 
-                className="text-lg sm:text-xl md:text-2xl text-gray-600 mb-2"
+                className="text-sm sm:text-base md:text-lg text-gray-600 bangla-text"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.4 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
               >
-                Bengali Comedy That Hits Home!
-              </motion.p>
-              <motion.p 
-                className="text-base sm:text-lg text-gray-500 bangla-text"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.5 }}
-              >
-                কলকাতার ঘরোয়া কমেডি
-              </motion.p>
-            </motion.div>
-
-            {/* Barir Mashla YouTube Video - Our Story */}
-            <ParallaxSection speed={0.3} delay={0.1}>
-              <section className="text-center mb-6 sm:mb-8 lg:mb-12" data-testid="hero-section">
-            {/* Barir Mashla Video - Our Story */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="text-center mb-6"
-            >
-              <motion.h1 
-                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gray-800 mb-2 bangla-text"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-              >
-                বং বাড়ি
-              </motion.h1>
-              <motion.p 
-                className="text-lg sm:text-xl md:text-2xl text-gray-600 mb-4"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.4 }}
-              >
-                Bengali Comedy That Hits Home!
-              </motion.p>
-              <motion.p 
-                className="text-base sm:text-lg text-gray-500 mb-6 bangla-text"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.6 }}
-              >
-                কলকাতার ঘরোয়া কমেডি - আমাদের গল্প শুনুন
+                কলকাতার ঘরোয়া কমেডি - আমাদের গল্প
               </motion.p>
             </motion.div>
 
             {/* YouTube Video Embed - Barir Mashla (Our Story) */}
             <motion.div
-              className="w-full max-w-4xl mx-auto mb-8"
+              className="w-full max-w-4xl mx-auto mb-6"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
             >
-              <div className="relative w-full aspect-video rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl">
+              <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-lg">
                 <iframe
                   src="https://www.youtube.com/embed/pdjQpcVqxMU?rel=0&modestbranding=1&showinfo=0"
                   title="বং বাড়ি - Barir Mashla | Our Story | Bengali Comedy Channel"
@@ -276,30 +232,16 @@ const Home = () => {
                   allowFullScreen
                 ></iframe>
               </div>
-              <motion.p 
-                className="text-center text-gray-600 mt-4 text-sm md:text-base"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, delay: 1 }}
-              >
-                🎬 আমাদের গল্প - কেন শুরু করলাম বং বাড়ি? | Why We Started Bong Bari?
-              </motion.p>
             </motion.div>
-            
-            
-            {/* Intro Text */}
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 1.3 }}
-            >
-              <motion.div
-                whileHover={{ 
-                  scale: 1.02,
-                  transition: { duration: 0.2 }
-                }}
-              >
-              <Card className="max-w-4xl mx-auto shadow-md transition-all duration-300 hover:shadow-2xl">
+          
+          {/* Intro Text */}
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+            className="mb-8"
+          >
+            <Card className="max-w-4xl mx-auto shadow-md transition-all duration-300 hover:shadow-2xl">
               <CardContent className="p-4 sm:p-6 lg:p-8">
                 <p className="text-base sm:text-lg lg:text-xl text-gray-700 mb-4 sm:mb-6 leading-relaxed" data-testid="intro-english">
                   Welcome to <strong>Bong Bari</strong> - where every Bengali family finds their story! 
@@ -313,10 +255,7 @@ const Home = () => {
                 </p>
               </CardContent>
             </Card>
-            </motion.div>
-            </motion.div>
-              </section>
-            </ParallaxSection>
+          </motion.div>
           
           {/* Latest Comedy Section (FOMO) */}
           <ParallaxSection speed={0.4} delay={0.2}>

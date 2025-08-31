@@ -42,9 +42,9 @@ const WorkWithUs = () => {
                 <motion.h1 
                   className="text-4xl font-bold text-center text-brand-blue mb-4" 
                   data-testid="page-title-english"
-                  initial={{ opacity: 0, y: 50 }}
+                  initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8 }}
+                  transition={{ duration: 1.2, ease: "easeOut" }}
                 >
                   Work with Us
                 </motion.h1>
@@ -54,9 +54,9 @@ const WorkWithUs = () => {
                 <motion.h2 
                   className="text-3xl font-bold text-center text-brand-blue mb-12 bangla-text" 
                   data-testid="page-title-bengali"
-                  initial={{ opacity: 0, y: 50 }}
+                  initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.2 }}
+                  transition={{ duration: 1.4, delay: 0.3, ease: "easeOut" }}
                 >
                   আমাদের সাথে কাজ করুন
                 </motion.h2>
@@ -81,14 +81,17 @@ const WorkWithUs = () => {
                 
                 <div className="grid md:grid-cols-3 gap-6 mt-8" data-testid="collaboration-types">
                   {collaborationTypes.map((type, index) => (
-                    <div 
+                    <motion.div 
                       key={index}
-                      className="text-center p-4 bg-brand-yellow rounded-lg"
+                      className="text-center p-6 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-500 ease-out hover:border-brand-blue/30 hover:-translate-y-1 group"
                       data-testid={`collaboration-type-${index}`}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.8, delay: 0.1 * index, ease: "easeOut" }}
                     >
-                      <h4 className="font-semibold text-brand-blue mb-2">{type.title}</h4>
-                      <p className="text-sm text-gray-700">{type.description}</p>
-                    </div>
+                      <h4 className="font-semibold text-brand-blue mb-3 group-hover:text-brand-red transition-colors duration-300">{type.title}</h4>
+                      <p className="text-sm text-gray-600 leading-relaxed">{type.description}</p>
+                    </motion.div>
                   ))}
                 </div>
               </CardContent>
@@ -101,18 +104,30 @@ const WorkWithUs = () => {
                   Let's Collaborate!
                 </h3>
                 
-                <div className="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center" data-testid="form-placeholder">
-                  <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h4 className="text-lg font-semibold text-gray-600 mb-2">Google Form Integration</h4>
-                  <p className="text-gray-500 mb-4">Collaboration inquiry form will be embedded here</p>
+                <motion.div 
+                  className="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-2xl p-12 text-center shadow-sm hover:shadow-lg transition-all duration-700 ease-out"
+                  data-testid="form-placeholder"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
+                >
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.8, delay: 0.7 }}
+                  >
+                    <FileText className="w-16 h-16 text-brand-blue mx-auto mb-6" />
+                  </motion.div>
+                  <h4 className="text-xl font-semibold text-gray-800 mb-3">Ready to Collaborate?</h4>
+                  <p className="text-gray-600 mb-8 max-w-md mx-auto leading-relaxed">Share your ideas and let's create something amazing together for the Bengali comedy community</p>
                   <Button 
-                    className="bg-brand-blue text-white hover:bg-blue-700"
+                    className="bg-gradient-to-r from-brand-blue to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 px-8 py-3 rounded-full font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg transform"
                     onClick={handleFormClick}
                     data-testid="button-form"
                   >
-                    Fill Collaboration Form
+                    Start Collaboration
                   </Button>
-                </div>
+                </motion.div>
               </CardContent>
             </Card>
             </div>

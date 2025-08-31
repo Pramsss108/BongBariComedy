@@ -131,12 +131,16 @@ const Home = () => {
             <ParallaxSection speed={0.3} delay={0.1}>
               <section className="text-center mb-8" data-testid="hero-section">
             <motion.div 
-              className="w-full h-64 md:h-80 bg-brand-yellow rounded-2xl shadow-lg mb-6 flex items-center justify-center relative overflow-hidden"
+              className="w-full h-64 md:h-80 bg-gradient-to-r from-brand-yellow via-brand-red to-brand-blue rounded-2xl shadow-lg mb-6 flex items-center justify-center relative overflow-hidden"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1, ease: [0.25, 0.25, 0.25, 1] }}
               whileHover={{ scale: 1.02 }}
             >
+              {/* Background pattern */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="w-full h-full bg-gradient-to-br from-transparent via-white to-transparent"></div>
+              </div>
               
               {/* Main content */}
               <motion.div 
@@ -151,12 +155,12 @@ const Home = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 0.7 }}
                 >
-                  <span className="text-6xl md:text-8xl font-bold text-brand-blue bangla-text drop-shadow-lg">
+                  <span className="text-6xl md:text-8xl font-bold text-white bangla-text drop-shadow-lg">
                     বং বাড়ি
                   </span>
                 </motion.div>
                 <motion.div 
-                  className="text-xl md:text-2xl font-semibold text-brand-blue drop-shadow-md"
+                  className="text-xl md:text-2xl font-semibold text-white drop-shadow-md"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 0.9 }}
@@ -164,7 +168,7 @@ const Home = () => {
                   Bengali Comedy That Hits Home!
                 </motion.div>
                 <motion.div 
-                  className="text-lg md:text-xl text-brand-blue/90 mt-2 bangla-text"
+                  className="text-lg md:text-xl text-white/90 mt-2 bangla-text"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 1.1 }}
@@ -174,9 +178,9 @@ const Home = () => {
               </motion.div>
               
               {/* Decorative elements */}
-              <div className="absolute top-4 left-4 w-16 h-16 bg-brand-blue/20 rounded-full"></div>
-              <div className="absolute bottom-4 right-4 w-12 h-12 bg-brand-blue/20 rounded-full"></div>
-              <div className="absolute top-1/2 right-8 w-8 h-8 bg-brand-blue/20 rounded-full"></div>
+              <div className="absolute top-4 left-4 w-16 h-16 bg-white/20 rounded-full"></div>
+              <div className="absolute bottom-4 right-4 w-12 h-12 bg-white/20 rounded-full"></div>
+              <div className="absolute top-1/2 right-8 w-8 h-8 bg-white/20 rounded-full"></div>
             </motion.div>
             
             

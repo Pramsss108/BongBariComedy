@@ -213,15 +213,15 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
     >
       {/* GLASS MORPHISM CONTAINER */}
-      <div className="w-full h-full bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl overflow-hidden">
+      <div className="w-full h-full bg-gradient-to-br from-white/15 via-white/10 to-white/5 backdrop-blur-xl rounded-2xl border border-white/30 shadow-2xl overflow-hidden">
         
         {/* PROFESSIONAL DRAGGABLE HEADER */}
         <motion.div
           ref={headerRef}
           onMouseDown={handleMouseDown}
-          className="relative w-full h-14 bg-gradient-to-r from-[#1363DF]/30 via-[#FFCC00]/30 to-[#FF4D4D]/30 backdrop-blur-lg cursor-grab active:cursor-grabbing flex items-center justify-between px-4 border-b border-white/20 rounded-t-2xl"
-          style={{ userSelect: 'none' }}
-          whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.15)' }}
+          className="relative w-full h-16 bg-gradient-to-r from-[#1363DF]/60 via-[#FFCC00]/60 to-[#FF4D4D]/60 backdrop-blur-lg cursor-grab active:cursor-grabbing flex items-center justify-between px-4 border-b-2 border-white/40 rounded-t-2xl shadow-lg"
+          style={{ userSelect: 'none', marginTop: '2px' }}
+          whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
         >
           {/* ANIMATED LOGO & TITLE */}
           <div className="flex items-center gap-3">
@@ -233,8 +233,8 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
               <Bot size={16} className="text-white drop-shadow-sm" />
             </motion.div>
             <div>
-              <h3 className="text-white font-bold text-sm drop-shadow-lg">🤖 Bong Bot</h3>
-              <p className="text-white/90 text-xs drop-shadow-sm font-medium">Bengali Comedy AI</p>
+              <h3 className="text-white font-bold text-base drop-shadow-lg tracking-wide">🤖 Bong Bot</h3>
+              <p className="text-white/95 text-xs drop-shadow-sm font-semibold tracking-wide">Bengali Comedy AI</p>
             </div>
           </div>
           
@@ -338,7 +338,7 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
               {/* QUICK REPLY TEMPLATES */}
               {showTemplates && (
                 <motion.div 
-                  className="px-4 py-2 bg-white/5 backdrop-blur-sm border-t border-white/10"
+                  className="px-4 py-3 bg-gradient-to-r from-[#FFCC00]/30 via-[#FF4D4D]/30 to-[#1363DF]/30 backdrop-blur-lg border-t-2 border-white/30"
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
@@ -351,9 +351,9 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
                           setMessage(template);
                           setShowTemplates(false);
                         }}
-                        className="px-3 py-2 bg-gradient-to-r from-[#FFCC00]/80 to-[#FF4D4D]/80 text-white text-xs rounded-lg shadow-sm border border-white/20 hover:shadow-md transition-all"
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
+                        className="px-3 py-2 bg-gradient-to-r from-[#FFCC00] to-[#FF4D4D] text-white text-xs font-semibold rounded-lg shadow-lg border-2 border-white/40 hover:shadow-xl transition-all"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                       >
                         {template}
                       </motion.button>
@@ -363,7 +363,7 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
               )}
               
               {/* PROFESSIONAL TYPING AREA */}
-              <div className="p-4 bg-white/5 backdrop-blur-sm border-t border-white/10 rounded-b-2xl">
+              <div className="p-4 bg-gradient-to-r from-[#1363DF]/20 via-[#FFCC00]/20 to-[#FF4D4D]/20 backdrop-blur-lg border-t-2 border-white/40 rounded-b-2xl shadow-inner">
                 <div className="flex gap-3 items-end">
                   <textarea
                     value={message}
@@ -374,7 +374,7 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
                       }
                     }}
                     placeholder="Kotha Hok Naki?"
-                    className="flex-1 px-4 py-3 bg-white/90 backdrop-blur-sm border border-white/20 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1363DF]/50 focus:border-[#1363DF]/50 resize-none hide-scrollbar transition-all placeholder-gray-500"
+                    className="flex-1 px-4 py-3 bg-white/95 backdrop-blur-sm border-2 border-white/40 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1363DF]/70 focus:border-[#1363DF]/70 resize-none hide-scrollbar transition-all placeholder-gray-600 shadow-sm"
                     style={{
                       minHeight: '44px',
                       maxHeight: '44px',
@@ -390,16 +390,16 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
                   />
                   <motion.button
                     onClick={handleSendMessage}
-                    className="px-4 py-3 bg-gradient-to-r from-[#1363DF] to-[#FF4D4D] text-white rounded-xl font-medium shadow-lg backdrop-blur-sm border border-white/20 flex items-center gap-2 flex-shrink-0"
+                    className="px-4 py-3 bg-gradient-to-r from-[#1363DF] to-[#FF4D4D] text-white rounded-xl font-semibold shadow-xl backdrop-blur-sm border-2 border-white/30 flex items-center gap-2 flex-shrink-0"
                     whileHover={{ 
                       scale: 1.05,
-                      boxShadow: '0 10px 25px rgba(19, 99, 223, 0.3)'
+                      boxShadow: '0 15px 30px rgba(19, 99, 223, 0.4)'
                     }}
                     whileTap={{ scale: 0.95 }}
                     disabled={!message.trim()}
                   >
-                    <Send size={16} className="drop-shadow-sm" />
-                    <span className="text-sm">Send</span>
+                    <Send size={16} className="drop-shadow-lg" />
+                    <span className="text-sm font-bold">Send</span>
                   </motion.button>
                 </div>
               </div>

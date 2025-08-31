@@ -68,6 +68,16 @@
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
 
+/* Hide scrollbar while keeping functionality */
+.hide-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
 /* Subtle Professional Hover Effects */
 .hover-bounce:hover {
   animation: subtleBounce 0.3s ease-out;

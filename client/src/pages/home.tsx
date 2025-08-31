@@ -231,8 +231,8 @@ const Home = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.8 }}
                 >
-                  Welcome to <strong className="text-brand-blue font-bold">Bong Bari</strong> - where every Bengali family finds their story! 
-                  Our hilarious <span className="text-brand-red font-semibold">mother-son comedy shorts</span> capture the essence of Kolkata homes with relatable, 
+                  Welcome to <strong className="text-brand-blue font-bold hover-belan">Bong Bari</strong> - where every Bengali family finds their story! 
+                  Our hilarious <span className="text-brand-red font-semibold hover-belan">mother-son comedy shorts</span> capture the essence of Kolkata homes with relatable, 
                   heartwarming humor that'll make you laugh until your stomach hurts.
                 </motion.p>
                 
@@ -244,7 +244,7 @@ const Home = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 1 }}
                 >
-                  <strong className="text-brand-blue font-bold">বং বাড়িতে</strong> স্বাগতম! আমাদের <span className="text-brand-red font-semibold">মা-ছেলের কমেডি শর্টস</span> দেখে হাসতে হাসতে পেট ব্যথা হয়ে যাবে। 
+                  <strong className="text-brand-blue font-bold hover-belan">বং বাড়িতে</strong> স্বাগতম! আমাদের <span className="text-brand-red font-semibold hover-belan">মা-ছেলের কমেডি শর্টস</span> দেখে হাসতে হাসতে পেট ব্যথা হয়ে যাবে। 
                   কলকাতার ঘরোয়া পরিবেশের সাথে মিলিয়ে এমন সব মজার গল্প যা আপনার নিজের বাড়ির মতোই লাগবে।
                 </motion.p>
               </CardContent>

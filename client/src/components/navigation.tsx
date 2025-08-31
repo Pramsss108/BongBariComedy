@@ -25,7 +25,7 @@ const Navigation = () => {
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50" data-testid="main-navigation">
       <div className="container mx-auto px-4 sm:px-6">
-        <div className="flex justify-between items-center py-3 px-2 sm:py-4">
+        <div className="flex justify-between items-center py-1 px-2 sm:py-2">
           {/* Logo - Optimized Layout */}
           <Link href="/" data-testid="logo-link">
             <div className="flex items-center space-x-3 cursor-pointer hover-logo-container group w-full">

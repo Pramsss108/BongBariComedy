@@ -116,7 +116,7 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
     }
   }, [isOpen, isMinimized]);
 
-  // Dragging and Resizing functionality
+  // Dragging and Resizing functionality - HARD CODED FIX
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (isDragging && chatbotRef.current) {
@@ -130,12 +130,23 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
         const boundedX = Math.max(16, Math.min(newX, maxX - 16));
         const boundedY = Math.max(16, Math.min(newY, maxY - 16));
         
+        // DIRECT DOM MANIPULATION FOR GUARANTEED MOVEMENT
+        chatbotRef.current.style.left = boundedX + 'px';
+        chatbotRef.current.style.top = boundedY + 'px';
+        chatbotRef.current.style.right = 'unset';
+        chatbotRef.current.style.bottom = 'unset';
+        
         setPosition({ x: boundedX, y: boundedY });
       }
       
-      if (isResizing) {
-        const newWidth = Math.max(320, Math.min(600, e.clientX - position.x + 50));
-        const newHeight = Math.max(400, Math.min(700, e.clientY - position.y + 50));
+      if (isResizing && chatbotRef.current) {
+        const newWidth = Math.max(320, Math.min(600, e.clientX - (position.x || 0) + 20));
+        const newHeight = Math.max(400, Math.min(700, e.clientY - (position.y || 0) + 20));
+        
+        // DIRECT DOM MANIPULATION FOR GUARANTEED RESIZING
+        chatbotRef.current.style.width = newWidth + 'px';
+        chatbotRef.current.style.height = newHeight + 'px';
+        
         setChatSize({ width: newWidth, height: newHeight });
       }
     };
@@ -143,10 +154,13 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
     const handleMouseUp = () => {
       setIsDragging(false);
       setIsResizing(false);
+      if (chatbotRef.current) {
+        chatbotRef.current.style.cursor = '';
+      }
     };
 
     if (isDragging || isResizing) {
-      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mousemove', handleMouseMove, { passive: false });
       document.addEventListener('mouseup', handleMouseUp);
       
       return () => {
@@ -160,13 +174,20 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
     if (isMinimized) return;
     e.preventDefault();
     e.stopPropagation();
-    setIsDragging(true);
+    
     const rect = chatbotRef.current?.getBoundingClientRect();
     if (rect) {
       setDragOffset({
         x: e.clientX - rect.left,
         y: e.clientY - rect.top
       });
+      setIsDragging(true);
+      
+      // FORCE CURSOR CHANGE
+      if (chatbotRef.current) {
+        chatbotRef.current.style.cursor = 'grabbing';
+        document.body.style.cursor = 'grabbing';
+      }
     }
   };
 
@@ -174,6 +195,12 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
     e.preventDefault();
     e.stopPropagation();
     setIsResizing(true);
+    
+    // FORCE CURSOR CHANGE FOR RESIZE
+    if (chatbotRef.current) {
+      chatbotRef.current.style.cursor = 'se-resize';
+      document.body.style.cursor = 'se-resize';
+    }
   };
 
   const addMessage = (role: 'user' | 'assistant', content: string) => {
@@ -393,10 +420,10 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
   return (
     <motion.div
       ref={chatbotRef}
-      className={`no-rickshaw-sound fixed z-50 ${className} ${isDragging ? 'chatbot-dragging' : isResizing ? 'cursor-se-resize' : ''}`}
+      className={`no-rickshaw-sound fixed z-50 ${className}`}
       style={{
-        left: position.x || 'unset',
-        top: position.y || 'unset',
+        left: position.x ? `${position.x}px` : 'unset',
+        top: position.y ? `${position.y}px` : 'unset',
         bottom: position.x || position.y ? 'unset' : 'max(1rem, env(safe-area-inset-bottom, 1rem))',
         right: position.x || position.y ? 'unset' : 'max(1rem, env(safe-area-inset-right, 1rem))',
         width: `${chatSize.width}px`,
@@ -404,7 +431,8 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
         pointerEvents: 'auto',
         touchAction: 'none',
         isolation: 'isolate',
-        userSelect: 'none'
+        userSelect: 'none',
+        cursor: isDragging ? 'grabbing' : isResizing ? 'se-resize' : 'default'
       }}
       initial={{ scale: 0, opacity: 0, y: 100 }}
       animate={{ scale: 1, opacity: 1, y: 0 }}

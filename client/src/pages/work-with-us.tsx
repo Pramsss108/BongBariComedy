@@ -4,8 +4,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ParallaxSection, ParallaxContainer } from "@/components/parallax-section";
 import { FileText } from "lucide-react";
+import { useSparkleSound } from "@/hooks/useSparkleSound";
 
 const WorkWithUs = () => {
+  const { playSparkleSound } = useSparkleSound({ 
+    enabled: true, 
+    volume: 0.2, 
+    cooldownMs: 200 
+  });
+
   const collaborationTypes = [
     {
       title: "Product Integration",
@@ -22,6 +29,7 @@ const WorkWithUs = () => {
   ];
 
   const handleFormClick = () => {
+    playSparkleSound();
     // This would open the actual Google Form
     window.open("https://forms.google.com/", "_blank");
   };
@@ -83,11 +91,12 @@ const WorkWithUs = () => {
                   {collaborationTypes.map((type, index) => (
                     <motion.div 
                       key={index}
-                      className="text-center p-6 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-500 ease-out hover:border-brand-blue/30 hover:-translate-y-1 group"
+                      className="text-center p-6 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-500 ease-out hover:border-brand-blue/30 hover:-translate-y-1 group cursor-pointer"
                       data-testid={`collaboration-type-${index}`}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.8, delay: 0.1 * index, ease: "easeOut" }}
+                      onMouseEnter={playSparkleSound}
                     >
                       <h4 className="font-semibold text-brand-blue mb-3 group-hover:text-brand-red transition-colors duration-300">{type.title}</h4>
                       <p className="text-sm text-gray-600 leading-relaxed">{type.description}</p>
@@ -110,6 +119,7 @@ const WorkWithUs = () => {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
+                  onMouseEnter={playSparkleSound}
                 >
                   <motion.div
                     initial={{ scale: 0.8, opacity: 0 }}

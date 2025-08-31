@@ -626,10 +626,19 @@ const Home = () => {
                                   <Input 
                                     placeholder="Enter phone number"
                                     data-testid="input-phone"
+                                    type="tel"
                                     value={field.value?.split(' ').slice(1).join(' ') || ''}
                                     onChange={(e) => {
+                                      // Only allow numbers - remove any non-digit characters
+                                      const numbersOnly = e.target.value.replace(/[^0-9]/g, '');
                                       const code = field.value?.split(' ')[0] || '+91';
-                                      field.onChange(code + (e.target.value ? ' ' + e.target.value : ''));
+                                      field.onChange(code + (numbersOnly ? ' ' + numbersOnly : ''));
+                                    }}
+                                    onKeyPress={(e) => {
+                                      // Prevent typing non-numeric characters
+                                      if (!/[0-9]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'Tab') {
+                                        e.preventDefault();
+                                      }
                                     }}
                                     className="flex-1"
                                   />

@@ -1199,9 +1199,9 @@ section:nth-child(odd) {
   
   /* Desktop subtitle professional spacing */
   [data-testid="logo-link"] p {
-    margin-top: 0 !important;
+    margin-top: 0.25rem !important;
     line-height: 1.1 !important;
-    font-size: 0.75rem !important;
+    font-size: 0.7rem !important;
     white-space: nowrap !important;
   }
   
@@ -1211,10 +1211,10 @@ section:nth-child(odd) {
     min-width: max-content !important;
   }
   
-  /* Desktop logo text alignment - 1cm down */
+  /* Desktop logo text alignment - proper spacing */
   [data-testid="logo-link"] .hidden.md\\:block {
-    margin-top: 0.75rem !important;
-    padding-top: 0.125rem !important;
+    margin-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
   }
 }
 

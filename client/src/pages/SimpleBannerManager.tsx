@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { Upload, Image, Save } from "lucide-react";
-import { AdvancedProfessionalBannerStudio } from "@/components/AdvancedProfessionalBannerStudio";
+import { SimpleCropStudio } from "@/components/SimpleCropStudio";
 
 interface BannerData {
   title: string;
@@ -176,9 +176,9 @@ export function SimpleBannerManager() {
             </CardContent>
           </Card>
 
-          {/* Advanced Professional Banner Studio */}
+          {/* Simple Crop Studio */}
           {bannerPreview && (
-            <AdvancedProfessionalBannerStudio 
+            <SimpleCropStudio 
               imageUrl={bannerPreview}
               onCropChange={setCroppedImage}
               className=""

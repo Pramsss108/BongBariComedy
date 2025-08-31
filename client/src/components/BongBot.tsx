@@ -7,7 +7,7 @@ interface BongBotProps {
 }
 
 export default function BongBot({ onOpenChange }: BongBotProps) {
-  const [position, setPosition] = useState({ x: 0, y: 100 });
+  const [position, setPosition] = useState({ x: 0, y: 50 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [isOpen, setIsOpen] = useState(false);
@@ -41,7 +41,7 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
   // When opening chatbot, position it on the right side
   const handleOpenChatbot = () => {
     const rightSideX = Math.max(0, window.innerWidth - 400); // Right side position with bounds check
-    setPosition({ x: rightSideX, y: 100 });
+    setPosition({ x: rightSideX, y: 50 }); // Lower Y to avoid header cutoff
     setIsOpen(true);
     setIsMinimized(false);
     
@@ -204,24 +204,24 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
       className="fixed z-50 select-none"
       style={{
         left: position.x + 'px',
-        top: position.y + 'px',
+        top: Math.max(20, position.y) + 'px', // Ensure minimum 20px from top
         width: '380px',
         height: isMinimized ? '70px' : '540px',
-        padding: '8px'
+        padding: '0px'
       }}
       initial={{ opacity: 0, scale: 0.8, y: 50 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
     >
       {/* GLASS MORPHISM CONTAINER */}
-      <div className="w-full h-full bg-gradient-to-br from-white/15 via-white/10 to-white/5 backdrop-blur-xl rounded-2xl border border-white/30 shadow-2xl overflow-hidden">
+      <div className="w-full h-full bg-gradient-to-br from-white/15 via-white/10 to-white/5 backdrop-blur-xl rounded-2xl border border-white/30 shadow-2xl overflow-hidden" style={{ marginTop: '10px' }}>
         
         {/* PROFESSIONAL DRAGGABLE HEADER */}
         <motion.div
           ref={headerRef}
           onMouseDown={handleMouseDown}
-          className="relative w-full h-16 bg-gradient-to-r from-[#1363DF]/60 via-[#FFCC00]/60 to-[#FF4D4D]/60 backdrop-blur-lg cursor-grab active:cursor-grabbing flex items-center justify-between px-4 border-b-2 border-white/40 shadow-lg rounded-t-2xl"
-          style={{ userSelect: 'none' }}
+          className="relative w-full h-18 bg-gradient-to-r from-[#1363DF]/60 via-[#FFCC00]/60 to-[#FF4D4D]/60 backdrop-blur-lg cursor-grab active:cursor-grabbing flex items-center justify-between px-4 border-b-2 border-white/40 shadow-lg rounded-t-2xl"
+          style={{ userSelect: 'none', paddingTop: '8px', paddingBottom: '8px' }}
           whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
         >
           {/* ANIMATED LOGO & TITLE */}

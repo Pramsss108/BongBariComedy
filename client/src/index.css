@@ -295,6 +295,14 @@
   position: relative;
   padding: 2px;
   border-radius: 14px;
+}
+
+/* Only the border rotates, content stays static */
+.rotating-border-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
   background: conic-gradient(
     from 0deg,
     #ff1493,  /* hot pink */
@@ -306,6 +314,7 @@
     #ff1493   /* back to hot pink */
   );
   animation: rotateBorder 3s linear infinite;
+  z-index: -1;
 }
 
 @keyframes rotateBorder {

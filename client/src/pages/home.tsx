@@ -142,25 +142,25 @@ const Home = () => {
                 <div className="w-full h-full bg-gradient-to-br from-transparent via-white to-transparent"></div>
               </div>
               
-              {/* Main content positioned in lower half */}
+              {/* Main content */}
               <motion.div 
-                className="text-center z-10 absolute bottom-16 left-1/2 transform -translate-x-1/2 w-full"
+                className="text-center z-10 mt-8"
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.5 }}
               >
                 <motion.div 
-                  className="mb-6"
+                  className="mb-8"
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 0.7 }}
                 >
-                  <span className="text-6xl md:text-7xl lg:text-8xl font-bold text-white bangla-text drop-shadow-lg">
+                  <span className="text-7xl md:text-9xl lg:text-[10rem] font-bold text-white bangla-text drop-shadow-lg">
                     বং বাড়ি
                   </span>
                 </motion.div>
                 <motion.div 
-                  className="text-xl md:text-2xl lg:text-3xl font-semibold text-white drop-shadow-md mt-4"
+                  className="text-2xl md:text-3xl lg:text-4xl font-semibold text-white drop-shadow-md mt-6"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 0.9 }}
@@ -168,7 +168,7 @@ const Home = () => {
                   Bengali Comedy That Hits Home!
                 </motion.div>
                 <motion.div 
-                  className="text-lg md:text-xl lg:text-2xl text-white/90 mt-2 bangla-text"
+                  className="text-xl md:text-2xl lg:text-3xl text-white/90 mt-4 bangla-text"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 1.1 }}

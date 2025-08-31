@@ -216,56 +216,53 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
       {/* GLASS MORPHISM CONTAINER */}
       <div className="w-full h-full bg-gradient-to-br from-white/15 via-white/10 to-white/5 backdrop-blur-xl rounded-2xl border border-white/30 shadow-2xl overflow-visible" style={{ marginTop: '0px', paddingTop: '10px' }}>
         
-        {/* PROFESSIONAL DRAGGABLE HEADER */}
+        {/* REDESIGNED CLEAN HEADER */}
         <motion.div
           ref={headerRef}
           onMouseDown={handleMouseDown}
-          className="relative w-full h-14 bg-gradient-to-r from-[#1363DF]/60 via-[#FFCC00]/60 to-[#FF4D4D]/60 backdrop-blur-lg cursor-grab active:cursor-grabbing flex items-center justify-between px-4 border-b-2 border-white/40 shadow-lg rounded-t-2xl"
-          style={{ userSelect: 'none', marginTop: '-10px' }}
-          whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
+          className="relative w-full bg-gradient-to-r from-[#1363DF]/70 via-[#FFCC00]/70 to-[#FF4D4D]/70 backdrop-blur-xl cursor-grab active:cursor-grabbing flex items-center justify-between border-b border-white/20 shadow-md rounded-t-2xl"
+          style={{ 
+            userSelect: 'none', 
+            marginTop: '-10px',
+            height: '60px',
+            paddingLeft: '16px',
+            paddingRight: '12px'
+          }}
         >
-          {/* ANIMATED LOGO & TITLE */}
-          <div className="flex items-center gap-2.5">
-            <motion.div 
-              className="w-8 h-8 bg-gradient-to-br from-[#FFCC00] to-[#FF4D4D] rounded-lg flex items-center justify-center shadow-lg"
-              animate={{ rotate: isDragging ? 10 : 0 }}
-              transition={{ type: 'spring', stiffness: 200 }}
-            >
-              <Bot size={16} className="text-white drop-shadow-sm" />
-            </motion.div>
-            <div className="flex flex-col justify-center py-1">
-              <h3 className="text-white font-bold text-base drop-shadow-lg leading-5">Bong Bot</h3>
-              <div className="flex items-center gap-1">
-                <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
-                <p className="text-white/90 text-xs font-normal leading-3">ami sob somoy online</p>
+          {/* LEFT SIDE - PROFILE & TEXT */}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#FFCC00] to-[#FF4D4D] rounded-full flex items-center justify-center shadow-md">
+              <Bot size={20} className="text-white" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-white font-semibold text-base leading-5">Bong Bot</span>
+              <div className="flex items-center gap-1 mt-0.5">
+                <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                <span className="text-white/80 text-xs">ami sob somoy online</span>
               </div>
             </div>
           </div>
           
-          {/* CONTROL BUTTONS */}
-          <div className="flex items-center gap-2">
-            <motion.button
+          {/* RIGHT SIDE - ACTION BUTTONS */}
+          <div className="flex items-center gap-1.5">
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 setIsMinimized(!isMinimized);
               }}
-              className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all backdrop-blur-sm border border-white/10"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
+              className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
             >
-              <Minimize2 size={12} className="text-white drop-shadow-sm" />
-            </motion.button>
-            <motion.button
+              <Minimize2 size={16} className="text-white/80" />
+            </button>
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 setIsOpen(false);
               }}
-              className="w-7 h-7 rounded-lg bg-red-500/80 hover:bg-red-500 flex items-center justify-center transition-all backdrop-blur-sm border border-red-300/20"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
+              className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
             >
-              <X size={12} className="text-white drop-shadow-sm" />
-            </motion.button>
+              <X size={16} className="text-white/80" />
+            </button>
           </div>
         </motion.div>
         

@@ -31,19 +31,60 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
   const [isTyping, setIsTyping] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const chatbotRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    if (messagesEndRef.current) {
+    if (messagesEndRef.current && scrollAreaRef.current) {
       setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+        const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-content]');
+        if (scrollContainer) {
+          scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        }
       }, 100);
     }
   }, [messages, isTyping]);
+
+  // Prevent page scrolling when chatbot is hovered
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if (isHovered && chatbotRef.current?.contains(e.target as Node)) {
+        e.stopPropagation();
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (isHovered && chatbotRef.current?.contains(e.target as Node)) {
+        e.stopPropagation();
+      }
+    };
+
+    if (isHovered) {
+      document.addEventListener('wheel', handleWheel, { passive: false });
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      
+      return () => {
+        document.removeEventListener('wheel', handleWheel);
+        document.removeEventListener('touchmove', handleTouchMove);
+      };
+    }
+  }, [isHovered]);
+
+  // Manage body scroll lock on mobile when chatbot is open
+  useEffect(() => {
+    if (isOpen && window.innerWidth < 640) {
+      document.body.classList.add('chatbot-open');
+      
+      return () => {
+        document.body.classList.remove('chatbot-open');
+      };
+    }
+  }, [isOpen]);
 
   // Focus input when chatbot opens
   useEffect(() => {
@@ -111,7 +152,7 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
   };
 
   const sendMessage = async () => {
-    if (!inputMessage.trim()) return;
+    if (!inputMessage.trim() || isTyping) return;
 
     const userMessage = inputMessage.trim();
     setInputMessage("");
@@ -135,10 +176,17 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
         }
       });
 
-      addMessage('assistant', response.response);
+      if (response?.response) {
+        addMessage('assistant', response.response);
+      } else {
+        throw new Error('Invalid response format');
+      }
     } catch (error) {
       console.error('Chatbot error:', error);
-      addMessage('assistant', 'দুঃখিত, আমার একটু সমস্যা হচ্ছে। আবার চেষ্টা করুন! 😅\n\nSorry, I\'m having some trouble. Please try again!');
+      const errorMessage = error instanceof Error && error.message.includes('network') 
+        ? 'ইন্টারনেট সংযোগ চেক করুন! 😅\n\nPlease check your internet connection!'
+        : 'দুঃখিত, আমার একটু সমস্যা হচ্ছে। আবার চেষ্টা করুন! 😅\n\nSorry, I\'m having some trouble. Please try again!';
+      addMessage('assistant', errorMessage);
     } finally {
       setIsTyping(false);
     }
@@ -243,15 +291,19 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
   if (!isOpen) {
     return (
       <motion.div
-        className={`fixed bottom-4 right-4 z-50 ${className}`}
+        className={`fixed bottom-4 right-4 z-50 ${className} touch-manipulation`}
+        style={{
+          bottom: 'max(1rem, env(safe-area-inset-bottom, 1rem))',
+          right: 'max(1rem, env(safe-area-inset-right, 1rem))'
+        }}
         initial={{ scale: 0, rotate: -180 }}
         animate={{ scale: 1, rotate: 0 }}
         transition={{ type: "spring", stiffness: 260, damping: 20 }}
       >
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center touch-manipulation">
           {/* Compact Bong Bot Label */}
           <motion.div
-            className="mb-2 px-3 py-1 bg-gradient-to-r from-[#1363DF]/95 to-[#FF4D4D]/95 backdrop-blur-md rounded-full text-white text-xs font-bold border border-[#FFCC00]/40 shadow-xl"
+            className="mb-2 px-3 py-2 sm:py-1 bg-gradient-to-r from-[#1363DF]/95 to-[#FF4D4D]/95 backdrop-blur-md rounded-full text-white text-sm sm:text-xs font-bold border border-[#FFCC00]/40 shadow-xl touch-manipulation"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.5 }}
@@ -279,8 +331,9 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
             
             <Button
               onClick={() => setIsOpen(true)}
-              className="no-rickshaw-sound relative w-16 h-16 rounded-full bg-gradient-to-br from-[#1363DF] via-[#FFCC00] to-[#FF4D4D] hover:from-[#1363DF]/90 hover:via-[#FFCC00]/90 hover:to-[#FF4D4D]/90 text-white shadow-xl border-2 border-[#FFCC00]/50 overflow-hidden"
+              className="no-rickshaw-sound relative w-20 h-20 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-[#1363DF] via-[#FFCC00] to-[#FF4D4D] hover:from-[#1363DF]/90 hover:via-[#FFCC00]/90 hover:to-[#FF4D4D]/90 active:scale-95 text-white shadow-xl border-2 border-[#FFCC00]/50 overflow-hidden touch-manipulation"
               data-testid="chatbot-open-button"
+              aria-label="Open Bong Bot Chat"
             >
               <motion.div
                 className="absolute inset-1 border border-[#FFCC00]/40 rounded-full"
@@ -288,10 +341,10 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
                 transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
               />
               
-              <MessageCircle className="w-7 h-7 relative z-10" />
+              <MessageCircle className="w-8 h-8 sm:w-7 sm:h-7 relative z-10" />
               
               <motion.div
-                className="absolute top-2 right-2 w-1.5 h-1.5 bg-[#FFCC00] rounded-full"
+                className="absolute top-2 right-2 w-2 h-2 sm:w-1.5 sm:h-1.5 bg-[#FFCC00] rounded-full"
                 animate={{ scale: [0, 1, 0], opacity: [0, 1, 0] }}
                 transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
               />
@@ -307,23 +360,38 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
       ref={chatbotRef}
       className={`no-rickshaw-sound fixed z-50 ${className} ${isDragging ? 'cursor-grabbing' : ''}`}
       style={{
-        bottom: '1rem',
-        right: '1rem',
+        bottom: 'max(1rem, env(safe-area-inset-bottom, 1rem))',
+        right: 'max(1rem, env(safe-area-inset-right, 1rem))',
         maxWidth: 'calc(100vw - 2rem)',
-        maxHeight: 'calc(100vh - 2rem)'
+        maxHeight: 'calc(100vh - 2rem)',
+        pointerEvents: 'auto',
+        touchAction: 'pan-y',
+        isolation: 'isolate'
       }}
       initial={{ scale: 0, opacity: 0, y: 100 }}
       animate={{ scale: 1, opacity: 1, y: 0 }}
       exit={{ scale: 0, opacity: 0, y: 100 }}
       transition={{ type: "spring", stiffness: 200, damping: 25 }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onTouchStart={() => setIsHovered(true)}
+      onTouchEnd={() => setIsHovered(false)}
     >
       <div 
         className={`relative transition-all duration-500 ease-out ${
           isMinimized 
             ? 'w-72 h-14' 
-            : 'w-80 sm:w-96 h-[450px]'
+            : 'w-80 sm:w-96 md:w-[400px] h-[450px] max-h-[80vh]'
         }`}
-        style={{ minWidth: '280px' }}
+        style={{ 
+          minWidth: '280px',
+          maxWidth: 'min(400px, calc(100vw - 2rem))',
+          contain: 'layout style paint',
+          isolation: 'isolate'
+        }}
+        role="dialog"
+        aria-label="Bong Bot Chat Assistant"
+        aria-modal="false"
       >
         {/* Brand Colors Glossy Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#101418]/95 via-[#1363DF]/20 to-[#101418]/95 backdrop-blur-xl rounded-2xl border border-[#FFCC00]/30 shadow-2xl overflow-hidden">
@@ -388,19 +456,21 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
               variant="ghost"
               size="sm"
               onClick={() => setIsMinimized(!isMinimized)}
-              className="no-rickshaw-sound h-7 w-7 p-0 rounded-full bg-[#FFCC00]/10 hover:bg-[#FFCC00]/20 text-white border border-[#FFCC00]/30"
+              className="no-rickshaw-sound h-8 w-8 sm:h-7 sm:w-7 p-0 rounded-full bg-[#FFCC00]/10 hover:bg-[#FFCC00]/20 active:bg-[#FFCC00]/30 text-white border border-[#FFCC00]/30 touch-manipulation"
               data-testid="chatbot-minimize-button"
+              aria-label={isMinimized ? "Maximize chat" : "Minimize chat"}
             >
-              {isMinimized ? <Maximize2 className="w-3 h-3" /> : <Minimize2 className="w-3 h-3" />}
+              {isMinimized ? <Maximize2 className="w-4 h-4 sm:w-3 sm:h-3" /> : <Minimize2 className="w-4 h-4 sm:w-3 sm:h-3" />}
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsOpen(false)}
-              className="no-rickshaw-sound h-7 w-7 p-0 rounded-full bg-[#FF4D4D]/10 hover:bg-[#FF4D4D]/20 text-white border border-[#FF4D4D]/30"
+              className="no-rickshaw-sound h-8 w-8 sm:h-7 sm:w-7 p-0 rounded-full bg-[#FF4D4D]/10 hover:bg-[#FF4D4D]/20 active:bg-[#FF4D4D]/30 text-white border border-[#FF4D4D]/30 touch-manipulation"
               data-testid="chatbot-close-button"
+              aria-label="Close chat"
             >
-              <X className="w-3 h-3" />
+              <X className="w-4 h-4 sm:w-3 sm:h-3" />
             </Button>
           </div>
         </div>
@@ -416,8 +486,18 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
               style={{ height: 'calc(450px - 60px)' }}
             >
               {/* Fixed Scrollable Messages Area with Custom Scrollbar */}
-              <div className="flex-1 overflow-hidden custom-scrollbar" style={{ height: '200px' }}>
-                <ScrollArea className="h-full px-3 py-2 custom-scrollbar">
+              <div 
+                className="flex-1 overflow-hidden" 
+                style={{ height: 'min(200px, 40vh)' }}
+                onWheel={(e) => {
+                  e.stopPropagation();
+                }}
+              >
+                <ScrollArea 
+                  ref={scrollAreaRef}
+                  className="h-full px-3 py-2 custom-scrollbar"
+                  style={{ touchAction: 'pan-y' }}
+                >
                   <div className="space-y-3">
                     {messages.map((message, index) => (
                       <motion.div
@@ -469,16 +549,16 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
               </div>
 
               {/* Compact Template Messages */}
-              <div className="px-3 py-2 border-t border-[#FFCC00]/20">
+              <div className="px-3 py-2 border-t border-[#FFCC00]/20 touch-manipulation">
                 <div className="space-y-1.5">
                   {templateMessages.map((template, index) => (
                     <motion.button
                       key={index}
                       onClick={() => sendTemplateMessage(template.text)}
                       disabled={isTyping}
-                      className="no-rickshaw-sound w-full py-2 px-3 bg-gradient-to-r from-[#1363DF]/20 to-[#FF4D4D]/20 backdrop-blur-sm rounded-lg border border-[#FFCC00]/30 text-white text-xs font-medium hover:from-[#1363DF]/30 hover:to-[#FF4D4D]/30 transition-all duration-200 flex items-center justify-between"
+                      className="no-rickshaw-sound w-full py-3 px-3 bg-gradient-to-r from-[#1363DF]/20 to-[#FF4D4D]/20 backdrop-blur-sm rounded-lg border border-[#FFCC00]/30 text-white text-xs sm:text-sm font-medium hover:from-[#1363DF]/30 hover:to-[#FF4D4D]/30 active:from-[#1363DF]/40 active:to-[#FF4D4D]/40 transition-all duration-200 flex items-center justify-between touch-manipulation"
                       whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
+                      whileTap={{ scale: 0.97 }}
                       data-testid={`template-${index}`}
                     >
                       <span className="flex-1 text-left truncate">{template.text}</span>
@@ -489,31 +569,35 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
               </div>
 
               {/* ALWAYS VISIBLE Fixed Input Area */}
-              <div className="mt-auto p-3 bg-gradient-to-t from-[#101418]/80 via-[#101418]/40 to-transparent backdrop-blur-sm border-t border-[#FFCC00]/20">
+              <div className="mt-auto p-3 bg-gradient-to-t from-[#101418]/80 via-[#101418]/40 to-transparent backdrop-blur-sm border-t border-[#FFCC00]/20 touch-manipulation">
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-r from-[#1363DF]/20 to-[#FF4D4D]/20 rounded-lg blur-sm" />
                   
-                  <div className="relative bg-[#101418]/40 backdrop-blur-sm rounded-lg border border-[#FFCC00]/30 p-2 flex gap-2 items-end">
+                  <div className="relative bg-[#101418]/40 backdrop-blur-sm rounded-lg border border-[#FFCC00]/30 p-2 flex gap-2 items-end touch-manipulation">
                     <textarea
                       ref={inputRef}
                       value={inputMessage}
                       onChange={(e) => setInputMessage(e.target.value)}
                       onKeyDown={handleKeyPress}
                       placeholder="Ask me anything magical... ✨"
-                      className="flex-1 bg-transparent border-0 text-white placeholder:text-[#FFCC00]/70 focus:ring-0 focus:outline-none text-xs resize-none"
+                      className="flex-1 bg-transparent border-0 text-white placeholder:text-[#FFCC00]/70 focus:ring-0 focus:outline-none text-sm sm:text-xs resize-none touch-manipulation"
                       disabled={isTyping}
                       rows={2}
-                      style={{ maxHeight: '60px', minHeight: '32px' }}
+                      style={{ 
+                        maxHeight: '60px', 
+                        minHeight: '40px',
+                        fontSize: window.innerWidth < 640 ? '16px' : '12px' // Prevent iOS zoom
+                      }}
                       data-testid="chatbot-input"
                     />
                     <motion.div whileTap={{ scale: 0.9 }}>
                       <Button
                         onClick={sendMessage}
                         disabled={!inputMessage.trim() || isTyping}
-                        className="no-rickshaw-sound w-8 h-8 p-0 rounded-lg bg-gradient-to-br from-[#1363DF] to-[#FF4D4D] hover:from-[#1363DF]/80 hover:to-[#FF4D4D]/80 disabled:opacity-50 border border-[#FFCC00]/20"
+                        className="no-rickshaw-sound w-10 h-10 sm:w-8 sm:h-8 p-0 rounded-lg bg-gradient-to-br from-[#1363DF] to-[#FF4D4D] hover:from-[#1363DF]/80 hover:to-[#FF4D4D]/80 active:from-[#1363DF]/60 active:to-[#FF4D4D]/60 disabled:opacity-50 border border-[#FFCC00]/20 touch-manipulation"
                         data-testid="chatbot-send-button"
                       >
-                        <Send className="w-3 h-3" />
+                        <Send className="w-4 h-4 sm:w-3 sm:h-3" />
                       </Button>
                     </motion.div>
                   </div>

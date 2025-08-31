@@ -269,7 +269,7 @@ const Home = () => {
           
           {/* CTA Buttons */}
           <ParallaxSection speed={0.3} delay={0.3}>
-            <section className="text-center mb-4 py-4" data-testid="cta-section">
+            <section className="text-center mb-0 py-2" data-testid="cta-section">
             <motion.div 
               className="flex flex-col lg:flex-row gap-8 justify-center items-center px-8 max-w-6xl mx-auto"
               initial={{ opacity: 0, y: 50 }}
@@ -318,8 +318,8 @@ const Home = () => {
             <section className="mb-0" data-testid="collaboration-section">
             <div className="max-w-4xl mx-auto">
               {/* Work with Us Header with Yellow Background */}
-              <div className="bg-brand-yellow rounded-2xl p-2 mb-0 text-center shadow-lg">
-                <h3 className="text-8xl md:text-9xl font-bold text-brand-blue mb-8" data-testid="collaboration-title-english" style={{fontSize: 'clamp(4rem, 12vw, 10rem)'}}>
+              <div className="bg-brand-yellow rounded-2xl p-2 mb-0 text-center shadow-lg -mt-4">
+                <h3 className="text-8xl md:text-9xl font-bold text-brand-blue mb-4" data-testid="collaboration-title-english" style={{fontSize: 'clamp(4rem, 12vw, 10rem)'}}>
                   Work with Us
                 </h3>
                 <h4 className="text-6xl md:text-8xl font-bold text-gray-800 bangla-text" data-testid="collaboration-title-bengali" style={{fontSize: 'clamp(3rem, 10vw, 8rem)'}}>

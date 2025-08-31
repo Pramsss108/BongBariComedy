@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Navigation from "@/components/navigation";
 import { ScrollProgress } from "@/components/scroll-progress";
 import { FloatingElements } from "@/components/floating-elements";
-import CursorMagic from "@/components/cursor-magic";
+import { useGlobalCursor } from "@/hooks/useGlobalCursor";
 import { useParallaxScroll } from "@/hooks/useParallaxScroll";
 import Home from "@/pages/home";
 import About from "@/pages/about";
@@ -19,6 +19,9 @@ import BlogPost from "@/pages/blog-post";
 import NotFound from "@/pages/not-found";
 
 function Router() {
+  // Initialize professional site-wide cursor effect
+  useGlobalCursor();
+  
   // Initialize fast engaging parallax scroll effects
   useParallaxScroll();
   
@@ -26,7 +29,6 @@ function Router() {
     <div className="min-h-screen bg-brand-yellow relative">
       <ScrollProgress />
       <FloatingElements />
-      <CursorMagic />
       <Navigation />
       <Switch>
         <Route path="/" component={Home} />

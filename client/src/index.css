@@ -148,6 +148,111 @@
     backface-visibility: hidden;
     transform: translateZ(0);
   }
+
+  /* Instagram Reels - Rotating Gradient Border Animation */
+  .instagram-reel-container {
+    position: relative;
+    border-radius: 16px;
+    padding: 3px;
+    background: conic-gradient(
+      from 0deg,
+      #ff006e,
+      #ff8500,
+      #ffb700,
+      #8ac926,
+      #1982c4,
+      #6a4c93,
+      #ff006e
+    );
+    animation: rotateGradient 3s linear infinite;
+    will-change: background;
+    transform: translateZ(0);
+  }
+
+  @keyframes rotateGradient {
+    0% {
+      background: conic-gradient(
+        from 0deg,
+        #ff006e,
+        #ff8500,
+        #ffb700,
+        #8ac926,
+        #1982c4,
+        #6a4c93,
+        #ff006e
+      );
+    }
+    25% {
+      background: conic-gradient(
+        from 90deg,
+        #ff006e,
+        #ff8500,
+        #ffb700,
+        #8ac926,
+        #1982c4,
+        #6a4c93,
+        #ff006e
+      );
+    }
+    50% {
+      background: conic-gradient(
+        from 180deg,
+        #ff006e,
+        #ff8500,
+        #ffb700,
+        #8ac926,
+        #1982c4,
+        #6a4c93,
+        #ff006e
+      );
+    }
+    75% {
+      background: conic-gradient(
+        from 270deg,
+        #ff006e,
+        #ff8500,
+        #ffb700,
+        #8ac926,
+        #1982c4,
+        #6a4c93,
+        #ff006e
+      );
+    }
+    100% {
+      background: conic-gradient(
+        from 360deg,
+        #ff006e,
+        #ff8500,
+        #ffb700,
+        #8ac926,
+        #1982c4,
+        #6a4c93,
+        #ff006e
+      );
+    }
+  }
+
+  .instagram-reel-inner {
+    background: white;
+    border-radius: 13px;
+    overflow: hidden;
+    position: relative;
+    aspect-ratio: 9/16;
+    width: 100%;
+    height: 100%;
+  }
+
+  .instagram-reel-container:hover {
+    transform: scale(1.05) translateZ(0);
+    transition: transform 0.15s ease;
+  }
+
+  /* Add Instagram reels to parallax system */
+  .instagram-reel-container {
+    will-change: transform, background;
+    backface-visibility: hidden;
+    contain: layout style paint;
+  }
 }
 
 .bangla-text {

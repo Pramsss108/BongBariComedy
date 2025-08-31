@@ -123,7 +123,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // YouTube API route
+  // YouTube API route - Latest videos (chronological order)
   app.get("/api/youtube/latest", async (_req, res) => {
     try {
       const youtube = google.youtube({
@@ -151,11 +151,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "Uploads playlist not found" });
       }
 
-      // Get latest 6 videos from uploads playlist
+      // Get latest 3 videos from uploads playlist (most recent first)
       const playlistResponse = await youtube.playlistItems.list({
         part: ['snippet', 'contentDetails'],
         playlistId: uploadsPlaylistId,
-        maxResults: 6
+        maxResults: 3
       });
 
       const videos = playlistResponse.data.items?.map(item => ({
@@ -167,8 +167,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(videos);
     } catch (error) {
-      console.error('YouTube API Error:', error);
-      res.status(500).json({ message: "Failed to fetch YouTube videos" });
+      console.error('YouTube API Error (Latest):', error);
+      res.status(500).json({ message: "Failed to fetch latest YouTube videos" });
+    }
+  });
+
+  // YouTube API route - Popular videos (by view count)
+  app.get("/api/youtube/popular", async (_req, res) => {
+    try {
+      const youtube = google.youtube({
+        version: 'v3',
+        auth: process.env.YOUTUBE_API_KEY
+      });
+
+      const channelId = process.env.YOUTUBE_CHANNEL_ID;
+      if (!channelId) {
+        return res.status(500).json({ message: "YouTube Channel ID not configured" });
+      }
+
+      // Search for videos from this channel, ordered by popularity (view count)
+      const searchResponse = await youtube.search.list({
+        part: ['snippet'],
+        channelId: channelId,
+        maxResults: 10,
+        order: 'viewCount',
+        type: 'video'
+      });
+
+      if (!searchResponse.data.items || searchResponse.data.items.length === 0) {
+        return res.status(404).json({ message: "No popular videos found" });
+      }
+
+      // Get detailed stats for these videos to ensure they're actually popular
+      const videoIds = searchResponse.data.items?.map((item: any) => item.id?.videoId).filter(Boolean) || [];
+      
+      const statsResponse = await youtube.videos.list({
+        part: ['statistics', 'snippet'],
+        id: videoIds
+      });
+
+      // Sort by view count and take top 3
+      const popularVideos = statsResponse.data.items?.map((item: any) => ({
+        videoId: item.id,
+        title: item.snippet?.title,
+        thumbnail: item.snippet?.thumbnails?.high?.url || item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url,
+        publishedAt: item.snippet?.publishedAt,
+        viewCount: parseInt(item.statistics?.viewCount || '0')
+      }))
+      .sort((a, b) => b.viewCount - a.viewCount)
+      .slice(0, 3) || [];
+
+      res.json(popularVideos);
+    } catch (error) {
+      console.error('YouTube API Error (Popular):', error);
+      res.status(500).json({ message: "Failed to fetch popular YouTube videos" });
     }
   });
 

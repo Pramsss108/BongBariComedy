@@ -30,9 +30,14 @@ const Home = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const { data: youtubeVideos, isLoading } = useQuery<YouTubeVideo[]>({
+  const { data: latestVideos, isLoading: isLoadingLatest } = useQuery<YouTubeVideo[]>({
     queryKey: ['/api/youtube/latest'],
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+  });
+
+  const { data: popularVideos, isLoading: isLoadingPopular } = useQuery<YouTubeVideo[]>({
+    queryKey: ['/api/youtube/popular'],
+    refetchInterval: 15 * 60 * 1000, // Refetch every 15 minutes (popular videos change less frequently)
   });
 
   const form = useForm<InsertCollaborationRequest>({
@@ -113,7 +118,15 @@ const Home = () => {
     }
   ];
 
-  const videoData = youtubeVideos || fallbackVideoData;
+  // Fallback data for latest videos (first 3)
+  const latestVideoData = latestVideos || fallbackVideoData.slice(0, 3);
+  
+  // Fallback data for popular videos (specific popular ones)
+  const popularVideoData = popularVideos || [
+    fallbackVideoData[1], // Popular video 1
+    fallbackVideoData[4], // Popular video 2  
+    fallbackVideoData[5]  // Popular video 3
+  ];
 
   return (
     <>
@@ -249,7 +262,7 @@ const Home = () => {
               New content keeps them coming back - Don't miss out!
             </motion.p>
             
-            {isLoading ? (
+            {isLoadingLatest ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 px-2 max-w-6xl mx-auto" data-testid="latest-videos-grid-loading">
                 {[...Array(3)].map((_, i) => (
                   <div key={i} className="video-container mx-auto">
@@ -259,7 +272,7 @@ const Home = () => {
               </div>
             ) : (
               <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 px-2 max-w-6xl mx-auto" data-testid="latest-videos-grid">
-                {videoData.slice(0, 3).map((video, index) => (
+                {latestVideoData.map((video: YouTubeVideo, index: number) => (
                   <motion.div
                     key={video.videoId}
                     initial={{ opacity: 0, y: 50, scale: 0.9 }}
@@ -317,7 +330,7 @@ const Home = () => {
               If others love it → you'll love it too!
             </motion.p>
             
-            {isLoading ? (
+            {isLoadingPopular ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 px-2 max-w-6xl mx-auto" data-testid="loved-videos-grid-loading">
                 {[...Array(3)].map((_, i) => (
                   <div key={i} className="video-container mx-auto">
@@ -327,11 +340,7 @@ const Home = () => {
               </div>
             ) : (
               <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 px-2 max-w-6xl mx-auto" data-testid="loved-videos-grid">
-                {[
-                  fallbackVideoData[1], // Popular video 1
-                  fallbackVideoData[4], // Popular video 2  
-                  fallbackVideoData[5]  // Popular video 3
-                ].map((video, index) => (
+                {popularVideoData.map((video: YouTubeVideo, index: number) => (
                   <motion.div
                     key={video.videoId}
                     initial={{ opacity: 0, y: 50, scale: 0.9 }}

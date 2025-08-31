@@ -53,37 +53,34 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
     }
   }, [messages, isTyping]);
 
-  // Prevent page scrolling when chatbot is hovered with proper edge handling
+  // PRECISE SCROLL CONTROL - Only for message area
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
-      if (isHovered && chatbotRef.current?.contains(e.target as Node)) {
-        const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-content]');
+      const messageArea = scrollAreaRef.current;
+      const isInMessageArea = messageArea?.contains(e.target as Node);
+      
+      if (isHovered && isInMessageArea && messageArea) {
+        const scrollContainer = messageArea.querySelector('[data-radix-scroll-area-content]');
         if (scrollContainer) {
           const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
-          const isAtTop = scrollTop <= 0;
-          const isAtBottom = scrollTop >= scrollHeight - clientHeight;
+          const isAtTop = scrollTop <= 2;
+          const isAtBottom = scrollTop >= scrollHeight - clientHeight - 2;
           
-          // Only prevent if scrolling within bounds or trying to scroll further when at edge
+          // Smart edge handling - prevent page scroll only when scrolling within message bounds
           if ((!isAtTop && e.deltaY < 0) || (!isAtBottom && e.deltaY > 0)) {
             e.preventDefault();
             e.stopPropagation();
-            
-            // Smooth scroll within chatbot
-            scrollContainer.scrollTo({
-              top: scrollTop + e.deltaY,
-              behavior: 'auto'
-            });
           }
         }
       }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (isHovered && chatbotRef.current?.contains(e.target as Node)) {
-        const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-content]');
-        if (scrollContainer) {
-          e.stopPropagation();
-        }
+      const messageArea = scrollAreaRef.current;
+      const isInMessageArea = messageArea?.contains(e.target as Node);
+      
+      if (isHovered && isInMessageArea && messageArea) {
+        e.stopPropagation();
       }
     };
 
@@ -396,10 +393,6 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
       animate={{ scale: 1, opacity: 1, y: 0 }}
       exit={{ scale: 0, opacity: 0, y: 100 }}
       transition={{ type: "spring", stiffness: 200, damping: 25 }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onTouchStart={() => setIsHovered(true)}
-      onTouchEnd={() => setIsHovered(false)}
     >
       <div 
         className={`relative transition-all duration-500 ease-out ${
@@ -435,67 +428,81 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
           </div>
         </div>
 
-        {/* Compact Header with Drag Handle */}
-        <div className="relative z-10 p-3 flex items-center justify-between border-b border-[#FFCC00]/20">
+        {/* NATURAL HEADER DESIGN - Fixed */}
+        <div className="relative z-10 flex flex-col bg-gradient-to-r from-[#1363DF]/95 to-[#FF4D4D]/95 backdrop-blur-md rounded-t-2xl border-b border-[#FFCC00]/30">
           {/* Drag Handle */}
           <div 
-            className="absolute left-1/2 top-1 transform -translate-x-1/2 cursor-grab active:cursor-grabbing hover:text-white/80 transition-colors"
+            className="absolute left-1/2 top-2 transform -translate-x-1/2 cursor-grab active:cursor-grabbing transition-colors"
             onMouseDown={handleMouseDown}
           >
-            <GripVertical className="w-4 h-4 text-[#FFCC00]/70" />
+            <GripVertical className="w-5 h-5 text-white/60 hover:text-white/80" />
           </div>
           
-          <div className="flex items-center gap-3">
-            <motion.div
-              className="relative w-8 h-8 rounded-full bg-gradient-to-br from-[#FFCC00] via-[#1363DF] to-[#FF4D4D] flex items-center justify-center"
-              animate={{ 
-                boxShadow: [
-                  "0 0 15px rgba(255, 204, 0, 0.6)", 
-                  "0 0 20px rgba(19, 99, 223, 0.7)", 
-                  "0 0 15px rgba(255, 77, 77, 0.6)"
-                ]
-              }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <Bot className="w-4 h-4 text-white" />
-            </motion.div>
-            
-            <div>
-              <h3 className="text-white font-bold text-sm bg-gradient-to-r from-[#FFCC00] to-[#FF4D4D] bg-clip-text text-transparent">
-                Bong Bot
-              </h3>
-              <div className="text-white/70 text-xs flex items-center gap-1">
-                <motion.div
-                  className="w-1.5 h-1.5 bg-[#FFCC00] rounded-full"
-                  animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                />
-                <span>Online ✨</span>
+          <div className="p-4 pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <motion.div
+                    className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FFCC00] via-[#FFD700] to-[#FF4D4D] flex items-center justify-center shadow-lg border-2 border-white/30"
+                    animate={{ 
+                      boxShadow: [
+                        "0 0 20px rgba(255, 204, 0, 0.5)",
+                        "0 0 30px rgba(255, 77, 77, 0.4)",
+                        "0 0 20px rgba(19, 99, 223, 0.5)"
+                      ]
+                    }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                  >
+                    <Bot className="w-6 h-6 text-white drop-shadow" />
+                  </motion.div>
+                  <motion.div
+                    className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white"
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  />
+                </div>
+                
+                <div>
+                  <h3 className="text-white font-bold text-lg leading-tight drop-shadow-sm">
+                    Bong Bot
+                  </h3>
+                  <p className="text-white/80 text-sm leading-tight">
+                    Bengali Comedy Assistant
+                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <motion.div
+                      className="w-2 h-2 bg-green-400 rounded-full"
+                      animate={{ opacity: [0.5, 1, 0.5] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    />
+                    <span className="text-green-300 text-xs font-medium">Always Online</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsMinimized(!isMinimized)}
+                  className="no-rickshaw-sound h-9 w-9 p-0 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 text-white border border-white/20 touch-manipulation transition-all duration-200"
+                  data-testid="chatbot-minimize-button"
+                  aria-label={isMinimized ? "Maximize chat" : "Minimize chat"}
+                >
+                  {isMinimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsOpen(false)}
+                  className="no-rickshaw-sound h-9 w-9 p-0 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 text-white border border-white/20 touch-manipulation transition-all duration-200"
+                  data-testid="chatbot-close-button"
+                  aria-label="Close chat"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
               </div>
             </div>
-          </div>
-          
-          <div className="flex gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsMinimized(!isMinimized)}
-              className="no-rickshaw-sound h-8 w-8 sm:h-7 sm:w-7 p-0 rounded-full bg-[#FFCC00]/10 hover:bg-[#FFCC00]/20 active:bg-[#FFCC00]/30 text-white border border-[#FFCC00]/30 touch-manipulation"
-              data-testid="chatbot-minimize-button"
-              aria-label={isMinimized ? "Maximize chat" : "Minimize chat"}
-            >
-              {isMinimized ? <Maximize2 className="w-4 h-4 sm:w-3 sm:h-3" /> : <Minimize2 className="w-4 h-4 sm:w-3 sm:h-3" />}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsOpen(false)}
-              className="no-rickshaw-sound h-8 w-8 sm:h-7 sm:w-7 p-0 rounded-full bg-[#FF4D4D]/10 hover:bg-[#FF4D4D]/20 active:bg-[#FF4D4D]/30 text-white border border-[#FF4D4D]/30 touch-manipulation"
-              data-testid="chatbot-close-button"
-              aria-label="Close chat"
-            >
-              <X className="w-4 h-4 sm:w-3 sm:h-3" />
-            </Button>
           </div>
         </div>
 
@@ -509,24 +516,22 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
               className="relative z-10 flex flex-col"
               style={{ height: 'calc(450px - 60px)' }}
             >
-              {/* Fixed Scrollable Messages Area with Custom Scrollbar */}
+              {/* SCROLLABLE MESSAGES AREA - Cursor Controlled */}
               <div 
-                className="flex-1 overflow-hidden" 
-                style={{ height: 'min(200px, 40vh)' }}
+                className="flex-1 overflow-hidden bg-gradient-to-b from-transparent via-[#101418]/20 to-transparent" 
+                style={{ height: '250px' }}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+                onTouchStart={() => setIsHovered(true)}
+                onTouchEnd={() => setIsHovered(false)}
               >
                 <ScrollArea 
                   ref={scrollAreaRef}
-                  className="h-full px-3 py-2 custom-scrollbar smooth-scroll"
+                  className="h-full px-4 py-3 custom-scrollbar smooth-scroll"
                   style={{ 
                     touchAction: 'pan-y',
                     scrollBehavior: 'smooth',
-                    overscrollBehavior: 'contain',
-                    scrollPadding: '8px',
-                    scrollMargin: '8px'
-                  }}
-                  onWheel={(e) => {
-                    // Let the improved wheel handler in useEffect manage this
-                    e.stopPropagation();
+                    overscrollBehavior: 'contain'
                   }}
                 >
                   <div className="space-y-3">
@@ -579,8 +584,8 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
                 </ScrollArea>
               </div>
 
-              {/* Compact Template Messages */}
-              <div className="px-3 py-2 border-t border-[#FFCC00]/20 touch-manipulation">
+              {/* Template Messages */}
+              <div className="px-4 py-2 border-t border-[#FFCC00]/20 bg-gradient-to-r from-[#101418]/60 to-[#101418]/80 backdrop-blur-sm">
                 <div className="space-y-1.5">
                   {templateMessages.map((template, index) => (
                     <motion.button
@@ -599,25 +604,25 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
                 </div>
               </div>
 
-              {/* ALWAYS VISIBLE Fixed Input Area */}
-              <div className="mt-auto p-3 bg-gradient-to-t from-[#101418]/80 via-[#101418]/40 to-transparent backdrop-blur-sm border-t border-[#FFCC00]/20 touch-manipulation">
+              {/* FIXED WRITING BOX - Never Moves */}
+              <div className="mt-auto p-4 bg-gradient-to-t from-[#101418]/95 via-[#101418]/80 to-[#101418]/60 backdrop-blur-md border-t-2 border-[#FFCC00]/30 rounded-b-2xl">
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-r from-[#1363DF]/20 to-[#FF4D4D]/20 rounded-lg blur-sm" />
                   
-                  <div className="relative bg-[#101418]/40 backdrop-blur-sm rounded-lg border border-[#FFCC00]/30 p-2 flex gap-2 items-end touch-manipulation">
+                  <div className="relative bg-[#101418]/60 backdrop-blur-sm rounded-xl border-2 border-[#FFCC00]/40 p-3 flex gap-3 items-end shadow-lg">
                     <textarea
                       ref={inputRef}
                       value={inputMessage}
                       onChange={(e) => setInputMessage(e.target.value)}
                       onKeyDown={handleKeyPress}
                       placeholder="Ask me anything magical... ✨"
-                      className="flex-1 bg-transparent border-0 text-white placeholder:text-[#FFCC00]/70 focus:ring-0 focus:outline-none text-sm sm:text-xs resize-none touch-manipulation"
+                      className="flex-1 bg-transparent border-0 text-white placeholder:text-[#FFCC00]/70 focus:ring-0 focus:outline-none text-sm resize-none"
                       disabled={isTyping}
                       rows={2}
                       style={{ 
-                        maxHeight: '60px', 
-                        minHeight: '40px',
-                        fontSize: window.innerWidth < 640 ? '16px' : '12px' // Prevent iOS zoom
+                        maxHeight: '80px', 
+                        minHeight: '44px',
+                        fontSize: '16px' // Prevent iOS zoom
                       }}
                       data-testid="chatbot-input"
                     />
@@ -625,10 +630,10 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
                       <Button
                         onClick={sendMessage}
                         disabled={!inputMessage.trim() || isTyping}
-                        className="no-rickshaw-sound w-10 h-10 sm:w-8 sm:h-8 p-0 rounded-lg bg-gradient-to-br from-[#1363DF] to-[#FF4D4D] hover:from-[#1363DF]/80 hover:to-[#FF4D4D]/80 active:from-[#1363DF]/60 active:to-[#FF4D4D]/60 disabled:opacity-50 border border-[#FFCC00]/20 touch-manipulation"
+                        className="no-rickshaw-sound w-12 h-12 p-0 rounded-xl bg-gradient-to-br from-[#1363DF] to-[#FF4D4D] hover:from-[#1363DF]/80 hover:to-[#FF4D4D]/80 active:scale-95 disabled:opacity-50 border-2 border-[#FFCC00]/40 shadow-lg transition-all duration-200"
                         data-testid="chatbot-send-button"
                       >
-                        <Send className="w-4 h-4 sm:w-3 sm:h-3" />
+                        <Send className="w-5 h-5" />
                       </Button>
                     </motion.div>
                   </div>

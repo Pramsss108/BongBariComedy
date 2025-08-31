@@ -288,7 +288,7 @@ const Home = () => {
                   onClick={() => window.open('https://youtube.com/@bongbari', '_blank')}
                   data-testid="button-youtube"
                 >
-                  <Youtube className="h-6 w-6" />
+                  <Youtube className="h-5 w-5" />
                   Subscribe on YouTube
                 </FuturisticButton>
               </motion.div>
@@ -305,7 +305,7 @@ const Home = () => {
                   onClick={() => window.open('https://instagram.com/thebongbari', '_blank')}
                   data-testid="button-instagram"
                 >
-                  <Instagram className="h-6 w-6" />
+                  <Instagram className="h-5 w-5" />
                   Follow on Instagram
                 </FuturisticButton>
               </motion.div>

@@ -59,30 +59,44 @@ export function useMouseMovementChime(options: MouseMovementChimeOptions = {}) {
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
       
-      // Create magical fairy dust sound with multiple harmonics
-      oscillator.type = 'sine'; // Pure sine wave for ethereal quality
-      oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+      // Create varied magical fairy dust sounds that change with movement
+      const variations = [
+        { freq: frequency, type: 'sine', harmonic: 1.5 },      // Crystal chime
+        { freq: frequency * 1.2, type: 'triangle', harmonic: 2 }, // Warm bell
+        { freq: frequency * 0.8, type: 'sine', harmonic: 1.25 },  // Deep sparkle
+        { freq: frequency * 1.4, type: 'sine', harmonic: 1.7 },   // High tinkle
+        { freq: frequency * 0.9, type: 'triangle', harmonic: 1.3 } // Soft chime
+      ];
       
-      // Add gentle, dreamy frequency modulation for fairy dust sparkle
+      // Select variation based on movement pattern (pseudo-random but consistent)
+      const now = Date.now();
+      const variationIndex = Math.floor((now / 300) % variations.length);
+      const currentVariation = variations[variationIndex];
+      
+      oscillator.type = currentVariation.type as OscillatorType;
+      oscillator.frequency.setValueAtTime(currentVariation.freq, audioContext.currentTime);
+      
+      // Add dynamic frequency modulation that varies per sound
       const lfo = audioContext.createOscillator();
       const lfoGain = audioContext.createGain();
       lfo.connect(lfoGain);
       lfoGain.connect(oscillator.frequency);
       
       lfo.type = 'sine';
-      lfo.frequency.setValueAtTime(1.5, audioContext.currentTime); // Slower, dreamier modulation
-      lfoGain.gain.setValueAtTime(8, audioContext.currentTime); // Gentle frequency shimmer
+      const lfoFreq = 1.2 + (variationIndex * 0.3); // Different LFO speeds
+      lfo.frequency.setValueAtTime(lfoFreq, audioContext.currentTime);
+      lfoGain.gain.setValueAtTime(5 + (variationIndex * 2), audioContext.currentTime);
       
-      // Add a second harmonic for magical depth
+      // Create harmonic with variation-specific frequency
       const harmonic = audioContext.createOscillator();
       const harmonicGain = audioContext.createGain();
       harmonic.connect(harmonicGain);
       harmonicGain.connect(audioContext.destination);
       
       harmonic.type = 'sine';
-      harmonic.frequency.setValueAtTime(frequency * 1.5, audioContext.currentTime); // Perfect fifth
+      harmonic.frequency.setValueAtTime(currentVariation.freq * currentVariation.harmonic, audioContext.currentTime);
       harmonicGain.gain.setValueAtTime(0, audioContext.currentTime);
-      harmonicGain.gain.linearRampToValueAtTime(volume * 0.3, audioContext.currentTime + fadeInTime);
+      harmonicGain.gain.linearRampToValueAtTime(volume * (0.2 + variationIndex * 0.05), audioContext.currentTime + fadeInTime);
       
       // Set initial volume to 0 and fade in
       gainNode.gain.setValueAtTime(0, audioContext.currentTime);
@@ -168,10 +182,11 @@ export function useMouseMovementChime(options: MouseMovementChimeOptions = {}) {
           clearTimeout(movementTimeoutRef.current);
         }
         
-        // Set timeout to stop fairy dust when movement stops (like emoji trail)
+        // Set timeout to stop fairy dust when movement stops (with slight variation)
+        const stopDelay = 180 + Math.random() * 40; // 180-220ms random variation
         movementTimeoutRef.current = window.setTimeout(() => {
           stopChime();
-        }, 200); // Stop after 200ms of no movement for smoother experience
+        }, stopDelay);
         
         lastMousePosRef.current = currentPos;
       }

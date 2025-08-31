@@ -206,29 +206,22 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
         left: position.x + 'px',
         top: position.y + 'px',
         width: '380px',
-        height: isMinimized ? '64px' : '520px'
+        height: isMinimized ? '70px' : '540px',
+        padding: '8px'
       }}
       initial={{ opacity: 0, scale: 0.8, y: 50 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
     >
       {/* GLASS MORPHISM CONTAINER */}
-      <div className="w-full h-full bg-gradient-to-br from-white/15 via-white/10 to-white/5 backdrop-blur-xl rounded-2xl border border-white/30 shadow-2xl overflow-hidden" style={{ paddingTop: '4px' }}>
+      <div className="w-full h-full bg-gradient-to-br from-white/15 via-white/10 to-white/5 backdrop-blur-xl rounded-2xl border border-white/30 shadow-2xl overflow-hidden">
         
         {/* PROFESSIONAL DRAGGABLE HEADER */}
         <motion.div
           ref={headerRef}
           onMouseDown={handleMouseDown}
-          className="relative w-full h-16 bg-gradient-to-r from-[#1363DF]/60 via-[#FFCC00]/60 to-[#FF4D4D]/60 backdrop-blur-lg cursor-grab active:cursor-grabbing flex items-center justify-between px-4 border-b-2 border-white/40 shadow-lg"
-          style={{ 
-            userSelect: 'none', 
-            borderTopLeftRadius: '16px',
-            borderTopRightRadius: '16px',
-            marginTop: '4px',
-            marginLeft: '4px',
-            marginRight: '4px',
-            width: 'calc(100% - 8px)'
-          }}
+          className="relative w-full h-16 bg-gradient-to-r from-[#1363DF]/60 via-[#FFCC00]/60 to-[#FF4D4D]/60 backdrop-blur-lg cursor-grab active:cursor-grabbing flex items-center justify-between px-4 border-b-2 border-white/40 shadow-lg rounded-t-2xl"
+          style={{ userSelect: 'none' }}
           whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
         >
           {/* ANIMATED LOGO & TITLE */}

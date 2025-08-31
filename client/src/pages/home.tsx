@@ -596,7 +596,7 @@ const Home = () => {
                               <FormControl>
                                 <div className="flex gap-2">
                                   <Select
-                                    value={field.value?.split(' ')[0] || "+880"}
+                                    value={field.value?.split(' ')[0] || "+91"}
                                     onValueChange={(code) => {
                                       const number = field.value?.split(' ').slice(1).join(' ') || '';
                                       field.onChange(code + (number ? ' ' + number : ''));
@@ -606,10 +606,10 @@ const Home = () => {
                                       <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
+                                      <SelectItem value="+91">🇮🇳 +91</SelectItem>
                                       <SelectItem value="+880">🇧🇩 +880</SelectItem>
                                       <SelectItem value="+1">🇺🇸 +1</SelectItem>
                                       <SelectItem value="+44">🇬🇧 +44</SelectItem>
-                                      <SelectItem value="+91">🇮🇳 +91</SelectItem>
                                       <SelectItem value="+86">🇨🇳 +86</SelectItem>
                                       <SelectItem value="+81">🇯🇵 +81</SelectItem>
                                       <SelectItem value="+49">🇩🇪 +49</SelectItem>
@@ -623,7 +623,7 @@ const Home = () => {
                                     data-testid="input-phone"
                                     value={field.value?.split(' ').slice(1).join(' ') || ''}
                                     onChange={(e) => {
-                                      const code = field.value?.split(' ')[0] || '+880';
+                                      const code = field.value?.split(' ')[0] || '+91';
                                       field.onChange(code + (e.target.value ? ' ' + e.target.value : ''));
                                     }}
                                     className="flex-1"

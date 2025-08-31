@@ -171,59 +171,141 @@ const Home = () => {
         <main className="py-4 sm:py-6 lg:py-8 relative z-10">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             
-            {/* Dynamic Promo/Offer Section - Just under header */}
+            {/* Dynamic Promo/Offer Section with Image Banners - Just under header */}
             {activeContent.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
-                className="mb-4"
+                className="mb-6"
               >
                 {activeContent
                   .filter((content: any) => content.isActive)
                   .sort((a: any, b: any) => a.displayOrder - b.displayOrder)
                   .slice(0, 2) // Show max 2 promo sections
-                  .map((content: any) => (
+                  .map((content: any, index: number) => (
                     <motion.div
                       key={content.id}
                       className={`
-                        ${content.sectionType === 'offer' ? 'bg-gradient-to-r from-yellow-100 to-yellow-50 border-yellow-300' : ''}
-                        ${content.sectionType === 'greeting' ? 'bg-gradient-to-r from-blue-100 to-blue-50 border-blue-300' : ''}
-                        ${content.sectionType === 'announcement' ? 'bg-gradient-to-r from-red-100 to-red-50 border-red-300' : ''}
-                        ${content.sectionType === 'banner' ? 'bg-gradient-to-r from-purple-100 to-purple-50 border-purple-300' : ''}
-                        border-2 rounded-lg p-3 mb-2 text-center
+                        ${content.sectionType === 'offer' ? 'bg-gradient-to-r from-yellow-400 via-yellow-300 to-orange-400' : ''}
+                        ${content.sectionType === 'greeting' ? 'bg-gradient-to-r from-blue-400 via-blue-300 to-cyan-400' : ''}
+                        ${content.sectionType === 'announcement' ? 'bg-gradient-to-r from-red-400 via-red-300 to-pink-400' : ''}
+                        ${content.sectionType === 'banner' ? 'bg-gradient-to-r from-purple-400 via-purple-300 to-indigo-400' : ''}
+                        rounded-xl shadow-lg hover:shadow-2xl mb-4 overflow-hidden relative
+                        transform transition-all duration-300 cursor-pointer
                       `}
-                      whileHover={{ scale: 1.02 }}
-                      transition={{ duration: 0.2 }}
+                      whileHover={{ 
+                        scale: 1.02,
+                        y: -2
+                      }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ 
+                        duration: 0.5, 
+                        delay: index * 0.1,
+                        type: "spring",
+                        stiffness: 100
+                      }}
+                      onClick={() => {
+                        if (content.linkUrl) {
+                          window.open(content.linkUrl, '_blank');
+                        }
+                      }}
                     >
-                      <div className="flex items-center justify-center gap-2">
-                        {content.sectionType === 'offer' && <span className="text-yellow-600">🎁</span>}
-                        {content.sectionType === 'greeting' && <span className="text-blue-600">🙏</span>}
-                        {content.sectionType === 'announcement' && <span className="text-red-600">📢</span>}
-                        {content.sectionType === 'banner' && <span className="text-purple-600">✨</span>}
-                        
-                        <div className="flex-1">
-                          {content.title && (
-                            <h3 className="font-semibold text-sm md:text-base text-gray-800">
-                              {content.title}
-                            </h3>
-                          )}
-                          {content.content && (
-                            <p className="text-xs md:text-sm text-gray-600 mt-1">
-                              {content.content}
-                            </p>
+                      {/* Background Pattern */}
+                      <div className="absolute inset-0 opacity-10">
+                        <div className="w-full h-full bg-gradient-to-br from-white via-transparent to-white"></div>
+                      </div>
+                      
+                      <div className="relative p-4 md:p-6">
+                        <div className="flex items-center gap-4">
+                          {/* Image/Icon Section */}
+                          <div className="flex-shrink-0">
+                            {content.imageUrl ? (
+                              <motion.div
+                                className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden shadow-lg border-4 border-white/30"
+                                whileHover={{ rotate: 5 }}
+                                transition={{ duration: 0.3 }}
+                              >
+                                <img 
+                                  src={content.imageUrl} 
+                                  alt={content.title || 'Promo banner'}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    // Fallback to emoji if image fails to load
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    target.nextElementSibling?.classList.remove('hidden');
+                                  }}
+                                />
+                                <div className="hidden w-full h-full flex items-center justify-center text-3xl bg-white/20 backdrop-blur-sm">
+                                  {content.sectionType === 'offer' && '🎁'}
+                                  {content.sectionType === 'greeting' && '🙏'}
+                                  {content.sectionType === 'announcement' && '📢'}
+                                  {content.sectionType === 'banner' && '✨'}
+                                </div>
+                              </motion.div>
+                            ) : (
+                              <motion.div 
+                                className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-3xl md:text-4xl shadow-lg border-4 border-white/30"
+                                whileHover={{ rotate: 10, scale: 1.1 }}
+                                transition={{ duration: 0.3 }}
+                              >
+                                {content.sectionType === 'offer' && '🎁'}
+                                {content.sectionType === 'greeting' && '🙏'}
+                                {content.sectionType === 'announcement' && '📢'}
+                                {content.sectionType === 'banner' && '✨'}
+                              </motion.div>
+                            )}
+                          </div>
+                          
+                          {/* Content Section */}
+                          <div className="flex-1 min-w-0">
+                            {content.title && (
+                              <motion.h3 
+                                className="font-bold text-lg md:text-xl lg:text-2xl text-white drop-shadow-lg mb-1 leading-tight"
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
+                              >
+                                {content.title}
+                              </motion.h3>
+                            )}
+                            {content.content && (
+                              <motion.p 
+                                className="text-sm md:text-base text-white/90 drop-shadow-md leading-relaxed"
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
+                              >
+                                {content.content}
+                              </motion.p>
+                            )}
+                          </div>
+                          
+                          {/* Action Button */}
+                          {content.buttonText && content.linkUrl && (
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ duration: 0.4, delay: 0.4 + index * 0.1 }}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              <div className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-4 py-2 md:px-6 md:py-3 rounded-full text-sm md:text-base font-semibold transition-all duration-300 shadow-lg border border-white/30 hover:border-white/50">
+                                {content.buttonText}
+                              </div>
+                            </motion.div>
                           )}
                         </div>
                         
-                        {content.buttonText && content.linkUrl && (
-                          <a 
-                            href={content.linkUrl}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs md:text-sm font-medium transition-colors"
-                          >
-                            {content.buttonText}
-                          </a>
-                        )}
+                        {/* Decorative elements */}
+                        <div className="absolute top-2 right-2 w-8 h-8 bg-white/10 rounded-full animate-pulse"></div>
+                        <div className="absolute bottom-2 left-2 w-6 h-6 bg-white/10 rounded-full animate-pulse delay-700"></div>
                       </div>
+                      
+                      {/* Hover glow effect */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     </motion.div>
                   ))}
               </motion.div>

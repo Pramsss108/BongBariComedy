@@ -75,7 +75,7 @@ const MagicalCursor = () => {
         className="belan-cursor-responsive"
         style={{
           position: 'absolute',
-          transform: `translate3d(${cursorPosition.x - 12}px, ${cursorPosition.y - 8}px, 0) rotate(45deg) ${
+          transform: `translate3d(${cursorPosition.x - 8}px, ${cursorPosition.y - 4}px, 0) rotate(45deg) ${
             isClicking ? 'scale(1.3)' : isMoving ? 'scale(1.15)' : 'scale(1)'
           }`,
           opacity: isClicking ? 1 : isMoving ? 1 : 0.7,
@@ -155,7 +155,7 @@ const MagicalCursor = () => {
           }}
         />
         
-        {/* Sharp front tip extension - focused 1-2cm zone */}
+        {/* 5cm responsive zone around front tip - like arrow cursor */}
         <div
           style={{
             position: 'absolute',
@@ -167,6 +167,21 @@ const MagicalCursor = () => {
             top: '2px',
             opacity: isClicking ? 0.9 : 0.6,
             transition: 'all 0.005s ease'
+          }}
+        />
+        
+        {/* 5cm responsive click zone around front tip - like arrow cursor */}
+        <div
+          style={{
+            position: 'absolute',
+            width: '60px',
+            height: '60px',
+            background: 'transparent',
+            left: '-20px',
+            top: '-30px',
+            pointerEvents: 'auto',
+            cursor: 'none',
+            borderRadius: '30px'
           }}
         />
       </div>

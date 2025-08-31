@@ -5,13 +5,13 @@ const MagicalCursor = () => {
 
   return (
     <div className="fixed inset-0 pointer-events-none z-50">
-      {/* Bigger grey circle that follows cursor */}
+      {/* Faint grey circle that follows cursor */}
       <div
-        className="absolute w-12 h-12 rounded-full bg-gray-400 transition-opacity duration-200"
+        className="absolute w-8 h-8 rounded-full bg-gray-400 transition-opacity duration-200"
         style={{
-          left: cursorPosition.x - 24,
-          top: cursorPosition.y - 24,
-          opacity: isMoving ? 0.25 : 0.08,
+          left: cursorPosition.x - 16,
+          top: cursorPosition.y - 16,
+          opacity: isMoving ? 0.15 : 0.05,
           transform: 'translate3d(0, 0, 0)',
           transition: 'left 0.1s ease-out, top 0.1s ease-out'
         }}
@@ -27,7 +27,7 @@ const MagicalCursor = () => {
             top: particle.y,
             opacity: particle.opacity,
             transform: `scale(${particle.scale}) translate3d(0, 0, 0)`,
-            fontSize: '28px',
+            fontSize: '14px',
             transition: 'opacity 0.1s ease-out'
           }}
         >

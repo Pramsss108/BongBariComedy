@@ -29,16 +29,16 @@ export const useMagicalCursor = () => {
         clearTimeout(movementTimer.current);
       }
 
-      // Create bigger particle trail when moving
-      if (Math.random() < 0.4) { // 40% chance to create particle
-        const isLaughEmoji = Math.random() < 0.2; // 20% chance for laugh emoji
+      // Create particle trail when moving
+      if (Math.random() < 0.3) { // 30% chance to create particle
+        const isLaughEmoji = Math.random() < 0.15; // 15% chance for laugh emoji
         const newParticle: Particle = {
           id: particleId.current++,
-          x: e.clientX + (Math.random() - 0.5) * 30,
-          y: e.clientY + (Math.random() - 0.5) * 30,
-          opacity: 0.9,
+          x: e.clientX + (Math.random() - 0.5) * 20,
+          y: e.clientY + (Math.random() - 0.5) * 20,
+          opacity: 0.8,
           emoji: isLaughEmoji ? '😂' : '✨',
-          scale: 1.2 + Math.random() * 0.6
+          scale: 0.8 + Math.random() * 0.4
         };
 
         setParticles(prev => [...prev, newParticle]);
@@ -67,9 +67,9 @@ export const useMagicalCursor = () => {
         prev
           .map(particle => ({
             ...particle,
-            opacity: particle.opacity - 0.015,
-            y: particle.y - 1.5,
-            scale: particle.scale * 0.995
+            opacity: particle.opacity - 0.02,
+            y: particle.y - 1,
+            scale: particle.scale * 0.98
           }))
           .filter(particle => particle.opacity > 0)
       );

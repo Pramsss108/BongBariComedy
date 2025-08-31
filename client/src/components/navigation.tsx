@@ -28,7 +28,7 @@ const Navigation = () => {
         <div className="flex justify-between items-center py-3 sm:py-4 md:py-5">
           {/* Logo - Optimized Layout */}
           <Link href="/" data-testid="logo-link">
-            <div className="flex items-start space-x-4 cursor-pointer hover-logo-container">
+            <div className="flex items-start space-x-4 cursor-pointer hover-logo-container group">
               <div className="relative logo-hover-wrapper">
                 <img 
                   src="/logo.png" 
@@ -45,15 +45,17 @@ const Navigation = () => {
                   <span className="emoji-float emoji-6 text-lg">🤣</span>
                 </div>
               </div>
-              {/* Mobile Logo - Enhanced Responsive */}
-              <div className="md:hidden flex flex-col justify-start pt-1 pr-2 min-w-[110px]">
+              {/* Mobile Logo - Enhanced with Tagline */}
+              <div className="md:hidden flex flex-col justify-start pt-1 pr-2 min-w-[130px]">
                 <h1 className="text-lg sm:text-xl font-bold text-brand-blue bangla-text leading-tight mb-1 pt-[2px] pb-[2px]">বং বাড়ি</h1>
-                <p className="text-[11px] sm:text-xs text-gray-600 leading-tight whitespace-nowrap">Family Comedy</p>
+                <p className="text-[10px] sm:text-[11px] text-gray-700 font-medium leading-tight whitespace-nowrap group-hover:text-brand-blue transition-colors duration-300">Every Home's Story</p>
+                <p className="text-[9px] sm:text-[10px] text-gray-500 bangla-text leading-tight group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
               </div>
-              {/* Desktop Logo - Fixed Layout */}
-              <div className="hidden md:flex flex-col justify-start pt-1 min-w-[140px]">
+              {/* Desktop Logo - Enhanced with Bilingual Tagline */}
+              <div className="hidden md:flex flex-col justify-start pt-1 min-w-[200px]">
                 <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[26px] leading-tight mb-1 pt-[2px] pb-[2px]">বং বাড়ি</h1>
-                <p className="text-xs text-gray-600 leading-tight whitespace-nowrap">Bengali Comedy</p>
+                <p className="text-sm font-semibold text-gray-800 leading-tight whitespace-nowrap mb-1 group-hover:text-brand-blue transition-colors duration-300">Every Home's Story — Bong Bari</p>
+                <p className="text-xs text-gray-600 bangla-text leading-tight whitespace-nowrap group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প — বং বাড়ি</p>
               </div>
             </div>
           </Link>
@@ -64,7 +66,7 @@ const Navigation = () => {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`font-semibold text-base lg:text-lg xl:text-xl transition-all duration-400 hover:text-brand-blue hover:scale-150 hover:-translate-y-3 hover:drop-shadow-2xl ${
+                className={`font-semibold text-base lg:text-lg xl:text-xl transition-all duration-200 hover:text-brand-blue hover:scale-105 ${
                   isActive(item.href) 
                     ? "text-brand-blue border-b-2 border-brand-blue pb-1" 
                     : "text-gray-700 hover:border-b-2 hover:border-brand-blue pb-1"

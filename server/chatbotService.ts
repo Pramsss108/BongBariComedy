@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { storage } from "./storage";
 
 if (!process.env.GEMINI_API_KEY) {
   throw new Error("GEMINI_API_KEY environment variable must be set");
@@ -62,6 +63,11 @@ export class ChatbotService {
     conversationHistory: ChatMessage[] = []
   ): Promise<string> {
     try {
+      // First, check for trained responses in database
+      const trainedResponse = await this.getTrainedResponse(userMessage);
+      if (trainedResponse) {
+        return trainedResponse;
+      }
       // Build conversation context
       const conversationContext = conversationHistory
         .map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
@@ -176,6 +182,70 @@ Response:`;
     } catch (error) {
       console.error('Tips generation error:', error);
       return "টিপস দিতে সমস্যা হচ্ছে। (Having trouble providing tips.)";
+    }
+  }
+
+  // 🎯 NEW: Use database training data for intelligent responses
+  private async getTrainedResponse(userMessage: string): Promise<string | null> {
+    try {
+      const keywords = this.extractKeywords(userMessage.toLowerCase());
+      
+      // Search for trained responses with different strategies
+      for (const keyword of keywords) {
+        const trainingData = await storage.searchChatbotTraining(keyword);
+        
+        if (trainingData.length > 0) {
+          // Find the best match based on priority and exact keyword match
+          const bestMatch = trainingData.find(data => 
+            data.keyword.toLowerCase() === keyword || 
+            userMessage.toLowerCase().includes(data.keyword.toLowerCase())
+          ) || trainingData[0]; // Fallback to highest priority
+          
+          console.log(`🎯 Found trained response for keyword: "${keyword}"`);
+          return bestMatch.botResponse;
+        }
+      }
+      
+      return null; // No trained response found, use AI
+    } catch (error) {
+      console.error('Error getting trained response:', error);
+      return null; // Fallback to AI on error
+    }
+  }
+
+  // Extract meaningful keywords from user message
+  private extractKeywords(message: string): string[] {
+    // Remove common words and extract meaningful terms
+    const commonWords = ['ami', 'tumi', 'ki', 'kemon', 'what', 'how', 'is', 'are', 'the', 'a', 'an', 'and', 'or', 'but'];
+    const words = message
+      .toLowerCase()
+      .replace(/[^\w\s\u0980-\u09ff]/g, '') // Keep alphanumeric and Bengali characters
+      .split(/\s+/)
+      .filter(word => word.length > 2 && !commonWords.includes(word));
+    
+    // Return unique keywords, prioritizing longer ones
+    return [...new Set(words)].sort((a, b) => b.length - a.length);
+  }
+
+  // 📝 Get greeting templates from database
+  async getGreetingTemplates(): Promise<string[]> {
+    try {
+      const templates = await storage.getChatbotTemplatesByType('greeting');
+      return templates.map(template => template.content);
+    } catch (error) {
+      console.error('Error fetching greeting templates:', error);
+      return ['🙏 Namaskar! Ami Bong Bot, Bong Bari er official AI assistant!'];
+    }
+  }
+
+  // 🚀 Get quick reply templates from database
+  async getQuickReplyTemplates(): Promise<string[]> {
+    try {
+      const templates = await storage.getChatbotTemplatesByType('quick_reply');
+      return templates.map(template => template.content);
+    } catch (error) {
+      console.error('Error fetching quick reply templates:', error);
+      return ['Kadate tow sobai pare Haste Chao?', 'Collab korlei Hese Felbe, Try?'];
     }
   }
 }

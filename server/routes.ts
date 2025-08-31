@@ -423,6 +423,215 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 🤖 ADMIN PANEL - CHATBOT TRAINING MANAGEMENT
+  app.get("/api/admin/chatbot-training", isAuthenticated, async (req, res) => {
+    try {
+      const training = await storage.getAllChatbotTraining();
+      res.json(training);
+    } catch (error) {
+      console.error("Error fetching chatbot training:", error);
+      res.status(500).json({ message: "Failed to fetch chatbot training data" });
+    }
+  });
+
+  app.post("/api/admin/chatbot-training", isAuthenticated, async (req, res) => {
+    try {
+      const trainingData = req.body;
+      const newTraining = await storage.createChatbotTraining(trainingData);
+      res.json(newTraining);
+    } catch (error) {
+      console.error("Error creating chatbot training:", error);
+      res.status(500).json({ message: "Failed to create chatbot training" });
+    }
+  });
+
+  app.put("/api/admin/chatbot-training/:id", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      const updated = await storage.updateChatbotTraining(id, updates);
+      if (!updated) {
+        return res.status(404).json({ message: "Training data not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating chatbot training:", error);
+      res.status(500).json({ message: "Failed to update chatbot training" });
+    }
+  });
+
+  app.delete("/api/admin/chatbot-training/:id", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteChatbotTraining(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Training data not found" });
+      }
+      res.json({ message: "Training data deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting chatbot training:", error);
+      res.status(500).json({ message: "Failed to delete chatbot training" });
+    }
+  });
+
+  // 📝 ADMIN PANEL - CHATBOT TEMPLATES MANAGEMENT
+  app.get("/api/admin/chatbot-templates", isAuthenticated, async (req, res) => {
+    try {
+      const templates = await storage.getAllChatbotTemplates();
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching chatbot templates:", error);
+      res.status(500).json({ message: "Failed to fetch chatbot templates" });
+    }
+  });
+
+  app.post("/api/admin/chatbot-templates", isAuthenticated, async (req, res) => {
+    try {
+      const templateData = req.body;
+      const newTemplate = await storage.createChatbotTemplate(templateData);
+      res.json(newTemplate);
+    } catch (error) {
+      console.error("Error creating chatbot template:", error);
+      res.status(500).json({ message: "Failed to create chatbot template" });
+    }
+  });
+
+  app.put("/api/admin/chatbot-templates/:id", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      const updated = await storage.updateChatbotTemplate(id, updates);
+      if (!updated) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating chatbot template:", error);
+      res.status(500).json({ message: "Failed to update chatbot template" });
+    }
+  });
+
+  app.delete("/api/admin/chatbot-templates/:id", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteChatbotTemplate(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+      res.json({ message: "Template deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting chatbot template:", error);
+      res.status(500).json({ message: "Failed to delete chatbot template" });
+    }
+  });
+
+  // 🏠 ADMIN PANEL - HOMEPAGE CONTENT MANAGEMENT
+  app.get("/api/admin/homepage-content", isAuthenticated, async (req, res) => {
+    try {
+      const content = await storage.getAllHomepageContent();
+      res.json(content);
+    } catch (error) {
+      console.error("Error fetching homepage content:", error);
+      res.status(500).json({ message: "Failed to fetch homepage content" });
+    }
+  });
+
+  app.get("/api/homepage-content/active", async (req, res) => {
+    try {
+      const content = await storage.getActiveHomepageContent();
+      res.json(content);
+    } catch (error) {
+      console.error("Error fetching active homepage content:", error);
+      res.status(500).json({ message: "Failed to fetch homepage content" });
+    }
+  });
+
+  app.post("/api/admin/homepage-content", isAuthenticated, async (req, res) => {
+    try {
+      const contentData = req.body;
+      const newContent = await storage.createHomepageContent(contentData);
+      res.json(newContent);
+    } catch (error) {
+      console.error("Error creating homepage content:", error);
+      res.status(500).json({ message: "Failed to create homepage content" });
+    }
+  });
+
+  app.put("/api/admin/homepage-content/:id", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      const updated = await storage.updateHomepageContent(id, updates);
+      if (!updated) {
+        return res.status(404).json({ message: "Content not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating homepage content:", error);
+      res.status(500).json({ message: "Failed to update homepage content" });
+    }
+  });
+
+  app.delete("/api/admin/homepage-content/:id", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteHomepageContent(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Content not found" });
+      }
+      res.json({ message: "Content deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting homepage content:", error);
+      res.status(500).json({ message: "Failed to delete homepage content" });
+    }
+  });
+
+  // ⚙️ ADMIN PANEL - SETTINGS MANAGEMENT
+  app.get("/api/admin/settings", isAuthenticated, async (req, res) => {
+    try {
+      const settings = await storage.getAllAdminSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching admin settings:", error);
+      res.status(500).json({ message: "Failed to fetch admin settings" });
+    }
+  });
+
+  app.get("/api/public-settings", async (req, res) => {
+    try {
+      const settings = await storage.getPublicSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching public settings:", error);
+      res.status(500).json({ message: "Failed to fetch public settings" });
+    }
+  });
+
+  app.post("/api/admin/settings", isAuthenticated, async (req, res) => {
+    try {
+      const settingData = req.body;
+      const newSetting = await storage.setAdminSetting(settingData);
+      res.json(newSetting);
+    } catch (error) {
+      console.error("Error setting admin setting:", error);
+      res.status(500).json({ message: "Failed to set admin setting" });
+    }
+  });
+
+  app.delete("/api/admin/settings/:key", isAuthenticated, async (req, res) => {
+    try {
+      const key = req.params.key;
+      const deleted = await storage.deleteAdminSetting(key);
+      if (!deleted) {
+        return res.status(404).json({ message: "Setting not found" });
+      }
+      res.json({ message: "Setting deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting admin setting:", error);
+      res.status(500).json({ message: "Failed to delete admin setting" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

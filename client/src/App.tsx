@@ -23,6 +23,8 @@ import Login from "@/pages/login";
 import BlogPost from "@/pages/blog-post";
 import NotFound from "@/pages/not-found";
 import BongBot from "@/components/BongBot";
+import { AdminChatbot } from "@/pages/AdminChatbot";
+import { AdminHomepage } from "@/pages/AdminHomepage";
 
 function Router() {
   const [showCharmSelector, setShowCharmSelector] = useState(false);
@@ -61,6 +63,8 @@ function Router() {
         <Route path="/blog" component={Blog} />
         <Route path="/blog/:slug" component={BlogPost} />
         <Route path="/admin" component={Admin} />
+        <Route path="/admin/chatbot" component={AdminChatbot} />
+        <Route path="/admin/homepage" component={AdminHomepage} />
         <Route path="/login" component={Login} />
         <Route component={NotFound} />
       </Switch>

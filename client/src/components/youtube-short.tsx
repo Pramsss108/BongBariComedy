@@ -23,19 +23,19 @@ const YouTubeShort = ({ videoId, thumbnail, title, onClick }: YouTubeShortProps)
       onClick={handleClick}
       data-testid={`youtube-short-${videoId}`}
     >
-      {/* Rotating gradient border - like a spinning wheel */}
-      <div className="rotating-gradient-border">
-        {/* Clean inner container for reel content */}
-        <div className="reel-content-container">
-          <img 
-            src={thumbnail} 
-            alt={title}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-            <div className="w-16 h-16 bg-brand-red rounded-full flex items-center justify-center">
-              <Play className="w-8 h-8 text-white ml-1" fill="currentColor" />
-            </div>
+      {/* Rotating gradient border - ONLY the border rotates */}
+      <div className="rotating-gradient-border"></div>
+      
+      {/* Static reel content - NEVER rotates */}
+      <div className="reel-content-container">
+        <img 
+          src={thumbnail} 
+          alt={title}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+          <div className="w-16 h-16 bg-brand-red rounded-full flex items-center justify-center">
+            <Play className="w-8 h-8 text-white ml-1" fill="currentColor" />
           </div>
         </div>
       </div>

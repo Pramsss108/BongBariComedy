@@ -163,67 +163,43 @@ const Home = () => {
       
       <ParallaxContainer>
         
-        <main className="py-4 sm:py-6 lg:py-8 relative z-10">
+        <main className="py-2 sm:py-3 relative z-10">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             
-            {/* Thin YouTube-style Banner */}
+            {/* Ultra-thin Banner */}
             <motion.div
-              initial={{ opacity: 0, y: -20 }}
+              initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="mb-4"
+              transition={{ duration: 0.4 }}
+              className="mb-2"
             >
-              <motion.div
-                className="w-full h-20 md:h-24 lg:h-28 rounded-lg shadow-lg hover:shadow-xl overflow-hidden relative transform transition-all duration-300"
-                whileHover={{ 
-                  scale: 1.005,
-                  y: -1
-                }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ 
-                  duration: 0.5,
-                  type: "spring",
-                  stiffness: 100
-                }}
-              >
-                <div className="w-full h-full bg-gradient-to-r from-brand-yellow via-yellow-400 to-orange-400"></div>
-              </motion.div>
+              <div className="w-full h-12 md:h-14 rounded-md shadow-md overflow-hidden bg-gradient-to-r from-brand-yellow via-yellow-400 to-orange-400">
+              </div>
             </motion.div>
 
-            {/* Compact Title Section */}
+            {/* Very Compact Title Section */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-center mb-4"
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className="text-center mb-3"
             >
-              <motion.h1 
-                className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-1 bangla-text"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-              >
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-1 bangla-text">
                 বং বাড়ি
-              </motion.h1>
-              <motion.p 
-                className="text-sm sm:text-base md:text-lg text-gray-600 bangla-text"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-              >
+              </h1>
+              <p className="text-xs sm:text-sm md:text-base text-gray-600 bangla-text">
                 কলকাতার ঘরোয়া কমেডি - আমাদের গল্প
-              </motion.p>
+              </p>
             </motion.div>
 
-            {/* YouTube Video Embed - Barir Mashla (Our Story) */}
+            {/* Compact YouTube Video */}
             <motion.div
-              className="w-full max-w-4xl mx-auto mb-6"
-              initial={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-3xl mx-auto mb-4"
+              initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
+              transition={{ duration: 0.4, delay: 0.2 }}
             >
-              <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-lg">
+              <div className="relative w-full aspect-video rounded-md overflow-hidden shadow-md">
                 <iframe
                   src="https://www.youtube.com/embed/pdjQpcVqxMU?rel=0&modestbranding=1&showinfo=0"
                   title="বং বাড়ি - Barir Mashla | Our Story | Bengali Comedy Channel"

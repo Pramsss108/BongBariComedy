@@ -33,7 +33,7 @@ const Navigation = () => {
                 <img 
                   src="/logo.png" 
                   alt="Bong Bari Logo" 
-                  className="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-lg transition-all duration-500 hover:scale-150 hover:rotate-12 hover:shadow-2xl hover:-translate-y-2"
+                  className="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-lg transition-all duration-300 hover:scale-125 hover:rotate-3 hover:shadow-2xl"
                 />
                 {/* Animated Emojis on Hover - DESKTOP ONLY */}
                 <div className="absolute inset-0 pointer-events-none hidden lg:block">
@@ -64,7 +64,7 @@ const Navigation = () => {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`font-semibold text-base lg:text-lg xl:text-xl transition-all duration-400 hover:text-brand-blue hover:scale-150 hover:-translate-y-3 hover:drop-shadow-2xl ${
+                className={`font-semibold text-base lg:text-lg xl:text-xl transition-all duration-300 hover:text-brand-blue hover:scale-125 hover:-translate-y-1 hover:drop-shadow-lg ${
                   isActive(item.href) 
                     ? "text-brand-blue border-b-2 border-brand-blue pb-1" 
                     : "text-gray-700 hover:border-b-2 hover:border-brand-blue pb-1"

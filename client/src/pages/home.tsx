@@ -136,11 +136,10 @@ const Home = () => {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1, ease: [0.25, 0.25, 0.25, 1] }}
               whileHover={{ 
-                scale: 1.08, 
-                rotateX: 5, 
-                rotateY: 5,
-                y: -10,
-                transition: { duration: 0.5, type: "spring", stiffness: 200 }
+                scale: 1.05, 
+                rotateX: 2, 
+                rotateY: 2,
+                transition: { duration: 0.4, type: "spring" }
               }}
             >
               {/* Background pattern */}
@@ -198,10 +197,9 @@ const Home = () => {
             >
               <motion.div
                 whileHover={{ 
-                  scale: 1.06, 
-                  y: -12,
-                  rotateX: 3,
-                  transition: { duration: 0.4, type: "spring" }
+                  scale: 1.02, 
+                  y: -5,
+                  transition: { duration: 0.3 }
                 }}
               >
               <Card className="max-w-4xl mx-auto shadow-md transition-all duration-300 hover:shadow-2xl">
@@ -266,11 +264,10 @@ const Home = () => {
                       ease: [0.25, 0.25, 0.25, 1]
                     }}
                     whileHover={{ 
-                      y: -30, 
-                      scale: 1.15,
-                      rotateY: 10,
-                      rotateX: 5,
-                      transition: { duration: 0.5, type: "spring", stiffness: 200 }
+                      y: -20, 
+                      scale: 1.08,
+                      rotateY: 5,
+                      transition: { duration: 0.4, type: "spring", stiffness: 300 }
                     }}
                   >
                     <YouTubeShort
@@ -293,11 +290,11 @@ const Home = () => {
               <motion.div 
                 className="bg-brand-yellow rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-6 mb-0 text-center shadow-lg transition-all duration-400"
                 whileHover={{ 
-                  scale: 1.08, 
-                  rotate: 3,
-                  y: -15,
-                  boxShadow: "0 35px 70px -12px rgba(0, 0, 0, 0.35)",
-                  transition: { duration: 0.5, type: "spring", stiffness: 200 }
+                  scale: 1.03, 
+                  rotate: 1,
+                  y: -8,
+                  boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                  transition: { duration: 0.4, type: "spring" }
                 }}
               >
                 <h3 className="font-bold text-brand-blue mb-2 sm:mb-4 hover-pulse cursor-pointer transition-all duration-300" data-testid="collaboration-title-english" style={{fontSize: 'clamp(2.5rem, 8vw, 8rem)'}}>
@@ -310,10 +307,9 @@ const Home = () => {
               
               <motion.div
                 whileHover={{ 
-                  scale: 1.06, 
-                  y: -12,
-                  rotateY: 2,
-                  transition: { duration: 0.4, type: "spring" }
+                  scale: 1.02, 
+                  y: -5,
+                  transition: { duration: 0.3 }
                 }}
               >
               <Card className="bg-white shadow-lg transition-all duration-300 hover:shadow-2xl">
@@ -406,7 +402,7 @@ const Home = () => {
                       
                       <MagneticButton 
                         disabled={collaborationMutation.isPending}
-                        className="w-full bg-brand-red text-white hover:bg-red-600 py-4 sm:py-3 rounded-full font-semibold text-base sm:text-lg hover-lift disabled:opacity-50 min-h-[52px] touch-manipulation transition-all duration-400 hover:scale-110 hover:-translate-y-3 hover:shadow-2xl"
+                        className="w-full bg-brand-red text-white hover:bg-red-600 py-4 sm:py-3 rounded-full font-semibold text-base sm:text-lg hover-lift disabled:opacity-50 min-h-[52px] touch-manipulation transition-all duration-300 hover:scale-105 hover:-translate-y-1 hover:shadow-2xl"
                         data-testid="button-submit-collaboration"
                         strength={0.5}
                         onClick={() => form.handleSubmit(onSubmit)()}
@@ -432,7 +428,7 @@ const Home = () => {
             {/* Enhanced Social Buttons */}
             <div className="flex justify-center gap-3 sm:gap-4 mb-4 sm:mb-6">
               <button 
-                className="bg-red-500 hover:bg-red-600 active:bg-red-700 text-white px-4 sm:px-5 py-3 sm:py-2 rounded-full text-sm sm:text-base flex items-center gap-2 transition-all duration-400 hover:scale-150 hover:-translate-y-4 hover:rotate-6 hover:shadow-2xl active:scale-95 min-h-[44px] touch-manipulation shadow-md"
+                className="bg-red-500 hover:bg-red-600 active:bg-red-700 text-white px-4 sm:px-5 py-3 sm:py-2 rounded-full text-sm sm:text-base flex items-center gap-2 transition-all duration-300 hover:scale-125 hover:-translate-y-2 hover:rotate-3 hover:shadow-2xl active:scale-95 min-h-[44px] touch-manipulation shadow-md"
                 onClick={() => window.open('https://youtube.com/@bongbari', '_blank')}
                 data-testid="button-youtube-footer"
               >
@@ -440,7 +436,7 @@ const Home = () => {
                 <span className="hidden xs:inline">YouTube</span>
               </button>
               <button 
-                className="bg-purple-500 hover:bg-purple-600 active:bg-purple-700 text-white px-4 sm:px-5 py-3 sm:py-2 rounded-full text-sm sm:text-base flex items-center gap-2 transition-all duration-400 hover:scale-150 hover:-translate-y-4 hover:-rotate-6 hover:shadow-2xl active:scale-95 min-h-[44px] touch-manipulation shadow-md"
+                className="bg-purple-500 hover:bg-purple-600 active:bg-purple-700 text-white px-4 sm:px-5 py-3 sm:py-2 rounded-full text-sm sm:text-base flex items-center gap-2 transition-all duration-300 hover:scale-125 hover:-translate-y-2 hover:-rotate-3 hover:shadow-2xl active:scale-95 min-h-[44px] touch-manipulation shadow-md"
                 onClick={() => window.open('https://instagram.com/thebongbari', '_blank')}
                 data-testid="button-instagram-footer"
               >

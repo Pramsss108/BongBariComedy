@@ -164,60 +164,72 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
   if (!isOpen) {
     return (
       <motion.div
-        className={`fixed bottom-20 right-6 z-40 ${className}`}
+        className={`fixed bottom-6 right-6 z-40 ${className}`}
         initial={{ scale: 0, rotate: -180 }}
         animate={{ scale: 1, rotate: 0 }}
         transition={{ type: "spring", stiffness: 260, damping: 20 }}
       >
-        <motion.div
-          className="relative"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          {/* Glow effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-blue-500 to-pink-500 rounded-full blur-lg opacity-70 animate-pulse" />
-          
-          {/* Main button */}
-          <Button
-            onClick={() => setIsOpen(true)}
-            className="no-rickshaw-sound relative w-16 h-16 rounded-full bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 hover:from-purple-700 hover:via-blue-700 hover:to-pink-700 text-white shadow-2xl border-2 border-white/20 overflow-hidden group"
-            data-testid="chatbot-open-button"
-          >
-            {/* Sparkle overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 via-transparent to-pink-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            
-            {/* Rotating ring */}
-            <motion.div
-              className="absolute inset-1 border-2 border-white/30 rounded-full"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-            />
-            
-            <MessageCircle className="w-7 h-7 relative z-10" />
-            
-            {/* Floating mini sparkles */}
-            <motion.div
-              className="absolute top-2 right-2 w-1 h-1 bg-yellow-300 rounded-full"
-              animate={{ scale: [0, 1, 0], opacity: [0, 1, 0] }}
-              transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
-            />
-            <motion.div
-              className="absolute bottom-2 left-2 w-1 h-1 bg-pink-300 rounded-full"
-              animate={{ scale: [0, 1, 0], opacity: [0, 1, 0] }}
-              transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-            />
-          </Button>
-
-          {/* Floating text */}
+        <div className="flex flex-col items-center">
+          {/* Bong Bot Label Above */}
           <motion.div
-            className="absolute -top-12 left-1/2 transform -translate-x-1/2 px-3 py-1 bg-black/80 backdrop-blur-sm rounded-lg text-white text-xs font-medium whitespace-nowrap border border-white/20"
+            className="mb-2 px-3 py-1 bg-gradient-to-r from-purple-600/90 to-pink-600/90 backdrop-blur-sm rounded-full text-white text-sm font-bold border border-white/20 shadow-lg"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+          >
+            🤖 Bong Bot
+          </motion.div>
+
+          <motion.div
+            className="relative"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            {/* Glow effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-blue-500 to-pink-500 rounded-full blur-lg opacity-70 animate-pulse" />
+            
+            {/* Main button */}
+            <Button
+              onClick={() => setIsOpen(true)}
+              className="no-rickshaw-sound relative w-16 h-16 rounded-full bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 hover:from-purple-700 hover:via-blue-700 hover:to-pink-700 text-white shadow-2xl border-2 border-white/20 overflow-hidden group"
+              data-testid="chatbot-open-button"
+            >
+              {/* Sparkle overlay */}
+              <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 via-transparent to-pink-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              
+              {/* Rotating ring */}
+              <motion.div
+                className="absolute inset-1 border-2 border-white/30 rounded-full"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+              />
+              
+              <MessageCircle className="w-7 h-7 relative z-10" />
+              
+              {/* Floating mini sparkles */}
+              <motion.div
+                className="absolute top-2 right-2 w-1 h-1 bg-yellow-300 rounded-full"
+                animate={{ scale: [0, 1, 0], opacity: [0, 1, 0] }}
+                transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+              />
+              <motion.div
+                className="absolute bottom-2 left-2 w-1 h-1 bg-pink-300 rounded-full"
+                animate={{ scale: [0, 1, 0], opacity: [0, 1, 0] }}
+                transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+              />
+            </Button>
+          </motion.div>
+
+          {/* Hi Greeting Below */}
+          <motion.div
+            className="mt-2 px-3 py-1 bg-gradient-to-r from-yellow-500/80 to-red-500/80 backdrop-blur-sm rounded-full text-white text-sm font-semibold border border-white/20 shadow-lg"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 2, duration: 0.5 }}
+            transition={{ delay: 0.8, duration: 0.5 }}
           >
-            চ্যাট করুন! Chat with AI! ✨
+            👋 Hi! / হাই!
           </motion.div>
-        </motion.div>
+        </div>
       </motion.div>
     );
   }
@@ -232,24 +244,44 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
     >
       <div className={`relative ${isMinimized ? 'w-80 h-16' : 'w-96 h-[600px]'} transition-all duration-500 ease-out`}>
         {/* Background with glass morphism */}
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/80 via-blue-900/80 to-pink-900/80 backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/85 via-blue-900/85 to-pink-900/85 backdrop-blur-xl rounded-3xl border-2 border-white/30 shadow-2xl overflow-hidden">
           {/* Animated gradient overlay */}
           <motion.div
-            className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-blue-500/20 to-pink-500/20"
+            className="absolute inset-0 bg-gradient-to-br from-purple-500/25 via-blue-500/25 to-pink-500/25"
             animate={{ 
               background: [
-                "linear-gradient(45deg, rgba(168, 85, 247, 0.2), rgba(59, 130, 246, 0.2), rgba(236, 72, 153, 0.2))",
-                "linear-gradient(90deg, rgba(236, 72, 153, 0.2), rgba(168, 85, 247, 0.2), rgba(59, 130, 246, 0.2))",
-                "linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(236, 72, 153, 0.2), rgba(168, 85, 247, 0.2))"
+                "linear-gradient(45deg, rgba(168, 85, 247, 0.25), rgba(59, 130, 246, 0.25), rgba(236, 72, 153, 0.25))",
+                "linear-gradient(90deg, rgba(236, 72, 153, 0.25), rgba(168, 85, 247, 0.25), rgba(59, 130, 246, 0.25))",
+                "linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(236, 72, 153, 0.25), rgba(168, 85, 247, 0.25))"
               ]
             }}
-            transition={{ duration: 4, repeat: Infinity }}
+            transition={{ duration: 6, repeat: Infinity }}
           />
           
           {/* Floating particles */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             {particles}
           </div>
+          
+          {/* Extra sparkle effects */}
+          <motion.div
+            className="absolute top-4 right-4 w-2 h-2 bg-yellow-300 rounded-full"
+            animate={{ 
+              scale: [0, 1, 0], 
+              opacity: [0, 1, 0],
+              rotate: [0, 180, 360]
+            }}
+            transition={{ duration: 3, repeat: Infinity, delay: 0.5 }}
+          />
+          <motion.div
+            className="absolute bottom-4 left-4 w-2 h-2 bg-pink-300 rounded-full"
+            animate={{ 
+              scale: [0, 1, 0], 
+              opacity: [0, 1, 0],
+              rotate: [360, 180, 0]
+            }}
+            transition={{ duration: 3, repeat: Infinity, delay: 1.5 }}
+          />
         </div>
 
         {/* Header */}

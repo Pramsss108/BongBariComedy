@@ -235,7 +235,10 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
             </motion.div>
             <div className="flex flex-col justify-center">
               <h3 className="text-white font-bold text-lg drop-shadow-lg tracking-wide leading-tight">Bong Bot</h3>
-              <p className="text-white/95 text-xs drop-shadow-sm font-medium tracking-wide leading-tight">Ami sob somoy online</p>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-green-400 rounded-full shadow-sm"></div>
+                <p className="text-white/90 text-xs drop-shadow-sm font-normal tracking-wide leading-tight">ami sob somoy online</p>
+              </div>
             </div>
           </div>
           

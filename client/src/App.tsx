@@ -36,7 +36,7 @@ function Router() {
   useMagicalHoverSounds({ enabled: true, volume: 0.12 });
   
   // Initialize magical glittery sparkles that follow mouse movement
-  useMouseMovementChime({ enabled: true, volume: 0.06, frequency: 1800 });
+  useMouseMovementChime({ enabled: false, volume: 0.06, frequency: 1800 });
   
   return (
     <div className="min-h-screen bg-brand-yellow relative">

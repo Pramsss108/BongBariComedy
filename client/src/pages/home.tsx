@@ -220,7 +220,7 @@ const Home = () => {
           
           {/* YouTube Shorts Grid */}
           <ParallaxSection speed={0.4} delay={0.2}>
-            <section className="mb-6 sm:mb-8 lg:mb-12" data-testid="videos-section">
+            <section className="mb-3 sm:mb-4 lg:mb-6" data-testid="videos-section">
             <motion.h3 
               className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-brand-blue mb-4 sm:mb-6 hover-wobble cursor-pointer transition-all duration-300" 
               data-testid="videos-title-english"
@@ -279,17 +279,17 @@ const Home = () => {
           
           {/* Collaboration Form */}
           <ParallaxSection speed={0.2} delay={0.4}>
-            <section className="mb-6 sm:mb-8 py-4 sm:py-6 lg:py-8" data-testid="collaboration-section">
+            <section className="mb-2 sm:mb-3 py-1 sm:py-2" data-testid="collaboration-section">
             <div className="max-w-4xl mx-auto">
               {/* Work with Us Header with Yellow Background */}
               <motion.div 
-                className="bg-brand-yellow rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-6 mb-0 text-center shadow-lg transition-all duration-400"
+                className="bg-brand-yellow rounded-xl sm:rounded-2xl p-2 sm:p-3 lg:p-4 mb-0 text-center shadow-lg transition-all duration-400"
                 whileHover={{ 
                   scale: 1.02,
                   transition: { duration: 0.2 }
                 }}
               >
-                <h3 className="font-bold text-brand-blue mb-2 sm:mb-4 hover-pulse cursor-pointer transition-all duration-300" data-testid="collaboration-title-english" style={{fontSize: 'clamp(2.5rem, 8vw, 8rem)'}}>
+                <h3 className="font-bold text-brand-blue mb-1 sm:mb-2 hover-pulse cursor-pointer transition-all duration-300" data-testid="collaboration-title-english" style={{fontSize: 'clamp(2.5rem, 8vw, 8rem)'}}>
                   Work with Us
                 </h3>
                 <h4 className="font-bold text-gray-800 bangla-text hover-wobble cursor-pointer transition-all duration-300" data-testid="collaboration-title-bengali" style={{fontSize: 'clamp(2rem, 6vw, 6rem)'}}>
@@ -304,11 +304,11 @@ const Home = () => {
                 }}
               >
               <Card className="bg-white shadow-lg transition-all duration-300 hover:shadow-2xl">
-                <CardContent className="p-4 sm:p-6 lg:p-8">
-                  <p className="text-center text-gray-700 mb-3 sm:mb-4 text-base sm:text-lg">
+                <CardContent className="p-3 sm:p-4 lg:p-6">
+                  <p className="text-center text-gray-700 mb-2 sm:mb-3 text-base sm:text-lg">
                     Ready to collaborate? Let's create some amazing Bengali comedy content together!
                   </p>
-                  <p className="text-center text-gray-700 mb-4 sm:mb-6 bangla-text text-base sm:text-lg">
+                  <p className="text-center text-gray-700 mb-3 sm:mb-4 bangla-text text-base sm:text-lg">
                     কোলাবোরেট করতে প্রস্তুত? চলুন একসাথে দুর্দান্ত বাংলা কমেডি কন্টেন্ট তৈরি করি!
                   </p>
                   

@@ -1,11 +1,17 @@
 import { useState, useRef, useEffect } from 'react';
 
 export default function SimpleChatbot() {
-  const [position, setPosition] = useState({ x: 50, y: 50 });
+  const [position, setPosition] = useState({ x: 20, y: 100 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [isOpen, setIsOpen] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
+
+  // When opening chatbot, position it on the left side
+  const handleOpenChatbot = () => {
+    setPosition({ x: 20, y: 100 }); // Left side position
+    setIsOpen(true);
+  };
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -53,7 +59,7 @@ export default function SimpleChatbot() {
   if (!isOpen) {
     return (
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={handleOpenChatbot}
         className="fixed bottom-4 right-4 w-16 h-16 bg-gradient-to-r from-[#1363DF] to-[#FF4D4D] rounded-full flex items-center justify-center text-white font-bold shadow-lg hover:scale-110 transition-transform z-50"
         data-testid="open-chatbot"
       >

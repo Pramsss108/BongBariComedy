@@ -12,6 +12,8 @@ import { useParallaxScroll } from "@/hooks/useParallaxScroll";
 import { useRickshawSound } from "@/hooks/useRickshawSound";
 import { useMagicalHoverSounds } from "@/hooks/useMagicalHoverSounds";
 import { useMouseMovementChime } from "@/hooks/useMouseMovementChime";
+import { CharmSoundSelector } from "@/components/CharmSoundSelector";
+import { useState } from "react";
 import Home from "@/pages/home";
 import About from "@/pages/about";
 import WorkWithUs from "@/pages/work-with-us";
@@ -23,6 +25,9 @@ import BlogPost from "@/pages/blog-post";
 import NotFound from "@/pages/not-found";
 
 function Router() {
+  const [showCharmSelector, setShowCharmSelector] = useState(true);
+  const [charmConfig, setCharmConfig] = useState({ enabled: false, volume: 0.06, frequency: 1200 });
+  
   // Initialize professional site-wide cursor effect
   useGlobalCursor();
   
@@ -36,7 +41,21 @@ function Router() {
   useMagicalHoverSounds({ enabled: true, volume: 0.12 });
   
   // Initialize magical fairy dust charm that follows mouse movement
-  useMouseMovementChime({ enabled: false, volume: 0.06, frequency: 1200 });
+  useMouseMovementChime(charmConfig);
+  
+  const handleCharmSelect = (charm: any) => {
+    setCharmConfig({ 
+      enabled: true, 
+      volume: 0.06, 
+      frequency: charm.frequency 
+    });
+    setShowCharmSelector(false);
+  };
+  
+  const handleCharmDisable = () => {
+    setCharmConfig({ enabled: false, volume: 0.06, frequency: 1200 });
+    setShowCharmSelector(false);
+  };
   
   return (
     <div className="min-h-screen bg-brand-yellow relative">
@@ -55,6 +74,14 @@ function Router() {
         <Route path="/login" component={Login} />
         <Route component={NotFound} />
       </Switch>
+      
+      {/* Charm Sound Selector */}
+      {showCharmSelector && (
+        <CharmSoundSelector 
+          onSelect={handleCharmSelect}
+          onDisable={handleCharmDisable}
+        />
+      )}
     </div>
   );
 }

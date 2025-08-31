@@ -42,8 +42,8 @@ export const useMagicalCursor = () => {
         
         const newParticle: Particle = {
           id: particleId.current++,
-          x: e.clientX + (Math.random() - 0.5) * 15,
-          y: e.clientY + (Math.random() - 0.5) * 15,
+          x: e.clientX + (Math.random() - 0.5) * 8,
+          y: e.clientY + (Math.random() - 0.5) * 8,
           vx: Math.cos(angle) * speed,
           vy: Math.sin(angle) * speed,
           opacity: 0.9,
@@ -68,15 +68,15 @@ export const useMagicalCursor = () => {
     const handleMouseDown = () => {
       setIsClicking(true);
       
-      // Create full belan burst of particles on click - head to toe
-      for (let i = 0; i < 15; i++) {
+      // Create focused tip burst of particles on click - only front tip
+      for (let i = 0; i < 10; i++) {
         const angle = (i / 8) * Math.PI * 2;
         const speed = 2 + Math.random() * 3;
         
         const clickParticle: Particle = {
           id: particleId.current++,
-          x: cursorPosition.x + (Math.random() - 0.5) * 25,
-          y: cursorPosition.y + (Math.random() - 0.5) * 25,
+          x: cursorPosition.x + (Math.random() - 0.5) * 12,
+          y: cursorPosition.y + (Math.random() - 0.5) * 12,
           vx: Math.cos(angle) * speed,
           vy: Math.sin(angle) * speed,
           opacity: 1,

@@ -87,106 +87,99 @@ const MagicalCursor = () => {
           height: '20px'
         }}
       >
-        {/* Full belan body - responsive from head to toe */}
+        {/* Static belan body - no response */}
         <div
           style={{
             position: 'absolute',
             width: '24px',
             height: '8px',
-            background: isClicking 
-              ? 'linear-gradient(45deg, #FFD700 0%, #FFA500 40%, #FF6347 100%)' 
-              : 'linear-gradient(45deg, #CD853F 0%, #D2691E 40%, #8B4513 100%)',
+            background: 'linear-gradient(45deg, #CD853F 0%, #D2691E 40%, #8B4513 100%)',
             borderRadius: '4px',
             left: '3px',
             top: '6px',
-            boxShadow: isClicking 
-              ? '0 4px 8px rgba(255,215,0,0.6), inset 0 1px 0 rgba(255,255,255,0.4)'
-              : '0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
-            border: isClicking ? '1px solid #DAA520' : '1px solid #654321',
-            transition: 'all 0.005s ease'
+            boxShadow: '0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
+            border: '1px solid #654321'
           }}
         />
         
-        {/* Responsive Left handle */}
+        {/* Static Left handle - no response */}
         <div
           style={{
             position: 'absolute',
             width: '6px',
             height: '5px',
-            background: isClicking
-              ? 'linear-gradient(45deg, #FFD700 0%, #FFA500 40%, #FF6347 100%)'
-              : 'linear-gradient(45deg, #8B4513 0%, #654321 50%, #4A2C17 100%)',
+            background: 'linear-gradient(45deg, #8B4513 0%, #654321 50%, #4A2C17 100%)',
             borderRadius: '3px',
             left: '-1px',
             top: '7.5px',
             boxShadow: '0 1px 3px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
-            border: '1px solid #3D2016',
-            transition: 'all 0.005s ease'
+            border: '1px solid #3D2016'
           }}
         />
         
-        {/* Responsive Right handle */}
+        {/* Static Right handle - no response */}
         <div
           style={{
             position: 'absolute',
             width: '6px',
             height: '5px',
-            background: isClicking
-              ? 'linear-gradient(45deg, #FFD700 0%, #FFA500 40%, #FF6347 100%)'
-              : 'linear-gradient(45deg, #8B4513 0%, #654321 50%, #4A2C17 100%)',
+            background: 'linear-gradient(45deg, #8B4513 0%, #654321 50%, #4A2C17 100%)',
             borderRadius: '3px',
             left: '25px',
             top: '7.5px',
             boxShadow: '0 1px 3px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
-            border: '1px solid #3D2016',
-            transition: 'all 0.005s ease'
+            border: '1px solid #3D2016'
           }}
         />
         
-        {/* Enhanced front tip - main click point */}
+        {/* Super responsive front tip - ONLY responsive area */}
         <div
           style={{
             position: 'absolute',
-            width: isClicking ? '6px' : '4px',
-            height: isClicking ? '6px' : '4px',
+            width: isClicking ? '8px' : '5px',
+            height: isClicking ? '8px' : '5px',
             background: isClicking ? '#FF4500' : '#FFCC00',
             borderRadius: '50%',
-            left: isClicking ? '13px' : '14px',
-            top: isClicking ? '2px' : '3px',
+            left: isClicking ? '12px' : '13px',
+            top: isClicking ? '1px' : '2px',
             boxShadow: isClicking 
-              ? '0 0 8px rgba(255, 69, 0, 0.9), 0 0 16px rgba(255, 69, 0, 0.4)'
-              : '0 0 4px rgba(255, 204, 0, 0.6)',
-            opacity: isClicking ? 1 : isMoving ? 1 : 0.8,
-            transition: 'all 0.005s ease'
+              ? '0 0 12px rgba(255, 69, 0, 0.9), 0 0 20px rgba(255, 69, 0, 0.5)'
+              : '0 0 6px rgba(255, 204, 0, 0.8)',
+            opacity: isClicking ? 1 : isMoving ? 1 : 0.9,
+            transition: 'all 0.005s ease',
+            transform: isClicking ? 'scale(1.2)' : 'scale(1)'
           }}
         />
         
-        {/* Extended front tip for head-to-toe response */}
+        {/* Sharp front tip extension - part of responsive area */}
         <div
           style={{
             position: 'absolute',
-            width: '3px',
-            height: '6px',
+            width: isClicking ? '4px' : '3px',
+            height: isClicking ? '8px' : '6px',
             background: isClicking ? '#FF6347' : '#D2691E',
-            borderRadius: '1.5px',
-            left: '15.5px',
-            top: '0px',
-            opacity: isClicking ? 0.9 : 0.6,
-            transition: 'all 0.005s ease'
+            borderRadius: '2px',
+            left: isClicking ? '15px' : '15.5px',
+            top: isClicking ? '-2px' : '-1px',
+            opacity: isClicking ? 1 : 0.7,
+            transition: 'all 0.005s ease',
+            transform: isClicking ? 'scale(1.1)' : 'scale(1)'
           }}
         />
         
-        {/* Extended clickable area above and around belan */}
+        {/* Extended responsive zone around front tip only */}
         <div
           style={{
             position: 'absolute',
-            width: '50px',
-            height: '40px',
+            width: '30px',
+            height: '30px',
             background: 'transparent',
-            left: '-10px',
-            top: '-15px',
+            left: '5px',
+            top: '-10px',
+            borderRadius: '15px',
             pointerEvents: 'none'
           }}
+          title="Front tip responsive area"
         />
         
       </div>

@@ -10,6 +10,7 @@ interface MagneticButtonProps {
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
   size?: "default" | "sm" | "lg" | "icon";
   strength?: number;
+  disabled?: boolean;
 }
 
 export const MagneticButton = ({ 
@@ -18,7 +19,8 @@ export const MagneticButton = ({
   onClick, 
   variant = "default",
   size = "default",
-  strength = 0.3 
+  strength = 0.3,
+  disabled = false
 }: MagneticButtonProps) => {
   const magneticRef = useMagneticEffect(strength);
 
@@ -30,6 +32,7 @@ export const MagneticButton = ({
       <Button
         variant={variant}
         size={size}
+        disabled={disabled}
         className={`relative overflow-hidden transition-colors duration-150 hover:shadow-md hover:shadow-brand-yellow/20 ${className}`}
         onClick={onClick}
       >

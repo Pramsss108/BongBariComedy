@@ -7,6 +7,7 @@ export const useParallaxScroll = () => {
       const rate = scrolled * -0.5;
       const fastRate = scrolled * -0.8;
       const superFastRate = scrolled * -1.2;
+      const windowHeight = window.innerHeight;
 
       // Smooth parallax for YouTube shorts
       const youtubeShorts = document.querySelectorAll('.youtube-short');
@@ -46,7 +47,7 @@ export const useParallaxScroll = () => {
         el.style.transform = `translateY(${floatSpeed}px) scale(${1 + Math.abs(floatSpeed) * 0.001})`;
       });
 
-      // Background sections depth - Exclude CTA section completely
+      // Background sections depth with blur preview effect
       const sections = document.querySelectorAll('section:not([data-testid="cta-section"])');
       sections.forEach((element, index) => {
         const el = element as HTMLElement;
@@ -54,8 +55,33 @@ export const useParallaxScroll = () => {
         if (el.querySelector('[data-testid="button-youtube"]') || el.querySelector('[data-testid="button-instagram"]')) {
           return;
         }
+        
+        const rect = el.getBoundingClientRect();
+        const elementTop = rect.top;
+        const elementHeight = rect.height;
         const depth = rate * (0.2 + index * 0.1);
+        
+        // Calculate blur based on distance from viewport
+        let blurAmount = 0;
+        let opacity = 1;
+        
+        // If element is below viewport (upcoming section)
+        if (elementTop > windowHeight * 0.8) {
+          const distance = (elementTop - windowHeight * 0.8) / windowHeight;
+          blurAmount = Math.min(distance * 8, 6); // Max 6px blur
+          opacity = Math.max(0.4, 1 - distance * 0.3); // Min 40% opacity
+        }
+        // If element is above viewport (past section)
+        else if (elementTop + elementHeight < windowHeight * 0.2) {
+          const distance = (windowHeight * 0.2 - (elementTop + elementHeight)) / windowHeight;
+          blurAmount = Math.min(distance * 4, 3); // Max 3px blur
+          opacity = Math.max(0.6, 1 - distance * 0.2); // Min 60% opacity
+        }
+        
         el.style.transform = `translateY(${depth * 0.06}px) scale(${1 + Math.abs(depth) * 0.0002})`;
+        el.style.filter = `blur(${blurAmount}px)`;
+        el.style.opacity = opacity.toString();
+        el.style.transition = 'filter 0.3s ease, opacity 0.3s ease';
       });
     };
 

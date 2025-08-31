@@ -123,13 +123,13 @@ const Home = () => {
         ogDescription="Hilarious Bengali mother-son comedy shorts from Kolkata"
       />
       <ParallaxContainer>
-        <main className="py-16">
+        <main className="py-8">
           <div className="container mx-auto px-4">
             {/* Hero Banner */}
             <ParallaxSection speed={0.3} delay={0.1}>
-              <section className="text-center mb-16" data-testid="hero-section">
+              <section className="text-center mb-8" data-testid="hero-section">
             <motion.div 
-              className="w-full h-64 md:h-80 bg-gradient-to-r from-brand-yellow via-brand-red to-brand-blue rounded-2xl shadow-lg mb-8 flex items-center justify-center relative overflow-hidden"
+              className="w-full h-64 md:h-80 bg-gradient-to-r from-brand-yellow via-brand-red to-brand-blue rounded-2xl shadow-lg mb-6 flex items-center justify-center relative overflow-hidden"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1, ease: [0.25, 0.25, 0.25, 1] }}
@@ -208,9 +208,9 @@ const Home = () => {
           
           {/* YouTube Shorts Grid */}
           <ParallaxSection speed={0.4} delay={0.2}>
-            <section className="mb-16" data-testid="videos-section">
+            <section className="mb-8" data-testid="videos-section">
             <motion.h3 
-              className="text-3xl font-bold text-center text-brand-blue mb-8" 
+              className="text-3xl font-bold text-center text-brand-blue mb-6" 
               data-testid="videos-title-english"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -219,7 +219,7 @@ const Home = () => {
               Latest Comedy Shorts
             </motion.h3>
             <motion.h4 
-              className="text-2xl font-bold text-center text-gray-800 mb-12 bangla-text" 
+              className="text-2xl font-bold text-center text-gray-800 mb-8 bangla-text" 
               data-testid="videos-title-bengali"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -267,7 +267,7 @@ const Home = () => {
           
           {/* CTA Buttons */}
           <ParallaxSection speed={0.3} delay={0.3}>
-            <section className="text-center mb-16" data-testid="cta-section">
+            <section className="text-center mb-8" data-testid="cta-section">
             <motion.div 
               className="flex flex-col lg:flex-row gap-8 justify-center items-center px-4"
               initial={{ opacity: 0, y: 50 }}
@@ -318,21 +318,24 @@ const Home = () => {
           
           {/* Collaboration Form */}
           <ParallaxSection speed={0.2} delay={0.4}>
-            <section className="mb-16" data-testid="collaboration-section">
-            <div className="max-w-2xl mx-auto">
-              <h3 className="text-3xl font-bold text-center text-brand-blue mb-1 leading-tight" data-testid="collaboration-title-english">
-                Work with Us
-              </h3>
-              <h4 className="text-xl font-medium text-center text-gray-600 mb-6 bangla-text" data-testid="collaboration-title-bengali">
-                আমাদের সাথে কাজ করুন
-              </h4>
+            <section className="mb-8" data-testid="collaboration-section">
+            <div className="max-w-4xl mx-auto">
+              {/* Work with Us Header with Yellow Background */}
+              <div className="bg-brand-yellow rounded-2xl p-6 mb-6 text-center shadow-lg">
+                <h3 className="text-4xl md:text-5xl font-bold text-brand-blue mb-4" data-testid="collaboration-title-english">
+                  Work with Us
+                </h3>
+                <h4 className="text-2xl md:text-3xl font-bold text-gray-800 bangla-text" data-testid="collaboration-title-bengali">
+                  আমাদের সাথে কাজ করুন
+                </h4>
+              </div>
               
               <Card className="bg-white shadow-lg">
                 <CardContent className="p-8">
-                  <p className="text-center text-gray-700 mb-6">
+                  <p className="text-center text-gray-700 mb-4 text-lg">
                     Ready to collaborate? Let's create some amazing Bengali comedy content together!
                   </p>
-                  <p className="text-center text-gray-700 mb-8 bangla-text">
+                  <p className="text-center text-gray-700 mb-6 bangla-text text-lg">
                     কোলাবোরেট করতে প্রস্তুত? চলুন একসাথে দুর্দান্ত বাংলা কমেডি কন্টেন্ট তৈরি করি!
                   </p>
                   

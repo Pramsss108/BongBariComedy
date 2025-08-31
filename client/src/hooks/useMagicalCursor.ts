@@ -20,6 +20,7 @@ export const useMagicalCursor = () => {
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
   const [particles, setParticles] = useState<Particle[]>([]);
   const [isMoving, setIsMoving] = useState(false);
+  const [isClicking, setIsClicking] = useState(false);
   const particleId = useRef(0);
   const movementTimer = useRef<NodeJS.Timeout>();
 
@@ -64,10 +65,46 @@ export const useMagicalCursor = () => {
       }, 150);
     };
 
+    const handleMouseDown = () => {
+      setIsClicking(true);
+      
+      // Create burst of particles on click for extra feedback
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        const speed = 2 + Math.random() * 3;
+        
+        const clickParticle: Particle = {
+          id: particleId.current++,
+          x: cursorPosition.x + (Math.random() - 0.5) * 10,
+          y: cursorPosition.y + (Math.random() - 0.5) * 10,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          opacity: 1,
+          scale: 0.6 + Math.random() * 0.4,
+          life: 40,
+          maxLife: 40,
+          rotation: Math.random() * 360,
+          rotationSpeed: (Math.random() - 0.5) * 8,
+          type: Math.random() < 0.3 ? 'laugh' : 'star',
+          sparklePhase: Math.random() * Math.PI * 2
+        };
+        
+        setParticles(prev => [...prev, clickParticle]);
+      }
+    };
+    
+    const handleMouseUp = () => {
+      setIsClicking(false);
+    };
+
     document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mousedown', handleMouseDown);
+    document.addEventListener('mouseup', handleMouseUp);
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mousedown', handleMouseDown);
+      document.removeEventListener('mouseup', handleMouseUp);
       if (movementTimer.current) {
         clearTimeout(movementTimer.current);
       }
@@ -106,6 +143,7 @@ export const useMagicalCursor = () => {
   return {
     cursorPosition,
     particles,
-    isMoving
+    isMoving,
+    isClicking
   };
 };

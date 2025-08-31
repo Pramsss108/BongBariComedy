@@ -138,16 +138,6 @@
     backface-visibility: hidden;
     transform-style: preserve-3d;
   }
-
-  /* RGB gradient animation keyframes */
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
-  }
 }
 
 .bangla-text {

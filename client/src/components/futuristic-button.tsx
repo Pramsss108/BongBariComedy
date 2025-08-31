@@ -133,34 +133,12 @@ export const FuturisticButton = ({
 
   return (
     <div className="relative inline-block">
-      {/* Moving RGB gradient border */}
-      <div className="absolute -inset-1 rounded-full opacity-75 blur-sm animate-pulse">
-        <div 
-          className="absolute inset-0 rounded-full"
-          style={{
-            background: `conic-gradient(from 0deg, #ff0080, #ff8c00, #40e0d0, #da70d6, #ff1493, #00ced1, #ff0080)`,
-            animation: 'spin 3s linear infinite'
-          }}
-        />
-      </div>
-      
-      {/* Secondary rotating gradient */}
-      <div className="absolute -inset-2 rounded-full opacity-50 blur-md">
-        <div 
-          className="absolute inset-0 rounded-full"
-          style={{
-            background: `conic-gradient(from 180deg, #00ff87, #60efff, #ff00ff, #ff6b6b, #4ecdc4, #45b7d1, #00ff87)`,
-            animation: 'spin 4s linear infinite reverse'
-          }}
-        />
-      </div>
-      
       <AnimatePresence>
         {!isExploding && (
           <motion.button
             ref={buttonRef}
             className={`
-              relative overflow-hidden px-12 py-6 rounded-full text-white font-bold text-xl
+              relative overflow-hidden px-8 py-4 rounded-full text-white font-bold text-lg
               bg-gradient-to-r ${style.gradient}
               shadow-2xl ${style.glow}
               border-2 border-white/20
@@ -169,13 +147,11 @@ export const FuturisticButton = ({
               hover:scale-105 hover:shadow-3xl hover:${style.glow}
               active:scale-95
               disabled:opacity-50 disabled:cursor-not-allowed
-              min-w-[350px] min-h-[80px]
               ${className}
             `}
             style={{
               filter: style.neon,
-              background: `linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(255,255,255,0.1) 100%), linear-gradient(to right, var(--tw-gradient-stops))`,
-              zIndex: 10
+              background: `linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(255,255,255,0.1) 100%), linear-gradient(to right, var(--tw-gradient-stops))`
             }}
             onClick={handleClick}
             disabled={disabled}

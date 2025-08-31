@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { chatbotService } from "./chatbotService";
 import { insertBlogPostSchema, insertCollaborationRequestSchema, insertUserSchema } from "@shared/schema";
 import { z } from "zod";
 import { google } from "googleapis";
@@ -334,6 +335,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+
+  // Chatbot API routes
+  app.post("/api/chatbot/message", async (req, res) => {
+    try {
+      const { message, conversationHistory = [] } = req.body;
+      
+      if (!message || typeof message !== 'string') {
+        return res.status(400).json({ error: "Message is required" });
+      }
+
+      const response = await chatbotService.generateResponse(message, conversationHistory);
+      
+      res.json({ 
+        response,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Chatbot API error:', error);
+      res.status(500).json({ 
+        error: "চ্যাটবট এখন কাজ করছে না। আবার চেষ্টা করুন! (Chatbot is not working right now. Please try again!)"
+      });
+    }
+  });
+
+  app.post("/api/chatbot/search", async (req, res) => {
+    try {
+      const { query } = req.body;
+      
+      if (!query || typeof query !== 'string') {
+        return res.status(400).json({ error: "Search query is required" });
+      }
+
+      const results = await chatbotService.searchWeb(query);
+      
+      res.json({ 
+        results,
+        query,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Chatbot search error:', error);
+      res.status(500).json({ 
+        error: "অনুসন্ধান করতে সমস্যা হচ্ছে। (Having trouble with search.)"
+      });
+    }
+  });
+
+  app.get("/api/chatbot/tips", async (req, res) => {
+    try {
+      const tips = await chatbotService.getBengaliComedyTips();
+      
+      res.json({ 
+        tips,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Chatbot tips error:', error);
+      res.status(500).json({ 
+        error: "টিপস দিতে সমস্যা হচ্ছে। (Having trouble providing tips.)"
+      });
+    }
+  });
 
   app.post("/api/collaboration-requests", async (req, res) => {
     try {

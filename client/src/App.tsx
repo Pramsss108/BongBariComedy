@@ -23,6 +23,7 @@ import Admin from "@/pages/admin";
 import Login from "@/pages/login";
 import BlogPost from "@/pages/blog-post";
 import NotFound from "@/pages/not-found";
+import Chatbot from "@/components/chatbot";
 
 function Router() {
   const [showCharmSelector, setShowCharmSelector] = useState(false);
@@ -64,6 +65,9 @@ function Router() {
         <Route path="/login" component={Login} />
         <Route component={NotFound} />
       </Switch>
+      
+      {/* AI Chatbot - Available on all pages */}
+      <Chatbot />
       
     </div>
   );

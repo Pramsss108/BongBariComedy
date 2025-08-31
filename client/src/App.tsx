@@ -36,7 +36,7 @@ function Router() {
   useMagicalHoverSounds({ enabled: true, volume: 0.12 });
   
   // Initialize magical fairy dust charm that follows mouse movement
-  useMouseMovementChime({ enabled: true, volume: 0.06, frequency: 1200 });
+  useMouseMovementChime({ enabled: false, volume: 0.06, frequency: 1200 });
   
   return (
     <div className="min-h-screen bg-brand-yellow relative">

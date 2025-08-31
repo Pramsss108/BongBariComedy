@@ -25,7 +25,7 @@ const Navigation = () => {
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50" data-testid="main-navigation">
       <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center py-3 md:py-10">
+        <div className="flex justify-between items-center py-3 md:py-10 pt-[20px] pb-[20px]">
           {/* Logo - Responsive Design */}
           <Link href="/" data-testid="logo-link">
             <div className="flex items-center space-x-3 cursor-pointer" style={{marginTop: '1rem'}}>

@@ -25,7 +25,7 @@ const Navigation = () => {
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50" data-testid="main-navigation">
       <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center py-2 md:py-4">
+        <div className="flex justify-between items-center py-3 md:py-5">
           {/* Logo - Optimized Layout */}
           <Link href="/" data-testid="logo-link">
             <div className="flex items-start space-x-4 cursor-pointer hover-logo-container">
@@ -33,7 +33,7 @@ const Navigation = () => {
                 <img 
                   src="/logo.png" 
                   alt="Bong Bari Logo" 
-                  className="w-14 h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-lg transition-transform duration-150 hover:scale-105"
+                  className="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-lg transition-transform duration-150 hover:scale-105"
                 />
                 {/* Animated Emojis on Hover - DESKTOP ONLY */}
                 <div className="absolute inset-0 pointer-events-none hidden lg:block">
@@ -49,10 +49,10 @@ const Navigation = () => {
               <div className="md:hidden flex flex-col justify-start pt-1">
                 <h1 className="text-xl font-bold text-brand-blue bangla-text leading-tight">বং বাড়ি</h1>
               </div>
-              {/* Desktop Logo - Repositioned Layout */}
-              <div className="hidden md:flex flex-col justify-start pt-2 min-w-0">
-                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[28px] leading-tight mb-1">বং বাড়ি</h1>
-                <p className="text-sm text-gray-600 leading-tight whitespace-nowrap ml-2">Bengali Comedy</p>
+              {/* Desktop Logo - Fixed Layout */}
+              <div className="hidden md:flex flex-col justify-start pt-1 min-w-[140px]">
+                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[26px] leading-tight mb-1">বং বাড়ি</h1>
+                <p className="text-xs text-gray-600 leading-tight whitespace-nowrap">Bengali Comedy</p>
               </div>
             </div>
           </Link>

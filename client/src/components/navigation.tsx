@@ -25,10 +25,10 @@ const Navigation = () => {
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50" data-testid="main-navigation">
       <div className="container mx-auto px-4 sm:px-6">
-        <div className="flex justify-between items-center py-2 px-1 sm:py-3">
+        <div className="flex justify-between items-center py-3 px-2 sm:py-4">
           {/* Logo - Optimized Layout */}
           <Link href="/" data-testid="logo-link">
-            <div className="flex items-center space-x-2 sm:space-x-3 cursor-pointer hover-logo-container group max-w-full">
+            <div className="flex items-center space-x-3 cursor-pointer hover-logo-container group w-full">
               <div className="relative logo-hover-wrapper">
                 <img 
                   src="/logo.png" 
@@ -45,11 +45,13 @@ const Navigation = () => {
                   <span className="emoji-float emoji-6 text-lg">🤣</span>
                 </div>
               </div>
-              {/* Mobile Logo - Compact Layout */}
-              <div className="md:hidden flex flex-col justify-center pl-1" style={{width: '48px'}}>
-                <h1 className="text-lg font-bold text-brand-blue bangla-text leading-none">বং বাড়ি</h1>
-                <p className="text-xs font-bold text-gray-800 leading-none group-hover:text-brand-blue transition-colors duration-300">Every Home's Story</p>
-                <p className="text-xs text-gray-600 bangla-text font-medium leading-none group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
+              {/* Mobile Logo - Professional Readable Layout */}
+              <div className="md:hidden flex flex-col justify-center pl-2 flex-1">
+                <h1 className="text-2xl font-bold text-brand-blue bangla-text leading-tight mb-1">বং বাড়ি</h1>
+                <div className="space-y-0">
+                  <p className="text-sm font-semibold text-gray-800 leading-tight group-hover:text-brand-blue transition-colors duration-300">Every Home's Story</p>
+                  <p className="text-sm text-gray-600 bangla-text font-medium leading-tight group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
+                </div>
               </div>
               {/* Desktop Logo - Maximum Visibility */}
               <div className="hidden md:flex flex-col justify-center pl-3 min-w-[300px]">

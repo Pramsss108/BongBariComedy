@@ -114,13 +114,19 @@ export default function SimpleChatbot() {
         
         {/* Fixed Typing Area */}
         <div className="border-t bg-white p-3 rounded-b-lg">
-          <div className="flex gap-2">
-            <input
-              type="text"
+          <div className="flex gap-2 items-end">
+            <textarea
               placeholder="Type your message..."
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-y-auto"
+              style={{
+                minHeight: '40px',
+                maxHeight: '40px',
+                lineHeight: '20px'
+              }}
+              rows={2}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
                   console.log('💬 Message sent:', e.currentTarget.value);
                   e.currentTarget.value = '';
                 }
@@ -128,7 +134,7 @@ export default function SimpleChatbot() {
             />
             <button
               onClick={() => console.log('💬 Send button clicked!')}
-              className="px-4 py-2 bg-gradient-to-r from-[#1363DF] to-[#FF4D4D] text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+              className="px-4 py-2 bg-gradient-to-r from-[#1363DF] to-[#FF4D4D] text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0"
             >
               Send
             </button>

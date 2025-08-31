@@ -1296,14 +1296,14 @@ section:nth-child(odd) {
   /* Magical Cursor Follower - Desktop Only */
   @media (min-width: 1024px) {
     .magic-cursor-circle {
-      width: 30px;
-      height: 30px;
+      width: 50px;
+      height: 50px;
       border-radius: 50%;
-      background: rgba(128, 128, 128, 0.15);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 204, 0, 0.2);
+      backdrop-filter: blur(5px);
+      border: 2px solid rgba(255, 204, 0, 0.4);
       position: relative;
-      animation: pulseCircle 2s ease-in-out infinite;
+      animation: pulseCircle 1.5s ease-in-out infinite;
     }
   }
 
@@ -1311,49 +1311,60 @@ section:nth-child(odd) {
   .glitter-2,
   .glitter-3 {
     position: absolute;
-    font-size: 8px;
+    font-size: 16px;
     opacity: 0;
-    animation: twinkle 2s ease-in-out infinite;
+    animation: magicalFloat 2s ease-in-out infinite;
     pointer-events: none;
+    z-index: 10;
   }
 
   .glitter-1 {
-    top: -5px;
-    left: 20px;
+    top: -10px;
+    left: 30px;
     animation-delay: 0s;
   }
 
   .glitter-2 {
-    bottom: -5px;
-    right: 18px;
-    animation-delay: 0.7s;
+    bottom: -10px;
+    right: 25px;
+    animation-delay: 0.5s;
   }
 
   .glitter-3 {
-    top: 15px;
-    left: -8px;
-    animation-delay: 1.4s;
+    top: 20px;
+    left: -15px;
+    animation-delay: 1s;
   }
 
   @keyframes pulseCircle {
     0%, 100% {
       transform: scale(1);
-      opacity: 0.6;
+      opacity: 0.8;
+      box-shadow: 0 0 20px rgba(255, 204, 0, 0.3);
     }
     50% {
-      transform: scale(1.1);
-      opacity: 0.3;
+      transform: scale(1.2);
+      opacity: 0.6;
+      box-shadow: 0 0 30px rgba(255, 204, 0, 0.5);
     }
   }
 
-  @keyframes twinkle {
+  @keyframes magicalFloat {
     0%, 100% {
       opacity: 0;
-      transform: scale(0.8);
+      transform: translateY(0px) scale(0.8) rotate(0deg);
+    }
+    25% {
+      opacity: 1;
+      transform: translateY(-8px) scale(1.2) rotate(90deg);
     }
     50% {
       opacity: 1;
-      transform: scale(1.2);
+      transform: translateY(-15px) scale(1.4) rotate(180deg);
+    }
+    75% {
+      opacity: 1;
+      transform: translateY(-8px) scale(1.2) rotate(270deg);
     }
   }
   

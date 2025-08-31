@@ -40,14 +40,14 @@ const Navigation = () => {
         <div 
           className="fixed pointer-events-none z-[999] transition-opacity duration-300 hidden lg:block"
           style={{
-            left: cursorPos.x - 15,
-            top: cursorPos.y - 15,
+            left: cursorPos.x - 25,
+            top: cursorPos.y - 25,
           }}
         >
           <div className="magic-cursor-circle">
-            <div className="glitter-1">✨</div>
-            <div className="glitter-2">⭐</div>
-            <div className="glitter-3">💫</div>
+            <div className="glitter-1">🌟</div>
+            <div className="glitter-2">😂</div>
+            <div className="glitter-3">✨</div>
           </div>
         </div>
       )}

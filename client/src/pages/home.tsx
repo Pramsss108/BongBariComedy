@@ -269,7 +269,7 @@ const Home = () => {
           
           {/* CTA Buttons */}
           <ParallaxSection speed={0.3} delay={0.3}>
-            <section className="text-center mb-16 py-8" data-testid="cta-section">
+            <section className="text-center mb-4 py-4" data-testid="cta-section">
             <motion.div 
               className="flex flex-col lg:flex-row gap-8 justify-center items-center px-8 max-w-6xl mx-auto"
               initial={{ opacity: 0, y: 50 }}

@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { Upload, Image, Save } from "lucide-react";
-import { BannerCropTool } from "@/components/BannerCropTool";
+import { AdvancedBannerCrop } from "@/components/AdvancedBannerCrop";
 
 interface BannerData {
   title: string;
@@ -165,10 +165,10 @@ export function SimpleBannerManager() {
                 </div>
               </div>
 
-              {/* New Crop Tool */}
+              {/* Advanced Crop Tool */}
               {bannerPreview && (
                 <div className="space-y-4">
-                  <BannerCropTool 
+                  <AdvancedBannerCrop 
                     imageUrl={bannerPreview}
                     onCropChange={setCroppedImage}
                     className=""

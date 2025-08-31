@@ -579,7 +579,7 @@ const Home = () => {
                           name="email"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Email <span className="text-red-500">*</span> <span className="text-gray-600 text-sm">(Required for verification)</span></FormLabel>
+                              <FormLabel>Email <span className="text-red-500">*</span></FormLabel>
                               <FormControl>
                                 <Input 
                                   type="email" 

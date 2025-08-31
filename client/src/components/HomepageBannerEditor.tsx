@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Upload, Save, X, Edit3, Clock } from "lucide-react";
-import { ProfessionalBannerStudio } from "./ProfessionalBannerStudio";
+import { AdvancedProfessionalBannerStudio } from "./AdvancedProfessionalBannerStudio";
 import { useToast } from "@/hooks/use-toast";
 
 interface BannerData {
@@ -43,12 +43,17 @@ export function HomepageBannerEditor({ currentBanner, onClose, timeRemaining }: 
     mutationFn: async (data: BannerData) => {
       const response = await fetch("/api/homepage-banner", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "credentials": "include"
+        },
+        credentials: "include",
         body: JSON.stringify(data),
       });
       
       if (!response.ok) {
-        throw new Error("Failed to update banner");
+        const errorData = await response.text();
+        throw new Error(`Failed to update banner: ${response.status} - ${errorData}`);
       }
       
       return response.json();
@@ -178,9 +183,9 @@ export function HomepageBannerEditor({ currentBanner, onClose, timeRemaining }: 
               </div>
             </div>
 
-            {/* Professional Banner Studio */}
+            {/* Advanced Professional Banner Studio */}
             {bannerPreview && (
-              <ProfessionalBannerStudio 
+              <AdvancedProfessionalBannerStudio 
                 imageUrl={bannerPreview}
                 onCropChange={setCroppedImage}
                 className=""

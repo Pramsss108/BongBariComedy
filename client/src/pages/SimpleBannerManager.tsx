@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { Upload, Image, Save } from "lucide-react";
-import { ProfessionalBannerStudio } from "@/components/ProfessionalBannerStudio";
+import { AdvancedProfessionalBannerStudio } from "@/components/AdvancedProfessionalBannerStudio";
 
 interface BannerData {
   title: string;
@@ -31,22 +31,18 @@ export function SimpleBannerManager() {
   // Fetch current banner data
   const { data: currentBanner, isLoading } = useQuery({
     queryKey: ["/api/homepage-banner"],
-    queryFn: () => fetch('/api/homepage-banner', {
-      headers: sessionId ? { 'Authorization': `Bearer ${sessionId}` } : {}
-    }).then(res => res.ok ? res.json() : { title: "বং বাড়ি", subtitle: "কলকাতার ঘরোয়া কমেডি - আমাদের গল্প" }),
-    enabled: !!sessionId,
+    queryFn: () => fetch('/api/homepage-banner').then(res => res.ok ? res.json() : { title: "বং বাড়ি", subtitle: "কলকাতার ঘরোয়া কমেডি - আমাদের গল্প" }),
   });
 
   // Save banner mutation
   const saveBannerMutation = useMutation({
-    mutationFn: (data: BannerData) => apiRequest("/api/homepage-banner", {
+    mutationFn: (data: BannerData) => fetch("/api/homepage-banner", {
       method: "POST",
       body: JSON.stringify(data),
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${sessionId}`
+        'Content-Type': 'application/json'
       }
-    }),
+    }).then(res => res.ok ? res.json() : Promise.reject('Failed to save banner')),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/homepage-banner"] });
       toast({ title: "✅ Banner updated successfully!" });
@@ -180,9 +176,9 @@ export function SimpleBannerManager() {
             </CardContent>
           </Card>
 
-          {/* Professional Banner Studio */}
+          {/* Advanced Professional Banner Studio */}
           {bannerPreview && (
-            <ProfessionalBannerStudio 
+            <AdvancedProfessionalBannerStudio 
               imageUrl={bannerPreview}
               onCropChange={setCroppedImage}
               className=""

@@ -61,7 +61,6 @@ const Home = () => {
         setSessionTimeRemaining(prev => {
           if (prev <= 1) {
             // Auto logout
-            fetch('/api/auth/logout', { method: 'POST' });
             setIsAdminMode(false);
             setShowBannerEditor(false);
             return 0;

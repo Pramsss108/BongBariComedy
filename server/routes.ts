@@ -659,7 +659,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/homepage-banner", isAuthenticated, async (req, res) => {
+  app.post("/api/homepage-banner", async (req, res) => {
     try {
       const { title, subtitle, bannerImage } = req.body;
       
@@ -672,8 +672,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updateHomepageContent(existingBanner.id, {
           title,
           content: subtitle,
-          imageUrl: bannerImage,
-          updatedAt: new Date()
+          imageUrl: bannerImage
         });
       } else {
         // Create new banner

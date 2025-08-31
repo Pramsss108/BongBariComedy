@@ -267,55 +267,9 @@ const Home = () => {
             </section>
           </ParallaxSection>
           
-          {/* CTA Buttons */}
-          <ParallaxSection speed={0.3} delay={0.3}>
-            <section className="text-center mb-0 py-4" data-testid="cta-section">
-            <motion.div 
-              className="flex flex-col lg:flex-row gap-8 justify-center items-center px-8 max-w-6xl mx-auto"
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-            >
-              <motion.div
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="flex-shrink-0"
-              >
-                <FuturisticButton 
-                  variant="youtube"
-                  className="max-w-full"
-                  onClick={() => window.open('https://youtube.com/@bongbari', '_blank')}
-                  data-testid="button-youtube"
-                >
-                  <Youtube className="h-5 w-5" />
-                  Subscribe on YouTube
-                </FuturisticButton>
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-                className="flex-shrink-0"
-              >
-                <FuturisticButton 
-                  variant="instagram"
-                  className="max-w-full"
-                  onClick={() => window.open('https://instagram.com/thebongbari', '_blank')}
-                  data-testid="button-instagram"
-                >
-                  <Instagram className="h-5 w-5" />
-                  Follow on Instagram
-                </FuturisticButton>
-              </motion.div>
-            </motion.div>
-            </section>
-          </ParallaxSection>
-          
           {/* Collaboration Form */}
           <ParallaxSection speed={0.2} delay={0.4}>
-            <section className="mb-0 -mt-12" data-testid="collaboration-section">
+            <section className="mb-8 py-8" data-testid="collaboration-section">
             <div className="max-w-4xl mx-auto">
               {/* Work with Us Header with Yellow Background */}
               <div className="bg-brand-yellow rounded-2xl p-2 mb-0 text-center shadow-lg">
@@ -430,6 +384,52 @@ const Home = () => {
               </Card>
             </div>
           </section>
+          </ParallaxSection>
+          
+          {/* CTA Buttons */}
+          <ParallaxSection speed={0.3} delay={0.3}>
+            <section className="text-center mb-8 py-8" data-testid="cta-section">
+            <motion.div 
+              className="flex flex-col lg:flex-row gap-8 justify-center items-center px-8 max-w-6xl mx-auto"
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+            >
+              <motion.div
+                initial={{ opacity: 0, x: -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="flex-shrink-0"
+              >
+                <FuturisticButton 
+                  variant="youtube"
+                  className="max-w-full"
+                  onClick={() => window.open('https://youtube.com/@bongbari', '_blank')}
+                  data-testid="button-youtube"
+                >
+                  <Youtube className="h-5 w-5" />
+                  Subscribe on YouTube
+                </FuturisticButton>
+              </motion.div>
+              
+              <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                className="flex-shrink-0"
+              >
+                <FuturisticButton 
+                  variant="instagram"
+                  className="max-w-full"
+                  onClick={() => window.open('https://instagram.com/thebongbari', '_blank')}
+                  data-testid="button-instagram"
+                >
+                  <Instagram className="h-5 w-5" />
+                  Follow on Instagram
+                </FuturisticButton>
+              </motion.div>
+            </motion.div>
+            </section>
           </ParallaxSection>
           </div>
         </main>

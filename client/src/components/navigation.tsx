@@ -25,7 +25,7 @@ const Navigation = () => {
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50" data-testid="main-navigation">
       <div className="container mx-auto px-4 sm:px-6">
-        <div className="flex justify-between items-center py-3 sm:py-4 md:py-5">
+        <div className="flex justify-between items-center py-2 sm:py-3">
           {/* Logo - Optimized Layout */}
           <Link href="/" data-testid="logo-link">
             <div className="flex items-start space-x-4 cursor-pointer hover-logo-container group">
@@ -33,7 +33,7 @@ const Navigation = () => {
                 <img 
                   src="/logo.png" 
                   alt="Bong Bari Logo" 
-                  className="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-lg transition-all duration-500 hover:scale-150 hover:rotate-12 hover:shadow-2xl hover:-translate-y-2"
+                  className="w-14 h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 rounded-lg transition-all duration-300 hover:scale-110 hover:rotate-6 hover:shadow-xl"
                 />
                 {/* Animated Emojis on Hover - DESKTOP ONLY */}
                 <div className="absolute inset-0 pointer-events-none hidden lg:block">
@@ -45,28 +45,28 @@ const Navigation = () => {
                   <span className="emoji-float emoji-6 text-lg">🤣</span>
                 </div>
               </div>
-              {/* Mobile Logo - Enhanced with Tagline */}
-              <div className="md:hidden flex flex-col justify-start pt-1 pr-2 min-w-[130px]">
-                <h1 className="text-lg sm:text-xl font-bold text-brand-blue bangla-text leading-tight mb-1 pt-[2px] pb-[2px]">বং বাড়ি</h1>
-                <p className="text-[10px] sm:text-[11px] text-gray-700 font-medium leading-tight whitespace-nowrap group-hover:text-brand-blue transition-colors duration-300">Every Home's Story</p>
-                <p className="text-[9px] sm:text-[10px] text-gray-500 bangla-text leading-tight group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
+              {/* Mobile Logo - Bigger and More Prominent */}
+              <div className="md:hidden flex flex-col justify-center pl-2 min-w-[140px]">
+                <h1 className="text-xl sm:text-2xl font-bold text-brand-blue bangla-text leading-tight mb-1">বং বাড়ি</h1>
+                <p className="text-[11px] sm:text-xs text-gray-700 font-semibold leading-tight whitespace-nowrap group-hover:text-brand-blue transition-colors duration-300">Every Home's Story</p>
+                <p className="text-[10px] sm:text-[11px] text-gray-500 bangla-text leading-tight group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
               </div>
-              {/* Desktop Logo - Enhanced with Bilingual Tagline */}
-              <div className="hidden md:flex flex-col justify-start pt-1 min-w-[200px]">
-                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[26px] leading-tight mb-1 pt-[2px] pb-[2px]">বং বাড়ি</h1>
-                <p className="text-sm font-semibold text-gray-800 leading-tight whitespace-nowrap mb-1 group-hover:text-brand-blue transition-colors duration-300">Every Home's Story — Bong Bari</p>
-                <p className="text-xs text-gray-600 bangla-text leading-tight whitespace-nowrap group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প — বং বাড়ি</p>
+              {/* Desktop Logo - Bigger and More Prominent */}
+              <div className="hidden md:flex flex-col justify-center pl-3 min-w-[240px]">
+                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[32px] lg:text-[36px] leading-tight mb-1">বং বাড়ি</h1>
+                <p className="text-base lg:text-lg font-semibold text-gray-800 leading-tight whitespace-nowrap mb-1 group-hover:text-brand-blue transition-colors duration-300">Every Home's Story — Bong Bari</p>
+                <p className="text-sm lg:text-base text-gray-600 bangla-text leading-tight whitespace-nowrap group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প — বং বাড়ি</p>
               </div>
             </div>
           </Link>
           
-          {/* Desktop Navigation - Enhanced Responsive */}
-          <div className="hidden md:flex items-center space-x-4 lg:space-x-6 xl:space-x-8">
+          {/* Desktop Navigation - Optimized Spacing */}
+          <div className="hidden md:flex items-center space-x-3 lg:space-x-4 xl:space-x-5">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`font-semibold text-base lg:text-lg xl:text-xl transition-all duration-200 hover:text-brand-blue hover:scale-105 ${
+                className={`font-medium text-sm lg:text-base transition-all duration-200 hover:text-brand-blue hover:scale-105 ${
                   isActive(item.href) 
                     ? "text-brand-blue border-b-2 border-brand-blue pb-1" 
                     : "text-gray-700 hover:border-b-2 hover:border-brand-blue pb-1"
@@ -82,7 +82,7 @@ const Navigation = () => {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden p-3 hover:bg-gray-100 transition-colors"
+            className="md:hidden p-2 hover:bg-gray-100 transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             data-testid="mobile-menu-toggle"
           >

@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { MagneticButton } from "@/components/magnetic-button";
+import { FuturisticButton } from "@/components/futuristic-button";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -280,16 +281,14 @@ const Home = () => {
                 transition={{ duration: 0.6, delay: 0.2 }}
                 className="w-full sm:w-auto"
               >
-                <MagneticButton 
-                  size="lg" 
-                  className="bg-brand-red text-white hover:bg-red-600 px-10 py-5 rounded-full font-semibold text-lg hover-lift shadow-2xl w-full sm:w-auto min-w-[280px]"
-                  data-testid="button-youtube"
+                <FuturisticButton 
+                  variant="youtube"
+                  className="w-full sm:w-auto min-w-[280px]"
                   onClick={() => window.open('https://youtube.com/@bongbari', '_blank')}
-                  strength={0.5}
                 >
-                  <Youtube className="mr-3 h-6 w-6" />
+                  <Youtube className="h-6 w-6" />
                   Subscribe on YouTube
-                </MagneticButton>
+                </FuturisticButton>
               </motion.div>
               
               {/* Separator for desktop */}
@@ -301,16 +300,14 @@ const Home = () => {
                 transition={{ duration: 0.6, delay: 0.4 }}
                 className="w-full sm:w-auto"
               >
-                <MagneticButton 
-                  size="lg" 
-                  className="bg-brand-blue text-white hover:bg-blue-700 px-10 py-5 rounded-full font-semibold text-lg hover-lift shadow-2xl w-full sm:w-auto min-w-[280px]"
-                  data-testid="button-instagram"
+                <FuturisticButton 
+                  variant="instagram"
+                  className="w-full sm:w-auto min-w-[280px]"
                   onClick={() => window.open('https://instagram.com/thebongbari', '_blank')}
-                  strength={0.5}
                 >
-                  <Instagram className="mr-3 h-6 w-6" />
+                  <Instagram className="h-6 w-6" />
                   Follow on Instagram
-                </MagneticButton>
+                </FuturisticButton>
               </motion.div>
             </motion.div>
             </section>

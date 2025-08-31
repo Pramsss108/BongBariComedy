@@ -51,7 +51,7 @@ const Navigation = () => {
               </div>
               {/* Desktop Logo - Full */}
               <div className="hidden md:block min-w-0">
-                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[24px]">বং বাড়ি</h1>
+                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[24px] pt-[3px] pb-[3px]">বং বাড়ি</h1>
                 <p className="text-xs text-gray-600 leading-tight whitespace-nowrap">Bengali Comedy</p>
               </div>
             </div>

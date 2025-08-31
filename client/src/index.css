@@ -1213,7 +1213,7 @@ section:nth-child(odd) {
   
   /* Desktop logo text alignment */
   [data-testid="logo-link"] .hidden.md\\:block {
-    margin-top: 0.5rem !important;
+    margin-top: 1rem !important;
   }
 }
 

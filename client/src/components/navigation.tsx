@@ -47,7 +47,7 @@ const Navigation = () => {
               </div>
               {/* Mobile Logo - Compact with Padding */}
               <div className="md:hidden flex flex-col justify-start pt-1 pr-2 min-w-[100px]">
-                <h1 className="text-lg font-bold text-brand-blue bangla-text leading-tight mb-1">বং বাড়ি</h1>
+                <h1 className="text-lg font-bold text-brand-blue bangla-text leading-tight mb-1 pt-[2px] pb-[2px]">বং বাড়ি</h1>
                 <p className="text-[10px] text-gray-600 leading-tight whitespace-nowrap">Family Comedy</p>
               </div>
               {/* Desktop Logo - Fixed Layout */}

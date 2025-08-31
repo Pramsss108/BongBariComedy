@@ -395,10 +395,48 @@ section,
   transform: scale(1.03) !important;
 }
 
+/* Logo hover effects with emoji animations */
+.hover-logo-container:hover .emoji-float {
+  opacity: 1;
+  transform: translateY(-20px) scale(1.2);
+  animation: floatEmoji 2s ease-in-out infinite;
+}
+
+.emoji-float {
+  position: absolute;
+  opacity: 0;
+  transition: all 0.3s ease;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.emoji-1 { top: -10px; left: -15px; animation-delay: 0s; }
+.emoji-2 { top: -5px; right: -10px; animation-delay: 0.2s; }
+.emoji-3 { bottom: -10px; left: -5px; animation-delay: 0.4s; }
+.emoji-4 { bottom: -5px; right: -15px; animation-delay: 0.6s; }
+.emoji-5 { top: -15px; left: 50%; animation-delay: 0.8s; }
+.emoji-6 { bottom: -15px; right: 50%; animation-delay: 1s; }
+
+@keyframes floatEmoji {
+  0%, 100% { 
+    transform: translateY(-20px) scale(1.2) rotate(0deg);
+  }
+  50% { 
+    transform: translateY(-30px) scale(1.4) rotate(10deg);
+  }
+}
+
+/* Navigation link hover effects */
+nav a:hover {
+  transform: translateY(-2px) !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+  transition: all 0.3s ease !important;
+}
+
 /* Navigation containers */
 nav:hover,
 header:hover {
-  transform: scale(1.02) !important;
+  transform: scale(1.01) !important;
 }
 
 /* Allow button independence - disable container override for buttons */

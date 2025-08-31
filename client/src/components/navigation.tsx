@@ -25,10 +25,10 @@ const Navigation = () => {
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50" data-testid="main-navigation">
       <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center py-3 md:py-10 pt-[20px] pb-[20px]">
+        <div className="flex justify-between items-center py-2 md:py-4">
           {/* Logo - Responsive Design */}
           <Link href="/" data-testid="logo-link">
-            <div className="flex items-center space-x-3 cursor-pointer hover-logo-container" style={{marginTop: '1rem'}}>
+            <div className="flex items-center space-x-3 cursor-pointer hover-logo-container">
               <div className="relative logo-hover-wrapper">
                 <img 
                   src="/logo.png" 
@@ -50,9 +50,9 @@ const Navigation = () => {
                 <h1 className="text-xl font-bold text-brand-blue bangla-text leading-tight">বং বাড়ি</h1>
               </div>
               {/* Desktop Logo - Full */}
-              <div className="hidden md:block min-w-0" style={{marginTop: '0.75rem'}}>
-                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap mt-[0.9px] mb-[0.9px] text-left pt-[2.5px] pb-[2.5px] text-[29px]">বং বাড়ি</h1>
-                <p className="text-xs text-gray-600 leading-tight whitespace-nowrap" style={{marginTop: '0.25rem', fontSize: '0.7rem'}}>Bengali Comedy</p>
+              <div className="hidden md:block min-w-0">
+                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[24px]">বং বাড়ি</h1>
+                <p className="text-xs text-gray-600 leading-tight whitespace-nowrap">Bengali Comedy</p>
               </div>
             </div>
           </Link>

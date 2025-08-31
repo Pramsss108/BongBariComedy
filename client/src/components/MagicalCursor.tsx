@@ -13,7 +13,7 @@ const MagicalCursor = () => {
   useEffect(() => {
     setIsOnMobile(isMobile());
     
-    // Force cursor to appear over iframes with JavaScript
+    // Force cursor to appear over iframes with JavaScript - targeting first video specifically
     const style = document.createElement('style');
     style.id = 'magical-cursor-force';
     style.textContent = `
@@ -28,8 +28,25 @@ const MagicalCursor = () => {
         mix-blend-mode: multiply !important;
       }
       
+      /* Target ALL iframes and their containers */
       iframe, video, embed, object {
         z-index: 1 !important;
+        position: relative !important;
+      }
+      
+      /* Specifically target the first video container */
+      .relative.aspect-video,
+      .relative.aspect-video iframe,
+      [class*="aspect-video"] iframe {
+        z-index: 1 !important;
+        isolation: auto !important;
+      }
+      
+      /* Force stacking context reset for YouTube containers */
+      div:has(iframe[src*="youtube.com"]),
+      div:has(iframe[src*="youtu.be"]) {
+        z-index: 1 !important;
+        isolation: auto !important;
         position: relative !important;
       }
     `;

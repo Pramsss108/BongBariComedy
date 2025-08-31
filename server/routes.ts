@@ -632,17 +632,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // 🎨 SIMPLE BANNER MANAGER - Homepage Banner API
+  // 🎨 BANNER API - Get banner data from database
   app.get("/api/homepage-banner", async (req, res) => {
     try {
-      // For now, return default banner data
-      // In production, this would fetch from database
-      const defaultBanner = {
-        title: "বং বাড়ি",
-        subtitle: "কলকাতার ঘরোয়া কমেডি - আমাদের গল্প",
-        bannerImage: ""
-      };
-      res.json(defaultBanner);
+      // Get banner from homepage content table
+      const bannerContent = await storage.getHomepageContentByType("banner");
+      const banner = bannerContent.find(c => c.isActive);
+      
+      if (banner) {
+        res.json({
+          title: banner.title || "বং বাড়ি",
+          subtitle: banner.content || "কলকাতার ঘরোয়া কমেডি - আমাদের গল্প",
+          bannerImage: banner.imageUrl || ""
+        });
+      } else {
+        // Return default if no banner found
+        res.json({
+          title: "বং বাড়ি",
+          subtitle: "কলকাতার ঘরোয়া কমেডি - আমাদের গল্প",
+          bannerImage: ""
+        });
+      }
     } catch (error) {
       console.error("Error fetching banner:", error);
       res.status(500).json({ message: "Failed to fetch banner data" });
@@ -651,17 +661,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/homepage-banner", isAuthenticated, async (req, res) => {
     try {
-      const bannerData = req.body;
-      console.log("Banner updated:", bannerData);
+      const { title, subtitle, bannerImage } = req.body;
       
-      // For now, just return success
-      // In production, this would save to database
+      // Get existing banner or create new one
+      const existingBanners = await storage.getHomepageContentByType("banner");
+      const existingBanner = existingBanners.find(b => b.isActive);
+      
+      if (existingBanner) {
+        // Update existing banner
+        await storage.updateHomepageContent(existingBanner.id, {
+          title,
+          content: subtitle,
+          imageUrl: bannerImage,
+          updatedAt: new Date()
+        });
+      } else {
+        // Create new banner
+        await storage.createHomepageContent({
+          sectionType: "banner",
+          title,
+          content: subtitle,
+          imageUrl: bannerImage,
+          isActive: true,
+          displayOrder: 1
+        });
+      }
+      
+      console.log("✅ Banner saved to database:", { title, subtitle, bannerImage });
       res.json({ 
         message: "Banner updated successfully",
-        data: bannerData 
+        data: { title, subtitle, bannerImage }
       });
     } catch (error) {
-      console.error("Error updating banner:", error);
+      console.error("❌ Error saving banner:", error);
       res.status(500).json({ message: "Failed to update banner" });
     }
   });

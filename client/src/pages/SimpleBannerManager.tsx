@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
-import { Upload, Image, RotateCw, ZoomIn, ZoomOut, Move } from "lucide-react";
+import { Upload, Image, Save } from "lucide-react";
+import { BannerCropTool } from "@/components/BannerCropTool";
 
 interface BannerData {
   title: string;
@@ -18,16 +19,9 @@ interface BannerData {
 export function SimpleBannerManager() {
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [croppedImage, setCroppedImage] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [subtitle, setSubtitle] = useState("");
-  const [cropData, setCropData] = useState({
-    x: 0,
-    y: 0,
-    width: 100,
-    height: 100,
-    rotation: 0,
-    zoom: 1
-  });
   
   const { toast } = useToast();
   const { sessionId } = useAuth();
@@ -86,20 +80,22 @@ export function SimpleBannerManager() {
 
   const handleSave = () => {
     const data: BannerData = {
-      title,
-      subtitle,
-      bannerImage: bannerPreview || currentBanner?.bannerImage || ""
+      title: title.trim() || currentBanner?.title || "বং বাড়ি",
+      subtitle: subtitle.trim() || currentBanner?.subtitle || "কলকাতার ঘরোয়া কমেডি - আমাদের গল্প",
+      bannerImage: croppedImage || currentBanner?.bannerImage || ""
     };
     
+    console.log("💾 Saving banner data:", data);
     saveBannerMutation.mutate(data);
   };
 
-  const adjustCrop = (property: keyof typeof cropData, delta: number) => {
-    setCropData(prev => ({
-      ...prev,
-      [property]: Math.max(0, prev[property] + delta)
-    }));
-  };
+  // Load current banner data into form
+  React.useEffect(() => {
+    if (currentBanner) {
+      setTitle(currentBanner.title || "");
+      setSubtitle(currentBanner.subtitle || "");
+    }
+  }, [currentBanner]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-red-50 p-6">
@@ -121,7 +117,7 @@ export function SimpleBannerManager() {
             <CardContent className="space-y-6">
               {/* Title Input */}
               <div>
-                <Label htmlFor="title">Homepage Title</Label>
+                <Label htmlFor="title">📝 Homepage Title</Label>
                 <Input
                   id="title"
                   value={title}
@@ -169,49 +165,14 @@ export function SimpleBannerManager() {
                 </div>
               </div>
 
-              {/* Image Adjustment Tools */}
+              {/* New Crop Tool */}
               {bannerPreview && (
-                <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-gray-800">Image Adjustments</h3>
-                  
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => adjustCrop('zoom', 0.1)}
-                      data-testid="button-zoom-in"
-                    >
-                      <ZoomIn className="w-4 h-4 mr-1" />
-                      Zoom In
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => adjustCrop('zoom', -0.1)}
-                      data-testid="button-zoom-out"
-                    >
-                      <ZoomOut className="w-4 h-4 mr-1" />
-                      Zoom Out
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => adjustCrop('rotation', 90)}
-                      data-testid="button-rotate"
-                    >
-                      <RotateCw className="w-4 h-4 mr-1" />
-                      Rotate
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setCropData({ x: 0, y: 0, width: 100, height: 100, rotation: 0, zoom: 1 })}
-                      data-testid="button-reset"
-                    >
-                      <Move className="w-4 h-4 mr-1" />
-                      Reset
-                    </Button>
-                  </div>
+                <div className="space-y-4">
+                  <BannerCropTool 
+                    imageUrl={bannerPreview}
+                    onCropChange={setCroppedImage}
+                    className=""
+                  />
                 </div>
               )}
 
@@ -234,17 +195,14 @@ export function SimpleBannerManager() {
             </CardHeader>
             <CardContent>
               <div className="bg-gradient-to-r from-brand-yellow to-brand-red p-6 rounded-lg text-center">
-                {/* Banner Image Preview */}
-                {bannerPreview && (
+                {/* Banner Image Preview - Exact Homepage Size */}
+                {croppedImage && (
                   <div className="mb-4 overflow-hidden rounded-lg">
                     <img 
-                      src={bannerPreview}
+                      src={croppedImage}
                       alt="Banner preview"
-                      className="w-full h-32 object-cover"
-                      style={{
-                        transform: `scale(${cropData.zoom}) rotate(${cropData.rotation}deg)`,
-                        objectPosition: `${cropData.x}% ${cropData.y}%`
-                      }}
+                      className="w-full h-20 md:h-24 object-cover"
+                      style={{ aspectRatio: '20/1' }}
                     />
                   </div>
                 )}
@@ -262,8 +220,13 @@ export function SimpleBannerManager() {
               
               <div className="mt-4 text-center">
                 <p className="text-sm text-gray-500">
-                  ☝️ This is how your banner will look on the homepage
+                  ☝️ This shows your exact homepage banner appearance
                 </p>
+                {croppedImage && (
+                  <p className="text-xs text-green-600 mt-1">
+                    ✅ Banner image ready for homepage
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>

@@ -1292,38 +1292,6 @@ section:nth-child(odd) {
     position: relative !important;
     transition: all 0.2s ease !important;
   }
-
-  /* $4000 Professional Magical Cursor */
-  @keyframes professionalPulse {
-    0%, 100% {
-      transform: scale(1);
-      box-shadow: 0 0 10px rgba(255, 204, 0, 0.2);
-    }
-    50% {
-      transform: scale(1.05);
-      box-shadow: 0 0 15px rgba(255, 204, 0, 0.4);
-    }
-  }
-
-  @keyframes elegantTwinkle {
-    0%, 100% {
-      opacity: 0;
-      transform: scale(0.8) translateY(0px);
-    }
-    50% {
-      opacity: 0.8;
-      transform: scale(1.2) translateY(-5px);
-    }
-  }
-
-  /* Hide default cursor for clean professional look */
-  body {
-    cursor: none !important;
-  }
-  
-  body * {
-    cursor: none !important;
-  }
   
   /* Logo gradient text on desktop */
   [data-testid="logo-link"] h1 {

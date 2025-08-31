@@ -163,52 +163,116 @@
   border-radius: 12px;
 }
 
-/* Rotating gradient border - colorful wheel around reel frame */
+/* Moving gradient border - gradient segment travels around reel */
 .rotating-gradient-border {
   position: absolute;
-  inset: -4px;
-  border-radius: 16px;
-  background: conic-gradient(
-    from 0deg,
-    #ff1493,  /* Hot pink */
-    #ff6347,  /* Orange red */
-    #ffa500,  /* Orange */
-    #ffff00,  /* Yellow */
-    #32cd32,  /* Lime green */
-    #00bfff,  /* Deep sky blue */
-    #8a2be2,  /* Blue violet */
-    #ff1493   /* Back to hot pink for seamless loop */
-  );
-  padding: 4px;
-  animation: spinWheel 3s linear infinite;
+  inset: -3px;
+  border-radius: 15px;
+  border: 3px solid transparent;
+  background: 
+    linear-gradient(white, white) padding-box,
+    conic-gradient(
+      from 0deg,
+      transparent 0%,
+      transparent 75%,
+      #ff1493 80%,  /* Hot pink */
+      #ff6347 85%,  /* Orange red */
+      #ffa500 90%,  /* Orange */
+      #ffff00 95%,  /* Yellow */
+      transparent 100%
+    ) border-box;
+  animation: moveGradientAround 3s linear infinite;
   pointer-events: none;
   z-index: 5;
-  filter: brightness(1.2) saturate(1.3);
+  filter: brightness(1.3) saturate(1.4);
 }
 
-/* Inner clean container for reel content - STATIC, never rotates */
+/* Inner clean container for reel content - STATIC, never moves */
 .reel-content-container {
-  position: relative;
+  position: absolute;
+  inset: 3px;
   background: white;
   border-radius: 12px;
   overflow: hidden;
   z-index: 10;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  height: 100%;
-  width: 100%;
 }
 
-/* Spin animation - rotates the entire gradient border */
-@keyframes spinWheel {
+/* Moving gradient animation - gradient segment travels around border */
+@keyframes moveGradientAround {
   0% {
-    transform: rotate(0deg);
+    background: 
+      linear-gradient(white, white) padding-box,
+      conic-gradient(
+        from 0deg,
+        transparent 0%,
+        transparent 75%,
+        #ff1493 80%,
+        #ff6347 85%,
+        #ffa500 90%,
+        #ffff00 95%,
+        transparent 100%
+      ) border-box;
+  }
+  25% {
+    background: 
+      linear-gradient(white, white) padding-box,
+      conic-gradient(
+        from 90deg,
+        transparent 0%,
+        transparent 75%,
+        #32cd32 80%,
+        #00bfff 85%,
+        #8a2be2 90%,
+        #ff1493 95%,
+        transparent 100%
+      ) border-box;
+  }
+  50% {
+    background: 
+      linear-gradient(white, white) padding-box,
+      conic-gradient(
+        from 180deg,
+        transparent 0%,
+        transparent 75%,
+        #ff6347 80%,
+        #ffa500 85%,
+        #ffff00 90%,
+        #32cd32 95%,
+        transparent 100%
+      ) border-box;
+  }
+  75% {
+    background: 
+      linear-gradient(white, white) padding-box,
+      conic-gradient(
+        from 270deg,
+        transparent 0%,
+        transparent 75%,
+        #00bfff 80%,
+        #8a2be2 85%,
+        #ff1493 90%,
+        #ff6347 95%,
+        transparent 100%
+      ) border-box;
   }
   100% {
-    transform: rotate(360deg);
+    background: 
+      linear-gradient(white, white) padding-box,
+      conic-gradient(
+        from 360deg,
+        transparent 0%,
+        transparent 75%,
+        #ff1493 80%,
+        #ff6347 85%,
+        #ffa500 90%,
+        #ffff00 95%,
+        transparent 100%
+      ) border-box;
   }
 }
 
-/* Each reel gets different spinning speeds for variety */
+/* Each reel gets different gradient movement speeds */
 .video-container:nth-child(1) .rotating-gradient-border {
   animation-duration: 3s;
 }

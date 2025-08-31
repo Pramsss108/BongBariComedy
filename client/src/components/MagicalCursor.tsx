@@ -11,10 +11,10 @@ const MagicalCursor = () => {
         style={{
           left: cursorPosition.x - 12,
           top: cursorPosition.y - 12,
-          opacity: isMoving ? 0.25 : 0.1,
-          transform: 'translate3d(0, 0, 0)',
-          transition: 'left 0.08s ease-out, top 0.08s ease-out, opacity 0.2s ease',
-          boxShadow: isMoving ? '0 0 15px rgba(128, 128, 128, 0.4)' : 'none'
+          opacity: isMoving ? 0.2 : 0.05,
+          transform: `translate3d(${cursorPosition.x - 12}px, ${cursorPosition.y - 12}px, 0)`,
+          transition: 'opacity 0.2s ease',
+          willChange: 'transform'
         }}
       />
 
@@ -27,11 +27,9 @@ const MagicalCursor = () => {
             key={particle.id}
             className="absolute pointer-events-none select-none"
             style={{
-              left: particle.x,
-              top: particle.y,
+              transform: `translate3d(${particle.x}px, ${particle.y}px, 0) scale(${particle.scale}) rotate(${particle.rotation}deg)`,
               opacity: particle.opacity,
-              transform: `scale(${particle.scale}) rotate(${particle.rotation}deg)`,
-              transition: 'none'
+              willChange: 'transform, opacity'
             }}
           >
             {particle.type === 'laugh' ? (

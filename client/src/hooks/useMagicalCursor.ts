@@ -33,8 +33,8 @@ export const useMagicalCursor = () => {
         clearTimeout(movementTimer.current);
       }
 
-      // Create LOTS of sparkly particles when moving - hundreds!
-      for (let i = 0; i < 8; i++) {
+      // Create smooth particle trail - optimized performance
+      for (let i = 0; i < 3; i++) {
         const angle = Math.random() * Math.PI * 2;
         const speed = 0.3 + Math.random() * 1.2;
         const isLaughEmoji = Math.random() < 0.08; // 8% chance for laugh emoji
@@ -47,8 +47,8 @@ export const useMagicalCursor = () => {
           vy: Math.sin(angle) * speed,
           opacity: 0.9,
           scale: 0.4 + Math.random() * 0.6,
-          life: 120 + Math.random() * 60, // Much longer life: 2-3 seconds
-          maxLife: 120 + Math.random() * 60,
+          life: 90 + Math.random() * 30, // Shorter life: 1.5-2 seconds
+          maxLife: 90 + Math.random() * 30,
           rotation: Math.random() * 360,
           rotationSpeed: (Math.random() - 0.5) * 4,
           type: isLaughEmoji ? 'laugh' : 'star',
@@ -98,7 +98,7 @@ export const useMagicalCursor = () => {
           })
           .filter(particle => particle.life > 0)
       );
-    }, 16); // 60fps
+    }, 20); // 50fps - slightly reduced for performance
 
     return () => clearInterval(interval);
   }, []);

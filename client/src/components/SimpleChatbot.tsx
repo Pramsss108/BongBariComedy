@@ -91,10 +91,48 @@ export default function SimpleChatbot() {
         </button>
       </div>
       
-      {/* SIMPLE CONTENT */}
-      <div className="p-4 h-full">
-        <div className="text-sm text-gray-600">
-          Simple chatbot! Drag the header to move me around.
+      {/* CHAT AREA WITH SCROLLABLE MESSAGES */}
+      <div className="flex flex-col h-full">
+        {/* Scrollable Messages Area */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ height: 'calc(100% - 60px)' }}>
+          <div className="text-sm text-gray-600 bg-gray-100 p-2 rounded">
+            🤖 Welcome to Bong Bot! I'm moving perfectly now. Try typing a message below!
+          </div>
+          <div className="text-sm text-blue-600 bg-blue-50 p-2 rounded self-end ml-8">
+            Hello! This chatbot is working great.
+          </div>
+          <div className="text-sm text-gray-600 bg-gray-100 p-2 rounded">
+            🤖 Yes! The dragging is smooth and now we have a proper chat interface. You can scroll through messages and type new ones.
+          </div>
+          <div className="text-sm text-blue-600 bg-blue-50 p-2 rounded self-end ml-8">
+            Perfect! The scrolling works well too.
+          </div>
+          <div className="text-sm text-gray-600 bg-gray-100 p-2 rounded">
+            🤖 This is a long message to test scrolling. The chat area should scroll smoothly when there are many messages. Each message appears in its own bubble with proper spacing and colors.
+          </div>
+        </div>
+        
+        {/* Fixed Typing Area */}
+        <div className="border-t bg-white p-3 rounded-b-lg">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Type your message..."
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  console.log('💬 Message sent:', e.currentTarget.value);
+                  e.currentTarget.value = '';
+                }
+              }}
+            />
+            <button
+              onClick={() => console.log('💬 Send button clicked!')}
+              className="px-4 py-2 bg-gradient-to-r from-[#1363DF] to-[#FF4D4D] text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+            >
+              Send
+            </button>
+          </div>
         </div>
       </div>
     </div>

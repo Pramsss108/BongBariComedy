@@ -75,28 +75,30 @@ const MagicalCursor = () => {
         className="belan-cursor-responsive"
         style={{
           position: 'absolute',
-          transform: `translate3d(${cursorPosition.x - 12}px, ${cursorPosition.y - 4}px, 0) rotate(45deg) ${
+          transform: `translate3d(${cursorPosition.x - 18}px, ${cursorPosition.y - 12}px, 0) rotate(45deg) ${
             isClicking ? 'scale(1.3)' : isMoving ? 'scale(1.15)' : 'scale(1)'
           }`,
           opacity: isClicking ? 1 : isMoving ? 1 : 0.7,
           transition: 'opacity 0.05s ease, transform 0.02s ease',
           willChange: 'transform, opacity',
           filter: `drop-shadow(0 3px 6px rgba(0,0,0,0.4)) ${isClicking ? 'brightness(1.2)' : ''}`,
-          zIndex: 2147483647
+          zIndex: 2147483647,
+          width: '36px',
+          height: '24px'
         }}
       >
-        {/* Enhanced Main wooden body - super responsive to clicks */}
+        {/* Enhanced Main wooden body - larger and more responsive */}
         <div
           style={{
             position: 'absolute',
-            width: '24px',
-            height: '8px',
+            width: '28px',
+            height: '10px',
             background: isClicking 
               ? 'linear-gradient(45deg, #FFD700 0%, #FFA500 40%, #FF6347 100%)' 
               : 'linear-gradient(45deg, #CD853F 0%, #D2691E 40%, #8B4513 100%)',
-            borderRadius: '4px',
-            left: '0px',
-            top: '0px',
+            borderRadius: '5px',
+            left: '4px',
+            top: '7px',
             boxShadow: isClicking 
               ? '0 4px 8px rgba(255,215,0,0.6), inset 0 1px 0 rgba(255,255,255,0.4)'
               : '0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
@@ -105,50 +107,65 @@ const MagicalCursor = () => {
           }}
         />
         
-        {/* Enhanced Left handle - more defined and clickable-looking */}
+        {/* Enhanced Left handle - larger and more responsive */}
         <div
           style={{
             position: 'absolute',
-            width: '6px',
-            height: '5px',
+            width: '8px',
+            height: '6px',
             background: 'linear-gradient(45deg, #8B4513 0%, #654321 50%, #4A2C17 100%)',
-            borderRadius: '3px',
-            left: '-3px',
-            top: '1.5px',
+            borderRadius: '4px',
+            left: '-2px',
+            top: '9px',
             boxShadow: '0 1px 3px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
             border: '1px solid #3D2016'
           }}
         />
         
-        {/* Enhanced Right handle - more defined and clickable-looking */}
+        {/* Enhanced Right handle - larger and more responsive */}
         <div
           style={{
             position: 'absolute',
-            width: '6px',
-            height: '5px',
+            width: '8px',
+            height: '6px',
             background: 'linear-gradient(45deg, #8B4513 0%, #654321 50%, #4A2C17 100%)',
-            borderRadius: '3px',
-            left: '21px',
-            top: '1.5px',
+            borderRadius: '4px',
+            left: '26px',
+            top: '9px',
             boxShadow: '0 1px 3px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
             border: '1px solid #3D2016'
           }}
         />
         
-        {/* Super responsive cursor tip indicator */}
+        {/* Extended cursor tip for better click targeting */}
         <div
           style={{
             position: 'absolute',
-            width: isClicking ? '5px' : '3px',
-            height: isClicking ? '5px' : '3px',
+            width: isClicking ? '6px' : '4px',
+            height: isClicking ? '6px' : '4px',
             background: isClicking ? '#FF4500' : '#FFCC00',
             borderRadius: '50%',
-            left: isClicking ? '9.5px' : '10.5px',
-            top: isClicking ? '1.5px' : '2.5px',
+            left: isClicking ? '15px' : '16px',
+            top: isClicking ? '9px' : '10px',
             boxShadow: isClicking 
               ? '0 0 8px rgba(255, 69, 0, 0.9), 0 0 16px rgba(255, 69, 0, 0.4)'
               : '0 0 4px rgba(255, 204, 0, 0.6)',
             opacity: isClicking ? 1 : isMoving ? 1 : 0.8,
+            transition: 'all 0.02s ease'
+          }}
+        />
+        
+        {/* Extended top tip for better click area and smoother responsiveness */}
+        <div
+          style={{
+            position: 'absolute',
+            width: '3px',
+            height: '8px',
+            background: isClicking ? '#FF6347' : '#D2691E',
+            borderRadius: '1.5px',
+            left: '16.5px',
+            top: '2px',
+            opacity: isClicking ? 0.9 : 0.6,
             transition: 'all 0.02s ease'
           }}
         />

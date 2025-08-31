@@ -28,8 +28,15 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
     }
   ]);
   const [isTyping, setIsTyping] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(true);
   const headerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Quick reply templates
+  const templates = [
+    "Kadate tow sobai pare Haste Chao?",
+    "Collab korlei Hese Felbe, Try?"
+  ];
 
   // When opening chatbot, position it on the right side
   const handleOpenChatbot = () => {
@@ -88,6 +95,7 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
     
     setMessages(prev => [...prev, userMessage]);
     setMessage('');
+    setShowTemplates(false); // Hide templates after sending
     setIsTyping(true);
     
     // Play typing sound when bot starts typing
@@ -211,9 +219,9 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
         <motion.div
           ref={headerRef}
           onMouseDown={handleMouseDown}
-          className="relative w-full h-14 bg-gradient-to-r from-[#1363DF]/20 via-[#FFCC00]/20 to-[#FF4D4D]/20 backdrop-blur-md cursor-grab active:cursor-grabbing flex items-center justify-between px-4 border-b border-white/10"
+          className="relative w-full h-14 bg-gradient-to-r from-[#1363DF]/30 via-[#FFCC00]/30 to-[#FF4D4D]/30 backdrop-blur-lg cursor-grab active:cursor-grabbing flex items-center justify-between px-4 border-b border-white/20 rounded-t-2xl"
           style={{ userSelect: 'none' }}
-          whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+          whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.15)' }}
         >
           {/* ANIMATED LOGO & TITLE */}
           <div className="flex items-center gap-3">
@@ -226,7 +234,7 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
             </motion.div>
             <div>
               <h3 className="text-white font-bold text-sm drop-shadow-lg">🤖 Bong Bot</h3>
-              <p className="text-white/80 text-xs drop-shadow-sm">Bengali Comedy AI</p>
+              <p className="text-white/90 text-xs drop-shadow-sm font-medium">Bengali Comedy AI</p>
             </div>
           </div>
           
@@ -327,12 +335,44 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
                 <div ref={messagesEndRef} />
               </div>
               
+              {/* QUICK REPLY TEMPLATES */}
+              {showTemplates && (
+                <motion.div 
+                  className="px-4 py-2 bg-white/5 backdrop-blur-sm border-t border-white/10"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                >
+                  <div className="flex flex-wrap gap-2">
+                    {templates.map((template, index) => (
+                      <motion.button
+                        key={index}
+                        onClick={() => {
+                          setMessage(template);
+                          setShowTemplates(false);
+                        }}
+                        className="px-3 py-2 bg-gradient-to-r from-[#FFCC00]/80 to-[#FF4D4D]/80 text-white text-xs rounded-lg shadow-sm border border-white/20 hover:shadow-md transition-all"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        {template}
+                      </motion.button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+              
               {/* PROFESSIONAL TYPING AREA */}
-              <div className="p-4 bg-white/5 backdrop-blur-sm border-t border-white/10">
+              <div className="p-4 bg-white/5 backdrop-blur-sm border-t border-white/10 rounded-b-2xl">
                 <div className="flex gap-3 items-end">
                   <textarea
                     value={message}
-                    onChange={(e) => setMessage(e.target.value)}
+                    onChange={(e) => {
+                      setMessage(e.target.value);
+                      if (e.target.value.length > 0) {
+                        setShowTemplates(false);
+                      }
+                    }}
                     placeholder="Kotha Hok Naki?"
                     className="flex-1 px-4 py-3 bg-white/90 backdrop-blur-sm border border-white/20 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1363DF]/50 focus:border-[#1363DF]/50 resize-none hide-scrollbar transition-all placeholder-gray-500"
                     style={{

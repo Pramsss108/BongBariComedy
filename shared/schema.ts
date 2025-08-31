@@ -23,7 +23,7 @@ export const collaborationRequests = pgTable("collaboration_requests", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   email: text("email").notNull(),
-  company: text("company"),
+  company: text("company").notNull(),
   message: text("message").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });

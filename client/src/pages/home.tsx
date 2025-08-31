@@ -50,6 +50,17 @@ const Home = () => {
     }
   });
 
+  // Watch all form values to check if all required fields are filled
+  const watchedValues = form.watch();
+  const isFormValid = watchedValues.name && 
+                     watchedValues.email && 
+                     watchedValues.company && 
+                     watchedValues.message &&
+                     watchedValues.name.trim() !== "" &&
+                     watchedValues.email.trim() !== "" &&
+                     watchedValues.company.trim() !== "" &&
+                     watchedValues.message.trim() !== "";
+
   const collaborationMutation = useMutation({
     mutationFn: (data: InsertCollaborationRequest) => apiRequest('/api/collaboration-requests', {
       method: 'POST',
@@ -543,7 +554,7 @@ const Home = () => {
                           name="name"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Name / নাম</FormLabel>
+                              <FormLabel>Name / নাম <span className="text-red-500">*</span></FormLabel>
                               <FormControl>
                                 <Input 
                                   placeholder="Your Name"
@@ -560,7 +571,7 @@ const Home = () => {
                           name="email"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Email</FormLabel>
+                              <FormLabel>Email <span className="text-red-500">*</span></FormLabel>
                               <FormControl>
                                 <Input 
                                   type="email" 
@@ -580,7 +591,7 @@ const Home = () => {
                         name="company"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Company / Brand</FormLabel>
+                            <FormLabel>Company / Brand <span className="text-red-500">*</span></FormLabel>
                             <FormControl>
                               <Input 
                                 placeholder="Your Company or Brand"
@@ -599,7 +610,7 @@ const Home = () => {
                         name="message"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Message / বার্তা</FormLabel>
+                            <FormLabel>Message / বার্তা <span className="text-red-500">*</span></FormLabel>
                             <FormControl>
                               <Textarea 
                                 rows={4}
@@ -615,14 +626,18 @@ const Home = () => {
                       />
                       
                       <MagneticButton 
-                        disabled={collaborationMutation.isPending}
-                        className="w-full bg-brand-red text-white hover:bg-red-600 py-4 sm:py-3 rounded-full font-semibold text-base sm:text-lg hover-lift disabled:opacity-50 min-h-[52px] touch-manipulation transition-all duration-400 hover:scale-110 hover:-translate-y-3 hover:shadow-2xl"
+                        disabled={collaborationMutation.isPending || !isFormValid}
+                        className={`w-full py-4 sm:py-3 rounded-full font-semibold text-base sm:text-lg hover-lift min-h-[52px] touch-manipulation transition-all duration-400 ${
+                          !isFormValid 
+                            ? 'bg-gray-400 text-gray-200 cursor-not-allowed opacity-60' 
+                            : 'bg-brand-red text-white hover:bg-red-600 hover:scale-110 hover:-translate-y-3 hover:shadow-2xl'
+                        } ${collaborationMutation.isPending ? 'opacity-50' : ''}`}
                         data-testid="button-submit-collaboration"
-                        strength={0.5}
-                        onClick={() => form.handleSubmit(onSubmit)()}
+                        strength={isFormValid ? 0.5 : 0}
+                        onClick={() => isFormValid && form.handleSubmit(onSubmit)()}
                       >
                         <Send className="mr-2 h-5 w-5" />
-                        {collaborationMutation.isPending ? "Sending..." : "Send Message"}
+                        {collaborationMutation.isPending ? "Sending..." : isFormValid ? "Send Message" : "Fill All Required Fields *"}
                       </MagneticButton>
                     </form>
                   </Form>

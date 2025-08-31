@@ -23,10 +23,11 @@ export const useGlobalCursor = () => {
       width: 48px;
       height: 16px;
       pointer-events: none;
-      z-index: 9999;
+      z-index: 99999;
       transform: translate(-50%, -50%) rotate(45deg);
       transition: opacity 0.2s ease;
       opacity: 0;
+      mix-blend-mode: difference;
     `;
     
     // Create main wooden body

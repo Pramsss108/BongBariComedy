@@ -560,6 +560,24 @@ input, textarea, [contenteditable] {
   cursor: text !important;
 }
 
+/* Ensure belan cursor shows over ALL content including iframes and videos */
+iframe, video, embed, object {
+  pointer-events: auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* Force magical cursor to stay on top of everything */
+.magical-cursor-container {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none !important;
+  z-index: 99999 !important;
+}
+
 /* Professional hover targets - ALL interactive elements */
 .hover-target,
 button,

@@ -16,6 +16,7 @@ import YouTubeShort from "@/components/youtube-short";
 import SEOHead from "@/components/seo-head";
 import { ParallaxSection, ParallaxContainer } from "@/components/parallax-section";
 import { Youtube, Instagram, Phone, Mail, Twitter, Send, Home as HomeIcon, Users, TrendingUp, Smile } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { insertCollaborationRequestSchema, type InsertCollaborationRequest } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -45,6 +46,7 @@ const Home = () => {
     defaultValues: {
       name: "",
       email: "",
+      phone: "",
       company: "",
       message: ""
     }
@@ -52,14 +54,13 @@ const Home = () => {
 
   // Watch all form values to check if all required fields are filled
   const watchedValues = form.watch();
+  const hasEmail = watchedValues.email && watchedValues.email.trim() !== "";
+  const hasPhone = watchedValues.phone && watchedValues.phone.trim() !== "";
   const isFormValid = watchedValues.name && 
-                     watchedValues.email && 
                      watchedValues.company && 
-                     watchedValues.message &&
+                     (hasEmail || hasPhone) && // Either email OR phone required
                      watchedValues.name.trim() !== "" &&
-                     watchedValues.email.trim() !== "" &&
-                     watchedValues.company.trim() !== "" &&
-                     watchedValues.message.trim() !== "";
+                     watchedValues.company.trim() !== "";
 
   const collaborationMutation = useMutation({
     mutationFn: (data: InsertCollaborationRequest) => apiRequest('/api/collaboration-requests', {
@@ -571,14 +572,63 @@ const Home = () => {
                           name="email"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Email <span className="text-red-500">*</span></FormLabel>
+                              <FormLabel>Email {!hasPhone && <span className="text-red-500">*</span>} {hasPhone && <span className="text-gray-400">(Optional)</span>}</FormLabel>
                               <FormControl>
                                 <Input 
                                   type="email" 
                                   placeholder="your@email.com"
                                   data-testid="input-email"
                                   {...field}
+                                  value={field.value ?? ""}
                                 />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="phone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Phone / ফোন {!hasEmail && <span className="text-red-500">*</span>} {hasEmail && <span className="text-gray-400">(Optional)</span>}</FormLabel>
+                              <FormControl>
+                                <div className="flex gap-2">
+                                  <Select
+                                    value={field.value?.split(' ')[0] || "+880"}
+                                    onValueChange={(code) => {
+                                      const number = field.value?.split(' ').slice(1).join(' ') || '';
+                                      field.onChange(code + (number ? ' ' + number : ''));
+                                    }}
+                                  >
+                                    <SelectTrigger className="w-24" data-testid="select-country-code">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="+880">🇧🇩 +880</SelectItem>
+                                      <SelectItem value="+1">🇺🇸 +1</SelectItem>
+                                      <SelectItem value="+44">🇬🇧 +44</SelectItem>
+                                      <SelectItem value="+91">🇮🇳 +91</SelectItem>
+                                      <SelectItem value="+86">🇨🇳 +86</SelectItem>
+                                      <SelectItem value="+81">🇯🇵 +81</SelectItem>
+                                      <SelectItem value="+49">🇩🇪 +49</SelectItem>
+                                      <SelectItem value="+33">🇫🇷 +33</SelectItem>
+                                      <SelectItem value="+61">🇦🇺 +61</SelectItem>
+                                      <SelectItem value="+971">🇦🇪 +971</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <Input 
+                                    placeholder="Enter phone number"
+                                    data-testid="input-phone"
+                                    value={field.value?.split(' ').slice(1).join(' ') || ''}
+                                    onChange={(e) => {
+                                      const code = field.value?.split(' ')[0] || '+880';
+                                      field.onChange(code + (e.target.value ? ' ' + e.target.value : ''));
+                                    }}
+                                    className="flex-1"
+                                  />
+                                </div>
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -610,14 +660,15 @@ const Home = () => {
                         name="message"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Message / বার্তা <span className="text-red-500">*</span></FormLabel>
+                            <FormLabel>Message / বার্তা <span className="text-gray-400">(Optional)</span></FormLabel>
                             <FormControl>
                               <Textarea 
                                 rows={4}
                                 className="min-h-[120px] resize-none text-base"
-                                placeholder="Tell us about your collaboration idea..."
+                                placeholder="Tell us about your collaboration idea... (Optional)"
                                 data-testid="textarea-message"
                                 {...field}
+                                value={field.value ?? ""}
                               />
                             </FormControl>
                             <FormMessage />
@@ -637,7 +688,7 @@ const Home = () => {
                         onClick={() => isFormValid && form.handleSubmit(onSubmit)()}
                       >
                         <Send className="mr-2 h-5 w-5" />
-                        {collaborationMutation.isPending ? "Sending..." : isFormValid ? "Send Message" : "Fill All Required Fields *"}
+                        {collaborationMutation.isPending ? "Sending..." : isFormValid ? "Send Message" : "Fill Name, Company & Email or Phone *"}
                       </MagneticButton>
                     </form>
                   </Form>

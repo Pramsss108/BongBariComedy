@@ -22,9 +22,10 @@ export const blogPosts = pgTable("blog_posts", {
 export const collaborationRequests = pgTable("collaboration_requests", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
-  email: text("email").notNull(),
+  email: text("email"),
+  phone: text("phone"),
   company: text("company").notNull(),
-  message: text("message").notNull(),
+  message: text("message"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

@@ -33,11 +33,11 @@ export const useMagicalCursor = () => {
         clearTimeout(movementTimer.current);
       }
 
-      // Create smooth particle trail - optimized performance
-      for (let i = 0; i < 3; i++) {
+      // Create smooth particle trail - ultra optimized
+      for (let i = 0; i < 2; i++) {
         const angle = Math.random() * Math.PI * 2;
         const speed = 0.3 + Math.random() * 1.2;
-        const isLaughEmoji = Math.random() < 0.08; // 8% chance for laugh emoji
+        const isLaughEmoji = Math.random() < 0.05; // 5% chance for laugh emoji
         
         const newParticle: Particle = {
           id: particleId.current++,
@@ -47,8 +47,8 @@ export const useMagicalCursor = () => {
           vy: Math.sin(angle) * speed,
           opacity: 0.9,
           scale: 0.4 + Math.random() * 0.6,
-          life: 90 + Math.random() * 30, // Shorter life: 1.5-2 seconds
-          maxLife: 90 + Math.random() * 30,
+          life: 60 + Math.random() * 20, // Much shorter life: 1-1.3 seconds
+          maxLife: 60 + Math.random() * 20,
           rotation: Math.random() * 360,
           rotationSpeed: (Math.random() - 0.5) * 4,
           type: isLaughEmoji ? 'laugh' : 'star',
@@ -98,7 +98,7 @@ export const useMagicalCursor = () => {
           })
           .filter(particle => particle.life > 0)
       );
-    }, 20); // 50fps - slightly reduced for performance
+    }, 16); // 60fps - optimized for smooth performance
 
     return () => clearInterval(interval);
   }, []);

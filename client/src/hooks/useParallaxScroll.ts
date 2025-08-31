@@ -37,73 +37,35 @@ export const useParallaxScroll = () => {
 
   const handleParallax = useCallback(() => {
     const scrolled = lastScrollY.current;
-    const rate = scrolled * -0.3; // Reduced intensity
-    const fastRate = scrolled * -0.5; // Reduced intensity
-    const windowHeight = window.innerHeight;
+    const rate = scrolled * -0.2; // Even more reduced for speed
+    const fastRate = scrolled * -0.3; // Even more reduced for speed
     const cache = elementsCache.current;
 
-    // Optimized floating background elements - reduced calculations
+    // ULTRA FAST floating background elements - minimal calculations
     cache.floating.forEach((element, index) => {
       const el = element as HTMLElement;
-      const speed = (index % 3 + 1) * 0.2; // Reduced speed
-      const sideSpeed = Math.sin(scrolled * 0.005 + index) * 15; // Reduced movement
-      const rotationSpeed = scrolled * 0.02 * (index % 2 === 0 ? 1 : -1); // Reduced rotation
+      const speed = (index % 2 + 1) * 0.1; // Much simpler speed calculation
+      const sideSpeed = (scrolled * 0.002 + index) * 8; // Simplified movement
       
-      el.style.transform = `translate3d(${sideSpeed}px, ${scrolled * speed}px, 0) rotate(${rotationSpeed}deg) scale(${1 + Math.sin(scrolled * 0.005 + index) * 0.05})`;
-      el.style.opacity = `${0.1 + Math.sin(scrolled * 0.01 + index) * 0.03}`;
+      el.style.transform = `translate3d(${sideSpeed}px, ${scrolled * speed}px, 0)`;
+      el.style.opacity = `${0.08 + (index % 3) * 0.02}`;
     });
 
-    // Simplified YouTube shorts
+    // ULTRA FAST YouTube shorts - minimal calculations
     cache.youtubeShorts.forEach((element, index) => {
       const el = element as HTMLElement;
-      const speed = index % 2 === 0 ? fastRate : fastRate * 1.2;
-      const floatOffset = Math.sin(scrolled * 0.01 + index) * 3;
-      el.style.transform = `translate3d(0, ${speed * 0.15 + floatOffset}px, 0)`;
+      const speed = fastRate * 0.1;
+      el.style.transform = `translate3d(0, ${speed}px, 0)`;
     });
 
-    // Simplified blog cards
-    cache.blogCards.forEach((element, index) => {
-      const el = element as HTMLElement;
-      const speed = rate * (0.4 + index * 0.1);
-      el.style.transform = `translate3d(0, ${speed * 0.1}px, 0)`;
-    });
-
-    // Simplified navigation
-    if (cache.nav) {
-      (cache.nav as HTMLElement).style.transform = `translate3d(0, ${rate * 0.1}px, 0)`;
-    }
-
-    // Simplified headers
+    // ULTRA FAST headers only
     cache.headers.forEach((element, index) => {
       const el = element as HTMLElement;
-      const speed = fastRate * (0.3 + index * 0.05);
-      const floatY = Math.sin(scrolled * 0.005 + index) * 2;
-      el.style.transform = `translate3d(0, ${speed * 0.08 + floatY}px, 0)`;
+      const speed = fastRate * 0.05;
+      el.style.transform = `translate3d(0, ${speed}px, 0)`;
     });
 
-    // Simplified buttons
-    cache.buttons.forEach((element, index) => {
-      const el = element as HTMLElement;
-      const floatSpeed = Math.sin(scrolled * 0.005 + index) * 1;
-      el.style.transform = `translate3d(0, ${floatSpeed}px, 0)`;
-    });
-
-    // Simplified sections - no blur effects for crisp text
-    cache.sections.forEach((element, index) => {
-      const el = element as HTMLElement;
-      // Skip CTA sections
-      if (el.querySelector('[data-testid="button-youtube"]') || el.querySelector('[data-testid="button-instagram"]')) {
-        return;
-      }
-      
-      const depth = rate * (0.1 + index * 0.05);
-      el.style.transform = `translate3d(0, ${depth * 0.04}px, 0)`;
-      
-      // Keep everything crisp and clear - no blur effects
-      el.style.filter = 'none';
-      el.style.opacity = '1';
-    });
-
+    // Skip other elements for maximum performance
     ticking.current = false;
   }, []);
 

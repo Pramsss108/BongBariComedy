@@ -9,12 +9,10 @@ const MagicalCursor = () => {
       <div
         className="absolute w-6 h-6 rounded-full bg-gray-400"
         style={{
-          left: cursorPosition.x - 12,
-          top: cursorPosition.y - 12,
-          opacity: isMoving ? 0.2 : 0.05,
           transform: `translate3d(${cursorPosition.x - 12}px, ${cursorPosition.y - 12}px, 0)`,
-          transition: 'opacity 0.2s ease',
-          willChange: 'transform'
+          opacity: isMoving ? 0.15 : 0.03,
+          transition: 'opacity 0.1s ease',
+          willChange: 'transform, opacity'
         }}
       />
 
@@ -48,8 +46,8 @@ const MagicalCursor = () => {
                 className="relative"
                 style={{
                   fontSize: '12px',
-                  filter: `drop-shadow(0 0 3px gold) drop-shadow(0 0 6px white) brightness(${0.7 + 0.6 * sparkleIntensity})`,
-                  textShadow: '0 0 8px gold, 0 0 12px white'
+                  filter: `brightness(${0.8 + 0.4 * sparkleIntensity})`,
+                  textShadow: '0 0 4px gold'
                 }}
               >
                 ✨

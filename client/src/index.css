@@ -560,14 +560,22 @@ input, textarea, [contenteditable] {
   cursor: text !important;
 }
 
-/* Ensure belan cursor shows over ALL content including iframes and videos */
+/* FORCE belan cursor over ALL iframes and videos including YouTube */
 iframe, video, embed, object {
-  pointer-events: auto;
-  position: relative;
-  z-index: 1;
+  pointer-events: auto !important;
+  position: relative !important;
+  z-index: 1 !important;
+  isolation: auto !important;
 }
 
-/* Force magical cursor to stay on top of everything */
+/* Specifically target YouTube iframes */
+iframe[src*="youtube.com"],
+iframe[src*="youtu.be"] {
+  z-index: 1 !important;
+  isolation: auto !important;
+}
+
+/* MAXIMUM PRIORITY - Force magical cursor to stay on top of EVERYTHING */
 .magical-cursor-container {
   position: fixed !important;
   top: 0 !important;
@@ -575,7 +583,20 @@ iframe, video, embed, object {
   width: 100% !important;
   height: 100% !important;
   pointer-events: none !important;
-  z-index: 99999 !important;
+  z-index: 2147483647 !important;
+  isolation: isolate !important;
+}
+
+/* Create new stacking context to force cursor over iframes */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2147483646;
 }
 
 /* Professional hover targets - ALL interactive elements */

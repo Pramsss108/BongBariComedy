@@ -20,16 +20,17 @@ const MagicalCursor = () => {
   }
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-[9999] hidden sm:block">
+    <div className="fixed inset-0 pointer-events-none hidden sm:block" style={{ zIndex: 2147483647 }}>
       {/* Authentic CSS Belan with wooden body and handles */}
       <div
         className="absolute pointer-events-none"
         style={{
           transform: `translate3d(${cursorPosition.x - 12}px, ${cursorPosition.y - 4}px, 0) rotate(45deg)`,
-          opacity: isMoving ? 0.5 : 0.2,
+          opacity: isMoving ? 0.8 : 0.4,
           transition: 'opacity 0.1s ease',
           willChange: 'transform, opacity',
-          zIndex: 9999
+          zIndex: 2147483647,
+          mixBlendMode: 'multiply'
         }}
       >
         {/* Main wooden body */}

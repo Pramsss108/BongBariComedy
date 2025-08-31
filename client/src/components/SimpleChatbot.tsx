@@ -76,6 +76,7 @@ export default function SimpleChatbot() {
     
     console.log('🔄 CHATBOT RESIZE STARTED!');
     
+    // Prevent chatbot from closing or disappearing
     setIsResizing(true);
     setResizeStart({ 
       x: e.clientX, 
@@ -118,10 +119,11 @@ export default function SimpleChatbot() {
         <span>🤖 Bong Bot</span>
         <button
           onClick={(e) => {
+            e.preventDefault();
             e.stopPropagation();
             setIsOpen(false);
           }}
-          className="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center text-xs"
+          className="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center text-xs z-20"
         >
           ×
         </button>
@@ -183,8 +185,12 @@ export default function SimpleChatbot() {
       
       {/* RESIZE HANDLE - Bottom Right Corner */}
       <div
-        onMouseDown={handleResizeStart}
-        className="absolute bottom-0 right-0 w-4 h-4 cursor-nw-resize bg-gradient-to-br from-[#1363DF] to-[#FF4D4D] opacity-60 hover:opacity-100 transition-opacity"
+        onMouseDown={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          handleResizeStart(e);
+        }}
+        className="absolute bottom-0 right-0 w-4 h-4 cursor-nw-resize bg-gradient-to-br from-[#1363DF] to-[#FF4D4D] opacity-60 hover:opacity-100 transition-opacity z-10"
         style={{
           clipPath: 'polygon(100% 0%, 0% 100%, 100% 100%)'
         }}
@@ -193,15 +199,23 @@ export default function SimpleChatbot() {
       
       {/* RESIZE HANDLE - Bottom Edge */}
       <div
-        onMouseDown={handleResizeStart}
-        className="absolute bottom-0 left-2 right-2 h-1 cursor-ns-resize bg-gradient-to-r from-[#1363DF] to-[#FF4D4D] opacity-40 hover:opacity-80 transition-opacity rounded-full"
+        onMouseDown={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          handleResizeStart(e);
+        }}
+        className="absolute bottom-0 left-2 right-2 h-1 cursor-ns-resize bg-gradient-to-r from-[#1363DF] to-[#FF4D4D] opacity-40 hover:opacity-80 transition-opacity rounded-full z-10"
         title="Drag to resize"
       />
       
       {/* RESIZE HANDLE - Right Edge */}
       <div
-        onMouseDown={handleResizeStart}
-        className="absolute top-12 bottom-2 right-0 w-1 cursor-ew-resize bg-gradient-to-b from-[#1363DF] to-[#FF4D4D] opacity-40 hover:opacity-80 transition-opacity rounded-full"
+        onMouseDown={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          handleResizeStart(e);
+        }}
+        className="absolute top-12 bottom-2 right-0 w-1 cursor-ew-resize bg-gradient-to-b from-[#1363DF] to-[#FF4D4D] opacity-40 hover:opacity-80 transition-opacity rounded-full z-10"
         title="Drag to resize"
       />
     </div>

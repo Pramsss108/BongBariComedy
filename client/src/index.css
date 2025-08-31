@@ -199,12 +199,23 @@
   h1, h2, h3,
   button,
   .magnetic-button,
-  section {
+  section,
+  .magical-hover {
     will-change: transform, opacity;
     backface-visibility: hidden;
     transform-style: preserve-3d;
     contain: layout style paint;
     transform: translateZ(0);
+  }
+  
+  /* Magical hover effects that trigger sounds */
+  .magical-hover {
+    transition: all 0.3s ease-out;
+  }
+  
+  .magical-hover:hover {
+    transform: translateY(-1px) scale(1.01);
+    filter: brightness(1.05) drop-shadow(0 2px 8px rgba(255, 215, 0, 0.2));
   }
   
   /* Hardware acceleration for cursor */

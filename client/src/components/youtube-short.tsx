@@ -19,7 +19,7 @@ const YouTubeShort = ({ videoId, thumbnail, title, onClick }: YouTubeShortProps)
 
   return (
     <div 
-      className="video-container cursor-pointer group transition-all duration-300 hover:scale-105"
+      className="video-container cursor-pointer group transition-all duration-300 hover:scale-105 magical-hover"
       onClick={handleClick}
       data-testid={`youtube-short-${videoId}`}
     >

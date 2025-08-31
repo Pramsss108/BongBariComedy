@@ -163,25 +163,31 @@
   border-radius: 12px;
 }
 
-/* Enhanced moving gradient border with mega glow effects */
+/* Pure rotating gradient border stroke - NO background fill */
 .rotating-gradient-border {
   position: absolute;
-  inset: -5px;
-  border-radius: 18px;
-  border: 5px solid transparent;
-  background: 
-    linear-gradient(white, white) padding-box,
-    conic-gradient(
-      from 0deg,
-      transparent 0%,
-      transparent 65%,
-      rgba(255, 20, 147, 0.9) 72%,  /* Hot pink building */
-      rgba(255, 99, 71, 1) 78%,     /* Orange red peak */
-      rgba(255, 165, 0, 1) 84%,     /* Orange peak */
-      rgba(255, 255, 0, 1) 90%,     /* Yellow peak */
-      rgba(50, 205, 50, 0.9) 96%,   /* Lime fading */
-      transparent 100%
-    ) border-box;
+  inset: -3px;
+  border-radius: 15px;
+  border: 3px solid transparent;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    transparent 65%,
+    rgba(255, 20, 147, 0.9) 72%,  /* Hot pink building */
+    rgba(255, 99, 71, 1) 78%,     /* Orange red peak */
+    rgba(255, 165, 0, 1) 84%,     /* Orange peak */
+    rgba(255, 255, 0, 1) 90%,     /* Yellow peak */
+    rgba(50, 205, 50, 0.9) 96%,   /* Lime fading */
+    transparent 100%
+  ) border-box;
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) padding-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: subtract;
+  mask: 
+    linear-gradient(#fff 0 0) padding-box, 
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
   animation: megaGlowSpin 3s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
   pointer-events: none;
   z-index: 5;
@@ -198,7 +204,7 @@
 /* Inner clean container for reel content - STATIC, never moves */
 .reel-content-container {
   position: absolute;
-  inset: 5px;
+  inset: 0px;
   background: transparent;
   border-radius: 13px;
   overflow: hidden;
@@ -210,9 +216,7 @@
 /* Mega glow spinning animation with dynamic effects */
 @keyframes megaGlowSpin {
   0% {
-    background: 
-      linear-gradient(white, white) padding-box,
-      conic-gradient(
+    background: conic-gradient(
         from 0deg,
         transparent 0%,
         transparent 65%,
@@ -233,9 +237,7 @@
   }
   
   20% {
-    background: 
-      linear-gradient(white, white) padding-box,
-      conic-gradient(
+    background: conic-gradient(
         from 72deg,
         transparent 0%,
         transparent 65%,
@@ -256,9 +258,7 @@
   }
   
   40% {
-    background: 
-      linear-gradient(white, white) padding-box,
-      conic-gradient(
+    background: conic-gradient(
         from 144deg,
         transparent 0%,
         transparent 65%,
@@ -279,9 +279,7 @@
   }
   
   60% {
-    background: 
-      linear-gradient(white, white) padding-box,
-      conic-gradient(
+    background: conic-gradient(
         from 216deg,
         transparent 0%,
         transparent 65%,
@@ -302,9 +300,7 @@
   }
   
   80% {
-    background: 
-      linear-gradient(white, white) padding-box,
-      conic-gradient(
+    background: conic-gradient(
         from 288deg,
         transparent 0%,
         transparent 65%,
@@ -325,9 +321,7 @@
   }
   
   100% {
-    background: 
-      linear-gradient(white, white) padding-box,
-      conic-gradient(
+    background: conic-gradient(
         from 360deg,
         transparent 0%,
         transparent 65%,

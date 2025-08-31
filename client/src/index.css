@@ -1293,18 +1293,17 @@ section:nth-child(odd) {
     transition: all 0.2s ease !important;
   }
 
-  /* Magical Cursor Follower - Desktop Only */
-  @media (min-width: 1024px) {
-    .magic-cursor-circle {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      background: rgba(255, 204, 0, 0.2);
-      backdrop-filter: blur(5px);
-      border: 2px solid rgba(255, 204, 0, 0.4);
-      position: relative;
-      animation: pulseCircle 1.5s ease-in-out infinite;
-    }
+  /* Magical Cursor Follower */
+  .magic-cursor-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(255, 204, 0, 0.3);
+    backdrop-filter: blur(5px);
+    border: 3px solid rgba(255, 204, 0, 0.6);
+    position: relative;
+    animation: pulseCircle 1.5s ease-in-out infinite;
+    box-shadow: 0 0 25px rgba(255, 204, 0, 0.5);
   }
 
   .glitter-1,

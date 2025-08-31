@@ -35,24 +35,55 @@ const Navigation = () => {
 
   return (
     <>
-      {/* Magical Cursor Follower - Desktop Only */}
+      {/* Magical Cursor Follower */}
       {isHovering && (
         <div 
-          className="fixed pointer-events-none z-[999] transition-opacity duration-300 hidden lg:block"
+          className="fixed pointer-events-none z-[9999]"
           style={{
-            left: cursorPos.x - 25,
-            top: cursorPos.y - 25,
+            left: cursorPos.x - 30,
+            top: cursorPos.y - 30,
           }}
         >
-          <div className="magic-cursor-circle">
-            <div className="glitter-1">🌟</div>
-            <div className="glitter-2">😂</div>
-            <div className="glitter-3">✨</div>
+          <div style={{
+            width: '60px',
+            height: '60px',
+            borderRadius: '50%',
+            background: 'rgba(255, 204, 0, 0.5)',
+            border: '3px solid #FFCC00',
+            position: 'relative',
+            boxShadow: '0 0 30px rgba(255, 204, 0, 0.8)',
+            animation: 'pulseCircle 1s ease-in-out infinite'
+          }}>
+            <div style={{
+              position: 'absolute',
+              top: '-15px',
+              left: '40px',
+              fontSize: '20px',
+              animation: 'magicalFloat 2s ease-in-out infinite'
+            }}>🌟</div>
+            <div style={{
+              position: 'absolute',
+              bottom: '-15px',
+              right: '35px',
+              fontSize: '20px',
+              animationDelay: '0.5s',
+              animation: 'magicalFloat 2s ease-in-out infinite'
+            }}>😂</div>
+            <div style={{
+              position: 'absolute',
+              top: '25px',
+              left: '-20px',
+              fontSize: '20px',
+              animationDelay: '1s',
+              animation: 'magicalFloat 2s ease-in-out infinite'
+            }}>✨</div>
           </div>
         </div>
       )}
       
-      <nav className="bg-white shadow-lg sticky top-0 z-50" data-testid="main-navigation">
+      <nav className="bg-white shadow-lg sticky top-0 z-50" data-testid="main-navigation"
+           onMouseEnter={() => setIsHovering(true)}
+           onMouseLeave={() => setIsHovering(false)}>
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center py-3 md:py-10">
           {/* Logo - Responsive Design */}
@@ -87,9 +118,7 @@ const Navigation = () => {
           </Link>
           
           {/* Desktop Navigation - Improved Layout */}
-          <div className="hidden md:flex items-center space-x-6 lg:space-x-8"
-               onMouseEnter={() => setIsHovering(true)}
-               onMouseLeave={() => setIsHovering(false)}>
+          <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
             {navItems.map((item) => (
               <Link
                 key={item.href}

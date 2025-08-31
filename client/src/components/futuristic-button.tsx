@@ -144,8 +144,7 @@ export const FuturisticButton = ({
       <motion.div
         className="absolute inset-0 rounded-full p-1"
         style={{
-          background: style.borderGradient,
-          filter: 'blur(2px)'
+          background: style.borderGradient
         }}
         animate={{
           rotate: 360
@@ -158,23 +157,6 @@ export const FuturisticButton = ({
       >
         <div className="w-full h-full rounded-full bg-transparent" />
       </motion.div>
-      
-      {/* Secondary glow ring */}
-      <motion.div
-        className="absolute inset-[-4px] rounded-full opacity-75"
-        style={{
-          background: style.borderGradient,
-          filter: 'blur(8px)'
-        }}
-        animate={{
-          rotate: -360,
-          scale: [1, 1.05, 1]
-        }}
-        transition={{
-          rotate: { duration: 4, repeat: Infinity, ease: "linear" },
-          scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-        }}
-      />
       
       <AnimatePresence>
         {!isExploding && (

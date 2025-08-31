@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Trash2, Plus, Edit, Eye, Home, Gift, Megaphone, ImageIcon } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Trash2, Plus, Edit, Eye, Home, Gift, Megaphone, ImageIcon, Upload, Image } from "lucide-react";
 
 interface HomepageContent {
   id: number;
@@ -31,52 +32,115 @@ interface HomepageContent {
 export function AdminHomepage() {
   const [editingContent, setEditingContent] = useState<HomepageContent | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { sessionId } = useAuth();
 
-  // Fetch homepage content
+  // Fetch homepage content with authentication
   const { data: contentData = [], isLoading } = useQuery({
     queryKey: ["/api/admin/homepage-content"],
+    queryFn: () => fetch('/api/admin/homepage-content', {
+      headers: {
+        'Authorization': `Bearer ${sessionId}`
+      }
+    }).then(res => {
+      if (!res.ok) throw new Error('Failed to fetch');
+      return res.json();
+    }),
+    enabled: !!sessionId,
   });
 
-  // Content mutations
+  // Content mutations with authentication
   const createContentMutation = useMutation({
-    mutationFn: (data: Partial<HomepageContent>) => apiRequest("/api/admin/homepage-content", { method: "POST", body: data }),
+    mutationFn: (data: Partial<HomepageContent>) => apiRequest("/api/admin/homepage-content", { 
+      method: "POST", 
+      body: JSON.stringify(data),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${sessionId}`
+      }
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/homepage-content"] });
       setIsDialogOpen(false);
       setEditingContent(null);
+      setSelectedImage(null);
+      setImagePreview(null);
       toast({ title: "✅ Homepage content created successfully!" });
     },
   });
 
   const updateContentMutation = useMutation({
     mutationFn: ({ id, ...data }: Partial<HomepageContent> & { id: number }) => 
-      apiRequest(`/api/admin/homepage-content/${id}`, { method: "PUT", body: data }),
+      apiRequest(`/api/admin/homepage-content/${id}`, { 
+        method: "PUT", 
+        body: JSON.stringify(data),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionId}`
+        }
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/homepage-content"] });
       setIsDialogOpen(false);
       setEditingContent(null);
+      setSelectedImage(null);
+      setImagePreview(null);
       toast({ title: "✅ Homepage content updated successfully!" });
     },
   });
 
   const deleteContentMutation = useMutation({
-    mutationFn: (id: number) => apiRequest(`/api/admin/homepage-content/${id}`, { method: "DELETE" }),
+    mutationFn: (id: number) => apiRequest(`/api/admin/homepage-content/${id}`, { 
+      method: "DELETE",
+      headers: {
+        'Authorization': `Bearer ${sessionId}`
+      }
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/homepage-content"] });
       toast({ title: "🗑️ Homepage content deleted successfully!" });
     },
   });
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({ 
+          title: "⚠️ File too large", 
+          description: "Please select an image under 5MB",
+          variant: "destructive" 
+        });
+        return;
+      }
+      
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onload = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    
+    // Handle image upload
+    let imageUrl = formData.get("imageUrl") as string;
+    if (selectedImage) {
+      // For demo purposes, we'll use a placeholder URL
+      // In production, you'd upload to your storage service first
+      imageUrl = imagePreview || "";
+    }
+    
     const data = {
       sectionType: formData.get("sectionType") as string,
       title: formData.get("title") as string,
       content: formData.get("content") as string,
-      imageUrl: formData.get("imageUrl") as string,
+      imageUrl: imageUrl,
       linkUrl: formData.get("linkUrl") as string,
       buttonText: formData.get("buttonText") as string,
       isActive: formData.get("isActive") === "on",
@@ -192,15 +256,56 @@ export function AdminHomepage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="imageUrl">Image URL (Optional)</Label>
-                    <Input
-                      id="imageUrl"
-                      name="imageUrl"
-                      placeholder="https://example.com/offer-image.jpg"
-                      defaultValue={editingContent?.imageUrl}
-                      data-testid="input-image-url"
-                    />
+                  <div className="space-y-4">
+                    <Label className="text-sm font-medium text-gray-700">Banner Image Upload</Label>
+                    
+                    {/* File Upload Area */}
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+                      <input
+                        type="file"
+                        accept="image/png,image/jpg,image/jpeg,image/webp"
+                        onChange={handleImageChange}
+                        className="hidden"
+                        id="banner-upload"
+                        data-testid="input-banner-upload"
+                      />
+                      <label htmlFor="banner-upload" className="cursor-pointer">
+                        <div className="flex flex-col items-center space-y-2">
+                          <Upload className="h-8 w-8 text-gray-400" />
+                          <span className="text-sm text-gray-600">
+                            Click to upload banner image
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            PNG, JPG, JPEG up to 5MB
+                          </span>
+                        </div>
+                      </label>
+                      
+                      {/* Image Preview */}
+                      {imagePreview && (
+                        <div className="mt-4">
+                          <img 
+                            src={imagePreview} 
+                            alt="Preview" 
+                            className="max-h-32 mx-auto rounded border"
+                          />
+                          <p className="text-xs text-green-600 mt-2">✓ Image ready to upload</p>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Fallback URL Input */}
+                    <div>
+                      <Label htmlFor="imageUrl" className="text-xs text-gray-500">Or use Image URL</Label>
+                      <Input
+                        id="imageUrl"
+                        name="imageUrl"
+                        placeholder="https://example.com/banner.jpg"
+                        defaultValue={editingContent?.imageUrl}
+                        data-testid="input-image-url"
+                        className="text-sm"
+                      />
+                    </div>
                   </div>
                   <div>
                     <Label htmlFor="linkUrl">Link URL (Optional)</Label>

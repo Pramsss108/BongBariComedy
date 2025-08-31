@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertBlogPostSchema, insertCollaborationRequestSchema, insertUserSchema } from "@shared/schema";
 import { z } from "zod";
 import { google } from "googleapis";
+import { ObjectStorageService } from "./objectStorage";
 
 // Simple session middleware
 const sessions = new Map<string, { username: string; createdAt: Date }>();
@@ -28,6 +29,22 @@ const isAuthenticated = (req: any, res: any, next: any) => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Object Storage routes - serve public assets
+  app.get("/public-objects/:filePath(*)", async (req, res) => {
+    const filePath = req.params.filePath;
+    const objectStorageService = new ObjectStorageService();
+    try {
+      const file = await objectStorageService.searchPublicObject(filePath);
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+      objectStorageService.downloadObject(file, res);
+    } catch (error) {
+      console.error("Error searching for public object:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Authentication routes
   app.post("/api/auth/login", async (req, res) => {
     try {

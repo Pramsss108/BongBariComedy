@@ -11,6 +11,7 @@ import { useGlobalCursor } from "@/hooks/useGlobalCursor";
 import { useParallaxScroll } from "@/hooks/useParallaxScroll";
 import { useRickshawSound } from "@/hooks/useRickshawSound";
 import { useMagicalHoverSounds } from "@/hooks/useMagicalHoverSounds";
+import { useMouseMovementChime } from "@/hooks/useMouseMovementChime";
 import Home from "@/pages/home";
 import About from "@/pages/about";
 import WorkWithUs from "@/pages/work-with-us";
@@ -33,6 +34,9 @@ function Router() {
   
   // Initialize magical hover sounds to complement cursor effects
   useMagicalHoverSounds({ enabled: true, volume: 0.12 });
+  
+  // Initialize continuous chime that follows mouse movement
+  useMouseMovementChime({ enabled: true, volume: 0.08, frequency: 900 });
   
   return (
     <div className="min-h-screen bg-brand-yellow relative">

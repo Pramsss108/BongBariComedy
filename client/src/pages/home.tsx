@@ -166,18 +166,18 @@ const Home = () => {
         <main className="py-4 sm:py-6 lg:py-8 relative z-10">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             
-            {/* Static Banner Section - Just under header */}
+            {/* Thin YouTube-style Banner */}
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="mb-6"
+              className="mb-4"
             >
               <motion.div
-                className="w-full rounded-xl shadow-lg hover:shadow-2xl overflow-hidden relative transform transition-all duration-300"
+                className="w-full h-20 md:h-24 lg:h-28 rounded-lg shadow-lg hover:shadow-xl overflow-hidden relative transform transition-all duration-300"
                 whileHover={{ 
-                  scale: 1.01,
-                  y: -2
+                  scale: 1.005,
+                  y: -1
                 }}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -187,12 +187,41 @@ const Home = () => {
                   stiffness: 100
                 }}
               >
-                <img 
-                  src="https://i.imgur.com/XqzE4tA.png" 
-                  alt="বং বাড়ি - Bengali Comedy That Hits Home!"
-                  className="w-full h-auto object-cover"
-                />
+                <div className="w-full h-full bg-gradient-to-r from-brand-yellow via-yellow-400 to-orange-400"></div>
               </motion.div>
+            </motion.div>
+
+            {/* Title and Subtitle Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-center mb-6"
+            >
+              <motion.h1 
+                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gray-800 mb-2 bangla-text"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+              >
+                বং বাড়ি
+              </motion.h1>
+              <motion.p 
+                className="text-lg sm:text-xl md:text-2xl text-gray-600 mb-2"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+              >
+                Bengali Comedy That Hits Home!
+              </motion.p>
+              <motion.p 
+                className="text-base sm:text-lg text-gray-500 bangla-text"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.5 }}
+              >
+                কলকাতার ঘরোয়া কমেডি
+              </motion.p>
             </motion.div>
 
             {/* Barir Mashla YouTube Video - Our Story */}

@@ -199,12 +199,15 @@
 .reel-content-container {
   position: absolute;
   inset: 5px;
-  background: transparent;
+  background: white;
   border-radius: 13px;
   overflow: hidden;
   z-index: 10;
   box-shadow: 
-    0 6px 20px rgba(0, 0, 0, 0.15);
+    0 6px 20px rgba(0, 0, 0, 0.15),
+    inset 0 1px 4px rgba(255, 255, 255, 0.95),
+    0 0 0 1px rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(1px);
 }
 
 /* Mega glow spinning animation with dynamic effects */

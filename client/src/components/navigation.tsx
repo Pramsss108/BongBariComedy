@@ -24,8 +24,8 @@ const Navigation = () => {
 
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50" data-testid="main-navigation">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center py-3 md:py-5">
+      <div className="container mx-auto px-6">
+        <div className="flex justify-between items-center py-4 md:py-5">
           {/* Logo - Optimized Layout */}
           <Link href="/" data-testid="logo-link">
             <div className="flex items-start space-x-4 cursor-pointer hover-logo-container">
@@ -45,13 +45,14 @@ const Navigation = () => {
                   <span className="emoji-float emoji-6 text-lg">🤣</span>
                 </div>
               </div>
-              {/* Mobile Logo - Compact */}
-              <div className="md:hidden flex flex-col justify-start pt-1">
-                <h1 className="text-xl font-bold text-brand-blue bangla-text leading-tight">বং বাড়ি</h1>
+              {/* Mobile Logo - Compact with Padding */}
+              <div className="md:hidden flex flex-col justify-start pt-1 pr-2 min-w-[100px]">
+                <h1 className="text-lg font-bold text-brand-blue bangla-text leading-tight mb-1">বং বাড়ি</h1>
+                <p className="text-[10px] text-gray-600 leading-tight whitespace-nowrap">Family Comedy</p>
               </div>
               {/* Desktop Logo - Fixed Layout */}
               <div className="hidden md:flex flex-col justify-start pt-1 min-w-[140px]">
-                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[26px] leading-tight mb-1 pt-[4px] pb-[4px]">বং বাড়ি</h1>
+                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[26px] leading-tight mb-1">বং বাড়ি</h1>
                 <p className="text-xs text-gray-600 leading-tight whitespace-nowrap">Bengali Comedy</p>
               </div>
             </div>

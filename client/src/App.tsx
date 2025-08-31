@@ -22,7 +22,7 @@ import Admin from "@/pages/admin";
 import Login from "@/pages/login";
 import BlogPost from "@/pages/blog-post";
 import NotFound from "@/pages/not-found";
-import SimpleChatbot from "@/components/SimpleChatbot";
+import BongBot from "@/components/BongBot";
 
 function Router() {
   const [showCharmSelector, setShowCharmSelector] = useState(false);
@@ -64,8 +64,8 @@ function Router() {
         <Route component={NotFound} />
       </Switch>
       
-      {/* AI Chatbot - Available on all pages */}
-      <SimpleChatbot />
+      {/* Professional Bong Bot - Available on all pages */}
+      <BongBot />
       
     </div>
   );

@@ -49,67 +49,43 @@ export function useMouseMovementChime(options: MouseMovementChimeOptions = {}) {
     try {
       const audioContext = audioContextRef.current;
       
-      // Create gentle fairy dust chimes - much more pleasant and smooth
-      const oscillators: OscillatorNode[] = [];
-      const gainNodes: GainNode[] = [];
+      // Create oscillator for the chime sound
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
       
-      // Soft, pleasant fairy dust frequencies - like tiny wind chimes
-      const fairyFrequencies = [660, 880, 1100, 1320]; // Gentle harmonic series
+      // Connect nodes
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
       
-      fairyFrequencies.forEach((freq, index) => {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        const filterNode = audioContext.createBiquadFilter();
-        
-        // Set up gentle low-pass filter for smooth, warm sound
-        filterNode.type = 'lowpass';
-        filterNode.frequency.setValueAtTime(2000, audioContext.currentTime);
-        filterNode.Q.setValueAtTime(1, audioContext.currentTime); // Gentle filtering
-        
-        // Connect nodes
-        oscillator.connect(filterNode);
-        filterNode.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        // Use sine wave for pure, smooth fairy dust sound
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(freq, audioContext.currentTime);
-        
-        // Add very gentle frequency modulation for magical shimmer
-        const shimmerLfo = audioContext.createOscillator();
-        const shimmerGain = audioContext.createGain();
-        shimmerLfo.connect(shimmerGain);
-        shimmerGain.connect(oscillator.frequency);
-        
-        shimmerLfo.type = 'sine';
-        shimmerLfo.frequency.setValueAtTime(2 + Math.random() * 1, audioContext.currentTime); // Slow, gentle shimmer
-        shimmerGain.gain.setValueAtTime(5 + Math.random() * 5, audioContext.currentTime); // Very subtle variation
-        
-        // Set up smooth volume envelope - gentle attack, long sustain
-        const individualVolume = (volume / fairyFrequencies.length) * (0.7 + Math.random() * 0.3);
-        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(individualVolume, audioContext.currentTime + 0.3); // Slow gentle fade in
-        
-        // Start oscillators with small delays for fairy dust sparkle
-        const startDelay = index * 0.05; // Gentle staggered start
-        oscillator.start(audioContext.currentTime + startDelay);
-        shimmerLfo.start(audioContext.currentTime + startDelay);
-        
-        oscillators.push(oscillator);
-        gainNodes.push(gainNode);
-      });
+      // Set up a gentle, magical chime sound
+      oscillator.type = 'sine'; // Pure sine wave for clean chime
+      oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+      
+      // Add subtle frequency modulation for magical effect
+      const lfo = audioContext.createOscillator();
+      const lfoGain = audioContext.createGain();
+      lfo.connect(lfoGain);
+      lfoGain.connect(oscillator.frequency);
+      
+      lfo.type = 'sine';
+      lfo.frequency.setValueAtTime(3, audioContext.currentTime); // 3Hz modulation
+      lfoGain.gain.setValueAtTime(20, audioContext.currentTime); // Subtle frequency variation
+      
+      // Set initial volume to 0 and fade in
+      gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+      gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + fadeInTime);
+      
+      // Start the sound
+      oscillator.start(audioContext.currentTime);
+      lfo.start(audioContext.currentTime);
       
       // Store references
-      oscillatorRef.current = oscillators[0];
-      gainNodeRef.current = gainNodes[0];
+      oscillatorRef.current = oscillator;
+      gainNodeRef.current = gainNode;
       isPlayingRef.current = true;
       
-      // Store all nodes for cleanup
-      (oscillatorRef.current as any).allOscillators = oscillators;
-      (gainNodeRef.current as any).allGainNodes = gainNodes;
-      
     } catch (error) {
-      console.log('Failed to create fairy dust sound');
+      console.log('Failed to create chime sound');
     }
   }, [enabled, volume, frequency, fadeInTime]);
 
@@ -120,87 +96,65 @@ export function useMouseMovementChime(options: MouseMovementChimeOptions = {}) {
       const audioContext = audioContextRef.current;
       if (!audioContext) return;
 
-      // Get all oscillators and gain nodes
-      const allOscillators = (oscillatorRef.current as any).allOscillators || [oscillatorRef.current];
-      const allGainNodes = (gainNodeRef.current as any).allGainNodes || [gainNodeRef.current];
+      // Fade out the sound
+      gainNodeRef.current.gain.cancelScheduledValues(audioContext.currentTime);
+      gainNodeRef.current.gain.setValueAtTime(gainNodeRef.current.gain.value, audioContext.currentTime);
+      gainNodeRef.current.gain.linearRampToValueAtTime(0, audioContext.currentTime + fadeOutTime);
       
-      // Fade out fairy dust sounds very slowly and gently like emoji trail
-      allGainNodes.forEach((gainNode: GainNode, index: number) => {
-        const slowFadeTime = fadeOutTime * (2 + Math.random() * 1); // Much slower fade like emoji trail
-        gainNode.gain.cancelScheduledValues(audioContext.currentTime);
-        gainNode.gain.setValueAtTime(gainNode.gain.value, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + slowFadeTime); // Smooth exponential fade
-      });
-      
-      // Stop all oscillators with gentle timing
-      allOscillators.forEach((oscillator: OscillatorNode, index: number) => {
-        const gentleStopTime = fadeOutTime * (2.5 + Math.random() * 0.5); // Even slower stop
-        oscillator.stop(audioContext.currentTime + gentleStopTime);
-      });
+      // Stop the oscillator after fade out
+      oscillatorRef.current.stop(audioContext.currentTime + fadeOutTime);
       
       // Clean up references
       setTimeout(() => {
         oscillatorRef.current = null;
         gainNodeRef.current = null;
         isPlayingRef.current = false;
-      }, (fadeOutTime * 1000) + 200);
+      }, (fadeOutTime * 1000) + 100);
       
     } catch (error) {
-      console.log('Failed to stop magical glitter sound');
+      console.log('Failed to stop chime sound');
     }
   }, [fadeOutTime]);
 
-  // Handle hover events instead of movement - much more pleasant
+  // Handle mouse movement
   useEffect(() => {
     if (!enabled) return;
 
-    const handleMouseEnter = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
+    const handleMouseMove = (event: MouseEvent) => {
+      const currentPos = { x: event.clientX, y: event.clientY };
+      const lastPos = lastMousePosRef.current;
       
-      // Only play on hoverable elements - more selective and pleasant
-      if (target.tagName === 'BUTTON' || 
-          target.tagName === 'A' || 
-          target.classList.contains('magical-hover') ||
-          target.closest('button') ||
-          target.closest('a') ||
-          target.closest('.magical-hover')) {
-        
-        // Start fairy dust if not already playing
+      // Calculate movement distance
+      const distance = Math.sqrt(
+        Math.pow(currentPos.x - lastPos.x, 2) + Math.pow(currentPos.y - lastPos.y, 2)
+      );
+      
+      // Only play if movement is significant enough
+      if (distance >= movementThreshold) {
+        // Start chime if not already playing
         if (!isPlayingRef.current) {
           startChime();
         }
-      }
-    };
-
-    const handleMouseLeave = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      
-      // Stop fairy dust when leaving hoverable elements
-      if (target.tagName === 'BUTTON' || 
-          target.tagName === 'A' || 
-          target.classList.contains('magical-hover') ||
-          target.closest('button') ||
-          target.closest('a') ||
-          target.closest('.magical-hover')) {
         
-        // Set timeout for gentle fade out like emoji trail
+        // Clear existing timeout
         if (movementTimeoutRef.current) {
           clearTimeout(movementTimeoutRef.current);
         }
         
+        // Set timeout to stop chime when movement stops
         movementTimeoutRef.current = window.setTimeout(() => {
           stopChime();
-        }, 300); // Longer delay for more pleasant experience
+        }, 150); // Stop after 150ms of no movement
+        
+        lastMousePosRef.current = currentPos;
       }
     };
 
-    // Add hover listeners instead of movement
-    document.addEventListener('mouseover', handleMouseEnter, { passive: true });
-    document.addEventListener('mouseout', handleMouseLeave, { passive: true });
+    // Add mouse move listener
+    document.addEventListener('mousemove', handleMouseMove, { passive: true });
 
     return () => {
-      document.removeEventListener('mouseover', handleMouseEnter);
-      document.removeEventListener('mouseout', handleMouseLeave);
+      document.removeEventListener('mousemove', handleMouseMove);
       
       // Clean up timeout
       if (movementTimeoutRef.current) {
@@ -210,7 +164,7 @@ export function useMouseMovementChime(options: MouseMovementChimeOptions = {}) {
       // Stop any playing sound
       stopChime();
     };
-  }, [enabled, startChime, stopChime]);
+  }, [enabled, startChime, stopChime, movementThreshold]);
 
   return {
     isEnabled: enabled,

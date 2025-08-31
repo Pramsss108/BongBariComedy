@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Navigation from "@/components/navigation";
 import { ScrollProgress } from "@/components/scroll-progress";
 import { FloatingElements } from "@/components/floating-elements";
+import MagicalCursor from "@/components/MagicalCursor";
 import { useGlobalCursor } from "@/hooks/useGlobalCursor";
 import { useParallaxScroll } from "@/hooks/useParallaxScroll";
 import Home from "@/pages/home";
@@ -29,6 +30,7 @@ function Router() {
     <div className="min-h-screen bg-brand-yellow relative">
       <ScrollProgress />
       <FloatingElements />
+      <MagicalCursor />
       <Navigation />
       <Switch>
         <Route path="/" component={Home} />

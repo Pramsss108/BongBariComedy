@@ -137,30 +137,55 @@ export function useMouseMovementChime(options: MouseMovementChimeOptions = {}) {
           startChime();
         }
         
-        // Clear existing timeout
+        // Clear existing timeout to keep playing while moving
         if (movementTimeoutRef.current) {
           clearTimeout(movementTimeoutRef.current);
+          movementTimeoutRef.current = null;
         }
-        
-        // Set timeout to stop fairy dust when movement stops (with slight variation)
-        const stopDelay = 180 + Math.random() * 40; // 180-220ms random variation
-        movementTimeoutRef.current = window.setTimeout(() => {
-          stopChime();
-        }, stopDelay);
         
         lastMousePosRef.current = currentPos;
       }
     };
 
+    const handleMouseStop = () => {
+      // Clear any existing timeout
+      if (movementTimeoutRef.current) {
+        clearTimeout(movementTimeoutRef.current);
+      }
+      
+      // Set timeout to stop charm when movement stops
+      movementTimeoutRef.current = window.setTimeout(() => {
+        if (isPlayingRef.current) {
+          stopChime();
+        }
+      }, 200); // Stop after 200ms of no movement
+    };
+
     // Add mouse move listener
     document.addEventListener('mousemove', handleMouseMove, { passive: true });
+    
+    // Add mouse stop detection (when not moving for a bit)
+    let mouseMoveTimer: number | null = null;
+    
+    const detectMouseStop = () => {
+      if (mouseMoveTimer) {
+        clearTimeout(mouseMoveTimer);
+      }
+      mouseMoveTimer = window.setTimeout(handleMouseStop, 100);
+    };
+    
+    document.addEventListener('mousemove', detectMouseStop, { passive: true });
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mousemove', detectMouseStop);
       
-      // Clean up timeout
+      // Clean up timeouts
       if (movementTimeoutRef.current) {
         clearTimeout(movementTimeoutRef.current);
+      }
+      if (mouseMoveTimer) {
+        clearTimeout(mouseMoveTimer);
       }
       
       // Stop any playing sound

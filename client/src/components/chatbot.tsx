@@ -220,15 +220,6 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
             </Button>
           </motion.div>
 
-          {/* Hi Greeting Below */}
-          <motion.div
-            className="mt-2 px-3 py-1 bg-gradient-to-r from-yellow-500/80 to-red-500/80 backdrop-blur-sm rounded-full text-white text-sm font-semibold border border-white/20 shadow-lg"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 0.5 }}
-          >
-            👋 Hi! / হাই!
-          </motion.div>
         </div>
       </motion.div>
     );
@@ -236,13 +227,13 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
 
   return (
     <motion.div
-      className={`no-rickshaw-sound fixed bottom-6 right-6 z-40 ${className}`}
+      className={`no-rickshaw-sound fixed bottom-4 right-4 z-50 ${className}`}
       initial={{ scale: 0, opacity: 0, y: 100 }}
       animate={{ scale: 1, opacity: 1, y: 0 }}
       exit={{ scale: 0, opacity: 0, y: 100 }}
       transition={{ type: "spring", stiffness: 200, damping: 25 }}
     >
-      <div className={`relative ${isMinimized ? 'w-80 h-16' : 'w-96 h-[600px]'} transition-all duration-500 ease-out`}>
+      <div className={`relative ${isMinimized ? 'w-80 h-16' : 'w-96 h-[500px]'} transition-all duration-500 ease-out`}>
         {/* Background with glass morphism */}
         <div className="absolute inset-0 bg-gradient-to-br from-purple-900/85 via-blue-900/85 to-pink-900/85 backdrop-blur-xl rounded-3xl border-2 border-white/30 shadow-2xl overflow-hidden">
           {/* Animated gradient overlay */}
@@ -348,7 +339,7 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
               className="relative z-10"
             >
               {/* Messages Area */}
-              <ScrollArea className="h-[440px] px-4 pb-4">
+              <ScrollArea className="h-[320px] px-4 pb-4">
                 <div className="space-y-6">
                   {messages.map((message, index) => (
                     <motion.div
@@ -409,35 +400,35 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
               </ScrollArea>
 
               {/* Quick Actions */}
-              <div className="px-4 pb-2">
+              <div className="px-3 pb-2">
                 <motion.button
                   onClick={getComedyTips}
                   disabled={isTyping}
-                  className="no-rickshaw-sound w-full py-2 px-4 bg-gradient-to-r from-yellow-500/20 to-red-500/20 backdrop-blur-sm rounded-xl border border-white/20 text-white text-sm font-medium hover:from-yellow-500/30 hover:to-red-500/30 transition-all duration-300 flex items-center justify-center gap-2"
+                  className="no-rickshaw-sound w-full py-2 px-3 bg-gradient-to-r from-yellow-500/20 to-red-500/20 backdrop-blur-sm rounded-lg border border-white/20 text-white text-xs font-medium hover:from-yellow-500/30 hover:to-red-500/30 transition-all duration-300 flex items-center justify-center gap-2"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   data-testid="quick-action-tips"
                 >
-                  <Zap className="w-4 h-4 text-yellow-400" />
-                  Comedy Magic Tips / কমেডি টিপস
-                  <Star className="w-4 h-4 text-yellow-400" />
+                  <Zap className="w-3 h-3 text-yellow-400" />
+                  Comedy Tips / কমেডি টিপস
+                  <Star className="w-3 h-3 text-yellow-400" />
                 </motion.button>
               </div>
 
               {/* Input Area */}
-              <div className="p-4 pt-2">
+              <div className="p-3 pt-2">
                 <div className="relative">
                   {/* Input glow */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl blur-sm" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl blur-sm" />
                   
-                  <div className="relative bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-2 flex gap-2">
+                  <div className="relative bg-white/15 backdrop-blur-sm rounded-xl border border-white/20 p-2 flex gap-2 items-center">
                     <input
                       ref={inputRef}
                       value={inputMessage}
                       onChange={(e) => setInputMessage(e.target.value)}
                       onKeyDown={handleKeyPress}
                       placeholder="Ask me anything magical... ✨"
-                      className="flex-1 bg-transparent border-0 text-white placeholder:text-white/50 focus:ring-0 focus:outline-none font-medium px-3 py-2 rounded-xl"
+                      className="flex-1 bg-transparent border-0 text-white placeholder:text-white/50 focus:ring-0 focus:outline-none font-medium px-2 py-2 rounded-lg text-sm"
                       disabled={isTyping}
                       data-testid="chatbot-input"
                     />
@@ -445,10 +436,10 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
                       <Button
                         onClick={sendMessage}
                         disabled={!inputMessage.trim() || isTyping}
-                        className="no-rickshaw-sound w-10 h-10 p-0 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 shadow-lg"
+                        className="no-rickshaw-sound w-8 h-8 p-0 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 shadow-lg"
                         data-testid="chatbot-send-button"
                       >
-                        <Send className="w-4 h-4" />
+                        <Send className="w-3 h-3" />
                       </Button>
                     </motion.div>
                   </div>

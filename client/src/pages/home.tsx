@@ -357,10 +357,10 @@ const Home = () => {
             <div className="max-w-4xl mx-auto">
               {/* Work with Us Header with Yellow Background */}
               <div className="bg-brand-yellow rounded-2xl p-2 mb-0 text-center shadow-lg">
-                <h3 className="text-6xl md:text-8xl font-bold text-brand-blue mb-6" data-testid="collaboration-title-english">
+                <h3 className="text-8xl md:text-9xl font-bold text-brand-blue mb-8" data-testid="collaboration-title-english" style={{fontSize: 'clamp(4rem, 12vw, 10rem)'}}>
                   Work with Us
                 </h3>
-                <h4 className="text-4xl md:text-6xl font-bold text-gray-800 bangla-text" data-testid="collaboration-title-bengali">
+                <h4 className="text-6xl md:text-8xl font-bold text-gray-800 bangla-text" data-testid="collaboration-title-bengali" style={{fontSize: 'clamp(3rem, 10vw, 8rem)'}}>
                   আমাদের সাথে কাজ করুন
                 </h4>
               </div>

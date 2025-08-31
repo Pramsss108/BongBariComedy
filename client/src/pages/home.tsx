@@ -58,7 +58,9 @@ const Home = () => {
   // Watch all form values to check if all required fields are filled
   const watchedValues = form.watch();
   const hasEmail = watchedValues.email && watchedValues.email.trim() !== "";
-  const hasPhone = watchedValues.phone && watchedValues.phone.trim() !== "";
+  // Check if phone has actual digits after the country code
+  const phoneDigits = watchedValues.phone?.split(' ').slice(1).join('') || '';
+  const hasPhone = phoneDigits.trim() !== "" && phoneDigits.length > 0;
   const hasContactMethod = hasEmail || hasPhone; // At least one contact method required
   const isFormValid = watchedValues.name && 
                      watchedValues.company && 

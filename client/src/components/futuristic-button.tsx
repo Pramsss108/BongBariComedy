@@ -140,39 +140,56 @@ export const FuturisticButton = ({
 
   return (
     <div className="relative inline-block">
-      {/* Animated Border Ring */}
+      {/* Main Animated Border Ring - Thick Glowing */}
       <motion.div
-        className="absolute inset-0 rounded-full p-1"
+        className="absolute inset-[-6px] rounded-full p-2"
         style={{
           background: style.borderGradient,
-          filter: 'blur(2px)'
+          filter: 'blur(0px)'
         }}
         animate={{
           rotate: 360
         }}
         transition={{
-          duration: 3,
+          duration: 2,
           repeat: Infinity,
           ease: "linear"
         }}
       >
-        <div className="w-full h-full rounded-full bg-transparent" />
+        <div className="w-full h-full rounded-full bg-black/20" />
       </motion.div>
       
-      {/* Secondary glow ring */}
+      {/* Secondary glow ring - Outer blur */}
       <motion.div
-        className="absolute inset-[-4px] rounded-full opacity-75"
+        className="absolute inset-[-12px] rounded-full opacity-80"
         style={{
           background: style.borderGradient,
-          filter: 'blur(8px)'
+          filter: 'blur(15px)'
         }}
         animate={{
           rotate: -360,
-          scale: [1, 1.05, 1]
+          scale: [1, 1.1, 1]
+        }}
+        transition={{
+          rotate: { duration: 3, repeat: Infinity, ease: "linear" },
+          scale: { duration: 2.5, repeat: Infinity, ease: "easeInOut" }
+        }}
+      />
+      
+      {/* Third ring - Super glow */}
+      <motion.div
+        className="absolute inset-[-20px] rounded-full opacity-60"
+        style={{
+          background: style.borderGradient,
+          filter: 'blur(25px)'
+        }}
+        animate={{
+          rotate: 360,
+          scale: [1, 1.15, 1]
         }}
         transition={{
           rotate: { duration: 4, repeat: Infinity, ease: "linear" },
-          scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+          scale: { duration: 3, repeat: Infinity, ease: "easeInOut" }
         }}
       />
       
@@ -194,8 +211,8 @@ export const FuturisticButton = ({
             style={{
               background: style.rgbGradient,
               filter: style.neon,
-              minWidth: '400px',
-              minHeight: '80px'
+              minWidth: '450px',
+              minHeight: '90px'
             }}
             onClick={handleClick}
             disabled={disabled}

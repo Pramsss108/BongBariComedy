@@ -182,12 +182,12 @@ const Home = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.1 }}
-              className="text-center mb-3"
+              className="text-center mb-2"
             >
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-1 bangla-text">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-0 bangla-text leading-none">
                 বং বাড়ি
               </h1>
-              <p className="text-xs sm:text-sm md:text-base text-gray-600 bangla-text">
+              <p className="text-xs sm:text-sm md:text-base text-gray-600 bangla-text leading-none">
                 কলকাতার ঘরোয়া কমেডি - আমাদের গল্প
               </p>
             </motion.div>

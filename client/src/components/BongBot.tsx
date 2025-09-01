@@ -162,8 +162,8 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
       const newY = position.y + (e.clientY - dragStart.y);
       
       // Keep in bounds
-      const maxX = window.innerWidth - 380;
-      const maxY = window.innerHeight - (isMinimized ? 60 : 500);
+      const maxX = window.innerWidth - 320;
+      const maxY = window.innerHeight - (isMinimized ? 40 : 360);
       
       const boundedX = Math.max(0, Math.min(newX, maxX));
       const boundedY = Math.max(0, Math.min(newY, maxY));
@@ -226,8 +226,8 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
       style={{
         left: position.x + 'px',
         top: Math.max(20, position.y) + 'px', // Ensure minimum 20px from top
-        width: '380px',
-        height: isMinimized ? '48px' : '420px',
+        width: '320px',
+        height: isMinimized ? '40px' : '360px',
         padding: '0px'
       }}
       initial={{ opacity: 0, scale: 0.8, y: 50 }}
@@ -245,21 +245,21 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
           style={{ 
             userSelect: 'none', 
             marginTop: '-10px',
-            height: '48px',
-            paddingLeft: '12px',
-            paddingRight: '10px'
+            height: '40px',
+            paddingLeft: '10px',
+            paddingRight: '8px'
           }}
         >
           {/* LEFT SIDE - COMPACT PROFILE & TEXT */}
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-[#FFCC00] to-[#FF4D4D] rounded-full flex items-center justify-center shadow-md">
-              <Bot size={16} className="text-white" />
+            <div className="w-7 h-7 bg-gradient-to-br from-[#FFCC00] to-[#FF4D4D] rounded-full flex items-center justify-center shadow-md">
+              <Bot size={14} className="text-white" />
             </div>
             <div className="flex flex-col justify-center">
-              <span className="text-white font-semibold text-sm leading-tight">Bong Bot</span>
-              <div className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
-                <span className="text-white/80 text-[10px] leading-tight">ami sob somoy online</span>
+              <span className="text-white font-semibold text-xs leading-tight">Bong Bot</span>
+              <div className="flex items-center gap-0.5">
+                <span className="w-1 h-1 bg-green-400 rounded-full"></span>
+                <span className="text-white/80 text-[9px] leading-tight">online</span>
               </div>
             </div>
           </div>
@@ -271,18 +271,18 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
                 e.stopPropagation();
                 setIsMinimized(!isMinimized);
               }}
-              className="w-7 h-7 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+              className="w-6 h-6 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
             >
-              <Minimize2 size={14} className="text-white/80" />
+              <Minimize2 size={12} className="text-white/80" />
             </button>
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setIsOpen(false);
               }}
-              className="w-7 h-7 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+              className="w-6 h-6 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
             >
-              <X size={14} className="text-white/80" />
+              <X size={12} className="text-white/80" />
             </button>
           </div>
         </motion.div>
@@ -293,29 +293,29 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
             <motion.div 
               className="flex flex-col h-full"
               initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'calc(100% - 52px)' }}
+              animate={{ opacity: 1, height: 'calc(100% - 44px)' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
             >
               {/* SCROLLABLE MESSAGES AREA */}
-              <div className="flex-1 overflow-y-auto p-2 space-y-2 hide-scrollbar">
+              <div className="flex-1 overflow-y-auto p-1.5 space-y-1.5 hide-scrollbar">
                 {messages.map((msg) => (
                   <motion.div
                     key={msg.id}
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    initial={{ opacity: 0, y: 5, scale: 0.98 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                     className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div 
-                      className={`max-w-[90%] px-2.5 py-1.5 rounded-xl text-xs shadow-md backdrop-blur-sm border ${
+                      className={`max-w-[92%] px-2 py-1 rounded-lg text-[11px] shadow-sm backdrop-blur-sm border ${
                         msg.sender === 'user' 
                           ? 'bg-gradient-to-r from-[#1363DF]/80 to-[#FF4D4D]/80 text-white border-white/20' 
                           : 'bg-white/90 text-gray-800 border-white/30'
                       }`}
                     >
-                      <p className="leading-relaxed break-words">{msg.text}</p>
-                      <span className={`text-[9px] opacity-60 block mt-0.5 ${msg.sender === 'user' ? 'text-white/70' : 'text-gray-500'}`}>
+                      <p className="leading-tight break-words">{msg.text}</p>
+                      <span className={`text-[8px] opacity-50 block mt-0.5 ${msg.sender === 'user' ? 'text-white/60' : 'text-gray-500'}`}>
                         {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
@@ -329,26 +329,26 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                   >
-                    <div className="bg-white/90 p-3 rounded-2xl shadow-lg backdrop-blur-sm border border-white/30">
-                      <div className="flex items-center gap-2">
-                        <div className="flex gap-1">
+                    <div className="bg-white/90 p-2 rounded-xl shadow-md backdrop-blur-sm border border-white/30">
+                      <div className="flex items-center gap-1.5">
+                        <div className="flex gap-0.5">
                           <motion.div 
-                            className="w-2 h-2 bg-[#1363DF] rounded-full"
+                            className="w-1.5 h-1.5 bg-[#1363DF] rounded-full"
                             animate={{ y: [0, -8, 0] }}
                             transition={{ duration: 0.8, repeat: Infinity, delay: 0 }}
                           />
                           <motion.div 
-                            className="w-2 h-2 bg-[#FFCC00] rounded-full"
+                            className="w-1.5 h-1.5 bg-[#FFCC00] rounded-full"
                             animate={{ y: [0, -8, 0] }}
                             transition={{ duration: 0.8, repeat: Infinity, delay: 0.2 }}
                           />
                           <motion.div 
-                            className="w-2 h-2 bg-[#FF4D4D] rounded-full"
+                            className="w-1.5 h-1.5 bg-[#FF4D4D] rounded-full"
                             animate={{ y: [0, -8, 0] }}
                             transition={{ duration: 0.8, repeat: Infinity, delay: 0.4 }}
                           />
                         </div>
-                        <span className="text-xs text-gray-500">Bong Bot is typing...</span>
+                        <span className="text-[10px] text-gray-500">typing...</span>
                       </div>
                     </div>
                   </motion.div>
@@ -360,12 +360,12 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
               {/* QUICK REPLY TEMPLATES */}
               {showTemplates && (
                 <motion.div 
-                  className="px-3 py-2 bg-gradient-to-r from-[#FFCC00]/30 via-[#FF4D4D]/30 to-[#1363DF]/30 backdrop-blur-lg border-t-2 border-white/30"
+                  className="px-2 py-1.5 bg-gradient-to-r from-[#FFCC00]/30 via-[#FF4D4D]/30 to-[#1363DF]/30 backdrop-blur-lg border-t border-white/30"
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
                 >
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1">
                     {templates.map((template, index) => (
                       <motion.button
                         key={index}
@@ -373,7 +373,7 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
                           setMessage(template);
                           setShowTemplates(false);
                         }}
-                        className="px-3 py-2 bg-slate-700/90 hover:bg-slate-600/90 text-white text-xs font-medium rounded-lg shadow-lg border border-slate-500/50 hover:border-slate-400/70 transition-all whitespace-nowrap"
+                        className="px-2 py-1 bg-slate-700/90 hover:bg-slate-600/90 text-white text-[10px] font-medium rounded-md shadow-sm border border-slate-500/50 hover:border-slate-400/70 transition-all whitespace-nowrap"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
@@ -384,9 +384,9 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
                 </motion.div>
               )}
               
-              {/* PROFESSIONAL TYPING AREA */}
-              <div className="p-3 bg-gradient-to-r from-[#1363DF]/20 via-[#FFCC00]/20 to-[#FF4D4D]/20 backdrop-blur-lg border-t-2 border-white/40 rounded-b-2xl shadow-inner">
-                <div className="flex gap-2 items-end">
+              {/* COMPACT TYPING AREA */}
+              <div className="p-2 bg-gradient-to-r from-[#1363DF]/20 via-[#FFCC00]/20 to-[#FF4D4D]/20 backdrop-blur-lg border-t border-white/40 rounded-b-2xl shadow-inner">
+                <div className="flex gap-1.5 items-end">
                   <textarea
                     value={message}
                     onChange={(e) => {
@@ -396,11 +396,11 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
                       }
                     }}
                     placeholder="Kotha Hok Naki?"
-                    className="flex-1 px-3 py-2 bg-white/95 backdrop-blur-sm border-2 border-white/40 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1363DF]/70 focus:border-[#1363DF]/70 resize-none hide-scrollbar transition-all placeholder-gray-600 shadow-sm"
+                    className="flex-1 px-2 py-1 bg-white/95 backdrop-blur-sm border border-white/40 rounded-md text-[11px] focus:outline-none focus:ring-1 focus:ring-[#1363DF]/70 focus:border-[#1363DF]/70 resize-none hide-scrollbar transition-all placeholder-gray-600 shadow-sm"
                     style={{
-                      minHeight: '36px',
-                      maxHeight: '36px',
-                      lineHeight: '18px'
+                      minHeight: '28px',
+                      maxHeight: '28px',
+                      lineHeight: '14px'
                     }}
                     rows={2}
                     onKeyDown={(e) => {
@@ -412,7 +412,7 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
                   />
                   <motion.button
                     onClick={handleSendMessage}
-                    className="px-3 py-2 bg-gradient-to-r from-[#1363DF] to-[#FF4D4D] text-white rounded-lg font-semibold shadow-xl backdrop-blur-sm border-2 border-white/30 flex items-center gap-1 flex-shrink-0"
+                    className="px-2 py-1 bg-gradient-to-r from-[#1363DF] to-[#FF4D4D] text-white rounded-md font-semibold shadow-md backdrop-blur-sm border border-white/30 flex items-center gap-0.5 flex-shrink-0"
                     whileHover={{ 
                       scale: 1.05,
                       boxShadow: '0 15px 30px rgba(19, 99, 223, 0.4)'
@@ -420,8 +420,8 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
                     whileTap={{ scale: 0.95 }}
                     disabled={!message.trim()}
                   >
-                    <Send size={16} className="drop-shadow-lg" />
-                    <span className="text-sm font-bold">Send</span>
+                    <Send size={12} className="drop-shadow-sm" />
+                    <span className="text-[10px] font-bold">Send</span>
                   </motion.button>
                 </div>
               </div>

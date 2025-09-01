@@ -46,7 +46,7 @@ const Navigation = () => {
   return (
     <nav className="sticky top-0 z-50" data-testid="main-navigation">
       {/* Main Navigation */}
-      <div className="bg-white/95 backdrop-blur-md shadow-sm">
+      <div className="bg-gradient-to-r from-brand-blue to-blue-600 shadow-lg">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-10 lg:h-12">
           {/* Logo - Optimized Layout */}
@@ -70,17 +70,17 @@ const Navigation = () => {
               </div>
               {/* Mobile Logo - Original Sizes */}
               <div className="md:hidden flex flex-col justify-center pl-0.5 flex-1">
-                <h1 className="text-sm font-bold text-brand-blue bangla-text leading-none mb-0">বং বাড়ি</h1>
+                <h1 className="text-sm font-bold text-brand-yellow bangla-text leading-none mb-0">বং বাড়ি</h1>
                 <div className="space-y-0">
-                  <p className="text-[8px] font-semibold text-gray-800 leading-none group-hover:text-brand-blue transition-colors duration-300">Every Home's Story</p>
-                  <p className="text-[8px] text-gray-600 bangla-text font-medium leading-none group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
+                  <p className="text-[8px] font-semibold text-white leading-none group-hover:text-brand-yellow transition-colors duration-300">Every Home's Story</p>
+                  <p className="text-[8px] text-blue-100 bangla-text font-medium leading-none group-hover:text-brand-yellow transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
                 </div>
               </div>
               {/* Desktop Logo - Original Sizes */}
               <div className="hidden md:flex flex-col justify-center pl-3 min-w-[280px]">
-                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[18px] lg:text-[32px] xl:text-[40px] leading-none mb-0">বং বাড়ি</h1>
-                <p className="text-[10px] lg:text-base xl:text-lg font-bold text-gray-800 leading-none whitespace-nowrap mb-0 group-hover:text-brand-blue transition-colors duration-300">Every Home's Story</p>
-                <p className="text-[8px] lg:text-sm xl:text-base text-gray-600 bangla-text font-semibold leading-none whitespace-nowrap group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
+                <h1 className="font-bold text-brand-yellow bangla-text whitespace-nowrap text-[18px] lg:text-[32px] xl:text-[40px] leading-none mb-0">বং বাড়ি</h1>
+                <p className="text-[10px] lg:text-base xl:text-lg font-bold text-white leading-none whitespace-nowrap mb-0 group-hover:text-brand-yellow transition-colors duration-300">Every Home's Story</p>
+                <p className="text-[8px] lg:text-sm xl:text-base text-blue-100 bangla-text font-semibold leading-none whitespace-nowrap group-hover:text-brand-yellow transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
               </div>
             </div>
           </Link>
@@ -96,10 +96,10 @@ const Navigation = () => {
                 <div key={item.href} className="relative flex items-center">
                   <Link
                     href={item.href}
-                    className={`font-semibold text-sm lg:text-lg xl:text-xl transition-all duration-300 hover:text-brand-blue hover:scale-105 ${
+                    className={`font-semibold text-sm lg:text-lg xl:text-xl transition-all duration-300 hover:text-brand-yellow hover:scale-105 ${
                       isActive(item.href) 
-                        ? "text-brand-blue border-b border-brand-blue" 
-                        : "text-green-600 hover:text-green-700 hover:border-b hover:border-green-600"
+                        ? "text-brand-yellow border-b-2 border-brand-yellow" 
+                        : "text-green-300 hover:text-green-200 hover:border-b-2 hover:border-green-200"
                     }`}
                     data-testid={`nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                   >
@@ -135,10 +135,10 @@ const Navigation = () => {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`font-semibold text-xs lg:text-base xl:text-lg transition-all duration-200 hover:text-brand-blue hover:scale-105 ${
+                  className={`font-semibold text-xs lg:text-base xl:text-lg transition-all duration-200 hover:text-brand-yellow hover:scale-105 ${
                     isActive(item.href) 
-                      ? "text-brand-blue border-b border-brand-blue" 
-                      : "text-gray-700 hover:border-b hover:border-brand-blue"
+                      ? "text-brand-yellow border-b-2 border-brand-yellow" 
+                      : "text-white hover:border-b-2 hover:border-brand-yellow"
                   }`}
                   data-testid={`nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                 >
@@ -155,11 +155,11 @@ const Navigation = () => {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden p-2 hover:bg-gray-100 transition-colors rounded-lg flex-shrink-0"
+            className="md:hidden p-2 hover:bg-white/10 transition-colors rounded-lg flex-shrink-0"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             data-testid="mobile-menu-toggle"
           >
-            {isMobileMenuOpen ? <X className="h-8 w-8 text-gray-800" /> : <Menu className="h-8 w-8 text-gray-800" />}
+            {isMobileMenuOpen ? <X className="h-8 w-8 text-white" /> : <Menu className="h-8 w-8 text-white" />}
           </Button>
           </div>
         </div>
@@ -182,7 +182,7 @@ const Navigation = () => {
       
       {/* Mobile Navigation - Maximum Visibility */}
         {isMobileMenuOpen && (
-          <div className="md:hidden pb-4 border-t border-gray-200 mt-4 bg-white shadow-lg" data-testid="mobile-menu">
+          <div className="md:hidden pb-4 bg-gradient-to-r from-brand-blue to-blue-600 shadow-lg" data-testid="mobile-menu">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isLoginItem = item.href === "/admin";
@@ -192,12 +192,12 @@ const Navigation = () => {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`block py-5 px-4 font-bold text-xl transition-all duration-200 hover:text-brand-blue hover:bg-gray-50 rounded-lg mx-3 my-2 ${
+                  className={`block py-5 px-4 font-bold text-xl transition-all duration-200 hover:bg-white/10 rounded-lg mx-3 my-2 ${
                     isActive(item.href) 
-                      ? "text-brand-blue bg-blue-50 border-l-4 border-brand-blue" 
+                      ? "text-brand-yellow bg-white/20 border-l-4 border-brand-yellow" 
                       : isLoggedIn
-                        ? "text-green-600 bg-green-50"
-                        : "text-gray-800"
+                        ? "text-green-300 bg-green-900/20"
+                        : "text-white hover:text-brand-yellow"
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                   data-testid={`mobile-nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}

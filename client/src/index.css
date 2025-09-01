@@ -56,6 +56,11 @@
   --tracking-normal: 0em;
 }
 
+/* Animation Delay */
+.animation-delay-200 {
+  animation-delay: 200ms;
+}
+
 /* Mobile-First Responsive Utilities */
 @media (min-width: 475px) {
   .xs\:inline { display: inline; }

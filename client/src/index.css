@@ -195,19 +195,19 @@
   }
 
   body {
-    @apply font-sans antialiased bg-brand-yellow text-foreground;
+    @apply font-sans antialiased text-foreground;
     background: linear-gradient(135deg, 
-      hsl(48, 100%, 80%) 0%, 
-      hsl(48, 100%, 75%) 25%, 
-      hsl(48, 100%, 80%) 50%, 
-      hsl(48, 100%, 85%) 75%, 
-      hsl(48, 100%, 80%) 100%);
+      hsl(215, 88%, 47%) 0%, 
+      hsl(215, 88%, 52%) 25%, 
+      hsl(215, 88%, 47%) 50%, 
+      hsl(215, 88%, 42%) 75%, 
+      hsl(215, 88%, 47%) 100%);
     background-attachment: fixed;
     /* Smooth scrolling optimizations */
     scroll-behavior: smooth;
     overflow-x: hidden;
-    margin: 0;
-    padding: 0;
+    margin: 0 !important;
+    padding: 0 !important;
   }
   
   html {

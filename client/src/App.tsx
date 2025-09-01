@@ -103,7 +103,7 @@ function Router() {
   }, [isAuthenticated]);
   
   return (
-    <div className="min-h-screen bg-brand-yellow relative">
+    <div className="min-h-screen relative" style={{ backgroundColor: 'hsl(48, 100%, 80%)' }}>
       <FloatingElements />
       {/* Show MagicalCursor (belan) only for public audience, not for logged-in admin */}
       {!isAuthenticated && <MagicalCursor />}

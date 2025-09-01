@@ -167,9 +167,10 @@ const Home = () => {
         ogDescription="Hilarious Bengali mother-son comedy shorts from Kolkata"
       />
       
-      <ParallaxContainer>
-        <main className="relative z-10 bg-brand-yellow">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div style={{ backgroundColor: 'hsl(48, 100%, 80%)' }}>
+        <ParallaxContainer>
+          <main className="relative z-10" style={{ backgroundColor: 'hsl(48, 100%, 80%)' }}>
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             {/* Hero Video Section - Premium Layout */}
             <motion.div
               className="w-full max-w-5xl mx-auto mb-8 pt-8"
@@ -760,6 +761,7 @@ const Home = () => {
           </div>
         </footer>
       </ParallaxContainer>
+      </div>
       
     </>
   );

@@ -27,6 +27,11 @@ const MagicalCursor = () => {
   }, []);
 
   useEffect(() => {
+    // Clean up cursor elements when authenticated
+    if (isAuthenticated) {
+      const belanElements = document.querySelectorAll('.magical-belan-portal, .particle-container');
+      belanElements.forEach(el => el.remove());
+    }
     
     // Only inject styles if not authenticated (admin not logged in)
     if (!isAuthenticated) {

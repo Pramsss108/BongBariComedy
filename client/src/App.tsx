@@ -53,21 +53,50 @@ function Router() {
   
   // Apply professional cursor style when logged in - with immediate update
   useEffect(() => {
-    if (isAuthenticated) {
-      // Add class for professional arrow cursor for serious work
-      document.body.classList.add('admin-logged-in');
-      document.body.style.cursor = 'default';
-      // Force immediate cursor update
-      document.documentElement.style.cursor = 'default';
-      // Remove any belan cursor styles
-      const belanStyles = document.querySelectorAll('[data-belan-cursor]');
-      belanStyles.forEach(el => el.remove());
-    } else {
-      // Remove class to allow belan cursor for public audience
-      document.body.classList.remove('admin-logged-in');
-      document.body.style.cursor = '';
-      document.documentElement.style.cursor = '';
-    }
+    const updateCursor = () => {
+      if (isAuthenticated) {
+        // Add class for professional arrow cursor for serious work
+        document.body.classList.add('admin-logged-in');
+        document.body.style.cursor = 'default !important';
+        document.documentElement.style.cursor = 'default !important';
+        
+        // Remove any belan cursor elements immediately
+        const belanElements = document.querySelectorAll('.magical-belan-portal, .particle-container, .global-cursor-follower');
+        belanElements.forEach(el => {
+          el.remove();
+        });
+        
+        // Apply professional cursor to all elements
+        const style = document.createElement('style');
+        style.id = 'admin-cursor-override';
+        style.textContent = `
+          * {
+            cursor: default !important;
+          }
+          button, a, [role="button"] {
+            cursor: pointer !important;
+          }
+          input, textarea, [contenteditable] {
+            cursor: text !important;
+          }
+        `;
+        document.head.appendChild(style);
+      } else {
+        // Remove class to allow belan cursor for public audience
+        document.body.classList.remove('admin-logged-in');
+        document.body.style.cursor = '';
+        document.documentElement.style.cursor = '';
+        
+        // Remove admin cursor override
+        const overrideStyle = document.getElementById('admin-cursor-override');
+        if (overrideStyle) {
+          overrideStyle.remove();
+        }
+      }
+    };
+    
+    // Apply immediately
+    updateCursor();
     
     // Force re-render of cursor elements
     window.dispatchEvent(new Event('auth-state-changed'));
@@ -76,6 +105,10 @@ function Router() {
       // Cleanup on unmount
       document.body.style.cursor = '';
       document.documentElement.style.cursor = '';
+      const overrideStyle = document.getElementById('admin-cursor-override');
+      if (overrideStyle) {
+        overrideStyle.remove();
+      }
     };
   }, [isAuthenticated]);
   

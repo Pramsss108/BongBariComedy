@@ -162,7 +162,7 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
       const newY = position.y + (e.clientY - dragStart.y);
       
       // Keep in bounds
-      const maxX = window.innerWidth - 400;
+      const maxX = window.innerWidth - 380;
       const maxY = window.innerHeight - (isMinimized ? 60 : 500);
       
       const boundedX = Math.max(0, Math.min(newX, maxX));
@@ -226,8 +226,8 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
       style={{
         left: position.x + 'px',
         top: Math.max(20, position.y) + 'px', // Ensure minimum 20px from top
-        width: '400px',
-        height: isMinimized ? '60px' : '450px',
+        width: '380px',
+        height: isMinimized ? '48px' : '420px',
         padding: '0px'
       }}
       initial={{ opacity: 0, scale: 0.8, y: 50 }}
@@ -237,7 +237,7 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
       {/* GLASS MORPHISM CONTAINER */}
       <div className="w-full h-full bg-gradient-to-br from-white/15 via-white/10 to-white/5 backdrop-blur-xl rounded-2xl border border-white/30 shadow-2xl overflow-visible" style={{ marginTop: '0px', paddingTop: '10px' }}>
         
-        {/* REDESIGNED CLEAN HEADER */}
+        {/* COMPACT PROFESSIONAL HEADER */}
         <motion.div
           ref={headerRef}
           onMouseDown={handleMouseDown}
@@ -245,44 +245,44 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
           style={{ 
             userSelect: 'none', 
             marginTop: '-10px',
-            height: '60px',
-            paddingLeft: '16px',
-            paddingRight: '12px'
+            height: '48px',
+            paddingLeft: '12px',
+            paddingRight: '10px'
           }}
         >
-          {/* LEFT SIDE - PROFILE & TEXT */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-[#FFCC00] to-[#FF4D4D] rounded-full flex items-center justify-center shadow-md">
-              <Bot size={20} className="text-white" />
+          {/* LEFT SIDE - COMPACT PROFILE & TEXT */}
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-[#FFCC00] to-[#FF4D4D] rounded-full flex items-center justify-center shadow-md">
+              <Bot size={16} className="text-white" />
             </div>
-            <div className="flex flex-col">
-              <span className="text-white font-semibold text-base leading-5">Bong Bot</span>
-              <div className="flex items-center gap-1 mt-0.5">
-                <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                <span className="text-white/80 text-xs">ami sob somoy online</span>
+            <div className="flex flex-col justify-center">
+              <span className="text-white font-semibold text-sm leading-tight">Bong Bot</span>
+              <div className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
+                <span className="text-white/80 text-[10px] leading-tight">ami sob somoy online</span>
               </div>
             </div>
           </div>
           
-          {/* RIGHT SIDE - ACTION BUTTONS */}
-          <div className="flex items-center gap-1.5">
+          {/* RIGHT SIDE - COMPACT ACTION BUTTONS */}
+          <div className="flex items-center gap-1">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setIsMinimized(!isMinimized);
               }}
-              className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+              className="w-7 h-7 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
             >
-              <Minimize2 size={16} className="text-white/80" />
+              <Minimize2 size={14} className="text-white/80" />
             </button>
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setIsOpen(false);
               }}
-              className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+              className="w-7 h-7 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
             >
-              <X size={16} className="text-white/80" />
+              <X size={14} className="text-white/80" />
             </button>
           </div>
         </motion.div>
@@ -293,29 +293,29 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
             <motion.div 
               className="flex flex-col h-full"
               initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'calc(100% - 64px)' }}
+              animate={{ opacity: 1, height: 'calc(100% - 52px)' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
             >
               {/* SCROLLABLE MESSAGES AREA */}
-              <div className="flex-1 overflow-y-auto p-3 space-y-3 hide-scrollbar">
+              <div className="flex-1 overflow-y-auto p-2 space-y-2 hide-scrollbar">
                 {messages.map((msg) => (
                   <motion.div
                     key={msg.id}
-                    initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                     className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div 
-                      className={`max-w-[95%] px-3 py-2 rounded-xl text-sm shadow-lg backdrop-blur-sm border ${
+                      className={`max-w-[90%] px-2.5 py-1.5 rounded-xl text-xs shadow-md backdrop-blur-sm border ${
                         msg.sender === 'user' 
-                          ? 'bg-gradient-to-r from-[#1363DF]/80 to-[#FF4D4D]/80 text-white border-white/20 ml-2' 
-                          : 'bg-white/90 text-gray-800 border-white/30 mr-2'
+                          ? 'bg-gradient-to-r from-[#1363DF]/80 to-[#FF4D4D]/80 text-white border-white/20' 
+                          : 'bg-white/90 text-gray-800 border-white/30'
                       }`}
                     >
-                      <p className="leading-relaxed break-words whitespace-pre-wrap overflow-wrap">{msg.text}</p>
-                      <span className={`text-[10px] opacity-70 block mt-1 ${msg.sender === 'user' ? 'text-white/80' : 'text-gray-500'}`}>
+                      <p className="leading-relaxed break-words">{msg.text}</p>
+                      <span className={`text-[9px] opacity-60 block mt-0.5 ${msg.sender === 'user' ? 'text-white/70' : 'text-gray-500'}`}>
                         {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>

@@ -45,15 +45,8 @@ const Navigation = () => {
 
   return (
     <nav className="sticky top-0 z-50" data-testid="main-navigation">
-      {/* Offer Banner */}
-      <div className="bg-brand-yellow text-center py-1 px-2 border-b border-yellow-400">
-        <p className="text-xs sm:text-sm font-semibold text-brand-blue animate-pulse">
-          🎬 New Comedy Every Week! | নতুন কমেডি প্রতি সপ্তাহে! 🎭
-        </p>
-      </div>
-      
       {/* Main Navigation */}
-      <div className="bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-200">
+      <div className="bg-white/95 backdrop-blur-md shadow-sm">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-10 lg:h-12">
           {/* Logo - Optimized Layout */}
@@ -170,8 +163,24 @@ const Navigation = () => {
           </Button>
           </div>
         </div>
-        
-        {/* Mobile Navigation - Maximum Visibility */}
+      </div>
+      
+      {/* Promotional Banner - Below Navigation */}
+      <div className="bg-gradient-to-r from-brand-yellow via-yellow-300 to-brand-yellow shadow-md">
+        <div className="container mx-auto px-4 py-2">
+          <div className="flex items-center justify-center space-x-2">
+            <span className="text-2xl animate-bounce">🎬</span>
+            <p className="text-sm sm:text-base font-bold text-brand-blue">
+              New Comedy Every Week! 
+              <span className="text-brand-red mx-2">|</span>
+              <span className="bangla-text">নতুন কমেডি প্রতি সপ্তাহে!</span>
+            </p>
+            <span className="text-2xl animate-bounce animation-delay-200">🎭</span>
+          </div>
+        </div>
+      </div>
+      
+      {/* Mobile Navigation - Maximum Visibility */}
         {isMobileMenuOpen && (
           <div className="md:hidden pb-4 border-t border-gray-200 mt-4 bg-white shadow-lg" data-testid="mobile-menu">
             {navItems.map((item) => {
@@ -203,7 +212,6 @@ const Navigation = () => {
             })}
           </div>
         )}
-      </div>
     </nav>
   );
 };

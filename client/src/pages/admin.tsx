@@ -412,13 +412,9 @@ const Admin = () => {
             </div>
             
             <Tabs defaultValue="requests" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="requests">Collaboration Requests</TabsTrigger>
                 <TabsTrigger value="blog">Blog Management</TabsTrigger>
-                <TabsTrigger value="homepage">
-                  <Home className="w-4 h-4 mr-2" />
-                  Homepage Manager
-                </TabsTrigger>
                 <TabsTrigger value="chatbot">
                   <Bot className="w-4 h-4 mr-2" />
                   Chatbot Training
@@ -590,10 +586,6 @@ const Admin = () => {
                     </CardContent>
                   </Card>
                 )}
-              </TabsContent>
-
-              <TabsContent value="homepage" className="mt-8">
-                <SimpleBannerManager />
               </TabsContent>
 
               <TabsContent value="chatbot" className="mt-8">

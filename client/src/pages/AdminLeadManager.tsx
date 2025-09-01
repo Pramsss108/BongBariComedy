@@ -52,12 +52,14 @@ export const AdminLeadManager = ({ sessionId }: AdminLeadManagerProps) => {
   const { toast } = useToast();
 
   // Build query parameters for filtering
-  const queryParams: any = {};
-  if (statusFilter !== 'all') queryParams.leadStatus = statusFilter;
-  if (openedFilter !== 'all') queryParams.opened = openedFilter;
+  const queryParams = new URLSearchParams();
+  if (statusFilter !== 'all') queryParams.append('leadStatus', statusFilter);
+  if (openedFilter !== 'all') queryParams.append('opened', openedFilter);
+  const queryString = queryParams.toString();
+  const apiUrl = queryString ? `/api/collaboration-requests?${queryString}` : '/api/collaboration-requests';
 
   const { data: collaborationRequests, isLoading: requestsLoading } = useQuery<CollaborationRequest[]>({
-    queryKey: ['/api/collaboration-requests', queryParams],
+    queryKey: [apiUrl],
     refetchInterval: 30 * 1000,
     refetchOnMount: true,
     refetchOnWindowFocus: true,

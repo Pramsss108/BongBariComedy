@@ -32,7 +32,12 @@ export const getQueryFn: <T>(options: {
       headers.Authorization = `Bearer ${sessionId}`;
     }
     
-    const res = await fetch(queryKey.join("/") as string, {
+    // Handle queryKey properly - if it's an array with one string, use that
+    const url = Array.isArray(queryKey) && queryKey.length === 1 && typeof queryKey[0] === 'string' 
+      ? queryKey[0] 
+      : queryKey.join("/") as string;
+    
+    const res = await fetch(url, {
       credentials: "include",
       headers,
     });

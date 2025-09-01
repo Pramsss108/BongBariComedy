@@ -4,7 +4,7 @@ import SEOHead from "@/components/seo-head";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ParallaxSection, ParallaxContainer } from "@/components/parallax-section";
-import { FileText, Send, CheckCircle2 } from "lucide-react";
+import { FileText, Send, CheckCircle2, Phone } from "lucide-react";
 import { useFunnySubmissionSound } from "@/hooks/useFunnySubmissionSound";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,23 +19,37 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 const collaborationFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address").optional().or(z.literal("")),
-  phone: z.string().optional(),
+  email: z.string()
+    .refine((val) => !val || val.includes('@'), "Email must contain @ symbol")
+    .optional()
+    .or(z.literal("")),
+  countryCode: z.string().min(1, "Country code is required"),
+  phoneNumber: z.string().optional(),
   company: z.string().min(2, "Company name is required"),
   message: z.string().optional(),
 }).refine((data) => {
   // At least one contact method must be provided
-  return data.email || data.phone;
+  return data.email || (data.phoneNumber && data.countryCode);
 }, {
   message: "Please provide either an email address or phone number",
   path: ["email"]
-});
+}).transform((data) => ({
+  ...data,
+  phone: data.phoneNumber ? `${data.countryCode} ${data.phoneNumber}` : undefined
+}));
 
 type CollaborationFormData = z.infer<typeof collaborationFormSchema>;
 
@@ -60,22 +74,39 @@ const WorkWithUs = () => {
     }
   ];
 
-  const form = useForm<CollaborationFormData>({
+  const form = useForm<any>({
     resolver: zodResolver(collaborationFormSchema),
     defaultValues: {
       name: "",
       email: "",
-      phone: "",
+      countryCode: "+91",
+      phoneNumber: "",
       company: "",
       message: "",
     },
   });
 
+  const countryCodes = [
+    { value: "+91", label: "🇮🇳 +91 (India)" },
+    { value: "+880", label: "🇧🇩 +880 (Bangladesh)" },
+    { value: "+1", label: "🇺🇸 +1 (USA/Canada)" },
+    { value: "+44", label: "🇬🇧 +44 (UK)" },
+    { value: "+971", label: "🇦🇪 +971 (UAE)" },
+    { value: "+61", label: "🇦🇺 +61 (Australia)" },
+    { value: "+65", label: "🇸🇬 +65 (Singapore)" },
+    { value: "+49", label: "🇩🇪 +49 (Germany)" },
+    { value: "+33", label: "🇫🇷 +33 (France)" },
+    { value: "+86", label: "🇨🇳 +86 (China)" },
+  ];
+
   const submitCollaborationMutation = useMutation({
-    mutationFn: async (data: CollaborationFormData) => {
+    mutationFn: async (data: any) => {
       const response = await apiRequest("/api/collaboration-requests", {
         method: "POST",
         body: JSON.stringify(data),
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
       return response;
     },
@@ -103,7 +134,7 @@ const WorkWithUs = () => {
     },
   });
 
-  const onSubmit = (data: CollaborationFormData) => {
+  const onSubmit = (data: any) => {
     submitCollaborationMutation.mutate(data);
   };
 
@@ -267,24 +298,53 @@ const WorkWithUs = () => {
                             )}
                           />
                           
-                          <FormField
-                            control={form.control}
-                            name="phone"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Phone Number</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    placeholder="+91 98765 43210" 
-                                    {...field}
-                                    data-testid="input-phone"
-                                    className="border-gray-300 focus:border-brand-blue"
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                          <FormItem>
+                            <FormLabel>Phone Number</FormLabel>
+                            <div className="flex gap-2">
+                              <FormField
+                                control={form.control}
+                                name="countryCode"
+                                render={({ field }) => (
+                                  <FormItem className="w-[180px]">
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                      <FormControl>
+                                        <SelectTrigger className="border-gray-300 focus:border-brand-blue">
+                                          <SelectValue placeholder="Code" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        {countryCodes.map((code) => (
+                                          <SelectItem key={code.value} value={code.value}>
+                                            {code.label}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name="phoneNumber"
+                                render={({ field }) => (
+                                  <FormItem className="flex-1">
+                                    <FormControl>
+                                      <div className="relative">
+                                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                                        <Input 
+                                          placeholder="98765 43210" 
+                                          {...field}
+                                          data-testid="input-phone"
+                                          className="border-gray-300 focus:border-brand-blue pl-10"
+                                        />
+                                      </div>
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          </FormItem>
                         </div>
                         
                         <FormField

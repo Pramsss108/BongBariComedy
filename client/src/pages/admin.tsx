@@ -204,6 +204,15 @@ const Admin = () => {
                 </p>
               </div>
               <div className="flex gap-2">
+                <Button
+                  onClick={handleLogout}
+                  variant="outline"
+                  className="border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700"
+                  data-testid="button-logout"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
                 <Dialog open={isCreateBlogOpen} onOpenChange={setIsCreateBlogOpen}>
                   <DialogTrigger asChild>
                     <Button

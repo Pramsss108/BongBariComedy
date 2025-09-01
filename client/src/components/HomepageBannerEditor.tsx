@@ -17,10 +17,9 @@ interface BannerData {
 interface HomepageBannerEditorProps {
   currentBanner: BannerData | null;
   onClose: () => void;
-  timeRemaining: number;
 }
 
-export function HomepageBannerEditor({ currentBanner, onClose, timeRemaining }: HomepageBannerEditorProps) {
+export function HomepageBannerEditor({ currentBanner, onClose }: HomepageBannerEditorProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -98,11 +97,6 @@ export function HomepageBannerEditor({ currentBanner, onClose, timeRemaining }: 
     saveBannerMutation.mutate(data);
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -117,14 +111,6 @@ export function HomepageBannerEditor({ currentBanner, onClose, timeRemaining }: 
             </div>
             
             <div className="flex items-center gap-4">
-              {/* Session Timer */}
-              <div className="flex items-center gap-2 bg-red-100 px-3 py-2 rounded-lg">
-                <Clock className="h-4 w-4 text-red-600" />
-                <span className="text-sm font-medium text-red-600">
-                  {formatTime(timeRemaining)} remaining
-                </span>
-              </div>
-              
               <Button 
                 variant="outline" 
                 size="sm" 

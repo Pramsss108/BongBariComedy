@@ -44,7 +44,6 @@ const Home = () => {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [showCursor, setShowCursor] = useState(true);
   const [showBannerEditor, setShowBannerEditor] = useState(false);
-  const [sessionTimeRemaining, setSessionTimeRemaining] = useState(300); // 5 minutes
   const [isAdminMode, setIsAdminMode] = useState(false);
   
   // Check admin status
@@ -53,23 +52,10 @@ const Home = () => {
     retry: false,
   });
 
-  // Auto-logout timer for homepage editing
+  // Show admin edit button when logged in on homepage
   useEffect(() => {
     if (authUser && !window.location.pathname.includes('/admin')) {
       setIsAdminMode(true);
-      const timer = setInterval(() => {
-        setSessionTimeRemaining(prev => {
-          if (prev <= 1) {
-            // Auto logout
-            setIsAdminMode(false);
-            setShowBannerEditor(false);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(timer);
     } else {
       setIsAdminMode(false);
     }
@@ -828,7 +814,6 @@ const Home = () => {
         <HomepageBannerEditor
           currentBanner={bannerData || null}
           onClose={() => setShowBannerEditor(false)}
-          timeRemaining={sessionTimeRemaining}
         />
       )}
     </>

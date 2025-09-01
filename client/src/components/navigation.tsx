@@ -54,7 +54,7 @@ const Navigation = () => {
                 <img 
                   src="/logo.png" 
                   alt="Bong Bari Logo" 
-                  className="w-6 h-6 sm:w-7 sm:h-7 md:w-9 md:h-9 lg:w-12 lg:h-12 xl:w-14 xl:h-14 rounded-lg transition-all duration-300 hover:scale-110 hover:rotate-6 hover:shadow-xl"
+                  className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 xl:w-11 xl:h-11 rounded-lg transition-all duration-300 hover:scale-110 hover:rotate-6 hover:shadow-xl"
                 />
                 {/* Animated Emojis on Hover - DESKTOP ONLY */}
                 <div className="absolute inset-0 pointer-events-none hidden lg:block">
@@ -74,17 +74,17 @@ const Navigation = () => {
                   <p className="text-[8px] text-gray-600 bangla-text font-medium leading-none group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
                 </div>
               </div>
-              {/* Desktop Logo - Original Sizes with Compact Height */}
-              <div className="hidden md:flex flex-col justify-center pl-3 min-w-[280px]">
-                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[18px] lg:text-[32px] xl:text-[40px] leading-none mb-0">বং বাড়ি</h1>
-                <p className="text-[10px] lg:text-base xl:text-lg font-bold text-gray-800 leading-none whitespace-nowrap mb-0 group-hover:text-brand-blue transition-colors duration-300">Every Home's Story</p>
-                <p className="text-[8px] lg:text-sm xl:text-base text-gray-600 bangla-text font-semibold leading-none whitespace-nowrap group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
+              {/* Desktop Logo - Ultra Slim */}
+              <div className="hidden md:flex flex-col justify-center pl-2 min-w-[200px]">
+                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[16px] lg:text-[20px] xl:text-[24px] leading-tight mb-0">বং বাড়ি</h1>
+                <p className="text-[9px] lg:text-[10px] xl:text-xs font-semibold text-gray-700 leading-tight whitespace-nowrap group-hover:text-brand-blue transition-colors duration-300">Every Home's Story</p>
+                <p className="text-[8px] lg:text-[9px] xl:text-[10px] text-gray-600 bangla-text font-medium leading-tight whitespace-nowrap group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
               </div>
             </div>
           </Link>
           
-          {/* Desktop Navigation - Premium Layout */}
-          <div className="hidden md:flex items-center space-x-4 lg:space-x-8 xl:space-x-10">
+          {/* Desktop Navigation - Ultra Slim Layout */}
+          <div className="hidden md:flex items-center space-x-2 lg:space-x-4 xl:space-x-6">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isLoginItem = item.href === "/admin";
@@ -94,22 +94,22 @@ const Navigation = () => {
                 <div key={item.href} className="relative flex items-center">
                   <Link
                     href={item.href}
-                    className={`font-semibold text-sm lg:text-lg xl:text-xl transition-all duration-300 hover:text-brand-blue hover:scale-105 ${
+                    className={`font-medium text-[11px] lg:text-xs xl:text-sm transition-all duration-300 hover:text-brand-blue ${
                       isActive(item.href) 
-                        ? "text-brand-blue border-b-3 border-brand-blue pb-2 shadow-sm" 
-                        : "text-green-600 hover:text-green-700 hover:border-b-2 hover:border-green-600 pb-2"
+                        ? "text-brand-blue border-b border-brand-blue" 
+                        : "text-green-600 hover:text-green-700 hover:border-b hover:border-green-600"
                     }`}
                     data-testid={`nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                   >
                     <span className="flex items-center gap-1">
-                      {Icon && <Icon className="w-4 h-4 lg:w-5 lg:h-5" />}
+                      {Icon && <Icon className="w-3 h-3 lg:w-3.5 lg:h-3.5" />}
                       {item.label}
                     </span>
                   </Link>
                   <Popover open={logoutPopoverOpen} onOpenChange={setLogoutPopoverOpen}>
                     <PopoverTrigger asChild>
                       <button 
-                        className="ml-3 px-3 py-1 bg-green-100 text-green-700 text-sm font-medium rounded-full cursor-pointer hover:bg-green-200 transition-all duration-300 hover:scale-105 shadow-sm"
+                        className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-medium rounded-full cursor-pointer hover:bg-green-200 transition-all duration-300 hover:scale-105 shadow-sm"
                         data-testid="logged-in-badge"
                       >
                         ● Logged In
@@ -133,15 +133,15 @@ const Navigation = () => {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`font-semibold text-xs lg:text-base xl:text-lg transition-all duration-200 hover:text-brand-blue hover:scale-105 hover:font-bold ${
+                  className={`font-medium text-[11px] lg:text-xs xl:text-sm transition-all duration-200 hover:text-brand-blue ${
                     isActive(item.href) 
-                      ? "text-brand-blue border-b-2 border-brand-blue pb-1" 
-                      : "text-gray-700 hover:border-b-2 hover:border-brand-blue pb-1"
+                      ? "text-brand-blue border-b border-brand-blue" 
+                      : "text-gray-700 hover:border-b hover:border-brand-blue"
                   }`}
                   data-testid={`nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                 >
                   <span className="flex items-center gap-1">
-                    {Icon && <Icon className="w-4 h-4 lg:w-5 lg:h-5" />}
+                    {Icon && <Icon className="w-3 h-3 lg:w-3.5 lg:h-3.5" />}
                     {item.label}
                   </span>
                 </Link>

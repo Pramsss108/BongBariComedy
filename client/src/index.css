@@ -16,14 +16,34 @@ html, body {
   position: relative;
 }
 
+body, header, .promo-banner {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
 body {
   margin-top: 0 !important;
   padding-top: 0 !important;
 }
 
 #root {
-  margin: 0;
-  padding: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* Ensure header touches top and banner touches header */
+header {
+  margin: 0 !important;
+  padding: 0 !important;
+  top: 0 !important;
+}
+
+.promo-banner {
+  margin: 0 !important;
+  padding: 0 !important;
+  top: 60px !important;
 }
 
 :root {

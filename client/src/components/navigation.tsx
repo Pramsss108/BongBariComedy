@@ -43,9 +43,9 @@ const Navigation = () => {
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 w-full bg-transparent m-0 p-0" style={{ top: '0px' }} data-testid="main-navigation">
+    <div className="fixed top-0 left-0 right-0 z-50 w-full bg-transparent" style={{ top: '0px', margin: '0', padding: '0' }} data-testid="main-navigation">
       {/* Main Header - #0D47FF Background, 60px Height */}
-      <header style={{ backgroundColor: '#0D47FF', height: '60px', marginTop: '0', paddingTop: '0' }} className="shadow-lg">
+      <header style={{ backgroundColor: '#0D47FF', height: '60px', margin: '0', padding: '0', top: '0' }} className="shadow-lg">
         <div className="max-w-7xl mx-auto px-4 h-full">
           <div className="flex justify-between items-center h-full">
             
@@ -197,7 +197,7 @@ const Navigation = () => {
           margin: '0',
           padding: '0'
         }} 
-        className="overflow-hidden flex items-center w-full z-40"
+        className="promo-banner overflow-hidden flex items-center w-full z-40"
       >
         <span className="animate-scroll text-black font-bold text-sm whitespace-nowrap">
           🔥 Special Offer: Flat 50% off on your first Bong Bari subscription 🔔 Stay tuned for updates • 

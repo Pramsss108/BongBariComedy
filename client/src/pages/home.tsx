@@ -168,31 +168,32 @@ const Home = () => {
       />
       
       <ParallaxContainer>
-        <main className="relative z-10 bg-brand-yellow">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            {/* Welcome Section - Larger & More Welcoming */}
+        <main className="relative z-10 bg-brand-yellow min-h-screen">
+          <div className="container mx-auto px-3 sm:px-4 lg:px-6">
+            {/* Welcome Section - Optimized for All Screens */}
             <motion.div
-              className="text-center pt-16 pb-8 mb-8"
+              className="text-center pt-4 sm:pt-6 lg:pt-8 pb-2 sm:pb-3 lg:pb-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-gray-900 mb-4 leading-tight">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-2 sm:mb-3 leading-tight">
                 Welcome to <span className="text-brand-blue">Bong Bari</span>
               </h1>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-800 bangla-text mb-6 leading-tight">
+              <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800 bangla-text leading-tight">
                 <span className="text-brand-red">বং বাড়িতে</span> স্বাগতম
               </h2>
             </motion.div>
 
-            {/* Hero Video Section - Full Visibility with Spacing */}
+            {/* Hero Video Section - Responsive Sizing */}
             <motion.div
-              className="w-full max-w-6xl mx-auto mb-12"
+              className="w-full max-w-3xl lg:max-w-4xl mx-auto mb-3 sm:mb-4 lg:mb-6"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6, delay: 0.4 }}
+              style={{ maxHeight: '50vh' }}
             >
-              <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-gray-900 to-gray-800">
+              <div className="relative w-full aspect-video rounded-lg sm:rounded-xl lg:rounded-2xl overflow-hidden shadow-lg lg:shadow-2xl bg-gradient-to-br from-gray-900 to-gray-800">
                 <iframe
                   src="https://www.youtube.com/embed/pdjQpcVqxMU?rel=0&modestbranding=1&showinfo=0&autoplay=0"
                   title="বং বাড়ি - Barir Mashla | Our Story | Bengali Comedy Channel"
@@ -203,17 +204,17 @@ const Home = () => {
               </div>
             </motion.div>
 
-            {/* Experience Section - Below Video with Better Spacing */}
+            {/* Experience Section - Compact & Responsive */}
             <motion.div
-              className="text-center mb-16"
+              className="text-center mb-6 sm:mb-8 lg:mb-10"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.7 }}
             >
-              <p className="text-xl sm:text-2xl text-gray-700 max-w-4xl mx-auto leading-relaxed font-medium">
+              <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed font-medium px-2">
                 Experience authentic Bengali family comedy that feels like home
               </p>
-              <p className="text-xl sm:text-2xl text-gray-700 bangla-text max-w-4xl mx-auto leading-relaxed mt-3 font-medium">
+              <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-700 bangla-text max-w-3xl mx-auto leading-relaxed mt-1 sm:mt-2 font-medium px-2">
                 ঘরোয়া পরিবেশের মজার গল্প যা আপনার নিজের বাড়ির মতোই লাগবে
               </p>
             </motion.div>

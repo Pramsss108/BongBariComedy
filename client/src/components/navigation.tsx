@@ -39,36 +39,21 @@ const Navigation = () => {
 
   return (
     <>
-      {/* Slim Fixed Header - Flaticon Style */}
-      <header 
-        style={{ 
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '60px',
-          background: '#0D47FF',
-          color: '#fff',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '0 20px',
-          zIndex: 1000
-        }}
-      >
-        {/* Logo + Text Section */}
+      {/* Slim Fixed Header - Fully Responsive */}
+      <header className="fixed top-0 left-0 w-full h-[60px] bg-[#0D47FF] text-white flex justify-between items-center px-3 sm:px-4 md:px-6 lg:px-8 z-[1000]">
+        {/* Logo + Text Section - Responsive */}
         <Link href="/">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+          <div className="flex items-center gap-2 sm:gap-3 cursor-pointer">
             <img 
               src="/logo.png" 
               alt="Bong Bari Logo"
-              style={{ height: '40px', width: '40px' }}
+              className="h-8 w-8 sm:h-10 sm:w-10 object-contain"
             />
-            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
-              <span style={{ fontSize: '16px', fontWeight: 'bold' }} className="bangla-text">
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm sm:text-base font-bold bangla-text">
                 বং বাড়ি
               </span>
-              <span style={{ fontSize: '11px', opacity: 0.9 }}>
+              <span className="text-[10px] sm:text-xs opacity-90 hidden sm:block">
                 Every Home's Story | <span className="bangla-text">প্রতিটা বাড়ির গল্প</span>
               </span>
             </div>
@@ -76,24 +61,15 @@ const Navigation = () => {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:block">
-          <ul style={{ listStyle: 'none', display: 'flex', gap: '20px', alignItems: 'center', margin: 0, padding: 0 }}>
+        <nav className="hidden lg:block">
+          <ul className="flex gap-4 xl:gap-6 items-center m-0 p-0 list-none">
             {navItems.map((item) => (
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  style={{
-                    textDecoration: 'none',
-                    color: isActive(item.href) ? '#FFD200' : '#fff',
-                    fontSize: '14px',
-                    transition: 'color 0.3s ease',
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = '#FFD200'}
-                  onMouseLeave={(e) => {
-                    if (!isActive(item.href)) {
-                      e.currentTarget.style.color = '#fff';
-                    }
-                  }}
+                  className={`text-sm font-medium transition-colors hover:text-[#FFD200] ${
+                    isActive(item.href) ? 'text-[#FFD200]' : 'text-white'
+                  }`}
                 >
                   {item.label}
                 </Link>
@@ -101,38 +77,17 @@ const Navigation = () => {
             ))}
             <li>
               {user ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div className="flex items-center gap-3">
                   <Link
                     href="/admin"
-                    style={{
-                      textDecoration: 'none',
-                      color: '#fff',
-                      fontSize: '14px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                      transition: 'color 0.3s ease',
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = '#FFD200'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = '#fff'}
+                    className="text-sm font-medium text-white hover:text-[#FFD200] transition-colors flex items-center gap-1"
                   >
                     <User size={14} />
                     Admin Panel
                   </Link>
                   <Popover open={logoutPopoverOpen} onOpenChange={setLogoutPopoverOpen}>
                     <PopoverTrigger asChild>
-                      <button 
-                        style={{
-                          padding: '4px 8px',
-                          background: '#22c55e',
-                          color: '#fff',
-                          fontSize: '11px',
-                          fontWeight: '500',
-                          borderRadius: '4px',
-                          border: 'none',
-                          cursor: 'pointer'
-                        }}
-                      >
+                      <button className="px-3 py-1 bg-green-500 text-white text-xs font-medium rounded hover:bg-green-600 transition-colors">
                         Logged In
                       </button>
                     </PopoverTrigger>
@@ -152,14 +107,7 @@ const Navigation = () => {
               ) : (
                 <Link
                   href="/admin"
-                  style={{
-                    textDecoration: 'none',
-                    color: '#fff',
-                    fontSize: '14px',
-                    transition: 'color 0.3s ease',
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = '#FFD200'}
-                  onMouseLeave={(e) => e.currentTarget.style.color = '#fff'}
+                  className="text-sm font-medium text-white hover:text-[#FFD200] transition-colors"
                 >
                   Login ➝
                 </Link>
@@ -168,116 +116,73 @@ const Navigation = () => {
           </ul>
         </nav>
 
-        {/* Mobile Hamburger */}
-        <div 
-          className="md:hidden"
-          style={{ fontSize: '24px', cursor: 'pointer', color: '#fff' }}
+        {/* Mobile/Tablet Hamburger */}
+        <button
+          className="lg:hidden text-2xl text-white"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label="Toggle menu"
         >
-          ☰
-        </div>
+          {isMobileMenuOpen ? '✕' : '☰'}
+        </button>
       </header>
 
-      {/* Mobile Menu Dropdown */}
-      {isMobileMenuOpen && (
-        <div 
-          className="md:hidden"
-          style={{
-            position: 'fixed',
-            top: '60px',
-            left: 0,
-            right: 0,
-            background: '#0D47FF',
-            borderTop: '1px solid rgba(255,255,255,0.1)',
-            zIndex: 999
-          }}
-        >
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              style={{
-                display: 'block',
-                padding: '12px 20px',
-                color: isActive(item.href) ? '#FFD200' : '#fff',
-                fontSize: '14px',
-                textDecoration: 'none',
-                borderBottom: '1px solid rgba(255,255,255,0.05)'
-              }}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {item.label}
-            </Link>
-          ))}
-          {user ? (
-            <Link
-              href="/admin"
-              style={{
-                display: 'block',
-                padding: '12px 20px',
-                color: '#fff',
-                fontSize: '14px',
-                textDecoration: 'none',
-                borderBottom: '1px solid rgba(255,255,255,0.05)'
-              }}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <User size={14} style={{ display: 'inline', marginRight: '5px' }} />
-              Admin Panel
-            </Link>
-          ) : (
-            <Link
-              href="/admin"
-              style={{
-                display: 'block',
-                padding: '12px 20px',
-                color: '#fff',
-                fontSize: '14px',
-                textDecoration: 'none'
-              }}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Login ➝
-            </Link>
-          )}
-        </div>
-      )}
-
-      {/* Promotional Banner with Scrolling Text */}
-      <div 
-        style={{
-          position: 'fixed',
-          top: '60px',
-          left: 0,
-          width: '100%',
-          height: '40px',
-          background: '#FF5733',
-          color: '#fff',
-          overflow: 'hidden',
-          whiteSpace: 'nowrap',
-          zIndex: 999,
-          display: 'flex',
-          alignItems: 'center'
-        }}
-      >
-        <div 
-          style={{
-            display: 'inline-block',
-            paddingLeft: '100%',
-            animation: 'scrollText 20s linear infinite',
-            fontSize: '14px',
-            fontWeight: 'bold'
-          }}
-        >
-          🔥 Special Offer: Flat 50% off on your first Bong Bari subscription 🔥 Stay tuned for updates 🔔 
-          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-          🎬 New Comedy Every Week! | নতুন কমেডি প্রতি সপ্তাহে! 🎭
-          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-          🔥 Special Offer: Flat 50% off on your first Bong Bari subscription 🔥 Stay tuned for updates 🔔
-          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        </div>
+      {/* Mobile/Tablet Menu Dropdown */}
+      <div className={`fixed top-[60px] left-0 right-0 bg-[#0D47FF] border-t border-white/10 z-[999] lg:hidden transform transition-transform duration-300 ${
+        isMobileMenuOpen ? 'translate-y-0' : '-translate-y-full'
+      }`}>
+        {navItems.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`block px-4 py-3 text-sm font-medium border-b border-white/5 transition-colors ${
+              isActive(item.href) ? 'bg-white/10 text-[#FFD200]' : 'text-white'
+            }`}
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            {item.label}
+          </Link>
+        ))}
+        {user ? (
+          <Link
+            href="/admin"
+            className="block px-4 py-3 text-sm font-medium text-white border-b border-white/5"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <User size={14} className="inline mr-2" />
+            Admin Panel
+          </Link>
+        ) : (
+          <Link
+            href="/admin"
+            className="block px-4 py-3 text-sm font-medium text-white"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            Login ➝
+          </Link>
+        )}
       </div>
 
+      {/* Promotional Banner with Responsive Text */}
+      <div className="fixed top-[60px] left-0 w-full h-[40px] bg-[#FF5733] text-white overflow-hidden z-[998] flex items-center">
+        <div 
+          className="inline-block whitespace-nowrap"
+          style={{
+            animation: 'scrollText 25s linear infinite',
+            paddingLeft: '100%'
+          }}
+        >
+          <span className="text-xs sm:text-sm font-bold px-2">
+            🔥 Special Offer: Flat 50% off on your first Bong Bari subscription 🔥 Stay tuned for updates 🔔 
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            🎬 New Comedy Every Week! | নতুন কমেডি প্রতি সপ্তাহে! 🎭
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            🔥 Special Offer: Flat 50% off on your first Bong Bari subscription 🔥 Stay tuned for updates 🔔
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            🎬 New Comedy Every Week! | নতুন কমেডি প্রতি সপ্তাহে! 🎭
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+          </span>
+        </div>
+      </div>
     </>
   );
 };

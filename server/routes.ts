@@ -6,6 +6,9 @@ import { insertBlogPostSchema, insertCollaborationRequestSchema, insertUserSchem
 import { z } from "zod";
 import { google } from "googleapis";
 import { ObjectStorageService } from "./objectStorage";
+import * as XLSX from 'xlsx';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 // Simple session middleware
 const sessions = new Map<string, { username: string; createdAt: Date }>();
@@ -390,26 +393,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Export leads (CSV format)
+  // Export leads (Multiple formats)
   app.get("/api/collaboration-requests/export", isAuthenticated, async (req, res) => {
     try {
-      const { leadStatus, ids } = req.query;
+      const { leadStatus, ids, format = 'csv' } = req.query;
       const filters: any = {};
       
-      if (leadStatus) filters.leadStatus = leadStatus;
-      if (ids) filters.ids = Array.isArray(ids) ? ids : [ids];
+      if (leadStatus) filters.leadStatus = leadStatus as string;
+      if (ids) filters.ids = Array.isArray(ids) ? ids as string[] : [ids as string];
       
       const requests = await storage.getCollaborationRequests(filters);
       
-      // Convert to CSV
-      const csvHeader = "ID,Name,Email,Phone,Company,Message,Status,Lead Status,Opened,Created At\n";
-      const csvRows = requests.map(r => 
-        `"${r.id}","${r.name}","${r.email || ''}","${r.phone || ''}","${r.company}","${r.message || ''}","${r.status}","${r.leadStatus}","${r.opened}","${r.createdAt}"`
-      ).join('\n');
+      // Format data for export
+      const exportData = requests.map(r => ({
+        ID: r.id,
+        Name: r.name,
+        Email: r.email || '',
+        Phone: r.phone || '',
+        Company: r.company,
+        Message: r.message || '',
+        Status: r.status,
+        'Lead Status': r.leadStatus || 'new',
+        Opened: r.opened ? 'Yes' : 'No',
+        'Created Date': r.createdAt ? new Date(r.createdAt).toLocaleString() : '',
+        'Opened Date': r.openedAt ? new Date(r.openedAt).toLocaleString() : '',
+        'Follow-up Notes': r.followUpNotes || ''
+      }));
       
-      res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', 'attachment; filename="collaboration-leads.csv"');
-      res.send(csvHeader + csvRows);
+      const formatString = String(format);
+      if (formatString === 'xlsx' || formatString === 'excel') {
+        // Excel export
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Leads');
+        
+        // Style the header row
+        const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+          const address = XLSX.utils.encode_col(C) + '1';
+          if (!worksheet[address]) continue;
+          worksheet[address].s = {
+            font: { bold: true },
+            fill: { fgColor: { rgb: 'FFCC00' } }
+          };
+        }
+        
+        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="leads-export-${Date.now()}.xlsx"`);
+        res.send(buffer);
+        
+      } else if (formatString === 'pdf') {
+        // PDF export
+        const doc = new jsPDF({ orientation: 'landscape' });
+        
+        // Add title
+        doc.setFontSize(18);
+        doc.text('Collaboration Leads Export', 14, 15);
+        doc.setFontSize(10);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
+        doc.text(`Total Leads: ${exportData.length}`, 14, 28);
+        
+        // Prepare table data
+        const headers = Object.keys(exportData[0] || {});
+        const rows = exportData.map(item => headers.map(key => item[key]));
+        
+        // Add table
+        autoTable(doc, {
+          head: [headers],
+          body: rows,
+          startY: 35,
+          theme: 'grid',
+          headStyles: { 
+            fillColor: [255, 204, 0], // Brand yellow
+            textColor: [0, 0, 0]
+          },
+          alternateRowStyles: { fillColor: [240, 240, 240] },
+          styles: { fontSize: 8, cellPadding: 2 },
+          columnStyles: {
+            0: { cellWidth: 20 }, // ID
+            1: { cellWidth: 25 }, // Name
+            2: { cellWidth: 30 }, // Email
+            3: { cellWidth: 25 }, // Phone
+            4: { cellWidth: 25 }, // Company
+            5: { cellWidth: 40 }, // Message
+            6: { cellWidth: 15 }, // Status
+            7: { cellWidth: 15 }, // Lead Status
+            8: { cellWidth: 12 }, // Opened
+            9: { cellWidth: 25 }, // Created Date
+            10: { cellWidth: 25 }, // Opened Date
+            11: { cellWidth: 35 }  // Follow-up Notes
+          }
+        });
+        
+        const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="leads-export-${Date.now()}.pdf"`);
+        res.send(pdfBuffer);
+        
+      } else {
+        // CSV export (default)
+        const csvHeader = Object.keys(exportData[0] || {}).join(',') + '\n';
+        const csvRows = exportData.map(row => 
+          Object.values(row).map(val => 
+            typeof val === 'string' && val.includes(',') ? `"${val.replace(/"/g, '""')}"` : val
+          ).join(',')
+        ).join('\n');
+        
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="leads-export-${Date.now()}.csv"`);
+        res.send(csvHeader + csvRows);
+      }
     } catch (error) {
       console.error("Error exporting leads:", error);
       res.status(500).json({ message: "Failed to export leads" });

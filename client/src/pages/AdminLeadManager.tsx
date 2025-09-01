@@ -19,6 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { type CollaborationRequest } from "@shared/schema";
@@ -35,7 +41,10 @@ import {
   Phone,
   X,
   CheckCircle,
-  User
+  User,
+  FileSpreadsheet,
+  FileText,
+  File
 } from "lucide-react";
 
 interface AdminLeadManagerProps {
@@ -137,15 +146,58 @@ export const AdminLeadManager = ({ sessionId }: AdminLeadManagerProps) => {
     }
   };
 
-  const handleExport = () => {
-    const params = new URLSearchParams();
-    if (statusFilter !== 'all') params.set('leadStatus', statusFilter);
-    if (selectedLeads.size > 0) {
-      Array.from(selectedLeads).forEach(id => params.append('ids', id));
+  const handleExport = async (format: string) => {
+    try {
+      const params = new URLSearchParams();
+      params.set('format', format);
+      if (statusFilter !== 'all') params.set('leadStatus', statusFilter);
+      if (selectedLeads.size > 0) {
+        Array.from(selectedLeads).forEach(id => params.append('ids', id));
+      }
+      
+      const url = `/api/collaboration-requests/export?${params.toString()}`;
+      
+      // Fetch with authorization header
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${sessionId}`
+        },
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+      
+      // Get the filename from Content-Disposition header
+      const contentDisposition = response.headers.get('Content-Disposition');
+      const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
+      const filename = filenameMatch ? filenameMatch[1] : `leads-export.${format}`;
+      
+      // Download the file
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      toast({
+        title: "Export Successful",
+        description: `Leads exported as ${format.toUpperCase()} successfully.`,
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export leads. Please try again.",
+        variant: "destructive"
+      });
     }
-    
-    const url = `/api/collaboration-requests/export?${params.toString()}`;
-    window.open(url, '_blank');
   };
 
   const toggleSelectLead = (id: string) => {
@@ -271,15 +323,32 @@ export const AdminLeadManager = ({ sessionId }: AdminLeadManagerProps) => {
                 {selectedLeads.size} selected
               </Badge>
             )}
-            <Button
-              onClick={handleExport}
-              variant="outline"
-              className="flex items-center gap-2"
-              disabled={!collaborationRequests || collaborationRequests.length === 0}
-            >
-              <Download className="w-4 h-4" />
-              Export
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  disabled={!collaborationRequests || collaborationRequests.length === 0}
+                >
+                  <Download className="w-4 h-4" />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleExport('csv')}>
+                  <FileText className="w-4 h-4 mr-2" />
+                  Export as CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport('xlsx')}>
+                  <FileSpreadsheet className="w-4 h-4 mr-2" />
+                  Export as Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport('pdf')}>
+                  <File className="w-4 h-4 mr-2" />
+                  Export as PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 

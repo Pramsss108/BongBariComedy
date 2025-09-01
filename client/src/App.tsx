@@ -12,7 +12,7 @@ import { useRickshawSound } from "@/hooks/useRickshawSound";
 import { useMagicalHoverSounds } from "@/hooks/useMagicalHoverSounds";
 import { useSimpleCharmSound } from "@/hooks/useSimpleCharmSound";
 import { CharmSoundSelector } from "@/components/CharmSoundSelector";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import Home from "@/pages/home";
 import About from "@/pages/about";
@@ -51,46 +51,36 @@ function Router() {
     audioFile: '/public-objects/sounds/folder/charm.mp3' // Your custom charm sound
   });
   
-  // Track if we have initialized auth state
-  const [hasInitialized, setHasInitialized] = useState(false);
+  // Use ref to track previous auth state without causing re-renders
+  const prevAuthRef = useRef(isAuthenticated);
   
   // Handle cursor changes and refresh on auth state change
   useEffect(() => {
-    console.log('Auth state changed:', { isAuthenticated, hasInitialized });
+    const prevAuth = prevAuthRef.current;
+    console.log('Auth state:', { current: isAuthenticated, previous: prevAuth });
     
-    // Skip first render
-    if (!hasInitialized) {
-      setHasInitialized(true);
+    // Check if auth state actually changed
+    if (prevAuth !== isAuthenticated) {
+      console.log('Auth state CHANGED! Refreshing page...');
       
-      // Apply initial cursor state
-      if (isAuthenticated) {
-        document.body.classList.add('admin-logged-in');
-        document.body.style.cursor = 'default';
-        const style = document.createElement('style');
-        style.id = 'admin-cursor-override';
-        style.textContent = `
-          * { cursor: default !important; }
-          button, a, [role="button"] { cursor: pointer !important; }
-          input, textarea, [contenteditable] { cursor: text !important; }
-        `;
-        if (!document.getElementById('admin-cursor-override')) {
-          document.head.appendChild(style);
+      // Update the ref for next comparison
+      prevAuthRef.current = isAuthenticated;
+      
+      // Refresh page after auth state change
+      setTimeout(() => {
+        if (isAuthenticated) {
+          // Just logged in - refresh current page to apply professional cursor
+          console.log('User logged in - refreshing page');
+          window.location.reload();
+        } else {
+          // Just logged out - go to home with belan cursor
+          console.log('User logged out - redirecting to home');
+          window.location.href = '/';
         }
-      }
-      return;
+      }, 100);
+    } else {
+      console.log('Auth state unchanged, no refresh needed');
     }
-    
-    // Auth state has changed after initialization - refresh the page
-    console.log('Refreshing page due to auth change...');
-    setTimeout(() => {
-      if (isAuthenticated) {
-        // Just logged in - refresh current page
-        window.location.reload();
-      } else {
-        // Just logged out - go to home
-        window.location.href = '/';
-      }
-    }, 100);
     
   }, [isAuthenticated]);
   

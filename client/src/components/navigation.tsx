@@ -55,8 +55,8 @@ const Navigation = () => {
                   className="w-10 h-10 rounded-lg flex-shrink-0"
                 />
                 <div className="flex flex-col justify-center min-w-0">
-                  <h1 className="text-sm font-bold text-[#FFD200] leading-none whitespace-nowrap">Bong Bari</h1>
-                  <p className="text-[9px] text-white/90 leading-none bangla-text whitespace-nowrap mt-1">প্রতিটা বাড়ির গল্প</p>
+                  <h1 className="text-xs font-bold text-[#FFD200] leading-none whitespace-nowrap">Bong Bari</h1>
+                  <p className="text-[8px] text-white/90 leading-none bangla-text whitespace-nowrap">প্রতিটা বাড়ির গল্প</p>
                 </div>
               </Link>
               

@@ -75,8 +75,8 @@ const MagicalCursor = () => {
         className="belan-cursor-responsive"
         style={{
           position: 'absolute',
-          transform: `translate3d(${cursorPosition.x - 5}px, ${cursorPosition.y - 15}px, 0) rotate(90deg) ${
-            isClicking ? 'scale(1.15)' : isMoving ? 'scale(1.1)' : 'scale(1)'
+          transform: `translate3d(${cursorPosition.x - 4}px, ${cursorPosition.y - 12}px, 0) ${
+            isClicking ? 'scale(1.1)' : 'scale(1)'
           }`,
           opacity: 1,
           transition: 'transform 0.005s ease',
@@ -87,65 +87,59 @@ const MagicalCursor = () => {
           backfaceVisibility: 'hidden'
         }}
       >
-        {/* Main belan cylinder body - bigger and clear */}
+        {/* Main belan cylinder body - vertical */}
         <div
           style={{
             position: 'absolute',
-            width: '24px',
-            height: '10px',
-            background: 'linear-gradient(180deg, #F4E4D0 0%, #D2691E 20%, #B8860B 50%, #8B4513 80%, #654321 100%)',
-            borderRadius: '5px',
+            width: '8px',
+            height: '16px',
+            background: '#B8860B',
+            borderRadius: '4px',
             left: '0px',
+            top: '4px',
+            boxShadow: '0 0 2px rgba(0,0,0,0.5)',
+            border: '1px solid #8B4513'
+          }}
+        />
+        
+        {/* Top handle - thin rod */}
+        <div
+          style={{
+            position: 'absolute',
+            width: '4px',
+            height: '6px',
+            background: '#A0522D',
+            borderRadius: '2px',
+            left: '2px',
             top: '0px',
-            boxShadow: '0 3px 6px rgba(0,0,0,0.6)',
-            border: '1px solid #654321',
-            imageRendering: 'crisp-edges',
-            backfaceVisibility: 'hidden'
+            border: '0.5px solid #654321'
           }}
         />
         
-        {/* Top handle - bigger and clear */}
+        {/* Bottom handle - thin rod */}
         <div
           style={{
             position: 'absolute',
-            width: '8px',
-            height: '8px',
-            background: '#8B4513',
-            borderRadius: '4px',
-            left: '8px',
-            top: '-7px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.6)',
-            border: '1px solid #654321',
-            imageRendering: 'crisp-edges'
+            width: '4px',
+            height: '6px',
+            background: '#A0522D',
+            borderRadius: '2px',
+            left: '2px',
+            top: '18px',
+            border: '0.5px solid #654321'
           }}
         />
         
-        {/* Bottom handle - bigger and clear */}
+        {/* Click indicator dot */}
         <div
           style={{
             position: 'absolute',
-            width: '8px',
-            height: '8px',
-            background: '#8B4513',
-            borderRadius: '4px',
-            left: '8px',
-            top: '9px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.6)',
-            border: '1px solid #654321',
-            imageRendering: 'crisp-edges'
-          }}
-        />
-        
-        {/* Front tip - click indicator */}
-        <div
-          style={{
-            position: 'absolute',
-            width: isClicking ? '5px' : '4px',
-            height: isClicking ? '5px' : '4px',
-            background: isClicking ? '#FF4500' : '#FFCC00',
+            width: '2px',
+            height: '2px',
+            background: isClicking ? '#FF4500' : 'transparent',
             borderRadius: '50%',
-            left: '10px',
-            top: '16px',
+            left: '3px',
+            top: '11px',
             boxShadow: isClicking 
               ? '0 0 6px rgba(255, 69, 0, 0.9), 0 0 10px rgba(255, 69, 0, 0.5)'
               : '0 0 3px rgba(255, 204, 0, 0.8)',
@@ -155,29 +149,35 @@ const MagicalCursor = () => {
           }}
         />
         
-        {/* Wood grain detail lines - clearer */}
+        {/* Wood grain lines on main body */}
         <div
           style={{
             position: 'absolute',
-            width: '18px',
+            width: '6px',
             height: '1px',
-            background: '#8B4513',
-            left: '3px',
-            top: '4px',
-            opacity: 0.6,
-            imageRendering: 'crisp-edges'
+            background: 'rgba(139, 69, 19, 0.4)',
+            left: '1px',
+            top: '8px'
           }}
         />
         <div
           style={{
             position: 'absolute',
-            width: '18px',
+            width: '6px',
             height: '1px',
-            background: '#8B4513',
-            left: '3px',
-            top: '6px',
-            opacity: 0.4,
-            imageRendering: 'crisp-edges'
+            background: 'rgba(139, 69, 19, 0.4)',
+            left: '1px',
+            top: '12px'
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            width: '6px',
+            height: '1px',
+            background: 'rgba(139, 69, 19, 0.4)',
+            left: '1px',
+            top: '16px'
           }}
         />
         

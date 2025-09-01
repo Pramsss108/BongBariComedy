@@ -53,18 +53,12 @@ const Admin = () => {
     }
   }, [isAuthenticated, authLoading, setLocation]);
 
-  const { data: collaborationRequests, isLoading: requestsLoading } = useQuery<CollaborationRequest[]>({
+  const { data: collaborationRequests, isLoading: requestsLoading, refetch: refetchRequests } = useQuery<CollaborationRequest[]>({
     queryKey: ['/api/collaboration-requests'],
-    queryFn: () => fetch('/api/collaboration-requests', {
-      headers: {
-        'Authorization': `Bearer ${sessionId}`
-      }
-    }).then(res => {
-      if (!res.ok) throw new Error('Failed to fetch');
-      return res.json();
-    }),
     enabled: isAuthenticated,
     refetchInterval: 30 * 1000, // Refetch every 30 seconds
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: blogPosts, isLoading: blogsLoading } = useQuery<BlogPost[]>({

@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -42,6 +42,7 @@ type CollaborationFormData = z.infer<typeof collaborationFormSchema>;
 const WorkWithUs = () => {
   const { playFunnySubmissionSound } = useFunnySubmissionSound({ enabled: true, volume: 0.2 });
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isSubmitted, setIsSubmitted] = useState(false);
   
   const collaborationTypes = [
@@ -86,6 +87,9 @@ const WorkWithUs = () => {
         description: "Your collaboration request has been submitted. We'll get back to you soon!",
       });
       form.reset();
+      
+      // Invalidate the collaboration requests cache
+      queryClient.invalidateQueries({ queryKey: ['/api/collaboration-requests'] });
       
       // Reset submitted state after 5 seconds
       setTimeout(() => setIsSubmitted(false), 5000);

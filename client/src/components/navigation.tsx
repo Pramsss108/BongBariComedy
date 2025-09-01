@@ -47,97 +47,94 @@ const Navigation = () => {
           <div className="container mx-auto px-4 h-full">
             <div className="flex justify-between items-center h-full">
               
-              {/* Logo Section - Left Side */}
-              <Link href="/" className="flex items-center space-x-2">
+              {/* Logo Section - Completely Static */}
+              <Link href="/" className="flex items-center space-x-2" style={{ position: 'relative' }}>
                 <img 
                   src="/logo.png" 
                   alt="Bong Bari" 
                   className="w-10 h-10 rounded-lg flex-shrink-0"
                 />
-                <span className="text-white font-bold text-base">Bong Bari</span>
+                <div className="flex flex-col justify-start h-10 pt-1">
+                  <h1 
+                    className="text-[11px] font-bold text-[#FFD200] leading-none whitespace-nowrap bangla-text mb-1"
+                    style={{ 
+                      position: 'relative',
+                      transform: 'translate3d(0,0,0)',
+                      willChange: 'auto',
+                      backfaceVisibility: 'hidden'
+                    }}
+                  >
+                    বং বাড়ি
+                  </h1>
+                  <div className="flex flex-col leading-none">
+                    <p className="text-[8px] text-white/90 leading-none whitespace-nowrap">Every Home's Story</p>
+                    <p className="text-[8px] text-white/90 leading-none bangla-text whitespace-nowrap">প্রতিটা বাড়ির গল্প</p>
+                  </div>
+                </div>
               </Link>
               
-              {/* Desktop Navigation with Enhanced Right Side */}
-              <nav className="hidden md:flex items-center justify-between flex-1 ml-8">
-                {/* Menu Items */}
-                <div className="flex items-center space-x-6">
-                  {navItems.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`text-white font-medium text-sm transition-all duration-200 hover:text-[#FFD200] ${
-                        isActive(item.href) 
-                          ? "text-[#FFD200]" 
-                          : ""
-                      }`}
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
+              {/* Desktop Navigation - Compact Menu */}
+              <nav className="hidden md:flex items-center space-x-4">
+                {navItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`text-white font-medium text-xs transition-all duration-200 hover:text-[#FFD200] ${
+                      isActive(item.href) 
+                        ? "text-[#FFD200]" 
+                        : ""
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
                 
-                {/* Right Side - Bengali Text and Taglines */}
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-3">
-                    {/* Large Bengali Text */}
-                    <h2 className="text-[#FFD200] font-bold text-2xl bangla-text">বং বাড়ি</h2>
-                    {/* Taglines with Separators */}
-                    <div className="flex items-center text-white/90 text-xs space-x-2 border-l border-white/30 pl-3">
-                      <span>Comedy</span>
-                      <span className="text-white/30">|</span>
-                      <span>Family</span>
-                      <span className="text-white/30">|</span>
-                      <span>Bengali</span>
-                    </div>
-                  </div>
-                
-                  {/* Compact Login/Admin Button */}
-                  {user ? (
-                    <div className="flex items-center space-x-2">
-                      <Link href="/admin">
-                        <Button 
-                          size="sm"
-                          variant="ghost" 
-                          className="text-white hover:bg-white/10 text-xs h-7 px-2"
-                        >
-                          <User className="w-3 h-3 mr-1" />
-                          Admin
-                        </Button>
-                      </Link>
-                      <Popover open={logoutPopoverOpen} onOpenChange={setLogoutPopoverOpen}>
-                        <PopoverTrigger asChild>
-                          <Button 
-                            size="sm"
-                            className="bg-green-500 hover:bg-green-600 text-white text-xs h-7 px-2"
-                          >
-                            ✓
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-24 p-1">
-                          <Button
-                            onClick={handleLogout}
-                            variant="ghost"
-                            size="sm"
-                            className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 text-xs h-6"
-                          >
-                            <LogOut className="w-3 h-3 mr-1" />
-                            Logout
-                          </Button>
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  ) : (
+                {/* Compact Login/Admin Button */}
+                {user ? (
+                  <div className="flex items-center space-x-2">
                     <Link href="/admin">
                       <Button 
                         size="sm"
-                        className="bg-white text-[#0E47FF] hover:bg-gray-100 font-medium text-xs h-7 px-3"
+                        variant="ghost" 
+                        className="text-white hover:bg-white/10 text-xs h-7 px-2"
                       >
-                        <LogIn className="w-3 h-3 mr-1" />
-                        Login
+                        <User className="w-3 h-3 mr-1" />
+                        Admin
                       </Button>
                     </Link>
-                  )}
-                </div>
+                    <Popover open={logoutPopoverOpen} onOpenChange={setLogoutPopoverOpen}>
+                      <PopoverTrigger asChild>
+                        <Button 
+                          size="sm"
+                          className="bg-green-500 hover:bg-green-600 text-white text-xs h-7 px-2"
+                        >
+                          ✓
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-24 p-1">
+                        <Button
+                          onClick={handleLogout}
+                          variant="ghost"
+                          size="sm"
+                          className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 text-xs h-6"
+                        >
+                          <LogOut className="w-3 h-3 mr-1" />
+                          Logout
+                        </Button>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                ) : (
+                  <Link href="/admin">
+                    <Button 
+                      size="sm"
+                      className="bg-white text-[#0E47FF] hover:bg-gray-100 font-medium text-xs h-7 px-3"
+                    >
+                      <LogIn className="w-3 h-3 mr-1" />
+                      Login
+                    </Button>
+                  </Link>
+                )}
               </nav>
               
               {/* Mobile Menu Button */}

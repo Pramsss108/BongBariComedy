@@ -189,6 +189,9 @@
 @layer base {
   * {
     @apply border-border;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
   }
 
   body {
@@ -208,8 +211,13 @@
   }
   
   html {
-    margin: 0;
-    padding: 0;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  #root {
+    margin: 0 !important;
+    padding: 0 !important;
   }
   
   /* ULTRA FAST Performance optimizations for all animated elements */

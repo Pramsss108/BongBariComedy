@@ -44,7 +44,7 @@ const Navigation = () => {
   };
 
   return (
-    <nav className="sticky top-0 z-50" data-testid="main-navigation">
+    <nav className="fixed top-0 w-full z-50 m-0 p-0" data-testid="main-navigation">
       {/* Main Navigation */}
       <div className="bg-gradient-to-r from-brand-blue to-blue-600 shadow-lg">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">

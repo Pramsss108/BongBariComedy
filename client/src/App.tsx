@@ -12,7 +12,7 @@ import { useRickshawSound } from "@/hooks/useRickshawSound";
 import { useMagicalHoverSounds } from "@/hooks/useMagicalHoverSounds";
 import { useSimpleCharmSound } from "@/hooks/useSimpleCharmSound";
 import { CharmSoundSelector } from "@/components/CharmSoundSelector";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import Home from "@/pages/home";
 import About from "@/pages/about";
@@ -51,38 +51,7 @@ function Router() {
     audioFile: '/public-objects/sounds/folder/charm.mp3' // Your custom charm sound
   });
   
-  // Use ref to track previous auth state without causing re-renders
-  const prevAuthRef = useRef(isAuthenticated);
-  
-  // Handle cursor changes and refresh on auth state change
-  useEffect(() => {
-    const prevAuth = prevAuthRef.current;
-    console.log('Auth state:', { current: isAuthenticated, previous: prevAuth });
-    
-    // Check if auth state actually changed
-    if (prevAuth !== isAuthenticated) {
-      console.log('Auth state CHANGED! Refreshing page...');
-      
-      // Update the ref for next comparison
-      prevAuthRef.current = isAuthenticated;
-      
-      // Refresh page after auth state change
-      setTimeout(() => {
-        if (isAuthenticated) {
-          // Just logged in - refresh current page to apply professional cursor
-          console.log('User logged in - refreshing page');
-          window.location.reload();
-        } else {
-          // Just logged out - go to home with belan cursor
-          console.log('User logged out - redirecting to home');
-          window.location.href = '/';
-        }
-      }, 100);
-    } else {
-      console.log('Auth state unchanged, no refresh needed');
-    }
-    
-  }, [isAuthenticated]);
+  // Remove the auto-refresh logic from here - it will be handled in login/logout actions only
   
   // Apply cursor styles based on current auth state
   useEffect(() => {

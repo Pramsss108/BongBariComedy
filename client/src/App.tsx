@@ -104,8 +104,9 @@ function Router() {
   }, [isAuthenticated]);
   
   return (
-    <div className="min-h-screen bg-brand-yellow relative m-0 p-0">
+    <>
       <Navigation />
+      <div className="min-h-screen bg-brand-yellow relative m-0 p-0 pt-[95px]">
       <FloatingElements />
       {/* Show MagicalCursor (belan) only for public audience, not for logged-in admin */}
       {!isAuthenticated && <MagicalCursor />}
@@ -126,7 +127,8 @@ function Router() {
       {/* Professional Bong Bot - Available on all pages */}
       <BongBot onOpenChange={setIsChatbotOpen} />
       
-    </div>
+      </div>
+    </>
   );
 }
 

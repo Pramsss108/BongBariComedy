@@ -3,6 +3,29 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Remove all default margins and padding from body and html */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  position: relative;
+}
+
+body {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+#root {
+  margin: 0;
+  padding: 0;
+}
+
 :root {
   --background: hsl(48, 100%, 50%);
   --foreground: hsl(216.47, 84.3%, 47.45%);

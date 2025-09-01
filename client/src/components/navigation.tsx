@@ -43,9 +43,9 @@ const Navigation = () => {
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 w-full bg-transparent" data-testid="main-navigation">
+    <div className="fixed top-0 left-0 right-0 z-50 w-full bg-transparent m-0 p-0" style={{ top: '0px' }} data-testid="main-navigation">
       {/* Main Header - #0D47FF Background, 60px Height */}
-      <header style={{ backgroundColor: '#0D47FF', height: '60px' }} className="shadow-lg">
+      <header style={{ backgroundColor: '#0D47FF', height: '60px', marginTop: '0', paddingTop: '0' }} className="shadow-lg">
         <div className="max-w-7xl mx-auto px-4 h-full">
           <div className="flex justify-between items-center h-full">
             

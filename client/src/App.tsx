@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { FloatingElements } from "@/components/floating-elements";
 import MagicalCursor from "@/components/MagicalCursor";
+import Navigation from "@/components/navigation";
 import { useGlobalCursor } from "@/hooks/useGlobalCursor";
 import { useParallaxScroll } from "@/hooks/useParallaxScroll";
 import { useRickshawSound } from "@/hooks/useRickshawSound";
@@ -103,10 +104,11 @@ function Router() {
   }, [isAuthenticated]);
   
   return (
-    <div className="min-h-screen bg-brand-yellow relative m-0 p-0">
+    <div className="min-h-screen bg-brand-yellow relative">
       <FloatingElements />
       {/* Show MagicalCursor (belan) only for public audience, not for logged-in admin */}
       {!isAuthenticated && <MagicalCursor />}
+      <Navigation />
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/about" component={About} />

@@ -12,7 +12,8 @@ import { useRickshawSound } from "@/hooks/useRickshawSound";
 import { useMagicalHoverSounds } from "@/hooks/useMagicalHoverSounds";
 import { useSimpleCharmSound } from "@/hooks/useSimpleCharmSound";
 import { CharmSoundSelector } from "@/components/CharmSoundSelector";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import Home from "@/pages/home";
 import About from "@/pages/about";
 import WorkWithUs from "@/pages/work-with-us";
@@ -29,6 +30,7 @@ import { AdminHomepage } from "@/pages/AdminHomepage";
 function Router() {
   const [showCharmSelector, setShowCharmSelector] = useState(false);
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
+  const { isAuthenticated } = useAuth();
   
   // Initialize professional site-wide cursor effect
   useGlobalCursor();
@@ -36,24 +38,37 @@ function Router() {
   // Initialize fast engaging parallax scroll effects
   useParallaxScroll();
   
-  // Initialize authentic Bengali rickshaw sound on taps (disabled when chatbot is open)
-  useRickshawSound({ enabled: !isChatbotOpen, volume: 0.3, cooldownMs: 200 });
+  // Initialize authentic Bengali rickshaw sound on taps (disabled when chatbot is open or logged in)
+  useRickshawSound({ enabled: !isChatbotOpen && !isAuthenticated, volume: 0.3, cooldownMs: 200 });
   
-  // Initialize magical hover sounds to complement cursor effects
-  useMagicalHoverSounds({ enabled: true, volume: 0.12 });
+  // Initialize magical hover sounds to complement cursor effects (disabled when logged in)
+  useMagicalHoverSounds({ enabled: !isAuthenticated, volume: 0.12 });
   
-  // Initialize custom charm sound that follows mouse movement
+  // Initialize custom charm sound that follows mouse movement (disabled when logged in)
   useSimpleCharmSound({ 
-    enabled: true, 
+    enabled: !isAuthenticated, 
     volume: 0.06, 
     audioFile: '/public-objects/sounds/folder/charm.mp3' // Your custom charm sound
   });
   
+  // Apply professional cursor style when logged in
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Add class for professional arrow cursor for serious work
+      document.body.classList.add('admin-logged-in');
+      document.body.style.cursor = 'default';
+    } else {
+      // Remove class to allow belan cursor for public audience
+      document.body.classList.remove('admin-logged-in');
+      document.body.style.cursor = '';
+    }
+  }, [isAuthenticated]);
   
   return (
     <div className="min-h-screen bg-brand-yellow relative">
       <FloatingElements />
-      <MagicalCursor />
+      {/* Show MagicalCursor (belan) only for public audience, not for logged-in admin */}
+      {!isAuthenticated && <MagicalCursor />}
       <Navigation />
       <Switch>
         <Route path="/" component={Home} />
@@ -76,13 +91,19 @@ function Router() {
   );
 }
 
+function AppContent() {
+  return (
+    <TooltipProvider>
+      <Toaster />
+      <Router />
+    </TooltipProvider>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
+      <AppContent />
     </QueryClientProvider>
   );
 }

@@ -555,6 +555,24 @@ a:focus-visible {
   cursor: none !important;
 }
 
+/* Professional arrow cursor for admin users doing serious work */
+body.admin-logged-in *,
+body.admin-logged-in {
+  cursor: default !important;
+}
+
+body.admin-logged-in input, 
+body.admin-logged-in textarea, 
+body.admin-logged-in [contenteditable] {
+  cursor: text !important;
+}
+
+body.admin-logged-in button,
+body.admin-logged-in a,
+body.admin-logged-in [role="button"] {
+  cursor: pointer !important;
+}
+
 /* Show cursor on inputs and text areas */
 input, textarea, [contenteditable] {
   cursor: text !important;

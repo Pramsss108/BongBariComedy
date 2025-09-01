@@ -172,7 +172,7 @@ const Home = () => {
           <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Hero Video Section - Premium Layout */}
             <motion.div
-              className="w-full max-w-4xl mx-auto mb-8"
+              className="w-full max-w-4xl mx-auto mb-12 sm:mb-16"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6 }}
@@ -262,7 +262,7 @@ const Home = () => {
           
           {/* Latest Comedy Section (FOMO) */}
           <ParallaxSection speed={0.4} delay={0.2}>
-            <section className="mb-6 sm:mb-8 lg:mb-10 px-4" data-testid="latest-comedy-section">
+            <section className="py-8 sm:py-12 lg:py-16 px-4" data-testid="latest-comedy-section">
             <motion.h3 
               className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-brand-blue mb-2 sm:mb-3 hover-wobble cursor-pointer transition-all duration-300" 
               data-testid="latest-comedy-title-english"
@@ -330,7 +330,7 @@ const Home = () => {
 
           {/* Most Loved Comedy Section (Social Proof) */}
           <ParallaxSection speed={0.4} delay={0.3}>
-            <section className="mb-3 sm:mb-4 lg:mb-6 px-4" data-testid="loved-comedy-section">
+            <section className="py-8 sm:py-12 lg:py-16 px-4" data-testid="loved-comedy-section">
             <motion.h3 
               className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-brand-red mb-2 sm:mb-3 hover-wobble cursor-pointer transition-all duration-300" 
               data-testid="loved-comedy-title-english"
@@ -398,7 +398,7 @@ const Home = () => {
 
           {/* Why Bong Bari Section */}
           <ParallaxSection speed={0.3} delay={0.1}>
-            <section className="mb-8 sm:mb-12 lg:mb-16 px-4" data-testid="why-bong-bari-section">
+            <section className="py-8 sm:py-12 lg:py-16 px-4" data-testid="why-bong-bari-section">
               <motion.div
                 className="max-w-6xl mx-auto"
                 initial={{ opacity: 0, y: 50 }}
@@ -531,7 +531,7 @@ const Home = () => {
           
           {/* Collaboration Form */}
           <ParallaxSection speed={0.2} delay={0.4}>
-            <section className="mb-2 sm:mb-3 py-1 sm:py-2 px-4" data-testid="collaboration-section">
+            <section className="py-8 sm:py-12 lg:py-16 px-4" data-testid="collaboration-section">
             <div className="max-w-4xl mx-auto">
               {/* Work with Us Header with Yellow Background */}
               <motion.div 

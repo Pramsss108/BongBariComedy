@@ -105,6 +105,21 @@ export const homepageContent = pgTable("homepage_content", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Homepage Elements Table - stores all editable elements with position and size
+export const homepageElements = pgTable("homepage_elements", {
+  id: serial("id").primaryKey(),
+  elementId: varchar("element_id", { length: 255 }).notNull().unique(), // unique identifier for each element
+  elementType: varchar("element_type", { length: 50 }).notNull(), // text, image, button, video, card
+  content: text("content"), // text content or image data
+  styles: text("styles"), // JSON string of CSS styles including position and size
+  position: text("position"), // JSON with x, y, width, height
+  zIndex: integer("z_index").default(1),
+  parentId: varchar("parent_id", { length: 255 }), // for nested elements
+  isVisible: boolean("is_visible").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Admin Settings Table
 export const adminSettings = pgTable("admin_settings", {
   id: serial("id").primaryKey(),
@@ -135,6 +150,12 @@ export const insertHomepageContentSchema = createInsertSchema(homepageContent).o
   updatedAt: true,
 });
 
+export const insertHomepageElementSchema = createInsertSchema(homepageElements).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertAdminSettingSchema = createInsertSchema(adminSettings).omit({
   id: true,
   updatedAt: true,
@@ -149,6 +170,9 @@ export type InsertChatbotTemplate = z.infer<typeof insertChatbotTemplateSchema>;
 
 export type HomepageContent = typeof homepageContent.$inferSelect;
 export type InsertHomepageContent = z.infer<typeof insertHomepageContentSchema>;
+
+export type HomepageElement = typeof homepageElements.$inferSelect;
+export type InsertHomepageElement = z.infer<typeof insertHomepageElementSchema>;
 
 export type AdminSetting = typeof adminSettings.$inferSelect;
 export type InsertAdminSetting = z.infer<typeof insertAdminSettingSchema>;

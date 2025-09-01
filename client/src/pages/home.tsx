@@ -22,6 +22,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useFunnySubmissionSound } from "@/hooks/useFunnySubmissionSound";
 import { useState, useEffect } from "react";
 import { HomepageBannerEditor } from "@/components/HomepageBannerEditor";
+import { HomepageEditor } from "@/components/HomepageEditor";
 
 interface YouTubeVideo {
   videoId: string;
@@ -44,6 +45,7 @@ const Home = () => {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [showCursor, setShowCursor] = useState(true);
   const [showBannerEditor, setShowBannerEditor] = useState(false);
+  const [showHomepageEditor, setShowHomepageEditor] = useState(false);
   const [sessionTimeRemaining, setSessionTimeRemaining] = useState(300); // 5 minutes
   const [isAdminMode, setIsAdminMode] = useState(false);
   
@@ -221,12 +223,12 @@ const Home = () => {
               transition={{ duration: 0.4 }}
               className="mb-1 relative"
             >
-              {/* Admin Quick Edit Button */}
+              {/* Admin Quick Edit Buttons */}
               {isAdminMode && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="absolute top-2 right-2 z-10"
+                  className="absolute top-2 right-2 z-10 flex gap-2"
                 >
                   <Button
                     onClick={() => setShowBannerEditor(true)}
@@ -234,6 +236,14 @@ const Home = () => {
                   >
                     <Edit3 className="h-3 w-3 mr-1" />
                     Quick Edit
+                  </Button>
+                  <Button
+                    onClick={() => setShowHomepageEditor(true)}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-black shadow-lg text-xs px-2 py-1 h-auto"
+                    data-testid="button-open-homepage-editor"
+                  >
+                    <Edit3 className="h-3 w-3 mr-1" />
+                    Full Page Editor
                   </Button>
                 </motion.div>
               )}
@@ -829,6 +839,13 @@ const Home = () => {
           currentBanner={bannerData || null}
           onClose={() => setShowBannerEditor(false)}
           timeRemaining={sessionTimeRemaining}
+        />
+      )}
+      
+      {/* Homepage Full Editor Modal */}
+      {showHomepageEditor && isAdminMode && (
+        <HomepageEditor
+          onClose={() => setShowHomepageEditor(false)}
         />
       )}
     </>

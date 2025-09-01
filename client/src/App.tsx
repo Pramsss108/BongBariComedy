@@ -51,82 +51,89 @@ function Router() {
     audioFile: '/public-objects/sounds/folder/charm.mp3' // Your custom charm sound
   });
   
-  // Track previous auth state for login/logout detection
-  const [prevAuth, setPrevAuth] = useState(isAuthenticated);
+  // Track if we have initialized auth state
+  const [hasInitialized, setHasInitialized] = useState(false);
   
-  // Apply professional cursor style when logged in with refresh on auth change
+  // Handle cursor changes and refresh on auth state change
   useEffect(() => {
-    // Detect login (was not authenticated, now is)
-    if (!prevAuth && isAuthenticated) {
-      // Single refresh after login to ensure cursor changes properly
-      setTimeout(() => {
+    console.log('Auth state changed:', { isAuthenticated, hasInitialized });
+    
+    // Skip first render
+    if (!hasInitialized) {
+      setHasInitialized(true);
+      
+      // Apply initial cursor state
+      if (isAuthenticated) {
+        document.body.classList.add('admin-logged-in');
+        document.body.style.cursor = 'default';
+        const style = document.createElement('style');
+        style.id = 'admin-cursor-override';
+        style.textContent = `
+          * { cursor: default !important; }
+          button, a, [role="button"] { cursor: pointer !important; }
+          input, textarea, [contenteditable] { cursor: text !important; }
+        `;
+        if (!document.getElementById('admin-cursor-override')) {
+          document.head.appendChild(style);
+        }
+      }
+      return;
+    }
+    
+    // Auth state has changed after initialization - refresh the page
+    console.log('Refreshing page due to auth change...');
+    setTimeout(() => {
+      if (isAuthenticated) {
+        // Just logged in - refresh current page
         window.location.reload();
-      }, 100);
-      setPrevAuth(isAuthenticated);
-      return;
-    }
-    
-    // Detect logout (was authenticated, now not)
-    if (prevAuth && !isAuthenticated) {
-      // Single refresh after logout to restore belan cursor properly
-      setTimeout(() => {
+      } else {
+        // Just logged out - go to home
         window.location.href = '/';
-      }, 100);
-      setPrevAuth(isAuthenticated);
-      return;
-    }
+      }
+    }, 100);
     
-    // Apply cursor styles based on auth state
+  }, [isAuthenticated]);
+  
+  // Apply cursor styles based on current auth state
+  useEffect(() => {
     if (isAuthenticated) {
-      // Add class for professional arrow cursor for serious work
+      // Professional cursor for admin
       document.body.classList.add('admin-logged-in');
       document.body.style.cursor = 'default';
       document.documentElement.style.cursor = 'default';
       
-      // Remove any belan cursor elements immediately
+      // Remove belan cursor elements
       const belanElements = document.querySelectorAll('.magical-belan-portal, .particle-container, .global-cursor-follower');
-      belanElements.forEach(el => {
-        el.remove();
-      });
+      belanElements.forEach(el => el.remove());
       
-      // Apply professional cursor to all elements
+      // Apply professional cursor styles
       const style = document.createElement('style');
       style.id = 'admin-cursor-override';
       style.textContent = `
-        * {
-          cursor: default !important;
-        }
-        button, a, [role="button"] {
-          cursor: pointer !important;
-        }
-        input, textarea, [contenteditable] {
-          cursor: text !important;
-        }
+        * { cursor: default !important; }
+        button, a, [role="button"] { cursor: pointer !important; }
+        input, textarea, [contenteditable] { cursor: text !important; }
       `;
       if (!document.getElementById('admin-cursor-override')) {
         document.head.appendChild(style);
       }
     } else {
-      // Remove class to allow belan cursor for public audience
+      // Remove professional cursor styles for public
       document.body.classList.remove('admin-logged-in');
       document.body.style.cursor = '';
       document.documentElement.style.cursor = '';
       
-      // Remove admin cursor override
       const overrideStyle = document.getElementById('admin-cursor-override');
       if (overrideStyle) {
         overrideStyle.remove();
       }
     }
     
-    // Update previous auth state
-    setPrevAuth(isAuthenticated);
-    
-    // Force re-render of cursor elements
+    // Notify cursor component of auth state change
     window.dispatchEvent(new Event('auth-state-changed'));
     
     return () => {
-      // Cleanup on unmount
+      // Cleanup
       document.body.style.cursor = '';
       document.documentElement.style.cursor = '';
       const overrideStyle = document.getElementById('admin-cursor-override');
@@ -134,7 +141,7 @@ function Router() {
         overrideStyle.remove();
       }
     };
-  }, [isAuthenticated, prevAuth]);
+  }, [isAuthenticated]);
   
   return (
     <div className="min-h-screen bg-brand-yellow relative">

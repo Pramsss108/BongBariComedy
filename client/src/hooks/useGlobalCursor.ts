@@ -11,9 +11,8 @@ export const useGlobalCursor = () => {
     if (isMobile()) {
       return;
     }
-    // Remove any existing cursors first to prevent multiple circles
-    const existingCursors = document.querySelectorAll('.global-cursor-follower, .global-cursor-ring');
-    existingCursors.forEach(el => el.remove());
+    // DISABLE this cursor to prevent double effect - MagicalCursor handles it
+    return;
 
     // Create BIG CSS Belan cursor!
     const cursor = document.createElement('div');

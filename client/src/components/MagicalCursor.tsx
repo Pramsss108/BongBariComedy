@@ -75,7 +75,7 @@ const MagicalCursor = () => {
         className="belan-cursor-responsive"
         style={{
           position: 'absolute',
-          transform: `translate3d(${cursorPosition.x - 6}px, ${cursorPosition.y - 2}px, 0) rotate(0deg) ${
+          transform: `translate3d(${cursorPosition.x - 3}px, ${cursorPosition.y - 8}px, 0) rotate(90deg) ${
             isClicking ? 'scale(1.2)' : isMoving ? 'scale(1.1)' : 'scale(1)'
           }`,
           opacity: isClicking ? 1 : isMoving ? 1 : 0.7,
@@ -85,61 +85,61 @@ const MagicalCursor = () => {
           zIndex: 2147483647
         }}
       >
-        {/* Main belan body - mouse cursor size */}
+        {/* Main belan body - vertical like I */}
         <div
           style={{
             position: 'absolute',
-            width: '16px',
-            height: '5px',
-            background: 'linear-gradient(90deg, #CD853F 0%, #D2691E 50%, #8B4513 100%)',
-            borderRadius: '2.5px',
-            left: '2px',
-            top: '1px',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.3), inset 0 0.5px 0 rgba(255,255,255,0.2)',
+            width: '18px',
+            height: '4px',
+            background: 'linear-gradient(0deg, #CD853F 0%, #D2691E 50%, #8B4513 100%)',
+            borderRadius: '2px',
+            left: '0px',
+            top: '2px',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.4)',
             border: '0.5px solid #654321'
           }}
         />
         
-        {/* Left handle - mouse cursor size */}
+        {/* Left handle - vertical */}
         <div
           style={{
             position: 'absolute',
-            width: '4px',
-            height: '4px',
-            background: 'linear-gradient(90deg, #8B4513 0%, #654321 50%, #4A2C17 100%)',
-            borderRadius: '2px',
-            left: '-1px',
-            top: '1.5px',
-            boxShadow: '0 0.5px 1px rgba(0,0,0,0.4), inset 0 0.3px 0 rgba(255,255,255,0.1)',
+            width: '3px',
+            height: '3px',
+            background: 'linear-gradient(0deg, #8B4513 0%, #654321 50%, #4A2C17 100%)',
+            borderRadius: '1.5px',
+            left: '7.5px',
+            top: '-1px',
+            boxShadow: '0 0.5px 1px rgba(0,0,0,0.4)',
             border: '0.3px solid #3D2016'
           }}
         />
         
-        {/* Right handle - mouse cursor size */}
+        {/* Right handle - vertical */}
         <div
           style={{
             position: 'absolute',
-            width: '4px',
-            height: '4px',
-            background: 'linear-gradient(90deg, #8B4513 0%, #654321 50%, #4A2C17 100%)',
-            borderRadius: '2px',
-            left: '17px',
-            top: '1.5px',
-            boxShadow: '0 0.5px 1px rgba(0,0,0,0.4), inset 0 0.3px 0 rgba(255,255,255,0.1)',
+            width: '3px',
+            height: '3px',
+            background: 'linear-gradient(0deg, #8B4513 0%, #654321 50%, #4A2C17 100%)',
+            borderRadius: '1.5px',
+            left: '7.5px',
+            top: '6px',
+            boxShadow: '0 0.5px 1px rgba(0,0,0,0.4)',
             border: '0.3px solid #3D2016'
           }}
         />
         
-        {/* Responsive front tip - mouse cursor size */}
+        {/* Responsive front tip - vertical */}
         <div
           style={{
             position: 'absolute',
-            width: isClicking ? '4px' : '3px',
-            height: isClicking ? '4px' : '3px',
+            width: isClicking ? '3px' : '2px',
+            height: isClicking ? '3px' : '2px',
             background: isClicking ? '#FF4500' : '#FFCC00',
             borderRadius: '50%',
-            left: isClicking ? '9px' : '9.5px',
-            top: isClicking ? '1px' : '1.5px',
+            left: isClicking ? '8px' : '8.5px',
+            top: isClicking ? '8px' : '8.5px',
             boxShadow: isClicking 
               ? '0 0 6px rgba(255, 69, 0, 0.9), 0 0 10px rgba(255, 69, 0, 0.5)'
               : '0 0 3px rgba(255, 204, 0, 0.8)',
@@ -149,16 +149,16 @@ const MagicalCursor = () => {
           }}
         />
         
-        {/* Sharp front tip extension - mouse cursor size */}
+        {/* Sharp front tip extension - vertical */}
         <div
           style={{
             position: 'absolute',
-            width: isClicking ? '2.5px' : '2px',
-            height: isClicking ? '3px' : '2.5px',
+            width: isClicking ? '2px' : '1.5px',
+            height: isClicking ? '2px' : '1.5px',
             background: isClicking ? '#FF6347' : '#D2691E',
             borderRadius: '1px',
-            left: isClicking ? '12px' : '12.5px',
-            top: isClicking ? '1.5px' : '1.8px',
+            left: isClicking ? '8.5px' : '8.8px',
+            top: isClicking ? '10px' : '10.5px',
             opacity: isClicking ? 1 : 0.7,
             transition: 'all 0.005s ease',
             transform: isClicking ? 'scale(1.1)' : 'scale(1)'

@@ -104,13 +104,34 @@ header {
   animation-delay: 200ms;
 }
 
-/* Scrolling Ticker Animation - Enhanced */
+/* Scrolling Ticker Animation - Ultra Smooth */
 @keyframes scroll {
   0% {
     transform: translateX(0);
   }
   100% {
     transform: translateX(-100%);
+  }
+}
+
+@keyframes scroll-smooth {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes gradient-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
   }
 }
 
@@ -146,6 +167,12 @@ header {
 .animate-scroll {
   display: flex;
   animation: scroll 30s linear infinite;
+  width: 200%;
+}
+
+.animate-scroll-smooth {
+  display: flex;
+  animation: scroll-smooth 40s linear infinite;
   width: 200%;
 }
 

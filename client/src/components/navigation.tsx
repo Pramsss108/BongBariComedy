@@ -41,53 +41,80 @@ const Navigation = () => {
       {/* Navigation Container - Completely Fixed */}
       <div className="fixed top-0 left-0 right-0 z-50 w-full">
         
-        {/* Main Header - Premium Minimalist Design */}
-        <header className="bg-[#0E47FF] backdrop-blur-md" style={{ height: '80px' }}>
-          <div className="max-w-7xl mx-auto px-4 lg:px-6 h-full">
+        {/* Main Header - Ultra Premium Futuristic Design */}
+        <header 
+          className="bg-[#0E47FF] relative overflow-hidden"
+          style={{ 
+            height: '75px',
+            background: 'linear-gradient(135deg, #0E47FF 0%, #0A3ACC 100%)',
+            backdropFilter: 'blur(20px)'
+          }}
+        >
+          {/* Futuristic Background Pattern */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute inset-0" style={{
+              backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%)',
+            }}></div>
+          </div>
+          
+          <div className="relative max-w-[1400px] mx-auto px-6 lg:px-8 h-full">
             <div className="flex justify-between items-center h-full">
               
-              {/* Left Section - Premium Design */}
-              <div className="flex items-center">
-                {/* Logo - Clean */}
-                <Link href="/" className="flex-shrink-0 mr-4">
+              {/* Left Section - Ultra Premium Layout */}
+              <div className="flex items-center space-x-5">
+                {/* Logo - Refined */}
+                <Link href="/" className="group relative">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-[#FFD200] to-[#FFC000] rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
                   <img 
                     src="/logo.png" 
                     alt="Bong Bari" 
-                    className="w-11 h-11 lg:w-12 lg:h-12 rounded-lg object-cover"
+                    className="relative w-10 h-10 lg:w-11 lg:h-11 rounded-lg object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 </Link>
                 
-                {/* Bengali Title - Elegant */}
+                {/* Bengali Title - Sophisticated */}
                 <h1 
-                  className="text-2xl lg:text-3xl font-bold text-[#FFD200] bangla-text mr-6"
+                  className="text-[26px] lg:text-[30px] font-bold text-[#FFD200] bangla-text tracking-wide"
                   style={{ 
-                    fontFamily: 'var(--font-bengali)'
+                    fontFamily: 'var(--font-bengali)',
+                    textShadow: '0 2px 10px rgba(255,210,0,0.2)'
                   }}
                 >
                   বং বাড়ি
                 </h1>
                 
-                {/* Tagline - Minimal & Gray */}
-                <span className="hidden md:inline-block text-xs lg:text-sm text-white/40 font-light">
-                  Every Home's Story
-                </span>
+                {/* Vertical Separator - Subtle */}
+                <div className="hidden md:block w-[1px] h-8 bg-gradient-to-b from-transparent via-white/20 to-transparent"></div>
+                
+                {/* Dual Tagline - Stacked */}
+                <div className="hidden md:flex flex-col justify-center leading-none">
+                  <span className="text-[11px] lg:text-xs text-white/50 font-light tracking-wider uppercase">
+                    Every Home's Story
+                  </span>
+                  <span className="text-[10px] lg:text-[11px] text-white/40 font-light bangla-text mt-0.5">
+                    প্রতিটা বাড়ির গল্প
+                  </span>
+                </div>
               </div>
               
-              {/* Desktop Navigation - Clean & Modern */}
-              <nav className="hidden md:flex items-center gap-8">
+              {/* Desktop Navigation - Futuristic */}
+              <nav className="hidden md:flex items-center gap-7 lg:gap-9">
                 {navItems.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`relative text-white font-medium text-sm lg:text-base transition-colors duration-200 hover:text-[#FFD200] ${
+                    className={`relative text-sm lg:text-[15px] font-medium tracking-wide transition-all duration-300 ${
                       isActive(item.href) 
                         ? "text-[#FFD200]" 
-                        : "text-white/90"
+                        : "text-white/80 hover:text-white"
                     }`}
                   >
-                    {item.label}
+                    <span className="relative z-10">{item.label}</span>
                     {isActive(item.href) && (
-                      <span className="absolute -bottom-[22px] left-0 right-0 h-0.5 bg-[#FFD200]"></span>
+                      <>
+                        <span className="absolute -bottom-[21px] left-0 right-0 h-[2px] bg-[#FFD200] rounded-full"></span>
+                        <span className="absolute -bottom-[21px] left-0 right-0 h-[2px] bg-[#FFD200] rounded-full blur-sm"></span>
+                      </>
                     )}
                   </Link>
                 ))}
@@ -131,10 +158,13 @@ const Navigation = () => {
                   <Link href="/admin">
                     <Button 
                       size="sm"
-                      className="bg-[#FFD200] text-[#0E47FF] hover:bg-[#FFC000] font-semibold text-sm h-9 px-5 rounded-full transition-all duration-200"
+                      className="relative group bg-[#FFD200] text-[#0E47FF] hover:bg-[#FFC000] font-semibold text-[13px] h-9 px-6 rounded-full transition-all duration-300 shadow-lg shadow-black/10"
                     >
-                      <LogIn className="w-4 h-4 mr-1.5" />
-                      Login
+                      <span className="absolute inset-0 rounded-full bg-gradient-to-r from-[#FFD200] to-[#FFC000] blur-sm opacity-50 group-hover:opacity-70 transition duration-300"></span>
+                      <span className="relative flex items-center">
+                        <LogIn className="w-3.5 h-3.5 mr-1.5" />
+                        Login
+                      </span>
                     </Button>
                   </Link>
                 )}
@@ -153,22 +183,34 @@ const Navigation = () => {
           </div>
         </header>
         
-        {/* Promo Banner - Sleek & Modern */}
-        <div className="bg-[#FFD200]" style={{ height: '40px' }}>
+        {/* Promo Banner - Ultra Sleek */}
+        <div 
+          className="relative overflow-hidden"
+          style={{ 
+            height: '36px',
+            background: 'linear-gradient(90deg, #FFD200 0%, #FFC000 50%, #FFD200 100%)',
+            backgroundSize: '200% 100%',
+            animation: 'gradient-flow 8s ease infinite'
+          }}
+        >
           <div className="h-full overflow-hidden relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="animate-scroll whitespace-nowrap flex">
-                <span className="text-[#0E47FF] font-medium text-sm lg:text-base px-6 flex items-center h-full">
-                  🎯 <span className="mx-2">Special Offer: Flat 50% off on your first Bong Bari subscription</span> • 
-                  🔔 <span className="mx-2">Stay tuned for exciting updates</span> • 
-                  🎬 <span className="mx-2">New comedy sketches every week</span> • 
-                  ✨ <span className="mx-2">Join our community of laughter lovers</span> • 
+              <div className="animate-scroll-smooth whitespace-nowrap flex">
+                <span className="text-[#0E47FF] font-medium text-[13px] lg:text-sm px-8 flex items-center h-full tracking-wide">
+                  <span className="mr-3">⚡</span>
+                  <span className="mr-8">Special Offer: Flat 50% off on your first subscription</span>
+                  <span className="mr-3">🎯</span>
+                  <span className="mr-8">New comedy content every week</span>
+                  <span className="mr-3">✨</span>
+                  <span className="mr-8">Join 10,000+ laughter lovers</span>
                 </span>
-                <span className="text-[#0E47FF] font-medium text-sm lg:text-base px-6 flex items-center h-full">
-                  🎯 <span className="mx-2">Special Offer: Flat 50% off on your first Bong Bari subscription</span> • 
-                  🔔 <span className="mx-2">Stay tuned for exciting updates</span> • 
-                  🎬 <span className="mx-2">New comedy sketches every week</span> • 
-                  ✨ <span className="mx-2">Join our community of laughter lovers</span> • 
+                <span className="text-[#0E47FF] font-medium text-[13px] lg:text-sm px-8 flex items-center h-full tracking-wide">
+                  <span className="mr-3">⚡</span>
+                  <span className="mr-8">Special Offer: Flat 50% off on your first subscription</span>
+                  <span className="mr-3">🎯</span>
+                  <span className="mr-8">New comedy content every week</span>
+                  <span className="mr-3">✨</span>
+                  <span className="mr-8">Join 10,000+ laughter lovers</span>
                 </span>
               </div>
             </div>
@@ -235,7 +277,7 @@ const Navigation = () => {
       </div>
       
       {/* Spacer for fixed navigation */}
-      <div style={{ height: '120px' }}></div>
+      <div style={{ height: '111px' }}></div>
     </>
   );
 };

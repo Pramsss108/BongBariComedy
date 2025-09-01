@@ -27,7 +27,6 @@ const Navigation = () => {
     { href: "/", label: "Home" },
     { href: "/about", label: "About" },
     { href: "/work-with-us", label: "Work with us" },
-    { href: "/contact", label: "Contact" },
     { href: "/blog", label: "Blog" },
   ];
 

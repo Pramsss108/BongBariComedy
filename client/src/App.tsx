@@ -49,7 +49,7 @@ function Router() {
   useSimpleCharmSound({ 
     enabled: !isAuthenticated, 
     volume: 0.06, 
-    audioFile: '/public-objects/sounds/folder/charm.mp3' // Your custom charm sound
+    audioFile: '/sounds/charm.mp3' // Your custom charm sound
   });
   
   // Remove the auto-refresh logic from here - it will be handled in login/logout actions only
@@ -109,6 +109,8 @@ function Router() {
       {/* Show MagicalCursor (belan) only for public audience, not for logged-in admin */}
       {!isAuthenticated && <MagicalCursor />}
       <Navigation />
+      {/* Bong Bot - Premium AI Chatbot */}
+      <BongBot onOpenChange={setIsChatbotOpen} />
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/about" component={About} />

@@ -43,24 +43,37 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
     playGlitterSound();
   };
 
-  // Sound effects
+  // Sound effects with graceful error handling
   const playGlitterSound = () => {
-    const audio = new Audio('/public-objects/sounds/folder/glitter.mp3');
-    audio.volume = 0.3;
-    audio.play().catch(() => {}); // Ignore errors
+    try {
+      const audio = new Audio('/sounds/glitter.mp3');
+      audio.volume = 0.3;
+      audio.play().catch(() => {}); // Ignore errors silently
+    } catch (e) {
+      // Sound not available, continue without sound
+    }
   };
 
   const playSendSound = () => {
-    const audio = new Audio('/public-objects/sounds/folder/whatsapp-send.mp3');
-    audio.volume = 0.4;
-    audio.play().catch(() => {}); // Ignore errors
+    try {
+      const audio = new Audio('/sounds/whatsapp-send.mp3');
+      audio.volume = 0.4;
+      audio.play().catch(() => {}); // Ignore errors silently
+    } catch (e) {
+      // Sound not available, continue without sound
+    }
   };
 
   const playTypingSound = () => {
-    const audio = new Audio('/public-objects/sounds/folder/typing.mp3');
-    audio.volume = 0.2;
-    audio.loop = true;
-    return audio;
+    try {
+      const audio = new Audio('/sounds/typing.mp3');
+      audio.volume = 0.2;
+      audio.loop = true;
+      return audio;
+    } catch (e) {
+      // Return a mock audio object that won't error
+      return { pause: () => {}, currentTime: 0 } as any;
+    }
   };
 
   // Auto scroll to bottom when new messages arrive

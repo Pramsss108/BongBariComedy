@@ -185,21 +185,15 @@ const Navigation = () => {
         )}
       </header>
       
-      {/* Promo Banner - #FF5733 Background, 40px Height, Scrolling Ticker */}
+      {/* Promo Banner - #FFD200 Yellow Background, 35px Height, Scrolling Ticker */}
       <div 
-        style={{ backgroundColor: '#FF5733', height: '40px' }} 
+        style={{ backgroundColor: '#FFD200', height: '35px' }} 
         className="overflow-hidden flex items-center"
       >
-        <div className="whitespace-nowrap animate-scroll">
-          <span className="text-white font-bold text-sm inline-block">
-            🔥 Special Offer: Flat 50% off on your first Bong Bari subscription 🔔 • 
-            New Comedy Every Week! • প্রিমিয়াম কন্টেন্ট এখন আরো সাশ্রয়ী! • 
-            🎭 Join thousands of happy viewers! • Limited Time Offer! • 
-            🔥 Special Offer: Flat 50% off on your first Bong Bari subscription 🔔 • 
-            New Comedy Every Week! • প্রিমিয়াম কন্টেন্ট এখন আরো সাশ্রয়ী! • 
-            🎭 Join thousands of happy viewers! • Limited Time Offer! • 
-          </span>
-        </div>
+        <span className="animate-scroll text-black font-bold text-sm">
+          🔥 Special Offer: Flat 50% off on your first Bong Bari subscription 🔔 Stay tuned for updates • 
+          🔥 Special Offer: Flat 50% off on your first Bong Bari subscription 🔔 Stay tuned for updates • 
+        </span>
       </div>
     </div>
   );

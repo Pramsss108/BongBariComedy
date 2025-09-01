@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bong Bari</title>
+  <style>
+    /* Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: sans-serif;
+    }
+
+    /* === HEADER MENU === */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 60px;
+      background: #0D47FF; /* Blue */
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 20px;
+      z-index: 1000;
+    }
+
+    .logo-text {
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 20px;
+    }
+
+    nav ul li a {
+      text-decoration: none;
+      color: #fff;
+      font-size: 14px;
+      transition: color 0.3s;
+    }
+
+    nav ul li a:hover {
+      color: #FFD200;
+    }
+
+    /* === PROMO BANNER === */
+    .promo-banner {
+      position: fixed;
+      top: 60px; /* right under header */
+      left: 0;
+      width: 100%;
+      height: 35px;
+      background: #FFD200; /* Yellow */
+      color: #000;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      white-space: nowrap;
+      z-index: 999;
+    }
+
+    .promo-text {
+      display: inline-block;
+      padding-left: 100%;
+      animation: scrollText 12s linear infinite;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    @keyframes scrollText {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-100%); }
+    }
+
+    /* Push page content down */
+    .page-content {
+      margin-top: 95px; /* header + banner height */
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo-text">বং বাড়ি</div>
+    <nav>
+      <ul>
+        <li><a href="#">Home</a></li>
+        <li><a href="#">About</a></li>
+        <li><a href="#">Work with us</a></li>
+        <li><a href="#">Contact</a></li>
+        <li><a href="#">Blog</a></li>
+        <li><a href="#">Login ➝</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- PROMO BANNER -->
+  <div class="promo-banner">
+    <span class="promo-text">🔥 Special Offer: Flat 50% off on your first Bong Bari subscription 🔔 Stay tuned for updates</span>
+  </div>
+
+  <!-- PAGE CONTENT -->
+  <div class="page-content">
+    <h1>Welcome to Bong Bari</h1>
+    <p>Your content starts here...</p>
+  </div>
+
+</body>
+</html>

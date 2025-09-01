@@ -42,44 +42,52 @@ const Navigation = () => {
       {/* Navigation Container - Completely Fixed */}
       <div className="fixed top-0 left-0 right-0 z-50 w-full">
         
-        {/* Main Header - Clean Slim Design */}
-        <header className="bg-[#0E47FF] shadow-md" style={{ height: '56px' }}>
+        {/* Promo Banner - Top (Same size as Flaticon) */}
+        <div className="bg-[#FFD200]" style={{ height: '35px' }}>
+          <div className="h-full overflow-hidden relative">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="animate-scroll whitespace-nowrap flex">
+                <span className="text-black font-semibold text-xs px-3">
+                  Special Offer: Flat 50% off on first Bong Bari subscription
+                </span>
+                <span className="text-black font-medium text-xs px-1">|</span>
+                <span className="text-black font-semibold text-xs px-3">
+                  Stay tuned for updates
+                </span>
+                <span className="text-black font-medium text-xs px-1">|</span>
+                <span className="text-black font-semibold text-xs px-3">
+                  Special Offer: Flat 50% off on first Bong Bari subscription
+                </span>
+                <span className="text-black font-medium text-xs px-1">|</span>
+                <span className="text-black font-semibold text-xs px-3">
+                  Stay tuned for updates
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Main Header - Increased Height for Better Visibility */}
+        <header className="bg-[#0E47FF] shadow-md" style={{ height: '72px' }}>
           <div className="container mx-auto px-4 h-full">
             <div className="flex justify-between items-center h-full">
               
-              {/* Logo Section - Completely Static */}
-              <Link href="/" className="flex items-center space-x-2" style={{ position: 'relative' }}>
+              {/* Logo Only - Left Side */}
+              <Link href="/" className="flex items-center" style={{ position: 'relative' }}>
                 <img 
                   src="/logo.png" 
                   alt="Bong Bari" 
-                  className="w-10 h-10 rounded-lg flex-shrink-0"
+                  className="w-12 h-12 rounded-lg flex-shrink-0"
                 />
-                <div className="flex flex-col justify-start h-10 pt-1">
-                  <h1 
-                    className="text-[11px] font-bold text-[#FFD200] leading-none whitespace-nowrap bangla-text mb-1"
-                    style={{ 
-                      position: 'relative',
-                      transform: 'translate3d(0,0,0)',
-                      willChange: 'auto',
-                      backfaceVisibility: 'hidden'
-                    }}
-                  >
-                    বং বাড়ি
-                  </h1>
-                  <div className="flex flex-col leading-none">
-                    <p className="text-[8px] text-white/90 leading-none whitespace-nowrap">Every Home's Story</p>
-                    <p className="text-[8px] text-white/90 leading-none bangla-text whitespace-nowrap">প্রতিটা বাড়ির গল্প</p>
-                  </div>
-                </div>
               </Link>
               
-              {/* Desktop Navigation - Compact Menu */}
-              <nav className="hidden md:flex items-center space-x-4">
+              {/* Desktop Navigation - Bigger Menu Items */}
+              <nav className="hidden md:flex items-center space-x-6">
                 {navItems.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`text-white font-medium text-xs transition-all duration-200 hover:text-[#FFD200] ${
+                    className={`text-white font-semibold text-base transition-all duration-200 hover:text-[#FFD200] ${
                       isActive(item.href) 
                         ? "text-[#FFD200]" 
                         : ""
@@ -89,36 +97,36 @@ const Navigation = () => {
                   </Link>
                 ))}
                 
-                {/* Compact Login/Admin Button */}
+                {/* Login/Admin Button */}
                 {user ? (
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-3">
                     <Link href="/admin">
                       <Button 
-                        size="sm"
+                        size="default"
                         variant="ghost" 
-                        className="text-white hover:bg-white/10 text-xs h-7 px-2"
+                        className="text-white hover:bg-white/10 text-sm h-9 px-4"
                       >
-                        <User className="w-3 h-3 mr-1" />
+                        <User className="w-4 h-4 mr-2" />
                         Admin
                       </Button>
                     </Link>
                     <Popover open={logoutPopoverOpen} onOpenChange={setLogoutPopoverOpen}>
                       <PopoverTrigger asChild>
                         <Button 
-                          size="sm"
-                          className="bg-green-500 hover:bg-green-600 text-white text-xs h-7 px-2"
+                          size="default"
+                          className="bg-green-500 hover:bg-green-600 text-white text-sm h-9 px-3"
                         >
                           ✓
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-24 p-1">
+                      <PopoverContent className="w-32 p-2">
                         <Button
                           onClick={handleLogout}
                           variant="ghost"
                           size="sm"
-                          className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 text-xs h-6"
+                          className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 text-sm"
                         >
-                          <LogOut className="w-3 h-3 mr-1" />
+                          <LogOut className="w-4 h-4 mr-2" />
                           Logout
                         </Button>
                       </PopoverContent>
@@ -127,46 +135,34 @@ const Navigation = () => {
                 ) : (
                   <Link href="/admin">
                     <Button 
-                      size="sm"
-                      className="bg-white text-[#0E47FF] hover:bg-gray-100 font-medium text-xs h-7 px-3"
+                      size="default"
+                      className="bg-white text-[#0E47FF] hover:bg-gray-100 font-semibold text-sm h-9 px-4"
                     >
-                      <LogIn className="w-3 h-3 mr-1" />
+                      <LogIn className="w-4 h-4 mr-2" />
                       Login
                     </Button>
                   </Link>
                 )}
               </nav>
               
-              {/* Mobile Menu Button */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="md:hidden text-white hover:bg-white/10 h-8 w-8"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              >
-                {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </Button>
-            </div>
-          </div>
-        </header>
-        
-        {/* Promo Banner - Slim */}
-        <div className="bg-[#FFD200]" style={{ height: '35px' }}>
-          <div className="h-full overflow-hidden relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="animate-scroll whitespace-nowrap flex">
-                <span className="text-black font-semibold text-sm px-6">
-                  🔥 Special Offer: Flat 50% off on your first Bong Bari subscription • 🔔 Stay tuned for updates • 
-                  🔥 Special Offer: Flat 50% off on your first Bong Bari subscription • 🔔 Stay tuned for updates • 
-                </span>
-                <span className="text-black font-semibold text-sm px-6">
-                  🔥 Special Offer: Flat 50% off on your first Bong Bari subscription • 🔔 Stay tuned for updates • 
-                  🔥 Special Offer: Flat 50% off on your first Bong Bari subscription • 🔔 Stay tuned for updates • 
-                </span>
+              {/* Big Bengali Text - Right Side */}
+              <div className="flex items-center">
+                <h1 className="text-[#FFD200] font-bold text-2xl md:text-3xl lg:text-4xl bangla-text hidden sm:block">
+                  বং বাড়ি
+                </h1>
+                {/* Mobile Menu Button */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="md:hidden text-white hover:bg-white/10 h-10 w-10 ml-4"
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                >
+                  {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                </Button>
               </div>
             </div>
           </div>
-        </div>
+        </header>
         
         {/* Mobile Navigation Menu */}
         {isMobileMenuOpen && (
@@ -227,7 +223,7 @@ const Navigation = () => {
       </div>
       
       {/* Spacer for fixed navigation */}
-      <div style={{ height: '91px' }}></div>
+      <div style={{ height: '107px' }}></div>
     </>
   );
 };

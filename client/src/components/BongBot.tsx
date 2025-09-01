@@ -7,7 +7,7 @@ interface BongBotProps {
 }
 
 export default function BongBot({ onOpenChange }: BongBotProps) {
-  const [position, setPosition] = useState({ x: window.innerWidth - 420, y: window.innerHeight - 500 });
+  const [position, setPosition] = useState({ x: window.innerWidth - 400, y: window.innerHeight - 450 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [isOpen, setIsOpen] = useState(false);
@@ -217,7 +217,7 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
     return (
       <motion.button
         onClick={handleOpenChatbot}
-        className="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-br from-[#1363DF]/90 to-[#FF4D4D]/90 backdrop-blur-sm rounded-full flex items-center justify-center text-white font-bold shadow-2xl border border-white/20 z-50"
+        className="fixed bottom-4 right-4 w-16 h-16 bg-gradient-to-br from-[#1363DF]/90 to-[#FF4D4D]/90 backdrop-blur-sm rounded-full flex items-center justify-center text-white font-bold shadow-2xl border border-white/20 z-50"
         data-testid="open-chatbot"
         whileHover={{ 
           scale: 1.1,

@@ -260,9 +260,9 @@ const Home = () => {
             </div>
           </motion.div>
           
-          {/* Latest Comedy Section (FOMO) */}
+          {/* Latest Comedy Section (FOMO) - Premium */}
           <ParallaxSection speed={0.4} delay={0.2}>
-            <section className="mb-6 sm:mb-8 lg:mb-10" data-testid="latest-comedy-section">
+            <section className="mb-12 sm:mb-16 lg:mb-20 py-8 sm:py-12 bg-gradient-to-br from-white via-gray-50 to-white rounded-3xl shadow-xl" data-testid="latest-comedy-section">
             <motion.h3 
               className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-brand-blue mb-2 sm:mb-3 hover-wobble cursor-pointer transition-all duration-300" 
               data-testid="latest-comedy-title-english"
@@ -292,15 +292,15 @@ const Home = () => {
             </motion.p>
             
             {isLoadingLatest ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 px-2 max-w-6xl mx-auto" data-testid="latest-videos-grid-loading">
+              <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-6 px-2 max-w-7xl mx-auto" data-testid="latest-videos-grid-loading">
                 {[...Array(3)].map((_, i) => (
-                  <div key={i} className="video-container mx-auto">
-                    <div className="w-full h-full bg-gray-200 rounded-lg animate-pulse" />
+                  <div key={i} className="video-container w-full">
+                    <div className="w-full aspect-[9/16] bg-gray-200 rounded-lg animate-pulse" />
                   </div>
                 ))}
               </div>
             ) : (
-              <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 px-2 max-w-6xl mx-auto" data-testid="latest-videos-grid">
+              <motion.div className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-6 px-2 max-w-7xl mx-auto" data-testid="latest-videos-grid">
                 {latestVideoData.map((video: YouTubeVideo, index: number) => (
                   <motion.div
                     key={video.videoId}
@@ -328,9 +328,9 @@ const Home = () => {
             </section>
           </ParallaxSection>
 
-          {/* Most Loved Comedy Section (Social Proof) */}
+          {/* Most Loved Comedy Section (Social Proof) - Premium */}
           <ParallaxSection speed={0.4} delay={0.3}>
-            <section className="mb-3 sm:mb-4 lg:mb-6" data-testid="loved-comedy-section">
+            <section className="mb-12 sm:mb-16 lg:mb-20 py-8 sm:py-12 bg-gradient-to-br from-white via-gray-50 to-white rounded-3xl shadow-xl" data-testid="loved-comedy-section">
             <motion.h3 
               className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-brand-red mb-2 sm:mb-3 hover-wobble cursor-pointer transition-all duration-300" 
               data-testid="loved-comedy-title-english"
@@ -360,15 +360,15 @@ const Home = () => {
             </motion.p>
             
             {isLoadingPopular ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 px-2 max-w-6xl mx-auto" data-testid="loved-videos-grid-loading">
+              <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-6 px-2 max-w-7xl mx-auto" data-testid="loved-videos-grid-loading">
                 {[...Array(3)].map((_, i) => (
-                  <div key={i} className="video-container mx-auto">
-                    <div className="w-full h-full bg-gray-200 rounded-lg animate-pulse" />
+                  <div key={i} className="video-container w-full">
+                    <div className="w-full aspect-[9/16] bg-gray-200 rounded-lg animate-pulse" />
                   </div>
                 ))}
               </div>
             ) : (
-              <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 px-2 max-w-6xl mx-auto" data-testid="loved-videos-grid">
+              <motion.div className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-6 px-2 max-w-7xl mx-auto" data-testid="loved-videos-grid">
                 {popularVideoData.map((video: YouTubeVideo, index: number) => (
                   <motion.div
                     key={video.videoId}

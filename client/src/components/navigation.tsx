@@ -165,29 +165,18 @@ const Navigation = () => {
         </div>
       </div>
       
-      {/* Premium Promotional Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-400 shadow-inner">
+      {/* Compact Premium Offer Banner */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 shadow-sm">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-center space-x-4">
-            <div className="flex items-center space-x-3">
-              <div className="relative">
-                <span className="text-2xl animate-pulse">🎆</span>
-                <span className="absolute -top-1 -right-1 text-xs animate-ping">✨</span>
-              </div>
-              <div className="text-center">
-                <p className="text-sm sm:text-base font-black text-slate-900 uppercase tracking-wide">
-                  Exclusive Weekly Premieres
-                </p>
-                <p className="text-xs sm:text-sm font-bold text-slate-700 bangla-text">
-                  প্রতি সপ্তাহে নতুন এক্সক্লুসিভ কমেডি
-                </p>
-              </div>
-              <div className="relative">
-                <span className="text-2xl animate-pulse animation-delay-500">🎬</span>
-                <span className="absolute -top-1 -left-1 text-xs animate-ping animation-delay-300">✨</span>
-              </div>
-            </div>
+        <div className="container mx-auto px-4 py-1.5">
+          <div className="flex items-center justify-center space-x-3">
+            <span className="text-lg animate-pulse">🎆</span>
+            <p className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-wide">
+              New Comedy Weekly
+              <span className="mx-2 text-slate-700">|</span>
+              <span className="bangla-text">প্রতি সপ্তাহে নতুন</span>
+            </p>
+            <span className="text-lg animate-pulse animation-delay-500">🎬</span>
           </div>
         </div>
       </div>

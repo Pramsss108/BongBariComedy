@@ -51,63 +51,49 @@ function Router() {
     audioFile: '/public-objects/sounds/folder/charm.mp3' // Your custom charm sound
   });
   
-  // Apply professional cursor style when logged in - with automatic refresh on logout
+  // Apply professional cursor style when logged in
   useEffect(() => {
-    const updateCursor = () => {
-      if (isAuthenticated) {
-        // Add class for professional arrow cursor for serious work
-        document.body.classList.add('admin-logged-in');
-        document.body.style.cursor = 'default !important';
-        document.documentElement.style.cursor = 'default !important';
-        
-        // Remove any belan cursor elements immediately
-        const belanElements = document.querySelectorAll('.magical-belan-portal, .particle-container, .global-cursor-follower');
-        belanElements.forEach(el => {
-          el.remove();
-        });
-        
-        // Apply professional cursor to all elements
-        const style = document.createElement('style');
-        style.id = 'admin-cursor-override';
-        style.textContent = `
-          * {
-            cursor: default !important;
-          }
-          button, a, [role="button"] {
-            cursor: pointer !important;
-          }
-          input, textarea, [contenteditable] {
-            cursor: text !important;
-          }
-        `;
-        if (!document.getElementById('admin-cursor-override')) {
-          document.head.appendChild(style);
+    if (isAuthenticated) {
+      // Add class for professional arrow cursor for serious work
+      document.body.classList.add('admin-logged-in');
+      document.body.style.cursor = 'default';
+      document.documentElement.style.cursor = 'default';
+      
+      // Remove any belan cursor elements immediately
+      const belanElements = document.querySelectorAll('.magical-belan-portal, .particle-container, .global-cursor-follower');
+      belanElements.forEach(el => {
+        el.remove();
+      });
+      
+      // Apply professional cursor to all elements
+      const style = document.createElement('style');
+      style.id = 'admin-cursor-override';
+      style.textContent = `
+        * {
+          cursor: default !important;
         }
-      } else {
-        // Remove class to allow belan cursor for public audience
-        document.body.classList.remove('admin-logged-in');
-        document.body.style.cursor = '';
-        document.documentElement.style.cursor = '';
-        
-        // Remove admin cursor override
-        const overrideStyle = document.getElementById('admin-cursor-override');
-        if (overrideStyle) {
-          overrideStyle.remove();
+        button, a, [role="button"] {
+          cursor: pointer !important;
         }
-        
-        // Refresh page to restore belan cursor properly when logging out
-        if (window.location.pathname === '/admin' || window.location.pathname === '/login') {
-          // Only refresh if we're on admin or login page
-          setTimeout(() => window.location.href = '/', 100);
-        } else {
-          // Refresh current page to restore cursor
-          setTimeout(() => window.location.reload(), 100);
+        input, textarea, [contenteditable] {
+          cursor: text !important;
         }
+      `;
+      if (!document.getElementById('admin-cursor-override')) {
+        document.head.appendChild(style);
       }
-    };
-    
-    // Apply immediately
-    updateCursor();
+    } else {
+      // Remove class to allow belan cursor for public audience
+      document.body.classList.remove('admin-logged-in');
+      document.body.style.cursor = '';
+      document.documentElement.style.cursor = '';
+      
+      // Remove admin cursor override
+      const overrideStyle = document.getElementById('admin-cursor-override');
+      if (overrideStyle) {
+        overrideStyle.remove();
+      }
+    }
     
     // Force re-render of cursor elements
     window.dispatchEvent(new Event('auth-state-changed'));

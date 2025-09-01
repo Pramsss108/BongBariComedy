@@ -46,7 +46,7 @@ const Navigation = () => {
   return (
     <nav className="bg-white/95 backdrop-blur-md shadow-xl sticky top-0 z-50 border-b border-gray-100" data-testid="main-navigation">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-3 lg:py-4">
+        <div className="flex justify-between items-center py-1.5 lg:py-2">
           {/* Logo - Optimized Layout */}
           <Link href="/" data-testid="logo-link">
             <div className="flex items-center space-x-1 cursor-pointer hover-logo-container group w-full">
@@ -66,19 +66,19 @@ const Navigation = () => {
                   <span className="emoji-float emoji-6 text-lg">🤣</span>
                 </div>
               </div>
-              {/* Mobile Logo - Original Sizes with Padding */}
-              <div className="md:hidden flex flex-col justify-center pl-0.5 flex-1 pt-1">
-                <h1 className="text-sm font-bold text-brand-blue bangla-text leading-none mb-0 pt-1">বং বাড়ি</h1>
+              {/* Mobile Logo - Original Sizes with Compact Height */}
+              <div className="md:hidden flex flex-col justify-center pl-0.5 flex-1">
+                <h1 className="text-sm font-bold text-brand-blue bangla-text leading-none mb-0">বং বাড়ি</h1>
                 <div className="space-y-0">
                   <p className="text-[8px] font-semibold text-gray-800 leading-none group-hover:text-brand-blue transition-colors duration-300">Every Home's Story</p>
-                  <p className="text-[8px] text-gray-600 bangla-text font-medium leading-none group-hover:text-brand-red transition-colors duration-300 pt-1">প্রতিটা বাড়ির গল্প</p>
+                  <p className="text-[8px] text-gray-600 bangla-text font-medium leading-none group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
                 </div>
               </div>
-              {/* Desktop Logo - Original Sizes with More Padding */}
-              <div className="hidden md:flex flex-col justify-center pl-3 min-w-[280px] pt-2">
-                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[18px] lg:text-[32px] xl:text-[40px] leading-none mb-1 pt-1">বং বাড়ি</h1>
+              {/* Desktop Logo - Original Sizes with Compact Height */}
+              <div className="hidden md:flex flex-col justify-center pl-3 min-w-[280px]">
+                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[18px] lg:text-[32px] xl:text-[40px] leading-none mb-0.5">বং বাড়ি</h1>
                 <p className="text-[10px] lg:text-base xl:text-lg font-bold text-gray-800 leading-none whitespace-nowrap mb-0 group-hover:text-brand-blue transition-colors duration-300">Every Home's Story</p>
-                <p className="text-[8px] lg:text-sm xl:text-base text-gray-600 bangla-text font-semibold leading-none whitespace-nowrap group-hover:text-brand-red transition-colors duration-300 pt-1">প্রতিটা বাড়ির গল্প</p>
+                <p className="text-[8px] lg:text-sm xl:text-base text-gray-600 bangla-text font-semibold leading-none whitespace-nowrap group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
               </div>
             </div>
           </Link>

@@ -170,9 +170,9 @@ const Home = () => {
       <ParallaxContainer>
         <main className="relative z-10 bg-brand-yellow">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            {/* Welcome Section */}
+            {/* Welcome Section Title Only */}
             <motion.div
-              className="text-center mb-12"
+              className="text-center pt-8 mb-12"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
@@ -183,12 +183,6 @@ const Home = () => {
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 bangla-text mb-4">
                 <span className="text-brand-red">বং বাড়িতে</span> স্বাগতম
               </h2>
-              <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-                Experience authentic Bengali family comedy that feels like home
-              </p>
-              <p className="text-lg sm:text-xl text-gray-600 bangla-text max-w-3xl mx-auto leading-relaxed mt-2">
-                ঘরোয়া পরিবেশের মজার গল্প যা আপনার নিজের বাড়ির মতোই লাগবে
-              </p>
             </motion.div>
 
             {/* Hero Video Section - Premium Layout */}
@@ -207,7 +201,21 @@ const Home = () => {
                   allowFullScreen
                 ></iframe>
               </div>
-              
+            </motion.div>
+
+            {/* Experience Section - Below Video */}
+            <motion.div
+              className="text-center mb-12"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+            >
+              <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                Experience authentic Bengali family comedy that feels like home
+              </p>
+              <p className="text-lg sm:text-xl text-gray-600 bangla-text max-w-3xl mx-auto leading-relaxed mt-2">
+                ঘরোয়া পরিবেশের মজার গল্প যা আপনার নিজের বাড়ির মতোই লাগবে
+              </p>
             </motion.div>
 
           {/* Latest Comedy Section (FOMO) */}

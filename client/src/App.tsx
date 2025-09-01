@@ -3,7 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Navigation from "@/components/navigation";
+
 import { FloatingElements } from "@/components/floating-elements";
 import MagicalCursor from "@/components/MagicalCursor";
 import { useGlobalCursor } from "@/hooks/useGlobalCursor";
@@ -107,7 +107,6 @@ function Router() {
       <FloatingElements />
       {/* Show MagicalCursor (belan) only for public audience, not for logged-in admin */}
       {!isAuthenticated && <MagicalCursor />}
-      <Navigation />
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/about" component={About} />

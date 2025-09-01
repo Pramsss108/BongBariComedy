@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, clearCSRFToken } from "@/lib/queryClient";
 
 interface AuthUser {
   username: string;
@@ -33,6 +33,7 @@ export function useAuth() {
     onSuccess: () => {
       localStorage.removeItem('admin_session');
       setSessionId(null);
+      clearCSRFToken(); // Clear CSRF token on logout
       queryClient.clear();
     }
   });
@@ -52,6 +53,7 @@ export function useAuth() {
     if (error && sessionId) {
       localStorage.removeItem('admin_session');
       setSessionId(null);
+      clearCSRFToken(); // Clear CSRF token on auth error
     }
   }, [error, sessionId]);
 

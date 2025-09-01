@@ -2,13 +2,26 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { chatbotService } from "./chatbotService";
-import { insertBlogPostSchema, insertCollaborationRequestSchema, insertUserSchema, insertHomepageElementSchema, type HomepageElement } from "@shared/schema";
+import { insertBlogPostSchema, insertCollaborationRequestSchema, insertUserSchema, insertHomepageContentSchema, type HomepageContent } from "@shared/schema";
 import { z } from "zod";
 import { google } from "googleapis";
 import { ObjectStorageService } from "./objectStorage";
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { 
+  securityHeaders, 
+  rateLimit, 
+  sanitizeBody,
+  validateSession,
+  trackRequests,
+  generateCSRFToken,
+  validateCSRFToken,
+  checkBruteForce,
+  recordFailedLogin,
+  clearLoginAttempts,
+  sanitizeInput
+} from "./middleware/security";
 
 // Simple session middleware
 const sessions = new Map<string, { username: string; createdAt: Date }>();
@@ -29,10 +42,37 @@ const isAuthenticated = (req: any, res: any, next: any) => {
   }
   
   req.user = session;
+  req.sessionId = sessionId; // Add sessionId to request for CSRF validation
+  next();
+};
+
+// CSRF validation middleware for state-changing operations
+const validateCSRF = (req: any, res: any, next: any) => {
+  // Skip CSRF check for GET requests
+  if (req.method === 'GET') {
+    return next();
+  }
+  
+  const sessionId = req.sessionId || req.headers.authorization?.replace('Bearer ', '');
+  const csrfToken = req.headers['x-csrf-token'] || req.body?.csrfToken;
+  
+  if (!sessionId || !csrfToken) {
+    return res.status(403).json({ message: "Missing CSRF token" });
+  }
+  
+  if (!validateCSRFToken(sessionId, csrfToken)) {
+    return res.status(403).json({ message: "Invalid CSRF token" });
+  }
+  
   next();
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Apply global security middleware
+  app.use(securityHeaders);
+  app.use(trackRequests);
+  app.use(rateLimit(1000, 60000)); // 1000 requests per minute globally - more reasonable for web apps
+  app.use(sanitizeBody); // Sanitize all request bodies
   // Object Storage routes - serve public assets
   app.get("/public-objects/:filePath(*)", async (req, res) => {
     const filePath = req.params.filePath;
@@ -49,15 +89,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Authentication routes
-  app.post("/api/auth/login", async (req, res) => {
+  // Authentication routes with enhanced security
+  app.post("/api/auth/login", rateLimit(5, 60000), async (req, res) => { // 5 login attempts per minute
     try {
+      const identifier = req.ip || req.socket.remoteAddress || 'unknown';
+      
+      // Check for brute force
+      if (!checkBruteForce(identifier)) {
+        return res.status(429).json({ message: "Too many failed login attempts. Please try again later." });
+      }
+      
       const { username, password } = insertUserSchema.parse(req.body);
       const user = await storage.getUserByUsername(username);
       
       if (!user || user.password !== password) {
+        recordFailedLogin(identifier);
         return res.status(401).json({ message: "Invalid username or password" });
       }
+      
+      // Clear failed attempts on successful login
+      clearLoginAttempts(identifier);
       
       // Create session
       const sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
@@ -66,7 +117,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdAt: new Date()
       });
       
-      res.json({ sessionId, username: user.username });
+      // Generate CSRF token for this session
+      const csrfToken = generateCSRFToken(sessionId);
+      
+      res.json({ sessionId, username: user.username, csrfToken });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid login data", errors: error.errors });
@@ -85,6 +139,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/auth/me", isAuthenticated, (req: any, res) => {
     res.json({ username: req.user.username });
+  });
+  
+  // Get CSRF token for authenticated users
+  app.get("/api/auth/csrf-token", isAuthenticated, (req: any, res) => {
+    const sessionId = req.sessionId;
+    if (!sessionId) {
+      return res.status(401).json({ message: "No session found" });
+    }
+    const csrfToken = generateCSRFToken(sessionId);
+    res.json({ csrfToken });
   });
 
   // Create initial admin user if none exists
@@ -107,7 +171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new admin user (protected)
-  app.post("/api/auth/create-user", isAuthenticated, async (req, res) => {
+  app.post("/api/auth/create-user", isAuthenticated, validateCSRF, async (req, res) => {
     try {
       const { username, password } = insertUserSchema.parse(req.body);
       
@@ -229,7 +293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Blog routes
-  app.post("/api/blog", isAuthenticated, async (req, res) => {
+  app.post("/api/blog", isAuthenticated, validateCSRF, async (req, res) => {
     try {
       const blogData = insertBlogPostSchema.parse(req.body);
       const newPost = await storage.createBlogPost(blogData);
@@ -294,7 +358,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/blog/:id", async (req, res) => {
+  app.put("/api/blog/:id", isAuthenticated, validateCSRF, async (req, res) => {
     try {
       const { id } = req.params;
       const validatedData = insertBlogPostSchema.partial().parse(req.body);
@@ -313,7 +377,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/blog/:id", isAuthenticated, async (req, res) => {
+  app.delete("/api/blog/:id", isAuthenticated, validateCSRF, async (req, res) => {
     try {
       const { id } = req.params;
       const deleted = await storage.deleteBlogPost(id);
@@ -341,7 +405,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Mark lead as opened
-  app.put("/api/collaboration-requests/:id/open", isAuthenticated, async (req, res) => {
+  app.put("/api/collaboration-requests/:id/open", isAuthenticated, validateCSRF, async (req, res) => {
     try {
       const { id } = req.params;
       const updated = await storage.markLeadAsOpened(id);
@@ -356,7 +420,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update lead status
-  app.put("/api/collaboration-requests/:id/status", isAuthenticated, async (req, res) => {
+  app.put("/api/collaboration-requests/:id/status", isAuthenticated, validateCSRF, async (req, res) => {
     try {
       const { id } = req.params;
       const { leadStatus } = req.body;
@@ -377,7 +441,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update follow-up notes
-  app.put("/api/collaboration-requests/:id/follow-up", isAuthenticated, async (req, res) => {
+  app.put("/api/collaboration-requests/:id/follow-up", isAuthenticated, validateCSRF, async (req, res) => {
     try {
       const { id } = req.params;
       const { followUpNotes } = req.body;
@@ -609,7 +673,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/admin/chatbot-training", isAuthenticated, async (req, res) => {
+  app.post("/api/admin/chatbot-training", isAuthenticated, validateCSRF, async (req, res) => {
     try {
       const trainingData = req.body;
       const newTraining = await storage.createChatbotTraining(trainingData);
@@ -620,7 +684,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/admin/chatbot-training/:id", isAuthenticated, async (req, res) => {
+  app.put("/api/admin/chatbot-training/:id", isAuthenticated, validateCSRF, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const updates = req.body;
@@ -635,7 +699,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/admin/chatbot-training/:id", isAuthenticated, async (req, res) => {
+  app.delete("/api/admin/chatbot-training/:id", isAuthenticated, validateCSRF, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteChatbotTraining(id);
@@ -721,7 +785,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/admin/homepage-content", isAuthenticated, async (req, res) => {
+  app.post("/api/admin/homepage-content", isAuthenticated, validateCSRF, async (req, res) => {
     try {
       const contentData = req.body;
       const newContent = await storage.createHomepageContent(contentData);
@@ -835,7 +899,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/homepage-banner", async (req, res) => {
+  app.post("/api/homepage-banner", isAuthenticated, validateCSRF, async (req, res) => {
     try {
       const { title, subtitle, bannerImage } = req.body;
       

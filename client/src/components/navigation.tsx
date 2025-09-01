@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [location] = useLocation();
+  const { user, isLoading } = useAuth();
 
   const navItems = [
     { href: "/", label: "Home" },
@@ -13,7 +15,11 @@ const Navigation = () => {
     { href: "/work-with-us", label: "Work with us" },
     { href: "/contact", label: "Contact" },
     { href: "/blog", label: "Blog" },
-    { href: "/admin", label: "Login" },
+    { 
+      href: "/admin", 
+      label: user ? "Admin Panel" : "Login",
+      icon: user ? User : LogIn
+    },
   ];
 
   const isActive = (href: string) => {
@@ -64,20 +70,32 @@ const Navigation = () => {
           
           {/* Desktop Navigation - High Visibility All Devices */}
           <div className="hidden md:flex items-center space-x-2 lg:space-x-6 xl:space-x-8">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`font-semibold text-xs lg:text-base xl:text-lg transition-all duration-200 hover:text-brand-blue hover:scale-105 hover:font-bold ${
-                  isActive(item.href) 
-                    ? "text-brand-blue border-b-2 border-brand-blue pb-1" 
-                    : "text-gray-700 hover:border-b-2 hover:border-brand-blue pb-1"
-                }`}
-                data-testid={`nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isLoginItem = item.href === "/admin";
+              const isLoggedIn = user && isLoginItem;
+              
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`font-semibold text-xs lg:text-base xl:text-lg transition-all duration-200 hover:text-brand-blue hover:scale-105 hover:font-bold ${
+                    isActive(item.href) 
+                      ? "text-brand-blue border-b-2 border-brand-blue pb-1" 
+                      : isLoggedIn
+                        ? "text-green-600 hover:text-green-700 hover:border-b-2 hover:border-green-600 pb-1"
+                        : "text-gray-700 hover:border-b-2 hover:border-brand-blue pb-1"
+                  }`}
+                  data-testid={`nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+                >
+                  <span className="flex items-center gap-1">
+                    {Icon && <Icon className="w-4 h-4 lg:w-5 lg:h-5" />}
+                    {item.label}
+                    {isLoggedIn && <span className="ml-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Logged In</span>}
+                  </span>
+                </Link>
+              );
+            })}
           </div>
           
           {/* Mobile Menu Button - Enhanced Touch Target */}
@@ -95,19 +113,33 @@ const Navigation = () => {
         {/* Mobile Navigation - Maximum Visibility */}
         {isMobileMenuOpen && (
           <div className="md:hidden pb-4 border-t border-gray-200 mt-4 bg-white shadow-lg" data-testid="mobile-menu">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`block py-5 px-4 font-bold text-xl transition-all duration-200 hover:text-brand-blue hover:bg-gray-50 rounded-lg mx-3 my-2 ${
-                  isActive(item.href) ? "text-brand-blue bg-blue-50 border-l-4 border-brand-blue" : "text-gray-800"
-                }`}
-                onClick={() => setIsMobileMenuOpen(false)}
-                data-testid={`mobile-nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isLoginItem = item.href === "/admin";
+              const isLoggedIn = user && isLoginItem;
+              
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`block py-5 px-4 font-bold text-xl transition-all duration-200 hover:text-brand-blue hover:bg-gray-50 rounded-lg mx-3 my-2 ${
+                    isActive(item.href) 
+                      ? "text-brand-blue bg-blue-50 border-l-4 border-brand-blue" 
+                      : isLoggedIn
+                        ? "text-green-600 bg-green-50"
+                        : "text-gray-800"
+                  }`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  data-testid={`mobile-nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+                >
+                  <span className="flex items-center gap-2">
+                    {Icon && <Icon className="w-6 h-6" />}
+                    {item.label}
+                    {isLoggedIn && <span className="ml-2 px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full">Logged In</span>}
+                  </span>
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>

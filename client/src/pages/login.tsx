@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import SEOHead from "@/components/seo-head";
 import { Lock, User, Eye, EyeOff } from "lucide-react";
 import { insertUserSchema, type InsertUser } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, setCSRFToken, clearCSRFToken } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -36,8 +36,29 @@ const Login = () => {
         'Content-Type': 'application/json'
       }
     }),
-    onSuccess: (data: any) => {
+    onSuccess: async (data: any) => {
       setSession(data.sessionId);
+      
+      // Store CSRF token if provided
+      if (data.csrfToken) {
+        setCSRFToken(data.csrfToken);
+      }
+      
+      // Fetch a fresh CSRF token for the session
+      try {
+        const response = await apiRequest('/api/auth/csrf-token', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${data.sessionId}`
+          }
+        });
+        if (response.csrfToken) {
+          setCSRFToken(response.csrfToken);
+        }
+      } catch (error) {
+        console.error('Failed to fetch CSRF token:', error);
+      }
+      
       toast({
         title: "Login Successful!",
         description: "Welcome to the admin panel."

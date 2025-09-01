@@ -170,17 +170,17 @@ const Home = () => {
       
       <ParallaxContainer>
         
-        <main className="relative z-10 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 min-h-screen">
+        <main className="relative z-10">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             
             {/* Hero Video Section - Premium Layout */}
             <motion.div
-              className="w-full max-w-5xl mx-auto pb-8 pt-4"
+              className="w-full max-w-5xl mx-auto mb-8 mt-2"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6 }}
             >
-              <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-2xl bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700/30">
+              <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-gray-900 to-gray-800">
                 <iframe
                   src="https://www.youtube.com/embed/pdjQpcVqxMU?rel=0&modestbranding=1&showinfo=0&autoplay=0"
                   title="বং বাড়ি - Barir Mashla | Our Story | Bengali Comedy Channel"
@@ -192,21 +192,21 @@ const Home = () => {
               
               {/* Video Title & Description */}
               <motion.div
-                className="text-center mt-4"
+                className="text-center mt-6"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.3 }}
               >
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-100 mb-2">
-                  Welcome to <span className="text-brand-yellow">Bong Bari</span>
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-3">
+                  Welcome to <span className="text-brand-blue">Bong Bari</span>
                 </h1>
-                <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-200 bangla-text mb-3">
-                  <span className="text-brand-yellow">বং বাড়িতে</span> স্বাগতম
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 bangla-text mb-4">
+                  <span className="text-brand-red">বং বাড়িতে</span> স্বাগতম
                 </h2>
-                <p className="text-base sm:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
+                <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
                   Experience authentic Bengali family comedy that feels like home
                 </p>
-                <p className="text-base sm:text-lg text-gray-400 bangla-text max-w-3xl mx-auto leading-relaxed mt-1">
+                <p className="text-lg sm:text-xl text-gray-600 bangla-text max-w-3xl mx-auto leading-relaxed mt-2">
                   ঘরোয়া পরিবেশের মজার গল্প যা আপনার নিজের বাড়ির মতোই লাগবে
                 </p>
               </motion.div>
@@ -217,47 +217,47 @@ const Home = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
-            className="pb-12"
+            className="mb-12"
           >
             <div className="max-w-6xl mx-auto">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <motion.div
-                  className="text-center p-4 bg-slate-800/50 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-700/30"
+                  className="text-center p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.7 }}
                 >
-                  <div className="w-14 h-14 bg-brand-yellow rounded-full flex items-center justify-center mx-auto mb-3">
-                    <HomeIcon className="w-7 h-7 text-slate-900" />
+                  <div className="w-16 h-16 bg-brand-yellow rounded-full flex items-center justify-center mx-auto mb-4">
+                    <HomeIcon className="w-8 h-8 text-brand-blue" />
                   </div>
-                  <h3 className="text-lg font-bold text-gray-100 mb-1">Authentic Stories</h3>
-                  <p className="text-gray-400 bangla-text text-sm">প্রতিটা বাড়ির সত্যি গল্প</p>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Authentic Stories</h3>
+                  <p className="text-gray-600 bangla-text">প্রতিটা বাড়ির সত্যি গল্প</p>
                 </motion.div>
                 
                 <motion.div
-                  className="text-center p-4 bg-slate-800/50 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-700/30"
+                  className="text-center p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.8 }}
                 >
-                  <div className="w-14 h-14 bg-brand-red rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Smile className="w-7 h-7 text-white" />
+                  <div className="w-16 h-16 bg-brand-red rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Smile className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className="text-lg font-bold text-gray-100 mb-1">Real Comedy</h3>
-                  <p className="text-gray-400 bangla-text text-sm">সত্যিকারের হাসির গল্প</p>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Real Comedy</h3>
+                  <p className="text-gray-600 bangla-text">সত্যিকারের হাসির গল্প</p>
                 </motion.div>
                 
                 <motion.div
-                  className="text-center p-4 bg-slate-800/50 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-700/30"
+                  className="text-center p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.9 }}
                 >
-                  <div className="w-14 h-14 bg-brand-blue rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Users className="w-7 h-7 text-white" />
+                  <div className="w-16 h-16 bg-brand-blue rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Users className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className="text-lg font-bold text-gray-100 mb-1">Family First</h3>
-                  <p className="text-gray-400 bangla-text text-sm">পরিবারের জন্য তৈরি</p>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Family First</h3>
+                  <p className="text-gray-600 bangla-text">পরিবারের জন্য তৈরি</p>
                 </motion.div>
               </div>
             </div>
@@ -267,7 +267,7 @@ const Home = () => {
           <ParallaxSection speed={0.4} delay={0.2}>
             <section className="mb-6 sm:mb-8 lg:mb-10" data-testid="latest-comedy-section">
             <motion.h3 
-              className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-brand-yellow mb-2 sm:mb-3 hover-wobble cursor-pointer transition-all duration-300" 
+              className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-brand-blue mb-2 sm:mb-3 hover-wobble cursor-pointer transition-all duration-300" 
               data-testid="latest-comedy-title-english"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -276,7 +276,7 @@ const Home = () => {
               Latest Comedy
             </motion.h3>
             <motion.h4 
-              className="text-xl sm:text-2xl lg:text-3xl font-bold text-center text-gray-200 mb-2 sm:mb-3 bangla-text hover-bounce cursor-pointer transition-all duration-300" 
+              className="text-xl sm:text-2xl lg:text-3xl font-bold text-center text-gray-800 mb-2 sm:mb-3 bangla-text hover-bounce cursor-pointer transition-all duration-300" 
               data-testid="latest-comedy-title-bengali"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -285,7 +285,7 @@ const Home = () => {
               সর্বশেষ কমেডি
             </motion.h4>
             <motion.p 
-              className="text-center text-gray-400 mb-6 sm:mb-8 text-sm sm:text-base italic" 
+              className="text-center text-gray-600 mb-6 sm:mb-8 text-sm sm:text-base italic" 
               data-testid="latest-comedy-subtitle"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -335,7 +335,7 @@ const Home = () => {
           <ParallaxSection speed={0.4} delay={0.3}>
             <section className="mb-3 sm:mb-4 lg:mb-6" data-testid="loved-comedy-section">
             <motion.h3 
-              className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-brand-yellow mb-2 sm:mb-3 hover-wobble cursor-pointer transition-all duration-300" 
+              className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-brand-red mb-2 sm:mb-3 hover-wobble cursor-pointer transition-all duration-300" 
               data-testid="loved-comedy-title-english"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -344,7 +344,7 @@ const Home = () => {
               ⭐ Most Loved Comedy
             </motion.h3>
             <motion.h4 
-              className="text-xl sm:text-2xl lg:text-3xl font-bold text-center text-gray-200 mb-2 sm:mb-3 bangla-text hover-bounce cursor-pointer transition-all duration-300" 
+              className="text-xl sm:text-2xl lg:text-3xl font-bold text-center text-gray-800 mb-2 sm:mb-3 bangla-text hover-bounce cursor-pointer transition-all duration-300" 
               data-testid="loved-comedy-title-bengali"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -353,7 +353,7 @@ const Home = () => {
               ⭐ সবচেয়ে প্রিয় কমেডি
             </motion.h4>
             <motion.p 
-              className="text-center text-gray-400 mb-6 sm:mb-8 text-sm sm:text-base italic" 
+              className="text-center text-gray-600 mb-6 sm:mb-8 text-sm sm:text-base italic" 
               data-testid="loved-comedy-subtitle"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -410,7 +410,7 @@ const Home = () => {
               >
                 {/* Section Header */}
                 <motion.h3 
-                  className="font-bold text-center text-brand-yellow mb-3 sm:mb-4 hover-wobble cursor-pointer transition-all duration-300 px-2" 
+                  className="font-bold text-center text-brand-blue mb-3 sm:mb-4 hover-wobble cursor-pointer transition-all duration-300 px-2" 
                   style={{ fontSize: 'clamp(1.8rem, 7vw, 3.5rem)' }}
                   data-testid="why-bong-bari-title-english"
                   initial={{ opacity: 0, y: 30 }}
@@ -420,7 +420,7 @@ const Home = () => {
                   Why Bong Bari?
                 </motion.h3>
                 <motion.h4 
-                  className="font-bold text-center text-gray-200 mb-8 sm:mb-12 bangla-text hover-bounce cursor-pointer transition-all duration-300 px-2" 
+                  className="font-bold text-center text-gray-800 mb-8 sm:mb-12 bangla-text hover-bounce cursor-pointer transition-all duration-300 px-2" 
                   style={{ fontSize: 'clamp(1.5rem, 6vw, 2.8rem)' }}
                   data-testid="why-bong-bari-title-bengali"
                   initial={{ opacity: 0, y: 30 }}
@@ -443,14 +443,14 @@ const Home = () => {
                   >
                     <div className="flex-shrink-0">
                       <div className="w-12 h-12 bg-brand-yellow rounded-full flex items-center justify-center">
-                        <HomeIcon className="w-6 h-6 text-brand-yellow" />
+                        <HomeIcon className="w-6 h-6 text-brand-blue" />
                       </div>
                     </div>
                     <div>
-                      <p className="text-lg sm:text-xl font-semibold text-gray-200 mb-2">
+                      <p className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">
                         Every home relates instantly
                       </p>
-                      <p className="text-base sm:text-lg text-gray-400 bangla-text">
+                      <p className="text-base sm:text-lg text-gray-600 bangla-text">
                         প্রতিটা বাড়ি নিজেকে খুঁজে পায়।
                       </p>
                     </div>
@@ -471,10 +471,10 @@ const Home = () => {
                       </div>
                     </div>
                     <div>
-                      <p className="text-lg sm:text-xl font-semibold text-gray-200 mb-2">
+                      <p className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">
                         Comedy that feels real, not acted
                       </p>
-                      <p className="text-base sm:text-lg text-gray-400 bangla-text">
+                      <p className="text-base sm:text-lg text-gray-600 bangla-text">
                         কমেডি যা লাগে একেবারে আসল।
                       </p>
                     </div>
@@ -495,10 +495,10 @@ const Home = () => {
                       </div>
                     </div>
                     <div>
-                      <p className="text-lg sm:text-xl font-semibold text-gray-200 mb-2">
+                      <p className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">
                         Maa–chele dynamic everyone connects with
                       </p>
-                      <p className="text-base sm:text-lg text-gray-400 bangla-text">
+                      <p className="text-base sm:text-lg text-gray-600 bangla-text">
                         মা–ছেলের কচাল, সবার চেনা।
                       </p>
                     </div>
@@ -519,10 +519,10 @@ const Home = () => {
                       </div>
                     </div>
                     <div>
-                      <p className="text-lg sm:text-xl font-semibold text-gray-200 mb-2">
+                      <p className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">
                         Perfect partner for brands entering Bengali homes
                       </p>
-                      <p className="text-base sm:text-lg text-gray-400 bangla-text">
+                      <p className="text-base sm:text-lg text-gray-600 bangla-text">
                         প্রতিটা বাঙালি বাড়িতে ব্র্যান্ড পৌঁছতে পারবে।
                       </p>
                     </div>
@@ -544,10 +544,10 @@ const Home = () => {
                   transition: { duration: 0.2 }
                 }}
               >
-                <h3 className="font-bold text-brand-yellow mb-1 sm:mb-2 hover-pulse cursor-pointer transition-all duration-300" data-testid="collaboration-title-english" style={{fontSize: 'clamp(2.5rem, 8vw, 8rem)'}}>
+                <h3 className="font-bold text-brand-blue mb-1 sm:mb-2 hover-pulse cursor-pointer transition-all duration-300" data-testid="collaboration-title-english" style={{fontSize: 'clamp(2.5rem, 8vw, 8rem)'}}>
                   Work with Us
                 </h3>
-                <h4 className="font-bold text-gray-200 bangla-text hover-wobble cursor-pointer transition-all duration-300" data-testid="collaboration-title-bengali" style={{fontSize: 'clamp(2rem, 6vw, 6rem)'}}>
+                <h4 className="font-bold text-gray-800 bangla-text hover-wobble cursor-pointer transition-all duration-300" data-testid="collaboration-title-bengali" style={{fontSize: 'clamp(2rem, 6vw, 6rem)'}}>
                   আমাদের সাথে কাজ করুন
                 </h4>
               </motion.div>

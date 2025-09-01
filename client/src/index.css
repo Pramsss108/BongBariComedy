@@ -56,24 +56,6 @@
   --tracking-normal: 0em;
 }
 
-/* Premium Animations */
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-.animate-shimmer {
-  animation: shimmer 3s infinite;
-}
-
-.animation-delay-300 {
-  animation-delay: 300ms;
-}
-
-.animation-delay-500 {
-  animation-delay: 500ms;
-}
-
 /* Mobile-First Responsive Utilities */
 @media (min-width: 475px) {
   .xs\:inline { display: inline; }

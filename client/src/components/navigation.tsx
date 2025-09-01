@@ -45,8 +45,8 @@ const Navigation = () => {
 
   return (
     <nav className="sticky top-0 z-50" data-testid="main-navigation">
-      {/* Main Navigation - Premium Deep Color */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 backdrop-blur-xl shadow-2xl">
+      {/* Main Navigation */}
+      <div className="bg-white/95 backdrop-blur-md shadow-sm">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-10 lg:h-12">
           {/* Logo - Optimized Layout */}
@@ -70,17 +70,17 @@ const Navigation = () => {
               </div>
               {/* Mobile Logo - Original Sizes */}
               <div className="md:hidden flex flex-col justify-center pl-0.5 flex-1">
-                <h1 className="text-sm font-bold text-brand-yellow bangla-text leading-none mb-0">বং বাড়ি</h1>
+                <h1 className="text-sm font-bold text-brand-blue bangla-text leading-none mb-0">বং বাড়ি</h1>
                 <div className="space-y-0">
-                  <p className="text-[8px] font-semibold text-gray-100 leading-none group-hover:text-brand-yellow transition-colors duration-300">Every Home's Story</p>
-                  <p className="text-[8px] text-gray-300 bangla-text font-medium leading-none group-hover:text-brand-yellow transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
+                  <p className="text-[8px] font-semibold text-gray-800 leading-none group-hover:text-brand-blue transition-colors duration-300">Every Home's Story</p>
+                  <p className="text-[8px] text-gray-600 bangla-text font-medium leading-none group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
                 </div>
               </div>
               {/* Desktop Logo - Original Sizes */}
               <div className="hidden md:flex flex-col justify-center pl-3 min-w-[280px]">
-                <h1 className="font-bold text-brand-yellow bangla-text whitespace-nowrap text-[18px] lg:text-[32px] xl:text-[40px] leading-none mb-0 drop-shadow-lg">বং বাড়ি</h1>
-                <p className="text-[10px] lg:text-base xl:text-lg font-bold text-gray-100 leading-none whitespace-nowrap mb-0 group-hover:text-brand-yellow transition-colors duration-300">Every Home's Story</p>
-                <p className="text-[8px] lg:text-sm xl:text-base text-gray-300 bangla-text font-semibold leading-none whitespace-nowrap group-hover:text-brand-yellow transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
+                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[18px] lg:text-[32px] xl:text-[40px] leading-none mb-0">বং বাড়ি</h1>
+                <p className="text-[10px] lg:text-base xl:text-lg font-bold text-gray-800 leading-none whitespace-nowrap mb-0 group-hover:text-brand-blue transition-colors duration-300">Every Home's Story</p>
+                <p className="text-[8px] lg:text-sm xl:text-base text-gray-600 bangla-text font-semibold leading-none whitespace-nowrap group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
               </div>
             </div>
           </Link>
@@ -96,10 +96,10 @@ const Navigation = () => {
                 <div key={item.href} className="relative flex items-center">
                   <Link
                     href={item.href}
-                    className={`font-semibold text-sm lg:text-lg xl:text-xl transition-all duration-300 hover:text-brand-yellow hover:scale-105 ${
+                    className={`font-semibold text-sm lg:text-lg xl:text-xl transition-all duration-300 hover:text-brand-blue hover:scale-105 ${
                       isActive(item.href) 
-                        ? "text-brand-yellow border-b-2 border-brand-yellow" 
-                        : "text-green-400 hover:text-green-300 hover:border-b-2 hover:border-green-400"
+                        ? "text-brand-blue border-b border-brand-blue" 
+                        : "text-green-600 hover:text-green-700 hover:border-b hover:border-green-600"
                     }`}
                     data-testid={`nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                   >
@@ -111,7 +111,7 @@ const Navigation = () => {
                   <Popover open={logoutPopoverOpen} onOpenChange={setLogoutPopoverOpen}>
                     <PopoverTrigger asChild>
                       <button 
-                        className="ml-3 px-3 py-1 bg-green-900/30 text-green-400 text-sm font-medium rounded-full cursor-pointer hover:bg-green-900/40 transition-all duration-300 hover:scale-105 shadow-sm backdrop-blur-sm border border-green-500/20"
+                        className="ml-3 px-3 py-1 bg-green-100 text-green-700 text-sm font-medium rounded-full cursor-pointer hover:bg-green-200 transition-all duration-300 hover:scale-105 shadow-sm"
                         data-testid="logged-in-badge"
                       >
                         ● Logged In
@@ -135,10 +135,10 @@ const Navigation = () => {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`font-semibold text-xs lg:text-base xl:text-lg transition-all duration-200 hover:text-brand-yellow hover:scale-105 ${
+                  className={`font-semibold text-xs lg:text-base xl:text-lg transition-all duration-200 hover:text-brand-blue hover:scale-105 ${
                     isActive(item.href) 
-                      ? "text-brand-yellow border-b-2 border-brand-yellow" 
-                      : "text-gray-100 hover:border-b-2 hover:border-brand-yellow"
+                      ? "text-brand-blue border-b border-brand-blue" 
+                      : "text-gray-700 hover:border-b hover:border-brand-blue"
                   }`}
                   data-testid={`nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                 >
@@ -165,25 +165,24 @@ const Navigation = () => {
         </div>
       </div>
       
-      {/* Compact Premium Offer Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 shadow-sm">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
-        <div className="container mx-auto px-4 py-1.5">
-          <div className="flex items-center justify-center space-x-3">
-            <span className="text-lg animate-pulse">🎆</span>
-            <p className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-wide">
-              New Comedy Weekly
-              <span className="mx-2 text-slate-700">|</span>
-              <span className="bangla-text">প্রতি সপ্তাহে নতুন</span>
+      {/* Promotional Banner - Below Navigation */}
+      <div className="bg-gradient-to-r from-brand-yellow via-yellow-300 to-brand-yellow shadow-md">
+        <div className="container mx-auto px-4 py-2">
+          <div className="flex items-center justify-center space-x-2">
+            <span className="text-2xl animate-bounce">🎬</span>
+            <p className="text-sm sm:text-base font-bold text-brand-blue">
+              New Comedy Every Week! 
+              <span className="text-brand-red mx-2">|</span>
+              <span className="bangla-text">নতুন কমেডি প্রতি সপ্তাহে!</span>
             </p>
-            <span className="text-lg animate-pulse animation-delay-500">🎬</span>
+            <span className="text-2xl animate-bounce animation-delay-200">🎭</span>
           </div>
         </div>
       </div>
       
-      {/* Mobile Navigation - Premium Design */}
+      {/* Mobile Navigation - Maximum Visibility */}
         {isMobileMenuOpen && (
-          <div className="md:hidden pb-4 border-t border-gray-700/20 bg-gradient-to-b from-slate-800 to-slate-900 shadow-2xl" data-testid="mobile-menu">
+          <div className="md:hidden pb-4 border-t border-gray-200 mt-4 bg-white shadow-lg" data-testid="mobile-menu">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isLoginItem = item.href === "/admin";
@@ -193,12 +192,12 @@ const Navigation = () => {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`block py-5 px-4 font-bold text-xl transition-all duration-200 hover:text-brand-yellow hover:bg-slate-700/40 rounded-lg mx-3 my-2 ${
+                  className={`block py-5 px-4 font-bold text-xl transition-all duration-200 hover:text-brand-blue hover:bg-gray-50 rounded-lg mx-3 my-2 ${
                     isActive(item.href) 
-                      ? "text-brand-yellow bg-slate-700/50 border-l-4 border-brand-yellow" 
+                      ? "text-brand-blue bg-blue-50 border-l-4 border-brand-blue" 
                       : isLoggedIn
-                        ? "text-green-400 bg-green-900/30"
-                        : "text-gray-100"
+                        ? "text-green-600 bg-green-50"
+                        : "text-gray-800"
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                   data-testid={`mobile-nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
@@ -206,7 +205,7 @@ const Navigation = () => {
                   <span className="flex items-center gap-2">
                     {Icon && <Icon className="w-6 h-6" />}
                     {item.label}
-                    {isLoggedIn && <span className="ml-2 px-3 py-1 bg-green-900/30 text-green-400 text-sm rounded-full border border-green-500/20">Logged In</span>}
+                    {isLoggedIn && <span className="ml-2 px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full">Logged In</span>}
                   </span>
                 </Link>
               );

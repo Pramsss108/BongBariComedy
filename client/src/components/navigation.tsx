@@ -44,9 +44,9 @@ const Navigation = () => {
   };
 
   return (
-    <nav className="fixed w-full z-50" style={{ top: '-5px', left: 0, margin: 0, padding: 0, border: 0, outline: 0 }} data-testid="main-navigation">
+    <nav className="fixed top-0 w-full z-50 m-0 p-0" data-testid="main-navigation">
       {/* Main Navigation */}
-      <div className="bg-gradient-to-r from-brand-blue to-blue-600 shadow-lg" style={{ margin: 0, padding: 0, border: 0, outline: 0 }}>
+      <div className="bg-gradient-to-r from-brand-blue to-blue-600 shadow-lg">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-10 lg:h-12">
           {/* Logo - Optimized Layout */}

@@ -103,7 +103,7 @@ function Router() {
   }, [isAuthenticated]);
   
   return (
-    <div className="min-h-screen bg-brand-blue relative m-0 p-0">
+    <div className="min-h-screen bg-brand-yellow relative m-0 p-0">
       <FloatingElements />
       {/* Show MagicalCursor (belan) only for public audience, not for logged-in admin */}
       {!isAuthenticated && <MagicalCursor />}

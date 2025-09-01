@@ -1,0 +1,83 @@
+General Layout
+
+The header should be a slim, fixed top bar exactly like Flaticon’s header (no extra vertical padding above or below).
+
+No white space before or after the header. The header should sit flush at the very top of the viewport, occupying the full width.
+
+Color Scheme (Bong Bari brand)
+
+Background color: #0D47FF (Bong Bari blue).
+
+Text and menu items: white (#FFFFFF).
+
+Active/hover link: Bong Bari yellow (#FFD200).
+
+Logo Section
+
+On the left, place the Bong Bari logo (use the provided logo image file).
+
+Next to the logo, place the brand name in Bengali: বং বাড়ি
+
+Below the brand name, add the tagline in English and Bengali:
+
+English: “Every Home’s Story”
+
+Bengali: “প্রতিটা বাড়ির গল্প”
+
+Align logo and text vertically centered.
+
+Navigation Menu
+
+On the right side of the header, include the following menu items in a single row:
+
+Home
+
+About
+
+Work with us
+
+Contact
+
+Blog
+
+Login (with login icon in front, same as in the screenshot you saw)
+
+Menu items should be horizontally aligned and have equal spacing.
+
+No extra gaps between header and menu.
+
+Header Styling
+
+Height: not more than 60px (keep it slim like Flaticon).
+
+Use flexbox with justify-content: space-between for proper alignment.
+
+Font family: sans-serif, medium weight.
+
+No box-shadow, no border, no extra margins.
+
+Below the Header (Promotional Section)
+
+Immediately below the header (with no white gap in between), add a full-width section with Bong Bari background color (#FFD200).
+
+Inside this section, place a search bar or text area for promotion/offers.
+
+Center align horizontally and vertically inside the section.
+
+No white margin before or after this section.
+
+Responsiveness
+
+On desktop: menu items spread across the top bar.
+
+On mobile: collapse into a hamburger menu (on the right side).
+
+Logo and brand name should shrink proportionally, keeping everything slim.
+
+Important Instructions
+
+Do not add any white margin, padding, or background above the header or below the promotional section.
+
+Header and promotional section should look like they are stitched together with no gaps.
+
+The design must visually replicate Flaticon’s slim header style but with Bong Bari’s colors and branding.

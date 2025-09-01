@@ -47,16 +47,16 @@ const Navigation = () => {
           <div className="container mx-auto px-4 h-full">
             <div className="flex justify-between items-center h-full">
               
-              {/* Logo Section - Perfect Size */}
-              <Link href="/" className="flex items-center space-x-2">
+              {/* Logo Section - Properly Sized */}
+              <Link href="/" className="flex items-center space-x-3">
                 <img 
                   src="/logo.png" 
                   alt="Bong Bari" 
-                  className="w-10 h-10 rounded-lg"
+                  className="w-10 h-10 rounded-lg flex-shrink-0"
                 />
-                <div className="flex flex-col justify-center">
-                  <h1 className="text-base font-bold text-[#FFD200] leading-tight">Bong Bari</h1>
-                  <p className="text-[10px] text-white/90 leading-tight bangla-text mt-0.5">প্রতিটা বাড়ির গল্প</p>
+                <div className="flex flex-col justify-center min-w-0">
+                  <h1 className="text-sm font-bold text-[#FFD200] leading-none whitespace-nowrap">Bong Bari</h1>
+                  <p className="text-[9px] text-white/90 leading-none bangla-text whitespace-nowrap mt-1">প্রতিটা বাড়ির গল্প</p>
                 </div>
               </Link>
               

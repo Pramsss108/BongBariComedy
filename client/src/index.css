@@ -61,6 +61,20 @@
   animation-delay: 200ms;
 }
 
+/* Scrolling Ticker Animation */
+@keyframes scroll {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-scroll {
+  animation: scroll 30s linear infinite;
+}
+
 /* Mobile-First Responsive Utilities */
 @media (min-width: 475px) {
   .xs\:inline { display: inline; }

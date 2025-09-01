@@ -13,7 +13,7 @@ const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [logoutPopoverOpen, setLogoutPopoverOpen] = useState(false);
   const [location] = useLocation();
-  const { user, isLoading, logout } = useAuth();
+  const { user, logout } = useAuth();
   
   const handleLogout = () => {
     logout();
@@ -31,7 +31,7 @@ const Navigation = () => {
     { href: "/blog", label: "Blog" },
     { 
       href: "/admin", 
-      label: user ? "Admin Panel" : "Login",
+      label: user ? "Admin Panel" : "Login ➝",
       icon: user ? User : LogIn
     },
   ];
@@ -43,47 +43,37 @@ const Navigation = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 w-full" data-testid="main-navigation">
-      {/* Main Blue Navigation Header */}
-      <nav className="bg-gradient-to-r from-brand-blue via-blue-600 to-brand-blue shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+    <div className="fixed top-0 left-0 right-0 z-50 w-full" data-testid="main-navigation">
+      {/* Main Header - #0D47FF Background, 60px Height */}
+      <header style={{ backgroundColor: '#0D47FF', height: '60px' }} className="shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 h-full">
+          <div className="flex justify-between items-center h-full">
             
-            {/* Logo Section */}
+            {/* Left Side: Logo + Text */}
             <Link href="/" data-testid="logo-link">
               <div className="flex items-center space-x-3 group cursor-pointer">
                 <div className="relative">
                   <img 
                     src="/logo.png" 
                     alt="Bong Bari Logo" 
-                    className="w-12 h-12 lg:w-14 lg:h-14 rounded-xl transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 shadow-md"
+                    className="w-10 h-10 rounded-lg transition-all duration-300 group-hover:scale-110 group-hover:rotate-6"
                   />
-                  {/* Hover Emojis */}
-                  <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden lg:block">
-                    <span className="absolute -top-2 -left-2 text-lg animate-bounce">😂</span>
-                    <span className="absolute -top-2 -right-2 text-sm animate-bounce delay-100">❤️</span>
-                    <span className="absolute -bottom-2 -left-2 text-sm animate-bounce delay-200">🎭</span>
-                    <span className="absolute -bottom-2 -right-2 text-xs animate-bounce delay-300">✨</span>
-                  </div>
                 </div>
                 
                 {/* Brand Text */}
                 <div className="flex flex-col">
-                  <h1 className="text-xl lg:text-3xl font-bold text-brand-yellow bangla-text leading-none group-hover:text-yellow-200 transition-colors">
+                  <h1 className="text-lg lg:text-xl font-bold text-white bangla-text leading-tight">
                     বং বাড়ি
                   </h1>
-                  <p className="text-xs lg:text-sm font-semibold text-white leading-none group-hover:text-yellow-100 transition-colors">
+                  <p className="text-xs text-white/90 leading-tight">
                     Every Home's Story
-                  </p>
-                  <p className="text-xs text-blue-100 bangla-text font-medium leading-none group-hover:text-yellow-200 transition-colors">
-                    প্রতিটা বাড়ির গল্প
                   </p>
                 </div>
               </div>
             </Link>
             
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-8">
+            {/* Right Side: Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-6">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isLoginItem = item.href === "/admin";
@@ -93,26 +83,26 @@ const Navigation = () => {
                   <div key={item.href} className="flex items-center space-x-3">
                     <Link
                       href={item.href}
-                      className={`flex items-center space-x-2 px-3 py-2 rounded-lg font-semibold text-sm lg:text-base transition-all duration-300 hover:scale-105 ${
+                      className={`flex items-center space-x-1 font-medium text-sm transition-colors duration-200 ${
                         isActive(item.href) 
-                          ? "text-brand-yellow bg-white/10 border border-brand-yellow" 
-                          : "text-green-300 hover:text-green-200 hover:bg-white/10"
+                          ? "text-white" 
+                          : "text-white hover:text-[#FFD200]"
                       }`}
                       data-testid={`nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                     >
-                      {Icon && <Icon className="w-5 h-5" />}
+                      {Icon && <Icon className="w-4 h-4" />}
                       <span>{item.label}</span>
                     </Link>
                     <Popover open={logoutPopoverOpen} onOpenChange={setLogoutPopoverOpen}>
                       <PopoverTrigger asChild>
                         <button 
-                          className="px-4 py-2 bg-green-100 text-green-800 text-sm font-semibold rounded-full hover:bg-green-200 transition-all duration-300 hover:scale-105 shadow-sm"
+                          className="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full hover:bg-green-200 transition-all duration-200"
                           data-testid="logged-in-badge"
                         >
                           ● Logged In
                         </button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-40 p-3">
+                      <PopoverContent className="w-32 p-2">
                         <Button
                           onClick={handleLogout}
                           variant="ghost"
@@ -120,7 +110,7 @@ const Navigation = () => {
                           className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
                           data-testid="logout-popup-button"
                         >
-                          <LogOut className="w-4 h-4 mr-2" />
+                          <LogOut className="w-4 h-4 mr-1" />
                           Logout
                         </Button>
                       </PopoverContent>
@@ -130,14 +120,14 @@ const Navigation = () => {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg font-semibold text-sm lg:text-base transition-all duration-300 hover:scale-105 ${
+                    className={`flex items-center space-x-1 font-medium text-sm transition-colors duration-200 ${
                       isActive(item.href) 
-                        ? "text-brand-yellow bg-white/10 border border-brand-yellow" 
-                        : "text-white hover:text-brand-yellow hover:bg-white/10"
+                        ? "text-white" 
+                        : "text-white hover:text-[#FFD200]"
                     }`}
                     data-testid={`nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                   >
-                    {Icon && <Icon className="w-5 h-5" />}
+                    {Icon && <Icon className="w-4 h-4" />}
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -152,14 +142,14 @@ const Navigation = () => {
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               data-testid="mobile-menu-toggle"
             >
-              {isMobileMenuOpen ? <X className="h-6 w-6 text-white" /> : <Menu className="h-6 w-6 text-white" />}
+              {isMobileMenuOpen ? <X className="h-5 w-5 text-white" /> : <Menu className="h-5 w-5 text-white" />}
             </Button>
           </div>
         </div>
         
         {/* Mobile Navigation Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-blue-700/95 backdrop-blur-sm border-t border-blue-500/20" data-testid="mobile-menu">
+          <div className="md:hidden bg-[#0D47FF]/95 backdrop-blur-sm border-t border-white/20" data-testid="mobile-menu">
             <div className="px-4 py-3 space-y-2">
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -170,20 +160,20 @@ const Navigation = () => {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center space-x-3 px-4 py-3 rounded-lg font-semibold text-base transition-all duration-200 ${
+                    className={`flex items-center space-x-3 px-4 py-3 rounded-lg font-medium text-sm transition-colors duration-200 ${
                       isActive(item.href) 
-                        ? "text-brand-yellow bg-white/20 border-l-4 border-brand-yellow" 
+                        ? "text-white bg-white/20" 
                         : isLoggedIn
-                          ? "text-green-300 bg-green-900/20"
-                          : "text-white hover:text-brand-yellow hover:bg-white/10"
+                          ? "text-green-300"
+                          : "text-white hover:text-[#FFD200] hover:bg-white/10"
                     }`}
                     onClick={() => setIsMobileMenuOpen(false)}
                     data-testid={`mobile-nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                   >
-                    {Icon && <Icon className="w-5 h-5" />}
+                    {Icon && <Icon className="w-4 h-4" />}
                     <span>{item.label}</span>
                     {isLoggedIn && (
-                      <span className="ml-auto px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+                      <span className="ml-auto px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
                         Logged In
                       </span>
                     )}
@@ -193,24 +183,25 @@ const Navigation = () => {
             </div>
           </div>
         )}
-      </nav>
+      </header>
       
-      {/* Yellow Promotional Banner */}
-      <div className="bg-gradient-to-r from-brand-yellow via-yellow-300 to-brand-yellow border-b border-yellow-400/30">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-center space-x-3">
-            <span className="text-2xl animate-bounce">🎬</span>
-            <p className="text-sm lg:text-base font-bold text-brand-blue text-center">
-              <span className="hidden sm:inline">New Comedy Every Week!</span>
-              <span className="sm:hidden">Weekly Comedy!</span>
-              <span className="text-brand-red mx-2">|</span>
-              <span className="bangla-text">নতুন কমেডি প্রতি সপ্তাহে!</span>
-            </p>
-            <span className="text-2xl animate-bounce" style={{ animationDelay: '0.5s' }}>🎭</span>
-          </div>
+      {/* Promo Banner - #FF5733 Background, 40px Height, Scrolling Ticker */}
+      <div 
+        style={{ backgroundColor: '#FF5733', height: '40px' }} 
+        className="overflow-hidden flex items-center"
+      >
+        <div className="whitespace-nowrap animate-scroll">
+          <span className="text-white font-bold text-sm inline-block">
+            🔥 Special Offer: Flat 50% off on your first Bong Bari subscription 🔔 • 
+            New Comedy Every Week! • প্রিমিয়াম কন্টেন্ট এখন আরো সাশ্রয়ী! • 
+            🎭 Join thousands of happy viewers! • Limited Time Offer! • 
+            🔥 Special Offer: Flat 50% off on your first Bong Bari subscription 🔔 • 
+            New Comedy Every Week! • প্রিমিয়াম কন্টেন্ট এখন আরো সাশ্রয়ী! • 
+            🎭 Join thousands of happy viewers! • Limited Time Offer! • 
+          </span>
         </div>
       </div>
-    </header>
+    </div>
   );
 };
 

@@ -1,13 +1,25 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
-import { Menu, X, User, LogIn } from "lucide-react";
+import { Menu, X, User, LogIn, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [location] = useLocation();
-  const { user, isLoading } = useAuth();
+  const [logoutPopoverOpen, setLogoutPopoverOpen] = useState(false);
+  const [location, setLocation] = useLocation();
+  const { user, isLoading, logout } = useAuth();
+  
+  const handleLogout = () => {
+    logout();
+    setLogoutPopoverOpen(false);
+    setLocation('/login');
+  };
 
   const navItems = [
     { href: "/", label: "Home" },
@@ -75,23 +87,59 @@ const Navigation = () => {
               const isLoginItem = item.href === "/admin";
               const isLoggedIn = user && isLoginItem;
               
-              return (
+              return isLoggedIn ? (
+                <div key={item.href} className="relative flex items-center">
+                  <Link
+                    href={item.href}
+                    className={`font-semibold text-xs lg:text-base xl:text-lg transition-all duration-200 hover:text-brand-blue hover:scale-105 hover:font-bold ${
+                      isActive(item.href) 
+                        ? "text-brand-blue border-b-2 border-brand-blue pb-1" 
+                        : "text-green-600 hover:text-green-700 hover:border-b-2 hover:border-green-600 pb-1"
+                    }`}
+                    data-testid={`nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+                  >
+                    <span className="flex items-center gap-1">
+                      {Icon && <Icon className="w-4 h-4 lg:w-5 lg:h-5" />}
+                      {item.label}
+                    </span>
+                  </Link>
+                  <Popover open={logoutPopoverOpen} onOpenChange={setLogoutPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <button 
+                        className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full cursor-pointer hover:bg-green-200 transition-colors"
+                        data-testid="logged-in-badge"
+                      >
+                        Logged In
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-32 p-2">
+                      <Button
+                        onClick={handleLogout}
+                        variant="ghost"
+                        size="sm"
+                        className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+                        data-testid="logout-popup-button"
+                      >
+                        <LogOut className="w-4 h-4 mr-1" />
+                        Logout?
+                      </Button>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              ) : (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={`font-semibold text-xs lg:text-base xl:text-lg transition-all duration-200 hover:text-brand-blue hover:scale-105 hover:font-bold ${
                     isActive(item.href) 
                       ? "text-brand-blue border-b-2 border-brand-blue pb-1" 
-                      : isLoggedIn
-                        ? "text-green-600 hover:text-green-700 hover:border-b-2 hover:border-green-600 pb-1"
-                        : "text-gray-700 hover:border-b-2 hover:border-brand-blue pb-1"
+                      : "text-gray-700 hover:border-b-2 hover:border-brand-blue pb-1"
                   }`}
                   data-testid={`nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                 >
                   <span className="flex items-center gap-1">
                     {Icon && <Icon className="w-4 h-4 lg:w-5 lg:h-5" />}
                     {item.label}
-                    {isLoggedIn && <span className="ml-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Logged In</span>}
                   </span>
                 </Link>
               );

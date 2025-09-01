@@ -396,15 +396,6 @@ const Admin = () => {
                     </Form>
                   </DialogContent>
                 </Dialog>
-                <Button
-                  onClick={handleLogout}
-                  variant="outline"
-                  className="border-brand-red text-brand-red hover:bg-brand-red hover:text-white"
-                  data-testid="button-logout"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Logout
-                </Button>
               </div>
             </div>
             

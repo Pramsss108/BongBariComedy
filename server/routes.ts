@@ -11,15 +11,15 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { 
   securityHeaders, 
-  rateLimit, 
+  // rateLimit, // Removed permanently
   sanitizeBody,
   validateSession,
   trackRequests,
   generateCSRFToken,
   validateCSRFToken,
-  checkBruteForce,
-  recordFailedLogin,
-  clearLoginAttempts,
+  // checkBruteForce, // Removed permanently
+  // recordFailedLogin, // Removed permanently
+  // clearLoginAttempts, // Removed permanently
   sanitizeInput
 } from "./middleware/security";
 
@@ -71,7 +71,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Apply global security middleware
   app.use(securityHeaders);
   app.use(trackRequests);
-  app.use(rateLimit(1000, 60000)); // 1000 requests per minute globally - more reasonable for web apps
+  // app.use(rateLimit(1000, 60000)); // Rate limiting removed permanently
   app.use(sanitizeBody); // Sanitize all request bodies
   // Object Storage routes - serve public assets
   app.get("/public-objects/:filePath(*)", async (req, res) => {
@@ -90,25 +90,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Authentication routes with enhanced security
-  app.post("/api/auth/login", rateLimit(100, 60000), async (req, res) => { // 100 login attempts per minute - much more lenient
+  app.post("/api/auth/login", async (req, res) => { // No rate limiting
     try {
       const identifier = req.ip || req.socket.remoteAddress || 'unknown';
       
-      // Check for brute force (disabled for now to prevent blocking)
-      // if (!checkBruteForce(identifier)) {
-      //   return res.status(429).json({ message: "Too many failed login attempts. Please try again later." });
-      // }
+      // No brute force protection - removed permanently
       
       const { username, password } = insertUserSchema.parse(req.body);
       const user = await storage.getUserByUsername(username);
       
       if (!user || user.password !== password) {
-        recordFailedLogin(identifier);
+        // No failed login recording
         return res.status(401).json({ message: "Invalid username or password" });
       }
       
       // Clear failed attempts on successful login
-      clearLoginAttempts(identifier);
+      // No login attempt tracking
       
       // Create session
       const sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);

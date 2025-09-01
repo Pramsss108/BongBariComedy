@@ -63,7 +63,10 @@ const Login = () => {
         title: "Login Successful!",
         description: "Welcome to the admin panel."
       });
-      setLocation('/admin');
+      // Force page refresh after login to update cursor
+      setTimeout(() => {
+        window.location.href = '/admin';
+      }, 100);
     },
     onError: (error: any) => {
       toast({

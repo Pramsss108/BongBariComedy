@@ -18,7 +18,10 @@ const Navigation = () => {
   const handleLogout = () => {
     logout();
     setLogoutPopoverOpen(false);
-    setLocation('/login');
+    // Force page refresh after logout to restore belan cursor
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 100);
   };
 
   const navItems = [

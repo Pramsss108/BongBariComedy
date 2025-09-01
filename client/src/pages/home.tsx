@@ -170,28 +170,12 @@ const Home = () => {
       <ParallaxContainer>
         <main className="relative z-10 bg-brand-yellow">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            
-            {/* Welcome Section */}
-            <motion.div
-              className="text-center pt-8 pb-6"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-3">
-                Welcome to <span className="text-brand-blue">Bong Bari</span>
-              </h1>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-800 bangla-text">
-                <span className="text-brand-red">বং বাড়িতে</span> স্বাগতম
-              </h2>
-            </motion.div>
-
-            {/* Hero Video Section */}
+            {/* Hero Video Section - Premium Layout */}
             <motion.div
               className="w-full max-w-5xl mx-auto mb-8"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
+              transition={{ duration: 0.6 }}
             >
               <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-gray-900 to-gray-800">
                 <iframe
@@ -202,77 +186,27 @@ const Home = () => {
                   allowFullScreen
                 ></iframe>
               </div>
-            </motion.div>
               
-            {/* Description Section */}
-            <motion.div
-              className="text-center mb-12"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-            >
-              <p className="text-xl sm:text-2xl text-gray-700 max-w-3xl mx-auto leading-relaxed font-medium">
-                Experience authentic Bengali family comedy that feels like home
-              </p>
-              <p className="text-lg sm:text-xl text-gray-600 bangla-text max-w-3xl mx-auto leading-relaxed mt-3">
-                ঘরোয়া পরিবেশের মজার গল্প যা আপনার নিজের বাড়ির মতোই লাগবে
-              </p>
-            </motion.div>
-
-            {/* Latest Comedy Section */}
-            <motion.div
-              className="mb-12"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.8 }}
-            >
-              <h3 className="text-3xl font-bold text-center mb-8 text-gray-900">
-                Latest Comedy
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                {latestVideoData.slice(0, 3).map((video, index) => (
-                  <motion.div
-                    key={video.videoId}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.9 + index * 0.1 }}
-                  >
-                    <YouTubeShort 
-                      videoId={video.videoId}
-                      thumbnail={video.thumbnail}
-                      title={video.title}
-                    />
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* Most Loved Comedy Section */}
-            <motion.div
-              className="mb-12"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 1.2 }}
-            >
-              <h3 className="text-3xl font-bold text-center mb-8 text-gray-900">
-                Most Loved Comedy
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                {popularVideoData.slice(0, 3).map((video, index) => (
-                  <motion.div
-                    key={video.videoId}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 1.3 + index * 0.1 }}
-                  >
-                    <YouTubeShort 
-                      videoId={video.videoId}
-                      thumbnail={video.thumbnail}
-                      title={video.title}
-                    />
-                  </motion.div>
-                ))}
-              </div>
+              {/* Video Title & Description */}
+              <motion.div
+                className="text-center mt-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+              >
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-3">
+                  Welcome to <span className="text-brand-blue">Bong Bari</span>
+                </h1>
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 bangla-text mb-4">
+                  <span className="text-brand-red">বং বাড়িতে</span> স্বাগতম
+                </h2>
+                <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                  Experience authentic Bengali family comedy that feels like home
+                </p>
+                <p className="text-lg sm:text-xl text-gray-600 bangla-text max-w-3xl mx-auto leading-relaxed mt-2">
+                  ঘরোয়া পরিবেশের মজার গল্প যা আপনার নিজের বাড়ির মতোই লাগবে
+                </p>
+              </motion.div>
             </motion.div>
           
           {/* Premium Features Section */}

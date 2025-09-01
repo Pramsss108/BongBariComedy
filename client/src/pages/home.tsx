@@ -168,7 +168,7 @@ const Home = () => {
       />
       
       <ParallaxContainer>
-        <main className="relative z-10 bg-brand-yellow pt-[100px]">
+        <main className="relative z-10 bg-brand-yellow pt-[120px]">
           <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Hero Video Section - Premium Layout */}
             <motion.div
@@ -262,9 +262,9 @@ const Home = () => {
           
           {/* Latest Comedy Section (FOMO) */}
           <ParallaxSection speed={0.4} delay={0.2}>
-            <section className="mb-6 sm:mb-8 lg:mb-10 px-4" data-testid="latest-comedy-section">
+            <section className="py-8 sm:py-12 lg:py-16 px-4" data-testid="latest-comedy-section">
             <motion.h3 
-              className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-brand-blue mb-2 sm:mb-3 hover-wobble cursor-pointer transition-all duration-300" 
+              className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-brand-blue mb-4 sm:mb-6 hover-wobble cursor-pointer transition-all duration-300" 
               data-testid="latest-comedy-title-english"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -273,7 +273,7 @@ const Home = () => {
               Latest Comedy
             </motion.h3>
             <motion.h4 
-              className="text-xl sm:text-2xl lg:text-3xl font-bold text-center text-gray-800 mb-2 sm:mb-3 bangla-text hover-bounce cursor-pointer transition-all duration-300" 
+              className="text-xl sm:text-2xl lg:text-3xl font-bold text-center text-gray-800 mb-4 sm:mb-6 bangla-text hover-bounce cursor-pointer transition-all duration-300" 
               data-testid="latest-comedy-title-bengali"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -330,9 +330,9 @@ const Home = () => {
 
           {/* Most Loved Comedy Section (Social Proof) */}
           <ParallaxSection speed={0.4} delay={0.3}>
-            <section className="mb-3 sm:mb-4 lg:mb-6 px-4" data-testid="loved-comedy-section">
+            <section className="py-8 sm:py-12 lg:py-16 px-4" data-testid="loved-comedy-section">
             <motion.h3 
-              className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-brand-red mb-2 sm:mb-3 hover-wobble cursor-pointer transition-all duration-300" 
+              className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-brand-red mb-4 sm:mb-6 hover-wobble cursor-pointer transition-all duration-300" 
               data-testid="loved-comedy-title-english"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -341,7 +341,7 @@ const Home = () => {
               ⭐ Most Loved Comedy
             </motion.h3>
             <motion.h4 
-              className="text-xl sm:text-2xl lg:text-3xl font-bold text-center text-gray-800 mb-2 sm:mb-3 bangla-text hover-bounce cursor-pointer transition-all duration-300" 
+              className="text-xl sm:text-2xl lg:text-3xl font-bold text-center text-gray-800 mb-4 sm:mb-6 bangla-text hover-bounce cursor-pointer transition-all duration-300" 
               data-testid="loved-comedy-title-bengali"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -398,7 +398,7 @@ const Home = () => {
 
           {/* Why Bong Bari Section */}
           <ParallaxSection speed={0.3} delay={0.1}>
-            <section className="mb-8 sm:mb-12 lg:mb-16 px-4" data-testid="why-bong-bari-section">
+            <section className="py-12 sm:py-16 lg:py-20 px-4" data-testid="why-bong-bari-section">
               <motion.div
                 className="max-w-6xl mx-auto"
                 initial={{ opacity: 0, y: 50 }}
@@ -407,7 +407,7 @@ const Home = () => {
               >
                 {/* Section Header */}
                 <motion.h3 
-                  className="font-bold text-center text-brand-blue mb-3 sm:mb-4 hover-wobble cursor-pointer transition-all duration-300 px-2" 
+                  className="font-bold text-center text-brand-blue mb-6 sm:mb-8 hover-wobble cursor-pointer transition-all duration-300 px-2" 
                   style={{ fontSize: 'clamp(1.8rem, 7vw, 3.5rem)' }}
                   data-testid="why-bong-bari-title-english"
                   initial={{ opacity: 0, y: 30 }}
@@ -417,7 +417,7 @@ const Home = () => {
                   Why Bong Bari?
                 </motion.h3>
                 <motion.h4 
-                  className="font-bold text-center text-gray-800 mb-8 sm:mb-12 bangla-text hover-bounce cursor-pointer transition-all duration-300 px-2" 
+                  className="font-bold text-center text-gray-800 mb-12 sm:mb-16 bangla-text hover-bounce cursor-pointer transition-all duration-300 px-2" 
                   style={{ fontSize: 'clamp(1.5rem, 6vw, 2.8rem)' }}
                   data-testid="why-bong-bari-title-bengali"
                   initial={{ opacity: 0, y: 30 }}
@@ -428,7 +428,7 @@ const Home = () => {
                 </motion.h4>
 
                 {/* Bullet Points Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-10 lg:gap-14">
                   {/* Point 1: Every home relates instantly */}
                   <motion.div
                     className="flex items-start space-x-4 p-4 sm:p-6 bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300"
@@ -531,20 +531,20 @@ const Home = () => {
           
           {/* Collaboration Form */}
           <ParallaxSection speed={0.2} delay={0.4}>
-            <section className="mb-2 sm:mb-3 py-1 sm:py-2 px-4" data-testid="collaboration-section">
+            <section className="py-12 sm:py-16 lg:py-20 px-4" data-testid="collaboration-section">
             <div className="max-w-4xl mx-auto">
               {/* Work with Us Header with Yellow Background */}
               <motion.div 
-                className="bg-brand-yellow rounded-xl sm:rounded-2xl p-2 sm:p-3 lg:p-4 mb-0 text-center shadow-lg transition-all duration-400"
+                className="bg-brand-yellow rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 mb-6 text-center shadow-lg transition-all duration-400"
                 whileHover={{ 
                   scale: 1.02,
                   transition: { duration: 0.2 }
                 }}
               >
-                <h3 className="font-bold text-brand-blue mb-1 sm:mb-2 hover-pulse cursor-pointer transition-all duration-300" data-testid="collaboration-title-english" style={{fontSize: 'clamp(2.5rem, 8vw, 8rem)'}}>
+                <h3 className="font-bold text-brand-blue mb-3 sm:mb-4 hover-pulse cursor-pointer transition-all duration-300" data-testid="collaboration-title-english" style={{fontSize: 'clamp(2rem, 6vw, 4rem)'}}>
                   Work with Us
                 </h3>
-                <h4 className="font-bold text-gray-800 bangla-text hover-wobble cursor-pointer transition-all duration-300" data-testid="collaboration-title-bengali" style={{fontSize: 'clamp(2rem, 6vw, 6rem)'}}>
+                <h4 className="font-bold text-gray-800 bangla-text hover-wobble cursor-pointer transition-all duration-300" data-testid="collaboration-title-bengali" style={{fontSize: 'clamp(1.5rem, 5vw, 3.5rem)'}}>
                   আমাদের সাথে কাজ করুন
                 </h4>
               </motion.div>
@@ -555,12 +555,12 @@ const Home = () => {
                   transition: { duration: 0.2 }
                 }}
               >
-              <Card className="bg-white shadow-lg transition-all duration-300 hover:shadow-2xl">
-                <CardContent className="p-3 sm:p-4 lg:p-6">
-                  <p className="text-center text-gray-700 mb-2 sm:mb-3 text-base sm:text-lg">
+              <Card className="bg-white shadow-lg transition-all duration-300 hover:shadow-2xl mt-8">
+                <CardContent className="p-6 sm:p-8 lg:p-10">
+                  <p className="text-center text-gray-700 mb-4 sm:mb-6 text-base sm:text-lg">
                     Ready to collaborate? Let's create some amazing Bengali comedy content together!
                   </p>
-                  <p className="text-center text-gray-700 mb-3 sm:mb-4 bangla-text text-base sm:text-lg">
+                  <p className="text-center text-gray-700 mb-6 sm:mb-8 bangla-text text-base sm:text-lg">
                     কোলাবোরেট করতে প্রস্তুত? চলুন একসাথে দুর্দান্ত বাংলা কমেডি কন্টেন্ট তৈরি করি!
                   </p>
                   

@@ -26,6 +26,7 @@ import NotFound from "@/pages/not-found";
 import BongBot from "@/components/BongBot";
 import { AdminChatbot } from "@/pages/AdminChatbot";
 import { AdminHomepage } from "@/pages/AdminHomepage";
+import Navigation from "@/components/navigation";
 
 function Router() {
   const [showCharmSelector, setShowCharmSelector] = useState(false);
@@ -104,6 +105,7 @@ function Router() {
   
   return (
     <div className="min-h-screen bg-brand-yellow relative m-0 p-0">
+      <Navigation />
       <FloatingElements />
       {/* Show MagicalCursor (belan) only for public audience, not for logged-in admin */}
       {!isAuthenticated && <MagicalCursor />}

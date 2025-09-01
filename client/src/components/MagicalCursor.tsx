@@ -1,5 +1,6 @@
 import { useMagicalCursor } from '@/hooks/useMagicalCursor';
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 
 // Mobile detection utility
 const isMobile = () => {
@@ -9,50 +10,54 @@ const isMobile = () => {
 const MagicalCursor = () => {
   const [isOnMobile, setIsOnMobile] = useState(false);
   const { cursorPosition, particles, isMoving, isClicking } = useMagicalCursor();
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     setIsOnMobile(isMobile());
     
-    // Force cursor to appear over iframes with JavaScript - targeting first video specifically
-    const style = document.createElement('style');
-    style.id = 'magical-cursor-force';
-    style.textContent = `
-      .magical-belan-portal {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        pointer-events: none !important;
-        z-index: 2147483647 !important;
-        mix-blend-mode: multiply !important;
-      }
+    // Only inject styles if not authenticated (admin not logged in)
+    if (!isAuthenticated) {
+      // Force cursor to appear over iframes with JavaScript - targeting first video specifically
+      const style = document.createElement('style');
+      style.id = 'magical-cursor-force';
+      style.textContent = `
+        .magical-belan-portal {
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          pointer-events: none !important;
+          z-index: 2147483647 !important;
+          mix-blend-mode: multiply !important;
+        }
+        
+        /* Target ALL iframes and their containers */
+        iframe, video, embed, object {
+          z-index: 1 !important;
+          position: relative !important;
+        }
+        
+        /* Specifically target the first video container */
+        .relative.aspect-video,
+        .relative.aspect-video iframe,
+        [class*="aspect-video"] iframe {
+          z-index: 1 !important;
+          isolation: auto !important;
+        }
+        
+        /* Force stacking context reset for YouTube containers */
+        div:has(iframe[src*="youtube.com"]),
+        div:has(iframe[src*="youtu.be"]) {
+          z-index: 1 !important;
+          isolation: auto !important;
+          position: relative !important;
+        }
+      `;
       
-      /* Target ALL iframes and their containers */
-      iframe, video, embed, object {
-        z-index: 1 !important;
-        position: relative !important;
+      if (!document.getElementById('magical-cursor-force')) {
+        document.head.appendChild(style);
       }
-      
-      /* Specifically target the first video container */
-      .relative.aspect-video,
-      .relative.aspect-video iframe,
-      [class*="aspect-video"] iframe {
-        z-index: 1 !important;
-        isolation: auto !important;
-      }
-      
-      /* Force stacking context reset for YouTube containers */
-      div:has(iframe[src*="youtube.com"]),
-      div:has(iframe[src*="youtu.be"]) {
-        z-index: 1 !important;
-        isolation: auto !important;
-        position: relative !important;
-      }
-    `;
-    
-    if (!document.getElementById('magical-cursor-force')) {
-      document.head.appendChild(style);
     }
     
     return () => {
@@ -61,10 +66,10 @@ const MagicalCursor = () => {
         existingStyle.remove();
       }
     };
-  }, []);
+  }, [isAuthenticated]);
 
-  // Don't render cursor on mobile devices
-  if (isOnMobile) {
+  // Don't render cursor on mobile devices or when admin is logged in
+  if (isOnMobile || isAuthenticated) {
     return null;
   }
 

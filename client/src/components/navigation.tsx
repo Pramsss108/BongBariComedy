@@ -41,36 +41,39 @@ const Navigation = () => {
       {/* Navigation Container - Completely Fixed */}
       <div className="fixed top-0 left-0 right-0 z-50 w-full">
         
-        {/* Main Header - Enhanced Visibility Design */}
-        <header className="bg-[#0E47FF] shadow-md" style={{ height: '90px' }}>
-          <div className="container mx-auto px-4 lg:px-6 h-full">
-            <div className="flex justify-between items-center h-full">
+        {/* Main Header - Professional Design */}
+        <header className="bg-gradient-to-r from-[#0E47FF] to-[#0A3ACC] shadow-xl" style={{ height: '95px' }}>
+          <div className="container mx-auto px-6 lg:px-8 h-full">
+            <div className="flex justify-between items-center h-full gap-4">
               
-              {/* Logo Section - Larger Sizes */}
-              <Link href="/" className="flex items-center space-x-4" style={{ position: 'relative' }}>
-                <img 
-                  src="/logo.png" 
-                  alt="Bong Bari" 
-                  className="w-14 h-14 lg:w-16 lg:h-16 rounded-lg flex-shrink-0"
-                />
-                <div className="flex flex-col justify-center">
-                  <h1 
-                    className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#FFD200] leading-none whitespace-nowrap bangla-text mb-1"
-                    style={{ 
-                      position: 'relative',
-                      transform: 'translate3d(0,0,0)',
-                      willChange: 'auto',
-                      backfaceVisibility: 'hidden'
-                    }}
-                  >
-                    বং বাড়ি
-                  </h1>
-                  <div className="flex flex-col leading-tight">
-                    <p className="text-xs sm:text-sm lg:text-base text-white/90 leading-none whitespace-nowrap">Every Home's Story</p>
-                    <p className="text-xs sm:text-sm lg:text-base text-white/90 leading-none bangla-text whitespace-nowrap">প্রতিটা বাড়ির গল্প</p>
-                  </div>
+              {/* Left Section - Logo, Title, Tagline in horizontal sequence */}
+              <div className="flex items-center space-x-4 sm:space-x-6 lg:space-x-10">
+                {/* Logo - Standalone */}
+                <Link href="/" className="flex-shrink-0 group">
+                  <img 
+                    src="/logo.png" 
+                    alt="Bong Bari" 
+                    className="w-16 h-16 lg:w-20 lg:h-20 rounded-xl shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:shadow-2xl group-hover:rotate-3"
+                  />
+                </Link>
+                
+                {/* Big Bengali Text - Separated */}
+                <h1 
+                  className="text-4xl sm:text-5xl lg:text-6xl font-black text-[#FFD200] leading-none whitespace-nowrap bangla-text tracking-wider"
+                  style={{ 
+                    textShadow: '3px 3px 6px rgba(0,0,0,0.4), 0 0 30px rgba(255,210,0,0.3)',
+                    fontFamily: 'var(--font-bengali)'
+                  }}
+                >
+                  বং বাড়ি
+                </h1>
+                
+                {/* Tagline Section - Enhanced */}
+                <div className="hidden md:flex flex-col justify-center leading-snug border-l-4 border-[#FFD200] pl-5 ml-2">
+                  <p className="text-base lg:text-lg text-white font-bold leading-tight whitespace-nowrap tracking-wide">Every Home's Story</p>
+                  <p className="text-base lg:text-lg text-[#FFD200]/90 font-semibold leading-tight bangla-text whitespace-nowrap">প্রতিটা বাড়ির গল্প</p>
                 </div>
-              </Link>
+              </div>
               
               {/* Desktop Navigation - Enhanced Menu */}
               <nav className="hidden md:flex items-center space-x-6 lg:space-x-10">
@@ -234,7 +237,7 @@ const Navigation = () => {
       </div>
       
       {/* Spacer for fixed navigation */}
-      <div style={{ height: '138px' }}></div>
+      <div style={{ height: '143px' }}></div>
     </>
   );
 };

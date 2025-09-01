@@ -75,8 +75,8 @@ const MagicalCursor = () => {
         className="belan-cursor-responsive"
         style={{
           position: 'absolute',
-          transform: `translate3d(${cursorPosition.x - 3}px, ${cursorPosition.y - 8}px, 0) rotate(90deg) ${
-            isClicking ? 'scale(1.2)' : isMoving ? 'scale(1.1)' : 'scale(1)'
+          transform: `translate3d(${cursorPosition.x - 12}px, ${cursorPosition.y - 4}px, 0) rotate(0deg) ${
+            isClicking ? 'scale(1.1)' : isMoving ? 'scale(1.05)' : 'scale(1)'
           }`,
           opacity: isClicking ? 1 : isMoving ? 1 : 0.7,
           transition: 'opacity 0.01s ease, transform 0.005s ease',
@@ -85,61 +85,61 @@ const MagicalCursor = () => {
           zIndex: 2147483647
         }}
       >
-        {/* Main belan body - vertical like I */}
+        {/* Main belan cylinder body - realistic */}
         <div
           style={{
             position: 'absolute',
-            width: '18px',
+            width: '14px',
+            height: '7px',
+            background: 'linear-gradient(180deg, #E8C4A0 0%, #D2691E 15%, #B8860B 40%, #A0522D 60%, #8B4513 85%, #654321 100%)',
+            borderRadius: '3.5px',
+            left: '6px',
+            top: '0px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -1px 0 rgba(0,0,0,0.2)',
+            border: '0.5px solid rgba(101, 67, 33, 0.8)'
+          }}
+        />
+        
+        {/* Left handle - realistic thin */}
+        <div
+          style={{
+            position: 'absolute',
+            width: '6px',
             height: '4px',
-            background: 'linear-gradient(0deg, #CD853F 0%, #D2691E 50%, #8B4513 100%)',
+            background: 'linear-gradient(90deg, #8B4513 0%, #A0522D 50%, #8B4513 100%)',
             borderRadius: '2px',
             left: '0px',
-            top: '2px',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.4)',
-            border: '0.5px solid #654321'
+            top: '1.5px',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.5), inset 0 0.5px 0 rgba(255,255,255,0.1)',
+            border: '0.5px solid rgba(61, 32, 22, 0.9)'
           }}
         />
         
-        {/* Left handle - vertical */}
+        {/* Right handle - realistic thin */}
         <div
           style={{
             position: 'absolute',
-            width: '3px',
-            height: '3px',
-            background: 'linear-gradient(0deg, #8B4513 0%, #654321 50%, #4A2C17 100%)',
-            borderRadius: '1.5px',
-            left: '7.5px',
-            top: '-1px',
-            boxShadow: '0 0.5px 1px rgba(0,0,0,0.4)',
-            border: '0.3px solid #3D2016'
+            width: '6px',
+            height: '4px',
+            background: 'linear-gradient(90deg, #8B4513 0%, #A0522D 50%, #8B4513 100%)',
+            borderRadius: '2px',
+            left: '20px',
+            top: '1.5px',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.5), inset 0 0.5px 0 rgba(255,255,255,0.1)',
+            border: '0.5px solid rgba(61, 32, 22, 0.9)'
           }}
         />
         
-        {/* Right handle - vertical */}
-        <div
-          style={{
-            position: 'absolute',
-            width: '3px',
-            height: '3px',
-            background: 'linear-gradient(0deg, #8B4513 0%, #654321 50%, #4A2C17 100%)',
-            borderRadius: '1.5px',
-            left: '7.5px',
-            top: '6px',
-            boxShadow: '0 0.5px 1px rgba(0,0,0,0.4)',
-            border: '0.3px solid #3D2016'
-          }}
-        />
-        
-        {/* Responsive front tip - vertical */}
+        {/* Front tip - click indicator */}
         <div
           style={{
             position: 'absolute',
             width: isClicking ? '3px' : '2px',
             height: isClicking ? '3px' : '2px',
-            background: isClicking ? '#FF4500' : '#FFCC00',
+            background: isClicking ? '#FF4500' : 'rgba(255, 204, 0, 0.6)',
             borderRadius: '50%',
-            left: isClicking ? '8px' : '8.5px',
-            top: isClicking ? '8px' : '8.5px',
+            left: '12px',
+            top: '-2px',
             boxShadow: isClicking 
               ? '0 0 6px rgba(255, 69, 0, 0.9), 0 0 10px rgba(255, 69, 0, 0.5)'
               : '0 0 3px rgba(255, 204, 0, 0.8)',
@@ -149,36 +149,19 @@ const MagicalCursor = () => {
           }}
         />
         
-        {/* Sharp front tip extension - vertical */}
+        {/* Wood grain detail line */}
         <div
           style={{
             position: 'absolute',
-            width: isClicking ? '2px' : '1.5px',
-            height: isClicking ? '2px' : '1.5px',
-            background: isClicking ? '#FF6347' : '#D2691E',
-            borderRadius: '1px',
-            left: isClicking ? '8.5px' : '8.8px',
-            top: isClicking ? '10px' : '10.5px',
-            opacity: isClicking ? 1 : 0.7,
-            transition: 'all 0.005s ease',
-            transform: isClicking ? 'scale(1.1)' : 'scale(1)'
+            width: '10px',
+            height: '0.5px',
+            background: 'rgba(139, 69, 19, 0.3)',
+            left: '8px',
+            top: '3px',
+            opacity: 0.5
           }}
         />
         
-        {/* Extended responsive zone around front tip - mouse cursor size */}
-        <div
-          style={{
-            position: 'absolute',
-            width: '18px',
-            height: '8px',
-            background: 'transparent',
-            left: '0px',
-            top: '-1px',
-            borderRadius: '4px',
-            pointerEvents: 'none'
-          }}
-          title="Front tip responsive area"
-        />
         
       </div>
 

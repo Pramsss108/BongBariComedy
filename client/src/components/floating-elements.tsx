@@ -59,13 +59,13 @@ export const FloatingElements = () => {
         />
       ))}
       
-      {/* Mouse follower - CSS Belan */}
+      {/* Mouse follower - CSS Belan - smaller horizontal */}
       <motion.div
         className="absolute pointer-events-none opacity-30"
         style={{
-          width: '20px',
-          height: '6px',
-          transform: 'rotate(45deg)'
+          width: '12px',
+          height: '4px',
+          transform: 'rotate(0deg)'
         }}
         animate={{
           x: `${mousePosition.x}vw`,
@@ -77,40 +77,40 @@ export const FloatingElements = () => {
           damping: 15,
         }}
       >
-        {/* Main wooden body */}
+        {/* Main wooden body - smaller horizontal */}
         <div
           className="absolute"
           style={{
-            width: '16px',
-            height: '4px',
+            width: '8px',
+            height: '2px',
             backgroundColor: '#D2691E',
-            borderRadius: '2px',
+            borderRadius: '1px',
             left: '2px',
             top: '1px'
           }}
         />
-        {/* Left handle */}
+        {/* Left handle - smaller */}
         <div
           className="absolute"
           style={{
-            width: '3px',
+            width: '2px',
             height: '2px',
             backgroundColor: '#8B4513',
             borderRadius: '1px',
             left: '0px',
-            top: '2px'
+            top: '1px'
           }}
         />
-        {/* Right handle */}
+        {/* Right handle - smaller */}
         <div
           className="absolute"
           style={{
-            width: '3px',
+            width: '2px',
             height: '2px',
             backgroundColor: '#8B4513',
             borderRadius: '1px',
-            left: '17px',
-            top: '2px'
+            left: '10px',
+            top: '1px'
           }}
         />
       </motion.div>

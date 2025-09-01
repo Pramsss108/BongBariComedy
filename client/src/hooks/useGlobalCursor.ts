@@ -20,51 +20,51 @@ export const useGlobalCursor = () => {
     cursor.className = 'global-cursor-follower';
     cursor.style.cssText = `
       position: fixed;
-      width: 48px;
-      height: 16px;
+      width: 20px;
+      height: 8px;
       pointer-events: none;
       z-index: 2147483647;
-      transform: translate(-50%, -50%) rotate(45deg);
+      transform: translate(-50%, -50%) rotate(0deg);
       transition: opacity 0.2s ease;
       opacity: 0;
       mix-blend-mode: multiply;
       isolation: isolate;
     `;
     
-    // Create main wooden body
+    // Create main wooden body - smaller horizontal
     const body = document.createElement('div');
     body.style.cssText = `
       position: absolute;
-      width: 40px;
-      height: 12px;
+      width: 14px;
+      height: 4px;
       background-color: #D2691E;
-      border-radius: 6px;
-      left: 4px;
+      border-radius: 2px;
+      left: 3px;
       top: 2px;
     `;
     
-    // Create left handle
+    // Create left handle - smaller
     const leftHandle = document.createElement('div');
     leftHandle.style.cssText = `
       position: absolute;
-      width: 8px;
-      height: 6px;
+      width: 3px;
+      height: 3px;
       background-color: #8B4513;
-      border-radius: 3px;
-      left: -2px;
-      top: 5px;
+      border-radius: 1.5px;
+      left: 0px;
+      top: 2.5px;
     `;
     
-    // Create right handle
+    // Create right handle - smaller
     const rightHandle = document.createElement('div');
     rightHandle.style.cssText = `
       position: absolute;
-      width: 8px;
-      height: 6px;
+      width: 3px;
+      height: 3px;
       background-color: #8B4513;
-      border-radius: 3px;
-      left: 42px;
-      top: 5px;
+      border-radius: 1.5px;
+      left: 17px;
+      top: 2.5px;
     `;
     
     cursor.appendChild(body);

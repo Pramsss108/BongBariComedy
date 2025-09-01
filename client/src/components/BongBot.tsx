@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Bot, X, Minimize2, MessageCircle } from 'lucide-react';
+import { Send, Bot, X, MessageCircle } from 'lucide-react';
 
 interface BongBotProps {
   onOpenChange?: (isOpen: boolean) => void;
@@ -11,7 +11,6 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [isOpen, setIsOpen] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([
     { 
@@ -37,7 +36,6 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
     const rightSideX = Math.max(0, window.innerWidth - 340); // Right side position with bounds check
     setPosition({ x: rightSideX, y: 100 }); // Lower Y to avoid header cutoff
     setIsOpen(true);
-    setIsMinimized(false);
     
     // Play glitter sound when opening
     playGlitterSound();
@@ -163,7 +161,7 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
       
       // Keep in bounds
       const maxX = window.innerWidth - 320;
-      const maxY = window.innerHeight - (isMinimized ? 50 : 380);
+      const maxY = window.innerHeight - 380;
       
       const boundedX = Math.max(0, Math.min(newX, maxX));
       const boundedY = Math.max(0, Math.min(newY, maxY));
@@ -227,7 +225,7 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
         left: position.x + 'px',
         top: Math.max(80, position.y) + 'px', // Ensure minimum 80px from top to prevent header cutting
         width: '320px',
-        height: isMinimized ? '40px' : '360px',
+        height: '360px',
         padding: '0px'
       }}
       initial={{ opacity: 0, scale: 0.8, y: 50 }}
@@ -263,32 +261,21 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
             </div>
           </div>
           
-          {/* RIGHT SIDE - COMPACT ACTION BUTTONS */}
-          <div className="flex items-center gap-1">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsMinimized(!isMinimized);
-              }}
-              className="w-6 h-6 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
-            >
-              <Minimize2 size={12} className="text-white/80" />
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsOpen(false);
-              }}
-              className="w-6 h-6 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
-            >
-              <X size={12} className="text-white/80" />
-            </button>
-          </div>
+          {/* RIGHT SIDE - CLOSE BUTTON */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsOpen(false);
+            }}
+            className="w-6 h-6 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+          >
+            <X size={12} className="text-white/80" />
+          </button>
         </motion.div>
         
-        {/* CHAT CONTENT - ONLY SHOW WHEN NOT MINIMIZED */}
+        {/* CHAT CONTENT */}
         <AnimatePresence>
-          {!isMinimized && (
+          {
             <motion.div 
               className="flex flex-col h-full"
               initial={{ opacity: 0, height: 0 }}
@@ -425,7 +412,7 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
                 </div>
               </div>
             </motion.div>
-          )}
+          }
         </AnimatePresence>
       </div>
     </motion.div>

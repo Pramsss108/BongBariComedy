@@ -39,26 +39,27 @@ const Navigation = () => {
 
   return (
     <>
-      {/* Navigation Container */}
-      <div className="fixed top-0 left-0 right-0 z-50 w-full">
+      {/* Navigation Container - Completely Fixed */}
+      <div className="fixed top-0 left-0 right-0 z-50 w-full" style={{ position: 'fixed !important' }}>
         
         {/* Main Header - Clean Slim Design */}
-        <header className="bg-[#0E47FF] shadow-md" style={{ height: '56px' }}>
+        <header className="bg-[#0E47FF] shadow-md" style={{ height: '56px', position: 'relative' }}>
           <div className="container mx-auto px-4 h-full">
             <div className="flex justify-between items-center h-full">
               
-              {/* Logo Section - Static Position */}
-              <Link href="/" className="flex items-center space-x-2 relative">
+              {/* Logo Section - Absolutely Fixed */}
+              <Link href="/" className="flex items-center space-x-2" style={{ position: 'static', transform: 'none' }}>
                 <img 
                   src="/logo.png" 
                   alt="Bong Bari" 
                   className="w-10 h-10 rounded-lg flex-shrink-0"
+                  style={{ position: 'static' }}
                 />
-                <div className="flex flex-col justify-start h-10 pt-1">
-                  <h1 className="text-[11px] font-bold text-[#FFD200] leading-none whitespace-nowrap bangla-text mb-1">বং বাড়ি</h1>
-                  <div className="flex flex-col leading-none">
-                    <p className="text-[8px] text-white/90 leading-none whitespace-nowrap">Every Home's Story</p>
-                    <p className="text-[8px] text-white/90 leading-none bangla-text whitespace-nowrap">প্রতিটা বাড়ির গল্প</p>
+                <div className="flex flex-col justify-start h-10 pt-1" style={{ position: 'static', transform: 'none' }}>
+                  <h1 className="text-[11px] font-bold text-[#FFD200] leading-none whitespace-nowrap bangla-text mb-1" style={{ position: 'static', transform: 'none' }}>বং বাড়ি</h1>
+                  <div className="flex flex-col leading-none" style={{ position: 'static', transform: 'none' }}>
+                    <p className="text-[8px] text-white/90 leading-none whitespace-nowrap" style={{ position: 'static' }}>Every Home's Story</p>
+                    <p className="text-[8px] text-white/90 leading-none bangla-text whitespace-nowrap" style={{ position: 'static' }}>প্রতিটা বাড়ির গল্প</p>
                   </div>
                 </div>
               </Link>

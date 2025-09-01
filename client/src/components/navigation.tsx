@@ -63,7 +63,7 @@ const Navigation = () => {
               {/* Left Section - Ultra Premium Layout */}
               <div className="flex items-center space-x-5">
                 {/* Logo - Refined */}
-                <Link href="/" className="group relative">
+                <Link href="/" className="group relative cursor-pointer">
                   <div className="absolute -inset-1 bg-gradient-to-r from-[#FFD200] to-[#FFC000] rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
                   <img 
                     src="/logo.png" 
@@ -72,12 +72,13 @@ const Navigation = () => {
                   />
                 </Link>
                 
-                {/* Bengali Title - Sophisticated */}
+                {/* Bengali Title - Moved down to align with logo center */}
                 <h1 
-                  className="text-[26px] lg:text-[30px] font-bold text-[#FFD200] bangla-text tracking-wide"
+                  className="text-[26px] lg:text-[30px] font-bold text-[#FFD200] bangla-text tracking-wide cursor-pointer self-center"
                   style={{ 
                     fontFamily: 'var(--font-bengali)',
-                    textShadow: '0 2px 10px rgba(255,210,0,0.2)'
+                    textShadow: '0 2px 10px rgba(255,210,0,0.2)',
+                    marginTop: '2px'
                   }}
                 >
                   বং বাড়ি
@@ -86,9 +87,9 @@ const Navigation = () => {
                 {/* Vertical Separator - Subtle */}
                 <div className="hidden md:block w-[1px] h-8 bg-gradient-to-b from-transparent via-white/20 to-transparent"></div>
                 
-                {/* Dual Tagline - Stacked */}
+                {/* Dual Tagline - Stacked with darker English */}
                 <div className="hidden md:flex flex-col justify-center leading-none">
-                  <span className="text-[11px] lg:text-xs text-white/50 font-light tracking-wider uppercase">
+                  <span className="text-[11px] lg:text-xs text-white/30 font-light tracking-wider uppercase">
                     Every Home's Story
                   </span>
                   <span className="text-[10px] lg:text-[11px] text-white/40 font-light bangla-text mt-0.5">
@@ -103,7 +104,7 @@ const Navigation = () => {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`relative text-sm lg:text-[15px] font-medium tracking-wide transition-all duration-300 ${
+                    className={`relative text-sm lg:text-[15px] font-medium tracking-wide transition-all duration-300 cursor-pointer ${
                       isActive(item.href) 
                         ? "text-[#FFD200]" 
                         : "text-white/80 hover:text-white"
@@ -158,7 +159,7 @@ const Navigation = () => {
                   <Link href="/admin">
                     <Button 
                       size="sm"
-                      className="relative group bg-[#FFD200] text-[#0E47FF] hover:bg-[#FFC000] font-semibold text-[13px] h-9 px-6 rounded-full transition-all duration-300 shadow-lg shadow-black/10"
+                      className="relative group bg-[#FFD200] text-[#0E47FF] hover:bg-[#FFC000] font-semibold text-[13px] h-9 px-6 rounded-full transition-all duration-300 shadow-lg shadow-black/10 cursor-pointer"
                     >
                       <span className="absolute inset-0 rounded-full bg-gradient-to-r from-[#FFD200] to-[#FFC000] blur-sm opacity-50 group-hover:opacity-70 transition duration-300"></span>
                       <span className="relative flex items-center">

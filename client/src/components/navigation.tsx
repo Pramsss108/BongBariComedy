@@ -278,8 +278,6 @@ const Navigation = () => {
         </div>
       </div>
 
-      {/* Spacer for fixed header and banner */}
-      <div style={{ height: '100px' }}></div>
     </>
   );
 };

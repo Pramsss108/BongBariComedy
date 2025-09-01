@@ -58,10 +58,10 @@ export function SimpleCropStudio({ imageUrl, onCropChange, className = "" }: Sim
         setImageSize({ width: img.width, height: img.height });
         // Set initial crop to center of image
         const initialCrop = {
-          width: Math.min(585, img.width * 0.6),
-          height: Math.min(360, img.height * 0.6),
-          x: img.width * 0.2,
-          y: img.height * 0.2
+          width: Math.min(400, img.width * 0.5),
+          height: Math.min(250, img.height * 0.5),
+          x: img.width * 0.25,
+          y: img.height * 0.25
         };
         setCropData(initialCrop);
         // Reset viewport
@@ -114,8 +114,8 @@ export function SimpleCropStudio({ imageUrl, onCropChange, className = "" }: Sim
     const cropRight = cropLeft + (cropData.width / imageSize.width) * rect.width;
     const cropBottom = cropTop + (cropData.height / imageSize.height) * rect.height;
 
-    // Check if clicking on resize handle (bottom-right corner with larger hit area)
-    if (Math.abs(x - cropRight) < 15 && Math.abs(y - cropBottom) < 15) {
+    // Check if clicking on resize handle (bottom-right corner with smaller hit area)
+    if (Math.abs(x - cropRight) < 8 && Math.abs(y - cropBottom) < 8) {
       setDragMode('resize');
     } else if (x >= cropLeft && x <= cropRight && y >= cropTop && y <= cropBottom) {
       setDragMode('move');
@@ -141,14 +141,14 @@ export function SimpleCropStudio({ imageUrl, onCropChange, className = "" }: Sim
     const cropRight = cropLeft + (cropData.width / imageSize.width) * rect.width;
     const cropBottom = cropTop + (cropData.height / imageSize.height) * rect.height;
 
-    // Update cursor
+    // Update cursor with precise hit detection
     if (!isDragging) {
-      if (Math.abs(x - cropRight) < 15 && Math.abs(y - cropBottom) < 15) {
+      if (Math.abs(x - cropRight) < 8 && Math.abs(y - cropBottom) < 8) {
         if (workspaceRef.current) workspaceRef.current.style.cursor = 'se-resize';
       } else if (x >= cropLeft && x <= cropRight && y >= cropTop && y <= cropBottom) {
         if (workspaceRef.current) workspaceRef.current.style.cursor = 'move';
       } else {
-        if (workspaceRef.current) workspaceRef.current.style.cursor = 'default';
+        if (workspaceRef.current) workspaceRef.current.style.cursor = 'crosshair';
       }
     }
 
@@ -240,7 +240,7 @@ export function SimpleCropStudio({ imageUrl, onCropChange, className = "" }: Sim
                 className="relative bg-white rounded-lg overflow-hidden shadow-inner mx-auto"
                 style={{ 
                   width: '100%',
-                  height: '400px'
+                  height: '280px'
                 }}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
@@ -297,25 +297,25 @@ export function SimpleCropStudio({ imageUrl, onCropChange, className = "" }: Sim
                       </div>
                       
                       {/* Corner Handles */}
-                      <div className="absolute -top-2 -left-2 w-4 h-4 bg-red-500 border-2 border-white shadow-sm" />
-                      <div className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 border-2 border-white shadow-sm" />
-                      <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-red-500 border-2 border-white shadow-sm" />
+                      <div className="absolute -top-1 -left-1 w-2 h-2 bg-red-500 border border-white shadow-sm" />
+                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 border border-white shadow-sm" />
+                      <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-red-500 border border-white shadow-sm" />
                       
                       {/* Resize Handle - Bottom Right */}
                       <div 
-                        className="absolute -bottom-2 -right-2 w-5 h-5 bg-red-600 border-2 border-white cursor-se-resize shadow-lg"
-                        style={{ borderRadius: '2px' }}
+                        className="absolute -bottom-1 -right-1 w-3 h-3 bg-red-600 border border-white cursor-se-resize shadow-lg"
+                        style={{ borderRadius: '1px' }}
                       />
                     </div>
                     
-                    {/* Dimension Display */}
-                    <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded shadow-lg font-mono">
-                      {cropData.width} × {cropData.height} px
+                    {/* Compact Info Display */}
+                    <div className="absolute top-1 left-1 bg-red-500 text-white text-xs px-1 py-0.5 rounded shadow-sm font-mono leading-tight">
+                      {cropData.width}×{cropData.height}
                     </div>
                     
                     {/* Position Display */}
-                    <div className="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded shadow-lg font-mono">
-                      X: {cropData.x}, Y: {cropData.y}
+                    <div className="absolute top-1 right-1 bg-blue-500 text-white text-xs px-1 py-0.5 rounded shadow-sm font-mono leading-tight">
+                      {cropData.x},{cropData.y}
                     </div>
                   </>
                 )}

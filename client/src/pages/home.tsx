@@ -187,79 +187,30 @@ const Home = () => {
                 ></iframe>
               </div>
               
-              {/* Video Title & Description */}
-              <motion.div
-                className="text-center mt-6"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-              >
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-3">
-                  Welcome to <span className="text-brand-blue">Bong Bari</span>
-                </h1>
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 bangla-text mb-4">
-                  <span className="text-brand-red">বং বাড়িতে</span> স্বাগতম
-                </h2>
-                <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-                  Experience authentic Bengali family comedy that feels like home
-                </p>
-                <p className="text-lg sm:text-xl text-gray-600 bangla-text max-w-3xl mx-auto leading-relaxed mt-2">
-                  ঘরোয়া পরিবেশের মজার গল্প যা আপনার নিজের বাড়ির মতোই লাগবে
-                </p>
-              </motion.div>
             </motion.div>
           
-          {/* Premium Features Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            className="mb-12"
-          >
-            <div className="max-w-6xl mx-auto">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <motion.div
-                  className="text-center p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.7 }}
-                >
-                  <div className="w-16 h-16 bg-brand-yellow rounded-full flex items-center justify-center mx-auto mb-4">
-                    <HomeIcon className="w-8 h-8 text-brand-blue" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Authentic Stories</h3>
-                  <p className="text-gray-600 bangla-text">প্রতিটা বাড়ির সত্যি গল্প</p>
-                </motion.div>
-                
-                <motion.div
-                  className="text-center p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.8 }}
-                >
-                  <div className="w-16 h-16 bg-brand-red rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Smile className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Real Comedy</h3>
-                  <p className="text-gray-600 bangla-text">সত্যিকারের হাসির গল্প</p>
-                </motion.div>
-                
-                <motion.div
-                  className="text-center p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.9 }}
-                >
-                  <div className="w-16 h-16 bg-brand-blue rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Users className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Family First</h3>
-                  <p className="text-gray-600 bangla-text">পরিবারের জন্য তৈরি</p>
-                </motion.div>
-              </div>
-            </div>
-          </motion.div>
           
+          {/* Welcome Section */}
+          <motion.div
+            className="text-center mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+          >
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-3">
+              Welcome to <span className="text-brand-blue">Bong Bari</span>
+            </h1>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 bangla-text mb-4">
+              <span className="text-brand-red">বং বাড়িতে</span> স্বাগতম
+            </h2>
+            <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              Experience authentic Bengali family comedy that feels like home
+            </p>
+            <p className="text-lg sm:text-xl text-gray-600 bangla-text max-w-3xl mx-auto leading-relaxed mt-2">
+              ঘরোয়া পরিবেশের মজার গল্প যা আপনার নিজের বাড়ির মতোই লাগবে
+            </p>
+          </motion.div>
+
           {/* Latest Comedy Section (FOMO) */}
           <ParallaxSection speed={0.4} delay={0.2}>
             <section className="mb-6 sm:mb-8 lg:mb-10" data-testid="latest-comedy-section">

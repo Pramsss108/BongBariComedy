@@ -185,12 +185,21 @@ const Navigation = () => {
         )}
       </header>
       
-      {/* Promo Banner - #FFD200 Yellow Background, 35px Height, Scrolling Ticker */}
+      {/* Single Slim Promo Banner - #FFD200 Yellow, 35px Height Only */}
       <div 
-        style={{ backgroundColor: '#FFD200', height: '35px', position: 'fixed', top: '60px', left: '0', right: '0' }} 
+        style={{ 
+          backgroundColor: '#FFD200', 
+          height: '35px', 
+          position: 'fixed', 
+          top: '60px', 
+          left: '0', 
+          right: '0',
+          margin: '0',
+          padding: '0'
+        }} 
         className="overflow-hidden flex items-center w-full z-40"
       >
-        <span className="animate-scroll text-black font-bold text-sm">
+        <span className="animate-scroll text-black font-bold text-sm whitespace-nowrap">
           🔥 Special Offer: Flat 50% off on your first Bong Bari subscription 🔔 Stay tuned for updates • 
           🔥 Special Offer: Flat 50% off on your first Bong Bari subscription 🔔 Stay tuned for updates • 
         </span>

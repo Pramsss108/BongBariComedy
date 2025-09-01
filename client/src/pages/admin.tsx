@@ -188,7 +188,7 @@ const Admin = () => {
         description="Admin panel to view collaboration requests and brand partnership inquiries for Bong Bari."
       />
       
-      <main className="pt-[110px] pb-16 bg-gray-50 min-h-screen">
+      <main className="pt-[95px] pb-16 bg-gray-50 min-h-screen">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
             <div className="flex justify-between items-center mb-12">

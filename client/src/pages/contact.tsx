@@ -55,7 +55,7 @@ const Contact = () => {
       />
       
       <ParallaxContainer>
-        <main className="pt-[110px] pb-16 bg-white">
+        <main className="pt-[95px] pb-16 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
               <ParallaxSection speed={0.3} delay={0.1}>

@@ -42,20 +42,20 @@ const Navigation = () => {
       <div className="fixed top-0 left-0 right-0 z-50 w-full">
         
         {/* Main Header - Enhanced Visibility Design */}
-        <header className="bg-[#0E47FF] shadow-md" style={{ height: '72px' }}>
+        <header className="bg-[#0E47FF] shadow-md" style={{ height: '90px' }}>
           <div className="container mx-auto px-4 lg:px-6 h-full">
             <div className="flex justify-between items-center h-full">
               
               {/* Logo Section - Larger Sizes */}
-              <Link href="/" className="flex items-center space-x-3" style={{ position: 'relative' }}>
+              <Link href="/" className="flex items-center space-x-4" style={{ position: 'relative' }}>
                 <img 
                   src="/logo.png" 
                   alt="Bong Bari" 
-                  className="w-12 h-12 lg:w-14 lg:h-14 rounded-lg flex-shrink-0"
+                  className="w-14 h-14 lg:w-16 lg:h-16 rounded-lg flex-shrink-0"
                 />
                 <div className="flex flex-col justify-center">
                   <h1 
-                    className="text-lg sm:text-xl lg:text-2xl font-bold text-[#FFD200] leading-none whitespace-nowrap bangla-text mb-1"
+                    className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#FFD200] leading-none whitespace-nowrap bangla-text mb-1"
                     style={{ 
                       position: 'relative',
                       transform: 'translate3d(0,0,0)',
@@ -66,8 +66,8 @@ const Navigation = () => {
                     বং বাড়ি
                   </h1>
                   <div className="flex flex-col leading-tight">
-                    <p className="text-[10px] sm:text-xs lg:text-sm text-white/90 leading-none whitespace-nowrap">Every Home's Story</p>
-                    <p className="text-[10px] sm:text-xs lg:text-sm text-white/90 leading-none bangla-text whitespace-nowrap">প্রতিটা বাড়ির গল্প</p>
+                    <p className="text-xs sm:text-sm lg:text-base text-white/90 leading-none whitespace-nowrap">Every Home's Story</p>
+                    <p className="text-xs sm:text-sm lg:text-base text-white/90 leading-none bangla-text whitespace-nowrap">প্রতিটা বাড়ির গল্প</p>
                   </div>
                 </div>
               </Link>

@@ -56,9 +56,9 @@ const Navigation = () => {
                 />
                 <div className="flex flex-col justify-center">
                   <h1 className="text-base font-bold text-white bangla-text leading-none">বং বাড়ি</h1>
-                  <div className="flex flex-col">
-                    <p className="text-[10px] text-white/90 leading-tight">Every Home's Story</p>
-                    <p className="text-[10px] text-white/90 leading-tight bangla-text">প্রতিটা বাড়ির গল্প</p>
+                  <div className="flex flex-col leading-none">
+                    <p className="text-[10px] text-white/90 leading-none">Every Home's Story</p>
+                    <p className="text-[10px] text-white/90 leading-none bangla-text">প্রতিটা বাড়ির গল্প</p>
                   </div>
                 </div>
               </Link>

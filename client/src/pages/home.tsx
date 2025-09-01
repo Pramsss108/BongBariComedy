@@ -168,11 +168,11 @@ const Home = () => {
       />
       
       <ParallaxContainer>
-        <main className="relative z-10">
+        <main className="relative z-10 bg-brand-yellow">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             {/* Hero Video Section - Premium Layout */}
             <motion.div
-              className="w-full max-w-5xl mx-auto mb-8"
+              className="w-full max-w-5xl mx-auto mb-8 pt-8"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6 }}

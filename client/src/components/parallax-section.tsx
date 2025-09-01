@@ -89,7 +89,7 @@ export const ParallaxContainer = ({
   className?: string; 
 }) => {
   return (
-    <div className={`overflow-hidden ${className}`}>
+    <div className={`overflow-hidden bg-brand-yellow ${className}`}>
       {children}
     </div>
   );

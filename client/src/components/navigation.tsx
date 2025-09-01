@@ -166,7 +166,7 @@ const Navigation = () => {
       </div>
       
       {/* Promotional Banner - Below Navigation */}
-      <div className="bg-gradient-to-r from-brand-yellow via-yellow-300 to-brand-yellow shadow-md">
+      <div className="bg-gradient-to-r from-brand-yellow via-yellow-300 to-brand-yellow">
         <div className="container mx-auto px-4 py-2">
           <div className="flex items-center justify-center space-x-2">
             <span className="text-2xl animate-bounce">🎬</span>

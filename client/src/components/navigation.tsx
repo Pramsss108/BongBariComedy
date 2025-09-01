@@ -89,7 +89,7 @@ const Navigation = () => {
                 
                 {/* Dual Tagline - Stacked with darker English */}
                 <div className="hidden md:flex flex-col justify-center leading-none">
-                  <span className="text-[11px] lg:text-xs text-white/30 font-light tracking-wider uppercase">
+                  <span className="text-xs lg:text-[13px] text-black/60 font-medium tracking-wider uppercase">
                     Every Home's Story
                   </span>
                   <span className="text-[10px] lg:text-[11px] text-white/40 font-light bangla-text mt-0.5">

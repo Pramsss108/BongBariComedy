@@ -9,11 +9,24 @@ const isMobile = () => {
 
 const MagicalCursor = () => {
   const [isOnMobile, setIsOnMobile] = useState(false);
+  const [forceHide, setForceHide] = useState(false);
   const { cursorPosition, particles, isMoving, isClicking } = useMagicalCursor();
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     setIsOnMobile(isMobile());
+    
+    // Listen for auth state changes to update cursor immediately
+    const handleAuthChange = () => {
+      setForceHide(false); // Force re-render
+      setTimeout(() => setForceHide(false), 10);
+    };
+    
+    window.addEventListener('auth-state-changed', handleAuthChange);
+    return () => window.removeEventListener('auth-state-changed', handleAuthChange);
+  }, []);
+
+  useEffect(() => {
     
     // Only inject styles if not authenticated (admin not logged in)
     if (!isAuthenticated) {

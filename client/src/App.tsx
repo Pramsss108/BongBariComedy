@@ -51,17 +51,32 @@ function Router() {
     audioFile: '/public-objects/sounds/folder/charm.mp3' // Your custom charm sound
   });
   
-  // Apply professional cursor style when logged in
+  // Apply professional cursor style when logged in - with immediate update
   useEffect(() => {
     if (isAuthenticated) {
       // Add class for professional arrow cursor for serious work
       document.body.classList.add('admin-logged-in');
       document.body.style.cursor = 'default';
+      // Force immediate cursor update
+      document.documentElement.style.cursor = 'default';
+      // Remove any belan cursor styles
+      const belanStyles = document.querySelectorAll('[data-belan-cursor]');
+      belanStyles.forEach(el => el.remove());
     } else {
       // Remove class to allow belan cursor for public audience
       document.body.classList.remove('admin-logged-in');
       document.body.style.cursor = '';
+      document.documentElement.style.cursor = '';
     }
+    
+    // Force re-render of cursor elements
+    window.dispatchEvent(new Event('auth-state-changed'));
+    
+    return () => {
+      // Cleanup on unmount
+      document.body.style.cursor = '';
+      document.documentElement.style.cursor = '';
+    };
   }, [isAuthenticated]);
   
   return (

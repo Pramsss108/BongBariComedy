@@ -559,6 +559,7 @@ a:focus-visible {
 body.admin-logged-in *,
 body.admin-logged-in {
   cursor: default !important;
+  transition: cursor 0s !important; /* Instant cursor change */
 }
 
 body.admin-logged-in input, 
@@ -571,6 +572,16 @@ body.admin-logged-in button,
 body.admin-logged-in a,
 body.admin-logged-in [role="button"] {
   cursor: pointer !important;
+}
+
+/* Hide any belan cursor elements when admin logged in */
+body.admin-logged-in .magical-belan-portal,
+body.admin-logged-in .particle-container,
+body.admin-logged-in [data-belan-cursor] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 /* Show cursor on inputs and text areas */

@@ -90,7 +90,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Authentication routes with enhanced security
-  app.post("/api/auth/login", rateLimit(5, 60000), async (req, res) => { // 5 login attempts per minute
+  app.post("/api/auth/login", rateLimit(20, 60000), async (req, res) => { // 20 login attempts per minute - more reasonable
     try {
       const identifier = req.ip || req.socket.remoteAddress || 'unknown';
       

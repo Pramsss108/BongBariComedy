@@ -207,8 +207,8 @@ export const trackRequests = (req: Request, res: Response, next: NextFunction) =
   history = history.filter(time => time > now - 300000);
   history.push(now);
   
-  // Detect suspicious activity (more than 500 requests in 5 minutes)
-  if (history.length > 500) {
+  // Detect suspicious activity (more than 5000 requests in 5 minutes - very high threshold)
+  if (history.length > 5000) {
     console.warn(`Suspicious activity detected from IP: ${ip}`);
     // Could implement additional blocking logic here
   }

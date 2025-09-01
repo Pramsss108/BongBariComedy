@@ -90,14 +90,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Authentication routes with enhanced security
-  app.post("/api/auth/login", rateLimit(20, 60000), async (req, res) => { // 20 login attempts per minute - more reasonable
+  app.post("/api/auth/login", rateLimit(100, 60000), async (req, res) => { // 100 login attempts per minute - much more lenient
     try {
       const identifier = req.ip || req.socket.remoteAddress || 'unknown';
       
-      // Check for brute force
-      if (!checkBruteForce(identifier)) {
-        return res.status(429).json({ message: "Too many failed login attempts. Please try again later." });
-      }
+      // Check for brute force (disabled for now to prevent blocking)
+      // if (!checkBruteForce(identifier)) {
+      //   return res.status(429).json({ message: "Too many failed login attempts. Please try again later." });
+      // }
       
       const { username, password } = insertUserSchema.parse(req.body);
       const user = await storage.getUserByUsername(username);

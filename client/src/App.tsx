@@ -51,7 +51,7 @@ function Router() {
     audioFile: '/public-objects/sounds/folder/charm.mp3' // Your custom charm sound
   });
   
-  // Apply professional cursor style when logged in - with immediate update
+  // Apply professional cursor style when logged in - with automatic refresh on logout
   useEffect(() => {
     const updateCursor = () => {
       if (isAuthenticated) {
@@ -80,7 +80,9 @@ function Router() {
             cursor: text !important;
           }
         `;
-        document.head.appendChild(style);
+        if (!document.getElementById('admin-cursor-override')) {
+          document.head.appendChild(style);
+        }
       } else {
         // Remove class to allow belan cursor for public audience
         document.body.classList.remove('admin-logged-in');
@@ -91,6 +93,15 @@ function Router() {
         const overrideStyle = document.getElementById('admin-cursor-override');
         if (overrideStyle) {
           overrideStyle.remove();
+        }
+        
+        // Refresh page to restore belan cursor properly when logging out
+        if (window.location.pathname === '/admin' || window.location.pathname === '/login') {
+          // Only refresh if we're on admin or login page
+          setTimeout(() => window.location.href = '/', 100);
+        } else {
+          // Refresh current page to restore cursor
+          setTimeout(() => window.location.reload(), 100);
         }
       }
     };

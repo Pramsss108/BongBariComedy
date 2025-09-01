@@ -51,6 +51,9 @@ function Router() {
     audioFile: '/public-objects/sounds/folder/charm.mp3' // Your custom charm sound
   });
   
+  // Track previous auth state for logout detection
+  const [prevAuth, setPrevAuth] = useState(isAuthenticated);
+  
   // Apply professional cursor style when logged in
   useEffect(() => {
     if (isAuthenticated) {
@@ -93,7 +96,19 @@ function Router() {
       if (overrideStyle) {
         overrideStyle.remove();
       }
+      
+      // Only refresh once when logging out (to restore belan cursor properly)
+      // Check if we just logged out (was authenticated, now not)
+      if (prevAuth && !isAuthenticated) {
+        // Single refresh to restore belan cursor after logout
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 100);
+      }
     }
+    
+    // Update previous auth state
+    setPrevAuth(isAuthenticated);
     
     // Force re-render of cursor elements
     window.dispatchEvent(new Event('auth-state-changed'));
@@ -107,7 +122,7 @@ function Router() {
         overrideStyle.remove();
       }
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, prevAuth]);
   
   return (
     <div className="min-h-screen bg-brand-yellow relative">

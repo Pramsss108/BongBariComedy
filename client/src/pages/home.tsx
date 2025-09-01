@@ -170,27 +170,27 @@ const Home = () => {
       <ParallaxContainer>
         <main className="relative z-10 bg-brand-yellow">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            {/* Welcome Section Title Only */}
+            {/* Welcome Section - Larger & More Welcoming */}
             <motion.div
-              className="text-center pt-8 mb-12"
+              className="text-center pt-16 pb-8 mb-8"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-3">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-gray-900 mb-4 leading-tight">
                 Welcome to <span className="text-brand-blue">Bong Bari</span>
               </h1>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 bangla-text mb-4">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-800 bangla-text mb-6 leading-tight">
                 <span className="text-brand-red">বং বাড়িতে</span> স্বাগতম
               </h2>
             </motion.div>
 
-            {/* Hero Video Section - Premium Layout */}
+            {/* Hero Video Section - Full Visibility with Spacing */}
             <motion.div
-              className="w-full max-w-5xl mx-auto mb-8"
+              className="w-full max-w-6xl mx-auto mb-12"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
             >
               <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-gray-900 to-gray-800">
                 <iframe
@@ -203,17 +203,17 @@ const Home = () => {
               </div>
             </motion.div>
 
-            {/* Experience Section - Below Video */}
+            {/* Experience Section - Below Video with Better Spacing */}
             <motion.div
-              className="text-center mb-12"
+              className="text-center mb-16"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
+              transition={{ duration: 0.6, delay: 0.7 }}
             >
-              <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              <p className="text-xl sm:text-2xl text-gray-700 max-w-4xl mx-auto leading-relaxed font-medium">
                 Experience authentic Bengali family comedy that feels like home
               </p>
-              <p className="text-lg sm:text-xl text-gray-600 bangla-text max-w-3xl mx-auto leading-relaxed mt-2">
+              <p className="text-xl sm:text-2xl text-gray-700 bangla-text max-w-4xl mx-auto leading-relaxed mt-3 font-medium">
                 ঘরোয়া পরিবেশের মজার গল্প যা আপনার নিজের বাড়ির মতোই লাগবে
               </p>
             </motion.div>

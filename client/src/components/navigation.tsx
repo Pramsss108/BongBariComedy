@@ -47,16 +47,16 @@ const Navigation = () => {
           <div className="container mx-auto px-4 h-full">
             <div className="flex justify-between items-center h-full">
               
-              {/* Logo Section - Fixed Position */}
-              <Link href="/" className="flex items-center space-x-2 sticky left-0">
+              {/* Logo Section - Static Position */}
+              <Link href="/" className="flex items-center space-x-2 relative">
                 <img 
                   src="/logo.png" 
                   alt="Bong Bari" 
                   className="w-10 h-10 rounded-lg flex-shrink-0"
                 />
-                <div className="flex flex-col justify-start h-10 pt-1 sticky left-0">
-                  <h1 className="text-[11px] font-bold text-[#FFD200] leading-none whitespace-nowrap bangla-text mb-1 sticky left-0">বং বাড়ি</h1>
-                  <div className="flex flex-col leading-none sticky left-0">
+                <div className="flex flex-col justify-start h-10 pt-1">
+                  <h1 className="text-[11px] font-bold text-[#FFD200] leading-none whitespace-nowrap bangla-text mb-1">বং বাড়ি</h1>
+                  <div className="flex flex-col leading-none">
                     <p className="text-[8px] text-white/90 leading-none whitespace-nowrap">Every Home's Story</p>
                     <p className="text-[8px] text-white/90 leading-none bangla-text whitespace-nowrap">প্রতিটা বাড়ির গল্প</p>
                   </div>

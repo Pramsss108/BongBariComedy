@@ -41,55 +41,53 @@ const Navigation = () => {
       {/* Navigation Container - Completely Fixed */}
       <div className="fixed top-0 left-0 right-0 z-50 w-full">
         
-        {/* Main Header - Professional Design */}
-        <header className="bg-gradient-to-r from-[#0E47FF] to-[#0A3ACC] shadow-xl" style={{ height: '95px' }}>
-          <div className="container mx-auto px-6 lg:px-8 h-full">
-            <div className="flex justify-between items-center h-full gap-4">
+        {/* Main Header - Premium Minimalist Design */}
+        <header className="bg-[#0E47FF] backdrop-blur-md" style={{ height: '80px' }}>
+          <div className="max-w-7xl mx-auto px-4 lg:px-6 h-full">
+            <div className="flex justify-between items-center h-full">
               
-              {/* Left Section - Logo, Title, Tagline in horizontal sequence */}
-              <div className="flex items-center space-x-4 sm:space-x-6 lg:space-x-10">
-                {/* Logo - Standalone */}
-                <Link href="/" className="flex-shrink-0 group">
+              {/* Left Section - Premium Design */}
+              <div className="flex items-center">
+                {/* Logo - Clean */}
+                <Link href="/" className="flex-shrink-0 mr-4">
                   <img 
                     src="/logo.png" 
                     alt="Bong Bari" 
-                    className="w-16 h-16 lg:w-20 lg:h-20 rounded-xl shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:shadow-2xl group-hover:rotate-3"
+                    className="w-11 h-11 lg:w-12 lg:h-12 rounded-lg object-cover"
                   />
                 </Link>
                 
-                {/* Big Bengali Text - Separated */}
+                {/* Bengali Title - Elegant */}
                 <h1 
-                  className="text-4xl sm:text-5xl lg:text-6xl font-black text-[#FFD200] leading-none whitespace-nowrap bangla-text tracking-wider"
+                  className="text-2xl lg:text-3xl font-bold text-[#FFD200] bangla-text mr-6"
                   style={{ 
-                    textShadow: '3px 3px 6px rgba(0,0,0,0.4), 0 0 30px rgba(255,210,0,0.3)',
                     fontFamily: 'var(--font-bengali)'
                   }}
                 >
                   বং বাড়ি
                 </h1>
                 
-                {/* Tagline Section - Enhanced */}
-                <div className="hidden md:flex flex-col justify-center leading-snug border-l-4 border-[#FFD200] pl-5 ml-2">
-                  <p className="text-base lg:text-lg text-white font-bold leading-tight whitespace-nowrap tracking-wide">Every Home's Story</p>
-                  <p className="text-base lg:text-lg text-[#FFD200]/90 font-semibold leading-tight bangla-text whitespace-nowrap">প্রতিটা বাড়ির গল্প</p>
-                </div>
+                {/* Tagline - Minimal & Gray */}
+                <span className="hidden md:inline-block text-xs lg:text-sm text-white/40 font-light">
+                  Every Home's Story
+                </span>
               </div>
               
-              {/* Desktop Navigation - Enhanced Menu */}
-              <nav className="hidden md:flex items-center space-x-6 lg:space-x-10">
+              {/* Desktop Navigation - Clean & Modern */}
+              <nav className="hidden md:flex items-center gap-8">
                 {navItems.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`relative text-white font-bold text-base lg:text-lg transition-all duration-300 hover:text-[#FFD200] hover:scale-105 ${
+                    className={`relative text-white font-medium text-sm lg:text-base transition-colors duration-200 hover:text-[#FFD200] ${
                       isActive(item.href) 
-                        ? "text-[#FFD200] scale-105" 
-                        : ""
+                        ? "text-[#FFD200]" 
+                        : "text-white/90"
                     }`}
                   >
                     {item.label}
                     {isActive(item.href) && (
-                      <span className="absolute -bottom-2 left-0 right-0 h-1 bg-[#FFD200] rounded-full animate-pulse"></span>
+                      <span className="absolute -bottom-[22px] left-0 right-0 h-0.5 bg-[#FFD200]"></span>
                     )}
                   </Link>
                 ))}
@@ -132,45 +130,45 @@ const Navigation = () => {
                 ) : (
                   <Link href="/admin">
                     <Button 
-                      size="default"
-                      className="bg-[#FFD200] text-[#0E47FF] hover:bg-yellow-400 font-bold text-base lg:text-lg h-11 px-6 transition-all duration-300 hover:scale-105 shadow-lg"
+                      size="sm"
+                      className="bg-[#FFD200] text-[#0E47FF] hover:bg-[#FFC000] font-semibold text-sm h-9 px-5 rounded-full transition-all duration-200"
                     >
-                      <LogIn className="w-5 h-5 mr-2" />
+                      <LogIn className="w-4 h-4 mr-1.5" />
                       Login
                     </Button>
                   </Link>
                 )}
               </nav>
               
-              {/* Mobile Menu Button - Larger */}
+              {/* Mobile Menu Button - Minimal */}
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden text-white hover:bg-white/20 h-12 w-12 transition-all duration-300"
+                className="md:hidden text-white hover:bg-white/10 h-10 w-10 rounded-lg"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               >
-                {isMobileMenuOpen ? <X className="h-7 w-7" /> : <Menu className="h-7 w-7" />}
+                {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </Button>
             </div>
           </div>
         </header>
         
-        {/* Promo Banner - Enhanced */}
-        <div className="bg-gradient-to-r from-[#FFD200] via-[#FFC000] to-[#FFD200]" style={{ height: '48px' }}>
+        {/* Promo Banner - Sleek & Modern */}
+        <div className="bg-[#FFD200]" style={{ height: '40px' }}>
           <div className="h-full overflow-hidden relative">
             <div className="absolute inset-0 flex items-center">
               <div className="animate-scroll whitespace-nowrap flex">
-                <span className="text-black font-bold text-base lg:text-lg px-8 flex items-center h-full">
-                  🎉 <span className="mx-2">Special Offer: Flat 50% off on your first Bong Bari subscription</span> • 
+                <span className="text-[#0E47FF] font-medium text-sm lg:text-base px-6 flex items-center h-full">
+                  🎯 <span className="mx-2">Special Offer: Flat 50% off on your first Bong Bari subscription</span> • 
                   🔔 <span className="mx-2">Stay tuned for exciting updates</span> • 
                   🎬 <span className="mx-2">New comedy sketches every week</span> • 
-                  🏆 <span className="mx-2">Join our community of laughter lovers</span> • 
+                  ✨ <span className="mx-2">Join our community of laughter lovers</span> • 
                 </span>
-                <span className="text-black font-bold text-base lg:text-lg px-8 flex items-center h-full">
-                  🎉 <span className="mx-2">Special Offer: Flat 50% off on your first Bong Bari subscription</span> • 
+                <span className="text-[#0E47FF] font-medium text-sm lg:text-base px-6 flex items-center h-full">
+                  🎯 <span className="mx-2">Special Offer: Flat 50% off on your first Bong Bari subscription</span> • 
                   🔔 <span className="mx-2">Stay tuned for exciting updates</span> • 
                   🎬 <span className="mx-2">New comedy sketches every week</span> • 
-                  🏆 <span className="mx-2">Join our community of laughter lovers</span> • 
+                  ✨ <span className="mx-2">Join our community of laughter lovers</span> • 
                 </span>
               </div>
             </div>
@@ -237,7 +235,7 @@ const Navigation = () => {
       </div>
       
       {/* Spacer for fixed navigation */}
-      <div style={{ height: '143px' }}></div>
+      <div style={{ height: '120px' }}></div>
     </>
   );
 };

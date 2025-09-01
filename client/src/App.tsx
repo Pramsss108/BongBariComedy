@@ -51,11 +51,32 @@ function Router() {
     audioFile: '/public-objects/sounds/folder/charm.mp3' // Your custom charm sound
   });
   
-  // Track previous auth state for logout detection
+  // Track previous auth state for login/logout detection
   const [prevAuth, setPrevAuth] = useState(isAuthenticated);
   
-  // Apply professional cursor style when logged in
+  // Apply professional cursor style when logged in with refresh on auth change
   useEffect(() => {
+    // Detect login (was not authenticated, now is)
+    if (!prevAuth && isAuthenticated) {
+      // Single refresh after login to ensure cursor changes properly
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+      setPrevAuth(isAuthenticated);
+      return;
+    }
+    
+    // Detect logout (was authenticated, now not)
+    if (prevAuth && !isAuthenticated) {
+      // Single refresh after logout to restore belan cursor properly
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
+      setPrevAuth(isAuthenticated);
+      return;
+    }
+    
+    // Apply cursor styles based on auth state
     if (isAuthenticated) {
       // Add class for professional arrow cursor for serious work
       document.body.classList.add('admin-logged-in');
@@ -95,15 +116,6 @@ function Router() {
       const overrideStyle = document.getElementById('admin-cursor-override');
       if (overrideStyle) {
         overrideStyle.remove();
-      }
-      
-      // Only refresh once when logging out (to restore belan cursor properly)
-      // Check if we just logged out (was authenticated, now not)
-      if (prevAuth && !isAuthenticated) {
-        // Single refresh to restore belan cursor after logout
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 100);
       }
     }
     

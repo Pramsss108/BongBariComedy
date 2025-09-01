@@ -7,7 +7,7 @@ interface BongBotProps {
 }
 
 export default function BongBot({ onOpenChange }: BongBotProps) {
-  const [position, setPosition] = useState({ x: 0, y: 50 });
+  const [position, setPosition] = useState({ x: 0, y: 100 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [isOpen, setIsOpen] = useState(false);
@@ -34,8 +34,8 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
 
   // When opening chatbot, position it on the right side
   const handleOpenChatbot = () => {
-    const rightSideX = Math.max(0, window.innerWidth - 400); // Right side position with bounds check
-    setPosition({ x: rightSideX, y: 50 }); // Lower Y to avoid header cutoff
+    const rightSideX = Math.max(0, window.innerWidth - 340); // Right side position with bounds check
+    setPosition({ x: rightSideX, y: 100 }); // Lower Y to avoid header cutoff
     setIsOpen(true);
     setIsMinimized(false);
     
@@ -163,7 +163,7 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
       
       // Keep in bounds
       const maxX = window.innerWidth - 320;
-      const maxY = window.innerHeight - (isMinimized ? 40 : 360);
+      const maxY = window.innerHeight - (isMinimized ? 50 : 380);
       
       const boundedX = Math.max(0, Math.min(newX, maxX));
       const boundedY = Math.max(0, Math.min(newY, maxY));
@@ -225,7 +225,7 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
       className="fixed z-50 select-none"
       style={{
         left: position.x + 'px',
-        top: Math.max(20, position.y) + 'px', // Ensure minimum 20px from top
+        top: Math.max(80, position.y) + 'px', // Ensure minimum 80px from top to prevent header cutting
         width: '320px',
         height: isMinimized ? '40px' : '360px',
         padding: '0px'
@@ -235,7 +235,7 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
     >
       {/* GLASS MORPHISM CONTAINER */}
-      <div className="w-full h-full bg-gradient-to-br from-white/15 via-white/10 to-white/5 backdrop-blur-xl rounded-2xl border border-white/30 shadow-2xl overflow-visible" style={{ marginTop: '0px', paddingTop: '10px' }}>
+      <div className="w-full h-full bg-gradient-to-br from-white/15 via-white/10 to-white/5 backdrop-blur-xl rounded-2xl border border-white/30 shadow-2xl overflow-hidden">
         
         {/* COMPACT PROFESSIONAL HEADER */}
         <motion.div
@@ -244,7 +244,6 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
           className="relative w-full bg-gradient-to-r from-[#1363DF]/70 via-[#FFCC00]/70 to-[#FF4D4D]/70 backdrop-blur-xl cursor-grab active:cursor-grabbing flex items-center justify-between border-b border-white/20 shadow-md rounded-t-2xl"
           style={{ 
             userSelect: 'none', 
-            marginTop: '-10px',
             height: '40px',
             paddingLeft: '10px',
             paddingRight: '8px'

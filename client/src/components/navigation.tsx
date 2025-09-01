@@ -44,9 +44,9 @@ const Navigation = () => {
   };
 
   return (
-    <nav className="bg-white shadow-lg sticky top-0 z-50" data-testid="main-navigation">
-      <div className="container mx-auto px-1 sm:px-2">
-        <div className="flex justify-between items-center py-0 px-0 sm:py-1 lg:py-2 mt-[6px] mb-[6px]">
+    <nav className="bg-white/95 backdrop-blur-md shadow-xl sticky top-0 z-50 border-b border-gray-100" data-testid="main-navigation">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center py-3 lg:py-4">
           {/* Logo - Optimized Layout */}
           <Link href="/" data-testid="logo-link">
             <div className="flex items-center space-x-1 cursor-pointer hover-logo-container group w-full">
@@ -74,17 +74,17 @@ const Navigation = () => {
                   <p className="text-[8px] text-gray-600 bangla-text font-medium leading-none group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
                 </div>
               </div>
-              {/* Desktop Logo - Maximum Visibility */}
-              <div className="hidden md:flex flex-col justify-center pl-2 min-w-[280px]">
-                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[18px] lg:text-[32px] xl:text-[40px] leading-none mb-0">বং বাড়ি</h1>
-                <p className="text-[10px] lg:text-base xl:text-lg font-bold text-gray-800 leading-none whitespace-nowrap mb-0 group-hover:text-brand-blue transition-colors duration-300">Every Home's Story — Bong Bari</p>
-                <p className="text-[8px] lg:text-sm xl:text-base text-gray-600 bangla-text font-semibold leading-none whitespace-nowrap group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প — বং বাড়ি</p>
+              {/* Desktop Logo - Premium Layout */}
+              <div className="hidden md:flex flex-col justify-center pl-3 min-w-[300px]">
+                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[20px] lg:text-[36px] xl:text-[44px] leading-none mb-1">বং বাড়ি</h1>
+                <p className="text-[11px] lg:text-lg xl:text-xl font-bold text-gray-800 leading-none whitespace-nowrap mb-0 group-hover:text-brand-blue transition-colors duration-300">Every Home's Story</p>
+                <p className="text-[9px] lg:text-sm xl:text-lg text-gray-600 bangla-text font-medium leading-none whitespace-nowrap group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
               </div>
             </div>
           </Link>
           
-          {/* Desktop Navigation - High Visibility All Devices */}
-          <div className="hidden md:flex items-center space-x-2 lg:space-x-6 xl:space-x-8">
+          {/* Desktop Navigation - Premium Layout */}
+          <div className="hidden md:flex items-center space-x-4 lg:space-x-8 xl:space-x-10">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isLoginItem = item.href === "/admin";
@@ -94,10 +94,10 @@ const Navigation = () => {
                 <div key={item.href} className="relative flex items-center">
                   <Link
                     href={item.href}
-                    className={`font-semibold text-xs lg:text-base xl:text-lg transition-all duration-200 hover:text-brand-blue hover:scale-105 hover:font-bold ${
+                    className={`font-semibold text-sm lg:text-lg xl:text-xl transition-all duration-300 hover:text-brand-blue hover:scale-105 ${
                       isActive(item.href) 
-                        ? "text-brand-blue border-b-2 border-brand-blue pb-1" 
-                        : "text-green-600 hover:text-green-700 hover:border-b-2 hover:border-green-600 pb-1"
+                        ? "text-brand-blue border-b-3 border-brand-blue pb-2 shadow-sm" 
+                        : "text-green-600 hover:text-green-700 hover:border-b-2 hover:border-green-600 pb-2"
                     }`}
                     data-testid={`nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                   >
@@ -109,10 +109,10 @@ const Navigation = () => {
                   <Popover open={logoutPopoverOpen} onOpenChange={setLogoutPopoverOpen}>
                     <PopoverTrigger asChild>
                       <button 
-                        className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full cursor-pointer hover:bg-green-200 transition-colors"
+                        className="ml-3 px-3 py-1 bg-green-100 text-green-700 text-sm font-medium rounded-full cursor-pointer hover:bg-green-200 transition-all duration-300 hover:scale-105 shadow-sm"
                         data-testid="logged-in-badge"
                       >
-                        Logged In
+                        ● Logged In
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-32 p-2">

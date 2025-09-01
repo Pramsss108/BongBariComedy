@@ -21,7 +21,6 @@ import { insertCollaborationRequestSchema, type InsertCollaborationRequest } fro
 import { apiRequest } from "@/lib/queryClient";
 import { useFunnySubmissionSound } from "@/hooks/useFunnySubmissionSound";
 import { useState, useEffect } from "react";
-import { HomepageBannerEditor } from "@/components/HomepageBannerEditor";
 
 interface YouTubeVideo {
   videoId: string;
@@ -30,11 +29,6 @@ interface YouTubeVideo {
   publishedAt: string;
 }
 
-interface BannerData {
-  title?: string;
-  subtitle?: string;
-  bannerImage?: string;
-}
 
 const Home = () => {
   const { toast } = useToast();
@@ -43,29 +37,8 @@ const Home = () => {
   const [typewriterText, setTypewriterText] = useState("");
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [showCursor, setShowCursor] = useState(true);
-  const [showBannerEditor, setShowBannerEditor] = useState(false);
-  const [isAdminMode, setIsAdminMode] = useState(false);
   
-  // Check admin status
-  const { data: authUser } = useQuery({
-    queryKey: ["/api/auth/me"],
-    retry: false,
-  });
 
-  // Show admin edit button when logged in on homepage
-  useEffect(() => {
-    if (authUser && !window.location.pathname.includes('/admin')) {
-      setIsAdminMode(true);
-    } else {
-      setIsAdminMode(false);
-    }
-  }, [authUser]);
-
-  // 🎨 Fetch banner data from admin panel
-  const { data: bannerData } = useQuery<BannerData>({
-    queryKey: ['/api/homepage-banner'],
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-  });
   
   
   const { data: latestVideos, isLoading: isLoadingLatest } = useQuery<YouTubeVideo[]>({
@@ -197,115 +170,97 @@ const Home = () => {
       
       <ParallaxContainer>
         
-        <main className="py-2 sm:py-3 relative z-10 mt-2">
+        <main className="relative z-10">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             
-            {/* Dynamic Banner Image with Admin Edit */}
+            {/* Hero Video Section - Premium Layout */}
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-              className="mb-1 relative"
-            >
-              {/* Admin Quick Edit Button */}
-              {isAdminMode && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="absolute top-2 right-2 z-10"
-                >
-                  <Button
-                    onClick={() => setShowBannerEditor(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg text-xs px-2 py-1 h-auto"
-                  >
-                    <Edit3 className="h-3 w-3 mr-1" />
-                    Quick Edit
-                  </Button>
-                </motion.div>
-              )}
-              
-              {bannerData?.bannerImage ? (
-                <div className="w-full h-20 md:h-24 rounded-md shadow-md overflow-hidden">
-                  <img 
-                    src={bannerData.bannerImage} 
-                    alt="Bong Bari Banner"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ) : (
-                <div className="w-full h-10 md:h-12 rounded-md shadow-md overflow-hidden bg-gradient-to-r from-brand-yellow via-yellow-400 to-orange-400">
-                </div>
-              )}
-            </motion.div>
-
-            {/* Dynamic Title Section from Admin Panel */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.1 }}
-              className="text-center mb-1"
-            >
-              <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-0 bangla-text leading-none">
-                {bannerData?.title || "বং বাড়ি"}
-              </h1>
-              <p className="text-xs sm:text-sm md:text-sm text-gray-600 bangla-text leading-none">
-                {bannerData?.subtitle || "কলকাতার ঘরোয়া কমেডি - আমাদের গল্প"}
-              </p>
-            </motion.div>
-
-            {/* Compact YouTube Video */}
-            <motion.div
-              className="w-full max-w-2xl mx-auto mb-2"
-              initial={{ opacity: 0, scale: 0.98 }}
+              className="w-full max-w-5xl mx-auto mb-8 mt-6"
+              initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4, delay: 0.2 }}
+              transition={{ duration: 0.6 }}
             >
-              <div className="relative w-full aspect-video rounded-md overflow-hidden shadow-md">
+              <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-gray-900 to-gray-800">
                 <iframe
-                  src="https://www.youtube.com/embed/pdjQpcVqxMU?rel=0&modestbranding=1&showinfo=0"
+                  src="https://www.youtube.com/embed/pdjQpcVqxMU?rel=0&modestbranding=1&showinfo=0&autoplay=0"
                   title="বং বাড়ি - Barir Mashla | Our Story | Bengali Comedy Channel"
                   className="absolute inset-0 w-full h-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                 ></iframe>
               </div>
+              
+              {/* Video Title & Description */}
+              <motion.div
+                className="text-center mt-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+              >
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-3">
+                  Welcome to <span className="text-brand-blue">Bong Bari</span>
+                </h1>
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 bangla-text mb-4">
+                  <span className="text-brand-red">বং বাড়িতে</span> স্বাগতম
+                </h2>
+                <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                  Experience authentic Bengali family comedy that feels like home
+                </p>
+                <p className="text-lg sm:text-xl text-gray-600 bangla-text max-w-3xl mx-auto leading-relaxed mt-2">
+                  ঘরোয়া পরিবেশের মজার গল্প যা আপনার নিজের বাড়ির মতোই লাগবে
+                </p>
+              </motion.div>
             </motion.div>
           
-          {/* Professional Intro Text */}
+          {/* Premium Features Section */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
-            className="mb-8"
+            className="mb-12"
           >
-            <Card className="max-w-4xl mx-auto shadow-lg bg-white border border-gray-100">
-              <CardContent className="p-6 sm:p-8 lg:p-10">
-                {/* Clean English Text */}
-                <motion.p 
-                  className="text-base sm:text-lg lg:text-xl text-gray-700 mb-6 leading-relaxed" 
-                  data-testid="intro-english"
-                  initial={{ opacity: 0, y: 20 }}
+            <div className="max-w-6xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <motion.div
+                  className="text-center p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.7 }}
+                >
+                  <div className="w-16 h-16 bg-brand-yellow rounded-full flex items-center justify-center mx-auto mb-4">
+                    <HomeIcon className="w-8 h-8 text-brand-blue" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Authentic Stories</h3>
+                  <p className="text-gray-600 bangla-text">প্রতিটা বাড়ির সত্যি গল্প</p>
+                </motion.div>
+                
+                <motion.div
+                  className="text-center p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
+                  initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.8 }}
                 >
-                  Welcome to <strong className="text-brand-blue font-bold">Bong Bari</strong> - where every Bengali family finds their story! 
-                  Our hilarious <span className="text-brand-red font-semibold">mother-son comedy shorts</span> capture the essence of Kolkata homes with relatable, 
-                  heartwarming humor that'll make you laugh until your stomach hurts.
-                </motion.p>
+                  <div className="w-16 h-16 bg-brand-red rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Smile className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Real Comedy</h3>
+                  <p className="text-gray-600 bangla-text">সত্যিকারের হাসির গল্প</p>
+                </motion.div>
                 
-                {/* Clean Bengali Text */}
-                <motion.p 
-                  className="text-base sm:text-lg lg:text-xl text-gray-700 bangla-text leading-relaxed" 
-                  data-testid="intro-bengali"
-                  initial={{ opacity: 0, y: 20 }}
+                <motion.div
+                  className="text-center p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
+                  initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 1 }}
+                  transition={{ duration: 0.6, delay: 0.9 }}
                 >
-                  <strong className="text-brand-blue font-bold">বং বাড়িতে</strong> স্বাগতম! আমাদের <span className="text-brand-red font-semibold">মা-ছেলের কমেডি শর্টস</span> দেখে হাসতে হাসতে পেট ব্যথা হয়ে যাবে। 
-                  কলকাতার ঘরোয়া পরিবেশের সাথে মিলিয়ে এমন সব মজার গল্প যা আপনার নিজের বাড়ির মতোই লাগবে।
-                </motion.p>
-              </CardContent>
-            </Card>
+                  <div className="w-16 h-16 bg-brand-blue rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Users className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Family First</h3>
+                  <p className="text-gray-600 bangla-text">পরিবারের জন্য তৈরি</p>
+                </motion.div>
+              </div>
+            </div>
           </motion.div>
           
           {/* Latest Comedy Section (FOMO) */}
@@ -809,13 +764,6 @@ const Home = () => {
         </footer>
       </ParallaxContainer>
       
-      {/* Homepage Banner Editor Modal */}
-      {showBannerEditor && isAdminMode && (
-        <HomepageBannerEditor
-          currentBanner={bannerData || null}
-          onClose={() => setShowBannerEditor(false)}
-        />
-      )}
     </>
   );
 };

@@ -187,11 +187,12 @@
 }
 
 @layer base {
+  /* Reset all browser defaults */
   * {
     @apply border-border;
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
   }
 
   html {
@@ -220,6 +221,12 @@
     margin: 0 !important;
     padding: 0 !important;
     min-height: 100vh;
+  }
+  
+  /* Reset margins and paddings for common elements */
+  h1, h2, h3, h4, h5, h6, p, ul, ol, li, figure, figcaption, blockquote, dl, dd {
+    margin: 0;
+    padding: 0;
   }
   
   /* ULTRA FAST Performance optimizations for all animated elements */

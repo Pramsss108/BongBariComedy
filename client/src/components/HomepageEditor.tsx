@@ -155,11 +155,20 @@ const EditableElement = ({ element, isEditing, onUpdate, onDelete }: EditableEle
 
         {element.elementType === 'image' && (
           <div className="relative w-full h-full">
-            <img 
-              src={element.content || '/api/placeholder/400/300'} 
-              alt=""
-              className="w-full h-full object-cover"
-            />
+            {element.content ? (
+              <img 
+                src={element.content} 
+                alt=""
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500">
+                <div className="text-center">
+                  <Image className="w-12 h-12 mx-auto mb-2" />
+                  <p>Click upload to add image</p>
+                </div>
+              </div>
+            )}
             {isEditing && (
               <Button
                 onClick={() => setShowCropStudio(true)}
@@ -267,14 +276,15 @@ export const HomepageEditor = ({ onClose }: HomepageEditorProps) => {
     queryKey: ['/api/homepage-elements'],
   });
 
-  // Local state for editing
+  // Local state for editing - initialize with empty array
   const [localElements, setLocalElements] = useState<HomepageElement[]>([]);
 
+  // Only update when elements actually change
   useEffect(() => {
-    if (elements) {
+    if (elements && elements.length > 0) {
       setLocalElements(elements);
     }
-  }, [elements]);
+  }, [elements.length]);
 
   // 5-minute timer
   useEffect(() => {
@@ -332,22 +342,32 @@ export const HomepageEditor = ({ onClose }: HomepageEditorProps) => {
   };
 
   const handleAddElement = (type: 'text' | 'image' | 'button') => {
-    const newElement: Partial<HomepageElement> = {
-      elementId: `element-${Date.now()}`,
+    const tempId = Date.now(); // Temporary ID for new elements
+    const newElement: HomepageElement = {
+      id: tempId, // Temporary ID
+      elementId: `element-${tempId}`,
       elementType: type,
-      content: type === 'text' ? 'New text' : type === 'button' ? 'New button' : '',
+      content: type === 'text' ? 'Click to edit text' : type === 'button' ? 'Click me' : '',
       position: JSON.stringify({
-        x: Math.random() * 400,
-        y: Math.random() * 400,
+        x: Math.random() * 400 + 100,
+        y: Math.random() * 300 + 100,
         width: type === 'image' ? 300 : 200,
-        height: type === 'image' ? 200 : 50
+        height: type === 'image' ? 200 : type === 'text' ? 100 : 50
       }),
-      styles: JSON.stringify({}),
+      styles: JSON.stringify({
+        backgroundColor: type === 'button' ? '#FFCC00' : 'transparent',
+        color: type === 'button' ? '#000' : '#333',
+        fontSize: type === 'text' ? '16px' : '14px',
+        padding: type === 'text' ? '10px' : '0'
+      }),
       zIndex: localElements.length + 1,
-      isVisible: true
+      isVisible: true,
+      parentId: null,
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
 
-    setLocalElements(prev => [...prev, newElement as HomepageElement]);
+    setLocalElements(prev => [...prev, newElement]);
   };
 
   const handleSave = () => {
@@ -446,9 +466,17 @@ export const HomepageEditor = ({ onClose }: HomepageEditorProps) => {
       {/* Canvas */}
       <div className="mt-16 relative w-full h-full overflow-auto bg-gray-50">
         <div className="relative min-h-screen" style={{ width: '100%', minHeight: '100vh' }}>
+          {localElements.length === 0 && !isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+              <div className="text-center">
+                <p className="text-xl mb-2">No elements yet</p>
+                <p>Click the buttons above to add text, images, or buttons</p>
+              </div>
+            </div>
+          )}
           {localElements.map(element => (
             <EditableElement
-              key={element.id}
+              key={element.elementId || element.id}
               element={element}
               isEditing={isEditing}
               onUpdate={(updates) => handleUpdateElement(element.id, updates)}

@@ -23,6 +23,8 @@ export const useMagicalCursor = () => {
   const [isClicking, setIsClicking] = useState(false);
   const particleId = useRef(0);
   const movementTimer = useRef<NodeJS.Timeout>();
+  const animationFrameRef = useRef<number>();
+  const lastMouseTime = useRef(0);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -34,8 +36,13 @@ export const useMagicalCursor = () => {
         clearTimeout(movementTimer.current);
       }
 
-      // Create sharp particle trail - ultra responsive
-      for (let i = 0; i < 3; i++) {
+      // Throttle particle creation for performance
+      const now = Date.now();
+      if (now - lastMouseTime.current < 32) return; // Limit to ~30fps particle generation
+      lastMouseTime.current = now;
+
+      // Reduced particle count for better performance
+      for (let i = 0; i < 2; i++) {
         const angle = Math.random() * Math.PI * 2;
         const speed = 0.8 + Math.random() * 2.0;
         const isLaughEmoji = Math.random() < 0.05; // 5% chance for laugh emoji
@@ -48,8 +55,8 @@ export const useMagicalCursor = () => {
           vy: Math.sin(angle) * speed,
           opacity: 0.9,
           scale: 0.4 + Math.random() * 0.6,
-          life: 40 + Math.random() * 15, // Sharp, fast life: 0.7-0.9 seconds
-          maxLife: 40 + Math.random() * 15,
+          life: 35 + Math.random() * 10, // Optimized particle lifetime
+          maxLife: 35 + Math.random() * 10,
           rotation: Math.random() * 360,
           rotationSpeed: (Math.random() - 0.5) * 4,
           type: isLaughEmoji ? 'laugh' : 'star',
@@ -68,8 +75,8 @@ export const useMagicalCursor = () => {
     const handleMouseDown = () => {
       setIsClicking(true);
       
-      // Create focused tip burst of particles on click - only front tip
-      for (let i = 0; i < 10; i++) {
+      // Reduced click particles for performance
+      for (let i = 0; i < 6; i++) {
         const angle = (i / 8) * Math.PI * 2;
         const speed = 2 + Math.random() * 3;
         
@@ -111,33 +118,49 @@ export const useMagicalCursor = () => {
     };
   }, []);
 
-  // Animate particles with sparkle effects
+  // Optimized particle animation with requestAnimationFrame
   useEffect(() => {
-    const interval = setInterval(() => {
-      setParticles(prev => 
-        prev
-          .map(particle => {
-            const newLife = particle.life - 1;
-            const lifeRatio = newLife / particle.maxLife;
-            
-            return {
-              ...particle,
-              x: particle.x + particle.vx,
-              y: particle.y + particle.vy,
-              vx: particle.vx * 0.995, // Very slight friction for smooth movement
-              vy: particle.vy * 0.995,
-              opacity: Math.max(0, lifeRatio * 0.8), // Slow fade
-              scale: particle.scale * (0.95 + 0.05 * Math.sin(particle.sparklePhase)), // Sparkle effect
-              rotation: particle.rotation + particle.rotationSpeed,
-              sparklePhase: particle.sparklePhase + 0.1,
-              life: newLife
-            };
-          })
-          .filter(particle => particle.life > 0)
-      );
-    }, 16); // 60fps - optimized for smooth performance
-
-    return () => clearInterval(interval);
+    const animate = () => {
+      setParticles(prev => {
+        if (prev.length === 0) {
+          animationFrameRef.current = requestAnimationFrame(animate);
+          return prev;
+        }
+        
+        const updatedParticles = [];
+        for (const particle of prev) {
+          const newLife = particle.life - 0.8; // Slightly slower decay
+          if (newLife <= 0) continue;
+          
+          const lifeRatio = newLife / particle.maxLife;
+          const sparkleValue = Math.sin(particle.sparklePhase);
+          
+          updatedParticles.push({
+            ...particle,
+            x: particle.x + particle.vx,
+            y: particle.y + particle.vy,
+            vx: particle.vx * 0.996,
+            vy: particle.vy * 0.996,
+            opacity: Math.max(0, lifeRatio * 0.8),
+            scale: particle.scale * (0.96 + 0.04 * sparkleValue),
+            rotation: particle.rotation + particle.rotationSpeed,
+            sparklePhase: particle.sparklePhase + 0.08,
+            life: newLife
+          });
+        }
+        
+        animationFrameRef.current = requestAnimationFrame(animate);
+        return updatedParticles;
+      });
+    };
+    
+    animationFrameRef.current = requestAnimationFrame(animate);
+    
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
   }, []);
 
   return {

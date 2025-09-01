@@ -98,16 +98,14 @@ const MagicalCursor = () => {
         className="belan-cursor-responsive"
         style={{
           position: 'absolute',
-          transform: `translate3d(${cursorPosition.x - 4}px, ${cursorPosition.y - 12}px, 0) ${
-            isClicking ? 'scale(1.1)' : 'scale(1)'
-          }`,
+          transform: `translate3d(${cursorPosition.x - 4}px, ${cursorPosition.y - 12}px, 0) scale(${isClicking ? 1.1 : 1})`,
           opacity: 1,
-          transition: 'transform 0.005s ease',
           willChange: 'transform',
           filter: isClicking ? 'brightness(1.2)' : 'none',
           zIndex: 2147483647,
           imageRendering: 'crisp-edges',
-          backfaceVisibility: 'hidden'
+          backfaceVisibility: 'hidden',
+          pointerEvents: 'none'
         }}
       >
         {/* Main belan cylinder body - vertical */}
@@ -159,16 +157,16 @@ const MagicalCursor = () => {
             position: 'absolute',
             width: '2px',
             height: '2px',
-            background: isClicking ? '#FF4500' : 'transparent',
+            background: isClicking ? '#FF4500' : 'rgba(255, 204, 0, 0.8)',
             borderRadius: '50%',
             left: '3px',
             top: '11px',
             boxShadow: isClicking 
-              ? '0 0 6px rgba(255, 69, 0, 0.9), 0 0 10px rgba(255, 69, 0, 0.5)'
-              : '0 0 3px rgba(255, 204, 0, 0.8)',
-            opacity: isClicking ? 1 : isMoving ? 1 : 0.9,
-            transition: 'all 0.005s ease',
-            transform: isClicking ? 'scale(1.2)' : 'scale(1)'
+              ? '0 0 4px rgba(255, 69, 0, 0.8)'
+              : '0 0 2px rgba(255, 204, 0, 0.6)',
+            opacity: isClicking ? 1 : 0.9,
+            transform: `scale(${isClicking ? 1.2 : 1})`,
+            willChange: 'transform'
           }}
         />
         
@@ -207,7 +205,7 @@ const MagicalCursor = () => {
         
       </div>
 
-      {/* Long magical glittery trail */}
+      {/* Optimized magical trail */}
       {particles.map(particle => {
         const sparkleIntensity = 0.5 + 0.5 * Math.sin(particle.sparklePhase);
         
@@ -218,16 +216,18 @@ const MagicalCursor = () => {
             style={{
               transform: `translate3d(${particle.x}px, ${particle.y}px, 0) scale(${particle.scale}) rotate(${particle.rotation}deg)`,
               opacity: particle.opacity,
-              willChange: 'transform, opacity',
-              zIndex: 2147483647
+              willChange: 'transform',
+              zIndex: 2147483647,
+              backfaceVisibility: 'hidden'
             }}
           >
             {particle.type === 'laugh' ? (
               /* Funny laugh emoji */
               <div 
-                className="text-4xl"
+                className="text-3xl"
                 style={{
-                  filter: `drop-shadow(0 0 4px gold) brightness(${0.8 + 0.4 * sparkleIntensity})`
+                  filter: `drop-shadow(0 0 3px gold) brightness(${0.8 + 0.3 * sparkleIntensity})`,
+                  textRendering: 'optimizeSpeed'
                 }}
               >
                 😂
@@ -237,20 +237,22 @@ const MagicalCursor = () => {
               <div
                 className="relative"
                 style={{
-                  fontSize: '24px',
-                  filter: `brightness(${0.8 + 0.4 * sparkleIntensity})`,
-                  textShadow: '0 0 4px gold'
+                  fontSize: '20px',
+                  filter: `brightness(${0.8 + 0.3 * sparkleIntensity})`,
+                  textShadow: '0 0 3px gold',
+                  textRendering: 'optimizeSpeed'
                 }}
               >
                 ✨
-                {/* Extra sparkle effect */}
-                {sparkleIntensity > 0.7 && (
+                {/* Optimized sparkle effect */}
+                {sparkleIntensity > 0.8 && (
                   <div 
                     className="absolute inset-0"
                     style={{
-                      fontSize: '18px',
-                      filter: 'blur(1px)',
-                      opacity: 0.6
+                      fontSize: '16px',
+                      filter: 'blur(0.5px)',
+                      opacity: 0.5,
+                      textRendering: 'optimizeSpeed'
                     }}
                   >
                     ⭐

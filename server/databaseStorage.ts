@@ -3,11 +3,10 @@ import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from "ws";
 import { 
-  users, blogPosts, collaborationRequests, chatbotTraining, chatbotTemplates, homepageContent, adminSettings, homepageElements,
+  users, blogPosts, collaborationRequests, chatbotTraining, chatbotTemplates, homepageContent, adminSettings,
   type User, type InsertUser, type BlogPost, type InsertBlogPost, type CollaborationRequest, type InsertCollaborationRequest,
   type ChatbotTraining, type InsertChatbotTraining, type ChatbotTemplate, type InsertChatbotTemplate,
-  type HomepageContent, type InsertHomepageContent, type AdminSetting, type InsertAdminSetting,
-  type HomepageElement, type InsertHomepageElement
+  type HomepageContent, type InsertHomepageContent, type AdminSetting, type InsertAdminSetting
 } from "@shared/schema";
 
 neonConfig.webSocketConstructor = ws;
@@ -17,7 +16,7 @@ if (!process.env.DATABASE_URL) {
 }
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const db = drizzle({ client: pool, schema: { users, blogPosts, collaborationRequests, chatbotTraining, chatbotTemplates, homepageContent, adminSettings, homepageElements } });
+const db = drizzle({ client: pool, schema: { users, blogPosts, collaborationRequests, chatbotTraining, chatbotTemplates, homepageContent, adminSettings } });
 
 // Database Storage Implementation with Admin Panel Features
 export class DatabaseStorage {
@@ -334,29 +333,6 @@ export class DatabaseStorage {
     }
   }
 
-  // Homepage Elements operations
-  async getAllHomepageElements(): Promise<HomepageElement[]> {
-    return await db.select().from(homepageElements).orderBy(homepageElements.zIndex);
-  }
-
-  async clearHomepageElements(): Promise<void> {
-    await db.delete(homepageElements);
-  }
-
-  async saveHomepageElements(elements: any[]): Promise<HomepageElement[]> {
-    if (elements.length === 0) return [];
-    
-    const savedElements = await db.insert(homepageElements)
-      .values(elements.map(el => ({
-        ...el,
-        id: undefined, // Let database generate ID
-        createdAt: new Date(),
-        updatedAt: new Date()
-      })))
-      .returning();
-    
-    return savedElements;
-  }
 }
 
 export const databaseStorage = new DatabaseStorage();

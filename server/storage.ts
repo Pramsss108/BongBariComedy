@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type BlogPost, type InsertBlogPost, type CollaborationRequest, type InsertCollaborationRequest, type HomepageElement, type InsertHomepageElement } from "@shared/schema";
+import { type User, type InsertUser, type BlogPost, type InsertBlogPost, type CollaborationRequest, type InsertCollaborationRequest } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -14,22 +14,17 @@ export interface IStorage {
   getCollaborationRequests(): Promise<CollaborationRequest[]>;
   createCollaborationRequest(request: InsertCollaborationRequest): Promise<CollaborationRequest>;
   getCollaborationRequestById(id: string): Promise<CollaborationRequest | undefined>;
-  getAllHomepageElements(): Promise<HomepageElement[]>;
-  clearHomepageElements(): Promise<void>;
-  saveHomepageElements(elements: any[]): Promise<HomepageElement[]>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private blogPosts: Map<string, BlogPost>;
   private collaborationRequests: Map<string, CollaborationRequest>;
-  private homepageElements: Map<number, HomepageElement>;
 
   constructor() {
     this.users = new Map();
     this.blogPosts = new Map();
     this.collaborationRequests = new Map();
-    this.homepageElements = new Map();
     
     // Initialize with some sample blog posts
     this.initializeSampleData();
@@ -162,31 +157,6 @@ export class MemStorage implements IStorage {
     return this.collaborationRequests.get(id);
   }
 
-  async getAllHomepageElements(): Promise<HomepageElement[]> {
-    return Array.from(this.homepageElements.values()).sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
-  }
-
-  async clearHomepageElements(): Promise<void> {
-    this.homepageElements.clear();
-  }
-
-  async saveHomepageElements(elements: any[]): Promise<HomepageElement[]> {
-    const savedElements: HomepageElement[] = [];
-    let id = 1;
-    
-    for (const element of elements) {
-      const homepageElement: HomepageElement = {
-        ...element,
-        id: id++,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      this.homepageElements.set(homepageElement.id, homepageElement);
-      savedElements.push(homepageElement);
-    }
-    
-    return savedElements;
-  }
 }
 
 import { databaseStorage } from "./databaseStorage";

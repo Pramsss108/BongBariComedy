@@ -632,29 +632,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // 🎨 Homepage Elements Management
-  app.get("/api/homepage-elements", async (req, res) => {
-    try {
-      const elements = await storage.getAllHomepageElements();
-      res.json(elements);
-    } catch (error) {
-      console.error("Error fetching homepage elements:", error);
-      res.status(500).json({ message: "Failed to fetch homepage elements" });
-    }
-  });
-
-  app.post("/api/homepage-elements", isAuthenticated, async (req, res) => {
-    try {
-      const { elements } = req.body;
-      // Clear existing elements and save new ones
-      await storage.clearHomepageElements();
-      const savedElements = await storage.saveHomepageElements(elements);
-      res.json(savedElements);
-    } catch (error) {
-      console.error("Error saving homepage elements:", error);
-      res.status(500).json({ message: "Failed to save homepage elements" });
-    }
-  });
 
   // 🎨 BANNER API - Get banner data from database
   app.get("/api/homepage-banner", async (req, res) => {

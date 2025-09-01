@@ -55,11 +55,8 @@ const Navigation = () => {
                   className="w-10 h-10 rounded-lg"
                 />
                 <div className="flex flex-col justify-center">
-                  <h1 className="text-base font-bold text-white bangla-text leading-none">বং বাড়ি</h1>
-                  <div className="flex flex-col leading-none">
-                    <p className="text-[10px] text-white/90 leading-none">Every Home's Story</p>
-                    <p className="text-[10px] text-white/90 leading-none bangla-text">প্রতিটা বাড়ির গল্প</p>
-                  </div>
+                  <h1 className="text-base font-bold text-[#FFD200] leading-tight">Bong Bari</h1>
+                  <p className="text-[10px] text-white/90 leading-tight bangla-text mt-0.5">প্রতিটা বাড়ির গল্প</p>
                 </div>
               </Link>
               

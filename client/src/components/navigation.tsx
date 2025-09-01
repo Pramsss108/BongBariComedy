@@ -42,21 +42,21 @@ const Navigation = () => {
       {/* Navigation Container - Completely Fixed */}
       <div className="fixed top-0 left-0 right-0 z-50 w-full">
         
-        {/* Main Header - Clean Slim Design */}
-        <header className="bg-[#0E47FF] shadow-md" style={{ height: '56px' }}>
-          <div className="container mx-auto px-4 h-full">
+        {/* Main Header - Enhanced Visibility Design */}
+        <header className="bg-[#0E47FF] shadow-md" style={{ height: '72px' }}>
+          <div className="container mx-auto px-4 lg:px-6 h-full">
             <div className="flex justify-between items-center h-full">
               
-              {/* Logo Section - Completely Static */}
-              <Link href="/" className="flex items-center space-x-2" style={{ position: 'relative' }}>
+              {/* Logo Section - Larger Sizes */}
+              <Link href="/" className="flex items-center space-x-3" style={{ position: 'relative' }}>
                 <img 
                   src="/logo.png" 
                   alt="Bong Bari" 
-                  className="w-10 h-10 rounded-lg flex-shrink-0"
+                  className="w-12 h-12 lg:w-14 lg:h-14 rounded-lg flex-shrink-0"
                 />
-                <div className="flex flex-col justify-start h-10 pt-1">
+                <div className="flex flex-col justify-center">
                   <h1 
-                    className="text-[11px] font-bold text-[#FFD200] leading-none whitespace-nowrap bangla-text mb-1"
+                    className="text-lg sm:text-xl lg:text-2xl font-bold text-[#FFD200] leading-none whitespace-nowrap bangla-text mb-1"
                     style={{ 
                       position: 'relative',
                       transform: 'translate3d(0,0,0)',
@@ -66,20 +66,20 @@ const Navigation = () => {
                   >
                     বং বাড়ি
                   </h1>
-                  <div className="flex flex-col leading-none">
-                    <p className="text-[8px] text-white/90 leading-none whitespace-nowrap">Every Home's Story</p>
-                    <p className="text-[8px] text-white/90 leading-none bangla-text whitespace-nowrap">প্রতিটা বাড়ির গল্প</p>
+                  <div className="flex flex-col leading-tight">
+                    <p className="text-[10px] sm:text-xs lg:text-sm text-white/90 leading-none whitespace-nowrap">Every Home's Story</p>
+                    <p className="text-[10px] sm:text-xs lg:text-sm text-white/90 leading-none bangla-text whitespace-nowrap">প্রতিটা বাড়ির গল্প</p>
                   </div>
                 </div>
               </Link>
               
-              {/* Desktop Navigation - Compact Menu */}
-              <nav className="hidden md:flex items-center space-x-4">
+              {/* Desktop Navigation - Enhanced Menu */}
+              <nav className="hidden md:flex items-center space-x-4 lg:space-x-8">
                 {navItems.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`text-white font-medium text-xs transition-all duration-200 hover:text-[#FFD200] ${
+                    className={`text-white font-semibold text-sm lg:text-base transition-all duration-200 hover:text-[#FFD200] ${
                       isActive(item.href) 
                         ? "text-[#FFD200]" 
                         : ""
@@ -89,16 +89,16 @@ const Navigation = () => {
                   </Link>
                 ))}
                 
-                {/* Compact Login/Admin Button */}
+                {/* Enhanced Login/Admin Button */}
                 {user ? (
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-3">
                     <Link href="/admin">
                       <Button 
                         size="sm"
                         variant="ghost" 
-                        className="text-white hover:bg-white/10 text-xs h-7 px-2"
+                        className="text-white hover:bg-white/10 text-sm lg:text-base h-9 px-3 font-semibold"
                       >
-                        <User className="w-3 h-3 mr-1" />
+                        <User className="w-4 h-4 mr-2" />
                         Admin
                       </Button>
                     </Link>
@@ -106,19 +106,19 @@ const Navigation = () => {
                       <PopoverTrigger asChild>
                         <Button 
                           size="sm"
-                          className="bg-green-500 hover:bg-green-600 text-white text-xs h-7 px-2"
+                          className="bg-green-500 hover:bg-green-600 text-white text-sm h-9 px-3"
                         >
                           ✓
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-24 p-1">
+                      <PopoverContent className="w-32 p-2">
                         <Button
                           onClick={handleLogout}
                           variant="ghost"
                           size="sm"
-                          className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 text-xs h-6"
+                          className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 text-sm h-8"
                         >
-                          <LogOut className="w-3 h-3 mr-1" />
+                          <LogOut className="w-4 h-4 mr-2" />
                           Logout
                         </Button>
                       </PopoverContent>
@@ -128,23 +128,23 @@ const Navigation = () => {
                   <Link href="/admin">
                     <Button 
                       size="sm"
-                      className="bg-white text-[#0E47FF] hover:bg-gray-100 font-medium text-xs h-7 px-3"
+                      className="bg-white text-[#0E47FF] hover:bg-gray-100 font-bold text-sm lg:text-base h-9 px-4"
                     >
-                      <LogIn className="w-3 h-3 mr-1" />
+                      <LogIn className="w-4 h-4 mr-2" />
                       Login
                     </Button>
                   </Link>
                 )}
               </nav>
               
-              {/* Mobile Menu Button */}
+              {/* Mobile Menu Button - Larger */}
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden text-white hover:bg-white/10 h-8 w-8"
+                className="md:hidden text-white hover:bg-white/10 h-10 w-10"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               >
-                {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </Button>
             </div>
           </div>
@@ -176,7 +176,7 @@ const Navigation = () => {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`block py-2 px-3 text-white font-medium text-sm rounded-lg transition-colors ${
+                  className={`block py-3 px-4 text-white font-semibold text-base rounded-lg transition-colors ${
                     isActive(item.href) 
                       ? "bg-white/20 text-[#FFD200]" 
                       : "hover:bg-white/10"
@@ -193,7 +193,7 @@ const Navigation = () => {
                   <>
                     <Link 
                       href="/admin" 
-                      className="block py-2 px-3 text-white font-medium text-sm rounded-lg hover:bg-white/10"
+                      className="block py-3 px-4 text-white font-semibold text-base rounded-lg hover:bg-white/10"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       <User className="inline w-4 h-4 mr-1" />
@@ -204,7 +204,7 @@ const Navigation = () => {
                         handleLogout();
                         setIsMobileMenuOpen(false);
                       }}
-                      className="block w-full text-left py-2 px-3 text-red-300 font-medium text-sm rounded-lg hover:bg-white/10"
+                      className="block w-full text-left py-3 px-4 text-red-300 font-semibold text-base rounded-lg hover:bg-white/10"
                     >
                       <LogOut className="inline w-4 h-4 mr-1" />
                       Logout
@@ -213,7 +213,7 @@ const Navigation = () => {
                 ) : (
                   <Link 
                     href="/admin" 
-                    className="block py-2 px-3 text-white font-medium text-sm rounded-lg hover:bg-white/10"
+                    className="block py-3 px-4 text-white font-semibold text-base rounded-lg hover:bg-white/10"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <LogIn className="inline w-4 h-4 mr-1" />
@@ -227,7 +227,7 @@ const Navigation = () => {
       </div>
       
       {/* Spacer for fixed navigation */}
-      <div style={{ height: '91px' }}></div>
+      <div style={{ height: '107px' }}></div>
     </>
   );
 };

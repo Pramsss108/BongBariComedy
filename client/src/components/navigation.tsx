@@ -29,11 +29,6 @@ const Navigation = () => {
     { href: "/work-with-us", label: "Work with us" },
     { href: "/contact", label: "Contact" },
     { href: "/blog", label: "Blog" },
-    { 
-      href: "/admin", 
-      label: user ? "Admin Panel" : "Login ➝",
-      icon: user ? User : LogIn
-    },
   ];
 
   const isActive = (href: string) => {
@@ -43,64 +38,63 @@ const Navigation = () => {
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 w-full bg-transparent" style={{ top: '0px', margin: '0', padding: '0' }} data-testid="main-navigation">
-      {/* Main Header - #0D47FF Background, 60px Height */}
-      <header style={{ backgroundColor: '#0D47FF', height: '60px', margin: '0', padding: '0', top: '0' }} className="shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 h-full">
-          <div className="flex justify-between items-center h-full">
-            
-            {/* Left Side: Logo + Text */}
-            <Link href="/" data-testid="logo-link">
-              <div className="flex items-center space-x-3 group cursor-pointer">
-                <div className="relative">
-                  <img 
-                    src="/logo.png" 
-                    alt="Bong Bari Logo" 
-                    className="w-10 h-10 rounded-lg transition-all duration-300 group-hover:scale-110 group-hover:rotate-6"
-                  />
+    <>
+      {/* Professional Navigation Container */}
+      <div className="fixed top-0 left-0 right-0 z-50 w-full">
+        
+        {/* Main Header - Clean Blue Design */}
+        <header className="bg-[#0E47FF] shadow-md">
+          <div className="container mx-auto px-4">
+            <div className="flex justify-between items-center h-16">
+              
+              {/* Logo Section */}
+              <Link href="/" className="flex items-center space-x-3 group">
+                <img 
+                  src="/logo.png" 
+                  alt="Bong Bari" 
+                  className="w-10 h-10 rounded-lg transition-transform duration-300 group-hover:scale-110"
+                />
+                <div>
+                  <h1 className="text-xl font-bold text-white bangla-text">বং বাড়ি</h1>
+                  <p className="text-xs text-white/80">Every Home's Story</p>
                 </div>
+              </Link>
+              
+              {/* Desktop Navigation */}
+              <nav className="hidden md:flex items-center space-x-8">
+                {navItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`text-white font-medium transition-all duration-200 hover:text-[#FFD200] ${
+                      isActive(item.href) ? "text-[#FFD200] border-b-2 border-[#FFD200] pb-1" : ""
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
                 
-                {/* Brand Text */}
-                <div className="flex flex-col">
-                  <h1 className="text-lg lg:text-xl font-bold text-white bangla-text leading-tight">
-                    বং বাড়ি
-                  </h1>
-                  <p className="text-xs text-white/90 leading-tight">
-                    Every Home's Story
-                  </p>
-                </div>
-              </div>
-            </Link>
-            
-            {/* Right Side: Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-6">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isLoginItem = item.href === "/admin";
-                const isLoggedIn = user && isLoginItem;
-                
-                return isLoggedIn ? (
-                  <div key={item.href} className="flex items-center space-x-3">
-                    <Link
-                      href={item.href}
-                      className={`flex items-center space-x-1 font-medium text-sm transition-colors duration-200 ${
-                        isActive(item.href) 
-                          ? "text-white" 
-                          : "text-white hover:text-[#FFD200]"
-                      }`}
-                      data-testid={`nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
-                    >
-                      {Icon && <Icon className="w-4 h-4" />}
-                      <span>{item.label}</span>
+                {/* Login/Admin Button */}
+                {user ? (
+                  <div className="flex items-center space-x-3">
+                    <Link href="/admin">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="text-white hover:bg-white/10 border border-white/20"
+                      >
+                        <User className="w-4 h-4 mr-2" />
+                        Admin Panel
+                      </Button>
                     </Link>
                     <Popover open={logoutPopoverOpen} onOpenChange={setLogoutPopoverOpen}>
                       <PopoverTrigger asChild>
-                        <button 
-                          className="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full hover:bg-green-200 transition-all duration-200"
-                          data-testid="logged-in-badge"
+                        <Button 
+                          size="sm"
+                          className="bg-green-500 hover:bg-green-600 text-white"
                         >
-                          ● Logged In
-                        </button>
+                          Logged In
+                        </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-32 p-2">
                         <Button
@@ -108,7 +102,6 @@ const Navigation = () => {
                           variant="ghost"
                           size="sm"
                           className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
-                          data-testid="logout-popup-button"
                         >
                           <LogOut className="w-4 h-4 mr-1" />
                           Logout
@@ -117,94 +110,104 @@ const Navigation = () => {
                     </Popover>
                   </div>
                 ) : (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center space-x-1 font-medium text-sm transition-colors duration-200 ${
-                      isActive(item.href) 
-                        ? "text-white" 
-                        : "text-white hover:text-[#FFD200]"
-                    }`}
-                    data-testid={`nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
-                  >
-                    {Icon && <Icon className="w-4 h-4" />}
-                    <span>{item.label}</span>
+                  <Link href="/admin">
+                    <Button 
+                      size="sm"
+                      className="bg-white text-[#0E47FF] hover:bg-gray-100 font-semibold"
+                    >
+                      <LogIn className="w-4 h-4 mr-2" />
+                      Login
+                    </Button>
                   </Link>
-                );
-              })}
+                )}
+              </nav>
+              
+              {/* Mobile Menu Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden text-white hover:bg-white/10"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              >
+                {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </Button>
             </div>
-            
-            {/* Mobile Menu Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden p-2 hover:bg-white/10 transition-colors rounded-lg"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              data-testid="mobile-menu-toggle"
-            >
-              {isMobileMenuOpen ? <X className="h-5 w-5 text-white" /> : <Menu className="h-5 w-5 text-white" />}
-            </Button>
+          </div>
+        </header>
+        
+        {/* Professional Promo Banner */}
+        <div className="bg-[#FFD200] h-[35px] overflow-hidden relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="animate-scroll whitespace-nowrap">
+              <span className="text-black font-semibold text-sm">
+                🔥 Special Offer: Flat 50% off on your first Bong Bari subscription • 🔔 Stay tuned for updates • 
+                🔥 Special Offer: Flat 50% off on your first Bong Bari subscription • 🔔 Stay tuned for updates • 
+              </span>
+            </div>
           </div>
         </div>
         
         {/* Mobile Navigation Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-[#0D47FF]/95 backdrop-blur-sm border-t border-white/20" data-testid="mobile-menu">
-            <div className="px-4 py-3 space-y-2">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isLoginItem = item.href === "/admin";
-                const isLoggedIn = user && isLoginItem;
-                
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center space-x-3 px-4 py-3 rounded-lg font-medium text-sm transition-colors duration-200 ${
-                      isActive(item.href) 
-                        ? "text-white bg-white/20" 
-                        : isLoggedIn
-                          ? "text-green-300"
-                          : "text-white hover:text-[#FFD200] hover:bg-white/10"
-                    }`}
+          <div className="md:hidden bg-[#0E47FF] border-t border-white/10">
+            <div className="container mx-auto px-4 py-4">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`block py-3 px-4 text-white font-medium rounded-lg transition-colors ${
+                    isActive(item.href) 
+                      ? "bg-white/20 text-[#FFD200]" 
+                      : "hover:bg-white/10"
+                  }`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              ))}
+              
+              {/* Mobile Login/Admin */}
+              <div className="mt-4 pt-4 border-t border-white/10">
+                {user ? (
+                  <>
+                    <Link 
+                      href="/admin" 
+                      className="block py-3 px-4 text-white font-medium rounded-lg hover:bg-white/10"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <User className="inline w-4 h-4 mr-2" />
+                      Admin Panel
+                    </Link>
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="block w-full text-left py-3 px-4 text-red-300 font-medium rounded-lg hover:bg-white/10"
+                    >
+                      <LogOut className="inline w-4 h-4 mr-2" />
+                      Logout
+                    </button>
+                  </>
+                ) : (
+                  <Link 
+                    href="/admin" 
+                    className="block py-3 px-4 text-white font-medium rounded-lg hover:bg-white/10"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    data-testid={`mobile-nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                   >
-                    {Icon && <Icon className="w-4 h-4" />}
-                    <span>{item.label}</span>
-                    {isLoggedIn && (
-                      <span className="ml-auto px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
-                        Logged In
-                      </span>
-                    )}
+                    <LogIn className="inline w-4 h-4 mr-2" />
+                    Login
                   </Link>
-                );
-              })}
+                )}
+              </div>
             </div>
           </div>
         )}
-      </header>
-      
-      {/* Single Slim Promo Banner - #FFD200 Yellow, 35px Height Only */}
-      <div 
-        style={{ 
-          backgroundColor: '#FFD200', 
-          height: '35px', 
-          position: 'fixed', 
-          top: '60px', 
-          left: '0', 
-          right: '0',
-          margin: '0',
-          padding: '0'
-        }} 
-        className="promo-banner overflow-hidden flex items-center w-full z-40"
-      >
-        <span className="animate-scroll text-black font-bold text-sm whitespace-nowrap">
-          🔥 Special Offer: Flat 50% off on your first Bong Bari subscription 🔔 Stay tuned for updates • 
-          🔥 Special Offer: Flat 50% off on your first Bong Bari subscription 🔔 Stay tuned for updates • 
-        </span>
       </div>
-    </div>
+      
+      {/* Spacer for fixed navigation */}
+      <div className="h-[99px]"></div>
+    </>
   );
 };
 

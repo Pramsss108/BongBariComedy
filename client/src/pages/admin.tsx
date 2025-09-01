@@ -19,6 +19,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { insertUserSchema, insertBlogPostSchema, type CollaborationRequest, type InsertUser, type InsertBlogPost, type BlogPost } from "@shared/schema";
 import { SimpleBannerManager } from "./SimpleBannerManager";
 import { AdminChatbot } from "./AdminChatbot";
+import { AdminLeadManager } from "./AdminLeadManager";
 
 const Admin = () => {
   const [, setLocation] = useLocation();
@@ -53,13 +54,6 @@ const Admin = () => {
     }
   }, [isAuthenticated, authLoading, setLocation]);
 
-  const { data: collaborationRequests, isLoading: requestsLoading, refetch: refetchRequests } = useQuery<CollaborationRequest[]>({
-    queryKey: ['/api/collaboration-requests'],
-    enabled: isAuthenticated,
-    refetchInterval: 30 * 1000, // Refetch every 30 seconds
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
-  });
 
   const { data: blogPosts, isLoading: blogsLoading } = useQuery<BlogPost[]>({
     queryKey: ['/api/blog'],
@@ -419,75 +413,7 @@ const Admin = () => {
                 <h3 className="text-2xl font-semibold text-brand-blue mb-6">
                   Collaboration Requests
                 </h3>
-              
-              {requestsLoading ? (
-                <div className="grid gap-6">
-                  {[...Array(3)].map((_, i) => (
-                    <Card key={i} className="animate-pulse">
-                      <CardContent className="p-6">
-                        <div className="h-4 bg-gray-200 rounded mb-2" />
-                        <div className="h-3 bg-gray-200 rounded w-1/2 mb-4" />
-                        <div className="h-20 bg-gray-200 rounded" />
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : collaborationRequests && collaborationRequests.length > 0 ? (
-                <div className="grid gap-6" data-testid="collaboration-requests-list">
-                  {collaborationRequests.map((request) => (
-                    <Card key={request.id} className="bg-white shadow-lg hover-lift">
-                      <CardHeader className="pb-4">
-                        <div className="flex justify-between items-start">
-                          <CardTitle className="text-xl text-brand-blue">
-                            {request.name}
-                          </CardTitle>
-                          <Badge variant="secondary" className="bg-brand-yellow text-brand-blue">
-                            New Lead
-                          </Badge>
-                        </div>
-                        <div className="flex flex-wrap gap-4 text-sm text-gray-600 mt-2">
-                          <div className="flex items-center">
-                            <Mail className="w-4 h-4 mr-1" />
-                            <a href={`mailto:${request.email}`} className="hover:text-brand-blue">
-                              {request.email}
-                            </a>
-                          </div>
-                          {request.company && (
-                            <div className="flex items-center">
-                              <Building className="w-4 h-4 mr-1" />
-                              {request.company}
-                            </div>
-                          )}
-                          <div className="flex items-center">
-                            <Calendar className="w-4 h-4 mr-1" />
-                            {formatDate(request.createdAt)}
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                          <h4 className="font-semibold text-gray-800 mb-2">Message:</h4>
-                          <p className="text-gray-700 whitespace-pre-wrap">
-                            {request.message}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <Card className="text-center py-12">
-                  <CardContent>
-                    <User className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                    <h4 className="text-xl font-semibold text-gray-600 mb-2">
-                      No collaboration requests yet
-                    </h4>
-                    <p className="text-gray-500">
-                      When people submit the collaboration form, their requests will appear here.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+                <AdminLeadManager sessionId={sessionId} />
               </TabsContent>
               
               <TabsContent value="blog" className="mt-8">

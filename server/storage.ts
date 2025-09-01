@@ -11,9 +11,12 @@ export interface IStorage {
   createBlogPost(post: InsertBlogPost): Promise<BlogPost>;
   updateBlogPost(id: string, post: Partial<InsertBlogPost>): Promise<BlogPost | undefined>;
   deleteBlogPost(id: string): Promise<boolean>;
-  getCollaborationRequests(): Promise<CollaborationRequest[]>;
+  getCollaborationRequests(filters?: any): Promise<CollaborationRequest[]>;
   createCollaborationRequest(request: InsertCollaborationRequest): Promise<CollaborationRequest>;
   getCollaborationRequestById(id: string): Promise<CollaborationRequest | undefined>;
+  markLeadAsOpened(id: string): Promise<CollaborationRequest | undefined>;
+  updateLeadStatus(id: string, leadStatus: string): Promise<CollaborationRequest | undefined>;
+  updateFollowUpNotes(id: string, notes: string): Promise<CollaborationRequest | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -133,8 +136,23 @@ export class MemStorage implements IStorage {
     return this.blogPosts.delete(id);
   }
 
-  async getCollaborationRequests(): Promise<CollaborationRequest[]> {
-    return Array.from(this.collaborationRequests.values()).sort(
+  async getCollaborationRequests(filters?: any): Promise<CollaborationRequest[]> {
+    let requests = Array.from(this.collaborationRequests.values());
+    
+    if (filters) {
+      if (filters.leadStatus) {
+        requests = requests.filter(r => r.leadStatus === filters.leadStatus);
+      }
+      if (filters.opened !== undefined) {
+        requests = requests.filter(r => r.opened === (filters.opened === 'true'));
+      }
+      if (filters.ids) {
+        const idSet = new Set(filters.ids);
+        requests = requests.filter(r => idSet.has(r.id));
+      }
+    }
+    
+    return requests.sort(
       (a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()
     );
   }
@@ -147,14 +165,54 @@ export class MemStorage implements IStorage {
       id,
       createdAt: now,
       status: insertRequest.status || "submitted",
+      opened: false,
+      openedAt: null,
+      leadStatus: 'new',
+      followUpNotes: null,
     };
     this.collaborationRequests.set(id, request);
     return request;
   }
 
-
   async getCollaborationRequestById(id: string): Promise<CollaborationRequest | undefined> {
     return this.collaborationRequests.get(id);
+  }
+
+  async markLeadAsOpened(id: string): Promise<CollaborationRequest | undefined> {
+    const request = this.collaborationRequests.get(id);
+    if (!request) return undefined;
+    
+    const updated = {
+      ...request,
+      opened: true,
+      openedAt: request.openedAt || new Date(),
+    };
+    this.collaborationRequests.set(id, updated);
+    return updated;
+  }
+
+  async updateLeadStatus(id: string, leadStatus: string): Promise<CollaborationRequest | undefined> {
+    const request = this.collaborationRequests.get(id);
+    if (!request) return undefined;
+    
+    const updated = {
+      ...request,
+      leadStatus: leadStatus as any,
+    };
+    this.collaborationRequests.set(id, updated);
+    return updated;
+  }
+
+  async updateFollowUpNotes(id: string, notes: string): Promise<CollaborationRequest | undefined> {
+    const request = this.collaborationRequests.get(id);
+    if (!request) return undefined;
+    
+    const updated = {
+      ...request,
+      followUpNotes: notes,
+    };
+    this.collaborationRequests.set(id, updated);
+    return updated;
   }
 
 }

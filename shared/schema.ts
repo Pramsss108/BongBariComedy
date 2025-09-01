@@ -1,7 +1,10 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, serial, integer, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, serial, integer, boolean, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// Lead status enum for collaboration requests
+export const leadStatusEnum = pgEnum('lead_status', ['new', 'hot', 'warm', 'cold', 'dead']);
 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -27,6 +30,10 @@ export const collaborationRequests = pgTable("collaboration_requests", {
   company: text("company").notNull(),
   message: text("message"),
   status: text("status").default("submitted"),
+  opened: boolean("opened").default(false),
+  openedAt: timestamp("opened_at"),
+  leadStatus: leadStatusEnum("lead_status").default('new'),
+  followUpNotes: text("follow_up_notes"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

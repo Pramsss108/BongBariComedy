@@ -1,4 +1,4 @@
-import { eq, and, like, desc } from "drizzle-orm";
+import { eq, and, or, like, desc } from "drizzle-orm";
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from "ws";
@@ -70,7 +70,35 @@ export class DatabaseStorage {
   }
 
   // Collaboration request operations
-  async getCollaborationRequests(): Promise<CollaborationRequest[]> {
+  async getCollaborationRequests(filters?: any): Promise<CollaborationRequest[]> {
+    let query = db.select().from(collaborationRequests);
+    let conditions = [];
+    
+    if (filters) {
+      if (filters.leadStatus) {
+        conditions.push(eq(collaborationRequests.leadStatus, filters.leadStatus));
+      }
+      if (filters.opened !== undefined) {
+        conditions.push(eq(collaborationRequests.opened, filters.opened === 'true'));
+      }
+      if (filters.ids && filters.ids.length > 0) {
+        // Handle multiple IDs filtering
+        const idConditions = filters.ids.map((id: string) => eq(collaborationRequests.id, id));
+        if (idConditions.length === 1) {
+          conditions.push(idConditions[0]);
+        } else {
+          // Combine with OR for multiple IDs
+          conditions.push(idConditions.reduce((a: any, b: any) => or(a, b)));
+        }
+      }
+    }
+    
+    if (conditions.length > 0) {
+      return await db.select().from(collaborationRequests)
+        .where(and(...conditions))
+        .orderBy(desc(collaborationRequests.createdAt));
+    }
+    
     return await db.select().from(collaborationRequests).orderBy(desc(collaborationRequests.createdAt));
   }
 
@@ -80,7 +108,12 @@ export class DatabaseStorage {
   }
 
   async createCollaborationRequest(insertRequest: InsertCollaborationRequest): Promise<CollaborationRequest> {
-    const [request] = await db.insert(collaborationRequests).values(insertRequest).returning();
+    const requestData = {
+      ...insertRequest,
+      opened: false,
+      leadStatus: 'new' as const,
+    };
+    const [request] = await db.insert(collaborationRequests).values(requestData).returning();
     return request;
   }
 
@@ -95,6 +128,30 @@ export class DatabaseStorage {
   async deleteCollaborationRequest(id: string): Promise<boolean> {
     const result = await db.delete(collaborationRequests).where(eq(collaborationRequests.id, id));
     return result.rowCount > 0;
+  }
+
+  async markLeadAsOpened(id: string): Promise<CollaborationRequest | undefined> {
+    const [request] = await db.update(collaborationRequests)
+      .set({ opened: true, openedAt: new Date() })
+      .where(eq(collaborationRequests.id, id))
+      .returning();
+    return request || undefined;
+  }
+
+  async updateLeadStatus(id: string, leadStatus: string): Promise<CollaborationRequest | undefined> {
+    const [request] = await db.update(collaborationRequests)
+      .set({ leadStatus: leadStatus as any })
+      .where(eq(collaborationRequests.id, id))
+      .returning();
+    return request || undefined;
+  }
+
+  async updateFollowUpNotes(id: string, notes: string): Promise<CollaborationRequest | undefined> {
+    const [request] = await db.update(collaborationRequests)
+      .set({ followUpNotes: notes })
+      .where(eq(collaborationRequests.id, id))
+      .returning();
+    return request || undefined;
   }
 
   // 🤖 CHATBOT TRAINING OPERATIONS

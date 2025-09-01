@@ -326,12 +326,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Collaboration request routes (protected)
-  app.get("/api/collaboration-requests", isAuthenticated, async (_req, res) => {
+  app.get("/api/collaboration-requests", isAuthenticated, async (req, res) => {
     try {
-      const requests = await storage.getCollaborationRequests();
+      // Get query parameters for filtering
+      const { leadStatus, opened } = req.query;
+      const requests = await storage.getCollaborationRequests({ leadStatus, opened });
       res.json(requests);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch collaboration requests" });
+    }
+  });
+
+  // Mark lead as opened
+  app.put("/api/collaboration-requests/:id/open", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updated = await storage.markLeadAsOpened(id);
+      if (!updated) {
+        return res.status(404).json({ message: "Lead not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      console.error("Error marking lead as opened:", error);
+      res.status(500).json({ message: "Failed to mark lead as opened" });
+    }
+  });
+
+  // Update lead status
+  app.put("/api/collaboration-requests/:id/status", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { leadStatus } = req.body;
+      
+      if (!['new', 'hot', 'warm', 'cold', 'dead'].includes(leadStatus)) {
+        return res.status(400).json({ message: "Invalid lead status" });
+      }
+      
+      const updated = await storage.updateLeadStatus(id, leadStatus);
+      if (!updated) {
+        return res.status(404).json({ message: "Lead not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating lead status:", error);
+      res.status(500).json({ message: "Failed to update lead status" });
+    }
+  });
+
+  // Update follow-up notes
+  app.put("/api/collaboration-requests/:id/follow-up", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { followUpNotes } = req.body;
+      
+      const updated = await storage.updateFollowUpNotes(id, followUpNotes);
+      if (!updated) {
+        return res.status(404).json({ message: "Lead not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating follow-up notes:", error);
+      res.status(500).json({ message: "Failed to update follow-up notes" });
+    }
+  });
+
+  // Export leads (CSV format)
+  app.get("/api/collaboration-requests/export", isAuthenticated, async (req, res) => {
+    try {
+      const { leadStatus, ids } = req.query;
+      const filters: any = {};
+      
+      if (leadStatus) filters.leadStatus = leadStatus;
+      if (ids) filters.ids = Array.isArray(ids) ? ids : [ids];
+      
+      const requests = await storage.getCollaborationRequests(filters);
+      
+      // Convert to CSV
+      const csvHeader = "ID,Name,Email,Phone,Company,Message,Status,Lead Status,Opened,Created At\n";
+      const csvRows = requests.map(r => 
+        `"${r.id}","${r.name}","${r.email || ''}","${r.phone || ''}","${r.company}","${r.message || ''}","${r.status}","${r.leadStatus}","${r.opened}","${r.createdAt}"`
+      ).join('\n');
+      
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="collaboration-leads.csv"');
+      res.send(csvHeader + csvRows);
+    } catch (error) {
+      console.error("Error exporting leads:", error);
+      res.status(500).json({ message: "Failed to export leads" });
     }
   });
 

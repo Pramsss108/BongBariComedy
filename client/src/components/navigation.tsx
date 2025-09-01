@@ -44,9 +44,18 @@ const Navigation = () => {
   };
 
   return (
-    <nav className="bg-white/95 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-200" data-testid="main-navigation">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-10 lg:h-12">
+    <nav className="sticky top-0 z-50" data-testid="main-navigation">
+      {/* Offer Banner */}
+      <div className="bg-brand-yellow text-center py-1 px-2 border-b border-yellow-400">
+        <p className="text-xs sm:text-sm font-semibold text-brand-blue animate-pulse">
+          🎬 New Comedy Every Week! | নতুন কমেডি প্রতি সপ্তাহে! 🎭
+        </p>
+      </div>
+      
+      {/* Main Navigation */}
+      <div className="bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-200">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-10 lg:h-12">
           {/* Logo - Optimized Layout */}
           <Link href="/" data-testid="logo-link">
             <div className="flex items-center space-x-1 cursor-pointer hover-logo-container group w-full">
@@ -159,6 +168,7 @@ const Navigation = () => {
           >
             {isMobileMenuOpen ? <X className="h-8 w-8 text-gray-800" /> : <Menu className="h-8 w-8 text-gray-800" />}
           </Button>
+          </div>
         </div>
         
         {/* Mobile Navigation - Maximum Visibility */}

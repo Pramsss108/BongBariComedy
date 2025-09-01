@@ -73,18 +73,21 @@ const Navigation = () => {
               </Link>
               
               {/* Desktop Navigation - Enhanced Menu */}
-              <nav className="hidden md:flex items-center space-x-4 lg:space-x-8">
+              <nav className="hidden md:flex items-center space-x-6 lg:space-x-10">
                 {navItems.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`text-white font-semibold text-sm lg:text-base transition-all duration-200 hover:text-[#FFD200] ${
+                    className={`relative text-white font-bold text-base lg:text-lg transition-all duration-300 hover:text-[#FFD200] hover:scale-105 ${
                       isActive(item.href) 
-                        ? "text-[#FFD200]" 
+                        ? "text-[#FFD200] scale-105" 
                         : ""
                     }`}
                   >
                     {item.label}
+                    {isActive(item.href) && (
+                      <span className="absolute -bottom-2 left-0 right-0 h-1 bg-[#FFD200] rounded-full animate-pulse"></span>
+                    )}
                   </Link>
                 ))}
                 
@@ -93,19 +96,19 @@ const Navigation = () => {
                   <div className="flex items-center space-x-3">
                     <Link href="/admin">
                       <Button 
-                        size="sm"
+                        size="default"
                         variant="ghost" 
-                        className="text-white hover:bg-white/10 text-sm lg:text-base h-9 px-3 font-semibold"
+                        className="text-white hover:bg-white/20 text-base lg:text-lg h-11 px-4 font-bold transition-all duration-300 hover:scale-105"
                       >
-                        <User className="w-4 h-4 mr-2" />
+                        <User className="w-5 h-5 mr-2" />
                         Admin
                       </Button>
                     </Link>
                     <Popover open={logoutPopoverOpen} onOpenChange={setLogoutPopoverOpen}>
                       <PopoverTrigger asChild>
                         <Button 
-                          size="sm"
-                          className="bg-green-500 hover:bg-green-600 text-white text-sm h-9 px-3"
+                          size="default"
+                          className="bg-green-500 hover:bg-green-600 text-white text-base h-11 px-4 transition-all duration-300 hover:scale-105"
                         >
                           ✓
                         </Button>
@@ -126,10 +129,10 @@ const Navigation = () => {
                 ) : (
                   <Link href="/admin">
                     <Button 
-                      size="sm"
-                      className="bg-white text-[#0E47FF] hover:bg-gray-100 font-bold text-sm lg:text-base h-9 px-4"
+                      size="default"
+                      className="bg-[#FFD200] text-[#0E47FF] hover:bg-yellow-400 font-bold text-base lg:text-lg h-11 px-6 transition-all duration-300 hover:scale-105 shadow-lg"
                     >
-                      <LogIn className="w-4 h-4 mr-2" />
+                      <LogIn className="w-5 h-5 mr-2" />
                       Login
                     </Button>
                   </Link>
@@ -140,62 +143,67 @@ const Navigation = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden text-white hover:bg-white/10 h-10 w-10"
+                className="md:hidden text-white hover:bg-white/20 h-12 w-12 transition-all duration-300"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               >
-                {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                {isMobileMenuOpen ? <X className="h-7 w-7" /> : <Menu className="h-7 w-7" />}
               </Button>
             </div>
           </div>
         </header>
         
-        {/* Promo Banner - Slim */}
-        <div className="bg-[#FFD200]" style={{ height: '35px' }}>
+        {/* Promo Banner - Enhanced */}
+        <div className="bg-gradient-to-r from-[#FFD200] via-[#FFC000] to-[#FFD200]" style={{ height: '48px' }}>
           <div className="h-full overflow-hidden relative">
             <div className="absolute inset-0 flex items-center">
               <div className="animate-scroll whitespace-nowrap flex">
-                <span className="text-black font-semibold text-sm px-6">
-                  🔥 Special Offer: Flat 50% off on your first Bong Bari subscription • 🔔 Stay tuned for updates • 
-                  🔥 Special Offer: Flat 50% off on your first Bong Bari subscription • 🔔 Stay tuned for updates • 
+                <span className="text-black font-bold text-base lg:text-lg px-8 flex items-center h-full">
+                  🎉 <span className="mx-2">Special Offer: Flat 50% off on your first Bong Bari subscription</span> • 
+                  🔔 <span className="mx-2">Stay tuned for exciting updates</span> • 
+                  🎬 <span className="mx-2">New comedy sketches every week</span> • 
+                  🏆 <span className="mx-2">Join our community of laughter lovers</span> • 
                 </span>
-                <span className="text-black font-semibold text-sm px-6">
-                  🔥 Special Offer: Flat 50% off on your first Bong Bari subscription • 🔔 Stay tuned for updates • 
-                  🔥 Special Offer: Flat 50% off on your first Bong Bari subscription • 🔔 Stay tuned for updates • 
+                <span className="text-black font-bold text-base lg:text-lg px-8 flex items-center h-full">
+                  🎉 <span className="mx-2">Special Offer: Flat 50% off on your first Bong Bari subscription</span> • 
+                  🔔 <span className="mx-2">Stay tuned for exciting updates</span> • 
+                  🎬 <span className="mx-2">New comedy sketches every week</span> • 
+                  🏆 <span className="mx-2">Join our community of laughter lovers</span> • 
                 </span>
               </div>
             </div>
           </div>
         </div>
         
-        {/* Mobile Navigation Menu */}
+        {/* Mobile Navigation Menu - Enhanced */}
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-[#0E47FF] border-t border-white/10">
-            <div className="container mx-auto px-4 py-3">
-              {navItems.map((item) => (
+          <div className="md:hidden bg-gradient-to-b from-[#0E47FF] to-[#0A3ACC] border-t-2 border-[#FFD200] shadow-lg animate-slide-down">
+            <div className="container mx-auto px-4 py-4">
+              {navItems.map((item, index) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`block py-3 px-4 text-white font-semibold text-base rounded-lg transition-colors ${
+                  className={`block py-4 px-5 mb-2 text-white font-bold text-lg rounded-xl transition-all duration-300 ${
                     isActive(item.href) 
-                      ? "bg-white/20 text-[#FFD200]" 
-                      : "hover:bg-white/10"
+                      ? "bg-[#FFD200] text-[#0E47FF] shadow-lg transform scale-105" 
+                      : "hover:bg-white/20 hover:transform hover:translate-x-2"
                   }`}
+                  style={{ animationDelay: `${index * 50}ms` }}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {item.label}
                 </Link>
               ))}
               
-              {/* Mobile Login/Admin */}
-              <div className="mt-3 pt-3 border-t border-white/20">
+              {/* Mobile Login/Admin - Enhanced */}
+              <div className="mt-4 pt-4 border-t-2 border-white/30">
                 {user ? (
                   <>
                     <Link 
                       href="/admin" 
-                      className="block py-3 px-4 text-white font-semibold text-base rounded-lg hover:bg-white/10"
+                      className="block py-4 px-5 mb-2 text-white font-bold text-lg rounded-xl hover:bg-white/20 transition-all duration-300 hover:transform hover:translate-x-2"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      <User className="inline w-4 h-4 mr-1" />
+                      <User className="inline w-5 h-5 mr-2" />
                       Admin Panel
                     </Link>
                     <button
@@ -203,19 +211,19 @@ const Navigation = () => {
                         handleLogout();
                         setIsMobileMenuOpen(false);
                       }}
-                      className="block w-full text-left py-3 px-4 text-red-300 font-semibold text-base rounded-lg hover:bg-white/10"
+                      className="block w-full text-left py-4 px-5 text-red-300 font-bold text-lg rounded-xl hover:bg-red-500/20 transition-all duration-300 hover:transform hover:translate-x-2"
                     >
-                      <LogOut className="inline w-4 h-4 mr-1" />
+                      <LogOut className="inline w-5 h-5 mr-2" />
                       Logout
                     </button>
                   </>
                 ) : (
                   <Link 
                     href="/admin" 
-                    className="block py-3 px-4 text-white font-semibold text-base rounded-lg hover:bg-white/10"
+                    className="block py-4 px-5 bg-[#FFD200] text-[#0E47FF] font-bold text-lg rounded-xl hover:bg-yellow-400 transition-all duration-300 shadow-lg hover:transform hover:scale-105"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    <LogIn className="inline w-4 h-4 mr-1" />
+                    <LogIn className="inline w-5 h-5 mr-2" />
                     Login
                   </Link>
                 )}
@@ -226,7 +234,7 @@ const Navigation = () => {
       </div>
       
       {/* Spacer for fixed navigation */}
-      <div style={{ height: '107px' }}></div>
+      <div style={{ height: '138px' }}></div>
     </>
   );
 };

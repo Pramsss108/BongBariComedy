@@ -104,7 +104,7 @@ header {
   animation-delay: 200ms;
 }
 
-/* Scrolling Ticker Animation */
+/* Scrolling Ticker Animation - Enhanced */
 @keyframes scroll {
   0% {
     transform: translateX(0);
@@ -114,10 +114,109 @@ header {
   }
 }
 
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 210, 0, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(255, 210, 0, 0.8);
+  }
+}
+
 .animate-scroll {
   display: flex;
-  animation: scroll 25s linear infinite;
+  animation: scroll 30s linear infinite;
   width: 200%;
+}
+
+/* Enhanced Header Effects */
+header {
+  animation: slide-in 0.5s ease-out;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(10px);
+}
+
+/* Navigation Item Hover Effects */
+nav a {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+nav a::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  width: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #FFD200, #FFC000);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateX(-50%);
+  border-radius: 2px;
+}
+
+nav a:hover::after {
+  width: 100%;
+}
+
+/* Button Hover Effects */
+button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Promotional Banner Enhancement */
+.bg-gradient-to-r {
+  background-size: 200% 100%;
+  animation: gradient-shift 3s ease infinite;
+}
+
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes slide-down {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-down {
+  animation: slide-down 0.3s ease-out;
 }
 
 /* Lock Logo Text in Place - Prevent ALL Movement */

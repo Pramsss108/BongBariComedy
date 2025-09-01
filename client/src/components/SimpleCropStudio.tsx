@@ -31,10 +31,10 @@ export function SimpleCropStudio({ imageUrl, onCropChange, className = "" }: Sim
   
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
   const [cropData, setCropData] = useState<CropData>({
-    width: 585,
-    height: 360,
-    x: 174,
-    y: 35
+    width: 200,
+    height: 40,
+    x: 100,
+    y: 50
   });
   
   const [viewport, setViewport] = useState<ViewportData>({
@@ -58,10 +58,10 @@ export function SimpleCropStudio({ imageUrl, onCropChange, className = "" }: Sim
         setImageSize({ width: img.width, height: img.height });
         // Set initial crop to center of image
         const initialCrop = {
-          width: Math.min(400, img.width * 0.5),
-          height: Math.min(250, img.height * 0.5),
-          x: img.width * 0.25,
-          y: img.height * 0.25
+          width: Math.min(200, img.width * 0.4),
+          height: Math.min(40, img.height * 0.1),
+          x: img.width * 0.3,
+          y: img.height * 0.45
         };
         setCropData(initialCrop);
         // Reset viewport
@@ -114,8 +114,10 @@ export function SimpleCropStudio({ imageUrl, onCropChange, className = "" }: Sim
     const cropRight = cropLeft + (cropData.width / imageSize.width) * rect.width;
     const cropBottom = cropTop + (cropData.height / imageSize.height) * rect.height;
 
-    // Check if clicking on resize handle (bottom-right corner with smaller hit area)
-    if (Math.abs(x - cropRight) < 8 && Math.abs(y - cropBottom) < 8) {
+    // Check if clicking on horizontal resize handles
+    const cropCenterY = cropTop + (cropBottom - cropTop) / 2;
+    if ((Math.abs(x - cropLeft) < 8 && Math.abs(y - cropCenterY) < 12) || 
+        (Math.abs(x - cropRight) < 8 && Math.abs(y - cropCenterY) < 12)) {
       setDragMode('resize');
     } else if (x >= cropLeft && x <= cropRight && y >= cropTop && y <= cropBottom) {
       setDragMode('move');
@@ -141,10 +143,12 @@ export function SimpleCropStudio({ imageUrl, onCropChange, className = "" }: Sim
     const cropRight = cropLeft + (cropData.width / imageSize.width) * rect.width;
     const cropBottom = cropTop + (cropData.height / imageSize.height) * rect.height;
 
-    // Update cursor with precise hit detection
+    // Update cursor for horizontal banner
     if (!isDragging) {
-      if (Math.abs(x - cropRight) < 8 && Math.abs(y - cropBottom) < 8) {
-        if (workspaceRef.current) workspaceRef.current.style.cursor = 'se-resize';
+      const cropCenterY = cropTop + (cropBottom - cropTop) / 2;
+      if ((Math.abs(x - cropLeft) < 8 && Math.abs(y - cropCenterY) < 12) || 
+          (Math.abs(x - cropRight) < 8 && Math.abs(y - cropCenterY) < 12)) {
+        if (workspaceRef.current) workspaceRef.current.style.cursor = 'ew-resize';
       } else if (x >= cropLeft && x <= cropRight && y >= cropTop && y <= cropBottom) {
         if (workspaceRef.current) workspaceRef.current.style.cursor = 'move';
       } else {
@@ -170,12 +174,12 @@ export function SimpleCropStudio({ imageUrl, onCropChange, className = "" }: Sim
         y: Math.max(0, Math.min(imageSize.height - prev.height, newY))
       }));
     } else if (dragMode === 'resize') {
+      // Only resize width for horizontal banner, keep height fixed
       const newWidth = dragStartData.crop.width + (deltaX * scaleX);
-      const newHeight = dragStartData.crop.height + (deltaY * scaleY);
       setCropData(prev => ({
         ...prev,
-        width: Math.max(50, Math.min(imageSize.width - prev.x, newWidth)),
-        height: Math.max(50, Math.min(imageSize.height - prev.y, newHeight))
+        width: Math.max(80, Math.min(imageSize.width - prev.x, newWidth))
+        // height stays the same for horizontal banner
       }));
     }
   };
@@ -259,16 +263,18 @@ export function SimpleCropStudio({ imageUrl, onCropChange, className = "" }: Sim
                       <div className="absolute inset-0 bg-black bg-opacity-40" />
                     </div>
                     
-                    {/* Crop Selection Area */}
+                    {/* Small Horizontal Banner Crop Area */}
                     <div
-                      className="absolute border-4 border-red-500 bg-transparent cursor-move"
+                      className="absolute border-2 border-red-500 bg-transparent cursor-move"
                       style={{
                         left: `${(cropData.x / imageSize.width) * 100}%`,
                         top: `${(cropData.y / imageSize.height) * 100}%`,
                         width: `${(cropData.width / imageSize.width) * 100}%`,
                         height: `${(cropData.height / imageSize.height) * 100}%`,
-                        minWidth: '50px',
-                        minHeight: '50px'
+                        minWidth: '80px',
+                        minHeight: '20px',
+                        borderRadius: '20px',
+                        boxShadow: '0 0 10px rgba(255, 0, 0, 0.3)'
                       }}
                     >
                       {/* Clear Image Preview Inside Crop */}
@@ -282,30 +288,15 @@ export function SimpleCropStudio({ imageUrl, onCropChange, className = "" }: Sim
                         }}
                       />
                       
-                      {/* Red Grid Lines */}
+                      {/* Simple Horizontal Guide Line */}
                       <div className="absolute inset-0 pointer-events-none">
-                        {/* Horizontal center line */}
-                        <div className="absolute top-1/2 left-0 w-full h-0.5 bg-red-400 opacity-70" style={{ transform: 'translateY(-50%)' }} />
-                        {/* Vertical center line */}
-                        <div className="absolute left-1/2 top-0 w-0.5 h-full bg-red-400 opacity-70" style={{ transform: 'translateX(-50%)' }} />
-                        
-                        {/* Rule of thirds lines */}
-                        <div className="absolute top-1/3 left-0 w-full h-px bg-red-300 opacity-50" />
-                        <div className="absolute top-2/3 left-0 w-full h-px bg-red-300 opacity-50" />
-                        <div className="absolute left-1/3 top-0 w-px h-full bg-red-300 opacity-50" />
-                        <div className="absolute left-2/3 top-0 w-px h-full bg-red-300 opacity-50" />
+                        {/* Center horizontal line */}
+                        <div className="absolute top-1/2 left-2 right-2 h-px bg-red-300 opacity-80" style={{ transform: 'translateY(-50%)' }} />
                       </div>
                       
-                      {/* Corner Handles */}
-                      <div className="absolute -top-1 -left-1 w-2 h-2 bg-red-500 border border-white shadow-sm" />
-                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 border border-white shadow-sm" />
-                      <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-red-500 border border-white shadow-sm" />
-                      
-                      {/* Resize Handle - Bottom Right */}
-                      <div 
-                        className="absolute -bottom-1 -right-1 w-3 h-3 bg-red-600 border border-white cursor-se-resize shadow-lg"
-                        style={{ borderRadius: '1px' }}
-                      />
+                      {/* Left and Right Resize Handles for Horizontal Banner */}
+                      <div className="absolute top-1/2 -left-1 w-2 h-4 bg-red-500 border border-white shadow-sm cursor-ew-resize rounded" style={{ transform: 'translateY(-50%)' }} />
+                      <div className="absolute top-1/2 -right-1 w-2 h-4 bg-red-600 border border-white cursor-ew-resize shadow-lg rounded" style={{ transform: 'translateY(-50%)' }} />
                     </div>
                     
                     {/* Compact Info Display */}

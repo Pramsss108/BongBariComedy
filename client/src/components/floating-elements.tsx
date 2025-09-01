@@ -59,12 +59,12 @@ export const FloatingElements = () => {
         />
       ))}
       
-      {/* Mouse follower - CSS Belan - smaller horizontal */}
+      {/* Mouse follower - CSS Belan - mouse cursor size */}
       <motion.div
         className="absolute pointer-events-none opacity-30"
         style={{
-          width: '12px',
-          height: '4px',
+          width: '18px',
+          height: '6px',
           transform: 'rotate(0deg)'
         }}
         animate={{
@@ -77,40 +77,40 @@ export const FloatingElements = () => {
           damping: 15,
         }}
       >
-        {/* Main wooden body - smaller horizontal */}
+        {/* Main wooden body - mouse cursor size */}
         <div
           className="absolute"
           style={{
-            width: '8px',
-            height: '2px',
+            width: '12px',
+            height: '3px',
             backgroundColor: '#D2691E',
-            borderRadius: '1px',
-            left: '2px',
-            top: '1px'
+            borderRadius: '1.5px',
+            left: '3px',
+            top: '1.5px'
           }}
         />
-        {/* Left handle - smaller */}
+        {/* Left handle - mouse cursor size */}
         <div
           className="absolute"
           style={{
-            width: '2px',
-            height: '2px',
+            width: '3px',
+            height: '3px',
             backgroundColor: '#8B4513',
-            borderRadius: '1px',
-            left: '0px',
-            top: '1px'
+            borderRadius: '1.5px',
+            left: '1px',
+            top: '1.5px'
           }}
         />
-        {/* Right handle - smaller */}
+        {/* Right handle - mouse cursor size */}
         <div
           className="absolute"
           style={{
-            width: '2px',
-            height: '2px',
+            width: '3px',
+            height: '3px',
             backgroundColor: '#8B4513',
-            borderRadius: '1px',
-            left: '10px',
-            top: '1px'
+            borderRadius: '1.5px',
+            left: '14px',
+            top: '1.5px'
           }}
         />
       </motion.div>

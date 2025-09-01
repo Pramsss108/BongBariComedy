@@ -20,8 +20,8 @@ export const useGlobalCursor = () => {
     cursor.className = 'global-cursor-follower';
     cursor.style.cssText = `
       position: fixed;
-      width: 20px;
-      height: 8px;
+      width: 32px;
+      height: 12px;
       pointer-events: none;
       z-index: 2147483647;
       transform: translate(-50%, -50%) rotate(0deg);
@@ -31,40 +31,40 @@ export const useGlobalCursor = () => {
       isolation: isolate;
     `;
     
-    // Create main wooden body - smaller horizontal
+    // Create main wooden body - mouse cursor size
     const body = document.createElement('div');
     body.style.cssText = `
       position: absolute;
-      width: 14px;
-      height: 4px;
+      width: 22px;
+      height: 6px;
       background-color: #D2691E;
-      border-radius: 2px;
-      left: 3px;
-      top: 2px;
+      border-radius: 3px;
+      left: 5px;
+      top: 3px;
     `;
     
-    // Create left handle - smaller
+    // Create left handle - mouse cursor size
     const leftHandle = document.createElement('div');
     leftHandle.style.cssText = `
       position: absolute;
-      width: 3px;
-      height: 3px;
+      width: 5px;
+      height: 5px;
       background-color: #8B4513;
-      border-radius: 1.5px;
-      left: 0px;
-      top: 2.5px;
+      border-radius: 2.5px;
+      left: 2px;
+      top: 3.5px;
     `;
     
-    // Create right handle - smaller
+    // Create right handle - mouse cursor size
     const rightHandle = document.createElement('div');
     rightHandle.style.cssText = `
       position: absolute;
-      width: 3px;
-      height: 3px;
+      width: 5px;
+      height: 5px;
       background-color: #8B4513;
-      border-radius: 1.5px;
-      left: 17px;
-      top: 2.5px;
+      border-radius: 2.5px;
+      left: 25px;
+      top: 3.5px;
     `;
     
     cursor.appendChild(body);

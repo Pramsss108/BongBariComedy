@@ -44,9 +44,9 @@ const Navigation = () => {
   };
 
   return (
-    <nav className="bg-white/95 backdrop-blur-md shadow-md sticky top-0 z-50 border-b border-gray-200" data-testid="main-navigation">
+    <nav className="bg-white/95 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-200" data-testid="main-navigation">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-0 lg:py-0">
+        <div className="flex justify-between items-center h-12 lg:h-14">
           {/* Logo - Optimized Layout */}
           <Link href="/" data-testid="logo-link">
             <div className="flex items-center space-x-1 cursor-pointer hover-logo-container group w-full">
@@ -54,7 +54,7 @@ const Navigation = () => {
                 <img 
                   src="/logo.png" 
                   alt="Bong Bari Logo" 
-                  className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 xl:w-11 xl:h-11 rounded-lg transition-all duration-300 hover:scale-110 hover:rotate-6 hover:shadow-xl"
+                  className="w-8 h-8 sm:w-8 sm:h-8 md:w-9 md:h-9 lg:w-10 lg:h-10 xl:w-10 xl:h-10 rounded-lg transition-all duration-300 hover:scale-110 hover:rotate-6 hover:shadow-xl"
                 />
                 {/* Animated Emojis on Hover - DESKTOP ONLY */}
                 <div className="absolute inset-0 pointer-events-none hidden lg:block">
@@ -66,19 +66,19 @@ const Navigation = () => {
                   <span className="emoji-float emoji-6 text-lg">🤣</span>
                 </div>
               </div>
-              {/* Mobile Logo - Original Sizes with Compact Height */}
+              {/* Mobile Logo - Ultra Compact */}
               <div className="md:hidden flex flex-col justify-center pl-0.5 flex-1">
-                <h1 className="text-sm font-bold text-brand-blue bangla-text leading-none mb-0">বং বাড়ি</h1>
-                <div className="space-y-0">
-                  <p className="text-[8px] font-semibold text-gray-800 leading-none group-hover:text-brand-blue transition-colors duration-300">Every Home's Story</p>
-                  <p className="text-[8px] text-gray-600 bangla-text font-medium leading-none group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
+                <h1 className="text-[11px] font-bold text-brand-blue bangla-text leading-[1] mb-0">বং বাড়ি</h1>
+                <div className="">
+                  <p className="text-[7px] font-semibold text-gray-800 leading-[1] group-hover:text-brand-blue transition-colors duration-300">Every Home's Story</p>
+                  <p className="text-[7px] text-gray-600 bangla-text font-medium leading-[1] group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
                 </div>
               </div>
               {/* Desktop Logo - Ultra Slim */}
-              <div className="hidden md:flex flex-col justify-center pl-2 min-w-[200px]">
-                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[16px] lg:text-[20px] xl:text-[24px] leading-tight mb-0">বং বাড়ি</h1>
-                <p className="text-[9px] lg:text-[10px] xl:text-xs font-semibold text-gray-700 leading-tight whitespace-nowrap group-hover:text-brand-blue transition-colors duration-300">Every Home's Story</p>
-                <p className="text-[8px] lg:text-[9px] xl:text-[10px] text-gray-600 bangla-text font-medium leading-tight whitespace-nowrap group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
+              <div className="hidden md:flex flex-col justify-center pl-2 min-w-[180px]">
+                <h1 className="font-bold text-brand-blue bangla-text whitespace-nowrap text-[14px] lg:text-[16px] xl:text-[18px] leading-[1.1] mb-0">বং বাড়ি</h1>
+                <p className="text-[8px] lg:text-[9px] xl:text-[10px] font-semibold text-gray-700 leading-[1.1] whitespace-nowrap group-hover:text-brand-blue transition-colors duration-300">Every Home's Story</p>
+                <p className="text-[7px] lg:text-[8px] xl:text-[9px] text-gray-600 bangla-text font-medium leading-[1.1] whitespace-nowrap group-hover:text-brand-red transition-colors duration-300">প্রতিটা বাড়ির গল্প</p>
               </div>
             </div>
           </Link>
@@ -149,15 +149,15 @@ const Navigation = () => {
             })}
           </div>
           
-          {/* Mobile Menu Button - Enhanced Touch Target */}
+          {/* Mobile Menu Button - Slim Design */}
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden p-2 hover:bg-gray-100 transition-colors rounded-lg flex-shrink-0"
+            className="md:hidden p-1 hover:bg-gray-100 transition-colors rounded-lg flex-shrink-0"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             data-testid="mobile-menu-toggle"
           >
-            {isMobileMenuOpen ? <X className="h-8 w-8 text-gray-800" /> : <Menu className="h-8 w-8 text-gray-800" />}
+            {isMobileMenuOpen ? <X className="h-5 w-5 text-gray-800" /> : <Menu className="h-5 w-5 text-gray-800" />}
           </Button>
         </div>
         

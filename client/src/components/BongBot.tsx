@@ -7,7 +7,7 @@ interface BongBotProps {
 }
 
 export default function BongBot({ onOpenChange }: BongBotProps) {
-  const [position, setPosition] = useState({ x: window.innerWidth - 400, y: window.innerHeight - 450 });
+  const [position, setPosition] = useState({ x: 0, y: 50 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [isOpen, setIsOpen] = useState(false);
@@ -32,11 +32,10 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
     "Collab korlei Hese Felbe, Try?"
   ];
 
-  // When opening chatbot, position it on the right side with proper spacing
+  // When opening chatbot, position it on the right side
   const handleOpenChatbot = () => {
-    const rightSideX = Math.max(20, window.innerWidth - 420); // Right side with 20px margin
-    const bottomY = Math.max(100, window.innerHeight - 500); // Position from bottom
-    setPosition({ x: rightSideX, y: bottomY }); 
+    const rightSideX = Math.max(0, window.innerWidth - 400); // Right side position with bounds check
+    setPosition({ x: rightSideX, y: 50 }); // Lower Y to avoid header cutoff
     setIsOpen(true);
     setIsMinimized(false);
     
@@ -44,37 +43,24 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
     playGlitterSound();
   };
 
-  // Sound effects with graceful error handling
+  // Sound effects
   const playGlitterSound = () => {
-    try {
-      const audio = new Audio('/sounds/glitter.mp3');
-      audio.volume = 0.3;
-      audio.play().catch(() => {}); // Ignore errors silently
-    } catch (e) {
-      // Sound not available, continue without sound
-    }
+    const audio = new Audio('/public-objects/sounds/folder/glitter.mp3');
+    audio.volume = 0.3;
+    audio.play().catch(() => {}); // Ignore errors
   };
 
   const playSendSound = () => {
-    try {
-      const audio = new Audio('/sounds/whatsapp-send.mp3');
-      audio.volume = 0.4;
-      audio.play().catch(() => {}); // Ignore errors silently
-    } catch (e) {
-      // Sound not available, continue without sound
-    }
+    const audio = new Audio('/public-objects/sounds/folder/whatsapp-send.mp3');
+    audio.volume = 0.4;
+    audio.play().catch(() => {}); // Ignore errors
   };
 
   const playTypingSound = () => {
-    try {
-      const audio = new Audio('/sounds/typing.mp3');
-      audio.volume = 0.2;
-      audio.loop = true;
-      return audio;
-    } catch (e) {
-      // Return a mock audio object that won't error
-      return { pause: () => {}, currentTime: 0 } as any;
-    }
+    const audio = new Audio('/public-objects/sounds/folder/typing.mp3');
+    audio.volume = 0.2;
+    audio.loop = true;
+    return audio;
   };
 
   // Auto scroll to bottom when new messages arrive

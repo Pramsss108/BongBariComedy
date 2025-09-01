@@ -168,11 +168,11 @@ const Home = () => {
       />
       
       <ParallaxContainer>
-        <main className="relative z-10 bg-brand-yellow pt-[100px]">
-          <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <main className="relative z-10 bg-brand-yellow">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             {/* Hero Video Section - Premium Layout */}
             <motion.div
-              className="w-full max-w-4xl mx-auto mb-12 sm:mb-16"
+              className="w-full max-w-5xl mx-auto mb-8 pt-8"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6 }}
@@ -189,21 +189,21 @@ const Home = () => {
               
               {/* Video Title & Description */}
               <motion.div
-                className="text-center mt-6 px-4"
+                className="text-center mt-6"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.3 }}
               >
-                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-3">
                   Welcome to <span className="text-brand-blue">Bong Bari</span>
                 </h1>
-                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800 bangla-text mb-4">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 bangla-text mb-4">
                   <span className="text-brand-red">বং বাড়িতে</span> স্বাগতম
                 </h2>
-                <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
                   Experience authentic Bengali family comedy that feels like home
                 </p>
-                <p className="text-base sm:text-lg md:text-xl text-gray-600 bangla-text max-w-3xl mx-auto leading-relaxed mt-2">
+                <p className="text-lg sm:text-xl text-gray-600 bangla-text max-w-3xl mx-auto leading-relaxed mt-2">
                   ঘরোয়া পরিবেশের মজার গল্প যা আপনার নিজের বাড়ির মতোই লাগবে
                 </p>
               </motion.div>
@@ -214,47 +214,47 @@ const Home = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
-            className="mb-8 sm:mb-12 px-4"
+            className="mb-12"
           >
             <div className="max-w-6xl mx-auto">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <motion.div
-                  className="text-center p-4 sm:p-5 lg:p-6 bg-white rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="text-center p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.7 }}
                 >
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 bg-brand-yellow rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                    <HomeIcon className="w-7 h-7 sm:w-8 sm:h-8 text-brand-blue" />
+                  <div className="w-16 h-16 bg-brand-yellow rounded-full flex items-center justify-center mx-auto mb-4">
+                    <HomeIcon className="w-8 h-8 text-brand-blue" />
                   </div>
-                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">Authentic Stories</h3>
-                  <p className="text-sm sm:text-base text-gray-600 bangla-text">প্রতিটা বাড়ির সত্যি গল্প</p>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Authentic Stories</h3>
+                  <p className="text-gray-600 bangla-text">প্রতিটা বাড়ির সত্যি গল্প</p>
                 </motion.div>
                 
                 <motion.div
-                  className="text-center p-4 sm:p-5 lg:p-6 bg-white rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="text-center p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.8 }}
                 >
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 bg-brand-red rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                    <Smile className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
+                  <div className="w-16 h-16 bg-brand-red rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Smile className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">Real Comedy</h3>
-                  <p className="text-sm sm:text-base text-gray-600 bangla-text">সত্যিকারের হাসির গল্প</p>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Real Comedy</h3>
+                  <p className="text-gray-600 bangla-text">সত্যিকারের হাসির গল্প</p>
                 </motion.div>
                 
                 <motion.div
-                  className="text-center p-4 sm:p-5 lg:p-6 bg-white rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 sm:col-span-2 lg:col-span-1"
+                  className="text-center p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.9 }}
                 >
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 bg-brand-blue rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                    <Users className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
+                  <div className="w-16 h-16 bg-brand-blue rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Users className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">Family First</h3>
-                  <p className="text-sm sm:text-base text-gray-600 bangla-text">পরিবারের জন্য তৈরি</p>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Family First</h3>
+                  <p className="text-gray-600 bangla-text">পরিবারের জন্য তৈরি</p>
                 </motion.div>
               </div>
             </div>
@@ -262,7 +262,7 @@ const Home = () => {
           
           {/* Latest Comedy Section (FOMO) */}
           <ParallaxSection speed={0.4} delay={0.2}>
-            <section className="py-8 sm:py-12 lg:py-16 px-4" data-testid="latest-comedy-section">
+            <section className="mb-6 sm:mb-8 lg:mb-10" data-testid="latest-comedy-section">
             <motion.h3 
               className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-brand-blue mb-2 sm:mb-3 hover-wobble cursor-pointer transition-all duration-300" 
               data-testid="latest-comedy-title-english"
@@ -330,7 +330,7 @@ const Home = () => {
 
           {/* Most Loved Comedy Section (Social Proof) */}
           <ParallaxSection speed={0.4} delay={0.3}>
-            <section className="py-8 sm:py-12 lg:py-16 px-4" data-testid="loved-comedy-section">
+            <section className="mb-3 sm:mb-4 lg:mb-6" data-testid="loved-comedy-section">
             <motion.h3 
               className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-brand-red mb-2 sm:mb-3 hover-wobble cursor-pointer transition-all duration-300" 
               data-testid="loved-comedy-title-english"
@@ -398,7 +398,7 @@ const Home = () => {
 
           {/* Why Bong Bari Section */}
           <ParallaxSection speed={0.3} delay={0.1}>
-            <section className="py-8 sm:py-12 lg:py-16 px-4" data-testid="why-bong-bari-section">
+            <section className="mb-8 sm:mb-12 lg:mb-16 px-4" data-testid="why-bong-bari-section">
               <motion.div
                 className="max-w-6xl mx-auto"
                 initial={{ opacity: 0, y: 50 }}
@@ -531,7 +531,7 @@ const Home = () => {
           
           {/* Collaboration Form */}
           <ParallaxSection speed={0.2} delay={0.4}>
-            <section className="py-8 sm:py-12 lg:py-16 px-4" data-testid="collaboration-section">
+            <section className="mb-2 sm:mb-3 py-1 sm:py-2" data-testid="collaboration-section">
             <div className="max-w-4xl mx-auto">
               {/* Work with Us Header with Yellow Background */}
               <motion.div 

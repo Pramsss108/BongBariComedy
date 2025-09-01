@@ -187,18 +187,11 @@
 }
 
 @layer base {
-  /* Reset all browser defaults */
   * {
     @apply border-border;
-    margin: 0 !important;
-    padding: 0 !important;
-    box-sizing: border-box !important;
-  }
-
-  html {
-    margin: 0 !important;
-    padding: 0 !important;
-    height: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
   }
 
   body {
@@ -210,72 +203,21 @@
       hsl(48, 100%, 85%) 75%, 
       hsl(48, 100%, 80%) 100%);
     background-attachment: fixed;
+    /* Smooth scrolling optimizations */
     scroll-behavior: smooth;
     overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+  }
+  
+  html {
     margin: 0 !important;
     padding: 0 !important;
-    min-height: 100%;
   }
   
   #root {
     margin: 0 !important;
     padding: 0 !important;
-    min-height: 100vh;
-  }
-  
-  /* Reset margins and paddings for common elements */
-  h1, h2, h3, h4, h5, h6, p, ul, ol, li, figure, figcaption, blockquote, dl, dd {
-    margin: 0;
-    padding: 0;
-  }
-  
-  /* Scrolling text animation for promo banner */
-  @keyframes scrollText {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-100%); }
-  }
-  
-  /* Responsive utilities */
-  .container {
-    width: 100%;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-  
-  @media (min-width: 640px) {
-    .container {
-      max-width: 640px;
-      padding-left: 1.5rem;
-      padding-right: 1.5rem;
-    }
-  }
-  
-  @media (min-width: 768px) {
-    .container {
-      max-width: 768px;
-    }
-  }
-  
-  @media (min-width: 1024px) {
-    .container {
-      max-width: 1024px;
-      padding-left: 2rem;
-      padding-right: 2rem;
-    }
-  }
-  
-  @media (min-width: 1280px) {
-    .container {
-      max-width: 1280px;
-    }
-  }
-  
-  @media (min-width: 1536px) {
-    .container {
-      max-width: 1536px;
-    }
   }
   
   /* ULTRA FAST Performance optimizations for all animated elements */

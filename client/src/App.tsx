@@ -6,7 +6,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { FloatingElements } from "@/components/floating-elements";
 import MagicalCursor from "@/components/MagicalCursor";
-import Navigation from "@/components/navigation";
 import { useGlobalCursor } from "@/hooks/useGlobalCursor";
 import { useParallaxScroll } from "@/hooks/useParallaxScroll";
 import { useRickshawSound } from "@/hooks/useRickshawSound";
@@ -49,7 +48,7 @@ function Router() {
   useSimpleCharmSound({ 
     enabled: !isAuthenticated, 
     volume: 0.06, 
-    audioFile: '/sounds/charm.mp3' // Your custom charm sound
+    audioFile: '/public-objects/sounds/folder/charm.mp3' // Your custom charm sound
   });
   
   // Remove the auto-refresh logic from here - it will be handled in login/logout actions only
@@ -108,9 +107,6 @@ function Router() {
       <FloatingElements />
       {/* Show MagicalCursor (belan) only for public audience, not for logged-in admin */}
       {!isAuthenticated && <MagicalCursor />}
-      <Navigation />
-      {/* Bong Bot - Premium AI Chatbot */}
-      <BongBot onOpenChange={setIsChatbotOpen} />
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/about" component={About} />

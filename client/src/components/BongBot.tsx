@@ -185,11 +185,9 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
         document.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, position, dragStart, isMinimized]);
+  }, [isDragging, position, dragStart]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (isMinimized) return;
-    
     e.preventDefault();
     e.stopPropagation();
     

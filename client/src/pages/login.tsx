@@ -88,7 +88,7 @@ const Login = () => {
         description="Secure admin panel login for Bong Bari team members."
       />
       
-      <main className="min-h-screen bg-brand-yellow flex items-center justify-center py-16">
+      <main className="min-h-screen bg-brand-yellow flex items-center justify-center pt-[110px] pb-16">
         <div className="container mx-auto px-4">
           <div className="max-w-md mx-auto">
             <Card className="bg-white shadow-xl">

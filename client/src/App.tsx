@@ -106,7 +106,7 @@ function Router() {
   return (
     <>
       <Navigation />
-      <div className="min-h-screen bg-brand-yellow relative m-0 p-0 pt-[95px]">
+      <div className="min-h-screen bg-brand-yellow relative m-0 p-0">
       <FloatingElements />
       {/* Show MagicalCursor (belan) only for public audience, not for logged-in admin */}
       {!isAuthenticated && <MagicalCursor />}

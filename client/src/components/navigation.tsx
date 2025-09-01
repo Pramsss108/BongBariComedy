@@ -42,33 +42,36 @@ const Navigation = () => {
       {/* Navigation Container */}
       <div className="fixed top-0 left-0 right-0 z-50 w-full">
         
-        {/* Main Header - Slim Professional Design */}
-        <header className="bg-[#0E47FF] shadow-md" style={{ height: '58px' }}>
+        {/* Main Header - Clean Slim Design */}
+        <header className="bg-[#0E47FF] shadow-md" style={{ height: '56px' }}>
           <div className="container mx-auto px-4 h-full">
             <div className="flex justify-between items-center h-full">
               
-              {/* Logo Section - Left Aligned */}
-              <Link href="/" className="flex items-center space-x-3">
+              {/* Logo Section - Perfect Size */}
+              <Link href="/" className="flex items-center space-x-2">
                 <img 
                   src="/logo.png" 
                   alt="Bong Bari" 
                   className="w-10 h-10 rounded-lg"
                 />
                 <div className="flex flex-col justify-center">
-                  <h1 className="text-base font-bold text-white bangla-text leading-tight">বং বাড়ি</h1>
-                  <p className="text-xs text-white/90 leading-tight">Every Home's Story | প্রতিটা বাড়ির গল্প</p>
+                  <h1 className="text-base font-bold text-white bangla-text leading-none">বং বাড়ি</h1>
+                  <div className="flex flex-col">
+                    <p className="text-[10px] text-white/90 leading-tight">Every Home's Story</p>
+                    <p className="text-[10px] text-white/90 leading-tight bangla-text">প্রতিটা বাড়ির গল্প</p>
+                  </div>
                 </div>
               </Link>
               
-              {/* Desktop Navigation - Right Aligned */}
-              <nav className="hidden md:flex items-center space-x-6">
+              {/* Desktop Navigation - Compact Menu */}
+              <nav className="hidden md:flex items-center space-x-4">
                 {navItems.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`text-white font-medium text-sm transition-all duration-200 hover:text-[#FFD200] ${
+                    className={`text-white font-medium text-xs transition-all duration-200 hover:text-[#FFD200] ${
                       isActive(item.href) 
-                        ? "text-[#FFD200] border-b-2 border-[#FFD200] pb-1" 
+                        ? "text-[#FFD200]" 
                         : ""
                     }`}
                   >
@@ -76,16 +79,16 @@ const Navigation = () => {
                   </Link>
                 ))}
                 
-                {/* Login/Admin Button */}
+                {/* Compact Login/Admin Button */}
                 {user ? (
                   <div className="flex items-center space-x-2">
                     <Link href="/admin">
                       <Button 
                         size="sm"
                         variant="ghost" 
-                        className="text-white hover:bg-white/10 border border-white/30 font-medium text-sm h-8 px-3"
+                        className="text-white hover:bg-white/10 text-xs h-7 px-2"
                       >
-                        <User className="w-4 h-4 mr-1" />
+                        <User className="w-3 h-3 mr-1" />
                         Admin
                       </Button>
                     </Link>
@@ -93,19 +96,19 @@ const Navigation = () => {
                       <PopoverTrigger asChild>
                         <Button 
                           size="sm"
-                          className="bg-green-500 hover:bg-green-600 text-white font-medium text-sm h-8 px-3"
+                          className="bg-green-500 hover:bg-green-600 text-white text-xs h-7 px-2"
                         >
-                          ✓ Logged
+                          ✓
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-28 p-2">
+                      <PopoverContent className="w-24 p-1">
                         <Button
                           onClick={handleLogout}
                           variant="ghost"
                           size="sm"
-                          className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 font-medium text-sm"
+                          className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 text-xs h-6"
                         >
-                          <LogOut className="w-4 h-4 mr-1" />
+                          <LogOut className="w-3 h-3 mr-1" />
                           Logout
                         </Button>
                       </PopoverContent>
@@ -115,9 +118,9 @@ const Navigation = () => {
                   <Link href="/admin">
                     <Button 
                       size="sm"
-                      className="bg-white text-[#0E47FF] hover:bg-gray-100 font-semibold text-sm h-8 px-4"
+                      className="bg-white text-[#0E47FF] hover:bg-gray-100 font-medium text-xs h-7 px-3"
                     >
-                      <LogIn className="w-4 h-4 mr-1" />
+                      <LogIn className="w-3 h-3 mr-1" />
                       Login
                     </Button>
                   </Link>
@@ -128,7 +131,7 @@ const Navigation = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden text-white hover:bg-white/10 h-9 w-9"
+                className="md:hidden text-white hover:bg-white/10 h-8 w-8"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               >
                 {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -214,7 +217,7 @@ const Navigation = () => {
       </div>
       
       {/* Spacer for fixed navigation */}
-      <div style={{ height: '93px' }}></div>
+      <div style={{ height: '91px' }}></div>
     </>
   );
 };

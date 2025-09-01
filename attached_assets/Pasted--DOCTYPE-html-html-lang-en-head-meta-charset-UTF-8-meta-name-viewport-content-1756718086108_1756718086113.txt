@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bong Bari</title>
+  <style>
+    /* Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: sans-serif;
+      background: #fff;
+    }
+
+    /* === HEADER === */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 60px;
+      background: #0D47FF; /* Bong Bari Blue */
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 20px;
+      z-index: 1000;
+    }
+
+    /* Logo + Text */
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-container img {
+      height: 40px;
+      width: 40px;
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+    }
+
+    .brand-text .title {
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .brand-text .tagline {
+      font-size: 11px;
+      opacity: 0.9;
+    }
+
+    /* Navigation */
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    nav ul li a {
+      text-decoration: none;
+      color: #fff;
+      font-size: 14px;
+      transition: color 0.3s ease;
+    }
+
+    nav ul li a:hover {
+      color: #FFD200;
+    }
+
+    .hamburger {
+      display: none;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    /* === PROMO BANNER === */
+    .promo-banner {
+      margin-top: 60px; /* exactly below header */
+      width: 100%;
+      background: #FF5733; /* Different color for banner */
+      color: #fff;
+      padding: 10px 0;
+      overflow: hidden;
+      white-space: nowrap;
+      position: relative;
+    }
+
+    .promo-text {
+      display: inline-block;
+      padding-left: 100%; /* start outside */
+      animation: scrollText 15s linear infinite;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    @keyframes scrollText {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-100%); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      nav ul {
+        display: none;
+      }
+
+      .hamburger {
+        display: block;
+        color: #fff;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo-container">
+      <img src="your-logo.png" alt="Bong Bari Logo">
+      <div class="brand-text">
+        <span class="title">বং বাড়ি</span>
+        <span class="tagline">Every Home's Story | প্রতিটা বাড়ির গল্প</span>
+      </div>
+    </div>
+
+    <nav>
+      <ul>
+        <li><a href="#">Home</a></li>
+        <li><a href="#">About</a></li>
+        <li><a href="#">Work with us</a></li>
+        <li><a href="#">Contact</a

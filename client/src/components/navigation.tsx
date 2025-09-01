@@ -243,32 +243,43 @@ const Navigation = () => {
         </div>
       )}
 
-      {/* Promo Section - Immediately Below Header */}
-      <section 
+      {/* Promotional Banner with Scrolling Text */}
+      <div 
         style={{
-          marginTop: '60px',
+          position: 'fixed',
+          top: '60px',
+          left: 0,
           width: '100%',
-          background: '#FFD200',
-          padding: '15px 20px',
+          height: '40px',
+          background: '#FF5733',
+          color: '#fff',
+          overflow: 'hidden',
+          whiteSpace: 'nowrap',
+          zIndex: 999,
           display: 'flex',
-          justifyContent: 'center',
           alignItems: 'center'
         }}
       >
-        <input
-          type="text"
-          placeholder="Search for comedy shorts, behind-the-scenes content..."
+        <div 
           style={{
-            width: '50%',
-            maxWidth: '500px',
-            padding: '10px',
-            border: 'none',
-            borderRadius: '4px',
+            display: 'inline-block',
+            paddingLeft: '100%',
+            animation: 'scrollText 20s linear infinite',
             fontSize: '14px',
-            outline: 'none'
+            fontWeight: 'bold'
           }}
-        />
-      </section>
+        >
+          🔥 Special Offer: Flat 50% off on your first Bong Bari subscription 🔥 Stay tuned for updates 🔔 
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+          🎬 New Comedy Every Week! | নতুন কমেডি প্রতি সপ্তাহে! 🎭
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+          🔥 Special Offer: Flat 50% off on your first Bong Bari subscription 🔥 Stay tuned for updates 🔔
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        </div>
+      </div>
+
+      {/* Spacer for fixed header and banner */}
+      <div style={{ height: '100px' }}></div>
     </>
   );
 };

@@ -229,6 +229,12 @@
     padding: 0;
   }
   
+  /* Scrolling text animation for promo banner */
+  @keyframes scrollText {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
+  }
+  
   /* ULTRA FAST Performance optimizations for all animated elements */
   .floating-bg-element,
   .youtube-short,

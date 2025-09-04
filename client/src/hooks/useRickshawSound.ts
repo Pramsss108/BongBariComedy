@@ -17,9 +17,8 @@ export function useRickshawSound(options: RickshawSoundOptions = {}) {
   useEffect(() => {
     if (!enabled) return;
 
-    // Load the rickshaw sound from Object Storage
-    // File is uploaded to public/sounds/ in Object Storage
-    const audio = new Audio('/public-objects/sounds/rickshaw-pao.mp3');
+  // Load the rickshaw sound from public/sounds/
+  const audio = new Audio('/sounds/rickshaw-pao.mp3');
     audio.volume = volume;
     audio.preload = 'auto';
     

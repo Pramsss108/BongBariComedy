@@ -33,8 +33,9 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
 
   // When opening chatbot, position it on the right side
   const handleOpenChatbot = () => {
-    const rightSideX = Math.max(0, window.innerWidth - 340); // Right side position with bounds check
-    setPosition({ x: rightSideX, y: 100 }); // Lower Y to avoid header cutoff
+  const rightSideX = Math.max(0, window.innerWidth - 340); // Right side position with bounds check
+  const bottomY = Math.max(0, window.innerHeight - 380 - 20); // 20px above bottom edge, never above header
+  setPosition({ x: rightSideX, y: bottomY }); // Open at bottom right corner
     setIsOpen(true);
     
     // Play glitter sound when opening
@@ -43,19 +44,19 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
 
   // Sound effects
   const playGlitterSound = () => {
-    const audio = new Audio('/public-objects/sounds/folder/glitter.mp3');
+  const audio = new Audio('/sounds/glitter.mp3');
     audio.volume = 0.3;
     audio.play().catch(() => {}); // Ignore errors
   };
 
   const playSendSound = () => {
-    const audio = new Audio('/public-objects/sounds/folder/whatsapp-send.mp3');
+  const audio = new Audio('/sounds/whatsapp-send.mp3');
     audio.volume = 0.4;
     audio.play().catch(() => {}); // Ignore errors
   };
 
   const playTypingSound = () => {
-    const audio = new Audio('/public-objects/sounds/folder/typing.mp3');
+  const audio = new Audio('/sounds/typing.mp3');
     audio.volume = 0.2;
     audio.loop = true;
     return audio;

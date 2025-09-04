@@ -23,8 +23,8 @@ export function useSimpleCharmSound(options: SimpleCharmSoundOptions = {}) {
 
     const audio = new Audio(audioFile);
     audio.volume = volume;
-    audio.loop = true;
-    audio.preload = 'auto';
+    audio.loop = false; // Premium: never loop
+    audio.preload = "auto";
     audioRef.current = audio;
 
     return () => {
@@ -41,81 +41,62 @@ export function useSimpleCharmSound(options: SimpleCharmSoundOptions = {}) {
 
     let lastX = 0;
     let lastY = 0;
-    let moveCount = 0;
+    let isMoving = false;
+    let fadeTimeout: number | null = null;
+    let stopTimeout: number | null = null;
 
     const handleMouseMove = (e: MouseEvent) => {
       const currentX = e.clientX;
       const currentY = e.clientY;
-      
-      // Calculate distance moved
       const distance = Math.sqrt(
         Math.pow(currentX - lastX, 2) + Math.pow(currentY - lastY, 2)
       );
-
-      // Only trigger on significant movement (not tiny scroll movements)
       if (distance > 5) {
-        moveCount++;
-        
-        // Start playing after a few movements to avoid false triggers
-        if (moveCount > 2 && !isPlayingRef.current && audioRef.current) {
+        if (!isMoving && audioRef.current) {
           audioRef.current.currentTime = 0;
-          audioRef.current.play().catch(() => {
-            // Ignore play errors
-          });
-          isPlayingRef.current = true;
+          audioRef.current.volume = volume;
+          audioRef.current.loop = true;
+          audioRef.current.play().catch(() => {});
+          isMoving = true;
         }
-
-        // Clear any existing timeout
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-        }
-
-        // Set timeout to stop sound when movement stops
-        timeoutRef.current = window.setTimeout(() => {
-          if (isPlayingRef.current && audioRef.current) {
-            audioRef.current.pause();
-            isPlayingRef.current = false;
+        if (stopTimeout) clearTimeout(stopTimeout);
+        stopTimeout = window.setTimeout(() => {
+          if (audioRef.current) {
+            // Fade out over 1.2s
+            let fadeVol = audioRef.current.volume;
+            if (fadeTimeout) clearInterval(fadeTimeout);
+            fadeTimeout = window.setInterval(() => {
+              fadeVol -= 0.01;
+              if (audioRef.current) audioRef.current.volume = Math.max(0, fadeVol);
+              if (fadeVol <= 0) {
+                if (audioRef.current) {
+                  audioRef.current.pause();
+                  audioRef.current.volume = volume;
+                  audioRef.current.loop = false;
+                }
+                clearInterval(fadeTimeout!);
+                isMoving = false;
+              }
+            }, 12); // ~1.2s fade
           }
-          moveCount = 0; // Reset move count
-        }, 500);
-
+        }, 200); // Mouse stop detection after 200ms
         lastX = currentX;
         lastY = currentY;
       }
     };
 
-    const handleScroll = () => {
-      // Force stop on scroll
-      if (isPlayingRef.current && audioRef.current) {
-        audioRef.current.pause();
-        isPlayingRef.current = false;
-      }
-      moveCount = 0;
-      
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-
-    document.addEventListener('mousemove', handleMouseMove, { passive: true });
-    document.addEventListener('scroll', handleScroll, { passive: true });
-    document.addEventListener('wheel', handleScroll, { passive: true });
-
+    document.addEventListener("mousemove", handleMouseMove, { passive: true });
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('scroll', handleScroll);
-      document.removeEventListener('wheel', handleScroll);
-      
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-      
+      document.removeEventListener("mousemove", handleMouseMove);
+      if (stopTimeout) clearTimeout(stopTimeout);
+      if (fadeTimeout) clearInterval(fadeTimeout);
       if (audioRef.current) {
         audioRef.current.pause();
+        audioRef.current.volume = volume;
+        audioRef.current.loop = false;
       }
-      isPlayingRef.current = false;
     };
-  }, [enabled, audioFile]);
+  }, [enabled, audioFile, volume]);
 
   return {
     isEnabled: enabled,

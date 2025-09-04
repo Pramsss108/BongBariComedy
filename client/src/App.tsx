@@ -49,7 +49,7 @@ function Router() {
   useSimpleCharmSound({ 
     enabled: !isAuthenticated, 
     volume: 0.06, 
-    audioFile: '/public-objects/sounds/folder/charm.mp3' // Your custom charm sound
+    audioFile: '/sounds/charm.mp3' // Your custom charm sound
   });
   
   // Remove the auto-refresh logic from here - it will be handled in login/logout actions only

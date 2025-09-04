@@ -1,6 +1,7 @@
 import { useMagicalCursor } from '@/hooks/useMagicalCursor';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useMouseMovementChime } from '@/hooks/useMouseMovementChime';
 
 // Mobile detection utility
 const isMobile = () => {
@@ -8,6 +9,8 @@ const isMobile = () => {
 };
 
 const MagicalCursor = () => {
+  // Play charm sound when cursor moves
+  useMouseMovementChime({ enabled: true, audioFile: '/sounds/charm.mp3' });
   const [isOnMobile, setIsOnMobile] = useState(false);
   const [forceHide, setForceHide] = useState(false);
   const { cursorPosition, particles, isMoving, isClicking } = useMagicalCursor();
@@ -35,7 +38,7 @@ const MagicalCursor = () => {
     
     // Only inject styles if not authenticated (admin not logged in)
     if (!isAuthenticated) {
-      // Force cursor to appear over iframes with JavaScript - targeting first video specifically
+      // Force cursor to appear above all headers and navigation
       const style = document.createElement('style');
       style.id = 'magical-cursor-force';
       style.textContent = `
@@ -48,14 +51,18 @@ const MagicalCursor = () => {
           pointer-events: none !important;
           z-index: 2147483647 !important;
           mix-blend-mode: multiply !important;
+          isolation: isolate !important;
         }
-        
+        .magical-belan-portal * {
+          position: absolute !important;
+          z-index: 2147483647 !important;
+          pointer-events: none !important;
+        }
         /* Target ALL iframes and their containers */
         iframe, video, embed, object {
           z-index: 1 !important;
           position: relative !important;
         }
-        
         /* Specifically target the first video container */
         .relative.aspect-video,
         .relative.aspect-video iframe,
@@ -63,7 +70,6 @@ const MagicalCursor = () => {
           z-index: 1 !important;
           isolation: auto !important;
         }
-        
         /* Force stacking context reset for YouTube containers */
         div:has(iframe[src*="youtube.com"]),
         div:has(iframe[src*="youtu.be"]) {
@@ -73,9 +79,12 @@ const MagicalCursor = () => {
         }
       `;
       
-      if (!document.getElementById('magical-cursor-force')) {
-        document.head.appendChild(style);
+      // Always inject or replace the style for belan cursor
+      const existingStyle = document.getElementById('magical-cursor-force');
+      if (existingStyle) {
+        existingStyle.remove();
       }
+      document.head.appendChild(style);
     }
     
     return () => {

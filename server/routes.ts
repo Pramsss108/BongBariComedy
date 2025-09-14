@@ -130,6 +130,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(approved.sort((a,b)=> new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
   });
 
+  // Preview moderation (no persistence, no rate-limit) – AI only suggests
+  app.post('/api/moderate-preview', async (req: any, res) => {
+    const { text } = req.body || {};
+    if (!text || typeof text !== 'string' || !text.trim()) return res.status(400).json({ message: 'Missing text' });
+    const raw = text.slice(0,1000);
+    const lower = raw.toLowerCase();
+    const severeIndicators = /(child\s*sex|rape|kill\syou|behead|incest|pedo|bomb|acid\s*attack)/i;
+    if (severeIndicators.test(lower)) {
+      return res.status(200).json({ status: 'severe_block', message: 'Eita khub sensitive – edit kore abar try korun.' });
+    }
+    let moderation: any;
+    try { moderation = await analyzeStory(raw); } catch { moderation = { decision: 'pending', reason: 'fallback', flags: [], usedAI: false, severity: 0 }; }
+    if (moderation.decision === 'approve') {
+      return res.json({ status: 'ok' });
+    }
+    return res.json({ status: 'review_suggested', reason: moderation.reason, flags: moderation.flags });
+  });
+
   // Submit story (6h rate limit per ip+device, triage moderation)
   app.post('/api/submit-story', async (req: any, res) => {
     const deviceId = req.deviceId || 'unknown';
@@ -226,6 +244,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     item.featured = true;
     logEvent(req, 'feature', { postId });
     res.json({ ok: true });
+  });
+
+  // --- Reaction endpoint with dedupe ---
+  const reactionTypes = new Set(['heart','laugh','thumbs']);
+  const reactionMemoryKeys = new Set<string>(); // key: postId:type:device
+  app.post('/api/reaction', async (req: any, res) => {
+    const { postId, type } = req.body || {};
+    if (!postId || !type || !reactionTypes.has(type)) return res.status(400).json({ message: 'Invalid reaction' });
+    const item = approved.find(a => a.id === postId);
+    if (!item) return res.status(404).json({ message: 'Post not found' });
+    const deviceId = req.deviceId || 'unknown';
+    const ip = (req.ip || '').replace(/[:].*$/, '') || 'ipless';
+    const deviceHash = deviceId.split('').reduce((h: number, c: string) => (Math.imul(h ^ c.charCodeAt(0), 16777619))>>>0, 2166136261).toString(36);
+    const dedupeKey = `reaction:${postId}:${type}:${deviceHash}`;
+    let duplicate = false;
+    if (upstashUrl && upstashToken) {
+      try {
+        const exists = await fetch(`${upstashUrl}/get/${encodeURIComponent(dedupeKey)}`, { headers: { Authorization: `Bearer ${upstashToken}` } });
+        const exJson = await exists.json().catch(()=>({}));
+        if (exJson.result) duplicate = true; else await fetch(`${upstashUrl}/set/${encodeURIComponent(dedupeKey)}/1?EX=${365*24*60*60}`, { headers: { Authorization: `Bearer ${upstashToken}` } });
+        if (!duplicate) {
+          const countKey = `reaction_counts:${postId}:${type}`;
+          await fetch(`${upstashUrl}/incr/${encodeURIComponent(countKey)}`, { headers: { Authorization: `Bearer ${upstashToken}` } });
+          // Fetch updated counts for all types
+          item.reactions = item.reactions || {};
+          for (const t of reactionTypes) {
+            const ck = `reaction_counts:${postId}:${t}`;
+            try {
+              const r = await fetch(`${upstashUrl}/get/${encodeURIComponent(ck)}`, { headers: { Authorization: `Bearer ${upstashToken}` } });
+              const jj = await r.json().catch(()=>({}));
+              const val = parseInt(jj.result||'0',10) || 0;
+              item.reactions[t] = val;
+            } catch {/* ignore */}
+          }
+        }
+      } catch { /* fallback to memory below if error triggers duplicate false path */ }
+    }
+    if (!upstashUrl || !upstashToken) {
+      if (reactionMemoryKeys.has(dedupeKey)) duplicate = true; else reactionMemoryKeys.add(dedupeKey);
+      if (!duplicate) {
+        item.reactions = item.reactions || {};
+        item.reactions[type] = (item.reactions[type]||0) + 1;
+      }
+    }
+    if (duplicate) return res.status(409).json({ message: 'Apni eita age thekei like korechhen' });
+    logEvent(req, 'reaction', { postId, type });
+    res.json({ ok: true, postId, reactions: item.reactions || {} });
   });
 
   // (Optional) expose last device logs (dev only)

@@ -3,6 +3,7 @@ import { motion as m, AnimatePresence, motion } from 'framer-motion';
 import SEOHead from '@/components/seo-head';
 import { Button } from '@/components/ui/button';
 import { getDeviceId } from '@/lib/deviceId';
+import { useToast } from '@/hooks/use-toast';
 import { useTheme } from '@/hooks/useTheme';
 
 interface ApprovedItem {
@@ -74,6 +75,28 @@ export default function CommunityFeed() {
     return () => { cancelled = true; };
   }, []);
 
+  // Periodic sync of authoritative reaction counts (every 45s)
+  useEffect(() => {
+    let stop = false;
+    const sync = async () => {
+      try {
+        const r = await fetch('/api/community/feed');
+        if (!r.ok) return;
+        const j: ApprovedItem[] = await r.json().catch(()=>[]);
+        if (stop || !Array.isArray(j)) return;
+        setItems(prev => {
+          const map: Record<string, ApprovedItem> = {};
+          // merge while preserving local likeEvents etc
+          [...prev, ...j].forEach(p => { map[p.id] = { ...(map[p.id]||{} as any), ...p, likeEvents: (map[p.id]?.likeEvents)||p.likeEvents }; });
+          return Object.values(map).sort((a,b)=> new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        });
+      } catch {/* ignore */}
+      finally { if (!stop) setTimeout(sync, 45000); }
+    };
+    sync();
+    return ()=> { stop = true; };
+  }, []);
+
   // Listen for new approved events
   const handleNewApproved = useCallback((e: Event) => {
     const detail = (e as CustomEvent).detail as ApprovedItem | undefined;
@@ -131,17 +154,41 @@ export default function CommunityFeed() {
 
   // Reaction handling (emoji set)
   const reactionSet = ['😂','❤️','😮','🔥'] as const;
-  const reactTo = (id: string, emoji: string) => {
-    // Local guard: one reaction per emoji per story per session
+  const { toast } = useToast();
+  const [reacting, setReacting] = useState<Record<string, boolean>>({}); // postId+emoji key
+  const emojiMap: Record<string, string> = { '😂':'laugh', '❤️':'heart', '😮':'thumbs', '🔥':'heart' }; // map to server types (🔥 reuses heart for now)
+  const reactTo = async (id: string, emoji: string) => {
     const key = `bbc_reacted_${id}_${emoji}`;
-    if (localStorage.getItem(key)) return; // already reacted
-    localStorage.setItem(key, '1');
-    setItems(prev => prev.map(it => {
-      if (it.id !== id) return it;
-      const reactions = { ...(it.reactions || {}) };
-      reactions[emoji] = (reactions[emoji] || 0) + 1;
-      return { ...it, reactions };
-    }));
+    if (localStorage.getItem(key)) { toast({ title:'Already', description:'You already reacted.' }); return; }
+    const loadingKey = `${id}_${emoji}`;
+    if (reacting[loadingKey]) return;
+    setReacting(r=>({...r,[loadingKey]:true}));
+    // Optimistic update
+    setItems(prev => prev.map(it => { if (it.id!==id) return it; const reactions = { ...(it.reactions||{}) }; reactions[emoji]=(reactions[emoji]||0)+1; return { ...it, reactions }; }));
+    try {
+      const serverType = emojiMap[emoji] || 'heart';
+      const res = await fetch('/api/reaction', { method:'POST', headers:{ 'Content-Type':'application/json','X-Device-Id': getDeviceId() }, body: JSON.stringify({ postId: id, type: serverType }) });
+      if (res.status === 409) {
+        // Duplicate: rollback optimistic increment
+        setItems(prev => prev.map(it => { if (it.id!==id) return it; const reactions = { ...(it.reactions||{}) }; reactions[emoji]=Math.max(0,(reactions[emoji]||1)-1); return { ...it, reactions }; }));
+        toast({ title:'একবারই', description:'Already reacted earlier.' });
+        localStorage.setItem(key,'1');
+        return;
+      }
+      const json = await res.json().catch(()=>({}));
+      if (json && json.reactions) {
+        // Replace with authoritative counts (map server types back heuristically)
+        setItems(prev => prev.map(it => { if (it.id!==id) return it; const reactions = { ...(it.reactions||{}) }; Object.entries(json.reactions).forEach(([t,v])=> {
+            if (t==='heart') { reactions['❤️']=v; reactions['🔥']=reactions['🔥']||0; }
+            if (t==='laugh') reactions['😂']=v;
+            if (t==='thumbs') reactions['😮']=v; }); return { ...it, reactions }; }));
+      }
+      localStorage.setItem(key,'1');
+    } catch {
+      // Rollback optimistic if network failed
+      setItems(prev => prev.map(it => { if (it.id!==id) return it; const reactions = { ...(it.reactions||{}) }; reactions[emoji]=Math.max(0,(reactions[emoji]||1)-1); return { ...it, reactions }; }));
+      toast({ title:'Error', description:'Reaction failed. Try later.' , variant:'destructive'});
+    } finally { setReacting(r=>{ const c={...r}; delete c[loadingKey]; return c; }); }
   };
 
   // Weekly list removed per latest instruction

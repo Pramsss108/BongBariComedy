@@ -28,6 +28,7 @@ import NotFound from "@/pages/not-found";
 import BongBot from "@/components/BongBot";
 import { AdminChatbot } from "@/pages/AdminChatbot";
 import { AdminHomepage } from "@/pages/AdminHomepage";
+import AdminModeration from "@/pages/AdminModeration";
 import Navigation from "@/components/navigation";
 import { ensureAudioUnlocked } from "@/lib/audioUnlock";
 import GreetingConsent from "@/components/GreetingConsent";
@@ -156,6 +157,7 @@ function Router() {
         <Route path="/admin" component={Admin} />
         <Route path="/admin/chatbot" component={AdminChatbot} />
         <Route path="/admin/homepage" component={AdminHomepage} />
+  <Route path="/admin/moderation" component={AdminModeration} />
         <Route path="/login" component={Login} />
         <Route component={NotFound} />
       </Switch>

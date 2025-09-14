@@ -54,6 +54,9 @@ export default function AdminModeration() {
   const [editing, setEditing] = useState<PendingPost | null>(null);
   const [editText, setEditText] = useState('');
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [showFlaggedOnly, setShowFlaggedOnly] = useState(false);
+  const [authorFilter, setAuthorFilter] = useState('');
+  const [termFilter, setTermFilter] = useState('');
 
   // Load from localStorage first (if present) else attempt fetch
   useEffect(() => {
@@ -115,6 +118,20 @@ export default function AdminModeration() {
   };
 
   const pendingCount = posts.length;
+  const filteredPosts = useMemo(() => {
+    return posts.filter(p => {
+      if (showFlaggedOnly && p.flagged_terms.length === 0) return false;
+      if (authorFilter.trim()) {
+        const a = (p.author || 'anonymous').toLowerCase();
+        if (!a.includes(authorFilter.toLowerCase())) return false;
+      }
+      if (termFilter.trim()) {
+        const text = p.text.toLowerCase();
+        if (!text.includes(termFilter.toLowerCase())) return false;
+      }
+      return true;
+    });
+  }, [posts, showFlaggedOnly, authorFilter, termFilter]);
   const topFlagged = useMemo(() => {
     const freq: Record<string, number> = {};
     posts.forEach(p => p.flagged_terms.forEach(t => { freq[t] = (freq[t]||0)+1; }));
@@ -218,10 +235,29 @@ export default function AdminModeration() {
         </div>
         <div className="grid md:grid-cols-4 gap-6">
           <div className="md:col-span-3 space-y-4" role="region" aria-label="Pending posts list">
+            {/* Filters */}
+            <div className="flex flex-wrap items-end gap-3 mb-2">
+              <label className="text-[11px] text-gray-700 flex items-center gap-1">
+                <input type="checkbox" checked={showFlaggedOnly} onChange={e=>setShowFlaggedOnly(e.target.checked)} className="h-4 w-4 rounded border-gray-400 text-brand-blue focus:ring-brand-blue" />
+                Flagged only
+              </label>
+              <div className="flex flex-col">
+                <label className="text-[10px] uppercase tracking-wide text-gray-500">Author</label>
+                <input value={authorFilter} onChange={e=>setAuthorFilter(e.target.value)} placeholder="any" className="h-8 px-2 rounded border border-gray-300 text-xs focus:outline-none focus:ring-2 focus:ring-brand-blue bg-white/70" />
+              </div>
+              <div className="flex flex-col">
+                <label className="text-[10px] uppercase tracking-wide text-gray-500">Contains</label>
+                <input value={termFilter} onChange={e=>setTermFilter(e.target.value)} placeholder="term" className="h-8 px-2 rounded border border-gray-300 text-xs focus:outline-none focus:ring-2 focus:ring-brand-blue bg-white/70" />
+              </div>
+              {(authorFilter || termFilter || showFlaggedOnly) && (
+                <button onClick={()=>{setAuthorFilter('');setTermFilter('');setShowFlaggedOnly(false);}} className="text-[10px] px-2 py-1 rounded bg-gray-200 hover:bg-gray-300 text-gray-700">Reset</button>
+              )}
+              <div className="ml-auto text-[11px] text-gray-600">Showing {filteredPosts.length} / {posts.length}</div>
+            </div>
             {loading && <div className="text-sm text-gray-600">Loading…</div>}
-            {!loading && posts.length === 0 && <div className="text-sm text-gray-600">No pending posts</div>}
+            {!loading && filteredPosts.length === 0 && <div className="text-sm text-gray-600">No pending posts</div>}
             <AnimatePresence>
-              {posts.map(p => {
+              {filteredPosts.map(p => {
                 const isSel = !!selected[p.postId];
                 const isExp = !!expanded[p.postId];
                 const preview = isExp ? p.text : (p.text.length > 120 ? p.text.slice(0,120)+'…' : p.text);

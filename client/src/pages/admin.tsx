@@ -217,6 +217,22 @@ const Admin = () => {
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout
                 </Button>
+                <Button
+                  onClick={() => setLocation('/admin/moderation')}
+                  variant="outline"
+                  className="border-brand-blue text-brand-blue hover:bg-brand-blue/10"
+                  aria-label="Go to moderation"
+                >
+                  Moderation
+                </Button>
+                <Button
+                  onClick={() => setLocation('/community/feed')}
+                  variant="outline"
+                  className="border-brand-blue text-brand-blue hover:bg-brand-blue/10"
+                  aria-label="Open community feed"
+                >
+                  Community Feed
+                </Button>
                 <Dialog open={isCreateBlogOpen} onOpenChange={setIsCreateBlogOpen}>
                   <DialogTrigger asChild>
                     <Button

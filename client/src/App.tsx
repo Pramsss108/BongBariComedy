@@ -29,6 +29,7 @@ import BongBot from "@/components/BongBot";
 import { AdminChatbot } from "@/pages/AdminChatbot";
 import { AdminHomepage } from "@/pages/AdminHomepage";
 import AdminModeration from "@/pages/AdminModeration";
+import CommunityFeed from "@/pages/community-feed";
 import Navigation from "@/components/navigation";
 import { ensureAudioUnlocked } from "@/lib/audioUnlock";
 import GreetingConsent from "@/components/GreetingConsent";
@@ -153,6 +154,7 @@ function Router() {
   <Route path="/community/submit" component={CommunitySubmit} />
   <Route path="/blog" component={Blog} />
   <Route path="/tools" component={FreeTools} />
+  <Route path="/community/feed" component={CommunityFeed} />
         <Route path="/blog/:slug" component={BlogPost} />
         <Route path="/admin" component={Admin} />
         <Route path="/admin/chatbot" component={AdminChatbot} />

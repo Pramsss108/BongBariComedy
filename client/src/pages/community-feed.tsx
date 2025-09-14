@@ -27,6 +27,8 @@ export default function CommunityFeed() {
   const [name, setName] = useState('');
   const [lang, setLang] = useState<'bn' | 'en'>('bn');
   const [text, setText] = useState('');
+  const [query, setQuery] = useState('');
+  const [visibleCount, setVisibleCount] = useState(10);
 
   // Persist likes & new items to localStorage whenever items change
   useEffect(() => {
@@ -101,6 +103,19 @@ export default function CommunityFeed() {
       .slice(0,5);
   }, [items, weekCutoff]);
 
+  const filteredItems = useMemo(() => {
+    if (!query.trim()) return items;
+    const q = query.toLowerCase();
+    return items.filter(it =>
+      (it.text.toLowerCase().includes(q)) ||
+      ((it.author || 'anonymous').toLowerCase().includes(q)) ||
+      (it.id.toLowerCase().includes(q))
+    );
+  }, [items, query]);
+
+  const visibleItems = filteredItems.slice(0, visibleCount);
+  const canLoadMore = visibleItems.length < filteredItems.length;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim()) return;
@@ -117,15 +132,28 @@ export default function CommunityFeed() {
     <main className="min-h-screen bg-brand-yellow pb-20" role="main" aria-labelledby="feedHeading">
       <SEOHead title="Community Feed" description="Latest approved community stories." />
       <div className="container mx-auto px-4 pt-10 max-w-3xl">
-        <div className="mb-8">
+        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <h1 id="feedHeading" className="text-3xl font-extrabold text-brand-blue tracking-tight">Bong Kahini <span className="bangla-text">— ঘরের গল্প</span></h1>
-          <p className="text-sm text-gray-700 mt-1">Your secret golpo corner. Featured highlight + weekly most liked.</p>
+          <div className="w-full max-w-sm lg:ml-auto">
+            <label htmlFor="kahiniSearch" className="sr-only">Search stories</label>
+            <input
+              id="kahiniSearch"
+              value={query}
+              onChange={e=>{setQuery(e.target.value); setVisibleCount(10);}}
+              placeholder="Search story / author / id" 
+              className="w-full rounded-lg border border-gray-300 bg-white/70 backdrop-blur px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue"
+            />
+            {query && (
+              <div className="mt-1 text-[10px] text-gray-500">{filteredItems.length} match{filteredItems.length!==1?'es':''}</div>
+            )}
+          </div>
         </div>
+        <p className="text-sm text-gray-700 mb-4">Your secret golpo corner. Featured highlight + weekly most liked.</p>
         {loading && <div className="text-sm text-gray-600 mb-4">Loading…</div>}
         <div className="grid lg:grid-cols-3 gap-8 items-start" aria-live="polite">
           {/* Left/Main Column (stories) */}
           <div className="lg:col-span-2 space-y-4">
-          {items.map(it => {
+          {visibleItems.map(it => {
             const Article = (
               <motion.article
                 layout
@@ -165,7 +193,12 @@ export default function CommunityFeed() {
               </div>
             );
           })}
-          {!loading && items.length === 0 && <p className="text-sm text-gray-600">No stories yet.</p>}
+           {!loading && visibleItems.length === 0 && <p className="text-sm text-gray-600">No stories{query?' for this search':''} yet.</p>}
+           {canLoadMore && (
+             <div className="pt-2">
+               <Button onClick={()=>setVisibleCount(c=>c+10)} variant="outline" className="w-full bg-white/70 hover:bg-white text-sm" aria-label="Load more stories">Load More</Button>
+             </div>
+           )}
           </div>
           {/* Right Column (submission + weekly list) */}
           <div className="space-y-6 sticky top-28">

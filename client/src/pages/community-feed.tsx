@@ -156,7 +156,7 @@ export default function CommunityFeed() {
           </div>
         </div>
         <p className="text-sm text-gray-700 mb-4">Your secret golpo corner. Featured highlight.</p>
-        {/* Featured colorful banner + dashboard */}
+  {/* Featured colorful banner + dashboard */}
         <div className="mb-10 grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 relative">
             <div className="relative overflow-hidden rounded-3xl p-0.5 group">
@@ -225,6 +225,38 @@ export default function CommunityFeed() {
                   <div className="absolute w-1 h-1 bg-white rounded-full top-6 left-4 animate-ping" />
                   <div className="absolute w-[5px] h-[5px] bg-white/90 rounded-full bottom-8 right-6 animate-ping [animation-delay:700ms]" />
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Best Liked mock preview banner */}
+        <div className="mb-10 relative">
+          <div className="relative overflow-hidden rounded-2xl p-0.5 group">
+            <div className="absolute inset-0 bg-[linear-gradient(120deg,#ff0080,#ffbf00,#0066ff,#ff0080)] bg-[length:300%_300%] animate-[gradientShift_7s_ease_infinite] opacity-80" />
+            <div className="relative rounded-2xl bg-white/85 backdrop-blur-xl border border-white/40 shadow-xl px-6 py-5 flex flex-col gap-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-sm font-semibold tracking-wide text-brand-blue flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-full bg-pink-600/10 text-pink-700 text-[11px] font-semibold">BEST LIKED (Mock)</span>
+                  <span className="text-[10px] text-gray-500">prototype preview</span>
+                </h2>
+                <div className="text-[10px] text-gray-600 flex items-center gap-3">
+                  <span className="flex items-center gap-1">❤️ {items.reduce((a,b)=>a+(b.likes||0),0)}</span>
+                  <span className="flex items-center gap-1">😂 {items.reduce((a,b)=>a+((b.reactions||{})['😂']||0),0)}</span>
+                  <span className="flex items-center gap-1">🔥 {items.reduce((a,b)=>a+((b.reactions||{})['🔥']||0),0)}</span>
+                </div>
+              </div>
+              <div className="text-sm leading-relaxed text-gray-800">
+                {(items.filter(i=>!i.featured)[0]?.text || 'Not enough stories yet, more laughs loading soon...').slice(0,180)}{(items.filter(i=>!i.featured)[0]?.text || '').length>180?'…':''}
+              </div>
+              <div className="flex flex-wrap gap-2 text-[10px] text-gray-500">
+                <span className="px-2 py-1 rounded-full bg-white/70 border border-white/40 backdrop-blur">Weekly snapshot pending</span>
+                <span className="px-2 py-1 rounded-full bg-white/70 border border-white/40 backdrop-blur">Live version coming</span>
+              </div>
+              <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
+                <div className="absolute w-24 h-24 -top-10 left-8 bg-pink-400/40 rounded-full mix-blend-overlay animate-pulse" />
+                <div className="absolute w-32 h-32 -bottom-16 right-4 bg-blue-400/40 rounded-full mix-blend-overlay animate-pulse [animation-delay:1.4s]" />
+                <div className="absolute w-2 h-2 top-6 right-10 bg-white rounded-full animate-ping" />
+                <div className="absolute w-1.5 h-1.5 bottom-8 left-16 bg-white/80 rounded-full animate-ping [animation-delay:600ms]" />
               </div>
             </div>
           </div>

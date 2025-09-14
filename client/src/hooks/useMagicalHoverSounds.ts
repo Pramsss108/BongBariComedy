@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
+import { getAudioContext, ensureAudioUnlocked, onAudioUnlocked, isAudioUnlocked, resumeAudioNow } from '@/lib/audioUnlock';
 
 interface MagicalHoverSoundOptions {
   enabled?: boolean;
@@ -15,20 +16,12 @@ export function useMagicalHoverSounds(options: MagicalHoverSoundOptions = {}) {
   // Initialize audio files
   useEffect(() => {
     if (!enabled) return;
+    // Ensure a shared AudioContext is available and unlocked on first gesture
+    ensureAudioUnlocked();
 
-    // Create sparkle sound (high pitch, short)
-    const sparkleAudio = new Audio();
-    sparkleAudio.volume = volume;
-    sparkleAudio.preload = 'auto';
-    
-    // Create magic chime sound (medium pitch, soft)
-    const magicAudio = new Audio();
-    magicAudio.volume = volume * 0.8;
-    magicAudio.preload = 'auto';
-
-    // Generate sparkle sound using Web Audio API if available
-    try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const setup = () => {
+      const audioContext = getAudioContext();
+      if (!audioContext) return;
       
       // Create sparkle sound effect
       const createSparkleSound = () => {
@@ -93,10 +86,17 @@ export function useMagicalHoverSounds(options: MagicalHoverSoundOptions = {}) {
         currentTime: 0,
         volume: volume * 0.8
       } as any;
+    };
 
-    } catch (error) {
-      console.log('Web Audio API not available, using fallback');
-      // Fallback to silent operation
+    if (isAudioUnlocked()) {
+      setup();
+    } else {
+      const off = onAudioUnlocked(setup);
+      return () => {
+        off && off();
+        sparkleAudioRef.current = null;
+        magicAudioRef.current = null;
+      };
     }
 
     return () => {
@@ -105,37 +105,47 @@ export function useMagicalHoverSounds(options: MagicalHoverSoundOptions = {}) {
     };
   }, [enabled, volume]);
 
-  const playSparkleSound = useCallback(() => {
-    if (!enabled || !sparkleAudioRef.current) return;
-
-    const now = Date.now();
-    if (now - lastPlayedRef.current < cooldownMs) {
-      return;
+  const playSparkleSound = useCallback((): void => {
+    if (!enabled) return;
+    if (typeof document !== 'undefined') {
+      if (document.visibilityState === 'hidden') return;
+      if (typeof document.hasFocus === 'function' && !document.hasFocus()) return;
     }
-
-    lastPlayedRef.current = now;
-
-    try {
-      (sparkleAudioRef.current as any).play();
-    } catch (error) {
-      // Silently handle errors
+    const doPlay = () => {
+      if (!sparkleAudioRef.current) return;
+      const now = Date.now();
+      if (now - lastPlayedRef.current < cooldownMs) return;
+      lastPlayedRef.current = now;
+      try {
+        (sparkleAudioRef.current as any).play();
+      } catch (_e) {}
+    };
+    if (!isAudioUnlocked()) {
+      resumeAudioNow().then(doPlay).catch(() => {});
+    } else {
+      doPlay();
     }
   }, [enabled, cooldownMs]);
 
-  const playMagicSound = useCallback(() => {
-    if (!enabled || !magicAudioRef.current) return;
-
-    const now = Date.now();
-    if (now - lastPlayedRef.current < cooldownMs) {
-      return;
+  const playMagicSound = useCallback((): void => {
+    if (!enabled) return;
+    if (typeof document !== 'undefined') {
+      if (document.visibilityState === 'hidden') return;
+      if (typeof document.hasFocus === 'function' && !document.hasFocus()) return;
     }
-
-    lastPlayedRef.current = now;
-
-    try {
-      (magicAudioRef.current as any).play();
-    } catch (error) {
-      // Silently handle errors
+    const doPlay = () => {
+      if (!magicAudioRef.current) return;
+      const now = Date.now();
+      if (now - lastPlayedRef.current < cooldownMs) return;
+      lastPlayedRef.current = now;
+      try {
+        (magicAudioRef.current as any).play();
+      } catch (_e) {}
+    };
+    if (!isAudioUnlocked()) {
+      resumeAudioNow().then(doPlay).catch(() => {});
+    } else {
+      doPlay();
     }
   }, [enabled, cooldownMs]);
 
@@ -144,6 +154,10 @@ export function useMagicalHoverSounds(options: MagicalHoverSoundOptions = {}) {
     if (!enabled) return;
 
     const handleHover = (event: Event) => {
+      if (typeof document !== 'undefined') {
+        if (document.visibilityState === 'hidden') return;
+        if (typeof document.hasFocus === 'function' && !document.hasFocus()) return;
+      }
       const target = event.target as HTMLElement;
       
       // Ensure target is an Element and has the matches method
@@ -182,8 +196,15 @@ export function useMagicalHoverSounds(options: MagicalHoverSoundOptions = {}) {
     // Add listeners for mouse enter events
     document.addEventListener('mouseover', handleHover, { passive: true });
 
+    const onHide = () => {
+      // Drop any references to ensure no scheduled plays continue
+      lastPlayedRef.current = 0;
+    };
+    document.addEventListener('visibilitychange', onHide as any, { passive: true } as any);
+
     return () => {
       document.removeEventListener('mouseover', handleHover);
+      document.removeEventListener('visibilitychange', onHide as any);
     };
   }, [enabled, playSparkleSound, playMagicSound]);
 

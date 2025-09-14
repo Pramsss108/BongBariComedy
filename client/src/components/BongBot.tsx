@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Bot, X, MessageCircle } from 'lucide-react';
+import { buildApiUrl } from '@/lib/queryClient';
 
 interface BongBotProps {
   onOpenChange?: (isOpen: boolean) => void;
@@ -12,23 +13,18 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState([
-    { 
-      id: 1, 
-      text: '🙏 Namaskar! Ami Bong Bot, Bong Bari er official AI assistant! Bong Bari সম্পর্কে জানতে চান? Bengali comedy নিয়ে আড্ডা দিতে চান? Ask me anything!', 
-      sender: 'bot', 
-      timestamp: new Date() 
-    }
-  ]);
+  // Start with no messages; we will fetch a fresh live greeting on open
+  const [messages, setMessages] = useState<Array<{id:number;text:string;sender:'bot'|'user';timestamp:Date}>>([]);
   const [isTyping, setIsTyping] = useState(false);
-  const [showTemplates, setShowTemplates] = useState(true);
+  const [showTemplates, setShowTemplates] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Quick reply templates
   const templates = [
-    "Kadate tow sobai pare Haste Chao?",
-    "Collab korlei Hese Felbe, Try?"
+    "Collab korte chai — process ta bolben?",
+    "Brand sponsor hole kivabe kaj hoy?",
+    "Mon bhalo lage? Soft subscribe korben? 😊"
   ];
 
   // When opening chatbot, position it on the right side
@@ -37,9 +33,23 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
   const bottomY = Math.max(0, window.innerHeight - 380 - 20); // 20px above bottom edge, never above header
   setPosition({ x: rightSideX, y: bottomY }); // Open at bottom right corner
     setIsOpen(true);
+    // Fresh session each open
+    setMessages([]);
+    setMessage('');
+  setShowTemplates(false);
+    setIsTyping(true);
     
     // Play glitter sound when opening
     playGlitterSound();
+
+    // First message template (no AI): concise, friendly, with CTA links
+    const first = [
+      "🙏 Hi! Ami Bong Bot — Bong Bari family-te welcome. Blood relation na, only laughing relation!",
+      "Join family: https://youtube.com/@bongbari | Work with us: /work-with-us#form | team@bongbari.com"
+    ].join('\n');
+    setMessages([{ id: Date.now(), text: first, sender: 'bot', timestamp: new Date() }]);
+    setIsTyping(false);
+    setShowTemplates(false);
   };
 
   // Sound effects
@@ -72,16 +82,17 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
     onOpenChange?.(isOpen);
   }, [isOpen, onOpenChange]);
 
-  // Handle sending message
-  const handleSendMessage = async () => {
-    if (!message.trim()) return;
+  // Handle sending message (AI-first: wait for Gemini; no local fallback bubbles)
+  const handleSendMessage = async (textOverride?: string) => {
+    const msgText = (textOverride ?? message).trim();
+    if (!msgText) return;
     
     // Play WhatsApp send sound
     playSendSound();
     
     const userMessage = {
       id: Date.now(),
-      text: message,
+      text: msgText,
       sender: 'user' as const,
       timestamp: new Date()
     };
@@ -94,60 +105,55 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
     // Play typing sound when bot starts typing
     const typingAudio = playTypingSound();
     
-    // Get real AI response from Gemini Pro
-    try {
-      const response = await fetch('/api/chatbot/message', {
+    // Try Gemini with small retries; keep typing; do not post local fallback
+    const conversationHistory = messages.slice(-6).map(msg => ({
+      role: msg.sender === 'user' ? 'user' : 'assistant',
+      content: msg.text
+    }));
+
+    const sendOnce = async () => {
+  const res = await fetch(buildApiUrl('/api/chatbot/message?aiOnly=1'), {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          message,
-          conversationHistory: messages.slice(-6).map(msg => ({
-            role: msg.sender === 'user' ? 'user' : 'assistant',
-            content: msg.text
-          }))
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msgText, conversationHistory, aiOnly: true })
       });
+      if (res.status === 202) return null; // pending
+      if (!res.ok) throw new Error('bad-status');
+      return res.json();
+    };
 
-      if (!response.ok) {
-        throw new Error('Failed to get response');
+    const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+    let attempts = 0;
+    let data: any = null;
+    while (attempts < 3) {
+      attempts++;
+      try {
+  data = await sendOnce();
+  const txt = String(data?.response || '').trim();
+  if (txt.length > 0) break;
+      } catch (e) {
+        // ignore and retry after short wait
       }
-
-      const data = await response.json();
-      
-      // Stop typing sound
-      typingAudio.pause();
-      typingAudio.currentTime = 0;
-      
-      const botResponse = {
-        id: Date.now() + 1,
-        text: data.response,
-        sender: 'bot' as const,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, botResponse]);
-      setIsTyping(false);
-      
-      // Play glitter sound when message appears
-      playGlitterSound();
-    } catch (error) {
-      console.error('Chat error:', error);
-      
-      // Stop typing sound
-      typingAudio.pause();
-      typingAudio.currentTime = 0;
-      
-      // Fallback response on error
-      const botResponse = {
-        id: Date.now() + 1,
-        text: "দুঃখিত, আমার একটু সমস্যা হচ্ছে। আবার চেষ্টা করুন! 😅",
-        sender: 'bot' as const,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, botResponse]);
-      setIsTyping(false);
+      await sleep(1200 * attempts);
     }
+
+    // Stop typing sound now (either success or gave up)
+    typingAudio.pause();
+    typingAudio.currentTime = 0;
+
+    // If we got a valid AI text, post it; otherwise end typing silently
+    const finalText = String(data?.response || '').trim();
+    if (finalText.length > 0) {
+      const botResponse = {
+        id: Date.now() + 1,
+        text: finalText,
+        sender: 'bot' as const,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, botResponse]);
+      playGlitterSound();
+    }
+    setIsTyping(false);
   };
 
   // Drag functionality
@@ -282,6 +288,33 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
             >
+              {/* QUICK REPLY TEMPLATES (TOP) */}
+              {showTemplates && (
+                <motion.div 
+                  className="px-2 py-1.5 bg-gradient-to-r from-[#FFCC00]/30 via-[#FF4D4D]/30 to-[#1363DF]/30 backdrop-blur-lg border-b border-white/30"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                >
+                  <div className="flex flex-wrap gap-1">
+                    {templates.map((template, index) => (
+                      <motion.button
+                        key={index}
+                        onClick={() => {
+                          setShowTemplates(false);
+                          handleSendMessage(template);
+                        }}
+                        className="px-2 py-1 bg-slate-700/90 hover:bg-slate-600/90 text-white text-[10px] font-medium rounded-md shadow-sm border border-slate-500/50 hover:border-slate-400/70 transition-all whitespace-nowrap"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        {template}
+                      </motion.button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
               {/* SCROLLABLE MESSAGES AREA */}
               <div className="flex-1 overflow-y-auto p-1.5 space-y-1.5 hide-scrollbar">
                 {messages.map((msg) => (
@@ -293,14 +326,22 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
                     className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div 
-                      className={`max-w-[92%] px-2 py-1 rounded-lg text-[11px] shadow-sm backdrop-blur-sm border ${
+                      className={`relative max-w-[92%] px-2 pt-1 pb-0.5 rounded-lg text-[11px] shadow-sm backdrop-blur-sm border ${
                         msg.sender === 'user' 
                           ? 'bg-gradient-to-r from-[#1363DF]/80 to-[#FF4D4D]/80 text-white border-white/20' 
                           : 'bg-white/90 text-gray-800 border-white/30'
                       }`}
                     >
-                      <p className="leading-tight break-words">{msg.text}</p>
-                      <span className={`text-[8px] opacity-50 block mt-0.5 ${msg.sender === 'user' ? 'text-white/60' : 'text-gray-500'}`}>
+                      {msg.sender === 'bot' ? (
+                        <p className="leading-tight pr-10 pb-0.5 break-words mb-0 whitespace-pre-line" dangerouslySetInnerHTML={{
+                          __html: msg.text.replace(/(https?:\/\/[^\s]+|\/(?:work-with-us)(?:#\w+)?)/g, (u) => `<a href="${u}" target="_blank" rel="noopener noreferrer" class="underline text-blue-600 hover:text-blue-800">${u}</a>`)
+                              // Linkify plain emails
+                              .replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, (e) => `<a href="mailto:${e}" class="underline text-blue-600 hover:text-blue-800">${e}</a>`)
+                        }} />
+                      ) : (
+                        <p className="leading-tight pr-10 pb-0.5 break-words mb-0">{msg.text}</p>
+                      )}
+                      <span className={`absolute right-2 bottom-0.5 text-[9px] opacity-60 ${msg.sender === 'user' ? 'text-white/70' : 'text-gray-500'}`}>
                         {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
@@ -342,36 +383,18 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
                 <div ref={messagesEndRef} />
               </div>
               
-              {/* QUICK REPLY TEMPLATES */}
-              {showTemplates && (
-                <motion.div 
-                  className="px-2 py-1.5 bg-gradient-to-r from-[#FFCC00]/30 via-[#FF4D4D]/30 to-[#1363DF]/30 backdrop-blur-lg border-t border-white/30"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                >
-                  <div className="flex flex-wrap gap-1">
-                    {templates.map((template, index) => (
-                      <motion.button
-                        key={index}
-                        onClick={() => {
-                          setMessage(template);
-                          setShowTemplates(false);
-                        }}
-                        className="px-2 py-1 bg-slate-700/90 hover:bg-slate-600/90 text-white text-[10px] font-medium rounded-md shadow-sm border border-slate-500/50 hover:border-slate-400/70 transition-all whitespace-nowrap"
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        {template}
-                      </motion.button>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
+              {/* QUICK REPLY TEMPLATES moved to top */}
               
               {/* COMPACT TYPING AREA */}
               <div className="p-2 bg-gradient-to-r from-[#1363DF]/20 via-[#FFCC00]/20 to-[#FF4D4D]/20 backdrop-blur-lg border-t border-white/40 rounded-b-2xl shadow-inner">
                 <div className="flex gap-1.5 items-end">
+                    <a
+                      href="/work-with-us#form"
+                      className="px-2.5 py-1.5 bg-white/80 hover:bg-white text-[#1363DF] rounded-md text-[11px] font-medium shadow-sm border border-[#1363DF]/30 transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      Contact Us
+                    </a>
                   <textarea
                     value={message}
                     onChange={(e) => {
@@ -396,7 +419,7 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
                     }}
                   />
                   <motion.button
-                    onClick={handleSendMessage}
+                    onClick={() => handleSendMessage()}
                     className="px-2 py-1 bg-gradient-to-r from-[#1363DF] to-[#FF4D4D] text-white rounded-md font-semibold shadow-md backdrop-blur-sm border border-white/30 flex items-center gap-0.5 flex-shrink-0"
                     whileHover={{ 
                       scale: 1.05,

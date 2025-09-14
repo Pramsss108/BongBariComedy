@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, buildApiUrl } from "@/lib/queryClient";
 import { Upload, Image, Save } from "lucide-react";
 import { SimpleCropStudio } from "@/components/SimpleCropStudio";
 
@@ -31,12 +31,12 @@ export function SimpleBannerManager() {
   // Fetch current banner data
   const { data: currentBanner, isLoading } = useQuery({
     queryKey: ["/api/homepage-banner"],
-    queryFn: () => fetch('/api/homepage-banner').then(res => res.ok ? res.json() : { title: "বং বাড়ি", subtitle: "কলকাতার ঘরোয়া কমেডি - আমাদের গল্প" }),
+    queryFn: () => fetch(buildApiUrl('/api/homepage-banner')).then(res => res.ok ? res.json() : { title: "বং বাড়ি", subtitle: "কলকাতার ঘরোয়া কমেডি - আমাদের গল্প" }),
   });
 
   // Save banner mutation
   const saveBannerMutation = useMutation({
-    mutationFn: (data: BannerData) => fetch("/api/homepage-banner", {
+  mutationFn: (data: BannerData) => fetch(buildApiUrl("/api/homepage-banner"), {
       method: "POST",
       body: JSON.stringify(data),
       headers: {

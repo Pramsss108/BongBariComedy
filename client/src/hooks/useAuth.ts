@@ -8,13 +8,13 @@ interface AuthUser {
 
 export function useAuth() {
   const [sessionId, setSessionId] = useState<string | null>(
-    localStorage.getItem('admin_session')
+    localStorage.getItem('admin_session') || localStorage.getItem('admin_jwt')
   );
   const queryClient = useQueryClient();
 
   const { data: user, isLoading, error } = useQuery({
     queryKey: ['/api/auth/me'],
-    queryFn: () => apiRequest('/api/auth/me', {
+  queryFn: () => apiRequest('/api/auth/me', {
       headers: {
         Authorization: `Bearer ${sessionId}`
       }
@@ -32,6 +32,7 @@ export function useAuth() {
     }),
     onSuccess: () => {
       localStorage.removeItem('admin_session');
+      localStorage.removeItem('admin_jwt');
       setSessionId(null);
       clearCSRFToken(); // Clear CSRF token on logout
       queryClient.clear();
@@ -39,7 +40,9 @@ export function useAuth() {
   });
 
   const setSession = (newSessionId: string) => {
-    localStorage.setItem('admin_session', newSessionId);
+  // Support both legacy session and new JWT
+  localStorage.setItem('admin_session', newSessionId);
+  localStorage.setItem('admin_jwt', newSessionId);
     setSessionId(newSessionId);
     queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
   };
@@ -52,6 +55,7 @@ export function useAuth() {
   useEffect(() => {
     if (error && sessionId) {
       localStorage.removeItem('admin_session');
+  localStorage.removeItem('admin_jwt');
       setSessionId(null);
       clearCSRFToken(); // Clear CSRF token on auth error
     }

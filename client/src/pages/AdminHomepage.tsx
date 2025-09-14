@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, buildApiUrl } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { Trash2, Plus, Edit, Eye, Home, Gift, Megaphone, ImageIcon, Upload, Image } from "lucide-react";
 
@@ -41,7 +41,7 @@ export function AdminHomepage() {
   // Fetch homepage content with authentication
   const { data: contentData = [], isLoading } = useQuery({
     queryKey: ["/api/admin/homepage-content"],
-    queryFn: () => fetch('/api/admin/homepage-content', {
+    queryFn: () => fetch(buildApiUrl('/api/admin/homepage-content'), {
       headers: {
         'Authorization': `Bearer ${sessionId}`
       }

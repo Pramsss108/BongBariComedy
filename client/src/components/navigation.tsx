@@ -28,6 +28,7 @@ const Navigation = () => {
     { href: "/about", label: "About" },
     { href: "/work-with-us", label: "Work with us" },
     { href: "/blog", label: "Blog" },
+  { href: "/tools", label: "Free Tools" },
   ];
 
   const isActive = (href: string) => {
@@ -47,7 +48,8 @@ const Navigation = () => {
           style={{ 
             height: '75px',
             background: 'linear-gradient(135deg, #0E47FF 0%, #0A3ACC 100%)',
-            backdropFilter: 'blur(20px)'
+            backdropFilter: 'blur(20px)',
+            isolation: 'auto'
           }}
         >
           {/* Futuristic Background Pattern */}

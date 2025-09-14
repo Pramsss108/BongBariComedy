@@ -2,47 +2,28 @@ import { Play } from "lucide-react";
 
 interface YouTubeShortProps {
   videoId: string;
-  thumbnail: string;
+  thumbnail: string; // kept for future use; not needed for iframe
   title: string;
-  onClick?: () => void;
 }
 
-const YouTubeShort = ({ videoId, thumbnail, title, onClick }: YouTubeShortProps) => {
-  const handleClick = () => {
-    if (onClick) {
-      onClick();
-    } else {
-      // Open YouTube video in new tab
-      window.open(`https://www.youtube.com/shorts/${videoId}`, '_blank');
-    }
-  };
-
+const YouTubeShort = ({ videoId, title }: YouTubeShortProps) => {
   return (
-    <div 
-      className="video-container cursor-pointer group transition-all duration-300 hover:scale-105 magical-hover"
-      onClick={handleClick}
-      data-testid={`youtube-short-${videoId}`}
-    >
-      {/* Thin rotating gradient border */}
-      <div className="rotating-border-wrapper">
-        <div className="relative w-full aspect-[9/16] rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 bg-white">
-          <img 
-            src={thumbnail} 
-            alt={title}
-            className="w-full h-full object-cover rounded-xl"
+    <div className="video-container group transition-all duration-300 hover:scale-105 magical-hover" data-testid={`youtube-short-${videoId}`}>
+      <div className="rotating-border-wrapper relative">
+        {/* Circling gradient border */}
+        <span className="absolute inset-0 z-0 rounded-xl border-4 border-transparent before:content-[''] before:absolute before:inset-0 before:rounded-xl before:bg-gradient-to-tr before:from-pink-500 before:via-yellow-400 before:to-blue-500 before:animate-spin-slow before:z-[-1] before:blur-sm"></span>
+        <div className="relative w-full aspect-[9/16] md:aspect-[9/16] rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 bg-black min-h-[320px]">
+          <iframe
+            src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&showinfo=0&autoplay=0`}
+            title={title}
+            className="absolute inset-0 w-full h-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
             loading="lazy"
-          />
-          
-          {/* Play button overlay */}
-          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 group-hover:bg-opacity-30 transition-all duration-300 rounded-xl">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-red-600 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-              <Play className="w-8 h-8 sm:w-10 sm:h-10 text-white ml-1" fill="currentColor" />
-            </div>
-          </div>
-          
+          ></iframe>
           {/* Title overlay */}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent p-4 rounded-b-xl">
-            <h3 className="text-white font-semibold text-sm line-clamp-2 leading-tight">
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent p-3 rounded-b-xl">
+            <h3 className="text-white font-semibold text-xs sm:text-sm line-clamp-2 leading-tight">
               {title}
             </h3>
           </div>

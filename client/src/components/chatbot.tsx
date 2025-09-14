@@ -19,14 +19,7 @@ interface ChatbotProps {
 export default function Chatbot({ className = "" }: ChatbotProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: 'Yes I am Bong Bot, Bong Barir Familir ekjon, Cha fuckka hobe nki? ☕🤖',
-      timestamp: new Date()
-    }
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -115,6 +108,21 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen, isMinimized]);
+
+  // Load greeting template on open
+  useEffect(() => {
+    if (isOpen && messages.length === 0) {
+      (async () => {
+        try {
+          const res = await apiRequest('/api/greeting/today', { method: 'GET' });
+          const text = String(res?.text || '🙏 Namaskar! Ami Bong Bot, Bong Bari er official AI assistant!');
+          setMessages([{ id: Date.now().toString(), role: 'assistant', content: text, timestamp: new Date() }]);
+        } catch {
+          setMessages([{ id: Date.now().toString(), role: 'assistant', content: '🙏 Namaskar! Ami Bong Bot, Bong Bari er official AI assistant!', timestamp: new Date() }]);
+        }
+      })();
+    }
+  }, [isOpen]);
 
   // WORKING DRAG SYSTEM - COPIED FROM RED CIRCLE
   const [chatPosition, setChatPosition] = useState({ x: 0, y: 0 });
@@ -218,28 +226,35 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
         content: msg.content
       }));
 
-      const response = await apiRequest('/api/chatbot/message', {
+      const response = await apiRequest('/api/chatbot/message?aiOnly=1', {
         method: 'POST',
         body: JSON.stringify({
           message: userMessage,
-          conversationHistory
+          conversationHistory,
+          aiOnly: true
         }),
         headers: {
           'Content-Type': 'application/json'
         }
       });
-
-      if (response?.response) {
-        addMessage('assistant', response.response);
-      } else {
-        throw new Error('Invalid response format');
+      let attempts = 0;
+      let finalText = String(response?.response || '').trim();
+      while ((!finalText || finalText.length === 0) && attempts < 3) {
+        attempts++;
+        await new Promise(r => setTimeout(r, 1200 * attempts));
+        const again = await apiRequest('/api/chatbot/message?aiOnly=1', {
+          method: 'POST',
+          body: JSON.stringify({ message: userMessage, conversationHistory, aiOnly: true }),
+          headers: { 'Content-Type': 'application/json' }
+        });
+        finalText = String(again?.response || '').trim();
+      }
+      if (finalText && finalText.length > 0) {
+        addMessage('assistant', finalText);
       }
     } catch (error) {
       console.error('Chatbot error:', error);
-      const errorMessage = error instanceof Error && error.message.includes('network') 
-        ? 'ইন্টারনেট সংযোগ চেক করুন! 😅\n\nPlease check your internet connection!'
-        : 'দুঃখিত, আমার একটু সমস্যা হচ্ছে। আবার চেষ্টা করুন! 😅\n\nSorry, I\'m having some trouble. Please try again!';
-      addMessage('assistant', errorMessage);
+      // AI-only: do not add local fallback bubble
     } finally {
       setIsTyping(false);
     }
@@ -263,21 +278,33 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
         content: msg.content
       }));
 
-      const response = await apiRequest('/api/chatbot/message', {
+      const response = await apiRequest('/api/chatbot/message?aiOnly=1', {
         method: 'POST',
         body: JSON.stringify({
           message: template,
-          conversationHistory
+          conversationHistory,
+          aiOnly: true
         }),
         headers: {
           'Content-Type': 'application/json'
         }
       });
-
-      addMessage('assistant', response.response);
+      let attempts = 0;
+      let finalText = String(response?.response || '').trim();
+      while ((!finalText || finalText.length === 0) && attempts < 3) {
+        attempts++;
+        await new Promise(r => setTimeout(r, 1200 * attempts));
+        const again = await apiRequest('/api/chatbot/message?aiOnly=1', {
+          method: 'POST',
+          body: JSON.stringify({ message: template, conversationHistory, aiOnly: true }),
+          headers: { 'Content-Type': 'application/json' }
+        });
+        finalText = String(again?.response || '').trim();
+      }
+      if (finalText && finalText.length > 0) addMessage('assistant', finalText);
     } catch (error) {
-      console.error('Template message error:', error);
-      addMessage('assistant', 'দুঃখিত, আমার একটু সমস্যা হচ্ছে। আবার চেষ্টা করুন! 😅');
+  console.error('Template message error:', error);
+  // AI-only: no local fallback bubble
     } finally {
       setIsTyping(false);
     }
@@ -337,8 +364,9 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
 
   // Template messages - compact
   const templateMessages = [
-    { text: "আমি কি তোমায় বিরক্ত করছি?", emoji: "🤔" },
-    { text: "বিরক্ত না হলে Collabe কি ভাবে করবো?", emoji: "🤝" }
+    { text: "Collab korte chai — process ta bolben?", emoji: "�" },
+    { text: "Brand sponsor hole kivabe kaj hoy?", emoji: "📣" },
+    { text: "Mon bhalo lage? Soft subscribe korben?", emoji: "✨" }
   ];
 
   if (!isOpen) {
@@ -567,6 +595,29 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
               transition={{ duration: 0.3 }}
               className="relative z-10 flex flex-col flex-1 min-h-0"
             >
+              {/* QUICK TEMPLATES AT TOP */}
+              <div className="px-4 py-2 border-b border-[#FFCC00]/20 bg-gradient-to-r from-[#101418]/60 to-[#101418]/80 backdrop-blur-sm flex-shrink-0">
+                <div className="flex flex-wrap gap-1.5">
+                  {templateMessages.map((template, index) => (
+                    <motion.button
+                      key={index}
+                      onClick={() => {
+                        setInputMessage(template.text);
+                        setTimeout(() => sendMessage(), 100);
+                      }}
+                      disabled={isTyping}
+                      className="no-rickshaw-sound py-1 px-2 bg-slate-700/80 hover:bg-slate-600/80 rounded-md border border-slate-500/50 text-white text-[11px] font-medium whitespace-nowrap"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <span className="flex items-center gap-1">
+                        <span>{template.emoji}</span>
+                        <span className="truncate">{template.text}</span>
+                      </span>
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
               {/* SCROLLABLE MESSAGES AREA - ONLY THIS SCROLLS */}
               <div 
                 className="flex-1 overflow-hidden bg-gradient-to-b from-transparent via-[#101418]/20 to-transparent min-h-0" 
@@ -585,7 +636,7 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
                     pointerEvents: 'auto'
                   }}
                 >
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {messages.map((message, index) => (
                       <motion.div
                         key={message.id}
@@ -595,11 +646,11 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
                         className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                       >
                         <div
-                          className={`max-w-[85%] relative ${
+                          className={`relative max-w-[85%] ${
                             message.role === 'user'
                               ? 'bg-gradient-to-br from-[#1363DF] to-[#FF4D4D] text-white rounded-lg rounded-br-sm shadow-lg border border-[#FFCC00]/20'
                               : 'bg-[#101418]/60 backdrop-blur-sm text-white rounded-lg rounded-bl-sm border border-[#FFCC00]/30'
-                          } p-2.5`}
+                          } px-3 pt-2 pb-1.5`}
                         >
                           <div className="flex items-start gap-2">
                             {message.role === 'assistant' && (
@@ -607,10 +658,10 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
                             )}
                             
                             <div className="flex-1">
-                              <p className="text-xs leading-relaxed whitespace-pre-wrap">
+                              <p className="text-xs leading-tight whitespace-pre-wrap pr-10 pb-0.5">
                                 {message.content}
                               </p>
-                              <span className="text-xs opacity-60 mt-1 block font-mono">
+                              <span className={`absolute right-2 bottom-0.5 text-[10px] opacity-60 font-mono ${message.role === 'user' ? 'text-white/80' : 'text-[#FFCC00]/70'}`}>
                                 {message.timestamp.toLocaleTimeString()}
                               </span>
                             </div>
@@ -635,31 +686,7 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
                 </ScrollArea>
               </div>
 
-              {/* Template Messages - Fixed */}
-              <div className="px-4 py-2 border-t border-[#FFCC00]/20 bg-gradient-to-r from-[#101418]/60 to-[#101418]/80 backdrop-blur-sm flex-shrink-0">
-                <div className="space-y-1.5">
-                  {templateMessages.map((template, index) => (
-                    <motion.button
-                      key={index}
-                      onClick={() => {
-                        setInputMessage(template.text);
-                        setTimeout(() => sendMessage(), 100);
-                      }}
-                      disabled={isTyping}
-                      className="no-rickshaw-sound w-full py-2 px-3 bg-gradient-to-r from-[#1363DF]/20 to-[#FF4D4D]/20 backdrop-blur-sm rounded-lg border border-[#FFCC00]/30 text-white text-xs font-medium hover:from-[#1363DF]/30 hover:to-[#FF4D4D]/30 active:from-[#1363DF]/40 active:to-[#FF4D4D]/40 transition-all duration-200 flex items-center justify-between"
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.98 }}
-                      data-testid={`template-${index}`}
-                    >
-                      <span className="flex items-center gap-2">
-                        <span>{template.emoji}</span>
-                        <span className="truncate">{template.text}</span>
-                      </span>
-                      <Send className="w-3 h-3 opacity-70 flex-shrink-0" />
-                    </motion.button>
-                  ))}
-                </div>
-              </div>
+              {/* Templates moved to top */}
 
               {/* ABSOLUTELY FIXED WRITING BOX - SHORTER & SCROLLABLE */}
               <div className="p-3 bg-gradient-to-t from-[#101418]/95 via-[#101418]/80 to-[#101418]/60 backdrop-blur-md border-t-2 border-[#FFCC00]/30 rounded-b-2xl flex-shrink-0">

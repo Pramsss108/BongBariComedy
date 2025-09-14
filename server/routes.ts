@@ -2,9 +2,14 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { chatbotService } from "./chatbotService";
-import { insertBlogPostSchema, insertCollaborationRequestSchema, insertUserSchema, insertHomepageContentSchema, type HomepageContent } from "@shared/schema";
+import { insertBlogPostSchema, insertCollaborationRequestSchema, insertUserSchema, insertHomepageContentSchema, type HomepageContent } from "@shared/schema.sqlite";
 import { z } from "zod";
-import { google } from "googleapis";
+import https from 'https';
+import { trendsService } from "./trendsService";
+import { memeService } from "./memeService";
+import { dailyDataService } from "./dailyDataService";
+import { parseStringPromise } from 'xml2js';
+import { youtubeService } from './youtubeService';
 import { ObjectStorageService } from "./objectStorage";
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
@@ -68,6 +73,101 @@ const validateCSRF = (req: any, res: any, next: any) => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Health endpoint (lightweight): confirms server is up and AI key presence
+  app.get('/api/health', (_req, res) => {
+    res.json({ ok: true, aiReady: Boolean(process.env.GEMINI_API_KEY) });
+  });
+
+  // Readiness endpoint: verifies background caches warmed; never blocks startup
+  app.get('/api/ready', (_req, res) => {
+    try {
+      const yt = youtubeService.getInfo();
+      const tr = trendsService.getInfo();
+      const ready = (yt.latest + yt.popular) > 0 && tr.items > 0;
+      res.json({ ok: true, ready, yt, trends: tr, aiReady: Boolean(process.env.GEMINI_API_KEY) });
+    } catch (e) {
+      res.json({ ok: true, ready: false });
+    }
+  });
+
+  // Start trends fetcher (BN/IN news & comedy viral)
+  trendsService.start();
+
+  // Daily greeting builder (always fresh per request)
+  app.get("/api/greeting/today", async (_req, res) => {
+    try {
+      // Get latest trends
+      const items = trendsService.getTop(8);
+      const upbeat = items.filter(i => !i.isSomber);
+      const somber = items.filter(i => i.isSomber);
+  // Persist today’s items for variety across visits
+  try { dailyDataService.mergeToday(items.map(i => ({ title: i.title, link: i.link, language: i.language, isSomber: i.isSomber })) as any); } catch {}
+
+      // Build a safe prompt for Gemini; if no key, use local fallback
+      const hasAI = Boolean(process.env.GEMINI_API_KEY);
+      const topicLines = items.slice(0, 6).map((it, idx) => `${idx + 1}. [${it.language.toUpperCase()}] ${it.title}${it.isSomber ? ' (somber)' : ''}`).join('\n');
+      const instructions = `
+You are Bong Bot, Bengali family-friendly comedian. Task: craft a fresh, tiny greeting for today.
+Constraints:
+- 2 short sentences max, answer-first punchy humor. Keep it clean & family-safe.
+- Language: Prefer Bengali (Bangla script) if trend titles include Bangla; else Benglish. Avoid heavy English.
+- Humor rules: never joke about death/accidents/tragedies. If somber present, acknowledge softly in 1 clause, then pivot to light, positive everyday humor.
+- Tone: witty, cultural (maa-chele, para, cha-fuchka), not cringe, not long.
+- Occasionally add CTA like “subscribe/like” (20% chance); not every time.
+Input trends (top 6):\n${topicLines}
+Output format: JUST the 1–2 sentence greeting. No emojis unless fits naturally (<=1).`;
+
+      let text = '';
+      if (hasAI) {
+        try {
+          const out = await chatbotService.generateFreeform(instructions, { temperature: 0.8, maxOutputTokens: 120 });
+          text = out || '';
+        } catch {
+          text = '';
+        }
+      }
+
+      if (!text || typeof text !== 'string') {
+        // Local safe fallback with more variety
+        const pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
+        const daily = dailyDataService.getTodaySamples(4).map(s => s.title.replace(/[|:–—-].*$/, ''));
+        const topic = daily[0] || upbeat[0]?.title || 'Kolkata vibe';
+        const quips = [
+          `Bikel bela moto—halka haowa, halka roast, full on hasi.`,
+          `${topic.split(' ').slice(0,3).join(' ')} niye ekta choto mazaak?`,
+          `Tension kom, ${topic.split(' ').slice(0,2).join(' ')} diye suru kori?`,
+          `Mood high, ${topic.split(' ').slice(0,2).join(' ')} er upor ekto light fun!`,
+          `Cha ready, kotha mishti—ajker topic: ${topic.split(' ').slice(0,3).join(' ')}.`
+        ];
+        const cta = Math.random() < 0.2 ? '—like/subscribe korle adda aro jambe!'
+          : '';
+        const base = somber.length
+          ? `Ajker khobore kichu pojjolo bishoy ache—samman rekhe halka positive kotha boli. ${pick(quips)}`
+          : pick(quips);
+        text = `${base} ${cta}`.trim();
+      }
+
+  res.json({ text });
+    } catch (e) {
+      console.error('today greeting error', e);
+  res.status(200).json({ text: 'Ajke positive thaki—halka roast, boro hasi.' });
+    }
+  });
+
+  // Viral comedy/trends feed (safe)
+  app.get("/api/trends", (_req, res) => {
+    const items = trendsService.getTop(20);
+    res.json({ items });
+  });
+  // Built-in fallback videos to avoid empty UI
+  const fallbackVideos = [
+    { videoId: 'pdjQpcVqxMU', title: 'Bong Bari Comedy Short 1', thumbnail: 'https://img.youtube.com/vi/pdjQpcVqxMU/hqdefault.jpg', publishedAt: '2024-01-01T00:00:00Z' },
+    { videoId: '8gdxQ_dgFv8', title: 'Bong Bari Comedy Short 2', thumbnail: 'https://img.youtube.com/vi/8gdxQ_dgFv8/hqdefault.jpg', publishedAt: '2024-01-01T00:00:00Z' },
+    { videoId: 'rGOvg5PJtXA', title: 'Bong Bari Comedy Short 3', thumbnail: 'https://img.youtube.com/vi/rGOvg5PJtXA/hqdefault.jpg', publishedAt: '2024-01-01T00:00:00Z' },
+    { videoId: 'Gyo_QpZQuPU', title: 'Bong Bari Comedy Short 4', thumbnail: 'https://img.youtube.com/vi/Gyo_QpZQuPU/hqdefault.jpg', publishedAt: '2024-01-01T00:00:00Z' },
+    { videoId: 'GJfHWL0ro_A', title: 'Bong Bari Comedy Short 5', thumbnail: 'https://img.youtube.com/vi/GJfHWL0ro_A/hqdefault.jpg', publishedAt: '2024-01-01T00:00:00Z' },
+    { videoId: 'NRdGq7Ncqw0', title: 'Bong Bari Comedy Short 6', thumbnail: 'https://img.youtube.com/vi/NRdGq7Ncqw0/hqdefault.jpg', publishedAt: '2024-01-01T00:00:00Z' },
+  ];
   // Apply global security middleware
   app.use(securityHeaders);
   app.use(trackRequests);
@@ -97,9 +197,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // No brute force protection - removed permanently
       
       const { username, password } = insertUserSchema.parse(req.body);
-      const user = await storage.getUserByUsername(username);
-      
-      if (!user || user.password !== password) {
+      let user = await storage.getUserByUsername(username);
+
+      // Auto-bootstrap admin if missing and correct env password provided
+      const adminEnvPass = process.env.ADMIN_PASSWORD || 'bongbari2025';
+      if (!user && username === 'admin' && password === adminEnvPass) {
+        try {
+          user = await storage.createUser({ username: 'admin', password: adminEnvPass });
+          console.log('✅ Admin auto-created on login');
+        } catch (e) {
+          // continue; maybe a race, will try to read again
+          user = await storage.getUserByUsername(username);
+        }
+      }
+
+      // Accept either DB password match or ADMIN_PASSWORD override for admin
+      const validPassword = user && (
+        user.password === password || (username === 'admin' && password === adminEnvPass)
+      );
+
+      if (!user || !validPassword) {
         // No failed login recording
         return res.status(401).json({ message: "Invalid username or password" });
       }
@@ -188,104 +305,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // YouTube API route - Latest videos (chronological order)
-  app.get("/api/youtube/latest", async (_req, res) => {
+  // Helper: fetch YouTube channel uploads via RSS (no API key)
+  async function fetchLatestFromRSS(channelId: string) {
+    const url = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
+    const xml = await new Promise<string>((resolve, reject) => {
+      https.get(url, (r) => {
+        let data = '';
+        r.on('data', (c) => (data += c));
+        r.on('end', () => resolve(data));
+      }).on('error', reject);
+    });
+    const json = await parseStringPromise(xml);
+    const entries = json.feed?.entry || [];
+    return entries.slice(0, 6).map((e: any) => {
+      const videoId = e['yt:videoId']?.[0];
+      return {
+        videoId,
+        title: e.title?.[0],
+        thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+        publishedAt: e.published?.[0],
+      };
+    });
+  }
+
+  // YouTube - Latest videos from background cache
+    app.get("/api/youtube/latest", async (req, res) => {
     try {
-      const youtube = google.youtube({
-        version: 'v3',
-        auth: process.env.YOUTUBE_API_KEY
-      });
-
-      const channelId = process.env.YOUTUBE_CHANNEL_ID;
-      if (!channelId) {
-        return res.status(500).json({ message: "YouTube Channel ID not configured" });
-      }
-
-      // Get channel's uploads playlist
-      const channelResponse = await youtube.channels.list({
-        part: ['contentDetails'],
-        id: [channelId]
-      });
-
-      if (!channelResponse.data.items || channelResponse.data.items.length === 0) {
-        return res.status(404).json({ message: "Channel not found" });
-      }
-
-      const uploadsPlaylistId = channelResponse.data.items[0].contentDetails?.relatedPlaylists?.uploads;
-      if (!uploadsPlaylistId) {
-        return res.status(500).json({ message: "Uploads playlist not found" });
-      }
-
-      // Get latest 3 videos from uploads playlist (most recent first)
-      const playlistResponse = await youtube.playlistItems.list({
-        part: ['snippet', 'contentDetails'],
-        playlistId: uploadsPlaylistId,
-        maxResults: 3
-      });
-
-      const videos = playlistResponse.data.items?.map(item => ({
-        videoId: item.contentDetails?.videoId,
-        title: item.snippet?.title,
-        thumbnail: item.snippet?.thumbnails?.high?.url || item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url,
-        publishedAt: item.snippet?.publishedAt
-      })) || [];
-
-      res.json(videos);
+        const channelId = (req.query.channelId as string) || process.env.YOUTUBE_CHANNEL_ID;
+        if (!channelId) {
+          console.warn('[express] YOUTUBE_CHANNEL_ID not set; YouTube sections will be empty.');
+          return res.json([]);
+        }
+        // Ensure background fetcher is running for this channel, then refresh now
+    youtubeService.start(channelId);
+    await youtubeService.forceRefresh();
+    const items = youtubeService.getLatest(3);
+    return res.json(items.length ? items : fallbackVideos.slice(0, 3));
     } catch (error) {
-      console.error('YouTube API Error (Latest):', error);
-      res.status(500).json({ message: "Failed to fetch latest YouTube videos" });
+      console.error('YouTube RSS Error (Latest):', error);
+        res.status(200).json([]);
     }
   });
 
-  // YouTube API route - Popular videos (by view count)
-  app.get("/api/youtube/popular", async (_req, res) => {
+  // YouTube - Popular videos from background cache
+    app.get("/api/youtube/popular", async (req, res) => {
     try {
-      const youtube = google.youtube({
-        version: 'v3',
-        auth: process.env.YOUTUBE_API_KEY
-      });
-
-      const channelId = process.env.YOUTUBE_CHANNEL_ID;
-      if (!channelId) {
-        return res.status(500).json({ message: "YouTube Channel ID not configured" });
-      }
-
-      // Search for videos from this channel, ordered by popularity (view count)
-      const searchResponse = await youtube.search.list({
-        part: ['snippet'],
-        channelId: channelId,
-        maxResults: 10,
-        order: 'viewCount',
-        type: 'video'
-      });
-
-      if (!searchResponse.data.items || searchResponse.data.items.length === 0) {
-        return res.status(404).json({ message: "No popular videos found" });
-      }
-
-      // Get detailed stats for these videos to ensure they're actually popular
-      const videoIds = searchResponse.data.items?.map((item: any) => item.id?.videoId).filter(Boolean) || [];
-      
-      const statsResponse = await youtube.videos.list({
-        part: ['statistics', 'snippet'],
-        id: videoIds
-      });
-
-      // Sort by view count and take top 3
-      const popularVideos = statsResponse.data.items?.map((item: any) => ({
-        videoId: item.id,
-        title: item.snippet?.title,
-        thumbnail: item.snippet?.thumbnails?.high?.url || item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url,
-        publishedAt: item.snippet?.publishedAt,
-        viewCount: parseInt(item.statistics?.viewCount || '0')
-      }))
-      .sort((a, b) => b.viewCount - a.viewCount)
-      .slice(0, 3) || [];
-
-      res.json(popularVideos);
+        const channelId = (req.query.channelId as string) || process.env.YOUTUBE_CHANNEL_ID;
+        if (!channelId) {
+          console.warn('[express] YOUTUBE_CHANNEL_ID not set; YouTube sections will be empty.');
+          return res.json([]);
+        }
+        // Ensure background fetcher is running for this channel, then refresh now
+    youtubeService.start(channelId);
+    await youtubeService.forceRefresh();
+    const items = youtubeService.getPopular(3);
+    return res.json(items.length ? items : fallbackVideos.slice(3, 6));
     } catch (error) {
-      console.error('YouTube API Error (Popular):', error);
-      res.status(500).json({ message: "Failed to fetch popular YouTube videos" });
+      console.error('YouTube RSS Error (Popular):', error);
+        res.status(200).json([]);
+    }
+  });
+
+  // Manual refresh endpoint (useful during development)
+  app.post("/api/youtube/refresh", async (_req, res) => {
+    try {
+      await youtubeService.forceRefresh();
+      res.json({ ok: true });
+    } catch (e) {
+      res.status(500).json({ ok: false });
     }
   });
 
@@ -300,6 +387,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid blog post data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create blog post" });
+    }
+  });
+
+  // Meme generation and admin review routes (Phase 1)
+  // Admin: generate today's meme ideas
+  app.post('/api/memes/generate', isAuthenticated, validateCSRF, async (req, res) => {
+    try {
+      const count = Math.max(1, Math.min(8, Number(req.body?.count) || 5));
+      const language = (req.body?.language as any) || 'auto';
+      const items = await memeService.generateForToday(count, language);
+      res.json({ dateKey: new Date().toISOString().slice(0, 10), items });
+    } catch (e) {
+      console.error('meme generate error', e);
+      res.status(500).json({ error: 'Failed to generate meme ideas' });
+    }
+  });
+
+  // Admin: list today or by date with optional status filter
+  app.get('/api/memes', isAuthenticated, async (req, res) => {
+    try {
+      const dateKey = String(req.query.dateKey || '').trim();
+      const status = String(req.query.status || '').trim() as any;
+      const items = dateKey ? memeService.getByDate(dateKey, status) : memeService.getToday(status);
+      res.json({ dateKey: dateKey || new Date().toISOString().slice(0,10), items });
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to fetch memes' });
+    }
+  });
+
+  // Admin: update meme idea (edit text/status/language)
+  app.put('/api/memes/:id', isAuthenticated, validateCSRF, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const patch: any = {};
+      if (typeof req.body?.idea === 'string') patch.idea = String(req.body.idea);
+      if (req.body?.status && ['draft','edited','approved','published'].includes(req.body.status)) patch.status = req.body.status;
+      if (req.body?.language && ['bn','en','auto'].includes(req.body.language)) patch.language = req.body.language;
+      const updated = memeService.update(id, patch);
+      if (!updated) return res.status(404).json({ error: 'Not found' });
+      res.json(updated);
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to update meme' });
+    }
+  });
+
+  // Admin: publish
+  app.post('/api/memes/:id/publish', isAuthenticated, validateCSRF, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updated = memeService.publish(id);
+      if (!updated) return res.status(404).json({ error: 'Not found' });
+      res.json(updated);
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to publish meme' });
+    }
+  });
+
+  // Public: latest published feed
+  app.get('/api/memes/public', async (_req, res) => {
+    try {
+      const items = memeService.getPublic(30);
+      res.json({ items });
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to fetch public memes' });
     }
   });
 
@@ -516,8 +667,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         doc.text(`Total Leads: ${exportData.length}`, 14, 28);
         
         // Prepare table data
-        const headers = Object.keys(exportData[0] || {});
-        const rows = exportData.map(item => headers.map(key => item[key]));
+  const headers = Object.keys(exportData[0] || {});
+  const rows = exportData.map(item => headers.map(key => (item as Record<string, any>)[key]));
         
         // Add table
         autoTable(doc, {
@@ -573,25 +724,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
   // Chatbot API routes
+  app.get("/api/ai/ready", async (req, res) => {
+    const health = await chatbotService.checkAIReady().catch(() => ({ ok: false, aiKeyPresent: Boolean(process.env.GEMINI_API_KEY) }));
+    res.json({ ok: health.ok, aiReady: health.ok, aiKeyPresent: health.aiKeyPresent });
+  });
+
   app.post("/api/chatbot/message", async (req, res) => {
     try {
-      const { message, conversationHistory = [] } = req.body;
+      const { message, conversationHistory = [], aiOnly: aiOnlyBody } = req.body || {};
+      const aiOnly = String(req.query.aiOnly || '').trim() === '1' || Boolean(aiOnlyBody);
       
       if (!message || typeof message !== 'string') {
         return res.status(400).json({ error: "Message is required" });
       }
 
-      const response = await chatbotService.generateResponse(message, conversationHistory);
-      
+  let response = '';
+      try {
+        response = await chatbotService.generateResponse(message, conversationHistory, { allowFallback: !aiOnly });
+      } catch (e) {
+        console.error('generateResponse failed, using fallback', e);
+        response = aiOnly ? '' : chatbotService.getFallback(message);
+      }
+
+      if (!response || typeof response !== 'string' || response.trim().length === 0) {
+        response = aiOnly ? '' : chatbotService.getFallback(message);
+      }
+
+      // Determine if AI produced this response
+      const aiInfo = chatbotService.getLastAiInfo();
+      const usedAI = aiInfo.source !== 'none';
+
+      // Allow greeting templates even in aiOnly mode
+      const isGreeting = /\b(hi|hello|hey|yo)\b/i.test(message) || /নমস্কার|হ্যালো|ওই|হাই/.test(message);
+
+      if (aiOnly && !usedAI && !isGreeting && (!response || response.trim().length === 0)) {
+        // Instead of leaving the user hanging, return a clear CTA to contact the team
+        const contactFallback = "Sorry, AI is busy right now. Email team@bongbari.com or use the contact form: /work-with-us#form";
+        return res.status(200).json({ response: contactFallback, usedAI: false, aiInfo });
+      }
+
       res.json({ 
         response,
-        timestamp: new Date().toISOString()
+        usedAI,
+        aiInfo,
+        timestamp: new Date().toISOString(),
       });
     } catch (error) {
       console.error('Chatbot API error:', error);
-      res.status(500).json({ 
-        error: "চ্যাটবট এখন কাজ করছে না। আবার চেষ্টা করুন! (Chatbot is not working right now. Please try again!)"
-      });
+      // In aiOnly mode, don't send local fallback; tell client to keep waiting
+      const aiOnly = String(req.query.aiOnly || '').trim() === '1' || Boolean(req.body?.aiOnly);
+      if (aiOnly) {
+        return res.status(202).json({ pending: true, usedAI: false, aiInfo: chatbotService.getLastAiInfo() });
+      }
+      const safe = chatbotService.getFallback(req.body?.message || 'hello');
+      res.status(200).json({ response: safe, usedAI: false, aiInfo: chatbotService.getLastAiInfo(), timestamp: new Date().toISOString() });
     }
   });
 
@@ -642,7 +828,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const requestData = {
         ...validatedData,
         status: 'submitted'
-      };
+      } as const;
       
       const request = await storage.createCollaborationRequest(requestData);
       

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
+import { ensureAudioUnlocked, onAudioUnlocked, isAudioUnlocked, resumeAudioNow } from '@/lib/audioUnlock';
 import { useToast } from './use-toast';
 
 interface RickshawSoundOptions {
@@ -16,9 +17,10 @@ export function useRickshawSound(options: RickshawSoundOptions = {}) {
   // Initialize audio
   useEffect(() => {
     if (!enabled) return;
+    ensureAudioUnlocked();
 
-  // Load the rickshaw sound from public/sounds/
-  const audio = new Audio('/sounds/rickshaw-pao.mp3');
+    // Load the rickshaw sound from public/sounds/
+    const audio = new Audio('/sounds/rickshaw-pao.mp3');
     audio.volume = volume;
     audio.preload = 'auto';
     
@@ -27,7 +29,12 @@ export function useRickshawSound(options: RickshawSoundOptions = {}) {
       console.log('Rickshaw sound not found yet - please upload your audio file');
     });
 
-    audioRef.current = audio;
+    const setRef = () => { audioRef.current = audio; };
+    if (isAudioUnlocked()) setRef();
+    else {
+      const off = onAudioUnlocked(setRef);
+      return () => { off && off(); audioRef.current = null; };
+    }
 
     return () => {
       if (audioRef.current) {
@@ -38,7 +45,8 @@ export function useRickshawSound(options: RickshawSoundOptions = {}) {
   }, [enabled, volume]);
 
   const playRickshawSound = useCallback(() => {
-    if (!enabled || !audioRef.current) return;
+  if (!enabled || !audioRef.current) return;
+  if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
 
     const now = Date.now();
     if (now - lastPlayedRef.current < cooldownMs) {
@@ -51,6 +59,9 @@ export function useRickshawSound(options: RickshawSoundOptions = {}) {
     audioRef.current.currentTime = 0;
     
     // Play the sound
+    if (!isAudioUnlocked()) {
+      resumeAudioNow().catch(() => {});
+    }
     audioRef.current.play().catch((error) => {
       // Handle autoplay restrictions gracefully
       console.log('Rickshaw sound autoplay blocked:', error);

@@ -13,13 +13,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Calendar, Building, User, LogOut, Plus, Users, FileText, Trash2, Home, Bot } from "lucide-react";
+import { Mail, Calendar, Building, User, LogOut, Plus, Users, FileText, Trash2, Home, Bot, Megaphone } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { insertUserSchema, insertBlogPostSchema, type CollaborationRequest, type InsertUser, type InsertBlogPost, type BlogPost } from "@shared/schema";
 import { SimpleBannerManager } from "./SimpleBannerManager";
 import { AdminChatbot } from "./AdminChatbot";
 import { AdminLeadManager } from "./AdminLeadManager";
+// import { MemeManager } from "./MemeManager";
+import { PromotionsManager } from "./promotions/PromotionsManager";
 
 const Admin = () => {
   const [, setLocation] = useLocation();
@@ -28,6 +30,8 @@ const Admin = () => {
   const queryClient = useQueryClient();
   const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
   const [isCreateBlogOpen, setIsCreateBlogOpen] = useState(false);
+  const [memeLanguage, setMemeLanguage] = useState<string>('auto');
+  const [memeCount, setMemeCount] = useState<number>(5);
 
   const userForm = useForm<InsertUser>({
     resolver: zodResolver(insertUserSchema),
@@ -278,6 +282,7 @@ const Admin = () => {
                                   rows={3}
                                   data-testid="input-blog-excerpt"
                                   {...field}
+                                  value={field.value ?? ''}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -296,6 +301,7 @@ const Admin = () => {
                                   rows={12}
                                   data-testid="input-blog-content"
                                   {...field}
+                                  value={field.value ?? ''}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -400,12 +406,16 @@ const Admin = () => {
             </div>
             
             <Tabs defaultValue="requests" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="requests">Collaboration Requests</TabsTrigger>
                 <TabsTrigger value="blog">Blog Management</TabsTrigger>
                 <TabsTrigger value="chatbot">
                   <Bot className="w-4 h-4 mr-2" />
                   Chatbot Training
+                </TabsTrigger>
+                <TabsTrigger value="promotions">
+                  <Megaphone className="w-4 h-4 mr-2" />
+                  Promotions
                 </TabsTrigger>
               </TabsList>
               
@@ -517,6 +527,14 @@ const Admin = () => {
                   Train your Gemini-powered chatbot with custom responses, keywords, and conversation flows.
                 </p>
                 <AdminChatbot />
+              </TabsContent>
+
+              <TabsContent value="promotions" className="mt-8">
+                <h3 className="text-2xl font-semibold text-brand-blue mb-6 flex items-center">
+                  <Megaphone className="w-6 h-6 mr-2" />
+                  Promotional Headlines
+                </h3>
+                <PromotionsManager />
               </TabsContent>
             </Tabs>
             

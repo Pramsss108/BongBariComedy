@@ -1,3 +1,8 @@
+# SQLite dev database files
+*.sqlite
+*.sqlite-journal
+*.db
+*.db-journal
 node_modules
 dist
 .DS_Store
@@ -5,3 +10,8 @@ server/public
 vite.config.ts.*
 *.tar.gz
 .local
+.env
+*.env
+server/.env
+# Local Netlify folder
+.netlify

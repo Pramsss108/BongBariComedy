@@ -210,7 +210,7 @@ const WorkWithUs = () => {
             </Card>
             
             {/* Collaboration Form */}
-            <Card>
+            <Card id="form">
               <CardContent className="p-8">
                 <h3 className="text-2xl font-semibold text-brand-blue mb-6 text-center" data-testid="form-title">
                   Let's Collaborate!

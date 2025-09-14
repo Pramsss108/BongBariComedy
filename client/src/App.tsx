@@ -19,6 +19,8 @@ import About from "@/pages/about";
 import WorkWithUs from "@/pages/work-with-us";
 import Contact from "@/pages/contact";
 import Blog from "@/pages/blog";
+import FreeTools from "./pages/free-tools";
+import CommunitySubmit from "./pages/community-submit";
 import Admin from "@/pages/admin";
 import Login from "@/pages/login";
 import BlogPost from "@/pages/blog-post";
@@ -27,11 +29,28 @@ import BongBot from "@/components/BongBot";
 import { AdminChatbot } from "@/pages/AdminChatbot";
 import { AdminHomepage } from "@/pages/AdminHomepage";
 import Navigation from "@/components/navigation";
+import { ensureAudioUnlocked } from "@/lib/audioUnlock";
+import GreetingConsent from "@/components/GreetingConsent";
+import { isAudioUnlocked, resumeAudioNow } from "@/lib/audioUnlock";
 
 function Router() {
   const [showCharmSelector, setShowCharmSelector] = useState(false);
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
   const { isAuthenticated } = useAuth();
+  const [showGreeting, setShowGreeting] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search);
+  // In local development, always show greeting on the main URL (root) without needing query params
+  // This makes http://localhost:5173/ behave like http://localhost:5173/?resetAudio=1
+  const forceRootInDev = (import.meta as any).env?.DEV && window.location.pathname === '/';
+  const hasReset = forceRootInDev || params.get('resetAudio') === '1' || window.location.hash.includes('reset-audio');
+    if (hasReset) {
+      try { localStorage.removeItem('bbc.audioDecision'); } catch {}
+    }
+    return !localStorage.getItem('bbc.audioDecision');
+  });
+
+  // Show greeting immediately when pending (no click gating)
   
   // Initialize professional site-wide cursor effect
   useGlobalCursor();
@@ -51,6 +70,20 @@ function Router() {
     volume: 0.06, 
     audioFile: '/sounds/charm.mp3' // Your custom charm sound
   });
+
+  // Ensure audio unlock listeners attached
+  useEffect(() => { ensureAudioUnlocked(); }, []);
+
+  // Handle greeting consent decisions
+  const handleDecision = async (d: 'granted' | 'denied') => {
+    localStorage.setItem('bbc.audioDecision', d);
+    setShowGreeting(false);
+    if (d === 'granted' && !isAudioUnlocked()) {
+      await resumeAudioNow();
+    }
+  // Notify any listeners (e.g., Home hero) that user has fully entered site
+  window.dispatchEvent(new Event('bbc:audio-decision'));
+  };
   
   // Remove the auto-refresh logic from here - it will be handled in login/logout actions only
   
@@ -107,6 +140,7 @@ function Router() {
     <>
       <Navigation />
       <div className="min-h-screen bg-brand-yellow relative m-0 p-0">
+  <GreetingConsent open={showGreeting} onDecision={handleDecision} />
       <FloatingElements />
       {/* Show MagicalCursor (belan) only for public audience, not for logged-in admin */}
       {!isAuthenticated && <MagicalCursor />}
@@ -114,8 +148,10 @@ function Router() {
         <Route path="/" component={Home} />
         <Route path="/about" component={About} />
         <Route path="/work-with-us" component={WorkWithUs} />
-        <Route path="/contact" component={Contact} />
-        <Route path="/blog" component={Blog} />
+  <Route path="/contact" component={Contact} />
+  <Route path="/community/submit" component={CommunitySubmit} />
+  <Route path="/blog" component={Blog} />
+  <Route path="/tools" component={FreeTools} />
         <Route path="/blog/:slug" component={BlogPost} />
         <Route path="/admin" component={Admin} />
         <Route path="/admin/chatbot" component={AdminChatbot} />

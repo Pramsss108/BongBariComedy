@@ -17,7 +17,7 @@ const Contact = () => {
     {
       icon: Mail,
       title: "Email",
-      value: "hello@bongbari.com",
+  value: "team@bongbari.com",
       bgColor: "bg-brand-blue"
     },
     {

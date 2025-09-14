@@ -31,83 +31,78 @@ export function useMouseMovementChime(options: MouseMovementChimeOptions = {}) {
   const lastMousePosRef = useRef({ x: 0, y: 0 });
   const movementTimeoutRef = useRef<number | null>(null);
 
-  // Initialize audio context and load custom audio file
+  // Load audio buffer once when enabled / file changes
   useEffect(() => {
     if (!enabled || !audioFile) return;
-
-    const loadAudio = async () => {
-      try {
-        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-        
-        // Load the custom charm sound file
-        const response = await fetch(audioFile);
-        const arrayBuffer = await response.arrayBuffer();
-        const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
-        audioBufferRef.current = audioBuffer;
-        
-      } catch (error) {
-        console.log('Failed to load custom charm sound:', error);
-      }
-    };
-
-    loadAudio();
-
-    return () => {
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
-    };
+    if (!audioContextRef.current) {
+      try { audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)(); } catch {}
+    }
+    const ctx = audioContextRef.current;
+    if (!ctx) return;
+    let cancelled = false;
+    fetch(audioFile)
+      .then(r => r.arrayBuffer())
+      .then(buf => ctx.decodeAudioData(buf))
+      .then(decoded => { if (!cancelled) audioBufferRef.current = decoded; })
+      .catch(() => {});
+    return () => { cancelled = true; };
   }, [enabled, audioFile]);
 
+  // Stable startChime implementation
+  const chimeCooldownRef = useRef<number>(0);
   const startChime = useCallback(() => {
     if (!enabled || !audioContextRef.current || !audioBufferRef.current) return;
 
-    // Stop any existing sound first
-    if (isPlayingRef.current) {
-      stopChime();
-      // Wait a moment for cleanup
-      setTimeout(() => {
-        startNewSound();
-      }, 50);
-      return;
-    }
+      // Do not play when tab is hidden or window not focused
+      if (typeof document !== 'undefined') {
+        if (document.visibilityState === 'hidden') return;
+        if (typeof document.hasFocus === 'function' && !document.hasFocus()) return;
+      }
 
-    startNewSound();
+      // Debounce: never play more than once every 120ms
+      const now = Date.now();
+      if (now - chimeCooldownRef.current < 120) return;
+      chimeCooldownRef.current = now;
 
-  function startNewSound() {
+      // Always stop any previous sound before starting a new one
+      if (audioSourceRef.current) {
+        try { audioSourceRef.current.stop(); } catch {}
+        try { audioSourceRef.current.disconnect(); } catch {}
+        audioSourceRef.current = null;
+      }
+      if (gainNodeRef.current) {
+        try { gainNodeRef.current.disconnect(); } catch {}
+        gainNodeRef.current = null;
+      }
+      isPlayingRef.current = false;
+
+      // Try to resume context in case it was suspended by browser policy
+      try {
+        if ((audioContextRef.current as any).state === 'suspended') {
+          (audioContextRef.current as any).resume().catch(() => {});
+        }
+      } catch {}
+
+      // Start new sound (never overlaps)
       try {
         const audioContext = audioContextRef.current;
         if (!audioContext || !audioBufferRef.current) return;
-
-        // Create audio source from your custom charm sound
         const audioSource = audioContext.createBufferSource();
         const gainNode = audioContext.createGain();
-
-        // Limiter: set gain ceiling
-        const maxGain = 0.08; // Prevent high pitch/volume
+        const maxGain = 0.08;
         gainNode.gain.setValueAtTime(0, audioContext.currentTime);
         gainNode.gain.linearRampToValueAtTime(Math.min(volume, maxGain), audioContext.currentTime + fadeInTime);
-
-        // Connect nodes
         audioSource.connect(gainNode);
         gainNode.connect(audioContext.destination);
-
-        // Set the custom charm sound buffer
         audioSource.buffer = audioBufferRef.current;
         audioSource.loop = false;
-
-        // Start playing your custom charm sound
         audioSource.start(audioContext.currentTime);
         audioSource.stop(audioContext.currentTime + audioSource.buffer.duration);
-
-        // Store references
         audioSourceRef.current = audioSource;
         gainNodeRef.current = gainNode;
         isPlayingRef.current = true;
-      } catch (error) {
-        console.log('Failed to play custom charm sound');
-        isPlayingRef.current = false;
-      }
+    } catch (error) {
+      isPlayingRef.current = false;
     }
   }, [enabled, volume, fadeInTime]);
 
@@ -123,9 +118,6 @@ export function useMouseMovementChime(options: MouseMovementChimeOptions = {}) {
         gainNodeRef.current = null;
         return;
       }
-      
-      // Smoothly fade out the volume
-      gainNodeRef.current.gain.setValueAtTime(volume, audioContext.currentTime);
       gainNodeRef.current.gain.linearRampToValueAtTime(0, audioContext.currentTime + fadeOutTime);
       
       // Stop the sound source
@@ -159,30 +151,48 @@ export function useMouseMovementChime(options: MouseMovementChimeOptions = {}) {
   const stopTimer = useRef<number | null>(null);
   const lastMoveTime = useRef<number>(0);
 
+  const isInteractive = (el: Element | null): boolean => {
+    if (!el || el.nodeType !== Node.ELEMENT_NODE) return false;
+    const tag = (el as HTMLElement).tagName?.toLowerCase();
+    const role = (el as HTMLElement).getAttribute?.('role');
+    const cls = (el as HTMLElement).className?.toString() || '';
+    const href = (el as HTMLElement).getAttribute?.('href');
+    return (
+      tag === 'button' || role === 'button' || tag === 'input' || tag === 'select' || tag === 'textarea' ||
+      (tag === 'a' && !!href) ||
+      /hover-|magical-hover|nav|menu|link|btn|card|video-container|clickable|cursor-pointer/.test(cls)
+    );
+  };
+
   useEffect(() => {
     if (!enabled) return;
-    let lastMoveTime = 0;
-    let stopTimer: number | null = null;
-    const movementThreshold = 8; // Adjusted for premium feel
+    let lastMove = 0;
+    let localStopTimer: number | null = null;
 
     const handleMouseMove = (event: MouseEvent) => {
+      // Ignore when page is hidden or not focused
+      if (document.visibilityState === 'hidden' || (typeof document.hasFocus === 'function' && !document.hasFocus())) {
+        forceStop();
+        return;
+      }
       const now = Date.now();
-      if (now - lastMoveTime < 30) return; // Ignore rapid events
-      lastMoveTime = now;
+      if (now - lastMove < 30) return; // Ignore rapid events
+      lastMove = now;
       const currentPos = { x: event.clientX, y: event.clientY };
       const lastPos = lastMousePosRef.current;
-      const distance = Math.sqrt(
-        Math.pow(currentPos.x - lastPos.x, 2) + Math.pow(currentPos.y - lastPos.y, 2)
-      );
-      if (distance >= movementThreshold) {
+      const distance = Math.hypot(currentPos.x - lastPos.x, currentPos.y - lastPos.y);
+      const el = document.elementFromPoint(event.clientX, event.clientY);
+      const overInteractive = isInteractive(el as Element);
+      if (distance >= movementThreshold && overInteractive) {
         startChime();
-        if (stopTimer) {
-          clearTimeout(stopTimer);
-          stopTimer = null;
+        if (localStopTimer) {
+          clearTimeout(localStopTimer);
+          localStopTimer = null;
         }
-        stopTimer = window.setTimeout(() => {
+        // Tight fade-out after movement stops
+        localStopTimer = window.setTimeout(() => {
           stopChime();
-        }, 120);
+        }, 90);
         lastMousePosRef.current = currentPos;
       } else {
         stopChime();
@@ -197,20 +207,38 @@ export function useMouseMovementChime(options: MouseMovementChimeOptions = {}) {
       forceStop();
     };
 
-    document.addEventListener('mousemove', handleMouseMove, { passive: true });
-    document.addEventListener('scroll', handleScroll, { passive: true });
-    document.addEventListener('mouseleave', handleMouseLeave, { passive: true });
+    const handleBlur = () => {
+      forceStop();
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'hidden') {
+        forceStop();
+      }
+    };
+
+  document.addEventListener('mousemove', handleMouseMove, { passive: true });
+  document.addEventListener('scroll', handleScroll, { passive: true });
+  document.addEventListener('mouseleave', handleMouseLeave, { passive: true });
+  window.addEventListener('blur', handleBlur, { passive: true } as any);
+  document.addEventListener('visibilitychange', handleVisibility as any, { passive: true } as any);
+
+  // Extra: force stop on pagehide (mobile/tab close/minimize)
+  window.addEventListener('pagehide', forceStop, { passive: true } as any);
+  window.addEventListener('unload', forceStop, { passive: true } as any);
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('scroll', handleScroll);
       document.removeEventListener('mouseleave', handleMouseLeave);
-      if (stopTimer) {
-        clearTimeout(stopTimer);
-      }
+      window.removeEventListener('blur', handleBlur as any);
+      document.removeEventListener('visibilitychange', handleVisibility as any);
+      window.removeEventListener('pagehide', forceStop as any);
+      window.removeEventListener('unload', forceStop as any);
+      if (localStopTimer) clearTimeout(localStopTimer);
       forceStop();
     };
-  }, [enabled, startChime, stopChime, forceStop, movementThreshold]);
+  }, [enabled, startChime, stopChime, movementThreshold]);
 
   return {
     isEnabled: enabled,

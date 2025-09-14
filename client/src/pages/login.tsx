@@ -37,10 +37,11 @@ const Login = () => {
       }
     }),
     onSuccess: async (data: any) => {
-      setSession(data.sessionId);
+      const session = data?.sessionId || data?.token;
+      setSession(session);
       
       // Store CSRF token if provided
-      if (data.csrfToken) {
+  if (data.csrfToken) {
         setCSRFToken(data.csrfToken);
       }
       
@@ -48,9 +49,7 @@ const Login = () => {
       try {
         const response = await apiRequest('/api/auth/csrf-token', {
           method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${data.sessionId}`
-          }
+          headers: { 'Authorization': `Bearer ${session}` }
         });
         if (response.csrfToken) {
           setCSRFToken(response.csrfToken);

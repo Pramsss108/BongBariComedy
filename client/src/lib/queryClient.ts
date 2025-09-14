@@ -20,6 +20,20 @@ export function clearCSRFToken() {
   localStorage.removeItem('csrf_token');
 }
 
+// API base management (supports Vite env and optional window override)
+const API_BASE: string = ((import.meta as any)?.env?.VITE_API_BASE ?? (
+  typeof window !== 'undefined' ? (window as any).__API_BASE__ : ''
+)) || '';
+
+export function buildApiUrl(url: string): string {
+  if (!url) return url;
+  // Absolute URLs pass through
+  if (/^https?:\/\//i.test(url)) return url;
+  const base = (API_BASE || '').replace(/\/+$/, '');
+  const path = url.startsWith('/') ? url : `/${url}`;
+  return base ? `${base}${path}` : path;
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -31,6 +45,7 @@ export async function apiRequest(
   url: string,
   options?: RequestInit,
 ): Promise<any> {
+  const finalUrl = buildApiUrl(url);
   const sessionId = localStorage.getItem('admin_session');
   const headers: Record<string, string> = {
     ...(options?.headers as Record<string, string> || {}),
@@ -50,7 +65,7 @@ export async function apiRequest(
     }
   }
   
-  const res = await fetch(url, {
+  const res = await fetch(finalUrl, {
     credentials: "include",
     ...options,
     headers,
@@ -76,8 +91,8 @@ export const getQueryFn: <T>(options: {
     const url = Array.isArray(queryKey) && queryKey.length === 1 && typeof queryKey[0] === 'string' 
       ? queryKey[0] 
       : queryKey.join("/") as string;
-    
-    const res = await fetch(url, {
+  const finalUrl = buildApiUrl(url);
+  const res = await fetch(finalUrl, {
       credentials: "include",
       headers,
     });

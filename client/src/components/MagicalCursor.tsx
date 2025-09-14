@@ -1,5 +1,6 @@
 import { useMagicalCursor } from '@/hooks/useMagicalCursor';
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useMouseMovementChime } from '@/hooks/useMouseMovementChime';
 
@@ -9,15 +10,38 @@ const isMobile = () => {
 };
 
 const MagicalCursor = () => {
-  // Play charm sound when cursor moves
-  useMouseMovementChime({ enabled: true, audioFile: '/sounds/charm.mp3' });
   const [isOnMobile, setIsOnMobile] = useState(false);
   const [forceHide, setForceHide] = useState(false);
   const { cursorPosition, particles, isMoving, isClicking } = useMagicalCursor();
   const { isAuthenticated } = useAuth();
+  const [cursorDisabled, setCursorDisabled] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  // Play charm sound when cursor moves (disabled while greeting modal is open and when hidden/unfocused)
+  const [pageActive, setPageActive] = useState(true);
+  useEffect(() => {
+    const check = () => setPageActive(document.visibilityState === 'visible' && (typeof document.hasFocus !== 'function' || document.hasFocus()));
+    check();
+    document.addEventListener('visibilitychange', check as any, { passive: true } as any);
+    window.addEventListener('focus', check as any, { passive: true } as any);
+    window.addEventListener('blur', check as any, { passive: true } as any);
+    return () => {
+      document.removeEventListener('visibilitychange', check as any);
+      window.removeEventListener('focus', check as any);
+      window.removeEventListener('blur', check as any);
+    };
+  }, []);
+  useMouseMovementChime({ enabled: !modalOpen && pageActive, audioFile: '/sounds/charm.mp3' });
 
   useEffect(() => {
     setIsOnMobile(isMobile());
+    // Kill switch: add ?cursor=off or localStorage bbc.cursorOff=1 to disable
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const offParam = params.get('cursor');
+      const lsOff = localStorage.getItem('bbc.cursorOff') === '1';
+      const disabled = offParam === 'off' || lsOff;
+      setCursorDisabled(disabled);
+    } catch {}
     
     // Listen for auth state changes to update cursor immediately
     const handleAuthChange = () => {
@@ -26,6 +50,13 @@ const MagicalCursor = () => {
     };
     
     window.addEventListener('auth-state-changed', handleAuthChange);
+    const handleModalFlag = (e: Event) => {
+      try {
+        // @ts-ignore
+        setModalOpen(Boolean((e as CustomEvent).detail));
+      } catch { setModalOpen(false); }
+    };
+    window.addEventListener('bbc:modal-open', handleModalFlag as EventListener);
     return () => window.removeEventListener('auth-state-changed', handleAuthChange);
   }, []);
 
@@ -41,7 +72,7 @@ const MagicalCursor = () => {
       // Force cursor to appear above all headers and navigation
       const style = document.createElement('style');
       style.id = 'magical-cursor-force';
-      style.textContent = `
+    style.textContent = `
         .magical-belan-portal {
           position: fixed !important;
           top: 0 !important;
@@ -50,8 +81,8 @@ const MagicalCursor = () => {
           height: 100vh !important;
           pointer-events: none !important;
           z-index: 2147483647 !important;
-          mix-blend-mode: multiply !important;
-          isolation: isolate !important;
+      mix-blend-mode: normal !important; /* ensure visibility over solid headers */
+      isolation: auto !important;
         }
         .magical-belan-portal * {
           position: absolute !important;
@@ -96,12 +127,12 @@ const MagicalCursor = () => {
   }, [isAuthenticated]);
 
   // Don't render cursor on mobile devices or when admin is logged in
-  if (isOnMobile || isAuthenticated) {
+  if (isOnMobile || isAuthenticated || cursorDisabled) {
     return null;
   }
 
-  return (
-    <div className="magical-belan-portal">
+  const cursorEl = (
+    <div className="magical-belan-portal" style={{ contain: 'layout paint style', pointerEvents: 'none' }}>
       {/* Super Responsive CSS Belan - reacts like cursor arrow */}
       <div
         className="belan-cursor-responsive"
@@ -110,7 +141,9 @@ const MagicalCursor = () => {
           transform: `translate3d(${cursorPosition.x - 4}px, ${cursorPosition.y - 12}px, 0) scale(${isClicking ? 1.1 : 1})`,
           opacity: 1,
           willChange: 'transform',
-          filter: isClicking ? 'brightness(1.2)' : 'none',
+          filter: isClicking 
+            ? 'brightness(1.2) drop-shadow(0 0 1px rgba(255,255,255,0.7)) drop-shadow(0 0 2px rgba(0,0,0,0.55))'
+            : 'drop-shadow(0 0 1px rgba(255,255,255,0.7)) drop-shadow(0 0 2px rgba(0,0,0,0.55))',
           zIndex: 2147483647,
           imageRendering: 'crisp-edges',
           backfaceVisibility: 'hidden',
@@ -214,10 +247,10 @@ const MagicalCursor = () => {
         
       </div>
 
-      {/* Optimized magical trail */}
-      {particles.map(particle => {
+      {/* Optimized magical trail (suppressed while modal open) */}
+      {!modalOpen && particles.map(particle => {
         const sparkleIntensity = 0.5 + 0.5 * Math.sin(particle.sparklePhase);
-        
+        const isLaugh = particle.type === 'laugh';
         return (
           <div
             key={particle.id}
@@ -230,25 +263,25 @@ const MagicalCursor = () => {
               backfaceVisibility: 'hidden'
             }}
           >
-            {particle.type === 'laugh' ? (
-              /* Funny laugh emoji */
+            {isLaugh ? (
+              // Funny laugh emoji
               <div 
                 className="text-3xl"
                 style={{
-                  filter: `drop-shadow(0 0 3px gold) brightness(${0.8 + 0.3 * sparkleIntensity})`,
+                  filter: `drop-shadow(0 0 2px gold) brightness(${0.8 + 0.3 * sparkleIntensity})`,
                   textRendering: 'optimizeSpeed'
                 }}
               >
                 😂
               </div>
             ) : (
-              /* Sparkly star particles */
+              // Sparkly star particles
               <div
                 className="relative"
                 style={{
                   fontSize: '20px',
                   filter: `brightness(${0.8 + 0.3 * sparkleIntensity})`,
-                  textShadow: '0 0 3px gold',
+                  textShadow: '0 0 2px gold',
                   textRendering: 'optimizeSpeed'
                 }}
               >
@@ -259,7 +292,7 @@ const MagicalCursor = () => {
                     className="absolute inset-0"
                     style={{
                       fontSize: '16px',
-                      filter: 'blur(0.5px)',
+                      filter: 'blur(0.4px)',
                       opacity: 0.5,
                       textRendering: 'optimizeSpeed'
                     }}
@@ -274,6 +307,9 @@ const MagicalCursor = () => {
       })}
     </div>
   );
+
+  // Render in a portal at the end of <body> to escape any parent stacking context
+  return createPortal(cursorEl, document.body);
 };
 
 export default MagicalCursor;

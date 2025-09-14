@@ -1,22 +1,13 @@
 import { eq, and, or, like, desc } from "drizzle-orm";
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
+import { db } from './db.sqlite';
 import { 
   users, blogPosts, collaborationRequests, chatbotTraining, chatbotTemplates, homepageContent, adminSettings,
   type User, type InsertUser, type BlogPost, type InsertBlogPost, type CollaborationRequest, type InsertCollaborationRequest,
   type ChatbotTraining, type InsertChatbotTraining, type ChatbotTemplate, type InsertChatbotTemplate,
   type HomepageContent, type InsertHomepageContent, type AdminSetting, type InsertAdminSetting
-} from "@shared/schema";
+} from "../shared/schema.sqlite";
 
-neonConfig.webSocketConstructor = ws;
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL must be set. Did you forget to provision a database?");
-}
-
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const db = drizzle({ client: pool, schema: { users, blogPosts, collaborationRequests, chatbotTraining, chatbotTemplates, homepageContent, adminSettings } });
 
 // Database Storage Implementation with Admin Panel Features
 export class DatabaseStorage {
@@ -58,7 +49,7 @@ export class DatabaseStorage {
 
   async updateBlogPost(id: string, updates: Partial<InsertBlogPost>): Promise<BlogPost | undefined> {
     const [post] = await db.update(blogPosts)
-      .set({ ...updates, updatedAt: new Date() })
+  .set({ ...updates, updatedAt: new Date().toISOString() })
       .where(eq(blogPosts.id, id))
       .returning();
     return post || undefined;
@@ -132,7 +123,7 @@ export class DatabaseStorage {
 
   async markLeadAsOpened(id: string): Promise<CollaborationRequest | undefined> {
     const [request] = await db.update(collaborationRequests)
-      .set({ opened: true, openedAt: new Date() })
+  .set({ opened: true, openedAt: new Date().toISOString() })
       .where(eq(collaborationRequests.id, id))
       .returning();
     return request || undefined;
@@ -196,7 +187,7 @@ export class DatabaseStorage {
     }
     
     const [training] = await db.update(chatbotTraining)
-      .set({ ...updateData, updatedAt: new Date() })
+  .set({ ...updateData, updatedAt: new Date().toISOString() })
       .where(eq(chatbotTraining.id, id))
       .returning();
     return training || undefined;
@@ -229,13 +220,32 @@ export class DatabaseStorage {
   }
 
   async createChatbotTemplate(data: InsertChatbotTemplate): Promise<ChatbotTemplate> {
-    const [template] = await db.insert(chatbotTemplates).values(data).returning();
+  const {
+    name,
+    templateType,
+    content,
+    language,
+    isActive,
+    displayOrder,
+  validFrom,
+  validTo
+  } = data;
+  const [template] = await db.insert(chatbotTemplates).values({
+    name,
+    templateType,
+    content,
+    language,
+    isActive,
+    displayOrder,
+    validFrom,
+  validTo
+  }).returning();
     return template;
   }
 
   async updateChatbotTemplate(id: number, updates: Partial<InsertChatbotTemplate>): Promise<ChatbotTemplate | undefined> {
     const [template] = await db.update(chatbotTemplates)
-      .set({ ...updates, updatedAt: new Date() })
+  .set({ ...updates, updatedAt: new Date().toISOString() })
       .where(eq(chatbotTemplates.id, id))
       .returning();
     return template || undefined;
@@ -273,7 +283,7 @@ export class DatabaseStorage {
 
   async updateHomepageContent(id: number, updates: Partial<InsertHomepageContent>): Promise<HomepageContent | undefined> {
     const [content] = await db.update(homepageContent)
-      .set({ ...updates, updatedAt: new Date() })
+  .set({ ...updates, updatedAt: new Date().toISOString() })
       .where(eq(homepageContent.id, id))
       .returning();
     return content || undefined;
@@ -308,7 +318,7 @@ export class DatabaseStorage {
           settingType: data.settingType,
           description: data.description,
           isPublic: data.isPublic,
-          updatedAt: new Date(),
+          updatedAt: new Date().toISOString(),
         },
       })
       .returning();

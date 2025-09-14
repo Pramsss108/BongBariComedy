@@ -28,7 +28,8 @@ const Navigation = () => {
     { href: "/about", label: "About" },
     { href: "/work-with-us", label: "Work with us" },
     { href: "/blog", label: "Blog" },
-  { href: "/tools", label: "Free Tools" },
+    { href: "/community/feed", label: "Community" },
+    { href: "/tools", label: "Free Tools" },
   ];
 
   const isActive = (href: string) => {

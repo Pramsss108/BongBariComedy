@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -48,13 +48,22 @@ const sampleData: PendingPost[] = [
 export default function AdminModeration() {
   const { toast } = useToast();
   const [posts, setPosts] = useState<PendingPost[]>(sampleData);
+  const firstLoadRef = useRef(true);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [editing, setEditing] = useState<PendingPost | null>(null);
   const [editText, setEditText] = useState('');
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
+  // Load from localStorage first (if present) else attempt fetch
   useEffect(() => {
+    const stored = localStorage.getItem('bbc_mod_pending');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) setPosts(parsed);
+      } catch {/* ignore parse */}
+    }
     let cancelled = false;
     (async () => {
       try {
@@ -63,7 +72,12 @@ export default function AdminModeration() {
         if (res.ok) {
           const json = await res.json();
           if (!cancelled && Array.isArray(json) && json.length) {
-            setPosts(json);
+            setPosts(prev => {
+              // Merge by postId avoid duplicates
+              const map: Record<string, PendingPost> = {};
+              [...json, ...prev].forEach(p => { map[p.postId] = p; });
+              return Object.values(map);
+            });
           }
         }
       } catch {/* fallback uses sampleData */}
@@ -71,6 +85,34 @@ export default function AdminModeration() {
     })();
     return () => { cancelled = true; };
   }, []);
+
+  // Persist pending posts whenever changed (skip very first seed write if identical to sample)
+  useEffect(() => {
+    if (firstLoadRef.current) {
+      firstLoadRef.current = false;
+    }
+    try {
+      localStorage.setItem('bbc_mod_pending', JSON.stringify(posts));
+    } catch {/* storage quota ignore */}
+  }, [posts]);
+
+  // Helper to append approved item to localStorage feed store and dispatch event
+  const recordApproved = (p: PendingPost, overrideText?: string) => {
+    const approvedStoreKey = 'bbc_feed_items';
+    let existing: any[] = [];
+    try { const raw = localStorage.getItem(approvedStoreKey); if (raw) existing = JSON.parse(raw) || []; } catch {/* ignore */}
+    const newItem = {
+      id: p.postId.replace(/^P/, 'A') + '-' + Date.now(),
+      text: overrideText || p.text,
+      author: p.author,
+      lang: /[\u0980-\u09FF]/.test(p.text) ? 'bn' : 'en',
+      createdAt: new Date().toISOString(),
+      featured: false
+    };
+    existing.unshift(newItem);
+    try { localStorage.setItem(approvedStoreKey, JSON.stringify(existing.slice(0,500))); } catch {/* ignore */}
+    window.dispatchEvent(new CustomEvent('bbc:new-approved', { detail: newItem }));
+  };
 
   const pendingCount = posts.length;
   const topFlagged = useMemo(() => {
@@ -96,6 +138,7 @@ export default function AdminModeration() {
   const publish = async (p: PendingPost, overrideText?: string) => {
     await simulate('/api/admin/publish', { postId: p.postId, text: overrideText || p.text });
     toast({ title: 'Shabash — published', description: `${p.postId} queued` });
+    recordApproved(p, overrideText);
     setPosts(ps => ps.filter(x => x.postId !== p.postId));
   };
   const feature = async (p: PendingPost) => {
@@ -120,9 +163,11 @@ export default function AdminModeration() {
     const ids = posts.filter(p => selected[p.postId]).map(p => p.postId);
     if (!ids.length) return;
     if (action === 'approve') {
-      await simulate('/api/admin/publish', { postIds: ids });
-      toast({ title: 'Shabash — published', description: `${ids.length} items` });
-      setPosts(ps => ps.filter(x => !ids.includes(x.postId)));
+  await simulate('/api/admin/publish', { postIds: ids });
+  toast({ title: 'Shabash — published', description: `${ids.length} items` });
+  // Record each approved
+  posts.filter(p => ids.includes(p.postId)).forEach(p => recordApproved(p));
+  setPosts(ps => ps.filter(x => !ids.includes(x.postId)));
     } else {
       if (!confirm('Delete selected stories?')) return;
       await simulate('/api/admin/delete', { postIds: ids });

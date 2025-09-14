@@ -28,7 +28,6 @@ const Navigation = () => {
     { href: "/about", label: "About" },
     { href: "/work-with-us", label: "Work with us" },
     { href: "/blog", label: "Blog" },
-    { href: "/community/feed", label: "Community" },
     { href: "/tools", label: "Free Tools" },
   ];
 
@@ -103,25 +102,50 @@ const Navigation = () => {
               
               {/* Desktop Navigation - Futuristic */}
               <nav className="hidden md:flex items-center gap-7 lg:gap-9">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`relative text-sm lg:text-[15px] font-medium tracking-wide transition-all duration-300 cursor-pointer ${
-                      isActive(item.href) 
-                        ? "text-[#FFD200]" 
-                        : "text-white/80 hover:text-white"
-                    }`}
-                  >
-                    <span className="relative z-10">{item.label}</span>
-                    {isActive(item.href) && (
-                      <>
-                        <span className="absolute -bottom-[21px] left-0 right-0 h-[2px] bg-[#FFD200] rounded-full"></span>
-                        <span className="absolute -bottom-[21px] left-0 right-0 h-[2px] bg-[#FFD200] rounded-full blur-sm"></span>
-                      </>
-                    )}
-                  </Link>
-                ))}
+                {navItems.map((item) => {
+                  if (item.href === '/tools') {
+                    return (
+                      <div key={item.href} className="relative group">
+                        <Link
+                          href={item.href}
+                          className={`relative text-sm lg:text-[15px] font-medium tracking-wide transition-all duration-300 cursor-pointer ${isActive(item.href) ? 'text-[#FFD200]' : 'text-white/80 hover:text-white'}`}
+                        >
+                          <span className="relative z-10">{item.label}</span>
+                          {isActive(item.href) && (
+                            <>
+                              <span className="absolute -bottom-[21px] left-0 right-0 h-[2px] bg-[#FFD200] rounded-full" />
+                              <span className="absolute -bottom-[21px] left-0 right-0 h-[2px] bg-[#FFD200] rounded-full blur-sm" />
+                            </>
+                          )}
+                        </Link>
+                        {/* Dropdown for Bong Kahini */}
+                        <div className="invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200 absolute top-full left-0 mt-4 min-w-[180px] rounded-xl bg-[#0E47FF]/95 backdrop-blur border border-white/10 shadow-xl p-3 flex flex-col gap-2">
+                          <Link
+                            href="/community/feed"
+                            className="text-xs font-semibold text-white/80 hover:text-white bg-white/0 hover:bg-white/10 rounded-lg px-3 py-2 transition"
+                          >
+                            Bong Kahini
+                          </Link>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`relative text-sm lg:text-[15px] font-medium tracking-wide transition-all duration-300 cursor-pointer ${isActive(item.href) ? 'text-[#FFD200]' : 'text-white/80 hover:text-white'}`}
+                    >
+                      <span className="relative z-10">{item.label}</span>
+                      {isActive(item.href) && (
+                        <>
+                          <span className="absolute -bottom-[21px] left-0 right-0 h-[2px] bg-[#FFD200] rounded-full" />
+                          <span className="absolute -bottom-[21px] left-0 right-0 h-[2px] bg-[#FFD200] rounded-full blur-sm" />
+                        </>
+                      )}
+                    </Link>
+                  );
+                })}
                 
                 {/* Enhanced Login/Admin Button */}
                 {user ? (
@@ -225,21 +249,40 @@ const Navigation = () => {
         {isMobileMenuOpen && (
           <div className="md:hidden bg-gradient-to-b from-[#0E47FF] to-[#0A3ACC] border-t-2 border-[#FFD200] shadow-lg animate-slide-down">
             <div className="container mx-auto px-4 py-4">
-              {navItems.map((item, index) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`block py-4 px-5 mb-2 text-white font-bold text-lg rounded-xl transition-all duration-300 ${
-                    isActive(item.href) 
-                      ? "bg-[#FFD200] text-[#0E47FF] shadow-lg transform scale-105" 
-                      : "hover:bg-white/20 hover:transform hover:translate-x-2"
-                  }`}
-                  style={{ animationDelay: `${index * 50}ms` }}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {navItems.map((item, index) => {
+                if (item.href === '/tools') {
+                  return (
+                    <div key={item.href} className="mb-4">
+                      <Link
+                        href={item.href}
+                        className={`block py-4 px-5 mb-2 text-white font-bold text-lg rounded-xl transition-all duration-300 ${isActive(item.href) ? 'bg-[#FFD200] text-[#0E47FF] shadow-lg transform scale-105' : 'hover:bg-white/20 hover:transform hover:translate-x-2'}`}
+                        style={{ animationDelay: `${index * 50}ms` }}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        {item.label}
+                      </Link>
+                      <Link
+                        href="/community/feed"
+                        className="block ml-4 py-3 px-4 text-white/80 font-semibold text-base rounded-lg transition-all duration-300 hover:bg-white/10 hover:text-white"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        Bong Kahini
+                      </Link>
+                    </div>
+                  );
+                }
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`block py-4 px-5 mb-2 text-white font-bold text-lg rounded-xl transition-all duration-300 ${isActive(item.href) ? 'bg-[#FFD200] text-[#0E47FF] shadow-lg transform scale-105' : 'hover:bg-white/20 hover:transform hover:translate-x-2'}`}
+                    style={{ animationDelay: `${index * 50}ms` }}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
               
               {/* Mobile Login/Admin - Enhanced */}
               <div className="mt-4 pt-4 border-t-2 border-white/30">

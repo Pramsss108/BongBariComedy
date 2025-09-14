@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { getDeviceId } from '@/lib/deviceId';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from '@/hooks/useTheme';
+import { getTestBypassHeader } from '@/lib/testBypass';
 
 interface ApprovedItem {
   id: string;
@@ -36,6 +37,8 @@ export default function CommunityFeed() {
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [showFloatShare, setShowFloatShare] = useState(false);
   const { mode, resolved, cycleMode } = useTheme();
+  const [testMode, setTestMode] = useState(false);
+  useEffect(()=>{ try { if (localStorage.getItem('bbc_test_bypass_token')) setTestMode(true); } catch {} },[]);
 
   // Persist likes & new items to localStorage whenever items change
   useEffect(() => {
@@ -167,7 +170,7 @@ export default function CommunityFeed() {
     setItems(prev => prev.map(it => { if (it.id!==id) return it; const reactions = { ...(it.reactions||{}) }; reactions[emoji]=(reactions[emoji]||0)+1; return { ...it, reactions }; }));
     try {
       const serverType = emojiMap[emoji] || 'heart';
-      const res = await fetch('/api/reaction', { method:'POST', headers:{ 'Content-Type':'application/json','X-Device-Id': getDeviceId() }, body: JSON.stringify({ postId: id, type: serverType }) });
+  const res = await fetch('/api/reaction', { method:'POST', headers:{ 'Content-Type':'application/json','X-Device-Id': getDeviceId(), ...getTestBypassHeader() }, body: JSON.stringify({ postId: id, type: serverType }) });
       if (res.status === 409) {
         // Duplicate: rollback optimistic increment
         setItems(prev => prev.map(it => { if (it.id!==id) return it; const reactions = { ...(it.reactions||{}) }; reactions[emoji]=Math.max(0,(reactions[emoji]||1)-1); return { ...it, reactions }; }));
@@ -226,7 +229,7 @@ export default function CommunityFeed() {
     setSubmitting(true);
     try {
       const body = { name: name.trim() || null, isAnonymous: !name.trim(), lang, text: text.trim() };
-  await fetch('/api/submit-story', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Device-Id': getDeviceId(), 'X-Client-Ts': Date.now().toString() }, body: JSON.stringify(body) }).catch(()=>{});
+    await fetch('/api/submit-story', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Device-Id': getDeviceId(), 'X-Client-Ts': Date.now().toString(), ...getTestBypassHeader() }, body: JSON.stringify(body) }).catch(()=>{});
       setName(''); setLang('bn'); setText('');
     } finally { setSubmitting(false); }
   };
@@ -446,6 +449,18 @@ export default function CommunityFeed() {
             </div>
           </form>
         </div>
+      </div>
+      {/* Floating Test Mode Toggle (dev only) */}
+      <div className="fixed bottom-4 right-4 z-40 flex flex-col items-end gap-2">
+        <button
+          onClick={() => {
+            if (testMode) { try { localStorage.removeItem('bbc_test_bypass_token'); } catch {}; setTestMode(false); }
+            else { const v = prompt('Enter test bypass token (from .env TEST_BYPASS_TOKEN):','dev-bypass-token'); if (v) { try { localStorage.setItem('bbc_test_bypass_token', v); } catch {}; setTestMode(true); } }
+          }}
+          className={`px-3 py-2 rounded-lg text-xs font-semibold shadow border transition ${testMode ? 'bg-emerald-600 text-white border-emerald-500 hover:bg-emerald-500' : 'bg-white/90 dark:bg-white/10 backdrop-blur border-gray-300 dark:border-white/15 text-gray-800 dark:text-gray-200 hover:bg-white'}`}
+          aria-pressed={testMode}
+        >{testMode ? 'Test Mode ON' : 'Enable Test Mode'}</button>
+        {testMode && <div className="text-[10px] bg-emerald-600/90 text-white px-2 py-1 rounded shadow">Bypass 6h limit active</div>}
       </div>
     </main>
   );

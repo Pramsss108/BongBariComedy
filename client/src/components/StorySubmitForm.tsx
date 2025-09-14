@@ -26,11 +26,12 @@ export function StorySubmitForm({ onSubmitted, autoReset = true, compact = false
 
   useEffect(()=>{
     if(!retryAt) return; const iv = setInterval(()=>{ if(Date.now()>retryAt) setRetryAt(null); else setRetryAt(r=>r ? r : r); },1000); return ()=> clearInterval(iv);
+  import { getTestBypassHeader } from '@/lib/testBypass';
   },[retryAt]);
 
   const formatCountdown = () => {
     if(!retryAt) return '';
-    const diff = Math.max(0, retryAt - Date.now());
+        const r = await fetch('/api/moderate-preview', { method:'POST', headers:{ 'Content-Type':'application/json','X-Device-Id': getDeviceId(), ...getTestBypassHeader() }, body: JSON.stringify({ text }) });
     const sec = Math.floor(diff/1000);
     const h = Math.floor(sec/3600).toString().padStart(2,'0');
     const m = Math.floor((sec%3600)/60).toString().padStart(2,'0');

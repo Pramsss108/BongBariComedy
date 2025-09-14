@@ -155,3 +155,23 @@ Rate limit: Publish one clean, then immediately publish another.
 - Reaction emoji 🔥 reuses heart server key for now.
 
 ---
+## Test Mode (Bypass Rate Limit)
+
+Purpose: Let non-coders rapidly test multiple submissions without 6h wait.
+
+Setup:
+1. Ensure `.env` has `TEST_BYPASS_TOKEN=dev-bypass-token` (or chosen string).
+2. Restart server.
+3. In browser on `/community/feed`, click floating "Enable Test Mode" button (bottom-right) and enter token.
+4. Button turns green: "Test Mode ON"; subsequent submissions/reactions send header `X-Test-Bypass: <token>`.
+
+Effects:
+- Skips 6h rate limit.
+- Response JSON includes `test: true`.
+- Device logs show `submit_test_bypass` events.
+
+Disable: Click the button again (removes token from localStorage).
+
+Security: Do not enable Test Mode in production; omit the env var so header is ignored.
+
+---

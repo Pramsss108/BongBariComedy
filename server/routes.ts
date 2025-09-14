@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { analyzeStory } from './moderation';
 import { chatbotService } from "./chatbotService";
 import { insertBlogPostSchema, insertCollaborationRequestSchema, insertUserSchema, insertHomepageContentSchema, type HomepageContent } from "@shared/schema.sqlite";
 import { z } from "zod";
@@ -73,6 +74,164 @@ const validateCSRF = (req: any, res: any, next: any) => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // --- Device ID extraction & logging / rate limit setup ---
+  interface DeviceLogEvent { ts: number; deviceId: string; ip: string | undefined; action: string; meta?: any; }
+  const deviceLogs: DeviceLogEvent[] = [];
+  const MAX_LOGS = 500;
+  // Legacy short window removed; new 6h single-post rate limit handled below
+  const sixHourMs = 6 * 60 * 60 * 1000;
+  const recentPostsInMemory = new Map<string, number>(); // key -> ts (ephemeral fallback)
+
+  const upstashUrl = process.env.UPSTASH_REST_URL;
+  const upstashToken = process.env.UPSTASH_REST_TOKEN;
+  async function upstashGet(key: string): Promise<boolean> {
+    if (!upstashUrl || !upstashToken) return false;
+    try {
+      const r = await fetch(`${upstashUrl}/get/${encodeURIComponent(key)}`, { headers: { Authorization: `Bearer ${upstashToken}` } });
+      if (!r.ok) return false;
+      const j = await r.json();
+      return j.result != null;
+    } catch { return false; }
+  }
+  async function upstashSetEx(key: string, ttlSec: number): Promise<void> {
+    if (!upstashUrl || !upstashToken) return;
+    try {
+      await fetch(`${upstashUrl}/set/${encodeURIComponent(key)}/1?EX=${ttlSec}`, { headers: { Authorization: `Bearer ${upstashToken}` } });
+    } catch {/* ignore */}
+  }
+
+  function getDeviceIdFromReq(req: any): string {
+    const header = (req.headers['x-device-id'] as string) || '';
+    if (header) return header.slice(0, 64);
+    const cookie = (req.headers.cookie || '').match(/bbc_device_id=([^;]+)/)?.[1];
+    if (cookie) return decodeURIComponent(cookie).slice(0, 64);
+    return 'unknown';
+  }
+  function logEvent(req: any, action: string, meta?: any) {
+    const entry: DeviceLogEvent = { ts: Date.now(), deviceId: req.deviceId, ip: req.ip, action, meta };
+    deviceLogs.push(entry);
+    if (deviceLogs.length > MAX_LOGS) deviceLogs.splice(0, deviceLogs.length - MAX_LOGS);
+  }
+  app.use((req: any, _res, next) => {
+    req.deviceId = getDeviceIdFromReq(req);
+    next();
+  });
+
+  // In-memory community store (ephemeral dev only)
+  interface CommunityItem { id: string; text: string; author: string | null; lang: 'bn' | 'en'; createdAt: string; featured?: boolean; likes?: number; reactions?: Record<string, number>; moderation?: { flags: string[]; reason: string; usedAI: boolean; severity: number; decision: string; }; }
+  interface PendingItem { postId: string; text: string; author: string | null; createdAt: string; flagged_terms: string[]; moderation: { flags: string[]; reason: string; usedAI: boolean; severity: number; decision: string; }; }
+  const approved: CommunityItem[] = [];
+  const pending: PendingItem[] = [];
+  let postCounter = 1000;
+
+  // Community feed
+  app.get('/api/community/feed', (_req, res) => {
+    // Return newest first
+    res.json(approved.sort((a,b)=> new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+  });
+
+  // Submit story (6h rate limit per ip+device, triage moderation)
+  app.post('/api/submit-story', async (req: any, res) => {
+    const deviceId = req.deviceId || 'unknown';
+    const ip = (req.ip || '').replace(/[:].*$/, '') || 'ipless';
+    const deviceHash = deviceId.split('').reduce((h: number, c: string) => (Math.imul(h ^ c.charCodeAt(0), 16777619))>>>0, 2166136261).toString(36);
+    const rateKey = `post:${ip}:${deviceHash}`;
+    const now = Date.now();
+    let limited = false;
+    if (upstashUrl && upstashToken) {
+      if (await upstashGet(rateKey)) limited = true; else await upstashSetEx(rateKey, sixHourMs/1000);
+    } else {
+      const ts = recentPostsInMemory.get(rateKey) || 0;
+      if (now - ts < sixHourMs) limited = true; else recentPostsInMemory.set(rateKey, now);
+    }
+    if (limited) {
+      const retryAfterSec = Math.round((sixHourMs - (now - (recentPostsInMemory.get(rateKey) || now))) / 1000);
+      logEvent(req, 'submit_rate_limited_6h', { rateKey, retryAfterSec });
+      return res.status(429).json({ code: 'rate_limited', retryAfterSec, message: 'Apni already post korechhen, 6 ghonta por abar.' });
+    }
+
+    const { name, isAnonymous, lang, text } = req.body || {};
+    if (!text || typeof text !== 'string' || text.trim().length === 0) {
+      return res.status(400).json({ message: 'Missing text' });
+    }
+    // Lightweight triage (bypass full AI for severe quick block) then deeper analyze
+    const raw = text.slice(0, 1000);
+    const lower = raw.toLowerCase();
+    const severeIndicators = /(child\s*sex|rape|kill\syou|behead|incest|pedo|bomb|acid\s*attack)/i;
+    if (severeIndicators.test(lower)) {
+      logEvent(req, 'submit_blocked_severe');
+      return res.status(200).json({ status: 'blocked', message: 'Dada/Di, ei jinis publish kora jabe na.' });
+    }
+    let moderation: any;
+    try { moderation = await analyzeStory(raw); } catch { moderation = { decision: 'pending', reason: 'fallback', flags: [], usedAI: false, severity: 0 }; }
+    const id = 'P' + (++postCounter);
+    if (moderation.decision === 'approve') {
+      const aid = 'A' + (++postCounter);
+      approved.unshift({ id: aid, text: raw, author: isAnonymous ? null : (name || null), lang: /[\u0980-\u09FF]/.test(raw) ? 'bn':'en', createdAt: new Date().toISOString(), featured: false, moderation });
+      logEvent(req, 'submit_published', { postId: id, approvedId: aid });
+      return res.status(200).json({ status: 'published', postId: id, approvedId: aid, message: 'Shabash! Golpo live holo.' });
+    }
+    // Treat non-approve as pending_review (friendly mild slang allowed but AI may choose pending)
+    const item: PendingItem = { postId: id, text: raw, author: isAnonymous ? null : (name || null), createdAt: new Date().toISOString(), flagged_terms: moderation.flags, moderation };
+    pending.unshift(item);
+    logEvent(req, 'submit_pending_review', { postId: id, flags: moderation.flags });
+    return res.status(200).json({ status: 'pending_review', postId: id, message: 'Dada/Di, ektu flagged kora holo — admin review korbe.' });
+  });
+
+  // Admin moderation list (unprotected for now – dev stub)
+  app.get('/api/admin/list-pending', (_req: any, res) => {
+    res.json(pending);
+  });
+  app.post('/api/admin/publish', (req: any, res) => {
+    const { postId, postIds, text } = req.body || {};
+    const ids: string[] = postIds || (postId ? [postId] : []);
+    const published: string[] = [];
+    ids.forEach(id => {
+      const idx = pending.findIndex(p => p.postId === id);
+      if (idx !== -1) {
+        const p = pending[idx];
+        pending.splice(idx,1);
+        const aid = 'A' + (++postCounter);
+        approved.unshift({ id: aid, text: (text && id===postId ? text : p.text), author: p.author, lang: /[\u0980-\u09FF]/.test(p.text) ? 'bn':'en', createdAt: new Date().toISOString(), featured: false });
+        published.push(id);
+      }
+    });
+    logEvent(req, 'publish', { count: published.length });
+    res.json({ ok: true, published });
+  });
+  app.post('/api/admin/reject', (req: any, res) => {
+    const { postId, reason } = req.body || {};
+    const idx = pending.findIndex(p => p.postId === postId);
+    if (idx === -1) return res.status(404).json({ message: 'Not found' });
+    pending.splice(idx,1);
+    logEvent(req, 'reject', { postId, reason: (reason||'').slice(0,140) });
+    res.json({ ok: true });
+  });
+  app.post('/api/admin/delete', (req: any, res) => {
+    const { postId, postIds } = req.body || {};
+    const ids: string[] = postIds || (postId ? [postId] : []);
+    let deleted = 0;
+    ids.forEach(id => {
+      const idx = pending.findIndex(p => p.postId === id);
+      if (idx !== -1) { pending.splice(idx,1); deleted++; }
+    });
+    logEvent(req, 'delete', { deleted });
+    res.json({ ok: true, deleted });
+  });
+  app.post('/api/admin/feature', (req: any, res) => {
+    const { postId } = req.body || {};
+    const item = approved.find(a => a.id === postId || a.id.replace(/^A/, 'P') === postId);
+    if (!item) return res.status(404).json({ message: 'Not found' });
+    approved.forEach(a => { if (a !== item) a.featured = false; });
+    item.featured = true;
+    logEvent(req, 'feature', { postId });
+    res.json({ ok: true });
+  });
+
+  // (Optional) expose last device logs (dev only)
+  app.get('/api/admin/device-logs', (_req, res) => {
+    res.json(deviceLogs.slice(-100));
+  });
   // Health endpoint (lightweight): confirms server is up and AI key presence
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true, aiReady: Boolean(process.env.GEMINI_API_KEY) });

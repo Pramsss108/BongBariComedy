@@ -150,22 +150,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Submit story (6h rate limit per ip+device, triage moderation)
   app.post('/api/submit-story', async (req: any, res) => {
+    const testBypassToken = process.env.TEST_BYPASS_TOKEN;
+    const isBypass = testBypassToken && req.headers['x-test-bypass'] === testBypassToken;
     const deviceId = req.deviceId || 'unknown';
     const ip = (req.ip || '').replace(/[:].*$/, '') || 'ipless';
     const deviceHash = deviceId.split('').reduce((h: number, c: string) => (Math.imul(h ^ c.charCodeAt(0), 16777619))>>>0, 2166136261).toString(36);
     const rateKey = `post:${ip}:${deviceHash}`;
     const now = Date.now();
     let limited = false;
-    if (upstashUrl && upstashToken) {
-      if (await upstashGet(rateKey)) limited = true; else await upstashSetEx(rateKey, sixHourMs/1000);
+    if (!isBypass) {
+      if (upstashUrl && upstashToken) {
+        if (await upstashGet(rateKey)) limited = true; else await upstashSetEx(rateKey, sixHourMs/1000);
+      } else {
+        const ts = recentPostsInMemory.get(rateKey) || 0;
+        if (now - ts < sixHourMs) limited = true; else recentPostsInMemory.set(rateKey, now);
+      }
+      if (limited) {
+        const retryAfterSec = Math.round((sixHourMs - (now - (recentPostsInMemory.get(rateKey) || now))) / 1000);
+        logEvent(req, 'submit_rate_limited_6h', { rateKey, retryAfterSec });
+        return res.status(429).json({ code: 'rate_limited', retryAfterSec, message: 'Apni already post korechhen, 6 ghonta por abar.' });
+      }
     } else {
-      const ts = recentPostsInMemory.get(rateKey) || 0;
-      if (now - ts < sixHourMs) limited = true; else recentPostsInMemory.set(rateKey, now);
-    }
-    if (limited) {
-      const retryAfterSec = Math.round((sixHourMs - (now - (recentPostsInMemory.get(rateKey) || now))) / 1000);
-      logEvent(req, 'submit_rate_limited_6h', { rateKey, retryAfterSec });
-      return res.status(429).json({ code: 'rate_limited', retryAfterSec, message: 'Apni already post korechhen, 6 ghonta por abar.' });
+      logEvent(req, 'submit_test_bypass', { deviceHash, ip });
     }
 
     const { name, isAnonymous, lang, text } = req.body || {};
@@ -185,15 +191,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const id = 'P' + (++postCounter);
     if (moderation.decision === 'approve') {
       const aid = 'A' + (++postCounter);
-      approved.unshift({ id: aid, text: raw, author: isAnonymous ? null : (name || null), lang: /[\u0980-\u09FF]/.test(raw) ? 'bn':'en', createdAt: new Date().toISOString(), featured: false, moderation });
-      logEvent(req, 'submit_published', { postId: id, approvedId: aid });
-      return res.status(200).json({ status: 'published', postId: id, approvedId: aid, message: 'Shabash! Golpo live holo.' });
+      approved.unshift({ id: aid, text: raw, author: isAnonymous ? null : (name || null), lang: /[\u0980-\u09FF]/.test(raw) ? 'bn':'en', createdAt: new Date().toISOString(), featured: false, moderation, test: isBypass });
+      logEvent(req, 'submit_published', { postId: id, approvedId: aid, test: isBypass });
+      return res.status(200).json({ status: 'published', postId: id, approvedId: aid, message: 'Shabash! Golpo live holo.', test: isBypass });
     }
     // Treat non-approve as pending_review (friendly mild slang allowed but AI may choose pending)
     const item: PendingItem = { postId: id, text: raw, author: isAnonymous ? null : (name || null), createdAt: new Date().toISOString(), flagged_terms: moderation.flags, moderation };
     pending.unshift(item);
-    logEvent(req, 'submit_pending_review', { postId: id, flags: moderation.flags });
-    return res.status(200).json({ status: 'pending_review', postId: id, message: 'Dada/Di, ektu flagged kora holo — admin review korbe.' });
+    logEvent(req, 'submit_pending_review', { postId: id, flags: moderation.flags, test: isBypass });
+    return res.status(200).json({ status: 'pending_review', postId: id, message: 'Dada/Di, ektu flagged kora holo — admin review korbe.', test: isBypass });
   });
 
   // Admin moderation list (unprotected for now – dev stub)

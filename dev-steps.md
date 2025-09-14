@@ -167,8 +167,11 @@ Setup:
 
 Effects:
 - Skips 6h rate limit.
+- Auto publishes every submission (unless severe block regex match) — no pending queue.
+- Preview endpoint always returns `{ status: 'ok', test: true }`.
+- Unlimited reactions (duplicate prevention disabled) so engagement testing is easy.
 - Response JSON includes `test: true`.
-- Device logs show `submit_test_bypass` events.
+- Device logs show `submit_published_test` & `reaction_test` events.
 
 Disable: Click the button again (removes token from localStorage).
 

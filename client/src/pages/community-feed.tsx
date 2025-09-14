@@ -92,16 +92,7 @@ export default function CommunityFeed() {
   };
 
   const weekCutoff = useMemo(() => Date.now() - 7 * 24 * 3600 * 1000, []);
-  const weeklyTop = useMemo(() => {
-    return [...items]
-      .map(it => {
-        const recentLikes = (it.likeEvents || []).filter(ts => ts >= weekCutoff).length;
-        return { ...it, recentLikes };
-      })
-      .filter(it => it.recentLikes > 0)
-      .sort((a,b) => b.recentLikes - a.recentLikes)
-      .slice(0,5);
-  }, [items, weekCutoff]);
+  // (Weekly list removed per latest instruction)
 
   const filteredItems = useMemo(() => {
     if (!query.trim()) return items;
@@ -133,7 +124,7 @@ export default function CommunityFeed() {
       <SEOHead title="Community Feed" description="Latest approved community stories." />
       <div className="container mx-auto px-4 pt-10 max-w-3xl">
         <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <h1 id="feedHeading" className="text-3xl font-extrabold text-brand-blue tracking-tight">Bong Kahini <span className="bangla-text">— ঘরের গল্প</span></h1>
+          <h1 id="feedHeading" className="text-3xl font-extrabold text-brand-blue tracking-tight whitespace-nowrap">Bong Kahini <span className="bangla-text">— ঘরের গল্প</span></h1>
           <div className="w-full max-w-sm lg:ml-auto">
             <label htmlFor="kahiniSearch" className="sr-only">Search stories</label>
             <input
@@ -148,7 +139,66 @@ export default function CommunityFeed() {
             )}
           </div>
         </div>
-        <p className="text-sm text-gray-700 mb-4">Your secret golpo corner. Featured highlight + weekly most liked.</p>
+        <p className="text-sm text-gray-700 mb-4">Your secret golpo corner. Featured highlight.</p>
+        {/* Featured thumbnail + dashboard */}
+        <div className="mb-8 grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 relative group rounded-2xl p-[2px] bg-gradient-to-r from-indigo-400 via-blue-400 to-yellow-300 animate-pulse [animation-duration:4s]">
+            <div className="rounded-2xl bg-white/90 backdrop-blur p-5 h-full flex flex-col shadow">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-sm font-semibold text-brand-blue flex items-center gap-2">
+                  <span className="px-2 py-[2px] text-[10px] rounded-full bg-indigo-100 text-indigo-700">featured ghotona</span>
+                </h2>
+                <span className="text-[10px] text-gray-500">auto curated</span>
+              </div>
+              <div className="relative flex-1">
+                {items.filter(i=>i.featured)[0] ? (
+                  <div className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
+                    {items.filter(i=>i.featured)[0].text}
+                  </div>
+                ) : (
+                  <div className="text-[11px] text-gray-500">No featured story yet.</div>
+                )}
+                <div className="pointer-events-none absolute inset-0 rounded-xl overflow-hidden">
+                  <div className="absolute w-1 h-1 bg-white rounded-full top-4 left-6 animate-ping" />
+                  <div className="absolute w-1 h-1 bg-white/80 rounded-full bottom-6 right-8 animate-ping [animation-delay:600ms]" />
+                  <div className="absolute w-1 h-1 bg-white/70 rounded-full top-8 right-12 animate-ping [animation-delay:1200ms]" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="relative rounded-2xl p-[2px] bg-gradient-to-br from-pink-400 via-indigo-400 to-amber-300">
+            <div className="rounded-2xl bg-white/90 backdrop-blur p-5 h-full flex flex-col shadow overflow-hidden">
+              <h2 className="text-sm font-semibold text-brand-blue mb-3 flex items-center gap-2">
+                <span>Dashboard</span>
+                <span className="relative w-2 h-2">
+                  <span className="absolute inset-0 bg-pink-500 rounded-full animate-ping" />
+                  <span className="absolute inset-0 bg-pink-500 rounded-full" />
+                </span>
+              </h2>
+              <div className="grid grid-cols-2 gap-3 text-center mb-4">
+                <div className="rounded-lg bg-white/70 p-3 shadow-sm">
+                  <div className="text-[10px] uppercase text-gray-500">Stories</div>
+                  <div className="text-lg font-bold text-brand-blue">{items.length}</div>
+                </div>
+                <div className="rounded-lg bg-white/70 p-3 shadow-sm">
+                  <div className="text-[10px] uppercase text-gray-500">Total Likes</div>
+                  <div className="text-lg font-bold text-pink-600">{items.reduce((a,b)=>a+(b.likes||0),0)}</div>
+                </div>
+                <div className="rounded-lg bg-white/70 p-3 shadow-sm col-span-2">
+                  <div className="text-[10px] uppercase text-gray-500">Featured Likes</div>
+                  <div className="text-base font-semibold text-indigo-600">{items.filter(i=>i.featured).reduce((a,b)=>a+(b.likes||0),0)}</div>
+                </div>
+              </div>
+              <div className="relative flex-1">
+                <div className="absolute inset-0 opacity-70 animate-pulse [animation-duration:5s] bg-[radial-gradient(circle_at_30%_30%,rgba(255,200,0,0.4),transparent_60%),radial-gradient(circle_at_70%_70%,rgba(0,100,255,0.35),transparent_60%)]" />
+                <div className="absolute inset-0 pointer-events-none">
+                  <div className="absolute w-1 h-1 bg-white rounded-full top-6 left-4 animate-ping" />
+                  <div className="absolute w-[5px] h-[5px] bg-white/90 rounded-full bottom-8 right-6 animate-ping [animation-delay:700ms]" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         {loading && <div className="text-sm text-gray-600 mb-4">Loading…</div>}
         <div className="grid lg:grid-cols-3 gap-8 items-start" aria-live="polite">
           {/* Left/Main Column (stories) */}
@@ -200,7 +250,7 @@ export default function CommunityFeed() {
              </div>
            )}
           </div>
-          {/* Right Column (submission + weekly list) */}
+          {/* Right Column (submission only, weekly list removed) */}
           <div className="space-y-6 sticky top-28">
             <div className="rounded-xl border bg-white/80 backdrop-blur p-5 shadow" aria-labelledby="yourKahiniHeading">
               <h2 id="yourKahiniHeading" className="text-sm font-semibold text-brand-blue flex items-center gap-2">Your Kahini <span className="text-[10px] italic text-gray-500">short keu kichu janbena</span></h2>
@@ -224,18 +274,6 @@ export default function CommunityFeed() {
                   {submitting ? 'Submitting…' : 'Post'}
                 </Button>
               </form>
-            </div>
-            <div className="rounded-xl border bg-white/80 backdrop-blur p-5 shadow" aria-labelledby="weeklyTopHeading">
-              <h2 id="weeklyTopHeading" className="text-sm font-semibold text-brand-blue">This week most liked মোজার story / ঘটনা</h2>
-              {weeklyTop.length === 0 && <p className="mt-3 text-[11px] text-gray-600">No likes yet.</p>}
-              <ul className="mt-3 space-y-3">
-                {weeklyTop.map(it => (
-                  <li key={it.id} className="text-[11px] flex justify-between gap-2">
-                    <span className="truncate max-w-[140px]">{it.text.slice(0,50)}{it.text.length>50?'…':''}</span>
-                    <span className="text-pink-600 font-medium">❤️ {it.recentLikes}</span>
-                  </li>
-                ))}
-              </ul>
             </div>
           </div>
         </div>

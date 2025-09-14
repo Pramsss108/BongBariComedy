@@ -20,7 +20,6 @@ import WorkWithUs from "@/pages/work-with-us";
 import Contact from "@/pages/contact";
 import Blog from "@/pages/blog";
 import FreeTools from "./pages/free-tools";
-import CommunitySubmit from "./pages/community-submit";
 import Admin from "@/pages/admin";
 import Login from "@/pages/login";
 import BlogPost from "@/pages/blog-post";
@@ -151,7 +150,6 @@ function Router() {
         <Route path="/about" component={About} />
         <Route path="/work-with-us" component={WorkWithUs} />
   <Route path="/contact" component={Contact} />
-  <Route path="/community/submit" component={CommunitySubmit} />
   <Route path="/blog" component={Blog} />
   <Route path="/tools" component={FreeTools} />
   <Route path="/community/feed" component={CommunityFeed} />

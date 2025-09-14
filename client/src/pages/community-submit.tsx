@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import SEOHead from '@/components/seo-head';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
+import { getDeviceId } from '@/lib/deviceId';
 
 // NOTE: Using wouter; emulate useRouter-like pattern
 export default function CommunitySubmit() {
@@ -30,7 +31,7 @@ export default function CommunitySubmit() {
     try {
       const res = await fetch('/api/submit-story', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Device-Id': getDeviceId(), 'X-Client-Ts': Date.now().toString() },
         body: JSON.stringify({
           name: name.trim() || null,
           isAnonymous: !name.trim(),
@@ -67,7 +68,7 @@ export default function CommunitySubmit() {
         <p className="text-center text-sm text-gray-800 mb-6" aria-live="polite">
           name optional, anonymous ok, no বaje kotha — only মজা
         </p>
-        <form onSubmit={handleSubmit} className="space-y-5 bg-white/70 backdrop-blur rounded-xl p-6 shadow" aria-describedby="formHelp">
+  <form onSubmit={handleSubmit} className="space-y-5 bg-white/70 backdrop-blur rounded-xl p-6 shadow" aria-describedby="formHelp" aria-busy={loading ? 'true' : 'false'}>
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-900 mb-1">নাম (optional)</label>
             <input
@@ -107,7 +108,7 @@ export default function CommunitySubmit() {
               className="w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue placeholder:text-gray-400"
               required
             />
-            <div id="formHelp" className="mt-1 text-[11px] text-gray-600 flex justify-between" aria-live="polite">
+            <div id="formHelp" className="mt-1 text-[11px] text-gray-600 flex justify-between" aria-live="polite" role="status">
               <span>{1000 - text.length} chars left</span>
               <span>{lang === 'bn' ? 'মজা রাখুন' : 'Keep it playful'}</span>
             </div>
@@ -116,7 +117,7 @@ export default function CommunitySubmit() {
             <Button
               type="submit"
               disabled={loading || !text.trim()}
-              aria-label="Post story"
+              aria-label={loading ? 'Submitting story, please wait' : 'Post story'}
               className="bg-brand-blue hover:bg-brand-blue/90 text-white font-semibold px-5 py-2 rounded-md"
             >
               {loading ? 'পাঠানো হচ্ছে…' : 'Post'}

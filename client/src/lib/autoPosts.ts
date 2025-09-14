@@ -126,8 +126,24 @@ export function generateAutoPost(opts: GenerateOptions = {}): AutoPost {
   if (chance(.3)) base = base.replace(/a/gi,'aa');
   if (chance(.2)) base = base.replace(/e/gi,'ee');
 
-  // Trim length
-  if (base.length > 160) base = base.slice(0,150) + '...';
+  // Expand to variable length (target 5-100 words) using topic fragments & filler
+  const minWords = 5;
+  const maxWords = 100;
+  const target = Math.floor(minWords + Math.random()*(maxWords-minWords));
+  const fillerBits = ['ekhono','eta','seriously','aro','onek','bristi','ghor','cha','addddda','uff','lol','bhaisaab','eta','abar','ekhane','kalke','office','metro','line','seat','honestly','ami','tumi','bhai'];
+  let words = base.split(/\s+/).filter(Boolean);
+  while (words.length < target) {
+    if (chance(.15) && words.length>8) words.push('\n');
+    words.push(random(fillerBits));
+    if (chance(.2)) words.push(random(fillerBits));
+  }
+  if (words.length > target + 8) words = words.slice(0, target + 3);
+  base = words.join(' ').replace(/ (\n)/g,'\n').trim();
+  // Hard cap fallback
+  if (base.split(/\s+/).length > 105) {
+    const slice = base.split(/\s+/).slice(0,105).join(' ');
+    base = slice;
+  }
 
   const safety = safetyCheck(base);
 

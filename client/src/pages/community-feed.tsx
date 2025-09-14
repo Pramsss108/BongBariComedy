@@ -456,6 +456,8 @@ export default function CommunityFeed() {
           {/* Stories List (audience pick excluded) */}
           {visibleItems.filter(it=> it.id !== audiencePickId).map(it => {
             const isFeatured = it.id === audiencePickId; // dynamic audience pick highlight
+            const isAuto = it.id.startsWith('AUTO-');
+            const displayId = isAuto ? (it.author || 'বন্ধু') : it.id;
             const Article = (
               <motion.article
                 layout
@@ -468,7 +470,7 @@ export default function CommunityFeed() {
                   <div>
                     <h2 id={`item-${it.id}`} className="font-semibold text-sm sm:text-sm text-gray-900 flex items-center gap-2">
                       {isFeatured && <span className="text-[10px] bg-indigo-200 dark:bg-indigo-400/30 text-indigo-800 dark:text-indigo-200 px-2 py-[2px] rounded-full animate-pulse">audience pick</span>}
-                      <span>{it.id}</span>
+                      <span>{displayId}</span>
                     </h2>
                     <div className="text-[11px] text-gray-600 mt-0.5 leading-snug">{(it.author || 'Anonymous')} • {new Date(it.createdAt).toLocaleString()} • {it.lang === 'bn' ? 'বাংলা' : 'English'}</div>
                   </div>

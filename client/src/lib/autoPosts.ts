@@ -12,6 +12,7 @@ export interface AutoPost {
   flag_reason?: string;
   blocked?: boolean;
   tags?: string[];
+  author: string;
 }
 
 export interface GenerateOptions {
@@ -75,6 +76,20 @@ function buildSentence(base: string, liveTrend?: string): string {
   return t.trim();
 }
 
+// Bengali / Benglish casual names (common + occasional uncommon)
+const commonNames = ['Riya','Babu','Tinku','Mona','Sona','Piku','Pappu','Rina','Tumpa','Dipu','Kaku','Kaku','Kaku','Bappa','Lopa','Soma','Raj','Sujan','Bapi','Liton','Joy','Piya','Mun','Bithi','Sathi','Pari','Rupu'];
+const uncommonNames = ['Jhilmil','Indranil','Urbi','Atrayee','Riddhiman','Oindrila','Pratyush','Bhumika','Sreeparna','Ritoban'];
+const suffixes = [' da',' di',' kaku',' pishi',' ma',' dada',' bro',' sis'];
+
+function randomAuthor(): string {
+  let base: string;
+  if (chance(.15)) base = random(uncommonNames); else base = random(commonNames);
+  if (chance(.35)) base += random(suffixes);
+  // Avoid triple Kaku repetition dominating
+  if (base === 'Kaku kaku') base = 'Kaku';
+  return base;
+}
+
 function injectBenglish(text: string, mode: 'mix'|'bn'|'en'): string {
   const replacements: [RegExp,string][] = [
     [/metro/gi,'metro'],[/train/gi,'train'],[/rain/gi,'bristi'],[/water/gi,'pani'],[/food/gi,'khawa'],[/eat/gi,'khaoa'],[/friend/gi,'bondhu'],[/mother/gi,'ma'],[/mom/gi,'ma'],[/tea/gi,'cha']
@@ -123,6 +138,7 @@ export function generateAutoPost(opts: GenerateOptions = {}): AutoPost {
     lang,
     seed: !!opts.seed,
     createdAt: now.toISOString(),
+    author: randomAuthor(),
     flagged: safety.flagged,
     flag_reason: safety.reason,
     blocked: safety.blocked,

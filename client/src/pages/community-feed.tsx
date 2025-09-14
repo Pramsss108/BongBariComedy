@@ -90,8 +90,8 @@ export default function CommunityFeed() {
   useEffect(() => {
     try {
       if (!localStorage.getItem(SEED_KEY)) {
-        const seeds = generateSeedPosts();
-        const approvedSeeds: ApprovedItem[] = seeds.filter(s=> !s.blocked).map(s => ({ id: s.id, text: s.text, author: 'Anonymous', lang: s.lang==='bn'?'bn': s.lang==='en'?'en':'bn', createdAt: s.createdAt, reactions:{}, seed:true, autoTopic: s.topic, flagged: s.flagged, blocked: s.blocked }));
+  const seeds = generateSeedPosts();
+  const approvedSeeds: ApprovedItem[] = seeds.filter(s=> !s.blocked).map(s => ({ id: s.id, text: s.text, author: s.author || 'Anonymous', lang: s.lang==='bn'?'bn': s.lang==='en'?'en':'bn', createdAt: s.createdAt, reactions:{}, seed:true, autoTopic: s.topic, flagged: s.flagged, blocked: s.blocked }));
         setItems(prev => {
           const merged = [...prev, ...approvedSeeds];
           return merged.sort((a,b)=> new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -116,7 +116,7 @@ export default function CommunityFeed() {
           if (stop) return;
           const p = generateAutoPost();
           if (!p.blocked) {
-            const ap: ApprovedItem = { id: p.id, text: p.text, author: 'Anonymous', lang: p.lang==='bn'?'bn': p.lang==='en'?'en':'bn', createdAt: new Date().toISOString(), reactions:{}, seed:false, autoTopic: p.topic, flagged: p.flagged, blocked: p.blocked };
+            const ap: ApprovedItem = { id: p.id, text: p.text, author: p.author || 'Anonymous', lang: p.lang==='bn'?'bn': p.lang==='en'?'en':'bn', createdAt: new Date().toISOString(), reactions:{}, seed:false, autoTopic: p.topic, flagged: p.flagged, blocked: p.blocked };
             setItems(prev => [ap, ...prev]);
           }
           setTyping(false);

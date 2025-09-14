@@ -133,6 +133,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Preview moderation (no persistence, no rate-limit) – AI only suggests
   app.post('/api/moderate-preview', async (req: any, res) => {
     const { text } = req.body || {};
+    const testBypassToken = process.env.TEST_BYPASS_TOKEN;
+    if (testBypassToken && req.headers['x-test-bypass'] === testBypassToken) {
+      return res.json({ status: 'ok', test: true });
+    }
     if (!text || typeof text !== 'string' || !text.trim()) return res.status(400).json({ message: 'Missing text' });
     const raw = text.slice(0,1000);
     const lower = raw.toLowerCase();
@@ -186,6 +190,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       logEvent(req, 'submit_blocked_severe');
       return res.status(200).json({ status: 'blocked', message: 'Dada/Di, ei jinis publish kora jabe na.' });
     }
+    // Auto publish when bypass active (unless severe earlier)
+    if (isBypass) {
+      const id = 'P' + (++postCounter);
+      const aid = 'A' + (++postCounter);
+      approved.unshift({ id: aid, text: raw, author: isAnonymous ? null : (name || null), lang: /[\u0980-\u09FF]/.test(raw) ? 'bn':'en', createdAt: new Date().toISOString(), featured: false, moderation: { flags: [], reason: 'test-bypass', usedAI: false, severity: 0, decision: 'approve' } });
+      logEvent(req, 'submit_published_test', { postId: id, approvedId: aid });
+      return res.status(200).json({ status: 'published', postId: id, approvedId: aid, test: true, message: 'Test bypass: published.' });
+    }
     let moderation: any;
     try { moderation = await analyzeStory(raw); } catch { moderation = { decision: 'pending', reason: 'fallback', flags: [], usedAI: false, severity: 0 }; }
     const id = 'P' + (++postCounter);
@@ -195,7 +207,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       logEvent(req, 'submit_published', { postId: id, approvedId: aid, test: isBypass });
       return res.status(200).json({ status: 'published', postId: id, approvedId: aid, message: 'Shabash! Golpo live holo.', test: isBypass });
     }
-    // Treat non-approve as pending_review (friendly mild slang allowed but AI may choose pending)
     const item: PendingItem = { postId: id, text: raw, author: isAnonymous ? null : (name || null), createdAt: new Date().toISOString(), flagged_terms: moderation.flags, moderation };
     pending.unshift(item);
     logEvent(req, 'submit_pending_review', { postId: id, flags: moderation.flags, test: isBypass });
@@ -265,6 +276,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const deviceHash = deviceId.split('').reduce((h: number, c: string) => (Math.imul(h ^ c.charCodeAt(0), 16777619))>>>0, 2166136261).toString(36);
     const dedupeKey = `reaction:${postId}:${type}:${deviceHash}`;
     let duplicate = false;
+    const testBypassToken2 = process.env.TEST_BYPASS_TOKEN;
+    if (testBypassToken2 && req.headers['x-test-bypass'] === testBypassToken2) {
+      item.reactions = item.reactions || {};
+      item.reactions[type] = (item.reactions[type]||0) + 1;
+      logEvent(req, 'reaction_test', { postId, type });
+      return res.json({ ok: true, postId, reactions: item.reactions, test: true });
+    }
     if (upstashUrl && upstashToken) {
       try {
         const exists = await fetch(`${upstashUrl}/get/${encodeURIComponent(dedupeKey)}`, { headers: { Authorization: `Bearer ${upstashToken}` } });

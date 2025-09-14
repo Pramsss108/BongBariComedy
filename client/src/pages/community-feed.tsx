@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
+import { generateSeedPosts, generateAutoPost, AutoPost } from '@/lib/autoPosts';
 import { motion as m, AnimatePresence, motion } from 'framer-motion';
 import SEOHead from '@/components/seo-head';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,10 @@ interface ApprovedItem {
   likes?: number;
   likeEvents?: number[]; // timestamps (ms) of likes
   reactions?: Record<string, number>; // emoji -> count
+  seed?: boolean;
+  autoTopic?: string;
+  flagged?: boolean;
+  blocked?: boolean;
 }
 
 const fallbackApproved: ApprovedItem[] = [
@@ -38,6 +43,9 @@ export default function CommunityFeed() {
   const [showFloatShare, setShowFloatShare] = useState(false);
   const { mode, resolved, cycleMode } = useTheme();
   const [testMode, setTestMode] = useState(false);
+  const [typing, setTyping] = useState(false);
+  const SEED_KEY = 'bbc_autoposts_seeded_v1';
+  const GEN_STOP_THRESHOLD = 120; // stop auto-gen when organic large
   useEffect(()=>{ try { if (localStorage.getItem('bbc_test_bypass_token')) setTestMode(true); } catch {} },[]);
 
   // Persist likes & new items to localStorage whenever items change
@@ -77,6 +85,48 @@ export default function CommunityFeed() {
     })();
     return () => { cancelled = true; };
   }, []);
+
+  // Seeding auto posts (once)
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem(SEED_KEY)) {
+        const seeds = generateSeedPosts();
+        const approvedSeeds: ApprovedItem[] = seeds.filter(s=> !s.blocked).map(s => ({ id: s.id, text: s.text, author: 'Anonymous', lang: s.lang==='bn'?'bn': s.lang==='en'?'en':'bn', createdAt: s.createdAt, reactions:{}, seed:true, autoTopic: s.topic, flagged: s.flagged, blocked: s.blocked }));
+        setItems(prev => {
+          const merged = [...prev, ...approvedSeeds];
+          return merged.sort((a,b)=> new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        });
+        localStorage.setItem(SEED_KEY,'1');
+      }
+    } catch {/* ignore */}
+  }, []);
+
+  // Periodic auto generation (simulate someone posting)
+  useEffect(() => {
+    if (items.length > GEN_STOP_THRESHOLD) return; // too many items -> stop
+    let stop = false;
+    let timeout: any;
+    const loop = () => {
+      if (stop) return;
+      const delay = 10000 + Math.random()*20000; // 10-30s
+      timeout = setTimeout(() => {
+        if (stop) return;
+        setTyping(true);
+        setTimeout(() => {
+          if (stop) return;
+          const p = generateAutoPost();
+          if (!p.blocked) {
+            const ap: ApprovedItem = { id: p.id, text: p.text, author: 'Anonymous', lang: p.lang==='bn'?'bn': p.lang==='en'?'en':'bn', createdAt: new Date().toISOString(), reactions:{}, seed:false, autoTopic: p.topic, flagged: p.flagged, blocked: p.blocked };
+            setItems(prev => [ap, ...prev]);
+          }
+          setTyping(false);
+          loop();
+        }, 1500 + Math.random()*1200); // typing duration
+      }, delay);
+    };
+    loop();
+    return () => { stop = true; clearTimeout(timeout); };
+  }, [items.length]);
 
   // Periodic sync of authoritative reaction counts (every 45s)
   useEffect(() => {
@@ -401,6 +451,7 @@ export default function CommunityFeed() {
           )}
         </AnimatePresence>
         {loading && <div className="text-sm text-gray-600 mb-4">Loading…</div>}
+  {typing && <div className="mb-4 text-[12px] text-gray-700 dark:text-gray-300 flex items-center gap-2"><span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75" /><span className="relative inline-flex rounded-full h-2 w-2 bg-pink-500" /></span><span>Someone is writing…</span></div>}
         <div className="space-y-4" aria-live="polite">
           {/* Stories List (audience pick excluded) */}
           {visibleItems.filter(it=> it.id !== audiencePickId).map(it => {

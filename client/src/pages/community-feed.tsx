@@ -12,6 +12,7 @@ interface ApprovedItem {
   featured?: boolean;
   likes?: number;
   likeEvents?: number[]; // timestamps (ms) of likes
+  reactions?: Record<string, number>; // emoji -> count
 }
 
 const fallbackApproved: ApprovedItem[] = [
@@ -91,6 +92,21 @@ export default function CommunityFeed() {
     }));
   };
 
+  // Reaction handling (emoji set)
+  const reactionSet = ['😂','❤️','😮','🔥'] as const;
+  const reactTo = (id: string, emoji: string) => {
+    // Local guard: one reaction per emoji per story per session
+    const key = `bbc_reacted_${id}_${emoji}`;
+    if (localStorage.getItem(key)) return; // already reacted
+    localStorage.setItem(key, '1');
+    setItems(prev => prev.map(it => {
+      if (it.id !== id) return it;
+      const reactions = { ...(it.reactions || {}) };
+      reactions[emoji] = (reactions[emoji] || 0) + 1;
+      return { ...it, reactions };
+    }));
+  };
+
   const weekCutoff = useMemo(() => Date.now() - 7 * 24 * 3600 * 1000, []);
   // (Weekly list removed per latest instruction)
 
@@ -140,28 +156,42 @@ export default function CommunityFeed() {
           </div>
         </div>
         <p className="text-sm text-gray-700 mb-4">Your secret golpo corner. Featured highlight.</p>
-        {/* Featured thumbnail + dashboard */}
-        <div className="mb-8 grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 relative group rounded-2xl p-[2px] bg-gradient-to-r from-indigo-400 via-blue-400 to-yellow-300 animate-pulse [animation-duration:4s]">
-            <div className="rounded-2xl bg-white/90 backdrop-blur p-5 h-full flex flex-col shadow">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-sm font-semibold text-brand-blue flex items-center gap-2">
-                  <span className="px-2 py-[2px] text-[10px] rounded-full bg-indigo-100 text-indigo-700">featured ghotona</span>
-                </h2>
-                <span className="text-[10px] text-gray-500">auto curated</span>
-              </div>
-              <div className="relative flex-1">
-                {items.filter(i=>i.featured)[0] ? (
-                  <div className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
-                    {items.filter(i=>i.featured)[0].text}
+        {/* Featured colorful banner + dashboard */}
+        <div className="mb-10 grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 relative">
+            <div className="relative overflow-hidden rounded-3xl p-0.5 group">
+              <div className="absolute inset-0 bg-[conic-gradient(from_0deg,rgba(255,0,128,0.5),rgba(0,128,255,0.5),rgba(255,200,0,0.5),rgba(255,0,128,0.5))] animate-spin-slow opacity-60" />
+              <div className="absolute inset-0 blur-2xl bg-[radial-gradient(circle_at_20%_30%,rgba(255,0,128,0.4),transparent_60%),radial-gradient(circle_at_80%_70%,rgba(0,128,255,0.4),transparent_60%)]" />
+              <div className="relative rounded-3xl bg-white/85 backdrop-blur-xl shadow-xl border border-white/40 p-6 flex flex-col gap-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-1 rounded-full bg-indigo-600/10 text-indigo-700 text-[11px] font-semibold tracking-wide">FEATURED GHOTONA</span>
+                    <span className="text-[10px] text-gray-500">auto curated</span>
                   </div>
-                ) : (
-                  <div className="text-[11px] text-gray-500">No featured story yet.</div>
+                  <div className="flex items-center gap-2 text-[10px] text-gray-600">
+                    <span className="flex items-center gap-1">❤️ {items.filter(i=>i.featured).reduce((a,b)=>a+(b.likes||0),0)}</span>
+                    <span className="flex items-center gap-1">🔥 {items.filter(i=>i.featured).reduce((a,b)=>a+((b.reactions||{})['🔥']||0),0)}</span>
+                  </div>
+                </div>
+                <div className="text-base leading-relaxed text-gray-800 whitespace-pre-wrap min-h-[80px]">
+                  {items.filter(i=>i.featured)[0]?.text || 'No featured story yet.'}
+                </div>
+                {items.filter(i=>i.featured)[0] && (
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    {reactionSet.map(em => (
+                      <button key={em} onClick={()=>reactTo(items.filter(i=>i.featured)[0].id, em)} className="text-xs px-3 py-1 rounded-full bg-white/70 hover:bg-white shadow border border-white/40 backdrop-blur transition flex items-center gap-1">
+                        <span>{em}</span>
+                        <span className="text-[10px] text-gray-600">{(items.filter(i=>i.featured)[0].reactions||{})[em]||0}</span>
+                      </button>
+                    ))}
+                    <button onClick={()=>toggleLike(items.filter(i=>i.featured)[0].id)} className="text-xs px-3 py-1 rounded-full bg-pink-500/90 hover:bg-pink-600 text-white shadow transition">❤️ {(items.filter(i=>i.featured)[0].likes)||0}</button>
+                  </div>
                 )}
-                <div className="pointer-events-none absolute inset-0 rounded-xl overflow-hidden">
-                  <div className="absolute w-1 h-1 bg-white rounded-full top-4 left-6 animate-ping" />
-                  <div className="absolute w-1 h-1 bg-white/80 rounded-full bottom-6 right-8 animate-ping [animation-delay:600ms]" />
-                  <div className="absolute w-1 h-1 bg-white/70 rounded-full top-8 right-12 animate-ping [animation-delay:1200ms]" />
+                <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
+                  <div className="absolute w-32 h-32 -top-10 -left-10 bg-pink-400/40 rounded-full mix-blend-overlay animate-pulse" />
+                  <div className="absolute w-40 h-40 -bottom-16 right-0 bg-indigo-400/40 rounded-full mix-blend-overlay animate-pulse [animation-delay:1.2s]" />
+                  <div className="absolute w-3 h-3 top-6 left-8 bg-white rounded-full animate-ping" />
+                  <div className="absolute w-2 h-2 bottom-10 right-14 bg-white/90 rounded-full animate-ping [animation-delay:600ms]" />
                 </div>
               </div>
             </div>
@@ -226,6 +256,14 @@ export default function CommunityFeed() {
                   </div>
                 </div>
                 <p className="mt-3 text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">{it.text}</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {reactionSet.map(em => (
+                    <button key={em} onClick={()=>reactTo(it.id, em)} className="text-[10px] px-2 py-1 rounded-full bg-white/70 hover:bg-white border border-gray-200 text-gray-700 flex items-center gap-1">
+                      <span>{em}</span>
+                      <span className="text-[9px] text-gray-500">{(it.reactions||{})[em]||0}</span>
+                    </button>
+                  ))}
+                </div>
               </motion.article>
             );
             if (!it.featured) return Article;

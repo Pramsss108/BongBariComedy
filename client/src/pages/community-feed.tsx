@@ -323,7 +323,7 @@ export default function CommunityFeed() {
           {/* Right Column (submission only, weekly list removed) */}
           <div className="space-y-6 sticky top-28">
             <div className="rounded-xl border bg-white/80 backdrop-blur p-5 shadow" aria-labelledby="yourKahiniHeading">
-              <h2 id="yourKahiniHeading" className="text-sm font-semibold text-brand-blue flex items-center gap-2">Your Kahini <span className="text-[10px] italic text-gray-500">short keu kichu janbena</span></h2>
+              <h2 id="yourKahiniHeading" className="text-sm font-semibold text-brand-blue flex items-center gap-2">Post Your Ghotona <span className="text-[10px] italic text-gray-500">মজার ঘটনা লিখুন • short keu kichu janbena</span></h2>
               <form onSubmit={handleSubmit} className="mt-3 space-y-3">
                 <div>
                   <label htmlFor="kahiniName" className="sr-only">Name (optional)</label>

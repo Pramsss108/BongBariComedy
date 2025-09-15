@@ -25,6 +25,7 @@ import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import axios from "axios";
 import { buildApiUrl } from "@/lib/queryClient";
 import { useLocation } from "wouter";
+import { ReactionBar } from "@/components/ReactionBar";
 
 interface YouTubeVideo {
   videoId: string;
@@ -465,6 +466,7 @@ const Home = () => {
                         thumbnail={video.thumbnail}
                         title={video.title}
                       />
+                      <ReactionBar id={`latest-video-${video.videoId}`} />
                     </motion.div>
                   );
                 })}
@@ -528,6 +530,7 @@ const Home = () => {
                         thumbnail={video.thumbnail}
                         title={video.title}
                       />
+                      <ReactionBar id={`popular-video-${video.videoId}`} />
                     </motion.div>
                   );
                 })}
@@ -548,6 +551,7 @@ const Home = () => {
                     <div key={m.id} className="bg-white rounded-lg p-4 shadow">
                       <div className="text-xs text-gray-500 mb-1">{m.dateKey}</div>
                       <p className="text-gray-800 whitespace-pre-wrap">{m.idea}</p>
+                      <ReactionBar id={`meme-${m.id}`} />
                     </div>
                   ))}
                 </div>
@@ -639,7 +643,7 @@ const Home = () => {
                                   <Select
                                     value={field.value?.split(' ')[0] || "+91"}
                                     onValueChange={(code) => {
-                                      const number = field.value?.split(' ').slice(1).join(' ') || '';
+                                      const number = field.value?.split(' ').slice(1).join('') || '';
                                       field.onChange(code + (number ? ' ' + number : ''));
                                     }}
                                   >

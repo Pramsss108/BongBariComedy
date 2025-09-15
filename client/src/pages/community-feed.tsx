@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { generateSeedPosts, generateAutoPost, AutoPost } from '@/lib/autoPosts';
 import { motion as m, AnimatePresence, motion } from 'framer-motion';
 import SEOHead from '@/components/seo-head';
 import { Button } from '@/components/ui/button';
@@ -18,10 +17,6 @@ interface ApprovedItem {
   likes?: number;
   likeEvents?: number[]; // timestamps (ms) of likes
   reactions?: Record<string, number>; // emoji -> count
-  seed?: boolean;
-  autoTopic?: string;
-  flagged?: boolean;
-  blocked?: boolean;
 }
 
 const fallbackApproved: ApprovedItem[] = [
@@ -43,9 +38,6 @@ export default function CommunityFeed() {
   const [showFloatShare, setShowFloatShare] = useState(false);
   const { mode, resolved, cycleMode } = useTheme();
   const [testMode, setTestMode] = useState(false);
-  const [typing, setTyping] = useState(false);
-  const SEED_KEY = 'bbc_autoposts_seeded_v1';
-  const GEN_STOP_THRESHOLD = 120; // stop auto-gen when organic large
   useEffect(()=>{ try { if (localStorage.getItem('bbc_test_bypass_token')) setTestMode(true); } catch {} },[]);
 
   // Persist likes & new items to localStorage whenever items change
@@ -85,48 +77,6 @@ export default function CommunityFeed() {
     })();
     return () => { cancelled = true; };
   }, []);
-
-  // Seeding auto posts (once)
-  useEffect(() => {
-    try {
-      if (!localStorage.getItem(SEED_KEY)) {
-  const seeds = generateSeedPosts();
-  const approvedSeeds: ApprovedItem[] = seeds.filter(s=> !s.blocked).map(s => ({ id: s.id, text: s.text, author: s.author || 'Anonymous', lang: s.lang==='bn'?'bn': s.lang==='en'?'en':'bn', createdAt: s.createdAt, reactions:{}, seed:true, autoTopic: s.topic, flagged: s.flagged, blocked: s.blocked }));
-        setItems(prev => {
-          const merged = [...prev, ...approvedSeeds];
-          return merged.sort((a,b)=> new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        });
-        localStorage.setItem(SEED_KEY,'1');
-      }
-    } catch {/* ignore */}
-  }, []);
-
-  // Periodic auto generation (simulate someone posting)
-  useEffect(() => {
-    if (items.length > GEN_STOP_THRESHOLD) return; // too many items -> stop
-    let stop = false;
-    let timeout: any;
-    const loop = () => {
-      if (stop) return;
-      const delay = 10000 + Math.random()*20000; // 10-30s
-      timeout = setTimeout(() => {
-        if (stop) return;
-        setTyping(true);
-        setTimeout(() => {
-          if (stop) return;
-          const p = generateAutoPost();
-          if (!p.blocked) {
-            const ap: ApprovedItem = { id: p.id, text: p.text, author: p.author || 'Anonymous', lang: p.lang==='bn'?'bn': p.lang==='en'?'en':'bn', createdAt: new Date().toISOString(), reactions:{}, seed:false, autoTopic: p.topic, flagged: p.flagged, blocked: p.blocked };
-            setItems(prev => [ap, ...prev]);
-          }
-          setTyping(false);
-          loop();
-        }, 1500 + Math.random()*1200); // typing duration
-      }, delay);
-    };
-    loop();
-    return () => { stop = true; clearTimeout(timeout); };
-  }, [items.length]);
 
   // Periodic sync of authoritative reaction counts (every 45s)
   useEffect(() => {
@@ -194,99 +144,73 @@ export default function CommunityFeed() {
 
   // (Legacy dark mode side-effect removed; handled by ThemeProvider)
 
-  // Migration: fold legacy likes into heart reaction once
-  useEffect(() => {
-    setItems(prev => prev.map(it => {
-      if (it.likes && it.likes > 0) {
-        const reactions = { ...(it.reactions || {}) };
-        reactions['❤️'] = (reactions['❤️'] || 0) + (it.likes || 0);
-        return { ...it, reactions, likes: 0 };
-      }
-      return it;
-    }));
-  }, []);
-
-  const reactionSet = ['😂','❤️','😮','🔥'] as const;
-  const { toast } = useToast();
-  const [userReactions, setUserReactions] = useState<Record<string,string>>({});
-  // Hydrate user reaction choices per story
-  useEffect(() => {
-    setUserReactions(prev => {
-      const next = { ...prev };
-      items.forEach(it => {
-        const k = `bbc_reaction_choice_${it.id}`;
-        try { const v = localStorage.getItem(k); if (v) next[it.id] = v; } catch {}
-      });
-      return next;
-    });
-  }, [items]);
-
-  const chooseReaction = (id: string, emoji: string) => {
+  // Like handling
+  const toggleLike = (id: string) => {
     setItems(prev => prev.map(it => {
       if (it.id !== id) return it;
-      const reactions = { ...(it.reactions || {}) };
-      const prevEmoji = userReactions[id];
-      if (!prevEmoji) {
-        reactions[emoji] = (reactions[emoji] || 0) + 1;
-        try { localStorage.setItem(`bbc_reaction_choice_${id}`, emoji); } catch {}
-        setUserReactions(r => ({ ...r, [id]: emoji }));
-        return { ...it, reactions };
-      }
-      if (prevEmoji === emoji) { // deselect
-        reactions[emoji] = Math.max(0, (reactions[emoji] || 1) - 1);
-        const { [id]:_, ...rest } = userReactions;
-        try { localStorage.removeItem(`bbc_reaction_choice_${id}`); } catch {}
-        setUserReactions(rest);
-        return { ...it, reactions };
-      }
-      // switch
-      reactions[prevEmoji] = Math.max(0, (reactions[prevEmoji] || 1) - 1);
-      reactions[emoji] = (reactions[emoji] || 0) + 1;
-      try { localStorage.setItem(`bbc_reaction_choice_${id}`, emoji); } catch {}
-      setUserReactions(r => ({ ...r, [id]: emoji }));
-      return { ...it, reactions };
+      const now = Date.now();
+      const likes = (it.likes || 0) + 1; // only increment (no unlike for simplicity)
+      const likeEvents = [...(it.likeEvents || []), now];
+      return { ...it, likes, likeEvents };
     }));
   };
 
-  // Share + deep link highlight
-  const { toast: t2 } = useToast();
-  const shareStory = (id: string) => {
-    const url = `${window.location.origin}${window.location.pathname}#story-${id}`;
-    if (navigator.share) {
-      navigator.share({ title: 'Bong Kahini', text: 'Check this story', url }).catch(()=>{});
-    } else if (navigator.clipboard) {
-      navigator.clipboard.writeText(url).then(()=> t2({ title:'Link copied', description:'Story link copied.' })).catch(()=>{});
-    }
+  // Reaction handling (emoji set)
+  const reactionSet = ['😂','❤️','😮','🔥'] as const;
+  const { toast } = useToast();
+  const [reacting, setReacting] = useState<Record<string, boolean>>({}); // postId+emoji key
+  const emojiMap: Record<string, string> = { '😂':'laugh', '❤️':'heart', '😮':'thumbs', '🔥':'heart' }; // map to server types (🔥 reuses heart for now)
+  const reactTo = async (id: string, emoji: string) => {
+    const anyKey = `bbc_reacted_post_${id}`;
+    if (localStorage.getItem(anyKey)) { toast({ title:'Already', description:'Only one reaction allowed per post.' }); return; }
+    const loadingKey = `${id}_${emoji}`;
+    if (reacting[loadingKey]) return;
+    setReacting(r=>({...r,[loadingKey]:true}));
+    // Optimistic update
+    setItems(prev => prev.map(it => { if (it.id!==id) return it; const reactions = { ...(it.reactions||{}) }; reactions[emoji]=(reactions[emoji]||0)+1; return { ...it, reactions }; }));
+    try {
+      const serverType = emojiMap[emoji] || 'heart';
+  const res = await fetch('/api/reaction', { method:'POST', headers:{ 'Content-Type':'application/json','X-Device-Id': getDeviceId(), ...getTestBypassHeader() }, body: JSON.stringify({ postId: id, type: serverType }) });
+      if (res.status === 409) {
+        // Duplicate overall: rollback optimistic increment
+        setItems(prev => prev.map(it => { if (it.id!==id) return it; const reactions = { ...(it.reactions||{}) }; reactions[emoji]=Math.max(0,(reactions[emoji]||1)-1); return { ...it, reactions }; }));
+        toast({ title:'একবারই', description:'Already reacted (one per post).' });
+        localStorage.setItem(anyKey,'1');
+        return;
+      }
+      const json = await res.json().catch(()=>({}));
+      if (json && json.reactions) {
+        // Replace with authoritative counts (map server types back heuristically)
+        setItems(prev => prev.map(it => { if (it.id!==id) return it; const reactions = { ...(it.reactions||{}) }; Object.entries(json.reactions).forEach(([t,v])=> {
+            if (t==='heart') { reactions['❤️']=v; reactions['🔥']=reactions['🔥']||0; }
+            if (t==='laugh') reactions['😂']=v;
+            if (t==='thumbs') reactions['😮']=v; }); return { ...it, reactions }; }));
+      }
+      localStorage.setItem(anyKey,'1');
+    } catch {
+      // Rollback optimistic if network failed
+      setItems(prev => prev.map(it => { if (it.id!==id) return it; const reactions = { ...(it.reactions||{}) }; reactions[emoji]=Math.max(0,(reactions[emoji]||1)-1); return { ...it, reactions }; }));
+      toast({ title:'Error', description:'Reaction failed. Try later.' , variant:'destructive'});
+    } finally { setReacting(r=>{ const c={...r}; delete c[loadingKey]; return c; }); }
   };
-
-  const [highlightId, setHighlightId] = useState('');
-  useEffect(() => {
-    const apply = () => {
-      const h = window.location.hash.replace('#','');
-      if (h.startsWith('story-')) setHighlightId(h.replace('story-','')); else setHighlightId('');
-    };
-    window.addEventListener('hashchange', apply);
-    apply();
-    return () => window.removeEventListener('hashchange', apply);
-  }, []);
 
   // Weekly list removed per latest instruction
 
-  // Audience pick logic: choose item with highest engagement score (reactions sum)
+  // Audience pick logic: choose item with highest engagement score (likes + reactions sum)
   // IMPORTANT: Exclude items with zero engagement so a freshly submitted post (0 likes, 0 reactions)
   // does not immediately appear as the audience pick. This keeps new stories in the recent list
   // until they earn at least 1 like or reaction.
   const audiencePick = useMemo(() => {
     if (!items.length) return null;
     const engaged = items.filter(it => {
-  const score = Object.values(it.reactions || {}).reduce((a,b)=>a+b,0);
+      const score = (it.likes || 0) + Object.values(it.reactions || {}).reduce((a,b)=>a+b,0);
       return score > 0; // require at least some engagement
     });
     if (!engaged.length) return null;
     let best: ApprovedItem | null = null;
     let bestScore = -1;
     for (const it of engaged) {
-  const score = Object.values(it.reactions || {}).reduce((a,b)=>a+b,0);
+      const score = (it.likes || 0) + Object.values(it.reactions || {}).reduce((a,b)=>a+b,0);
       if (score > bestScore) { bestScore = score; best = it; }
     }
     return best;
@@ -357,7 +281,8 @@ export default function CommunityFeed() {
                   </div>
                   {audiencePick && (
                     <div className="flex items-center gap-2 text-[10px] text-gray-600 dark:text-gray-300">
-                      <span className="flex items-center gap-1">Total {(Object.values(audiencePick.reactions||{}).reduce((a,b)=>a+b,0))}</span>
+                      <span className="flex items-center gap-1">❤️ {audiencePick.likes || 0}</span>
+                      <span className="flex items-center gap-1">🔥 {(audiencePick.reactions||{})['🔥'] || 0}</span>
                     </div>
                   )}
                 </div>
@@ -366,16 +291,13 @@ export default function CommunityFeed() {
                 </div>
                 {audiencePick && (
                   <div className="flex flex-wrap items-center gap-2 pt-1">
-                    {reactionSet.map(em => {
-                      const active = userReactions[audiencePick.id] === em;
-                      return (
-                        <button key={em} onClick={()=>chooseReaction(audiencePick.id, em)} className={`text-xs px-3 py-1 rounded-full shadow border backdrop-blur transition flex items-center gap-1 ${active ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-white/70 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 border-white/40 dark:border-white/15 text-gray-800 dark:text-gray-200'}`}>
-                          <span>{em}</span>
-                          <span className="text-[10px] opacity-80">{(audiencePick.reactions||{})[em]||0}</span>
-                        </button>
-                      );
-                    })}
-                    <button onClick={()=>shareStory(audiencePick.id)} className="text-xs px-3 py-1 rounded-full bg-gradient-to-r from-pink-500 to-indigo-500 text-white shadow transition hover:from-pink-600 hover:to-indigo-600">Share</button>
+                    {reactionSet.map(em => (
+                      <button key={em} onClick={()=>reactTo(audiencePick.id, em)} className="text-xs px-3 py-1 rounded-full bg-white/70 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 shadow border border-white/40 dark:border-white/15 backdrop-blur transition flex items-center gap-1">
+                        <span>{em}</span>
+                        <span className="text-[10px] text-gray-600 dark:text-gray-300">{(audiencePick.reactions||{})[em]||0}</span>
+                      </button>
+                    ))}
+                    <button onClick={()=>toggleLike(audiencePick.id)} className="text-xs px-3 py-1 rounded-full bg-pink-500/90 hover:bg-pink-600 text-white shadow transition">❤️ {(audiencePick.likes)||0}</button>
                   </div>
                 )}
                 <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
@@ -413,8 +335,8 @@ export default function CommunityFeed() {
                     <div className="text-lg font-bold text-brand-blue">{items.length}</div>
                   </div>
                   <div className="rounded-lg bg-pink-50 dark:bg-pink-400/10 p-3 text-center">
-                    <div className="text-[10px] uppercase text-gray-500">Hearts</div>
-                    <div className="text-lg font-bold text-pink-600">{items.reduce((a,b)=>a+((b.reactions||{})['❤️']||0),0)}</div>
+                    <div className="text-[10px] uppercase text-gray-500">Likes</div>
+                    <div className="text-lg font-bold text-pink-600">{items.reduce((a,b)=>a+(b.likes||0),0)}</div>
                   </div>
                   <div className="rounded-lg bg-indigo-50 dark:bg-indigo-400/10 p-3 text-center">
                     <div className="text-[10px] uppercase text-gray-500">Reactions</div>
@@ -436,7 +358,7 @@ export default function CommunityFeed() {
                   <h3 className="text-sm font-semibold text-gray-800 mb-2">Top 3 (Engagement)</h3>
                   <ol className="space-y-2 text-xs list-decimal list-inside">
                     {([ ...items ]
-                      .map(it => ({ it, score: Object.values(it.reactions||{}).reduce((x,y)=>x+y,0) }))
+                      .map(it => ({ it, score: (it.likes||0) + Object.values(it.reactions||{}).reduce((x,y)=>x+y,0) }))
                       .sort((a,b)=> b.score - a.score)
                       .slice(0,3)).map(({it,score}) => (
                         <li key={it.id} className="truncate"><span className="font-semibold">{it.id}</span> — score {score} • {(it.text).slice(0,60)}{it.text.length>60?'…':''}</li>
@@ -451,44 +373,39 @@ export default function CommunityFeed() {
           )}
         </AnimatePresence>
         {loading && <div className="text-sm text-gray-600 mb-4">Loading…</div>}
-  {typing && <div className="mb-4 text-[12px] text-gray-700 dark:text-gray-300 flex items-center gap-2"><span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75" /><span className="relative inline-flex rounded-full h-2 w-2 bg-pink-500" /></span><span>Someone is writing…</span></div>}
         <div className="space-y-4" aria-live="polite">
           {/* Stories List (audience pick excluded) */}
           {visibleItems.filter(it=> it.id !== audiencePickId).map(it => {
             const isFeatured = it.id === audiencePickId; // dynamic audience pick highlight
-            const isAuto = it.id.startsWith('AUTO-');
-            const displayId = isAuto ? (it.author || 'বন্ধু') : it.id;
             const Article = (
               <motion.article
                 layout
                 key={it.id}
-                id={`story-${it.id}`}
-                className={`relative rounded-lg border bg-white/80 dark:bg-white/5 dark:border-white/10 backdrop-blur p-4 shadow-sm ${isFeatured ? 'ring-2 ring-brand-blue/70' : ''} ${highlightId===it.id ? 'ring-2 ring-pink-500 animate-pulse' : ''} sm:p-4 p-3 transition-colors`}
+                className={`relative rounded-lg border bg-white/80 dark:bg-white/5 dark:border-white/10 backdrop-blur p-4 shadow-sm ${isFeatured ? 'ring-2 ring-brand-blue/70' : ''} sm:p-4 p-3 transition-colors`}
                 aria-labelledby={`item-${it.id}`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h2 id={`item-${it.id}`} className="font-semibold text-sm sm:text-sm text-gray-900 flex items-center gap-2">
                       {isFeatured && <span className="text-[10px] bg-indigo-200 dark:bg-indigo-400/30 text-indigo-800 dark:text-indigo-200 px-2 py-[2px] rounded-full animate-pulse">audience pick</span>}
-                      <span>{displayId}</span>
+                      <span>{it.id}</span>
                     </h2>
                     <div className="text-[11px] text-gray-600 mt-0.5 leading-snug">{(it.author || 'Anonymous')} • {new Date(it.createdAt).toLocaleString()} • {it.lang === 'bn' ? 'বাংলা' : 'English'}</div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={()=>shareStory(it.id)} aria-label="Share story" className="text-[11px] px-2 py-1 rounded-md bg-gradient-to-r from-pink-500 to-indigo-500 text-white hover:from-pink-600 hover:to-indigo-600 transition">Share</button>
+                    <button onClick={()=>toggleLike(it.id)} aria-label="Like story" className="text-[11px] px-2 py-1 rounded-md bg-pink-100 text-pink-700 hover:bg-pink-200 transition">
+                      ❤️ {it.likes || 0}
+                    </button>
                   </div>
                 </div>
                 <p className="mt-2 text-[13px] sm:text-sm leading-relaxed text-gray-800 dark:text-gray-100 whitespace-pre-wrap">{it.text}</p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {reactionSet.map(em => {
-                    const active = userReactions[it.id] === em;
-                    return (
-                      <button key={em} onClick={()=>chooseReaction(it.id, em)} className={`text-[10px] px-2 py-1 rounded-full flex items-center gap-1 border transition ${active ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-white/70 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 border-gray-200 dark:border-white/15 text-gray-700 dark:text-gray-200'}`}>
-                        <span>{em}</span>
-                        <span className="text-[9px] opacity-70">{(it.reactions||{})[em]||0}</span>
-                      </button>
-                    );
-                  })}
+                  {reactionSet.map(em => (
+                    <button key={em} onClick={()=>reactTo(it.id, em)} className="text-[10px] px-2 py-1 rounded-full bg-white/70 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 border border-gray-200 dark:border-white/15 text-gray-700 dark:text-gray-200 flex items-center gap-1">
+                      <span>{em}</span>
+                      <span className="text-[9px] text-gray-500">{(it.reactions||{})[em]||0}</span>
+                    </button>
+                  ))}
                 </div>
               </motion.article>
             );

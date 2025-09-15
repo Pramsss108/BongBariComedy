@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 
 export const FloatingElements = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -16,48 +16,54 @@ export const FloatingElements = () => {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  const elements = Array.from({ length: 6 }, (_, i) => ({
+  const elements = useMemo(() => Array.from({ length: 7 }, (_, i) => ({
     id: i,
-    size: Math.random() * 60 + 20,
+    size: 40 + Math.random() * 80,
     initialX: Math.random() * 100,
     initialY: Math.random() * 100,
-    speed: Math.random() * 0.5 + 0.2,
-  }));
+  })), []);
 
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      {elements.map((element) => (
-        <motion.div
-          key={element.id}
-          className="absolute rounded-full opacity-10"
-          style={{
-            width: element.size,
-            height: element.size,
-            background: `linear-gradient(45deg, 
-              hsl(${45 + element.id * 60}, 70%, 60%), 
-              hsl(${45 + element.id * 60 + 30}, 70%, 70%))`,
-          }}
-          animate={{
-            x: [
-              `${element.initialX}vw`,
-              `${element.initialX + 20}vw`,
-              `${element.initialX}vw`,
-            ],
-            y: [
-              `${element.initialY}vh`,
-              `${element.initialY - 30}vh`,
-              `${element.initialY}vh`,
-            ],
-            rotate: [0, 360],
-            scale: [1, 1.2, 1],
-          }}
-          transition={{
-            duration: 20 + element.id * 5,
-            repeat: Infinity,
-            ease: "linear",
-          }}
-        />
-      ))}
+      {elements.map((element, idx) => {
+        const horizontalDrift = 6 + idx * 1.2; // vw
+        const verticalDrift = 10 + idx * 1.5; // vh
+        return (
+          <motion.div
+            key={element.id}
+            className="absolute rounded-full opacity-[0.08] will-change-transform"
+            style={{
+              width: element.size,
+              height: element.size,
+              background: `radial-gradient(circle at 30% 30%, hsl(${200 + element.id * 25},70%,65%), hsl(${200 + element.id * 25},70%,40%))`,
+              mixBlendMode: 'screen',
+              filter: 'blur(2px)'
+            }}
+            animate={{
+              x: [
+                `${element.initialX}vw`,
+                `${element.initialX + horizontalDrift}vw`,
+                `${element.initialX - horizontalDrift}vw`,
+                `${element.initialX}vw`,
+              ],
+              y: [
+                `${element.initialY}vh`,
+                `${element.initialY - verticalDrift}vh`,
+                `${element.initialY + verticalDrift * 0.6}vh`,
+                `${element.initialY}vh`,
+              ],
+              scale: [1, 1.04, 1, 1.02],
+              rotate: [0, 20, -15, 0],
+              opacity: [0.04, 0.12, 0.08, 0.1]
+            }}
+            transition={{
+              duration: 70 + idx * 18,
+              repeat: Infinity,
+              ease: 'easeInOut'
+            }}
+          />
+        );
+      })}
       
       {/* REMOVED: Mouse follower belan - preventing double cursor effect */}
     </div>

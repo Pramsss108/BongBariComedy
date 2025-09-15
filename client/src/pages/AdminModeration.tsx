@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
+import { getDeviceId } from '@/lib/deviceId';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import SEOHead from '@/components/seo-head';
+import { useAuth } from '@/hooks/useAuth';
+import { useLocation } from 'wouter';
 
 interface PendingPost {
   postId: string;
@@ -11,6 +14,7 @@ interface PendingPost {
   createdAt: string;
   flagged_terms: string[];
   seeded?: boolean;
+  moderation?: { flags: string[]; reason: string; usedAI: boolean; severity: number; decision: string; };
 }
 
 const sampleData: PendingPost[] = [
@@ -46,6 +50,14 @@ const sampleData: PendingPost[] = [
 ];
 
 export default function AdminModeration() {
+  const { isAuthenticated } = useAuth();
+  const [, navigate] = useLocation();
+  useEffect(() => {
+    if (!isAuthenticated) navigate('/login');
+  }, [isAuthenticated, navigate]);
+  if (!isAuthenticated) {
+    return <main className="min-h-screen flex items-center justify-center"><p className="text-sm text-gray-600">Redirecting to login…</p></main>;
+  }
   const { toast } = useToast();
   const [posts, setPosts] = useState<PendingPost[]>(sampleData);
   const firstLoadRef = useRef(true);
@@ -57,6 +69,8 @@ export default function AdminModeration() {
   const [showFlaggedOnly, setShowFlaggedOnly] = useState(false);
   const [authorFilter, setAuthorFilter] = useState('');
   const [termFilter, setTermFilter] = useState('');
+  const [rejecting, setRejecting] = useState<PendingPost | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
 
   // Load from localStorage first (if present) else attempt fetch
   useEffect(() => {
@@ -149,7 +163,7 @@ export default function AdminModeration() {
   };
 
   const simulate = async (url: string, body: any) => {
-    try { await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); } catch {}
+    try { await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Device-Id': getDeviceId() }, body: JSON.stringify(body) }); } catch {}
   };
 
   const publish = async (p: PendingPost, overrideText?: string) => {
@@ -162,9 +176,7 @@ export default function AdminModeration() {
     await simulate('/api/admin/feature', { postId: p.postId });
     toast({ title: 'Featured', description: `${p.postId} highlighted` });
   };
-  const reject = async (p: PendingPost) => {
-    const reason = prompt('Reject reason? (bn/en)');
-    if (reason === null) return;
+  const reject = async (p: PendingPost, reason: string) => {
     await simulate('/api/admin/reject', { postId: p.postId, reason });
     toast({ title: 'Rejected', description: `${p.postId} (${reason.slice(0,50)})` });
     setPosts(ps => ps.filter(x => x.postId !== p.postId));
@@ -221,7 +233,7 @@ export default function AdminModeration() {
         <div className="mb-6 rounded-lg border border-red-400 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
           Admin UI stub — not protected. Do not expose in production.
         </div>
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
+  <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6" aria-live="polite">
           <div>
             <h1 id="modHeading" className="text-2xl font-bold text-brand-blue">Admin Moderation</h1>
             <p className="text-sm text-gray-700">Quick review & actions — UI stub</p>
@@ -231,6 +243,7 @@ export default function AdminModeration() {
             <Button aria-label="Bulk approve" onClick={() => bulk('approve')} className="bg-brand-blue text-white hover:bg-brand-blue/90">Bulk Approve</Button>
             <Button aria-label="Bulk delete" onClick={() => bulk('delete')} variant="destructive">Bulk Delete</Button>
             <Button aria-label="Export CSV" variant="outline" onClick={exportCsv}>Export CSV</Button>
+            <div className="text-[11px] text-gray-600 ml-2" role="status">Selected: {Object.values(selected).filter(Boolean).length}</div>
           </div>
         </div>
         <div className="grid md:grid-cols-4 gap-6">
@@ -268,7 +281,7 @@ export default function AdminModeration() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -8 }}
-                    className={`rounded-lg border bg-white/80 backdrop-blur p-4 shadow-sm transition ${isSel ? 'ring-2 ring-brand-blue' : ''}`}
+                    className={`rounded-lg border bg-white/80 backdrop-blur p-4 shadow-sm transition hover:shadow-md ${isSel ? 'ring-2 ring-brand-blue' : ''}`}
                     role="article"
                     aria-labelledby={`post-${p.postId}`}
                   >
@@ -294,17 +307,24 @@ export default function AdminModeration() {
                         <Button aria-label="Edit" size="sm" variant="outline" onClick={() => openEdit(p)}>Edit</Button>
                         <Button aria-label="Feature" size="sm" variant="outline" onClick={()=>feature(p)}>Feature</Button>
                         <Button aria-label="Approve" size="sm" className="bg-brand-blue text-white hover:bg-brand-blue/90" onClick={()=>publish(p)}>Approve</Button>
-                        <Button aria-label="Reject" size="sm" variant="destructive" onClick={()=>reject(p)}>Reject</Button>
+                        <Button aria-label="Reject" size="sm" variant="destructive" onClick={()=>{setRejecting(p); setRejectReason('');}}>Reject</Button>
                         <Button aria-label="Delete" size="sm" variant="destructive" onClick={()=>del(p)}>Del</Button>
                       </div>
                     </div>
                     <div className="mt-3 text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">{preview}</div>
-                    {p.flagged_terms.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1" aria-label="Flagged terms">
+                    {(p.flagged_terms.length > 0 || p.moderation) && (
+                      <div className="mt-2 flex flex-wrap gap-1" aria-label="Moderation info">
+                        {p.moderation && (
+                          <>
+                            <span className={`text-[10px] px-2 py-[2px] rounded-full border ${p.moderation.decision==='approve' ? 'bg-emerald-100 text-emerald-700 border-emerald-300' : p.moderation.decision==='reject' ? 'bg-red-100 text-red-700 border-red-300' : 'bg-amber-100 text-amber-700 border-amber-300'}`}>{p.moderation.decision}</span>
+                            <span className="text-[10px] px-2 py-[2px] rounded bg-gray-200 text-gray-700" title={p.moderation.reason}>{p.moderation.reason.slice(0,34)}{p.moderation.reason.length>34?'…':''}</span>
+                            {p.moderation.usedAI && <span className="text-[10px] px-2 py-[2px] rounded-full bg-indigo-100 text-indigo-700 border border-indigo-300">AI</span>}
+                          </>
+                        )}
                         {p.flagged_terms.map(t => (
                           <span key={t} className="text-[10px] px-2 py-[2px] rounded-full bg-red-100 text-red-700 border border-red-300">{t}</span>
                         ))}
-                        <Button aria-label="Apply sanitized suggestion" size="sm" variant="outline" className="text-[10px] h-6" onClick={()=>applySanitized(p)}>Sanitize</Button>
+                        {p.flagged_terms.length > 0 && <Button aria-label="Apply sanitized suggestion" size="sm" variant="outline" className="text-[10px] h-6" onClick={()=>applySanitized(p)}>Sanitize</Button>}
                       </div>
                     )}
                   </motion.div>
@@ -357,6 +377,41 @@ export default function AdminModeration() {
               <div className="mt-4 flex justify-end gap-2">
                 <Button aria-label="Cancel edit" variant="outline" onClick={()=>setEditing(null)}>Cancel</Button>
                 <Button aria-label="Save edit" className="bg-brand-blue text-white hover:bg-brand-blue/90" onClick={saveEdit}>Save & Publish</Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+        {rejecting && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            aria-modal="true"
+            role="dialog"
+            aria-labelledby="rejectHeading"
+          >
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={()=>setRejecting(null)} />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative w-full max-w-md rounded-xl bg-white p-5 shadow-lg"
+            >
+              <h2 id="rejectHeading" className="text-lg font-semibold mb-3">Reject Story</h2>
+              <p className="text-xs text-gray-600 mb-3">Provide a short reason (internal only in this stub).</p>
+              <textarea
+                aria-label="Reject reason"
+                value={rejectReason}
+                onChange={e=>setRejectReason(e.target.value)}
+                rows={5}
+                maxLength={200}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue"
+                placeholder="Reason (e.g. off-topic / duplicate / inappropriate language)"
+              />
+              <div className="mt-4 flex justify-end gap-2">
+                <Button variant="outline" aria-label="Cancel rejection" onClick={()=>setRejecting(null)}>Cancel</Button>
+                <Button disabled={!rejectReason.trim()} aria-label="Confirm rejection" variant="destructive" onClick={()=>{ if(rejecting){ reject(rejecting, rejectReason.trim()); setRejecting(null);} }}>Reject</Button>
               </div>
             </motion.div>
           </motion.div>

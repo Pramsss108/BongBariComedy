@@ -150,6 +150,17 @@ const Home = () => {
     refetchInterval: 15 * 60 * 1000, // Refetch every 15 minutes (popular videos change less frequently)
   });
 
+  // Fetch videos from database (including hero video)
+  const { data: videosBundle } = useQuery<{
+    videos: YouTubeVideo[];
+    hero: YouTubeVideo | null;
+  }>({
+    queryKey: ['/api/videos'],
+    queryFn: () => apiRequest('/api/videos'),
+    refetchInterval: 2 * 60 * 1000, // Refetch every 2 minutes for admin updates
+    staleTime: 60 * 1000, // Consider stale after 1 minute
+  });
+
 
   const form = useForm<InsertCollaborationRequest>({
     resolver: zodResolver(insertCollaborationRequestSchema),
@@ -316,7 +327,11 @@ const Home = () => {
               transition={{ duration: 0.6, delay: 0.3 }}
             >
               {(() => {
-                const landscapeId = heroVideoOverride || (latestVideos && latestVideos[0]?.videoId) || fallbackVideoData[0].videoId;
+                // Hero video priority chain: URL override > admin-configured hero > latest videos > fallback
+                const landscapeId = heroVideoOverride || 
+                  videosBundle?.hero?.videoId || 
+                  (latestVideos && latestVideos[0]?.videoId) || 
+                  fallbackVideoData[0].videoId;
                 // Gate iframe: before entering site (decision) show a placeholder skeleton so layout height stable
                 return (
                   <div className="relative w-full rounded-xl overflow-hidden shadow-md lg:shadow-lg border border-brand-blue/70 bg-black aspect-video">

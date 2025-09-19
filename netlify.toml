@@ -1,62 +1,8 @@
 [build]
-  functions = "netlify/functions"
+  publish = "dist/client"
+  command = "npm run build"
 
 [[redirects]]
-  from = "/api/auth/login"
-  to = "/.netlify/functions/auth-login"
+  from = "/*"
+  to = "/index.html"
   status = 200
-
-[[redirects]]
-  from = "/api/auth/me"
-  to = "/.netlify/functions/auth-me"
-  status = 200
-
-[[redirects]]
-  from = "/api/auth/logout"
-  to = "/.netlify/functions/auth-logout"
-  status = 200
-
-[[redirects]]
-  from = "/api/memes/*"
-  to = "/.netlify/functions/memes/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/api/chatbot/*"
-  to = "/.netlify/functions/chatbot/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/api/greeting/*"
-  to = "/.netlify/functions/greeting/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/api/admin/homepage-content*"
-  to = "/.netlify/functions/homepage-content/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/api/homepage-banner*"
-  to = "/.netlify/functions/homepage-banner/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/api/homepage-promo*"
-  to = "/.netlify/functions/homepage-promo/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/api/youtube/*"
-  to = "/.netlify/functions/youtube/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/api/ready"
-  to = "/.netlify/functions/ready"
-  status = 200
-
-# Scheduled functions (Netlify Pro/Business or GitHub Developer Pack plan)
-[[scheduled]]
-  path = "/.netlify/functions/youtube-warm"
-  schedule = "*/10 * * * *"

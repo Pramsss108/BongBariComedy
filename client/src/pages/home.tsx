@@ -319,7 +319,14 @@ const Home = () => {
                 const landscapeId = heroVideoOverride || (latestVideos && latestVideos[0]?.videoId) || fallbackVideoData[0].videoId;
                 // Gate iframe: before entering site (decision) show a placeholder skeleton so layout height stable
                 return (
-                  <div className="relative w-full rounded-xl overflow-hidden shadow-md lg:shadow-lg border border-brand-blue/70 bg-black aspect-video">
+                  <div className="relative w-full rounded-xl overflow-hidden shadow-md lg:shadow-lg border border-brand-blue/70 bg-black aspect-[9/16] sm:aspect-video">
+                    {!enteredSite && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                          <div className="w-[65%] aspect-[9/16] sm:aspect-video bg-gray-600/40 rounded-lg animate-pulse" />
+                        </div>
+                      </div>
+                    )}
                     {enteredSite && (
                     <iframe
                       key={videoKey}
@@ -338,11 +345,6 @@ const Home = () => {
                       }}
                       allowFullScreen
                     ></iframe>
-                    )}
-                    {!enteredSite && (
-                      <div className="absolute inset-0 flex items-center justify-center text-xs text-white/60">
-                        <span className="animate-pulse">Preparing video…</span>
-                      </div>
                     )}
                     <button
                       type="button"

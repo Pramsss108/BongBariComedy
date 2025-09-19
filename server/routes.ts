@@ -266,6 +266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // --- Reaction endpoint with dedupe ---
   const reactionTypes = new Set(['heart','laugh','thumbs']);
   const reactionMemoryKeys = new Set<string>(); // key: postId:type:device
+  const reactionAnyMemoryKeys = new Set<string>(); // key: postId:any:device (enforce single reaction overall)
   app.post('/api/reaction', async (req: any, res) => {
     const { postId, type } = req.body || {};
     if (!postId || !type || !reactionTypes.has(type)) return res.status(400).json({ message: 'Invalid reaction' });
@@ -275,7 +276,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const ip = (req.ip || '').replace(/[:].*$/, '') || 'ipless';
     const deviceHash = deviceId.split('').reduce((h: number, c: string) => (Math.imul(h ^ c.charCodeAt(0), 16777619))>>>0, 2166136261).toString(36);
     const dedupeKey = `reaction:${postId}:${type}:${deviceHash}`;
+    const anyKey = `reaction_any:${postId}:${deviceHash}`;
     let duplicate = false;
+    let anyDuplicate = false;
     const testBypassToken2 = process.env.TEST_BYPASS_TOKEN;
     if (testBypassToken2 && req.headers['x-test-bypass'] === testBypassToken2) {
       item.reactions = item.reactions || {};
@@ -285,9 +288,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     if (upstashUrl && upstashToken) {
       try {
-        const exists = await fetch(`${upstashUrl}/get/${encodeURIComponent(dedupeKey)}`, { headers: { Authorization: `Bearer ${upstashToken}` } });
-        const exJson = await exists.json().catch(()=>({}));
-        if (exJson.result) duplicate = true; else await fetch(`${upstashUrl}/set/${encodeURIComponent(dedupeKey)}/1?EX=${365*24*60*60}`, { headers: { Authorization: `Bearer ${upstashToken}` } });
+        // First check if any reaction already done for this post by this device
+        const anyExists = await fetch(`${upstashUrl}/get/${encodeURIComponent(anyKey)}`, { headers: { Authorization: `Bearer ${upstashToken}` } });
+        const anyJson = await anyExists.json().catch(()=>({}));
+        if (anyJson.result) anyDuplicate = true;
+        // If no prior any reaction, check specific type key (legacy granular key)
+        if (!anyDuplicate) {
+          const exists = await fetch(`${upstashUrl}/get/${encodeURIComponent(dedupeKey)}`, { headers: { Authorization: `Bearer ${upstashToken}` } });
+          const exJson = await exists.json().catch(()=>({}));
+          if (exJson.result) duplicate = true;
+        }
+        if (!anyDuplicate && !duplicate) {
+          // Set both keys to enforce single overall reaction
+            await fetch(`${upstashUrl}/set/${encodeURIComponent(dedupeKey)}/1?EX=${365*24*60*60}`, { headers: { Authorization: `Bearer ${upstashToken}` } });
+            await fetch(`${upstashUrl}/set/${encodeURIComponent(anyKey)}/1?EX=${365*24*60*60}`, { headers: { Authorization: `Bearer ${upstashToken}` } });
         if (!duplicate) {
           const countKey = `reaction_counts:${postId}:${type}`;
           await fetch(`${upstashUrl}/incr/${encodeURIComponent(countKey)}`, { headers: { Authorization: `Bearer ${upstashToken}` } });
@@ -303,16 +317,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
             } catch {/* ignore */}
           }
         }
+        }
       } catch { /* fallback to memory below if error triggers duplicate false path */ }
     }
     if (!upstashUrl || !upstashToken) {
-      if (reactionMemoryKeys.has(dedupeKey)) duplicate = true; else reactionMemoryKeys.add(dedupeKey);
-      if (!duplicate) {
+      if (reactionAnyMemoryKeys.has(anyKey)) anyDuplicate = true;
+      if (!anyDuplicate) {
+        if (reactionMemoryKeys.has(dedupeKey)) duplicate = true; else reactionMemoryKeys.add(dedupeKey);
+      }
+      if (!anyDuplicate && !duplicate) {
+        reactionAnyMemoryKeys.add(anyKey);
         item.reactions = item.reactions || {};
         item.reactions[type] = (item.reactions[type]||0) + 1;
       }
     }
-    if (duplicate) return res.status(409).json({ message: 'Apni eita age thekei like korechhen' });
+    if (anyDuplicate || duplicate) return res.status(409).json({ message: 'Already reacted (only one allowed).' });
     logEvent(req, 'reaction', { postId, type });
     res.json({ ok: true, postId, reactions: item.reactions || {} });
   });

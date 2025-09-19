@@ -1,0 +1,18 @@
+{
+  "POST123": {
+    "like": 10,
+    "laugh": 4,
+    "wow": 2,
+    "clap": 7,
+    "fire": 3,
+    "mind": 1
+  },
+  "POST456": {
+    "like": 1,
+    "laugh": 0,
+    "wow": 0,
+    "clap": 0,
+    "fire": 0,
+    "mind": 0
+  }
+}

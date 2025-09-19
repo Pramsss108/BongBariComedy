@@ -29,10 +29,12 @@ import { AdminChatbot } from "@/pages/AdminChatbot";
 import { AdminHomepage } from "@/pages/AdminHomepage";
 import AdminModeration from "@/pages/AdminModeration";
 import CommunityFeed from "@/pages/community-feed";
+import CommunitySubmit from "@/pages/community-submit";
 import Navigation from "@/components/navigation";
 import { ensureAudioUnlocked } from "@/lib/audioUnlock";
 import GreetingConsent from "@/components/GreetingConsent";
 import { isAudioUnlocked, resumeAudioNow } from "@/lib/audioUnlock";
+import { ThemeProvider } from "@/hooks/useTheme";
 
 function Router() {
   const [showCharmSelector, setShowCharmSelector] = useState(false);
@@ -153,6 +155,7 @@ function Router() {
   <Route path="/blog" component={Blog} />
   <Route path="/tools" component={FreeTools} />
   <Route path="/community/feed" component={CommunityFeed} />
+  <Route path="/community/submit" component={CommunitySubmit} />
         <Route path="/blog/:slug" component={BlogPost} />
         <Route path="/admin" component={Admin} />
         <Route path="/admin/chatbot" component={AdminChatbot} />
@@ -182,7 +185,9 @@ function AppContent() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppContent />
+      <ThemeProvider>
+        <AppContent />
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

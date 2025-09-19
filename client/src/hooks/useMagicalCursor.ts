@@ -29,7 +29,7 @@ export const useMagicalCursor = () => {
   const lastCursorUpdateRef = useRef<number>(0);
   const isAnimatingRef = useRef<boolean>(false);
   const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const MAX_PARTICLES = prefersReducedMotion ? 36 : 60; // Cap to prevent DOM churn
+  const MAX_PARTICLES = prefersReducedMotion ? 24 : 40; // Fewer particles for calmer effect
   const modalOpenRef = useRef<boolean>(false);
 
   useEffect(() => {
@@ -70,15 +70,15 @@ export const useMagicalCursor = () => {
 
       // Throttle particle creation for performance
       const now = Date.now();
-      if (now - lastMouseTime.current < 32) return; // Limit to ~30fps particle generation
+  if (now - lastMouseTime.current < 55) return; // Further limit spawn frequency
       lastMouseTime.current = now;
 
   // Reduced particle count for better performance (batch update)
   const additions: Particle[] = [];
-  const spawnCount = modalOpenRef.current ? 0 : 2; // no spawn while modal open
+  const spawnCount = modalOpenRef.current ? 0 : 1; // single slow particle
   for (let i = 0; i < spawnCount; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const speed = 0.8 + Math.random() * 2.0;
+  const speed = 0.3 + Math.random() * 0.9; // slower drift velocity
         const isLaughEmoji = Math.random() < 0.05; // 5% chance for laugh emoji
         additions.push({
           id: particleId.current++,
@@ -87,9 +87,9 @@ export const useMagicalCursor = () => {
           vx: Math.cos(angle) * speed,
           vy: Math.sin(angle) * speed,
           opacity: 0.9,
-          scale: 0.4 + Math.random() * 0.6,
-          life: 35 + Math.random() * 10, // Optimized particle lifetime
-          maxLife: 35 + Math.random() * 10,
+          scale: 0.5 + Math.random() * 0.4,
+          life: 70 + Math.random() * 30, // longer lifetime for persistent gentle trail
+          maxLife: 70 + Math.random() * 30,
           rotation: Math.random() * 360,
           rotationSpeed: (Math.random() - 0.5) * 4,
           type: isLaughEmoji ? 'laugh' : 'star',
@@ -115,9 +115,9 @@ export const useMagicalCursor = () => {
       
       // Reduced click particles for performance (batch update)
       const additions: Particle[] = [];
-      for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 4; i++) {
         const angle = (i / 8) * Math.PI * 2;
-        const speed = 2 + Math.random() * 3;
+  const speed = 0.8 + Math.random() * 1.2; // slower burst
         additions.push({
           id: particleId.current++,
           x: cursorPosition.x + (Math.random() - 0.5) * 12,
@@ -126,8 +126,8 @@ export const useMagicalCursor = () => {
           vy: Math.sin(angle) * speed,
           opacity: 1,
           scale: 0.6 + Math.random() * 0.4,
-          life: 40,
-          maxLife: 40,
+          life: 85,
+          maxLife: 85,
           rotation: Math.random() * 360,
           rotationSpeed: (Math.random() - 0.5) * 8,
           type: Math.random() < 0.3 ? 'laugh' : 'star',
@@ -194,7 +194,7 @@ export const useMagicalCursor = () => {
 
   const animate = () => {
     const now = performance.now();
-    const minFrameMs = 1000 / 30; // ~30fps target
+  const minFrameMs = 1000 / 40; // allow slightly smoother but still throttled
     if (now - lastAnimTimeRef.current < minFrameMs) return; // Skip work, but rAF keeps running
     lastAnimTimeRef.current = now;
 
@@ -202,22 +202,22 @@ export const useMagicalCursor = () => {
       if (prev.length === 0) return prev; // Nothing to update this frame
       const updated: Particle[] = [];
       for (const particle of prev) {
-        const newLife = particle.life - 0.8; // Slightly slower decay
+  const newLife = particle.life - 0.35; // much slower decay
         if (newLife <= 0) continue;
 
-        const lifeRatio = newLife / particle.maxLife;
-        const sparkleValue = Math.sin(particle.sparklePhase);
+  const lifeRatio = newLife / particle.maxLife;
+  const sparkleValue = Math.sin(particle.sparklePhase * 0.6);
 
         updated.push({
           ...particle,
           x: particle.x + particle.vx,
           y: particle.y + particle.vy,
-          vx: particle.vx * 0.996,
-          vy: particle.vy * 0.996,
-          opacity: Math.max(0, lifeRatio * 0.8),
-          scale: particle.scale * (0.96 + 0.04 * sparkleValue),
-          rotation: particle.rotation + particle.rotationSpeed,
-          sparklePhase: particle.sparklePhase + 0.08,
+          vx: particle.vx * 0.995,
+          vy: particle.vy * 0.995 + 0.002, // gentle downward drift
+          opacity: Math.max(0, lifeRatio * 0.55),
+          scale: particle.scale * (0.985 + 0.02 * sparkleValue),
+          rotation: particle.rotation + particle.rotationSpeed * 0.4,
+          sparklePhase: particle.sparklePhase + 0.045,
           life: newLife
         });
       }

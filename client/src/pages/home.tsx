@@ -14,7 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import YouTubeShort from "@/components/youtube-short";
 import SEOHead from "@/components/seo-head";
-import { PromoMarquee } from "@/components/PromoMarquee";
+// Removed PromoMarquee (promo API disabled)
 import { ParallaxSection, ParallaxContainer } from "@/components/parallax-section";
 import { Youtube, Instagram, Phone, Mail, Twitter, Send, Home as HomeIcon, Users, TrendingUp, Smile, Edit3, Volume2, VolumeX } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -308,7 +308,7 @@ const Home = () => {
                 <span className="text-brand-red">বং বাড়িতে</span> স্বাগতম
               </h2>
             </motion.div>
-            <PromoMarquee />
+            {/* PromoMarquee removed: placeholder strip could go here later */}
             <motion.div
               className={`w-full mx-auto mb-1 sm:mb-1.5 ${compactHero ? 'max-w-sm md:max-w-md' : 'max-w-lg md:max-w-xl'} transition-all`}
               initial={{ opacity: 0, scale: 0.95 }}

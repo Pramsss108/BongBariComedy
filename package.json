@@ -7,6 +7,7 @@
   "scripts": {
     "db:sqlite:push": "drizzle-kit push --config=drizzle.sqlite.config.ts",
     "dev": "set NODE_ENV=development && nodemon --watch server --ext ts,js,json --exec tsx server/index.ts",
+  "dev:server:esm": "set NODE_ENV=development && tsx watch server/index.ts",
     "client": "vite --config vite.config.ts",
     "predev:live": "npx --yes kill-port 5000 5173 8888",
     "dev:live": "concurrently \"npm run dev\" \"npm run client\"",

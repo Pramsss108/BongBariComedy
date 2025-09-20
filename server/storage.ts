@@ -217,9 +217,22 @@ export class MemStorage implements IStorage {
 
 }
 
-import { databaseStorage } from "./databaseStorage";
-
-// Initialize default data on startup
-databaseStorage.initializeDefaultData();
-
-export const storage = databaseStorage;
+// Dynamic storage selection. In production we avoid loading better-sqlite3 native module.
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+let storageImpl: IStorage;
+if (process.env.NODE_ENV === 'production') {
+  storageImpl = new MemStorage();
+  console.log('[storage] Using in-memory storage (production) – SQLite disabled.');
+} else {
+  try {
+    const { databaseStorage } = require('./databaseStorage');
+    databaseStorage.initializeDefaultData();
+    storageImpl = databaseStorage;
+    console.log('[storage] Using SQLite development storage.');
+  } catch (err) {
+    console.warn('[storage] Failed to load SQLite dev storage, falling back to memory:', err);
+    storageImpl = new MemStorage();
+  }
+}
+export const storage = storageImpl;

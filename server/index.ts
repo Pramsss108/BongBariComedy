@@ -62,13 +62,13 @@ app.use((req, res, next) => {
   next();
 });
 
+// Root health endpoint (must be before static fallbacks)
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok' });
+});
+
 (async () => {
   const server = await registerRoutes(app);
-
-  // Lightweight root-level health endpoint (non-namespaced) for platform pings
-  app.get('/health', (_req, res) => {
-    res.json({ status: 'ok' });
-  });
 
   // Graceful shutdown to prevent EADDRINUSE on fast restarts (Windows/nodemon)
   const shutdown = () => {

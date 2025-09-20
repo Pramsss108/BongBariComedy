@@ -24,8 +24,12 @@ JWT_SECRET=...
 YOUTUBE_CHANNEL_ID=...
 CORS_ORIGIN=https://<netlify-site>.netlify.app
 ```
-Build Command:
+Build Command (choose one):
 ```
+# Recommended (ensures devDependencies installed before building)
+npm run render:build
+
+# Or (if Render installs devDependencies already)
 npm run build
 ```
 Start Command:
@@ -73,6 +77,7 @@ After confirming production works, remove localhost from `CORS_ORIGIN` in Render
 - 404 on /health: Ensure `NODE_ENV=production` and server built (`npm run build`).
 - 127 build error: Start script must not use Windows `set` syntax (already fixed).
 - CORS error in browser: Check `Origin` value is included in `CORS_ORIGIN`.
+- vite: not found: Render may have installed only production dependencies. Use `render:build` script so devDependencies (vite, esbuild, tailwind) are installed during build.
 
 ## 10. Scripts Overview
 - `npm run build` – full build (client + server bundle)

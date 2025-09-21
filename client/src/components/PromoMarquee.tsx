@@ -9,16 +9,10 @@ export function PromoMarquee() {
   const { data } = useQuery<PromoSettings>({
     queryKey: ['/api/homepage-promo'],
     queryFn: async () => {
-      const urls = [
-        buildApiUrl('/.netlify/functions/homepage-promo'),
-        buildApiUrl('/api/homepage-promo'),
-      ];
-      for (const url of urls) {
-        try {
-          const r = await fetch(url);
-          if (r.ok) return r.json();
-        } catch {}
-      }
+      try {
+        const r = await fetch(buildApiUrl('/api/homepage-promo'));
+        if (r.ok) return r.json();
+      } catch {}
       return { enabled: false, speed: 60, items: [] };
     },
     staleTime: 60_000,

@@ -37,6 +37,62 @@ export const collaborationRequests = pgTable("collaboration_requests", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Community posts schema (Bong Kahini)
+export const communityPosts = pgTable("community_posts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  text: text("text").notNull(),
+  author: text("author"), // null for anonymous
+  language: varchar("language", { length: 2 }).notNull().default("en"), // 'bn' or 'en'
+  featured: boolean("featured").default(false),
+  likes: integer("likes").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  
+  // Moderation fields
+  moderationFlags: text("moderation_flags"), // JSON array of flags
+  moderationReason: text("moderation_reason"),
+  moderationUsedAI: boolean("moderation_used_ai").default(false),
+  moderationSeverity: integer("moderation_severity").default(0),
+  moderationDecision: varchar("moderation_decision", { length: 50 }).default("pending"),
+});
+
+// Community post reactions
+export const communityReactions = pgTable("community_reactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  postId: varchar("post_id").notNull().references(() => communityPosts.id, { onDelete: "cascade" }),
+  reactionType: varchar("reaction_type", { length: 20 }).notNull(), // 'heart', 'laugh', 'thumbs', etc
+  count: integer("count").default(1),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Community pending posts (moderation queue)
+export const communityPendingPosts = pgTable("community_pending_posts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  postId: varchar("post_id").notNull().unique(), // Original post ID for tracking
+  text: text("text").notNull(),
+  author: text("author"), // null for anonymous
+  language: varchar("language", { length: 2 }).notNull().default("en"),
+  flaggedTerms: text("flagged_terms"), // JSON array
+  
+  // Moderation fields
+  moderationFlags: text("moderation_flags"), // JSON array of flags
+  moderationReason: text("moderation_reason"),
+  moderationUsedAI: boolean("moderation_used_ai").default(false),
+  moderationSeverity: integer("moderation_severity").default(0),
+  moderationDecision: varchar("moderation_decision", { length: 50 }).default("pending"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Rate limiting for posts and reactions (using device + IP hash for deduplication)
+export const rateLimits = pgTable("rate_limits", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  key: varchar("key", { length: 100 }).notNull().unique(), // 'post:ip:deviceHash' or 'reaction:postId:type:deviceHash'
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -48,6 +104,17 @@ export const insertBlogPostSchema = createInsertSchema(blogPosts).omit({
   updatedAt: true,
 });
 
+export const insertCommunityPostSchema = createInsertSchema(communityPosts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCommunityPendingPostSchema = createInsertSchema(communityPendingPosts).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertCollaborationRequestSchema = createInsertSchema(collaborationRequests).omit({
   id: true,
   createdAt: true,
@@ -55,16 +122,16 @@ export const insertCollaborationRequestSchema = createInsertSchema(collaboration
   // At least one contact method (email or phone) must be provided
   return data.email || data.phone;
 }, {
-  message: "Please provide either an email address or phone number",
-  path: ["email"] // This will show the error on the email field
+  message: "Either email or phone number must be provided",
+  path: ["email", "phone"]
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
-export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
 export type BlogPost = typeof blogPosts.$inferSelect;
-export type InsertCollaborationRequest = z.infer<typeof insertCollaborationRequestSchema>;
 export type CollaborationRequest = typeof collaborationRequests.$inferSelect;
+export type CommunityPost = typeof communityPosts.$inferSelect;
+export type CommunityReaction = typeof communityReactions.$inferSelect;
+export type CommunityPendingPost = typeof communityPendingPosts.$inferSelect;
 
 // Chatbot Training Data Table
 export const chatbotTraining = pgTable("chatbot_training", {

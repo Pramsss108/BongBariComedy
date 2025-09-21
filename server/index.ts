@@ -1,10 +1,5 @@
-import dotenv from 'dotenv';
-import path from 'path';
-// Prefer env from server/.env; fallback to root .env if not found
-const envResult = dotenv.config({ path: path.resolve(import.meta.dirname, '.env') });
-if (envResult.error) {
-  dotenv.config();
-}
+// Load environment configuration first
+import './env';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";

@@ -4,7 +4,15 @@
 //   node scripts/db-check.mjs            (uses .env / server/.env)
 //   DATABASE_URL=... node scripts/db-check.mjs
 // Exits 0 on success, 1 on failure.
-import 'dotenv/config';
+// Try loading root .env first, then server/.env fallback
+import dotenv from 'dotenv';
+let loaded = dotenv.config();
+if (loaded.error) {
+  // ignore
+}
+if (!process.env.DATABASE_URL) {
+  dotenv.config({ path: new URL('../server/.env', import.meta.url).pathname });
+}
 import { neon } from '@neondatabase/serverless';
 
 async function main() {

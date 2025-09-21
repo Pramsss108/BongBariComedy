@@ -117,17 +117,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
-  // In-memory community store (ephemeral dev only)
-  interface CommunityItem { id: string; text: string; author: string | null; lang: 'bn' | 'en'; createdAt: string; featured?: boolean; likes?: number; reactions?: Record<string, number>; moderation?: { flags: string[]; reason: string; usedAI: boolean; severity: number; decision: string; }; }
-  interface PendingItem { postId: string; text: string; author: string | null; createdAt: string; flagged_terms: string[]; moderation: { flags: string[]; reason: string; usedAI: boolean; severity: number; decision: string; }; }
-  const approved: CommunityItem[] = [];
-  const pending: PendingItem[] = [];
-  let postCounter = 1000;
-
-  // Community feed
-  app.get('/api/community/feed', (_req, res) => {
-    // Return newest first
-    res.json(approved.sort((a,b)=> new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+  // Community feed - now using Postgres storage
+  app.get('/api/community/feed', async (_req, res) => {
+    try {
+      const feed = await storage.getCommunityFeed();
+      res.json(feed);
+    } catch (error) {
+      console.error('Error fetching community feed:', error);
+      res.status(500).json({ message: 'Failed to fetch community feed' });
+    }
   });
 
   // Preview moderation (no persistence, no rate-limit) – AI only suggests
@@ -152,7 +150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return res.json({ status: 'review_suggested', reason: moderation.reason, flags: moderation.flags });
   });
 
-  // Submit story (6h rate limit per ip+device, triage moderation)
+  // Submit story - now using Postgres storage
   app.post('/api/submit-story', async (req: any, res) => {
     const testBypassToken = process.env.TEST_BYPASS_TOKEN;
     const isBypass = testBypassToken && req.headers['x-test-bypass'] === testBypassToken;
@@ -160,17 +158,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const ip = (req.ip || '').replace(/[:].*$/, '') || 'ipless';
     const deviceHash = deviceId.split('').reduce((h: number, c: string) => (Math.imul(h ^ c.charCodeAt(0), 16777619))>>>0, 2166136261).toString(36);
     const rateKey = `post:${ip}:${deviceHash}`;
-    const now = Date.now();
+    const sixHourMs = 6 * 60 * 60 * 1000;
     let limited = false;
+
+    // Rate limiting check
     if (!isBypass) {
       if (upstashUrl && upstashToken) {
         if (await upstashGet(rateKey)) limited = true; else await upstashSetEx(rateKey, sixHourMs/1000);
       } else {
-        const ts = recentPostsInMemory.get(rateKey) || 0;
-        if (now - ts < sixHourMs) limited = true; else recentPostsInMemory.set(rateKey, now);
+        // Use Postgres rate limiting if available, fallback to memory
+        try {
+          limited = await storage.checkRateLimit(rateKey);
+          if (!limited) {
+            await storage.setRateLimit(rateKey, sixHourMs);
+          }
+        } catch {
+          // Fallback to memory
+          const ts = recentPostsInMemory.get(rateKey) || 0;
+          if (Date.now() - ts < sixHourMs) limited = true; else recentPostsInMemory.set(rateKey, Date.now());
+        }
       }
+      
       if (limited) {
-        const retryAfterSec = Math.round((sixHourMs - (now - (recentPostsInMemory.get(rateKey) || now))) / 1000);
+        const retryAfterSec = Math.round(sixHourMs / 1000);
         logEvent(req, 'submit_rate_limited_6h', { rateKey, retryAfterSec });
         return res.status(429).json({ code: 'rate_limited', retryAfterSec, message: 'Apni already post korechhen, 6 ghonta por abar.' });
       }
@@ -182,139 +192,279 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!text || typeof text !== 'string' || text.trim().length === 0) {
       return res.status(400).json({ message: 'Missing text' });
     }
-    // Lightweight triage (bypass full AI for severe quick block) then deeper analyze
+    
+    // Process text and detect language
     const raw = text.slice(0, 1000);
     const lower = raw.toLowerCase();
+    const detectedLang = /[\u0980-\u09FF]/.test(raw) ? 'bn' : 'en';
+    
+    // Severe content check
     const severeIndicators = /(child\s*sex|rape|kill\syou|behead|incest|pedo|bomb|acid\s*attack)/i;
     if (severeIndicators.test(lower)) {
       logEvent(req, 'submit_blocked_severe');
       return res.status(200).json({ status: 'blocked', message: 'Dada/Di, ei jinis publish kora jabe na.' });
     }
-    // Auto publish when bypass active (unless severe earlier)
+
+    // Generate unique post ID
+    const postId = 'P' + Date.now() + Math.random().toString(36).substr(2, 5);
+
+    // Auto publish when bypass active
     if (isBypass) {
-      const id = 'P' + (++postCounter);
-      const aid = 'A' + (++postCounter);
-      approved.unshift({ id: aid, text: raw, author: isAnonymous ? null : (name || null), lang: /[\u0980-\u09FF]/.test(raw) ? 'bn':'en', createdAt: new Date().toISOString(), featured: false, moderation: { flags: [], reason: 'test-bypass', usedAI: false, severity: 0, decision: 'approve' } });
-      logEvent(req, 'submit_published_test', { postId: id, approvedId: aid });
-      return res.status(200).json({ status: 'published', postId: id, approvedId: aid, test: true, message: 'Test bypass: published.' });
+      try {
+        const approvedPost = await storage.createCommunityPost({
+          text: raw,
+          author: isAnonymous ? null : (name || null),
+          language: detectedLang,
+          featured: false,
+          moderationFlags: [],
+          moderationReason: 'test-bypass',
+          moderationUsedAI: false,
+          moderationSeverity: 0,
+          moderationDecision: 'approve'
+        });
+        
+        logEvent(req, 'submit_published_test', { postId, approvedId: approvedPost.id });
+        return res.status(200).json({ 
+          status: 'published', 
+          postId, 
+          approvedId: approvedPost.id, 
+          test: true, 
+          message: 'Test bypass: published.' 
+        });
+      } catch (error) {
+        console.error('Error creating community post:', error);
+        return res.status(500).json({ message: 'Failed to create post' });
+      }
     }
+
+    // AI moderation
     let moderation: any;
-    try { moderation = await analyzeStory(raw); } catch { moderation = { decision: 'pending', reason: 'fallback', flags: [], usedAI: false, severity: 0 }; }
-    const id = 'P' + (++postCounter);
-    if (moderation.decision === 'approve') {
-      const aid = 'A' + (++postCounter);
-      approved.unshift({ id: aid, text: raw, author: isAnonymous ? null : (name || null), lang: /[\u0980-\u09FF]/.test(raw) ? 'bn':'en', createdAt: new Date().toISOString(), featured: false, moderation, test: isBypass });
-      logEvent(req, 'submit_published', { postId: id, approvedId: aid, test: isBypass });
-      return res.status(200).json({ status: 'published', postId: id, approvedId: aid, message: 'Shabash! Golpo live holo.', test: isBypass });
+    try { 
+      moderation = await analyzeStory(raw); 
+    } catch { 
+      moderation = { decision: 'pending', reason: 'fallback', flags: [], usedAI: false, severity: 0 }; 
     }
-    const item: PendingItem = { postId: id, text: raw, author: isAnonymous ? null : (name || null), createdAt: new Date().toISOString(), flagged_terms: moderation.flags, moderation };
-    pending.unshift(item);
-    logEvent(req, 'submit_pending_review', { postId: id, flags: moderation.flags, test: isBypass });
-    return res.status(200).json({ status: 'pending_review', postId: id, message: 'Dada/Di, ektu flagged kora holo — admin review korbe.', test: isBypass });
+
+    if (moderation.decision === 'approve') {
+      try {
+        const approvedPost = await storage.createCommunityPost({
+          text: raw,
+          author: isAnonymous ? null : (name || null),
+          language: detectedLang,
+          featured: false,
+          moderationFlags: moderation.flags,
+          moderationReason: moderation.reason,
+          moderationUsedAI: moderation.usedAI,
+          moderationSeverity: moderation.severity,
+          moderationDecision: 'approve'
+        });
+        
+        logEvent(req, 'submit_published', { postId, approvedId: approvedPost.id, test: isBypass });
+        return res.status(200).json({ 
+          status: 'published', 
+          postId, 
+          approvedId: approvedPost.id, 
+          message: 'Shabash! Golpo live holo.', 
+          test: isBypass 
+        });
+      } catch (error) {
+        console.error('Error creating approved community post:', error);
+        return res.status(500).json({ message: 'Failed to create post' });
+      }
+    }
+
+    // Add to pending queue
+    try {
+      await storage.createPendingCommunityPost({
+        postId,
+        text: raw,
+        author: isAnonymous ? null : (name || null),
+        language: detectedLang,
+        flaggedTerms: moderation.flags,
+        moderationFlags: moderation.flags,
+        moderationReason: moderation.reason,
+        moderationUsedAI: moderation.usedAI,
+        moderationSeverity: moderation.severity,
+        moderationDecision: 'pending'
+      });
+      
+      logEvent(req, 'submit_pending_review', { postId, flags: moderation.flags, test: isBypass });
+      return res.status(200).json({ 
+        status: 'pending_review', 
+        postId, 
+        message: 'Dada/Di, ektu flagged kora holo — admin review korbe.', 
+        test: isBypass 
+      });
+    } catch (error) {
+      console.error('Error creating pending community post:', error);
+      return res.status(500).json({ message: 'Failed to create pending post' });
+    }
   });
 
-  // Admin moderation list (unprotected for now – dev stub)
-  app.get('/api/admin/list-pending', (_req: any, res) => {
-    res.json(pending);
+  // Admin moderation list - using Postgres storage
+  app.get('/api/admin/list-pending', async (_req: any, res) => {
+    try {
+      const pending = await storage.getPendingCommunityPosts();
+      res.json(pending);
+    } catch (error) {
+      console.error('Error fetching pending posts:', error);
+      res.status(500).json({ message: 'Failed to fetch pending posts' });
+    }
   });
-  app.post('/api/admin/publish', (req: any, res) => {
+
+  // Admin publish posts - using Postgres storage
+  app.post('/api/admin/publish', async (req: any, res) => {
     const { postId, postIds, text } = req.body || {};
     const ids: string[] = postIds || (postId ? [postId] : []);
     const published: string[] = [];
-    ids.forEach(id => {
-      const idx = pending.findIndex(p => p.postId === id);
-      if (idx !== -1) {
-        const p = pending[idx];
-        pending.splice(idx,1);
-        const aid = 'A' + (++postCounter);
-        approved.unshift({ id: aid, text: (text && id===postId ? text : p.text), author: p.author, lang: /[\u0980-\u09FF]/.test(p.text) ? 'bn':'en', createdAt: new Date().toISOString(), featured: false });
-        published.push(id);
+    
+    try {
+      for (const id of ids) {
+        const editedText = (text && id === postId) ? text : undefined;
+        const approvedPost = await storage.approvePendingCommunityPost(id, editedText);
+        if (approvedPost) {
+          published.push(id);
+        }
       }
-    });
-    logEvent(req, 'publish', { count: published.length });
-    res.json({ ok: true, published });
+      
+      logEvent(req, 'publish', { count: published.length });
+      res.json({ ok: true, published });
+    } catch (error) {
+      console.error('Error publishing posts:', error);
+      res.status(500).json({ message: 'Failed to publish posts' });
+    }
   });
-  app.post('/api/admin/reject', (req: any, res) => {
+
+  // Admin reject posts - using Postgres storage
+  app.post('/api/admin/reject', async (req: any, res) => {
     const { postId, reason } = req.body || {};
-    const idx = pending.findIndex(p => p.postId === postId);
-    if (idx === -1) return res.status(404).json({ message: 'Not found' });
-    pending.splice(idx,1);
-    logEvent(req, 'reject', { postId, reason: (reason||'').slice(0,140) });
-    res.json({ ok: true });
+    
+    try {
+      const success = await storage.rejectPendingCommunityPost(postId);
+      if (!success) {
+        return res.status(404).json({ message: 'Not found' });
+      }
+      
+      logEvent(req, 'reject', { postId, reason: (reason||'').slice(0,140) });
+      res.json({ ok: true });
+    } catch (error) {
+      console.error('Error rejecting post:', error);
+      res.status(500).json({ message: 'Failed to reject post' });
+    }
   });
-  app.post('/api/admin/delete', (req: any, res) => {
+
+  // Admin delete posts - using Postgres storage
+  app.post('/api/admin/delete', async (req: any, res) => {
     const { postId, postIds } = req.body || {};
     const ids: string[] = postIds || (postId ? [postId] : []);
     let deleted = 0;
-    ids.forEach(id => {
-      const idx = pending.findIndex(p => p.postId === id);
-      if (idx !== -1) { pending.splice(idx,1); deleted++; }
-    });
-    logEvent(req, 'delete', { deleted });
-    res.json({ ok: true, deleted });
+    
+    try {
+      for (const id of ids) {
+        const success = await storage.deletePendingCommunityPost(id);
+        if (success) deleted++;
+      }
+      
+      logEvent(req, 'delete', { deleted });
+      res.json({ ok: true, deleted });
+    } catch (error) {
+      console.error('Error deleting posts:', error);
+      res.status(500).json({ message: 'Failed to delete posts' });
+    }
   });
-  app.post('/api/admin/feature', (req: any, res) => {
+  // Admin feature post - using Postgres storage
+  app.post('/api/admin/feature', async (req: any, res) => {
     const { postId } = req.body || {};
-    const item = approved.find(a => a.id === postId || a.id.replace(/^A/, 'P') === postId);
-    if (!item) return res.status(404).json({ message: 'Not found' });
-    approved.forEach(a => { if (a !== item) a.featured = false; });
-    item.featured = true;
-    logEvent(req, 'feature', { postId });
-    res.json({ ok: true });
+    
+    try {
+      const success = await storage.featureCommunityPost(postId);
+      if (!success) {
+        return res.status(404).json({ message: 'Not found' });
+      }
+      
+      logEvent(req, 'feature', { postId });
+      res.json({ ok: true });
+    } catch (error) {
+      console.error('Error featuring post:', error);
+      res.status(500).json({ message: 'Failed to feature post' });
+    }
   });
 
-  // --- Reaction endpoint with dedupe ---
+  // Reaction endpoint - using Postgres storage with deduplication
   const reactionTypes = new Set(['heart','laugh','thumbs']);
-  const reactionMemoryKeys = new Set<string>(); // key: postId:type:device
   app.post('/api/reaction', async (req: any, res) => {
     const { postId, type } = req.body || {};
-    if (!postId || !type || !reactionTypes.has(type)) return res.status(400).json({ message: 'Invalid reaction' });
-    const item = approved.find(a => a.id === postId);
-    if (!item) return res.status(404).json({ message: 'Post not found' });
+    if (!postId || !type || !reactionTypes.has(type)) {
+      return res.status(400).json({ message: 'Invalid reaction' });
+    }
+
     const deviceId = req.deviceId || 'unknown';
     const ip = (req.ip || '').replace(/[:].*$/, '') || 'ipless';
     const deviceHash = deviceId.split('').reduce((h: number, c: string) => (Math.imul(h ^ c.charCodeAt(0), 16777619))>>>0, 2166136261).toString(36);
     const dedupeKey = `reaction:${postId}:${type}:${deviceHash}`;
     let duplicate = false;
+
     const testBypassToken2 = process.env.TEST_BYPASS_TOKEN;
     if (testBypassToken2 && req.headers['x-test-bypass'] === testBypassToken2) {
-      item.reactions = item.reactions || {};
-      item.reactions[type] = (item.reactions[type]||0) + 1;
-      logEvent(req, 'reaction_test', { postId, type });
-      return res.json({ ok: true, postId, reactions: item.reactions, test: true });
+      // Test bypass - add reaction directly
+      try {
+        await storage.addReactionToCommunityPost(postId, type);
+        logEvent(req, 'reaction_test', { postId, type });
+        
+        // Get updated feed to return current reactions
+        const feed = await storage.getCommunityFeed();
+        const post = feed.find(p => p.id === postId);
+        return res.json({ ok: true, postId, reactions: post?.reactions || {}, test: true });
+      } catch (error) {
+        console.error('Error adding test reaction:', error);
+        return res.status(500).json({ message: 'Failed to add reaction' });
+      }
     }
+
+    // Check for reaction deduplication
     if (upstashUrl && upstashToken) {
       try {
         const exists = await fetch(`${upstashUrl}/get/${encodeURIComponent(dedupeKey)}`, { headers: { Authorization: `Bearer ${upstashToken}` } });
         const exJson = await exists.json().catch(()=>({}));
-        if (exJson.result) duplicate = true; else await fetch(`${upstashUrl}/set/${encodeURIComponent(dedupeKey)}/1?EX=${365*24*60*60}`, { headers: { Authorization: `Bearer ${upstashToken}` } });
+        if (exJson.result) duplicate = true; 
+        else await fetch(`${upstashUrl}/set/${encodeURIComponent(dedupeKey)}/1?EX=${365*24*60*60}`, { headers: { Authorization: `Bearer ${upstashToken}` } });
+      } catch (error) {
+        console.warn('Upstash deduplication error:', error);
+      }
+    } else {
+      // Use Postgres rate limiting for deduplication
+      try {
+        duplicate = await storage.checkRateLimit(dedupeKey);
         if (!duplicate) {
-          const countKey = `reaction_counts:${postId}:${type}`;
-          await fetch(`${upstashUrl}/incr/${encodeURIComponent(countKey)}`, { headers: { Authorization: `Bearer ${upstashToken}` } });
-          // Fetch updated counts for all types
-          item.reactions = item.reactions || {};
-          for (const t of reactionTypes) {
-            const ck = `reaction_counts:${postId}:${t}`;
-            try {
-              const r = await fetch(`${upstashUrl}/get/${encodeURIComponent(ck)}`, { headers: { Authorization: `Bearer ${upstashToken}` } });
-              const jj = await r.json().catch(()=>({}));
-              const val = parseInt(jj.result||'0',10) || 0;
-              item.reactions[t] = val;
-            } catch {/* ignore */}
-          }
+          await storage.setRateLimit(dedupeKey, 365 * 24 * 60 * 60 * 1000); // 1 year
         }
-      } catch { /* fallback to memory below if error triggers duplicate false path */ }
-    }
-    if (!upstashUrl || !upstashToken) {
-      if (reactionMemoryKeys.has(dedupeKey)) duplicate = true; else reactionMemoryKeys.add(dedupeKey);
-      if (!duplicate) {
-        item.reactions = item.reactions || {};
-        item.reactions[type] = (item.reactions[type]||0) + 1;
+      } catch (error) {
+        console.warn('Postgres deduplication error:', error);
       }
     }
-    if (duplicate) return res.status(409).json({ message: 'Apni eita age thekei like korechhen' });
-    logEvent(req, 'reaction', { postId, type });
-    res.json({ ok: true, postId, reactions: item.reactions || {} });
+
+    if (duplicate) {
+      logEvent(req, 'reaction_duplicate', { postId, type, dedupeKey });
+      return res.json({ ok: false, message: 'Already reacted' });
+    }
+
+    // Add reaction to post
+    try {
+      const success = await storage.addReactionToCommunityPost(postId, type);
+      if (!success) {
+        return res.status(404).json({ message: 'Post not found' });
+      }
+      
+      logEvent(req, 'reaction_added', { postId, type });
+      
+      // Get updated reactions to return
+      const feed = await storage.getCommunityFeed();
+      const post = feed.find(p => p.id === postId);
+      res.json({ ok: true, postId, reactions: post?.reactions || {} });
+    } catch (error) {
+      console.error('Error adding reaction:', error);
+      res.status(500).json({ message: 'Failed to add reaction' });
+    }
   });
 
   // (Optional) expose last device logs (dev only)

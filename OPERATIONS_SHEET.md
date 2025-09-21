@@ -18,12 +18,14 @@ Output:
 ## 3. Render Deployment
 Environment variables (Render dashboard -> Environment):
 ```
-DATABASE_URL=...
-GEMINI_API_KEY=...
+DATABASE_URL=postgresql://neondb_owner:npg_tnZHhjiP0c9s@ep-snowy-rain-adu1hltp-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+GEMINI_API_KEY=AIzaSyDZc4bEPBkqa2zLCxV_XNVEWYRAR4PmTB4
 JWT_SECRET=...
-YOUTUBE_CHANNEL_ID=...
+YOUTUBE_CHANNEL_ID=UCNXvQhwAn4b2sAm6pCM9w7Q
+YOUTUBE_API_KEY=AIzaSyC9xBYncxvSALTuVr2pqTnokHHxbFOLiH8
 CORS_ORIGIN=https://<netlify-site>.netlify.app
 ```
+**Note**: DATABASE_URL is required for persistent storage of community posts, blog posts, and user data in Neon PostgreSQL database.
 Build Command (choose one):
 ```
 # Recommended (ensures devDependencies installed before building)

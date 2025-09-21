@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type BlogPost, type InsertBlogPost, type CollaborationRequest, type InsertCollaborationRequest } from "@shared/schema";
+import { type User, type InsertUser, type BlogPost, type InsertBlogPost, type CollaborationRequest, type InsertCollaborationRequest, type CommunityPost, type CommunityPendingPost } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -17,6 +17,19 @@ export interface IStorage {
   markLeadAsOpened(id: string): Promise<CollaborationRequest | undefined>;
   updateLeadStatus(id: string, leadStatus: string): Promise<CollaborationRequest | undefined>;
   updateFollowUpNotes(id: string, notes: string): Promise<CollaborationRequest | undefined>;
+  
+  // Community methods
+  getCommunityFeed(): Promise<(CommunityPost & { reactions?: Record<string, number> })[]>;
+  createCommunityPost(data: { text: string; author: string | null; language: 'bn' | 'en'; featured?: boolean; moderationFlags?: string[]; moderationReason?: string; moderationUsedAI?: boolean; moderationSeverity?: number; moderationDecision?: string; }): Promise<CommunityPost>;
+  featureCommunityPost(postId: string): Promise<boolean>;
+  addReactionToCommunityPost(postId: string, reactionType: string): Promise<boolean>;
+  getPendingCommunityPosts(): Promise<CommunityPendingPost[]>;
+  createPendingCommunityPost(data: { postId: string; text: string; author: string | null; language: 'bn' | 'en'; flaggedTerms?: string[]; moderationFlags?: string[]; moderationReason?: string; moderationUsedAI?: boolean; moderationSeverity?: number; moderationDecision?: string; }): Promise<CommunityPendingPost>;
+  approvePendingCommunityPost(postId: string, editedText?: string): Promise<CommunityPost | null>;
+  rejectPendingCommunityPost(postId: string): Promise<boolean>;
+  deletePendingCommunityPost(postId: string): Promise<boolean>;
+  checkRateLimit(key: string): Promise<boolean>;
+  setRateLimit(key: string, expiresInMs: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -219,6 +232,41 @@ export class MemStorage implements IStorage {
     return updated;
   }
 
+  // Community methods (stubs - not implemented for memory storage)
+  async getCommunityFeed(): Promise<(CommunityPost & { reactions?: Record<string, number> })[]> {
+    console.warn('Community features not implemented in MemStorage');
+    return [];
+  }
+  async createCommunityPost(): Promise<CommunityPost> {
+    throw new Error('Community features not implemented in MemStorage');
+  }
+  async featureCommunityPost(): Promise<boolean> {
+    return false;
+  }
+  async addReactionToCommunityPost(): Promise<boolean> {
+    return false;
+  }
+  async getPendingCommunityPosts(): Promise<CommunityPendingPost[]> {
+    return [];
+  }
+  async createPendingCommunityPost(): Promise<CommunityPendingPost> {
+    throw new Error('Community features not implemented in MemStorage');
+  }
+  async approvePendingCommunityPost(): Promise<CommunityPost | null> {
+    return null;
+  }
+  async rejectPendingCommunityPost(): Promise<boolean> {
+    return false;
+  }
+  async deletePendingCommunityPost(): Promise<boolean> {
+    return false;
+  }
+  async checkRateLimit(): Promise<boolean> {
+    return false; // No rate limiting in memory storage
+  }
+  async setRateLimit(): Promise<boolean> {
+    return false;
+  }
 }
 
 // Dynamic storage selection. In production we avoid loading better-sqlite3 native module.

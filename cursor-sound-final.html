@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Final Cursor Sound Effect</title>
+  <style>
+    body { height: 100vh; margin: 0; background: #f8f8f8; }
+    .info { position: fixed; top: 20px; left: 20px; background: #fff; padding: 12px 20px; border-radius: 8px; box-shadow: 0 2px 8px #0001; font-family: sans-serif; }
+  </style>
+</head>
+<body>
+  <div class="info">
+    Move your cursor to hear the sound.<br>
+    <b>Sound stops and fades out instantly when you stop moving or change direction.</b>
+  </div>
+  <audio id="cursor-audio" src="/sounds/charm.mp3" preload="auto"></audio>
+  <script>
+    const audio = document.getElementById('cursor-audio');
+    let ctx, source, gain;
+    let lastX = null, lastY = null;
+    let playing = false;
+    let movementThreshold = 8;
+    let maxGain = 0.08;
+    let fadeOutMs = 60;
+    let stopTimeout = null;
+
+    function playSound() {
+      if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (!audio.src) return;
+      if (playing) return;
+      source = ctx.createBufferSource();
+      gain = ctx.createGain();
+      gain.gain.value = maxGain;
+      source.connect(gain);
+      gain.connect(ctx.destination);
+      fetch(audio.src)
+        .then(r => r.arrayBuffer())
+        .then(b => ctx.decodeAudioData(b))
+        .then(buffer => {
+          source.buffer = buffer;
+          source.loop = false;
+          source.start(0);
+          playing = true;
+          source.onended = () => { playing = false; };
+        });
+    }
+
+    function stopSound(fade = true) {
+      if (source && playing) {
+        if (fade && gain) {
+          gain.gain.cancelScheduledValues(ctx.currentTime);
+          gain.gain.setValueAtTime(gain.gain.value, ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0, ctx.currentTime + fadeOutMs/1000);
+          setTimeout(() => {
+            try { source.stop(0); } catch(e) {}
+            playing = false;
+          }, fadeOutMs);
+        } else {
+          try { source.stop(0); } catch(e) {}
+          playing = false;
+        }
+      }
+    }
+
+    function handleMove(e) {
+      if (lastX === null || lastY === null) {
+        lastX = e.clientX;
+        lastY = e.clientY;
+        return;
+      }
+      const dx = e.clientX - lastX;
+      const dy = e.clientY - lastY;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist > movementThreshold) {
+        playSound();
+        if (stopTimeout) clearTimeout(stopTimeout);
+        stopTimeout = setTimeout(() => stopSound(true), 80); // Stop quickly after movement
+      } else {
+        stopSound(true);
+      }
+      lastX = e.clientX;
+      lastY = e.clientY;
+    }
+
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseleave', () => stopSound(true));
+    document.addEventListener('mousedown', () => stopSound(false));
+    document.addEventListener('mouseup', () => stopSound(false));
+  </script>
+</body>
+</html>

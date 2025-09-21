@@ -21,15 +21,28 @@ export function clearCSRFToken() {
 }
 
 // API base management (supports Vite env and optional window override)
-const API_BASE: string = ((import.meta as any)?.env?.VITE_API_BASE ?? (
-  typeof window !== 'undefined' ? (window as any).__API_BASE__ : ''
-)) || '';
+// Add multiple fallbacks so production build never silently calls relative path (causing 404 on GH Pages for POST /api/*)
+function detectApiBase(): string {
+  // 1. Vite injected env (dev + proper prod build)
+  const envBase = (import.meta as any)?.env?.VITE_API_BASE;
+  if (envBase) return envBase;
+  // 2. Window override (can be injected via <script>)
+  if (typeof window !== 'undefined' && (window as any).__API_BASE__) return (window as any).__API_BASE__;
+  // 3. If running on GitHub Pages custom domain, use hardcoded production API host
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (/bongbari\.com$/i.test(host)) return 'https://bongbaricomedy.onrender.com';
+  }
+  return '';
+}
+
+const API_BASE: string = detectApiBase();
 
 export function buildApiUrl(url: string): string {
   if (!url) return url;
   // Absolute URLs pass through
   if (/^https?:\/\//i.test(url)) return url;
-  const base = (API_BASE || '').replace(/\/+$/, '');
+  const base = (API_BASE || '').replace(/\/+$|^$/g, '');
   const path = url.startsWith('/') ? url : `/${url}`;
   return base ? `${base}${path}` : path;
 }
@@ -46,17 +59,15 @@ export async function apiRequest(
   options?: RequestInit,
 ): Promise<any> {
   const finalUrl = buildApiUrl(url);
-  const sessionId = localStorage.getItem('admin_session');
+  const sessionId = typeof window !== 'undefined' ? localStorage.getItem('admin_session') : null;
   const headers: Record<string, string> = {
     ...(options?.headers as Record<string, string> || {}),
   };
   
-  // Add session token if available
   if (sessionId) {
     headers['Authorization'] = `Bearer ${sessionId}`;
   }
   
-  // Add CSRF token for non-GET requests
   const method = options?.method?.toUpperCase();
   if (method && method !== 'GET' && method !== 'HEAD') {
     const token = getCSRFToken();
@@ -81,24 +92,23 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const sessionId = localStorage.getItem('admin_session');
+    const sessionId = typeof window !== 'undefined' ? localStorage.getItem('admin_session') : null;
     const headers: HeadersInit = {};
     if (sessionId) {
-      headers.Authorization = `Bearer ${sessionId}`;
+      (headers as any).Authorization = `Bearer ${sessionId}`;
     }
     
-    // Handle queryKey properly - if it's an array with one string, use that
     const url = Array.isArray(queryKey) && queryKey.length === 1 && typeof queryKey[0] === 'string' 
       ? queryKey[0] 
-      : queryKey.join("/") as string;
-  const finalUrl = buildApiUrl(url);
-  const res = await fetch(finalUrl, {
+      : (queryKey as any).join("/") as string;
+    const finalUrl = buildApiUrl(url);
+    const res = await fetch(finalUrl, {
       credentials: "include",
       headers,
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+      return null as any;
     }
 
     await throwIfResNotOk(res);

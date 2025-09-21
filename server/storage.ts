@@ -161,15 +161,19 @@ export class MemStorage implements IStorage {
     const id = randomUUID();
     const now = new Date();
     const request: CollaborationRequest = {
-      ...insertRequest,
       id,
+      name: insertRequest.name,
+      company: insertRequest.company,
+      message: insertRequest.message ?? null,
+      email: insertRequest.email ?? null,
+      phone: insertRequest.phone ?? null,
       createdAt: now,
-      status: insertRequest.status || "submitted",
+      status: (insertRequest as any).status || 'submitted',
       opened: false,
       openedAt: null,
       leadStatus: 'new',
       followUpNotes: null,
-    };
+    } as any;
     this.collaborationRequests.set(id, request);
     return request;
   }
@@ -218,21 +222,13 @@ export class MemStorage implements IStorage {
 }
 
 // Dynamic storage selection. In production we avoid loading better-sqlite3 native module.
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
+import { postgresStorage } from './postgresStorage';
 let storageImpl: IStorage;
-if (process.env.NODE_ENV === 'production') {
-  storageImpl = new MemStorage();
-  console.log('[storage] Using in-memory storage (production) – SQLite disabled.');
+if (process.env.DATABASE_URL) {
+  storageImpl = postgresStorage as unknown as IStorage;
+  console.log('[storage] Using Postgres (Neon) storage.');
 } else {
-  try {
-    const { databaseStorage } = require('./databaseStorage');
-    databaseStorage.initializeDefaultData();
-    storageImpl = databaseStorage;
-    console.log('[storage] Using SQLite development storage.');
-  } catch (err) {
-    console.warn('[storage] Failed to load SQLite dev storage, falling back to memory:', err);
-    storageImpl = new MemStorage();
-  }
+  storageImpl = new MemStorage();
+  console.log('[storage] Using in-memory storage (no DATABASE_URL set).');
 }
 export const storage = storageImpl;

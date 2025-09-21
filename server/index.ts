@@ -13,10 +13,24 @@ app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 // Always send bodies; avoid 304-empty issues during dev
 app.disable('etag');
 
-// Minimal CORS for API
-const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
+// Minimal CORS for API - Allow production domains
+const allowedOrigins = [
+  'http://localhost:5173',              // Development
+  'https://www.bongbari.com',           // Production domain
+  'https://bongbari.com',               // Domain without www
+  'https://pramsss108.github.io'        // GitHub Pages fallback
+];
+
+const CORS_ORIGIN = process.env.NODE_ENV === 'production' ? allowedOrigins : '*';
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', CORS_ORIGIN);
+  const origin = req.headers.origin;
+  if (Array.isArray(CORS_ORIGIN)) {
+    if (origin && CORS_ORIGIN.includes(origin)) {
+      res.header('Access-Control-Allow-Origin', origin);
+    }
+  } else {
+    res.header('Access-Control-Allow-Origin', CORS_ORIGIN);
+  }
   res.header('Vary', 'Origin');
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-CSRF-Token');

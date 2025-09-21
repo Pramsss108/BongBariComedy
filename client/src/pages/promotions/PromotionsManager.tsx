@@ -22,23 +22,17 @@ export function PromotionsManager() {
   const { data: promo, isLoading, isFetching, error } = useQuery<PromoSettings>({
     queryKey: ['/api/homepage-promo'],
     queryFn: async () => {
-      // Prefer Netlify Functions path in dev/production
-      const url = buildApiUrl('/.netlify/functions/homepage-promo');
       try {
-        const r = await fetch(url, { headers: sessionId ? { Authorization: `Bearer ${sessionId}` } : {} });
+        const r = await fetch(buildApiUrl('/api/homepage-promo'), { 
+          headers: sessionId ? { Authorization: `Bearer ${sessionId}` } : {} 
+        });
         if (r.ok) {
           const data = await r.json();
           localStorage.setItem('promo_draft', JSON.stringify(data));
           return data;
         }
       } catch {}
-      // Try /api fallback
-      const r2 = await fetch(buildApiUrl('/api/homepage-promo'), { headers: sessionId ? { Authorization: `Bearer ${sessionId}` } : {} });
-      if (r2.ok) {
-        const data = await r2.json();
-        localStorage.setItem('promo_draft', JSON.stringify(data));
-        return data;
-      }
+      
       // Last resort: local draft
       const draft = localStorage.getItem('promo_draft');
       if (draft) return JSON.parse(draft);
@@ -48,16 +42,14 @@ export function PromotionsManager() {
 
   const addItem = useMutation({
     mutationFn: async (text: string) => {
-      // Try functions path first
-      let r = await fetch(buildApiUrl('/.netlify/functions/homepage-promo'), {
-  method: 'POST', headers: { 'Content-Type': 'application/json', ...(sessionId ? { Authorization: `Bearer ${sessionId}` } : {}) }, body: JSON.stringify({ text })
-      }).catch(() => undefined as any);
-      if (!r || !r.ok) {
-        // Fallback to /api
-        r = await fetch(buildApiUrl('/api/homepage-promo'), {
-          method: 'POST', headers: { 'Content-Type': 'application/json', ...(sessionId ? { Authorization: `Bearer ${sessionId}` } : {}) }, body: JSON.stringify({ text })
-        });
-      }
+      const r = await fetch(buildApiUrl('/api/homepage-promo'), {
+        method: 'POST', 
+        headers: { 
+          'Content-Type': 'application/json', 
+          ...(sessionId ? { Authorization: `Bearer ${sessionId}` } : {}) 
+        }, 
+        body: JSON.stringify({ text })
+      });
       if (!r.ok) throw new Error('Failed to add');
       const item = await r.json();
       // Update local draft immediately
@@ -66,19 +58,19 @@ export function PromotionsManager() {
       return item;
     },
     onSuccess: () => { setNewText(''); qc.invalidateQueries({ queryKey: ['/api/homepage-promo'] }); },
-    onError: (e: any) => { toast({ title: 'Add failed', description: e?.message || 'Function not reachable. Start Netlify Dev.', variant: 'destructive' }); }
+    onError: (e: any) => { toast({ title: 'Add failed', description: e?.message || 'API not reachable.', variant: 'destructive' }); }
   });
 
   const updateSettings = useMutation({
     mutationFn: async (patch: Partial<PromoSettings>) => {
-      let r = await fetch(buildApiUrl('/.netlify/functions/homepage-promo'), {
-  method: 'PUT', headers: { 'Content-Type': 'application/json', ...(sessionId ? { Authorization: `Bearer ${sessionId}` } : {}) }, body: JSON.stringify(patch)
-      }).catch(() => undefined as any);
-      if (!r || !r.ok) {
-        r = await fetch(buildApiUrl('/api/homepage-promo'), {
-          method: 'PUT', headers: { 'Content-Type': 'application/json', ...(sessionId ? { Authorization: `Bearer ${sessionId}` } : {}) }, body: JSON.stringify(patch)
-        });
-      }
+      const r = await fetch(buildApiUrl('/api/homepage-promo'), {
+        method: 'PUT', 
+        headers: { 
+          'Content-Type': 'application/json', 
+          ...(sessionId ? { Authorization: `Bearer ${sessionId}` } : {}) 
+        }, 
+        body: JSON.stringify(patch)
+      });
       if (!r.ok) throw new Error('Failed to save settings');
       // Update local draft
       const draft = (promo ?? { enabled: true, speed: 60, items: [] }) as PromoSettings;
@@ -90,14 +82,14 @@ export function PromotionsManager() {
 
   const updateItem = useMutation({
     mutationFn: async ({ id, patch }: { id: string, patch: Partial<PromoItem> }) => {
-      let r = await fetch(buildApiUrl(`/.netlify/functions/homepage-promo/${id}`), {
-  method: 'PUT', headers: { 'Content-Type': 'application/json', ...(sessionId ? { Authorization: `Bearer ${sessionId}` } : {}) }, body: JSON.stringify(patch)
-      }).catch(() => undefined as any);
-      if (!r || !r.ok) {
-        r = await fetch(buildApiUrl(`/api/homepage-promo/${id}`), {
-          method: 'PUT', headers: { 'Content-Type': 'application/json', ...(sessionId ? { Authorization: `Bearer ${sessionId}` } : {}) }, body: JSON.stringify(patch)
-        });
-      }
+      const r = await fetch(buildApiUrl(`/api/homepage-promo/${id}`), {
+        method: 'PUT', 
+        headers: { 
+          'Content-Type': 'application/json', 
+          ...(sessionId ? { Authorization: `Bearer ${sessionId}` } : {}) 
+        }, 
+        body: JSON.stringify(patch)
+      });
       if (!r.ok) throw new Error('Failed to update item');
       // Update local draft
       const draft = (promo ?? { enabled: true, speed: 60, items: [] }) as PromoSettings;
@@ -105,15 +97,15 @@ export function PromotionsManager() {
       localStorage.setItem('promo_draft', JSON.stringify({ ...draft, items }));
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['/api/homepage-promo'] }),
-    onError: (e: any) => { toast({ title: 'Update failed', description: e?.message || 'Function not reachable.', variant: 'destructive' }); }
+    onError: (e: any) => { toast({ title: 'Update failed', description: e?.message || 'API not reachable.', variant: 'destructive' }); }
   });
 
   const removeItem = useMutation({
     mutationFn: async (id: string) => {
-      let r = await fetch(buildApiUrl(`/.netlify/functions/homepage-promo/${id}`), { method: 'DELETE', headers: { ...(sessionId ? { Authorization: `Bearer ${sessionId}` } : {}) } }).catch(() => undefined as any);
-      if (!r || !r.ok) {
-        r = await fetch(buildApiUrl(`/api/homepage-promo/${id}`), { method: 'DELETE', headers: { ...(sessionId ? { Authorization: `Bearer ${sessionId}` } : {}) } });
-      }
+      const r = await fetch(buildApiUrl(`/api/homepage-promo/${id}`), { 
+        method: 'DELETE', 
+        headers: { ...(sessionId ? { Authorization: `Bearer ${sessionId}` } : {}) } 
+      });
       if (!r.ok) throw new Error('Failed to delete item');
       // Update local draft
       const draft = (promo ?? { enabled: true, speed: 60, items: [] }) as PromoSettings;
@@ -121,7 +113,7 @@ export function PromotionsManager() {
       localStorage.setItem('promo_draft', JSON.stringify({ ...draft, items }));
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['/api/homepage-promo'] }),
-    onError: (e: any) => { toast({ title: 'Delete failed', description: e?.message || 'Function not reachable.', variant: 'destructive' }); }
+    onError: (e: any) => { toast({ title: 'Delete failed', description: e?.message || 'API not reachable.', variant: 'destructive' }); }
   });
 
   const handleToggle = (enabled: boolean) => updateSettings.mutate({ enabled });

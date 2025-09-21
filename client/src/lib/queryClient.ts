@@ -36,13 +36,22 @@ function detectApiBase(): string {
   return '';
 }
 
-const API_BASE: string = detectApiBase();
+// Allow late assignment (e.g., if 404.html lacked script but index injects later).
+// We recompute if initially empty.
+let API_BASE: string = detectApiBase();
+
+function ensureApiBase(): string {
+  if (!API_BASE) {
+    API_BASE = detectApiBase();
+  }
+  return API_BASE;
+}
 
 export function buildApiUrl(url: string): string {
   if (!url) return url;
   // Absolute URLs pass through
   if (/^https?:\/\//i.test(url)) return url;
-  const base = (API_BASE || '').replace(/\/+$|^$/g, '');
+  const base = (ensureApiBase() || '').replace(/\/+$|^$/g, '');
   const path = url.startsWith('/') ? url : `/${url}`;
   return base ? `${base}${path}` : path;
 }

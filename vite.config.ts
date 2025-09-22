@@ -158,3 +158,4 @@ export default defineConfig({
 });
 
 // Build-test: client change to trigger workflow build
+// Test: deploy from main after removing environment restrictions

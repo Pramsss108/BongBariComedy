@@ -17,6 +17,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.decide.outputs.skip }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -33,34 +35,39 @@ jobs:
             tailwind.config.*
             tsconfig*.json
 
-      - name: Skip if no relevant changes
-        if: steps.changes.outputs.any_changed == 'false' && github.event_name == 'push'
+      - name: Decide skip
+        id: decide
         run: |
-          echo "No client-facing changes detected. Skipping build & deploy." 
-          echo "Set 'FORCE_PAGES_DEPLOY=1' in commit message to override." 
-        shell: bash
-        continue-on-error: false
-
-      - name: Continue if forced override
-        if: steps.changes.outputs.any_changed == 'false' && contains(github.event.head_commit.message, 'FORCE_PAGES_DEPLOY')
-        run: echo "Override detected in commit message; proceeding anyway."
+          FORCE_OVERRIDE="${{ contains(github.event.head_commit.message, 'FORCE_PAGES_DEPLOY') }}"
+          if [ "${{ steps.changes.outputs.any_changed }}" = "false" ] && [ "$FORCE_OVERRIDE" != "true" ]; then
+            echo "No relevant client changes; marking skip=true"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "Proceeding with build"
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Set up Node
+        if: steps.decide.outputs.skip == 'false'
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
 
       - name: Install dependencies
+        if: steps.decide.outputs.skip == 'false'
         run: npm ci
 
       - name: TypeScript check (no emit)
+        if: steps.decide.outputs.skip == 'false'
         run: npm run check
 
       - name: Build client (includes 404.html copy)
+        if: steps.decide.outputs.skip == 'false'
         run: npm run build:client
 
       - name: Verify build outputs
+        if: steps.decide.outputs.skip == 'false'
         run: |
           echo "Listing dist/public (should contain index.html and 404.html)" 
           ls -al dist/public || true
@@ -68,13 +75,19 @@ jobs:
           test -f dist/public/404.html || (echo "ERROR: 404.html missing" && exit 1)
           echo "✅ Build artifact structure looks OK"
 
+      - name: Setup Pages
+        if: steps.decide.outputs.skip == 'false'
+        uses: actions/configure-pages@v5
+
       - name: Upload artifact for Pages
+        if: steps.decide.outputs.skip == 'false'
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist/public
 
   deploy:
     needs: build
+    if: needs.build.outputs.skip == 'false'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

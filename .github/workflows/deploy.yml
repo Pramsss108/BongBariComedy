@@ -1,13 +1,8 @@
-name: Build and Deploy Frontend
+name: Deploy Frontend to GitHub Pages
 
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'client/**'
-      - 'package.json'
-      - 'vite.config.ts'
-      - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
 permissions:
@@ -16,34 +11,32 @@ permissions:
   id-token: write
 
 concurrency:
-  group: 'pages'
-  cancel-in-progress: true
+  group: pages-deploy
+  cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      VITE_API_BASE: https://bongbaricomedy.onrender.com
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
           cache: 'npm'
 
-      - name: Install deps
+      - name: Install dependencies
         run: npm ci
 
-      - name: Build client (Vite)
+      - name: Build client (includes 404.html copy)
         run: npm run build:client
 
-      - name: Upload artifact (dist/public)
+      - name: Upload artifact for Pages
         uses: actions/upload-pages-artifact@v3
         with:
-           path: dist/public
+          path: dist/public
 
   deploy:
     needs: build
@@ -51,9 +44,6 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    permissions:
-      pages: write
-      id-token: write
     steps:
       - name: Deploy to GitHub Pages
         id: deployment

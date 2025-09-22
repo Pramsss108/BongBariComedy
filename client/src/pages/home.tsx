@@ -282,7 +282,7 @@ const Home = () => {
       
   <ParallaxContainer>
         <main className="relative z-10 bg-brand-yellow min-h-screen">
-          <div className="container mx-auto px-3 sm:px-4 lg:px-6">
+          <div className="mobile-container">
 
           {/* HERO CLUSTER (scales to fit) */}
           <div
@@ -310,7 +310,7 @@ const Home = () => {
             </motion.div>
             {/* PromoMarquee removed: placeholder strip could go here later */}
             <motion.div
-              className={`w-full mx-auto mb-1 sm:mb-1.5 ${compactHero ? 'max-w-sm md:max-w-md' : 'max-w-lg md:max-w-xl'} transition-all`}
+              className="w-full mx-auto mobile-spacing"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6, delay: 0.3 }}
@@ -319,11 +319,11 @@ const Home = () => {
                 const landscapeId = heroVideoOverride || (latestVideos && latestVideos[0]?.videoId) || fallbackVideoData[0].videoId;
                 // Gate iframe: before entering site (decision) show a placeholder skeleton so layout height stable
                 return (
-                  <div className="relative w-full rounded-xl overflow-hidden shadow-md lg:shadow-lg border border-brand-blue/70 bg-black aspect-[9/16] sm:aspect-video">
+                  <div className="mobile-video-container shadow-md lg:shadow-lg border border-brand-blue/70 bg-black relative">
                     {!enteredSite && (
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
-                          <div className="w-[65%] aspect-[9/16] sm:aspect-video bg-gray-600/40 rounded-lg animate-pulse" />
+                          <div className="w-[80%] h-[80%] bg-gray-600/40 rounded-lg animate-pulse" />
                         </div>
                       </div>
                     )}

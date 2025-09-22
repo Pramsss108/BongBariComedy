@@ -62,6 +62,10 @@ jobs:
         if: steps.decide.outputs.skip == 'false'
         run: npm run check
 
+      - name: Run tests
+        if: steps.decide.outputs.skip == 'false'
+        run: npm run test
+
       - name: Build client (includes 404.html copy)
         if: steps.decide.outputs.skip == 'false'
         run: npm run build:client

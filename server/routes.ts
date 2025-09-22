@@ -476,6 +476,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ ok: true, aiReady: Boolean(process.env.GEMINI_API_KEY) });
   });
 
+  // Version endpoint: build info and diagnostics
+  app.get('/api/version', async (_req, res) => {
+    try {
+      const versionInfo = {
+        version: '1.0.0',
+        buildTime: new Date().toISOString(),
+        nodeVersion: process.version,
+        environment: process.env.NODE_ENV || 'development',
+        uptime: Math.floor(process.uptime()),
+        status: 'healthy',
+        aiReady: Boolean(process.env.GEMINI_API_KEY)
+      };
+      res.json(versionInfo);
+    } catch (error) {
+      res.status(500).json({ 
+        error: 'Failed to get version info',
+        status: 'unhealthy' 
+      });
+    }
+  });
+
   // Readiness endpoint: verifies background caches warmed; never blocks startup
   app.get('/api/ready', (_req, res) => {
     try {

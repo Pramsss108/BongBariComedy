@@ -12,27 +12,38 @@ import { useRickshawSound } from "@/hooks/useRickshawSound";
 import { useMagicalHoverSounds } from "@/hooks/useMagicalHoverSounds";
 import { useSimpleCharmSound } from "@/hooks/useSimpleCharmSound";
 import { CharmSoundSelector } from "@/components/CharmSoundSelector";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense, lazy } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import Home from "@/pages/home";
-import About from "@/pages/about";
-import WorkWithUs from "@/pages/work-with-us";
-import Contact from "@/pages/contact";
-import Blog from "@/pages/blog";
-import FreeTools from "./pages/free-tools";
-import Admin from "@/pages/admin";
-import Login from "@/pages/login";
-import BlogPost from "@/pages/blog-post";
-import NotFound from "@/pages/not-found";
-import BongBot from "@/components/BongBot";
-import { AdminChatbot } from "@/pages/AdminChatbot";
-import { AdminHomepage } from "@/pages/AdminHomepage";
-import AdminModeration from "@/pages/AdminModeration";
-import CommunityFeed from "@/pages/community-feed";
 import Navigation from "@/components/navigation";
 import { ensureAudioUnlocked } from "@/lib/audioUnlock";
 import GreetingConsent from "@/components/GreetingConsent";
 import { isAudioUnlocked, resumeAudioNow } from "@/lib/audioUnlock";
+import BongBot from "@/components/BongBot";
+
+// Lazy load components for code splitting
+const About = lazy(() => import("@/pages/about"));
+const WorkWithUs = lazy(() => import("@/pages/work-with-us"));
+const Contact = lazy(() => import("@/pages/contact"));
+const Blog = lazy(() => import("@/pages/blog"));
+const FreeTools = lazy(() => import("./pages/free-tools"));
+const Admin = lazy(() => import("@/pages/admin"));
+const Login = lazy(() => import("@/pages/login"));
+const BlogPost = lazy(() => import("@/pages/blog-post"));
+const NotFound = lazy(() => import("@/pages/not-found"));
+const AdminChatbot = lazy(() => import("@/pages/AdminChatbot").then(m => ({ default: m.AdminChatbot })));
+const AdminHomepage = lazy(() => import("@/pages/AdminHomepage").then(m => ({ default: m.AdminHomepage })));
+const AdminModeration = lazy(() => import("@/pages/AdminModeration"));
+const CommunityFeed = lazy(() => import("@/pages/community-feed"));
+
+// Loading fallback component
+function LoadingFallback() {
+  return (
+    <div className="flex items-center justify-center min-h-[200px]">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+    </div>
+  );
+}
 
 function Router() {
   const [showCharmSelector, setShowCharmSelector] = useState(false);
@@ -147,19 +158,71 @@ function Router() {
       {!isAuthenticated && <MagicalCursor />}
       <Switch>
         <Route path="/" component={Home} />
-        <Route path="/about" component={About} />
-        <Route path="/work-with-us" component={WorkWithUs} />
-  <Route path="/contact" component={Contact} />
-  <Route path="/blog" component={Blog} />
-  <Route path="/tools" component={FreeTools} />
-  <Route path="/community/feed" component={CommunityFeed} />
-        <Route path="/blog/:slug" component={BlogPost} />
-        <Route path="/admin" component={Admin} />
-        <Route path="/admin/chatbot" component={AdminChatbot} />
-        <Route path="/admin/homepage" component={AdminHomepage} />
-  <Route path="/admin/moderation" component={AdminModeration} />
-        <Route path="/login" component={Login} />
-        <Route component={NotFound} />
+        <Route path="/about">
+          <Suspense fallback={<LoadingFallback />}>
+            <About />
+          </Suspense>
+        </Route>
+        <Route path="/work-with-us">
+          <Suspense fallback={<LoadingFallback />}>
+            <WorkWithUs />
+          </Suspense>
+        </Route>
+        <Route path="/contact">
+          <Suspense fallback={<LoadingFallback />}>
+            <Contact />
+          </Suspense>
+        </Route>
+        <Route path="/blog">
+          <Suspense fallback={<LoadingFallback />}>
+            <Blog />
+          </Suspense>
+        </Route>
+        <Route path="/tools">
+          <Suspense fallback={<LoadingFallback />}>
+            <FreeTools />
+          </Suspense>
+        </Route>
+        <Route path="/community/feed">
+          <Suspense fallback={<LoadingFallback />}>
+            <CommunityFeed />
+          </Suspense>
+        </Route>
+        <Route path="/blog/:slug">
+          <Suspense fallback={<LoadingFallback />}>
+            <BlogPost />
+          </Suspense>
+        </Route>
+        <Route path="/admin">
+          <Suspense fallback={<LoadingFallback />}>
+            <Admin />
+          </Suspense>
+        </Route>
+        <Route path="/admin/chatbot">
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminChatbot />
+          </Suspense>
+        </Route>
+        <Route path="/admin/homepage">
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminHomepage />
+          </Suspense>
+        </Route>
+        <Route path="/admin/moderation">
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminModeration />
+          </Suspense>
+        </Route>
+        <Route path="/login">
+          <Suspense fallback={<LoadingFallback />}>
+            <Login />
+          </Suspense>
+        </Route>
+        <Route>
+          <Suspense fallback={<LoadingFallback />}>
+            <NotFound />
+          </Suspense>
+        </Route>
       </Switch>
       
       {/* Professional Bong Bot - Available on all pages */}

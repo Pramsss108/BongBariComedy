@@ -13,6 +13,16 @@ import { ParallaxSection, ParallaxContainer } from "@/components/parallax-sectio
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import type { BlogPost } from "@shared/schema";
 
+type FeaturedPost = { id:string; title:string; excerpt:string; image:string; date:string; slug:string };
+type DisplayPost = BlogPost | FeaturedPost;
+
+function isFeatured(post: DisplayPost): post is FeaturedPost {
+  return (post as any).image !== undefined && (post as any).date !== undefined;
+}
+function isRealBlog(post: DisplayPost): post is BlogPost {
+  return (post as any).content !== undefined;
+}
+
 const Blog = () => {
   const [, setLocation] = useLocation();
   const [page, setPage] = useState(1);
@@ -64,9 +74,9 @@ const Blog = () => {
     items: displayPosts,
     loading: loadingMore,
     hasMore
-  } = useInfiniteScroll({
-    items: blogPosts && blogPosts.length > 0 ? blogPosts : featuredPosts,
-    fetchMore: fetchMorePosts,
+  } = useInfiniteScroll<DisplayPost>({
+    items: (blogPosts && blogPosts.length > 0 ? blogPosts : featuredPosts) as DisplayPost[],
+    fetchMore: fetchMorePosts as unknown as () => Promise<DisplayPost[]>,
     hasMore: page < 3, // Limit to 3 pages for demo
     threshold: 200
   });
@@ -168,13 +178,15 @@ const Blog = () => {
                                 className="text-gray-600 mb-4"
                                 data-testid={`blog-post-excerpt-${post.id}`}
                               >
-                                {'excerpt' in post ? post.excerpt : (post.content ? post.content.substring(0, 100) + '...' : '')}
+                                {isFeatured(post)
+                                  ? post.excerpt
+                                  : (isRealBlog(post) && post.content ? post.content.substring(0,100)+'...' : '')}
                               </p>
                               <div className="flex justify-between items-center">
                                 <div className="flex items-center text-sm text-gray-500">
                                   <Calendar className="w-4 h-4 mr-1" />
                                   <span data-testid={`blog-post-date-${post.id}`}>
-                                    {'date' in post ? post.date : new Date(post.createdAt!).toLocaleDateString()}
+                                    {isFeatured(post) ? post.date : (isRealBlog(post) && post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '')}
                                   </span>
                                 </div>
                                 <motion.div
@@ -186,7 +198,7 @@ const Blog = () => {
                                     size="sm"
                                     className="text-brand-red hover:text-red-600 p-0"
                                     onClick={() => {
-                                      const slug = 'slug' in post ? post.slug : post.id;
+                                      const slug = isFeatured(post) ? post.slug : post.slug;
                                       setLocation(`/blog/${slug}`);
                                     }}
                                     data-testid={`blog-post-read-more-${post.id}`}

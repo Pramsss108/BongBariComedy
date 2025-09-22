@@ -2,7 +2,7 @@ name: Deploy Frontend to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -21,6 +21,30 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Detect client changes
+        id: changes
+        uses: tj-actions/changed-files@v45
+        with:
+          files: |
+            client/**
+            shared/**
+            vite.config.ts
+            package.json
+            tailwind.config.*
+            tsconfig*.json
+
+      - name: Skip if no relevant changes
+        if: steps.changes.outputs.any_changed == 'false' && github.event_name == 'push'
+        run: |
+          echo "No client-facing changes detected. Skipping build & deploy." 
+          echo "Set 'FORCE_PAGES_DEPLOY=1' in commit message to override." 
+        shell: bash
+        continue-on-error: false
+
+      - name: Continue if forced override
+        if: steps.changes.outputs.any_changed == 'false' && contains(github.event.head_commit.message, 'FORCE_PAGES_DEPLOY')
+        run: echo "Override detected in commit message; proceeding anyway."
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
@@ -30,8 +54,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: TypeScript check (no emit)
+        run: npm run check
+
       - name: Build client (includes 404.html copy)
         run: npm run build:client
+
+      - name: Verify build outputs
+        run: |
+          echo "Listing dist/public (should contain index.html and 404.html)" 
+          ls -al dist/public || true
+          test -f dist/public/index.html || (echo "ERROR: index.html missing" && exit 1)
+          test -f dist/public/404.html || (echo "ERROR: 404.html missing" && exit 1)
+          echo "✅ Build artifact structure looks OK"
 
       - name: Upload artifact for Pages
         uses: actions/upload-pages-artifact@v3
@@ -45,6 +80,16 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages
+          path: ./artifact
+      - name: Inspect downloaded artifact
+        run: |
+          echo "Downloaded artifact contents:" 
+          ls -R ./artifact | head -100
+          echo "(Truncated if long)"
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

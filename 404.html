@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Redirecting - Bong Bari</title>
+    
+    <script>
+      // Single Page Application (SPA) router fix for GitHub Pages
+      // This redirects all 404s back to index.html with the path as a query parameter
+      const currentPath = window.location.pathname;
+      const currentSearch = window.location.search;
+      const currentHash = window.location.hash;
+      
+      // Redirect to index.html with path info immediately
+      const redirectUrl = '/index.html?p=' + encodeURIComponent(currentPath) + currentSearch + currentHash;
+      window.location.replace(redirectUrl);
+    </script>
+  </head>
+  <body>
+    <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif; background: #1a1a1a; color: white; min-height: 100vh;">
+      <h1>🚀 Redirecting...</h1>
+      <p>Taking you to the right place...</p>
+      <p style="margin-top: 20px;">
+        <a href="/index.html" style="color: #4CAF50; text-decoration: none;">Go to Homepage</a>
+      </p>
+    </div>
+  </body>
+</html>

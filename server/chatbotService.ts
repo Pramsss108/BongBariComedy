@@ -10,6 +10,7 @@ try {
   }
 } catch (_) {}
 import { storage } from "./storage";
+import { type ChatbotTraining, type ChatbotTemplate } from "@shared/schema";
 import { trendsService } from "./trendsService";
 
 // Gracefully handle missing API key in development/preview
@@ -452,15 +453,19 @@ ${trendLines}
       
       // Search for trained responses with different strategies
       for (const keyword of keywords) {
-        const trainingData = await storage.searchChatbotTraining(keyword);
-        
+        let trainingData = [] as ChatbotTraining[];
+        if (typeof storage.searchChatbotTraining === 'function') {
+          trainingData = await storage.searchChatbotTraining(keyword);
+        } else {
+          // Fallback: fetch all and filter in memory
+          const all = await storage.getAllChatbotTraining();
+          trainingData = all.filter(d => d.keyword.toLowerCase().includes(keyword));
+        }
         if (trainingData.length > 0) {
-          // Find the best match based on priority and exact keyword match
-          const bestMatch = trainingData.find(data => 
-            data.keyword.toLowerCase() === keyword || 
+          const bestMatch = trainingData.find((data: ChatbotTraining) =>
+            data.keyword.toLowerCase() === keyword ||
             userMessage.toLowerCase().includes(data.keyword.toLowerCase())
-          ) || trainingData[0]; // Fallback to highest priority
-          
+          ) || trainingData[0];
           console.log(`🎯 Found trained response for keyword: "${keyword}"`);
           return bestMatch.botResponse;
         }
@@ -491,8 +496,13 @@ ${trendLines}
   // 📝 Get greeting templates from database
   async getGreetingTemplates(): Promise<string[]> {
     try {
-      const templates = await storage.getChatbotTemplatesByType('greeting');
-      return templates.map(template => template.content);
+      let templates: ChatbotTemplate[];
+      if (typeof storage.getChatbotTemplatesByType === 'function') {
+        templates = await storage.getChatbotTemplatesByType('greeting');
+      } else {
+        templates = (await storage.getAllChatbotTemplates()).filter(t => (t as any).templateType === 'greeting');
+      }
+      return templates.map((template: ChatbotTemplate) => template.content);
     } catch (error) {
       console.error('Error fetching greeting templates:', error);
       return ['🙏 Namaskar! Ami Bong Bot, Bong Bari er official AI assistant!'];
@@ -502,8 +512,13 @@ ${trendLines}
   // 🚀 Get quick reply templates from database
   async getQuickReplyTemplates(): Promise<string[]> {
     try {
-      const templates = await storage.getChatbotTemplatesByType('quick_reply');
-      return templates.map(template => template.content);
+      let templates: ChatbotTemplate[];
+      if (typeof storage.getChatbotTemplatesByType === 'function') {
+        templates = await storage.getChatbotTemplatesByType('quick_reply');
+      } else {
+        templates = (await storage.getAllChatbotTemplates()).filter(t => (t as any).templateType === 'quick_reply');
+      }
+      return templates.map((template: ChatbotTemplate) => template.content);
     } catch (error) {
       console.error('Error fetching quick reply templates:', error);
       return ['Kadate tow sobai pare Haste Chao?', 'Collab korlei Hese Felbe, Try?'];

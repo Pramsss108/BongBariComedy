@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { getDeviceId } from '@/lib/deviceId';
 import { useToast } from '@/hooks/use-toast';
+import { getTestBypassHeader } from '@/lib/testBypass';
 
 export interface StorySubmitFormProps {
   onSubmitted?: (result?: { postId?: string }) => void;
@@ -25,14 +26,19 @@ export function StorySubmitForm({ onSubmitted, autoReset = true, compact = false
   const clear = () => { if (!loading && !previewing) { setName(''); setLang('bn'); setText(''); } };
 
   useEffect(()=>{
-    if(!retryAt) return; const iv = setInterval(()=>{ if(Date.now()>retryAt) setRetryAt(null); else setRetryAt(r=>r ? r : r); },1000); return ()=> clearInterval(iv);
-  import { getTestBypassHeader } from '@/lib/testBypass';
+    if(!retryAt) return; 
+    const iv = setInterval(()=>{ 
+      if(Date.now()>retryAt) setRetryAt(null); 
+      else setRetryAt(r=>r ? r : r); 
+    },1000); 
+    return ()=> clearInterval(iv);
   },[retryAt]);
 
   const formatCountdown = () => {
     if(!retryAt) return '';
-        const r = await fetch('/api/moderate-preview', { method:'POST', headers:{ 'Content-Type':'application/json','X-Device-Id': getDeviceId(), ...getTestBypassHeader() }, body: JSON.stringify({ text }) });
-    const sec = Math.floor(diff/1000);
+    const remainingMs = retryAt - Date.now();
+    if (remainingMs <= 0) return '';
+    const sec = Math.floor(remainingMs/1000);
     const h = Math.floor(sec/3600).toString().padStart(2,'0');
     const m = Math.floor((sec%3600)/60).toString().padStart(2,'0');
     return `${h}:${m}`;
@@ -41,7 +47,7 @@ export function StorySubmitForm({ onSubmitted, autoReset = true, compact = false
   const runPreview = async (): Promise<'ok'|'review'|'blocked'> => {
     setPreviewing(true);
     try {
-      const r = await fetch('/api/moderate-preview', { method:'POST', headers:{ 'Content-Type':'application/json','X-Device-Id': getDeviceId() }, body: JSON.stringify({ text }) });
+      const r = await fetch('/api/moderate-preview', { method:'POST', headers:{ 'Content-Type':'application/json','X-Device-Id': getDeviceId(), ...getTestBypassHeader() }, body: JSON.stringify({ text }) });
       const j = await r.json().catch(()=>({}));
       if (j.status === 'ok') return 'ok';
       if (j.status === 'review_suggested') { setReviewInfo({ reason: j.reason, flags: j.flags }); setShowReviewModal(true); return 'review'; }

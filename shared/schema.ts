@@ -126,9 +126,13 @@ export const insertCollaborationRequestSchema = createInsertSchema(collaboration
   path: ["email", "phone"]
 });
 
+// Export select and insert types for core tables
 export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
 export type BlogPost = typeof blogPosts.$inferSelect;
+export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
 export type CollaborationRequest = typeof collaborationRequests.$inferSelect;
+export type InsertCollaborationRequest = z.infer<typeof insertCollaborationRequestSchema>;
 export type CommunityPost = typeof communityPosts.$inferSelect;
 export type CommunityReaction = typeof communityReactions.$inferSelect;
 export type CommunityPendingPost = typeof communityPendingPosts.$inferSelect;

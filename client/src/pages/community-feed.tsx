@@ -339,7 +339,7 @@ export default function CommunityFeed() {
             )}
           </div>
           <div className="ml-auto flex items-center gap-3 order-2 sm:order-none">
-            <ThemeToggleButton mode={mode} resolved={resolved} onCycle={cycleMode} />
+            <ThemeToggleButton mode={mode === 'system' ? 'auto' : mode} resolved={resolved} onCycle={cycleMode} />
           </div>
         </div>
         <p className="text-sm text-gray-700 mb-6">Your secret golpo corner. Audience powered highlight.</p>

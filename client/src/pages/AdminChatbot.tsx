@@ -49,18 +49,19 @@ export function AdminChatbot() {
   const queryClient = useQueryClient();
 
   // Fetch chatbot training data
-  const { data: trainingData = [], isLoading: isLoadingTraining } = useQuery({
+  // Fetch chatbot training data
+  const { data: trainingData = [], isLoading: isLoadingTraining } = useQuery<ChatbotTraining[]>({
     queryKey: ["/api/admin/chatbot-training"],
   });
 
   // Fetch chatbot templates
-  const { data: templatesData = [], isLoading: isLoadingTemplates } = useQuery({
+  const { data: templatesData = [], isLoading: isLoadingTemplates } = useQuery<ChatbotTemplate[]>({
     queryKey: ["/api/admin/chatbot-templates"],
   });
 
   // Training mutations
   const createTrainingMutation = useMutation({
-    mutationFn: (data: Partial<ChatbotTraining>) => apiRequest("/api/admin/chatbot-training", { method: "POST", body: data }),
+    mutationFn: (data: Partial<ChatbotTraining>) => apiRequest("/api/admin/chatbot-training", { method: "POST", body: JSON.stringify(data) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/chatbot-training"] });
       setIsTrainingDialogOpen(false);
@@ -71,7 +72,7 @@ export function AdminChatbot() {
 
   const updateTrainingMutation = useMutation({
     mutationFn: ({ id, ...data }: Partial<ChatbotTraining> & { id: number }) => 
-      apiRequest(`/api/admin/chatbot-training/${id}`, { method: "PUT", body: data }),
+      apiRequest(`/api/admin/chatbot-training/${id}`, { method: "PUT", body: JSON.stringify(data) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/chatbot-training"] });
       setIsTrainingDialogOpen(false);
@@ -90,7 +91,7 @@ export function AdminChatbot() {
 
   // Template mutations
   const createTemplateMutation = useMutation({
-    mutationFn: (data: Partial<ChatbotTemplate>) => apiRequest("/api/admin/chatbot-templates", { method: "POST", body: data }),
+    mutationFn: (data: Partial<ChatbotTemplate>) => apiRequest("/api/admin/chatbot-templates", { method: "POST", body: JSON.stringify(data) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/chatbot-templates"] });
       setIsTemplateDialogOpen(false);
@@ -101,7 +102,7 @@ export function AdminChatbot() {
 
   const updateTemplateMutation = useMutation({
     mutationFn: ({ id, ...data }: Partial<ChatbotTemplate> & { id: number }) => 
-      apiRequest(`/api/admin/chatbot-templates/${id}`, { method: "PUT", body: data }),
+      apiRequest(`/api/admin/chatbot-templates/${id}`, { method: "PUT", body: JSON.stringify(data) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/chatbot-templates"] });
       setIsTemplateDialogOpen(false);

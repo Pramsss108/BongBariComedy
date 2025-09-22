@@ -2,10 +2,18 @@ import { eq, and, or, desc, sql } from 'drizzle-orm';
 import { pgDb } from './db.pg';
 import { 
   users, blogPosts, collaborationRequests, communityPosts, communityReactions, communityPendingPosts, rateLimits,
-  type User, type InsertUser, type BlogPost, type InsertBlogPost,
-  type CollaborationRequest, type InsertCollaborationRequest,
-  type CommunityPost, type CommunityReaction, type CommunityPendingPost
+  chatbotTraining, chatbotTemplates, homepageContent, adminSettings,
+  type User, type BlogPost,
+  type CollaborationRequest,
+  type CommunityPost, type CommunityReaction, type CommunityPendingPost,
+  type ChatbotTraining, type InsertChatbotTraining,
+  type ChatbotTemplate, type InsertChatbotTemplate,
+  type HomepageContent, type InsertHomepageContent,
+  type AdminSetting, type InsertAdminSetting
 } from '../shared/schema';
+
+type InsertBlogPost = Omit<BlogPost, 'id' | 'createdAt' | 'updatedAt'>;
+type InsertCollaborationRequest = Omit<CollaborationRequest, 'id' | 'createdAt' | 'updatedAt'>;
 
 export class PostgresStorage {
   private db = pgDb;
@@ -13,7 +21,7 @@ export class PostgresStorage {
 
   async getUser(id: string): Promise<User | undefined> { if(!this.db) return undefined; const [u]= await this.db.select().from(users).where(eq(users.id,id)); return u; }
   async getUserByUsername(username: string): Promise<User | undefined> { if(!this.db) return undefined; const [u]= await this.db.select().from(users).where(eq(users.username,username)); return u; }
-  async createUser(insert: InsertUser): Promise<User> { if(!this.db) throw new Error('db'); const [u]= await this.db.insert(users).values(insert).returning(); return u; }
+  async createUser(insert: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> { if(!this.db) throw new Error('db'); const [u]= await this.db.insert(users).values(insert).returning(); return u; }
 
   async getBlogPosts(): Promise<BlogPost[]> { if(!this.db) return []; return await this.db.select().from(blogPosts).orderBy(desc(blogPosts.createdAt)); }
   async getBlogPost(id: string): Promise<BlogPost | undefined> { if(!this.db) return undefined; const [p]= await this.db.select().from(blogPosts).where(eq(blogPosts.id,id)); return p; }
@@ -287,6 +295,138 @@ export class PostgresStorage {
       // Key might already exist - that's OK for rate limiting
       return false;
     }
+  }
+  
+  // Chatbot training methods
+  async getAllChatbotTraining(): Promise<ChatbotTraining[]> {
+    if (!this.db) return [];
+    return await this.db.select().from(chatbotTraining).orderBy(desc(chatbotTraining.createdAt));
+  }
+  
+  async createChatbotTraining(data: InsertChatbotTraining): Promise<ChatbotTraining> {
+    if (!this.db) throw new Error('db');
+    const [training] = await this.db.insert(chatbotTraining).values(data).returning();
+    return training;
+  }
+  
+  async updateChatbotTraining(id: number, data: Partial<InsertChatbotTraining>): Promise<ChatbotTraining | undefined> {
+    if (!this.db) return undefined;
+    const [training] = await this.db.update(chatbotTraining)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(chatbotTraining.id, id))
+      .returning();
+    return training;
+  }
+  
+  async deleteChatbotTraining(id: number): Promise<boolean> {
+    if (!this.db) return false;
+    const result = await this.db.delete(chatbotTraining).where(eq(chatbotTraining.id, id));
+    return result.rowCount > 0;
+  }
+  
+  // Chatbot template methods
+  async getAllChatbotTemplates(): Promise<ChatbotTemplate[]> {
+    if (!this.db) return [];
+    return await this.db.select().from(chatbotTemplates).orderBy(desc(chatbotTemplates.createdAt));
+  }
+  
+  async createChatbotTemplate(data: InsertChatbotTemplate): Promise<ChatbotTemplate> {
+    if (!this.db) throw new Error('db');
+    const [template] = await this.db.insert(chatbotTemplates).values(data).returning();
+    return template;
+  }
+  
+  async updateChatbotTemplate(id: number, data: Partial<InsertChatbotTemplate>): Promise<ChatbotTemplate | undefined> {
+    if (!this.db) return undefined;
+    const [template] = await this.db.update(chatbotTemplates)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(chatbotTemplates.id, id))
+      .returning();
+    return template;
+  }
+  
+  async deleteChatbotTemplate(id: number): Promise<boolean> {
+    if (!this.db) return false;
+    const result = await this.db.delete(chatbotTemplates).where(eq(chatbotTemplates.id, id));
+    return result.rowCount > 0;
+  }
+  
+  // Homepage content methods
+  async getAllHomepageContent(): Promise<HomepageContent[]> {
+    if (!this.db) return [];
+    return await this.db.select().from(homepageContent).orderBy(desc(homepageContent.createdAt));
+  }
+  
+  async getActiveHomepageContent(): Promise<HomepageContent[]> {
+    if (!this.db) return [];
+    return await this.db.select().from(homepageContent)
+      .where(eq(homepageContent.isActive, true))
+      .orderBy(desc(homepageContent.createdAt));
+  }
+  
+  async getHomepageContentByType(type: string): Promise<HomepageContent[]> {
+    if (!this.db) return [];
+    return await this.db.select().from(homepageContent)
+      .where(eq(homepageContent.sectionType, type))
+      .orderBy(desc(homepageContent.createdAt));
+  }
+  
+  async createHomepageContent(data: InsertHomepageContent): Promise<HomepageContent> {
+    if (!this.db) throw new Error('db');
+    const [content] = await this.db.insert(homepageContent).values(data).returning();
+    return content;
+  }
+  
+  async updateHomepageContent(id: number, data: Partial<InsertHomepageContent>): Promise<HomepageContent | undefined> {
+    if (!this.db) return undefined;
+    const [content] = await this.db.update(homepageContent)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(homepageContent.id, id))
+      .returning();
+    return content;
+  }
+  
+  async deleteHomepageContent(id: number): Promise<boolean> {
+    if (!this.db) return false;
+    const result = await this.db.delete(homepageContent).where(eq(homepageContent.id, id));
+    return result.rowCount > 0;
+  }
+  
+  // Admin settings methods
+  async getAllAdminSettings(): Promise<AdminSetting[]> {
+    if (!this.db) return [];
+    return await this.db.select().from(adminSettings).orderBy(desc(adminSettings.updatedAt));
+  }
+  
+  async getPublicSettings(): Promise<AdminSetting[]> {
+    if (!this.db) return [];
+    return await this.db.select().from(adminSettings)
+      .where(eq(adminSettings.isPublic, true))
+      .orderBy(desc(adminSettings.updatedAt));
+  }
+  
+  async setAdminSetting(data: InsertAdminSetting): Promise<AdminSetting> {
+    if (!this.db) throw new Error('db');
+    // Try to update existing setting first
+    const existing = await this.db.select().from(adminSettings)
+      .where(eq(adminSettings.settingKey, data.settingKey));
+    
+    if (existing.length > 0) {
+      const [setting] = await this.db.update(adminSettings)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(adminSettings.settingKey, data.settingKey))
+        .returning();
+      return setting;
+    } else {
+      const [setting] = await this.db.insert(adminSettings).values(data).returning();
+      return setting;
+    }
+  }
+  
+  async deleteAdminSetting(key: string): Promise<boolean> {
+    if (!this.db) return false;
+    const result = await this.db.delete(adminSettings).where(eq(adminSettings.settingKey, key));
+    return result.rowCount > 0;
   }
 }
 

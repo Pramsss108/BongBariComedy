@@ -18,7 +18,7 @@ import SEOHead from "@/components/seo-head";
 import { ParallaxSection, ParallaxContainer } from "@/components/parallax-section";
 import { Youtube, Instagram, Phone, Mail, Twitter, Send, Home as HomeIcon, Users, TrendingUp, Smile, Edit3, Volume2, VolumeX } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { insertCollaborationRequestSchema, type InsertCollaborationRequest } from "@shared/schema";
+import { insertCollaborationRequestSchema, type CollaborationRequest } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useFunnySubmissionSound } from "@/hooks/useFunnySubmissionSound";
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
@@ -151,7 +151,7 @@ const Home = () => {
   });
 
 
-  const form = useForm<InsertCollaborationRequest>({
+  const form = useForm<CollaborationRequest>({
     resolver: zodResolver(insertCollaborationRequestSchema),
     defaultValues: {
       name: "",
@@ -176,7 +176,7 @@ const Home = () => {
                      watchedValues.company.trim() !== "";
 
   const collaborationMutation = useMutation({
-    mutationFn: (data: InsertCollaborationRequest) => apiRequest('/api/collaboration-requests', {
+    mutationFn: (data: CollaborationRequest) => apiRequest('/api/collaboration-requests', {
       method: 'POST',
       body: JSON.stringify(data),
       headers: {
@@ -203,7 +203,7 @@ const Home = () => {
   });
 
 
-  const onSubmit = (data: InsertCollaborationRequest) => {
+  const onSubmit = (data: CollaborationRequest) => {
     collaborationMutation.mutate(data);
   };
 

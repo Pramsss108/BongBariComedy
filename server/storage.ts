@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type BlogPost, type InsertBlogPost, type CollaborationRequest, type InsertCollaborationRequest, type CommunityPost, type CommunityPendingPost } from "@shared/schema";
+import { type User, type InsertUser, type BlogPost, type InsertBlogPost, type CollaborationRequest, type InsertCollaborationRequest, type CommunityPost, type CommunityPendingPost, type ChatbotTraining, type InsertChatbotTraining, type ChatbotTemplate, type InsertChatbotTemplate, type HomepageContent, type InsertHomepageContent, type AdminSetting, type InsertAdminSetting } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -30,6 +30,35 @@ export interface IStorage {
   deletePendingCommunityPost(postId: string): Promise<boolean>;
   checkRateLimit(key: string): Promise<boolean>;
   setRateLimit(key: string, expiresInMs: number): Promise<boolean>;
+  
+  // Chatbot methods
+  getAllChatbotTraining(): Promise<ChatbotTraining[]>;
+  // Optional search; if not implemented caller will fallback
+  searchChatbotTraining?(keyword: string): Promise<ChatbotTraining[]>;
+  createChatbotTraining(data: InsertChatbotTraining): Promise<ChatbotTraining>;
+  updateChatbotTraining(id: number, data: Partial<InsertChatbotTraining>): Promise<ChatbotTraining | undefined>;
+  deleteChatbotTraining(id: number): Promise<boolean>;
+  
+  // Template methods
+  getAllChatbotTemplates(): Promise<ChatbotTemplate[]>;
+  getChatbotTemplatesByType?(type: string): Promise<ChatbotTemplate[]>;
+  createChatbotTemplate(data: InsertChatbotTemplate): Promise<ChatbotTemplate>;
+  updateChatbotTemplate(id: number, data: Partial<InsertChatbotTemplate>): Promise<ChatbotTemplate | undefined>;
+  deleteChatbotTemplate(id: number): Promise<boolean>;
+  
+  // Homepage content methods
+  getAllHomepageContent(): Promise<HomepageContent[]>;
+  getActiveHomepageContent(): Promise<HomepageContent[]>;
+  getHomepageContentByType(type: string): Promise<HomepageContent[]>;
+  createHomepageContent(data: InsertHomepageContent): Promise<HomepageContent>;
+  updateHomepageContent(id: number, data: Partial<InsertHomepageContent>): Promise<HomepageContent | undefined>;
+  deleteHomepageContent(id: number): Promise<boolean>;
+  
+  // Admin settings methods
+  getAllAdminSettings(): Promise<AdminSetting[]>;
+  getPublicSettings(): Promise<AdminSetting[]>;
+  setAdminSetting(data: InsertAdminSetting): Promise<AdminSetting>;
+  deleteAdminSetting(key: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -265,6 +294,68 @@ export class MemStorage implements IStorage {
     return false; // No rate limiting in memory storage
   }
   async setRateLimit(): Promise<boolean> {
+    return false;
+  }
+  
+  // Chatbot methods (not implemented in MemStorage)
+  async getAllChatbotTraining(): Promise<ChatbotTraining[]> {
+    return [];
+  }
+  async createChatbotTraining(): Promise<ChatbotTraining> {
+    throw new Error('Chatbot features not implemented in MemStorage');
+  }
+  async updateChatbotTraining(): Promise<ChatbotTraining | undefined> {
+    return undefined;
+  }
+  async deleteChatbotTraining(): Promise<boolean> {
+    return false;
+  }
+  
+  // Template methods (not implemented in MemStorage)
+  async getAllChatbotTemplates(): Promise<ChatbotTemplate[]> {
+    return [];
+  }
+  async createChatbotTemplate(): Promise<ChatbotTemplate> {
+    throw new Error('Template features not implemented in MemStorage');
+  }
+  async updateChatbotTemplate(): Promise<ChatbotTemplate | undefined> {
+    return undefined;
+  }
+  async deleteChatbotTemplate(): Promise<boolean> {
+    return false;
+  }
+  
+  // Homepage content methods (not implemented in MemStorage)
+  async getAllHomepageContent(): Promise<HomepageContent[]> {
+    return [];
+  }
+  async getActiveHomepageContent(): Promise<HomepageContent[]> {
+    return [];
+  }
+  async getHomepageContentByType(): Promise<HomepageContent[]> {
+    return [];
+  }
+  async createHomepageContent(): Promise<HomepageContent> {
+    throw new Error('Homepage content features not implemented in MemStorage');
+  }
+  async updateHomepageContent(): Promise<HomepageContent | undefined> {
+    return undefined;
+  }
+  async deleteHomepageContent(): Promise<boolean> {
+    return false;
+  }
+  
+  // Admin settings methods (not implemented in MemStorage)
+  async getAllAdminSettings(): Promise<AdminSetting[]> {
+    return [];
+  }
+  async getPublicSettings(): Promise<AdminSetting[]> {
+    return [];
+  }
+  async setAdminSetting(): Promise<AdminSetting> {
+    throw new Error('Admin settings not implemented in MemStorage');
+  }
+  async deleteAdminSetting(): Promise<boolean> {
     return false;
   }
 }

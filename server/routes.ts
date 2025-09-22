@@ -1222,11 +1222,15 @@ Output format: JUST the 1–2 sentence greeting. No emojis unless fits naturally
     try {
       const validatedData = insertCollaborationRequestSchema.parse(req.body);
       
-      // Save request directly without verification
+      // Save request directly without verification - clean up the data types
       const requestData = {
-        ...validatedData,
+        name: validatedData.name,
+        company: validatedData.company,
+        email: validatedData.email,
+        phone: validatedData.phone,
+        message: validatedData.message,
         status: 'submitted'
-      } as const;
+      };
       
       const request = await storage.createCollaborationRequest(requestData);
       

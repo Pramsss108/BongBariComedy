@@ -24,12 +24,11 @@ export const validateCSRFToken = (sessionId: string, token: string): boolean => 
 // Clean expired tokens periodically
 setInterval(() => {
   const now = Date.now();
-  for (const [sessionId, data] of csrfTokens.entries()) {
-    if (data.expires < now) {
-      csrfTokens.delete(sessionId);
-    }
+  for (const entry of Array.from(csrfTokens.entries())) {
+    const [sessionId, data] = entry;
+    if (data.expires < now) csrfTokens.delete(sessionId);
   }
-}, 300000); // Clean every 5 minutes
+}, 300000);
 
 // Rate Limiting
 interface RateLimitEntry {
@@ -220,12 +219,9 @@ export const trackRequests = (req: Request, res: Response, next: NextFunction) =
 // Clean up old request history periodically
 setInterval(() => {
   const now = Date.now();
-  for (const [ip, history] of requestHistory.entries()) {
-    const filtered = history.filter(time => time > now - 300000);
-    if (filtered.length === 0) {
-      requestHistory.delete(ip);
-    } else {
-      requestHistory.set(ip, filtered);
-    }
+  for (const entry of Array.from(requestHistory.entries())) {
+    const [ip, history] = entry;
+    const filtered = history.filter(t => t > now - 300000);
+    if (filtered.length === 0) requestHistory.delete(ip); else requestHistory.set(ip, filtered);
   }
-}, 600000); // Clean every 10 minutes
+}, 600000);

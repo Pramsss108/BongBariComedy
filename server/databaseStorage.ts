@@ -56,8 +56,8 @@ export class DatabaseStorage {
   }
 
   async deleteBlogPost(id: string): Promise<boolean> {
-    const result = await db.delete(blogPosts).where(eq(blogPosts.id, id));
-    return result.rowCount > 0;
+    const deleted = await db.delete(blogPosts).where(eq(blogPosts.id, id)).returning({ id: blogPosts.id });
+    return deleted.length > 0;
   }
 
   // Collaboration request operations
@@ -117,8 +117,8 @@ export class DatabaseStorage {
   }
 
   async deleteCollaborationRequest(id: string): Promise<boolean> {
-    const result = await db.delete(collaborationRequests).where(eq(collaborationRequests.id, id));
-    return result.rowCount > 0;
+    const deleted = await db.delete(collaborationRequests).where(eq(collaborationRequests.id, id)).returning({ id: collaborationRequests.id });
+    return deleted.length > 0;
   }
 
   async markLeadAsOpened(id: string): Promise<CollaborationRequest | undefined> {
@@ -194,8 +194,8 @@ export class DatabaseStorage {
   }
 
   async deleteChatbotTraining(id: number): Promise<boolean> {
-    const result = await db.delete(chatbotTraining).where(eq(chatbotTraining.id, id));
-    return result.rowCount > 0;
+    const deleted = await db.delete(chatbotTraining).where(eq(chatbotTraining.id, id)).returning({ id: chatbotTraining.id });
+    return deleted.length > 0;
   }
 
   // 📝 CHATBOT TEMPLATE OPERATIONS
@@ -252,8 +252,8 @@ export class DatabaseStorage {
   }
 
   async deleteChatbotTemplate(id: number): Promise<boolean> {
-    const result = await db.delete(chatbotTemplates).where(eq(chatbotTemplates.id, id));
-    return result.rowCount > 0;
+    const deleted = await db.delete(chatbotTemplates).where(eq(chatbotTemplates.id, id)).returning({ id: chatbotTemplates.id });
+    return deleted.length > 0;
   }
 
   // 🏠 HOMEPAGE CONTENT OPERATIONS
@@ -290,8 +290,8 @@ export class DatabaseStorage {
   }
 
   async deleteHomepageContent(id: number): Promise<boolean> {
-    const result = await db.delete(homepageContent).where(eq(homepageContent.id, id));
-    return result.rowCount > 0;
+    const deleted = await db.delete(homepageContent).where(eq(homepageContent.id, id)).returning({ id: homepageContent.id });
+    return deleted.length > 0;
   }
 
   // ⚙️ ADMIN SETTINGS OPERATIONS
@@ -326,8 +326,8 @@ export class DatabaseStorage {
   }
 
   async deleteAdminSetting(key: string): Promise<boolean> {
-    const result = await db.delete(adminSettings).where(eq(adminSettings.settingKey, key));
-    return result.rowCount > 0;
+    const deleted = await db.delete(adminSettings).where(eq(adminSettings.settingKey, key)).returning({ key: adminSettings.settingKey });
+    return deleted.length > 0;
   }
 
   // 🚀 INITIALIZE DEFAULT DATA

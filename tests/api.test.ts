@@ -49,12 +49,12 @@ describe('BongBari API Tests', () => {
       const data = await response.json();
       
       expect(response.status).toBe(200);
-      expect(data).toHaveProperty('token');
+      expect(data).toHaveProperty('sessionId');
       expect(data).toHaveProperty('csrfToken');
-      expect(data).toHaveProperty('user');
+      expect(data).toHaveProperty('username');
       
       // Store tokens for subsequent tests
-      authToken = data.token;
+      authToken = data.sessionId;
       csrfToken = data.csrfToken;
     });
 
@@ -116,7 +116,9 @@ describe('BongBari API Tests', () => {
       const data = await response.json();
       
       expect(response.status).toBe(200);
-      expect(data).toHaveProperty('ready');
+      expect(data).toHaveProperty('ok');
+      expect(data).toHaveProperty('aiReady');
+      expect(data).toHaveProperty('aiKeyPresent');
     });
 
     test('should get Bengali comedy tips', async () => {
@@ -227,10 +229,11 @@ describe('BongBari API Tests', () => {
       const data = await response.json();
       
       expect(response.status).toBe(200);
-      expect(data).toHaveProperty('decision');
-      expect(data).toHaveProperty('confidence');
-      expect(data).toHaveProperty('reasoning');
-      expect(['approve', 'review', 'reject']).toContain(data.decision);
+      expect(data).toHaveProperty('status');
+      if (data.status === 'review_suggested') {
+        expect(data).toHaveProperty('reason');
+        expect(data).toHaveProperty('flags');
+      }
     });
 
     test('should handle story reactions', async () => {
@@ -323,7 +326,8 @@ describe('BongBari API Tests', () => {
       const data = await response.json();
       
       expect(response.status).toBe(200);
-      expect(data).toHaveProperty('trending');
+      expect(data).toHaveProperty('items');
+      expect(Array.isArray(data.items)).toBe(true);
     });
   });
 

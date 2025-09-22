@@ -62,9 +62,43 @@ jobs:
         if: steps.decide.outputs.skip == 'false'
         run: npm run check
 
+      - name: Start backend server for tests
+        if: steps.decide.outputs.skip == 'false'
+        run: |
+          echo "Starting backend server..."
+          npm run dev:server:esm &
+          SERVER_PID=$!
+          echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
+          echo "Backend server started with PID: $SERVER_PID"
+          
+      - name: Wait for backend to be ready
+        if: steps.decide.outputs.skip == 'false'
+        run: |
+          echo "Waiting for backend server to be ready..."
+          for i in {1..30}; do
+            if curl -f http://localhost:5000/api/health > /dev/null 2>&1; then
+              echo "✅ Backend server is ready!"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "❌ Backend server failed to start after 30 seconds"
+              exit 1
+            fi
+            echo "Attempt $i/30: Backend not ready yet, waiting 1 second..."
+            sleep 1
+          done
+
       - name: Run tests
         if: steps.decide.outputs.skip == 'false'
         run: npm run test
+        
+      - name: Stop backend server
+        if: always() && steps.decide.outputs.skip == 'false'
+        run: |
+          if [ ! -z "$SERVER_PID" ]; then
+            echo "Stopping backend server (PID: $SERVER_PID)..."
+            kill $SERVER_PID || true
+          fi
 
       - name: Build client (includes 404.html copy)
         if: steps.decide.outputs.skip == 'false'

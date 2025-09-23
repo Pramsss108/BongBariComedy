@@ -238,8 +238,16 @@ function Router() {
 function GlobalErrorBanner() {
   const [error, setError] = React.useState(null);
   useEffect(() => {
-    const handler = (event) => {
-      setError(event.error || event.reason || event.message || 'Unknown error');
+    const handler = (event: ErrorEvent | PromiseRejectionEvent) => {
+      setError(
+        // For ErrorEvent
+        (event as ErrorEvent).error ||
+        // For PromiseRejectionEvent
+        (event as PromiseRejectionEvent).reason ||
+        // Fallbacks
+        (event as any).message ||
+        'Unknown error'
+      );
     };
     window.addEventListener('error', handler);
     window.addEventListener('unhandledrejection', handler);

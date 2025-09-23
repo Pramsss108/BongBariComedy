@@ -19,7 +19,7 @@ describe('BongBari API Tests', () => {
   describe('Authentication Tests', () => {
     test('should get health status', async () => {
       const response = await fetch(`${API_BASE}/api/health`);
-      const data = await response.json();
+  const data: any = await response.json();
       
       expect(response.status).toBe(200);
       expect(data).toHaveProperty('ok', true);
@@ -28,7 +28,7 @@ describe('BongBari API Tests', () => {
 
     test('should get version info', async () => {
       const response = await fetch(`${API_BASE}/api/version`);
-      const data = await response.json();
+  const data: any = await response.json();
       
       expect(response.status).toBe(200);
       expect(data).toHaveProperty('version');
@@ -46,7 +46,7 @@ describe('BongBari API Tests', () => {
         body: JSON.stringify(TEST_USER),
       });
       
-      const data = await response.json();
+      const data = await response.json() as any;
       
       expect(response.status).toBe(200);
       expect(data).toHaveProperty('sessionId');
@@ -80,7 +80,7 @@ describe('BongBari API Tests', () => {
         },
       });
       
-      const data = await response.json();
+  const data: any = await response.json();
       
       expect(response.status).toBe(200);
   expect(data).toHaveProperty('username', TEST_USER.username);
@@ -99,7 +99,7 @@ describe('BongBari API Tests', () => {
         },
       });
       
-      const data = await response.json();
+      const data = await response.json() as any;
       
       expect(response.status).toBe(200);
       expect(data).toHaveProperty('csrfToken');
@@ -112,7 +112,7 @@ describe('BongBari API Tests', () => {
   describe('Chatbot Tests', () => {
     test('should check chatbot readiness', async () => {
       const response = await fetch(`${API_BASE}/api/ai/ready`);
-      const data = await response.json();
+  const data: any = await response.json();
       
       expect(response.status).toBe(200);
       expect(data).toHaveProperty('ok');
@@ -122,7 +122,7 @@ describe('BongBari API Tests', () => {
 
     test('should get Bengali comedy tips', async () => {
       const response = await fetch(`${API_BASE}/api/chatbot/tips`);
-      const data = await response.json();
+  const data: any = await response.json();
       
       expect(response.status).toBe(200);
       expect(data).toHaveProperty('tips');
@@ -144,7 +144,7 @@ describe('BongBari API Tests', () => {
         body: JSON.stringify(testMessage),
       });
       
-      const data = await response.json();
+  const data: any = await response.json();
       
       expect(response.status).toBe(200);
       expect(data).toHaveProperty('response');
@@ -166,7 +166,7 @@ describe('BongBari API Tests', () => {
         body: JSON.stringify(testMessage),
       });
       
-      const data = await response.json();
+  const data: any = await response.json();
       
       expect(response.status).toBe(200);
       expect(data).toHaveProperty('response');
@@ -177,7 +177,7 @@ describe('BongBari API Tests', () => {
   describe('Community Feed Tests (Bong Kahini)', () => {
     test('should get community feed', async () => {
       const response = await fetch(`${API_BASE}/api/community/feed`);
-      const data = await response.json();
+  const data: any = await response.json();
       
       expect(response.status).toBe(200);
       expect(Array.isArray(data)).toBe(true);
@@ -225,7 +225,7 @@ describe('BongBari API Tests', () => {
         body: JSON.stringify(testContent),
       });
       
-      const data = await response.json();
+  const data: any = await response.json();
       
       expect(response.status).toBe(200);
       expect(data).toHaveProperty('status');
@@ -238,7 +238,7 @@ describe('BongBari API Tests', () => {
     test('should handle story reactions', async () => {
       // First get the community feed to find a post to react to
       const feedResponse = await fetch(`${API_BASE}/api/community/feed`);
-      const feed = await feedResponse.json();
+  const feed: any = await feedResponse.json();
       
       if (feed.length > 0) {
         const postId = feed[0].id;
@@ -269,7 +269,7 @@ describe('BongBari API Tests', () => {
         },
       });
       
-      const data = await response.json();
+  const data: any = await response.json();
       
       expect(response.status).toBe(200);
       expect(Array.isArray(data)).toBe(true);
@@ -296,7 +296,7 @@ describe('BongBari API Tests', () => {
         },
       });
       
-      const data = await response.json();
+  const data: any = await response.json();
       
       expect(response.status).toBe(200);
       expect(Array.isArray(data)).toBe(true);
@@ -306,7 +306,7 @@ describe('BongBari API Tests', () => {
   describe('Blog and Content Tests', () => {
     test('should get blog posts', async () => {
       const response = await fetch(`${API_BASE}/api/blog`);
-      const data = await response.json();
+  const data: any = await response.json();
       
       expect(response.status).toBe(200);
       expect(Array.isArray(data)).toBe(true);
@@ -322,7 +322,7 @@ describe('BongBari API Tests', () => {
 
     test('should get trending data', async () => {
       const response = await fetch(`${API_BASE}/api/trends`);
-      const data = await response.json();
+  const data: any = await response.json();
       
       expect(response.status).toBe(200);
       expect(data).toHaveProperty('items');

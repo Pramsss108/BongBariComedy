@@ -1910,6 +1910,7 @@ section:nth-child(odd) {
     /* iOS Safari form improvements */
     input, textarea, select {
       -webkit-appearance: none !important;
+      appearance: none !important;
       border-radius: 8px !important;
       font-size: 16px !important; /* Prevent zoom */
     }
@@ -1918,6 +1919,7 @@ section:nth-child(odd) {
     .magnetic-button {
       -webkit-touch-callout: none !important;
       -webkit-user-select: none !important;
+      user-select: none !important;
       -webkit-tap-highlight-color: transparent !important;
       margin: 30px auto !important;
     }

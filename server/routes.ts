@@ -302,7 +302,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin moderation list - using Postgres storage
-  app.get('/api/admin/list-pending', async (_req: any, res) => {
+  app.get('/api/admin/list-pending', isAuthenticated, async (req: any, res) => {
     try {
       const pending = await storage.getPendingCommunityPosts();
       res.json(pending);

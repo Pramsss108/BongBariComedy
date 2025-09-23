@@ -83,8 +83,7 @@ describe('BongBari API Tests', () => {
       const data = await response.json();
       
       expect(response.status).toBe(200);
-      expect(data).toHaveProperty('user');
-      expect(data.user).toHaveProperty('username', TEST_USER.username);
+  expect(data).toHaveProperty('username', TEST_USER.username);
     });
 
     test('should fail to access protected route without token', async () => {

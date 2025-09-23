@@ -178,10 +178,21 @@ export function useMouseMovementChime(options: MouseMovementChimeOptions = {}) {
       const now = Date.now();
       if (now - lastMove < 30) return; // Ignore rapid events
       lastMove = now;
-      const currentPos = { x: event.clientX, y: event.clientY };
+      const cx = event.clientX;
+      const cy = event.clientY;
+      // Guard against browsers occasionally emitting non-finite values
+      if (!Number.isFinite(cx) || !Number.isFinite(cy)) {
+        return; // skip this event quietly
+      }
+      const currentPos = { x: cx, y: cy };
       const lastPos = lastMousePosRef.current;
       const distance = Math.hypot(currentPos.x - lastPos.x, currentPos.y - lastPos.y);
-      const el = document.elementFromPoint(event.clientX, event.clientY);
+      let el: Element | null = null;
+      try {
+        el = document.elementFromPoint(cx, cy);
+      } catch {
+        // ignore elementFromPoint errors
+      }
       const overInteractive = isInteractive(el as Element);
       if (distance >= movementThreshold && overInteractive) {
         startChime();

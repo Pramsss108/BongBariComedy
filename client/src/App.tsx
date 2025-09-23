@@ -13,6 +13,7 @@ import { useMagicalHoverSounds } from "@/hooks/useMagicalHoverSounds";
 import { useSimpleCharmSound } from "@/hooks/useSimpleCharmSound";
 import { CharmSoundSelector } from "@/components/CharmSoundSelector";
 import { useState, useEffect, Suspense, lazy } from "react";
+import React from "react";
 import { useAuth } from "@/hooks/useAuth";
 import Home from "@/pages/home";
 import Navigation from "@/components/navigation";
@@ -233,9 +234,36 @@ function Router() {
   );
 }
 
+// Global error overlay/banner
+function GlobalErrorBanner() {
+  const [error, setError] = React.useState(null);
+  useEffect(() => {
+    const handler = (event) => {
+      setError(event.error || event.reason || event.message || 'Unknown error');
+    };
+    window.addEventListener('error', handler);
+    window.addEventListener('unhandledrejection', handler);
+    return () => {
+      window.removeEventListener('error', handler);
+      window.removeEventListener('unhandledrejection', handler);
+    };
+  }, []);
+  if (!error) return null;
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
+      background: '#b91c1c', color: 'white', padding: '12px', fontWeight: 'bold',
+      fontFamily: 'monospace', textAlign: 'center',
+    }}>
+      ⚠️ Runtime error: {String(error)}
+    </div>
+  );
+}
+
 function AppContent() {
   return (
     <TooltipProvider>
+      <GlobalErrorBanner />
       <Toaster />
       <Router />
     </TooltipProvider>

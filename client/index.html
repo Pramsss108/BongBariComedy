@@ -31,11 +31,9 @@
   </head>
   <body>
     <div id="root"></div>
-    <script>
-      // Build version stamp for cache busting; replaced each deploy by timestamp.
-      window.__BUILD_VERSION__ = Date.now().toString();
-    </script>
-    <script type="module" src="/src/main.tsx?v="+window.__BUILD_VERSION__></script>
+    <!-- Build version stamp (update this string when deploying to bust caches deterministically) -->
+    <script>window.__BUILD_VERSION__='20250923-1';</script>
+    <script type="module" src="/src/main.tsx?v=20250923-1"></script>
     <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
     <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
   </body>

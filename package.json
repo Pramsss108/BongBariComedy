@@ -24,7 +24,8 @@
   "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:ui": "vitest --ui",
+  "test:ui": "vitest --ui",
+  "test:integration": "vitest run --config vitest.integration.config.ts",
     "db:push": "drizzle-kit push",
     "db:check": "node scripts/db-check.mjs"
   },

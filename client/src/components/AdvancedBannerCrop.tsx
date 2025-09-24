@@ -165,7 +165,7 @@ export function AdvancedBannerCrop({ imageUrl, onCropChange, className = "" }: A
     const deltaY = mousePos.y - lastMousePos.y;
 
     setCropData(prev => {
-      let newData = { ...prev };
+      const newData = { ...prev };
 
       switch (dragMode) {
         case 'move':

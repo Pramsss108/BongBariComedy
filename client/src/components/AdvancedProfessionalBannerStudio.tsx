@@ -201,7 +201,7 @@ export function AdvancedProfessionalBannerStudio({ imageUrl, onCropChange, class
     const deltaY = mousePos.y - lastMousePos.y;
 
     setCropData(prev => {
-      let newData = { ...prev };
+      const newData = { ...prev };
 
       switch (dragMode) {
         case 'move':

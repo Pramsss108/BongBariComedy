@@ -2,21 +2,55 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "Ship (Preflight → Commit → Push)",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"node scripts/preflight.cjs; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; git add -A; git commit -m \"${input:commitMessage}\"; if ($LASTEXITCODE -ne 0) { Write-Host 'No changes to commit, continuing.' }; git push origin main"
+			],
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always"
+			}
+		},
+		{
 			"label": "Run local (free ports + dev servers)",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"predev:live"
+			],
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always"
+			},
+			"dependsOn": [
+				"Start dev servers"
+			]
+		},
+		{
+			"label": "Start dev servers",
 			"type": "shell",
 			"command": "npm",
 			"args": [
 				"run",
 				"dev:live"
 			],
-			"isBackground": true,
-			"problemMatcher": [
-				"$tsc"
-			],
-			"group": {
-				"kind": "build",
-				"isDefault": true
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always"
 			}
+		}
+	],
+	"inputs": [
+		{
+			"id": "commitMessage",
+			"type": "promptString",
+			"description": "Commit message",
+			"default": "chore(ship): preflight + deploy"
 		}
 	]
 }

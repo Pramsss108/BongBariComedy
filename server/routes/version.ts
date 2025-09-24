@@ -10,7 +10,7 @@ router.get('/version', async (req, res) => {
   try {
     let gitHash = 'unknown';
     let gitBranch = 'unknown';
-    let buildTime = new Date().toISOString();
+    const buildTime = new Date().toISOString();
 
     // Try to get git info
     try {

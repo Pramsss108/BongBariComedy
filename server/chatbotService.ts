@@ -140,7 +140,7 @@ export class ChatbotService {
     if (isJoke) {
       // Answer-first: 2 quick topical lines (no prompt request)
       const trends = trendsService.getTop(8).filter(t => !t.isSomber);
-      let topic = trends[0]?.title || '';
+      const topic = trends[0]?.title || '';
       let topicShort = topic ? topic.replace(/[|:–—-].*$/, '').split(/\s+/).slice(0, 3).join(' ') : '';
   if (!topicShort || /viral\s+funny\s+name/i.test(topicShort)) topicShort = 'Trending now';
 

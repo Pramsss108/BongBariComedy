@@ -62,8 +62,8 @@ export class DatabaseStorage {
 
   // Collaboration request operations
   async getCollaborationRequests(filters?: any): Promise<CollaborationRequest[]> {
-    let query = db.select().from(collaborationRequests);
-    let conditions = [];
+    const query = db.select().from(collaborationRequests);
+    const conditions = [];
     
     if (filters) {
       if (filters.leadStatus) {
@@ -158,7 +158,7 @@ export class DatabaseStorage {
   }
 
   async searchChatbotTraining(keyword: string, language?: string): Promise<ChatbotTraining[]> {
-    let conditions = [
+    const conditions = [
       eq(chatbotTraining.isActive, true),
       like(chatbotTraining.keyword, `%${keyword.toLowerCase()}%`)
     ];

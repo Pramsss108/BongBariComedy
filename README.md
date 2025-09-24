@@ -54,6 +54,23 @@ dist/public/   Built frontend (index.html + 404.html)
 - `build:client` auto creates `404.html` for SPA deep links.
 - API base is detected at runtime; deep links still work on GitHub Pages.
 
+## Responsive CSS Workflow (Non-coder Friendly)
+- Desktop and global styles: edit `client/src/index.css` only. This is the main file for all desktop and default styles.
+- Mobile-only fixes: edit `client/src/mobile-overrides.css` only. This file uses `@media (max-width: 768px)` to target phones and small screens.
+- Do NOT use or create a desktop override file. All desktop changes go in `index.css`.
+- Tablet overrides can be added later if needed, but are not present now.
+
+How to work:
+- For desktop or global changes, ask to update `index.css`.
+- For phone-only fixes, ask to update `mobile-overrides.css`.
+- This keeps things simple, safe, and future-proof for non-coders.
+
+Example:
+- "Make hero headline smaller on desktop" → edit `index.css`.
+- "Fix header height on mobile" → edit `mobile-overrides.css`.
+
+No duplication, no confusion. Desktop is always in `index.css`, mobile fixes are isolated in `mobile-overrides.css`.
+
 ## Preflight Details
 `scripts/preflight.cjs` runs:
 1. `npm run check` (TypeScript)

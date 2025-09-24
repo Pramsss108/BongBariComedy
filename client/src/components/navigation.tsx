@@ -39,14 +39,14 @@ const Navigation = () => {
 
   return (
     <>
-  {/* Navigation Container - Completely Fixed */}
-  <div className="fixed top-0 left-0 right-0 z-50 w-full">
+      {/* Navigation Container - Completely Fixed */}
+      <div className="fixed top-0 left-0 right-0 z-50 w-full">
         
         {/* Main Header - Ultra Premium Futuristic Design */}
         <header 
-          data-testid="main-navigation"
           className="bg-[#0E47FF] relative overflow-hidden"
           style={{ 
+            height: '75px',
             background: 'linear-gradient(135deg, #0E47FF 0%, #0A3ACC 100%)',
             backdropFilter: 'blur(20px)',
             isolation: 'auto'
@@ -59,39 +59,29 @@ const Navigation = () => {
             }}></div>
           </div>
           
-          <div className="relative container mx-auto">
-            <div className="flex flex-nowrap justify-between items-center gap-2 xs:gap-3 md:gap-5 min-w-0 py-2 md:py-3">
+          <div className="relative max-w-[1400px] mx-auto px-6 lg:px-8 h-full">
+            <div className="flex justify-between items-center h-full">
               
               {/* Left Section - Ultra Premium Layout */}
-              <div className="flex flex-col xs:flex-row items-center min-w-0 flex-shrink flex-grow-0 w-full max-w-full xs:justify-start justify-center text-center xs:text-left">
+              <div className="flex items-center space-x-5">
                 {/* Logo - Refined */}
-                <div className="w-full flex flex-col xs:hidden mb-1">
-                  <span className="text-[10px] text-black/70 font-medium tracking-wide uppercase max-w-full whitespace-nowrap overflow-hidden text-ellipsis" title="Every Home's Story">
-                    Every Home's Story
-                  </span>
-                  <span className="text-[8px] text-white/50 font-light bangla-text mt-0.5 max-w-full whitespace-nowrap overflow-hidden text-ellipsis" title="প্রতিটা বাড়ির গল্প">
-                    প্রতিটা বাড়ির গল্প
-                  </span>
-                </div>
-                <Link href="/" data-testid="logo-link" className="group relative cursor-pointer flex-shrink-0 mr-2 xs:mr-3 sm:mr-4">
+                <Link href="/" className="group relative cursor-pointer">
                   <div className="absolute -inset-1 bg-gradient-to-r from-[#FFD200] to-[#FFC000] rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
                   <img 
                     src="/logo.png" 
                     alt="Bong Bari" 
-                    className="relative w-[28px] h-[28px] xs:w-[32px] xs:h-[32px] sm:w-[36px] sm:h-[36px] md:w-[40px] md:h-[40px] lg:w-[44px] lg:h-[44px] rounded-lg object-cover transition-transform duration-300 group-hover:scale-105"
+                    className="relative w-10 h-10 lg:w-11 lg:h-11 rounded-lg object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 </Link>
                 
                 {/* Bengali Title - Moved down to align with logo center */}
                 <h1 
-                  className="flex-shrink-0 text-[15px] xs:text-[17px] sm:text-[19px] md:text-[23px] lg:text-[30px] font-bold text-[#FFD200] bangla-text tracking-wide cursor-pointer self-center ml-0 xs:ml-2"
+                  className="text-[26px] lg:text-[30px] font-bold text-[#FFD200] bangla-text tracking-wide cursor-pointer self-center"
                   style={{ 
                     fontFamily: 'var(--font-bengali)',
                     textShadow: '0 2px 10px rgba(255,210,0,0.2)',
-                    marginTop: '1px',
-                    lineHeight: 1.1
+                    marginTop: '2px'
                   }}
-                  title="বং বাড়ি"
                 >
                   বং বাড়ি
                 </h1>
@@ -99,12 +89,12 @@ const Navigation = () => {
                 {/* Vertical Separator - Subtle */}
                 <div className="hidden md:block w-[1px] h-8 bg-gradient-to-b from-transparent via-white/20 to-transparent"></div>
                 
-                {/* Dual Tagline - Responsive: shrink, ellipsis, hide on xs */}
-                <div className="hidden xs:flex flex-col justify-center flex-shrink min-w-0 max-w-[40vw] xs:max-w-[32vw] sm:max-w-[26vw] md:max-w-[20vw] leading-tight ml-2 xs:ml-3">
-                  <span className="text-[11px] sm:text-[13px] md:text-xs lg:text-[13px] text-black/70 font-medium tracking-wide uppercase max-w-full whitespace-nowrap overflow-hidden text-ellipsis" title="Every Home's Story">
+                {/* Dual Tagline - Stacked with darker English */}
+                <div className="hidden md:flex flex-col justify-center leading-none">
+                  <span className="text-xs lg:text-[13px] text-black/60 font-medium tracking-wider uppercase">
                     Every Home's Story
                   </span>
-                  <span className="text-[9px] sm:text-[10px] md:text-[11px] lg:text-[11px] text-white/50 font-light bangla-text mt-0.5 max-w-full whitespace-nowrap overflow-hidden text-ellipsis" title="প্রতিটা বাড়ির গল্প">
+                  <span className="text-[10px] lg:text-[11px] text-white/40 font-light bangla-text mt-0.5">
                     প্রতিটা বাড়ির গল্প
                   </span>
                 </div>
@@ -212,10 +202,8 @@ const Navigation = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                data-testid="mobile-menu-toggle"
-                className="md:hidden text-white hover:bg-white/10 h-10 w-10 rounded-lg shrink-0"
+                className="md:hidden text-white hover:bg-white/10 h-10 w-10 rounded-lg"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
               >
                 {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </Button>
@@ -223,33 +211,36 @@ const Navigation = () => {
           </div>
         </header>
         
-        {/* Promo Banner - animated scrolling (news ticker style), scales for mobile */}
+        {/* Promo Banner - Ultra Sleek */}
         <div 
-          className="relative overflow-hidden h-[30px] xs:h-[32px] sm:h-[34px] md:h-[36px]"
+          className="relative overflow-hidden"
           style={{ 
+            height: '36px',
             background: 'linear-gradient(90deg, #FFD200 0%, #FFC000 50%, #FFD200 100%)',
             backgroundSize: '200% 100%',
             animation: 'gradient-flow 8s ease infinite'
           }}
         >
-          <div className="absolute inset-0 flex items-center">
-            <div className="animate-scroll-smooth whitespace-nowrap flex">
-              <span className="text-[#0E47FF] font-medium text-[11px] xs:text-[12px] sm:text-[13px] lg:text-sm px-6 sm:px-8 flex items-center h-full tracking-wide">
-                <span className="mr-3">⚡</span>
-                <span className="mr-8">Special Offer: Flat 50% off on your first subscription</span>
-                <span className="mr-3">🎯</span>
-                <span className="mr-8">New comedy content every week</span>
-                <span className="mr-3">✨</span>
-                <span className="mr-8">Join 10,000+ laughter lovers</span>
-              </span>
-              <span className="text-[#0E47FF] font-medium text-[11px] xs:text-[12px] sm:text-[13px] lg:text-sm px-6 sm:px-8 flex items-center h-full tracking-wide">
-                <span className="mr-3">⚡</span>
-                <span className="mr-8">Special Offer: Flat 50% off on your first subscription</span>
-                <span className="mr-3">🎯</span>
-                <span className="mr-8">New comedy content every week</span>
-                <span className="mr-3">✨</span>
-                <span className="mr-8">Join 10,000+ laughter lovers</span>
-              </span>
+          <div className="h-full overflow-hidden relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="animate-scroll-smooth whitespace-nowrap flex">
+                <span className="text-[#0E47FF] font-medium text-[13px] lg:text-sm px-8 flex items-center h-full tracking-wide">
+                  <span className="mr-3">⚡</span>
+                  <span className="mr-8">Special Offer: Flat 50% off on your first subscription</span>
+                  <span className="mr-3">🎯</span>
+                  <span className="mr-8">New comedy content every week</span>
+                  <span className="mr-3">✨</span>
+                  <span className="mr-8">Join 10,000+ laughter lovers</span>
+                </span>
+                <span className="text-[#0E47FF] font-medium text-[13px] lg:text-sm px-8 flex items-center h-full tracking-wide">
+                  <span className="mr-3">⚡</span>
+                  <span className="mr-8">Special Offer: Flat 50% off on your first subscription</span>
+                  <span className="mr-3">🎯</span>
+                  <span className="mr-8">New comedy content every week</span>
+                  <span className="mr-3">✨</span>
+                  <span className="mr-8">Join 10,000+ laughter lovers</span>
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -333,7 +324,7 @@ const Navigation = () => {
       </div>
       
       {/* Spacer for fixed navigation */}
-  <div className="h-[92px] xs:h-[96px] sm:h-[100px] md:h-[111px]"></div>
+      <div style={{ height: '111px' }}></div>
     </>
   );
 };

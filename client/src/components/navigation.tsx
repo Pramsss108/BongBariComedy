@@ -39,12 +39,13 @@ const Navigation = () => {
 
   return (
     <>
-      {/* Navigation Container - Completely Fixed */}
-      <div className="fixed top-0 left-0 right-0 z-50 w-full">
+  {/* Navigation Container - Completely Fixed */}
+  <div className="fixed top-0 left-0 right-0 z-50 w-full">
         
         {/* Main Header - Ultra Premium Futuristic Design */}
         <header 
-          className="bg-[#0E47FF] relative overflow-hidden h-[62px] xs:h-[66px] sm:h-[70px] md:h-[75px]"
+          data-testid="main-navigation"
+          className="bg-[#0E47FF] relative overflow-hidden"
           style={{ 
             background: 'linear-gradient(135deg, #0E47FF 0%, #0A3ACC 100%)',
             backdropFilter: 'blur(20px)',
@@ -58,8 +59,8 @@ const Navigation = () => {
             }}></div>
           </div>
           
-          <div className="relative max-w-[1400px] mx-auto px-2 xs:px-3 sm:px-4 md:px-6 lg:px-8 h-full">
-            <div className="flex flex-nowrap justify-between items-center h-full gap-2 xs:gap-3 md:gap-5 min-w-0">
+          <div className="relative container max-w-[1400px] mx-auto px-2 xs:px-3 sm:px-4 md:px-6 lg:px-8">
+            <div className="flex flex-nowrap justify-between items-center gap-2 xs:gap-3 md:gap-5 min-w-0 py-2 md:py-3">
               
               {/* Left Section - Ultra Premium Layout */}
               <div className="flex flex-col xs:flex-row items-center min-w-0 flex-shrink flex-grow-0 w-full max-w-full xs:justify-start justify-center text-center xs:text-left">
@@ -72,7 +73,7 @@ const Navigation = () => {
                     প্রতিটা বাড়ির গল্প
                   </span>
                 </div>
-                <Link href="/" className="group relative cursor-pointer flex-shrink-0 mr-2 xs:mr-3 sm:mr-4">
+                <Link href="/" data-testid="logo-link" className="group relative cursor-pointer flex-shrink-0 mr-2 xs:mr-3 sm:mr-4">
                   <div className="absolute -inset-1 bg-gradient-to-r from-[#FFD200] to-[#FFC000] rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
                   <img 
                     src="/logo.png" 
@@ -211,6 +212,7 @@ const Navigation = () => {
               <Button
                 variant="ghost"
                 size="icon"
+                data-testid="mobile-menu-toggle"
                 className="md:hidden text-white hover:bg-white/10 h-10 w-10 rounded-lg shrink-0"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}

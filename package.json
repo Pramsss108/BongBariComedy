@@ -12,7 +12,7 @@
     "dev:server:esm": "set NODE_ENV=development && tsx watch server/index.ts",
     "client": "vite --config vite.config.ts",
     "predev:live": "npx --yes kill-port 5000 5173 8888",
-  "dev:live": "concurrently \"npm run dev:server:esm\" \"npm run client\"",
+  "dev:live": "npm run start:clean && start powershell -NoExit -Command npm run dev:server:esm && npm run client",
     "start:clean": "npx --yes kill-port 5000 5173 8888",
     "start:server": "npm run dev:server:esm",
     "start:client": "npm run client",

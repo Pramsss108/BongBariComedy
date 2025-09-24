@@ -55,6 +55,13 @@ Purpose: Make AI agents productive fast by documenting how this repo is organize
 - Backend env via `server/.env` (fallback to root `.env`): `DATABASE_URL`, `GEMINI_API_KEY`, `JWT_SECRET`, optional `YOUTUBE_CHANNEL_ID`, Upstash tokens.
 - To force a Pages deploy when no client changes: include `FORCE_PAGES_DEPLOY` in the commit message.
 
+### Responsive CSS Overrides
+- Base styles live in `client/src/index.css` (desktop-first defaults).
+- Mobile fixes go in `client/src/mobile-overrides.css` using `@media (max-width: 768px)` only.
+- Desktop refinements go in `client/src/desktop-overrides.css` using `@media (min-width: 769px)` (or 1024px for large desktops) only.
+- Import order in `client/src/main.tsx`: `index.css` → `mobile-overrides.css` → `desktop-overrides.css` so overrides win by cascade but remain scoped by media queries.
+- Do not introduce device detection or JS-based branching for layout; use pure CSS media queries to avoid regressions.
+
 ## Daily Workflow
 - Edit features/content; test at `http://localhost:5173`.
 - Commit/push to `main` to deploy frontend (Pages) and backend (Render) automatically.
@@ -62,6 +69,7 @@ Purpose: Make AI agents productive fast by documenting how this repo is organize
 
 ## Key Paths
 - API base and helpers: `client/src/lib/queryClient.ts`.
+- Responsive CSS entry points: `client/src/index.css`, `client/src/mobile-overrides.css`, `client/src/desktop-overrides.css`.
 - Auth flow: `client/src/pages/login.tsx`, `client/src/hooks/useAuth.ts`.
 - Endpoints: `server/routes.ts`.
 - Storage: `server/storage.ts`, `server/postgresStorage.ts`.

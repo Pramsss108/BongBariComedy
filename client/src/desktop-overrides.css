@@ -1,4 +1,4 @@
-/* Desktop-only overrides scaffold: keeps current desktop unchanged. */
+/* Desktop-only overrides scaffold: keeps current desktop unchanged unless specified here. */
 @media (min-width: 769px) {
   /* 
    Desktop refinements (add when needed):
@@ -9,4 +9,12 @@
    - Grid/layout adjustments
    - Footer alignment
   */
+}
+
+/* Subtle desktop header refinement for better above-the-fold fit */
+@media (min-width: 1024px) {
+  [data-testid="main-navigation"] {
+    min-height: 120px !important; /* was 140px in base */
+    padding: 0.75rem 0 !important;
+  }
 }

@@ -1976,7 +1976,8 @@ section:nth-child(odd) {
   
   [data-testid="main-navigation"] .container {
     max-width: 1200px !important;
-    padding: 0 2rem !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
   }
   
   /* Desktop logo hover effect */

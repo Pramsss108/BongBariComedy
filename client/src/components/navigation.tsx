@@ -59,7 +59,7 @@ const Navigation = () => {
             }}></div>
           </div>
           
-          <div className="relative container max-w-[1400px] mx-auto px-2 xs:px-3 sm:px-4 md:px-6 lg:px-8">
+          <div className="relative container mx-auto">
             <div className="flex flex-nowrap justify-between items-center gap-2 xs:gap-3 md:gap-5 min-w-0 py-2 md:py-3">
               
               {/* Left Section - Ultra Premium Layout */}

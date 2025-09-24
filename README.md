@@ -1,5 +1,25 @@
 # BongBariComedy
 
+## Quick Start (Simple Local Dev)
+To run everything locally, use:
+
+```powershell
+npm run dev:live
+```
+
+This will:
+- Kill any old server/client processes on ports 5000, 5173, 8888
+- Open a new window for the backend server
+- Start the frontend (Vite) in your current window
+
+Manual steps if you want to run each part separately:
+```powershell
+npm run start:clean      # kill ports 5000 5173 8888
+npm run start:server     # starts backend (in one terminal)
+npm run start:client     # starts frontend (second terminal)
+```
+Then open `http://localhost:5173` in your browser.
+
 Full-stack app: React (Vite) frontend on GitHub Pages, Express + Postgres (Neon) backend on Render. SPA routing supported with `404.html` copy. Chatbot (Gemini), community feed, admin panels.
 
 ## Quick Scripts

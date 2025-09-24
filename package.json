@@ -28,6 +28,11 @@
     "test:integration": "vitest run tests/api.test.ts",
     "db:push": "drizzle-kit push",
     "db:check": "node scripts/db-check.mjs"
+    "git:fetch": "git fetch origin --quiet",
+    "remote:file": "node scripts/remote-file.mjs",
+    "diff:file": "node scripts/diff-file.mjs",
+    "backup:file": "node scripts/backup-file.mjs",
+    "restore:file": "node scripts/restore-file.mjs"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.17.0",

@@ -2,6 +2,23 @@
 
 Purpose: Make AI agents productive fast by documenting how this repo is organized, how it builds/tests/deploys, and the project-specific patterns to follow.
 
+## Responsive CSS Workflow (Non-coder Friendly)
+- Desktop and global styles: edit `client/src/index.css` only. This is the main file for all desktop and default styles.
+- Mobile-only fixes: edit `client/src/mobile-overrides.css` only. This file uses `@media (max-width: 768px)` to target phones and small screens.
+- Do NOT use or create a desktop override file. All desktop changes go in `index.css`.
+- Tablet overrides can be added later if needed, but are not present now.
+
+How to work:
+- For desktop or global changes, ask to update `index.css`.
+- For phone-only fixes, ask to update `mobile-overrides.css`.
+- This keeps things simple, safe, and future-proof for non-coders.
+
+Example:
+- "Make hero headline smaller on desktop" → edit `index.css`.
+- "Fix header height on mobile" → edit `mobile-overrides.css`.
+
+No duplication, no confusion. Desktop is always in `index.css`, mobile fixes are isolated in `mobile-overrides.css`.
+
 ## Quick Start
 - Open project in VS Code, ensure Copilot enabled.
 - Run locally:
@@ -11,6 +28,27 @@ Purpose: Make AI agents productive fast by documenting how this repo is organize
   npm run dev:live
   ```
 - Browse `http://localhost:5173` and iterate. Commit to `main` to auto-deploy.
+
+## Non‑Coder Safe: View/Diff/Restore Any File From GitHub
+- Show remote version (from GitHub `main`) of a file:
+  ```powershell
+  npm run git:fetch ; npm run remote:file -- client/src/index.css
+  ```
+- See differences between your local file and GitHub `main`:
+  ```powershell
+  npm run git:fetch ; npm run diff:file -- client/src/index.css
+  ```
+- Safely restore your local file from GitHub `main` (auto‑backup to `.backups/`):
+  ```powershell
+  npm run restore:file -- client/src/index.css
+  ```
+- Make a manual backup anytime:
+  ```powershell
+  npm run backup:file -- client/src/index.css
+  ```
+Notes:
+- These commands never push; they only fetch, view, diff, and restore locally.
+- After restore, you can run locally and verify before committing.
 
 ## Architecture
 - Client: React + Vite SPA in `client/`; build to `dist/public/`. SPA routing via `404.html` copied from `index.html` (see `scripts/postbuild-spa-404.cjs`). Domain: `https://bongbari.com` (GitHub Pages).
@@ -55,13 +93,6 @@ Purpose: Make AI agents productive fast by documenting how this repo is organize
 - Backend env via `server/.env` (fallback to root `.env`): `DATABASE_URL`, `GEMINI_API_KEY`, `JWT_SECRET`, optional `YOUTUBE_CHANNEL_ID`, Upstash tokens.
 - To force a Pages deploy when no client changes: include `FORCE_PAGES_DEPLOY` in the commit message.
 
-### Responsive CSS Overrides
-- Base styles live in `client/src/index.css` (desktop-first defaults).
-- Mobile fixes go in `client/src/mobile-overrides.css` using `@media (max-width: 768px)` only.
-- Desktop refinements go in `client/src/desktop-overrides.css` using `@media (min-width: 769px)` (or 1024px for large desktops) only.
-- Import order in `client/src/main.tsx`: `index.css` → `mobile-overrides.css` → `desktop-overrides.css` so overrides win by cascade but remain scoped by media queries.
-- Do not introduce device detection or JS-based branching for layout; use pure CSS media queries to avoid regressions.
-
 ## Daily Workflow
 - Edit features/content; test at `http://localhost:5173`.
 - Commit/push to `main` to deploy frontend (Pages) and backend (Render) automatically.
@@ -69,7 +100,6 @@ Purpose: Make AI agents productive fast by documenting how this repo is organize
 
 ## Key Paths
 - API base and helpers: `client/src/lib/queryClient.ts`.
-- Responsive CSS entry points: `client/src/index.css`, `client/src/mobile-overrides.css`, `client/src/desktop-overrides.css`.
 - Auth flow: `client/src/pages/login.tsx`, `client/src/hooks/useAuth.ts`.
 - Endpoints: `server/routes.ts`.
 - Storage: `server/storage.ts`, `server/postgresStorage.ts`.

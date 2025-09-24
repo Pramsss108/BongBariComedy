@@ -24,10 +24,18 @@ No duplication, no confusion. Desktop is always in `index.css`, mobile fixes are
 - Run locally:
   ```powershell
   npm install   # only if deps changed
-  npm run predev:live
-  npm run dev:live
+  npm run dev:live   # (does: kill ports -> open server window -> start client)
   ```
 - Browse `http://localhost:5173` and iterate. Commit to `main` to auto-deploy.
+
+### Manual (Alternate) Startup (No combined script)
+If `dev:live` ever fails you can run the three steps yourself:
+```powershell
+npm run start:clean      # kill ports 5000 5173 8888
+npm run start:server     # starts backend (in one terminal)
+npm run start:client     # starts frontend (second terminal)
+```
+Then open `http://localhost:5173`.
 
 ## Non‑Coder Safe: View/Diff/Restore Any File From GitHub
 - Show remote version (from GitHub `main`) of a file:
@@ -59,7 +67,6 @@ Notes:
 ## Dev / Build / Test
 - Run local (frees ports first if needed):
   ```powershell
-  npm run predev:live
   npm run dev:live
   ```
 - Vite proxy: `/api` → `:5000` (or `:8888` when `NETLIFY=1`). Dev-only mock for `/.netlify/functions/homepage-promo` writes `.dev/promo.json` (see `vite.config.ts`).

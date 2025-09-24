@@ -22,6 +22,8 @@ import GreetingConsent from "@/components/GreetingConsent";
 import { isAudioUnlocked, resumeAudioNow } from "@/lib/audioUnlock";
 import BongBot from "@/components/BongBot";
 
+// Deploy note: trivial comment to force GitHub Pages rebuild (FORCE_PAGES_DEPLOY)
+
 // Lazy load components for code splitting
 const About = lazy(() => import("@/pages/about"));
 const WorkWithUs = lazy(() => import("@/pages/work-with-us"));

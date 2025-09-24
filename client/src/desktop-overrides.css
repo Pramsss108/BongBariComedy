@@ -1,0 +1,12 @@
+/* Desktop-only overrides scaffold: keeps current desktop unchanged. */
+@media (min-width: 769px) {
+  /* 
+   Desktop refinements (add when needed):
+   - Header/navigation
+   - Hero & media
+   - Promo/ticker sizing
+   - Forms & inputs density
+   - Grid/layout adjustments
+   - Footer alignment
+  */
+}

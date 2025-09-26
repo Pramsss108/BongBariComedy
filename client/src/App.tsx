@@ -34,7 +34,7 @@ const Admin = lazy(() => import("@/pages/admin"));
 const Login = lazy(() => import("@/pages/login"));
 const BlogPost = lazy(() => import("@/pages/blog-post"));
 const NotFound = lazy(() => import("@/pages/not-found"));
-const AdminChatbot = lazy(() => import("@/pages/AdminChatbot").then(m => ({ default: m.AdminChatbot })));
+const AdminChatbot = lazy(() => import("@/pages/AdminChatbot"));
 const AdminHomepage = lazy(() => import("@/pages/AdminHomepage").then(m => ({ default: m.AdminHomepage })));
 const AdminModeration = lazy(() => import("@/pages/AdminModeration"));
 const CommunityFeed = lazy(() => import("@/pages/community-feed"));

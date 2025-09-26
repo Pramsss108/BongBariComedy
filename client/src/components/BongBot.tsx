@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Bot, X, MessageCircle } from 'lucide-react';
+import { Send, Bot, X, MessageCircle, RotateCcw } from 'lucide-react';
 import { buildApiUrl } from '@/lib/queryClient';
 
 interface BongBotProps {
@@ -20,12 +20,49 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
   const headerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Quick reply templates
-  const templates = [
+  // Quick reply templates - loaded from database
+  const [templates, setTemplates] = useState<string[]>([]);
+  const [templatesSource, setTemplatesSource] = useState<'DB' | 'Default'>('Default');
+  
+  // Default fallback templates
+  const defaultTemplates = [
     "Collab korte chai — process ta bolben?",
-    "Brand sponsor hole kivabe kaj hoy?",
-    "Mon bhalo lage? Soft subscribe korben? 😊"
+    "Brand sponsor hole kivabe kaj hoy?", 
+    "Mon bhalo na lagle halka Subscribe MARO"
   ];
+
+  // Load templates from database
+  const loadTemplates = async () => {
+    try {
+      const response = await fetch(buildApiUrl(`/api/chatbot/templates?ts=${Date.now()}`));
+      if (response.ok) {
+        const dbTemplates = await response.json();
+        if (dbTemplates && dbTemplates.length > 0) {
+          const templateTexts = dbTemplates.map((t: any) => t.content);
+          setTemplates(templateTexts);
+          setTemplatesSource('DB');
+          console.log('🔄 Templates loaded from DB:', templateTexts);
+        } else {
+          setTemplates(defaultTemplates);
+          setTemplatesSource('Default');
+          console.log('📝 Using default templates (no DB templates found)');
+        }
+      } else {
+        setTemplates(defaultTemplates);
+        setTemplatesSource('Default');
+        console.log('⚠️ Failed to load templates from DB, using defaults');
+      }
+    } catch (error) {
+      console.error('❌ Error loading templates:', error);
+      setTemplates(defaultTemplates);
+      setTemplatesSource('Default');
+    }
+  };
+
+  // Load templates on mount
+  useEffect(() => {
+    loadTemplates();
+  }, []);
 
   // When opening chatbot, position it on the right side
   const handleOpenChatbot = () => {
@@ -36,20 +73,44 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
     // Fresh session each open
     setMessages([]);
     setMessage('');
-  setShowTemplates(false);
     setIsTyping(true);
     
     // Play glitter sound when opening
     playGlitterSound();
 
-    // First message template (no AI): concise, friendly, with CTA links
-    const first = [
-      "🙏 Hi! Ami Bong Bot — Bong Bari family-te welcome. Blood relation na, only laughing relation!",
-      "Join family: https://youtube.com/@bongbari | Work with us: /work-with-us#form | team@bongbari.com"
-    ].join('\n');
-    setMessages([{ id: Date.now(), text: first, sender: 'bot', timestamp: new Date() }]);
-    setIsTyping(false);
-    setShowTemplates(false);
+    // Reload templates on each open
+    loadTemplates();
+
+    // First message: fetch dynamic greeting template; fallback to default
+    (async () => {
+      try {
+        const res = await fetch(buildApiUrl(`/api/chatbot/templates?type=greeting&ts=${Date.now()}`));
+        let greet = '';
+        if (res.ok) {
+          const list = await res.json();
+          if (Array.isArray(list) && list.length > 0) {
+            greet = String(list[0]?.content || '').trim();
+          }
+        }
+        const header = greet && greet.length > 0
+          ? greet
+          : "🙏 Hi! Ami Bong Bot — Bong Bari family-te welcome. Blood relation na, only laughing relation!";
+        const first = [
+          header,
+          "Join family: https://youtube.com/@bongbari | Work with us: /work-with-us#form | team@bongbari.com"
+        ].join('\n');
+        setMessages([{ id: Date.now(), text: first, sender: 'bot', timestamp: new Date() }]);
+      } catch (e) {
+        const first = [
+          "🙏 Hi! Ami Bong Bot — Bong Bari family-te welcome. Blood relation na, only laughing relation!",
+          "Join family: https://youtube.com/@bongbari | Work with us: /work-with-us#form | team@bongbari.com"
+        ].join('\n');
+        setMessages([{ id: Date.now(), text: first, sender: 'bot', timestamp: new Date() }]);
+      } finally {
+        setIsTyping(false);
+        setShowTemplates(true);
+      }
+    })();
   };
 
   // Sound effects
@@ -401,6 +462,9 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
                       setMessage(e.target.value);
                       if (e.target.value.length > 0) {
                         setShowTemplates(false);
+                      } else {
+                        // Show templates again when input is cleared
+                        setShowTemplates(true);
                       }
                     }}
                     placeholder="Kotha Hok Naki?"

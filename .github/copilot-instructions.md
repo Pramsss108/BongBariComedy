@@ -61,7 +61,7 @@ Notes:
 ## Architecture
 - Client: React + Vite SPA in `client/`; build to `dist/public/`. SPA routing via `404.html` copied from `index.html` (see `scripts/postbuild-spa-404.cjs`). Domain: `https://bongbari.com` (GitHub Pages).
 - Server: Express (TS, ESM) in `server/`, all API under `/api/*`. Dev injects Vite middleware; prod serves `dist/public/` (see `server/vite.ts`). Backend hosted on Render `https://bongbaricomedy.onrender.com`.
-- Data: Drizzle ORM with Neon Postgres when `DATABASE_URL` exists; otherwise `MemStorage` stubs. Shared schema/types in `shared/` (`shared/schema.ts`). SQLite schemas exist for local utilities, but production uses Postgres.
+- Data: Drizzle ORM with Neon Postgres when `DATABASE_URL` exists; otherwise `MemStorage` stubs. Shared schema/types in `shared/` (`shared/schema.ts`). SQLite schemas exist for local utilities, but **SQLite is not used for app data; all features require Neon/Postgres**.
 - Vite aliases: `@` → `client/src`, `@shared` → `shared`, `@assets` → `attached_assets`.
 
 ## Dev / Build / Test
@@ -127,11 +127,24 @@ Notes:
 - CI failures: open the failed job log in Actions; copy the last 20 lines for debugging.
 - Local Postgres vs memory: without `DATABASE_URL`, community features are stubs; use Neon for full behavior.
 
+### Blank Site (White Screen) on GitHub Pages
+- If the live site is blank, check browser DevTools → Network tab. If the main JS bundle (e.g., `index-xxxx.js`) returns HTML or a redirect, the deploy is out of sync.
+- **Fix:** Make any client code change (even a comment), commit with `FORCE_PAGES_DEPLOY` in the message, and push to `main`. This forces a full rebuild and asset upload.
+- Always wait for the Pages workflow to finish before checking the live site. Hard refresh (Ctrl+F5) after deploy.
+
 ## Security Notes
 - Never log tokens; store admin session in `localStorage['admin_session']` only.
 - Always send `X-CSRF-Token` for non-GET requests when authenticated.
 
-If anything above is unclear (e.g., exact API base needs, new endpoints, or env vars), say what you’re adding and we’ll extend these notes.
+
+## Hero/CTA Desktop Sizing & Section Rules (Zero-Mismatch)
+- On desktop, the hero video container (`.mobile-video-container`) must use:
+  - `max-width: 520px` at `min-width: 768px` (tablet)
+  - `max-width: 600px` at `min-width: 1024px` (desktop)
+- Always force `compactHero` mode for desktop hero section for above-the-fold visibility.
+- The 3 CTA buttons ("Bong Kahini", "Subscribe", "Collab?") must end the first hero section, with extra bottom margin (`mb-4 sm:mb-6`) to clearly separate from the next section.
+- Never increase hero/video size or spacing unless above-the-fold visibility is confirmed on desktop.
+- Do not change these rules unless updating both code and this instruction file together.
 
 ## Agent Playbook
 - Add an API route (server): edit `server/routes.ts`.

@@ -1,524 +1,271 @@
-import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+﻿import { useEffect, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Trash2, Plus, Edit, Eye, Bot, MessageSquare, Settings } from "lucide-react";
+import { Bot, MessageSquare, Save } from "lucide-react";
 
-interface ChatbotTraining {
-  id: number;
-  keyword: string;
-  userMessage: string;
-  botResponse: string;
-  language: string;
-  category: string;
-  isActive: boolean;
-  priority: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface ChatbotTemplate {
-  id: number;
-  name: string;
-  templateType: string;
-  content: string;
-  language: string;
-  isActive: boolean;
-  displayOrder: number;
-  validFrom: string;
-  validTo?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export function AdminChatbot() {
-  const [editingTraining, setEditingTraining] = useState<ChatbotTraining | null>(null);
-  const [editingTemplate, setEditingTemplate] = useState<ChatbotTemplate | null>(null);
-  const [isTrainingDialogOpen, setIsTrainingDialogOpen] = useState(false);
-  const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
+export default function AdminChatbot() {
+  const DEFAULT_T1 = "Collab korte chaile, Process ta ki?";
+  const DEFAULT_T2 = "Brand sponsor hole kivabe kaj hoy?";
+  const DEFAULT_T3 = "Mon bhalo na lagle halka Subscribe MARO";
+  const DEFAULT_GREETING = "🙏 Hi! Ami Bong Bot — Bong Bari family‑te welcome.";
+  const [trainingData, setTrainingData] = useState("");
+  const [greeting, setGreeting] = useState(DEFAULT_GREETING);
+  const [template1, setTemplate1] = useState(DEFAULT_T1);
+  const [template2, setTemplate2] = useState(DEFAULT_T2);
+  const [template3, setTemplate3] = useState(DEFAULT_T3);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  // Fetch chatbot training data
-  // Fetch chatbot training data
-  const { data: trainingData = [], isLoading: isLoadingTraining } = useQuery<ChatbotTraining[]>({
-    queryKey: ["/api/admin/chatbot-training"],
-  });
+  const getCharCount = (text: string) => Array.from(text).length;
+  const MAX_CHARS = 60;
 
-  // Fetch chatbot templates
-  const { data: templatesData = [], isLoading: isLoadingTemplates } = useQuery<ChatbotTemplate[]>({
-    queryKey: ["/api/admin/chatbot-templates"],
-  });
+  // On page load, fetch saved templates so the inputs match the DB
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await apiRequest('/api/chatbot/templates'); // public endpoint, deduped & limited to 3
+        if (!Array.isArray(data) || cancelled) return;
+        const by = new Map<number, any>();
+        for (const t of data) by.set(t.displayOrder ?? 1, t);
+        setTemplate1(by.get(1)?.content ?? DEFAULT_T1);
+        setTemplate2(by.get(2)?.content ?? DEFAULT_T2);
+        setTemplate3(by.get(3)?.content ?? DEFAULT_T3);
+      } catch {
+        // keep defaults on error
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
-  // Training mutations
-  const createTrainingMutation = useMutation({
-    mutationFn: (data: Partial<ChatbotTraining>) => apiRequest("/api/admin/chatbot-training", { method: "POST", body: JSON.stringify(data) }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/chatbot-training"] });
-      setIsTrainingDialogOpen(false);
-      setEditingTraining(null);
-      toast({ title: "✅ Training data created successfully!" });
+  // Load existing training notepad from admin settings
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const settings = await apiRequest('/api/admin/settings');
+        if (!Array.isArray(settings) || cancelled) return;
+        const existing = settings.find((s: any) => s.settingKey === 'chatbot_training_notepad');
+        if (existing?.settingValue) setTrainingData(existing.settingValue as string);
+      } catch (_) {
+        // ignore; keep empty default
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Load Greeting template from admin templates (protected API)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const templates = await apiRequest('/api/admin/chatbot-templates');
+        if (!Array.isArray(templates) || cancelled) return;
+        const greet = templates.find((t: any) => t.templateType === 'greeting' && (t.displayOrder ?? 1) === 1);
+        if (greet?.content) setGreeting(greet.content as string);
+      } catch (_) {
+        // ignore; keep default
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const saveTemplatesMutation = useMutation({
+    mutationFn: async () => {
+      const templates = [
+        { name: "Quick Reply 1", templateType: "quick_reply", content: template1, displayOrder: 1 },
+        { name: "Quick Reply 2", templateType: "quick_reply", content: template2, displayOrder: 2 },
+        { name: "Quick Reply 3", templateType: "quick_reply", content: template3, displayOrder: 3 }
+      ];
+      return Promise.all(templates.map(template => 
+        apiRequest("/api/admin/chatbot-templates", { 
+          method: "POST", 
+          body: JSON.stringify({
+            ...template, language: 'auto', isActive: true
+          }),
+          headers: { 'Content-Type': 'application/json' }
+        })
+      ));
     },
+    onSuccess: () => toast({ title: "✅ Templates saved!" }),
+    onError: () => toast({ title: "❌ Error saving", variant: "destructive" })
   });
 
-  const updateTrainingMutation = useMutation({
-    mutationFn: ({ id, ...data }: Partial<ChatbotTraining> & { id: number }) => 
-      apiRequest(`/api/admin/chatbot-training/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/chatbot-training"] });
-      setIsTrainingDialogOpen(false);
-      setEditingTraining(null);
-      toast({ title: "✅ Training data updated successfully!" });
+  // Save Training Notes (admin setting)
+  const saveTrainingMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          settingKey: 'chatbot_training_notepad',
+          settingValue: trainingData,
+          settingType: 'text',
+          description: 'Bong Bot training notes (Title + bullet points). Used in AI prompt.',
+          isPublic: false,
+        }),
+      });
     },
+    onSuccess: () => toast({ title: '✅ Training notes saved!' }),
+    onError: () => toast({ title: '❌ Error saving training notes', variant: 'destructive' }),
   });
 
-  const deleteTrainingMutation = useMutation({
-    mutationFn: (id: number) => apiRequest(`/api/admin/chatbot-training/${id}`, { method: "DELETE" }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/chatbot-training"] });
-      toast({ title: "🗑️ Training data deleted successfully!" });
+  // Save Greeting Template (upsert by templateType+displayOrder)
+  const saveGreetingMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest('/api/admin/chatbot-templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Greeting',
+          templateType: 'greeting',
+          content: greeting,
+          language: 'auto',
+          isActive: true,
+          displayOrder: 1,
+        }),
+      });
     },
+    onSuccess: () => toast({ title: '✅ Greeting saved!' }),
+    onError: () => toast({ title: '❌ Error saving greeting', variant: 'destructive' }),
   });
-
-  // Template mutations
-  const createTemplateMutation = useMutation({
-    mutationFn: (data: Partial<ChatbotTemplate>) => apiRequest("/api/admin/chatbot-templates", { method: "POST", body: JSON.stringify(data) }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/chatbot-templates"] });
-      setIsTemplateDialogOpen(false);
-      setEditingTemplate(null);
-      toast({ title: "✅ Template created successfully!" });
-    },
-  });
-
-  const updateTemplateMutation = useMutation({
-    mutationFn: ({ id, ...data }: Partial<ChatbotTemplate> & { id: number }) => 
-      apiRequest(`/api/admin/chatbot-templates/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/chatbot-templates"] });
-      setIsTemplateDialogOpen(false);
-      setEditingTemplate(null);
-      toast({ title: "✅ Template updated successfully!" });
-    },
-  });
-
-  const deleteTemplateMutation = useMutation({
-    mutationFn: (id: number) => apiRequest(`/api/admin/chatbot-templates/${id}`, { method: "DELETE" }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/chatbot-templates"] });
-      toast({ title: "🗑️ Template deleted successfully!" });
-    },
-  });
-
-  const handleTrainingSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const data = {
-      keyword: formData.get("keyword") as string,
-      userMessage: formData.get("userMessage") as string,
-      botResponse: formData.get("botResponse") as string,
-      language: formData.get("language") as string,
-      category: formData.get("category") as string,
-      isActive: formData.get("isActive") === "on",
-      priority: parseInt(formData.get("priority") as string),
-    };
-
-    if (editingTraining) {
-      updateTrainingMutation.mutate({ id: editingTraining.id, ...data });
-    } else {
-      createTrainingMutation.mutate(data);
-    }
-  };
-
-  const handleTemplateSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const data = {
-      name: formData.get("name") as string,
-      templateType: formData.get("templateType") as string,
-      content: formData.get("content") as string,
-      language: formData.get("language") as string,
-      isActive: formData.get("isActive") === "on",
-      displayOrder: parseInt(formData.get("displayOrder") as string),
-    };
-
-    if (editingTemplate) {
-      updateTemplateMutation.mutate({ id: editingTemplate.id, ...data });
-    } else {
-      createTemplateMutation.mutate(data);
-    }
-  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-red-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center gap-3">
-            <Bot className="h-10 w-10 text-blue-600" />
-            Bong Bot Management
-          </h1>
-          <p className="text-gray-600">Train your AI chatbot and manage templates</p>
-        </div>
-
-        <Tabs defaultValue="training" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="training" className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4" />
-              Training Data
-            </TabsTrigger>
-            <TabsTrigger value="templates" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Templates
-            </TabsTrigger>
-          </TabsList>
-
-          {/* TRAINING DATA TAB */}
-          <TabsContent value="training" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <h2 className="text-2xl font-semibold">Chatbot Training Data</h2>
-                <p className="text-gray-600">Teach Bong Bot specific responses to keywords</p>
-              </div>
-              <Dialog open={isTrainingDialogOpen} onOpenChange={setIsTrainingDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-blue-600 hover:bg-blue-700" data-testid="button-add-training">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Training Data
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>{editingTraining ? "Edit" : "Add"} Training Data</DialogTitle>
-                    <DialogDescription>
-                      Train the chatbot to respond to specific keywords or phrases
-                    </DialogDescription>
-                  </DialogHeader>
-                  <form onSubmit={handleTrainingSubmit} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="keyword">Keyword</Label>
-                        <Input
-                          id="keyword"
-                          name="keyword"
-                          placeholder="collaboration, comedy, maa"
-                          defaultValue={editingTraining?.keyword}
-                          required
-                          data-testid="input-keyword"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="priority">Priority (1-10)</Label>
-                        <Input
-                          id="priority"
-                          name="priority"
-                          type="number"
-                          min="1"
-                          max="10"
-                          defaultValue={editingTraining?.priority || 5}
-                          required
-                          data-testid="input-priority"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="userMessage">User Message Example</Label>
-                      <Input
-                        id="userMessage"
-                        name="userMessage"
-                        placeholder="What about collaboration?"
-                        defaultValue={editingTraining?.userMessage}
-                        required
-                        data-testid="input-user-message"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="botResponse">Bot Response</Label>
-                      <Textarea
-                        id="botResponse"
-                        name="botResponse"
-                        placeholder="আমরা brand collaboration করি! Visit our collaboration page for more details."
-                        defaultValue={editingTraining?.botResponse}
-                        rows={3}
-                        required
-                        data-testid="textarea-bot-response"
-                      />
-                    </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <Label htmlFor="language">Language</Label>
-                        <Select name="language" defaultValue={editingTraining?.language || "auto"}>
-                          <SelectTrigger data-testid="select-language">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="auto">Auto Detect</SelectItem>
-                            <SelectItem value="bengali">Bengali</SelectItem>
-                            <SelectItem value="benglish">Benglish</SelectItem>
-                            <SelectItem value="english">English</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="category">Category</Label>
-                        <Select name="category" defaultValue={editingTraining?.category || "general"}>
-                          <SelectTrigger data-testid="select-category">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="general">General</SelectItem>
-                            <SelectItem value="comedy">Comedy</SelectItem>
-                            <SelectItem value="collaboration">Collaboration</SelectItem>
-                            <SelectItem value="culture">Culture</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex items-center space-x-2 pt-6">
-                        <input
-                          type="checkbox"
-                          id="isActive"
-                          name="isActive"
-                          defaultChecked={editingTraining?.isActive !== false}
-                          data-testid="checkbox-is-active"
-                        />
-                        <Label htmlFor="isActive">Active</Label>
-                      </div>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button type="button" variant="outline" onClick={() => setIsTrainingDialogOpen(false)}>
-                        Cancel
-                      </Button>
-                      <Button type="submit" data-testid="button-save-training">
-                        {editingTraining ? "Update" : "Create"}
-                      </Button>
-                    </div>
-                  </form>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            {isLoadingTraining ? (
-              <div className="text-center py-8">Loading training data...</div>
-            ) : (
-              <div className="grid gap-4">
-                {trainingData.map((training: ChatbotTraining) => (
-                  <Card key={training.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-6">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Badge variant={training.isActive ? "default" : "secondary"}>
-                              {training.keyword}
-                            </Badge>
-                            <Badge variant="outline">{training.language}</Badge>
-                            <Badge variant="outline">Priority: {training.priority}</Badge>
-                            <Badge variant="outline">{training.category}</Badge>
-                          </div>
-                          <p className="text-sm text-gray-600 mb-2">
-                            <strong>User:</strong> {training.userMessage}
-                          </p>
-                          <p className="text-sm">
-                            <strong>Bot:</strong> {training.botResponse}
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setEditingTraining(training);
-                              setIsTrainingDialogOpen(true);
-                            }}
-                            data-testid={`button-edit-training-${training.id}`}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => deleteTrainingMutation.mutate(training.id)}
-                            data-testid={`button-delete-training-${training.id}`}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          {/* TEMPLATES TAB */}
-          <TabsContent value="templates" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <h2 className="text-2xl font-semibold">Chatbot Templates</h2>
-                <p className="text-gray-600">Manage greetings, quick replies, and offers</p>
-              </div>
-              <Dialog open={isTemplateDialogOpen} onOpenChange={setIsTemplateDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-blue-600 hover:bg-blue-700" data-testid="button-add-template">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Template
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>{editingTemplate ? "Edit" : "Add"} Template</DialogTitle>
-                    <DialogDescription>
-                      Create reusable templates for greetings, quick replies, and offers
-                    </DialogDescription>
-                  </DialogHeader>
-                  <form onSubmit={handleTemplateSubmit} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="name">Template Name</Label>
-                        <Input
-                          id="name"
-                          name="name"
-                          placeholder="Welcome Greeting"
-                          defaultValue={editingTemplate?.name}
-                          required
-                          data-testid="input-template-name"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="templateType">Template Type</Label>
-                        <Select name="templateType" defaultValue={editingTemplate?.templateType || "greeting"}>
-                          <SelectTrigger data-testid="select-template-type">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="greeting">Greeting</SelectItem>
-                            <SelectItem value="quick_reply">Quick Reply</SelectItem>
-                            <SelectItem value="offer">Offer</SelectItem>
-                            <SelectItem value="fallback">Fallback</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="content">Template Content</Label>
-                      <Textarea
-                        id="content"
-                        name="content"
-                        placeholder="🙏 Namaskar! Ami Bong Bot, Bong Bari er official AI assistant!"
-                        defaultValue={editingTemplate?.content}
-                        rows={3}
-                        required
-                        data-testid="textarea-template-content"
-                      />
-                    </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <Label htmlFor="language">Language</Label>
-                        <Select name="language" defaultValue={editingTemplate?.language || "auto"}>
-                          <SelectTrigger data-testid="select-template-language">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="auto">Auto</SelectItem>
-                            <SelectItem value="bengali">Bengali</SelectItem>
-                            <SelectItem value="benglish">Benglish</SelectItem>
-                            <SelectItem value="english">English</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="displayOrder">Display Order</Label>
-                        <Input
-                          id="displayOrder"
-                          name="displayOrder"
-                          type="number"
-                          min="1"
-                          defaultValue={editingTemplate?.displayOrder || 1}
-                          required
-                          data-testid="input-display-order"
-                        />
-                      </div>
-                      <div className="flex items-center space-x-2 pt-6">
-                        <input
-                          type="checkbox"
-                          id="templateIsActive"
-                          name="isActive"
-                          defaultChecked={editingTemplate?.isActive !== false}
-                          data-testid="checkbox-template-is-active"
-                        />
-                        <Label htmlFor="templateIsActive">Active</Label>
-                      </div>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button type="button" variant="outline" onClick={() => setIsTemplateDialogOpen(false)}>
-                        Cancel
-                      </Button>
-                      <Button type="submit" data-testid="button-save-template">
-                        {editingTemplate ? "Update" : "Create"}
-                      </Button>
-                    </div>
-                  </form>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            {isLoadingTemplates ? (
-              <div className="text-center py-8">Loading templates...</div>
-            ) : (
-              <div className="grid gap-4">
-                {templatesData.map((template: ChatbotTemplate) => (
-                  <Card key={template.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-6">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Badge variant={template.isActive ? "default" : "secondary"}>
-                              {template.name}
-                            </Badge>
-                            <Badge variant="outline">{template.templateType}</Badge>
-                            <Badge variant="outline">{template.language}</Badge>
-                            <Badge variant="outline">Order: {template.displayOrder}</Badge>
-                          </div>
-                          <p className="text-sm">{template.content}</p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setEditingTemplate(template);
-                              setIsTemplateDialogOpen(true);
-                            }}
-                            data-testid={`button-edit-template-${template.id}`}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => deleteTemplateMutation.mutate(template.id)}
-                            data-testid={`button-delete-template-${template.id}`}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+    <div className="container mx-auto py-8 space-y-8">
+      <div className="flex items-center gap-3 mb-6">
+        <Bot className="h-8 w-8 text-blue-600" />
+        <h1 className="text-3xl font-bold">BongBot Management</h1>
       </div>
+
+      {/* Training Center */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            Bong Bot Training Center
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="text-sm text-gray-600 space-y-1">
+            <p>Format: Paste notepad-style blocks — a Title line followed by bullet points.</p>
+            <ul className="list-disc ml-5">
+              <li>Example:
+                <div className="mt-1 rounded-md bg-gray-50 p-2 text-xs text-gray-700">
+                  GREETING{`\n`}
+                  - Friendly one-liners for first hello{`\n`}
+                  - Keep it short and witty{`\n`}
+                  {`\n`}
+                  ABOUT REPLY{`\n`}
+                  - Who we are and what we do{`\n`}
+                  - Collab value for brands (family connect)
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <Textarea
+            value={trainingData}
+            onChange={(e) => setTrainingData(e.target.value)}
+            placeholder={"GREETING\n- ...\n- ...\n\nABOUT REPLY\n- ...\n- ..."}
+            rows={12}
+          />
+
+          <Button onClick={() => saveTrainingMutation.mutate()} disabled={saveTrainingMutation.isPending} className="w-full">
+            <Save className="h-4 w-4 mr-2" />
+            {saveTrainingMutation.isPending ? 'Saving...' : 'Save Training Notes'}
+          </Button>
+
+          <div className="text-xs text-gray-500">
+            These notes are injected into the AI prompt to guide replies. Keep them concise and bullet-y for best results.
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Greeting Template (same pattern as Quick Replies) */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bot className="h-5 w-5" />
+            Greeting Template
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-gray-600">This is used for first “hello”. Keep it short and welcoming.</p>
+          <div>
+            <label className="text-sm font-medium">Greeting</label>
+            <Textarea
+              value={greeting}
+              onChange={(e) => setGreeting(e.target.value)}
+              rows={2}
+            />
+          </div>
+          <Button onClick={() => saveGreetingMutation.mutate()} disabled={saveGreetingMutation.isPending} className="w-full">
+            <Save className="h-4 w-4 mr-2" />
+            {saveGreetingMutation.isPending ? 'Saving...' : 'Save Greeting'}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bot className="h-5 w-5" />
+            Quick Reply Templates
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-gray-600">Max 60 characters each</p>
+          
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm font-medium">Template 1 ({getCharCount(template1)}/{MAX_CHARS})</label>
+              <Textarea
+                value={template1}
+                onChange={(e) => setTemplate1(e.target.value)}
+                rows={2}
+                className={getCharCount(template1) > MAX_CHARS ? "border-red-500" : ""}
+              />
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium">Template 2 ({getCharCount(template2)}/{MAX_CHARS})</label>
+              <Textarea
+                value={template2}
+                onChange={(e) => setTemplate2(e.target.value)}
+                rows={2}
+                className={getCharCount(template2) > MAX_CHARS ? "border-red-500" : ""}
+              />
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium">Template 3 ({getCharCount(template3)}/{MAX_CHARS})</label>
+              <Textarea
+                value={template3}
+                onChange={(e) => setTemplate3(e.target.value)}
+                rows={2}
+                className={getCharCount(template3) > MAX_CHARS ? "border-red-500" : ""}
+              />
+            </div>
+          </div>
+          
+          <Button 
+            onClick={() => saveTemplatesMutation.mutate()}
+            disabled={
+              saveTemplatesMutation.isPending || 
+              getCharCount(template1) > MAX_CHARS || 
+              getCharCount(template2) > MAX_CHARS || 
+              getCharCount(template3) > MAX_CHARS
+            }
+            className="w-full"
+          >
+            <Save className="h-4 w-4 mr-2" />
+            {saveTemplatesMutation.isPending ? "Saving..." : "Save Templates"}
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -1332,9 +1332,38 @@ Output format: JUST the 1–2 sentence greeting. No emojis unless fits naturally
 
   app.post("/api/admin/chatbot-templates", isAuthenticated, async (req, res) => {
     try {
-      const templateData = req.body;
-      const newTemplate = await storage.createChatbotTemplate(templateData);
-      res.json(newTemplate);
+      // Handle cases where body might be a string or improperly parsed
+      const raw = (req as any).body;
+      let body: any = raw;
+      if (typeof raw === 'string') {
+        try { body = JSON.parse(raw); } catch { body = {}; }
+      }
+
+      const payload = {
+        name: typeof body?.name === 'string' ? body.name.trim() : '',
+        templateType: typeof body?.templateType === 'string' ? body.templateType.trim() : 'quick_reply',
+        content: typeof body?.content === 'string' ? body.content : '',
+        language: typeof body?.language === 'string' ? body.language : 'auto',
+        isActive: typeof body?.isActive === 'boolean' ? body.isActive : true,
+        displayOrder: Number.isFinite(Number(body?.displayOrder)) ? Number(body.displayOrder) : 1,
+        // validFrom/validTo managed by DB defaults unless explicitly added later
+      } as any;
+
+      if (!payload.name || !payload.content) {
+        return res.status(400).json({ message: 'name and content are required' });
+      }
+
+      // Upsert by (templateType, displayOrder)
+      const existingList = await storage.getAllChatbotTemplates();
+      const match = existingList.find(
+        (t: any) => t.templateType === payload.templateType && (t.displayOrder ?? 1) === payload.displayOrder
+      );
+      if (match) {
+        const updated = await storage.updateChatbotTemplate(match.id, payload);
+        return res.json(updated);
+      }
+      const created = await storage.createChatbotTemplate(payload);
+      res.json(created);
     } catch (error) {
       console.error("Error creating chatbot template:", error);
       res.status(500).json({ message: "Failed to create chatbot template" });
@@ -1367,6 +1396,44 @@ Output format: JUST the 1–2 sentence greeting. No emojis unless fits naturally
     } catch (error) {
       console.error("Error deleting chatbot template:", error);
       res.status(500).json({ message: "Failed to delete chatbot template" });
+    }
+  });
+
+  // Public templates endpoint for BongBot
+  app.get("/api/chatbot/templates", async (req, res) => {
+    try {
+      const templates = await storage.getAllChatbotTemplates();
+      const type = String((req.query.type || 'quick_reply')).trim();
+      // Filter active templates by requested type, dedupe by displayOrder taking latest
+      const filtered = templates.filter(t => t.isActive && t.templateType === (type === 'greeting' ? 'greeting' : 'quick_reply'));
+      const byOrder = new Map<number, any>();
+      for (const t of filtered) {
+        const order = (t.displayOrder ?? 1) as number;
+        const prev = byOrder.get(order);
+        const prevTs = prev ? (new Date(prev.updatedAt || prev.createdAt || 0)).getTime() : -1;
+        const curTs = (new Date((t as any).updatedAt || (t as any).createdAt || 0)).getTime();
+        if (!prev || curTs >= prevTs) {
+          byOrder.set(order, t);
+        }
+      }
+      let activeTemplates = Array.from(byOrder.entries())
+        .sort((a, b) => a[0] - b[0])
+        .map(([_, t]) => ({
+          id: t.id,
+          name: t.name,
+          content: t.content,
+          displayOrder: t.displayOrder,
+          isActive: t.isActive,
+          templateType: t.templateType
+        }));
+      if (type !== 'greeting') {
+        activeTemplates = activeTemplates.slice(0, 3);
+      }
+      
+      res.json(activeTemplates);
+    } catch (error) {
+      console.error("Error fetching public chatbot templates:", error);
+      res.status(500).json({ message: "Failed to fetch chatbot templates" });
     }
   });
 

@@ -99,7 +99,8 @@ const Home = () => {
       if (force === '1') {
         setCompactHero(true);
       } else {
-        setCompactHero(window.innerHeight < 720);
+        // Force compact mode for better above-fold visibility
+        setCompactHero(true);
       }
     };
     assess();
@@ -379,7 +380,7 @@ const Home = () => {
               </p>
             </motion.div>
             <motion.div
-              className={`flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3.5 ${compactHero ? 'mb-1 sm:mb-1.5' : 'mb-1.5 sm:mb-2'} transition-all`}
+              className={`flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3.5 ${compactHero ? 'mb-4 sm:mb-6' : 'mb-6 sm:mb-8'} transition-all`}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, delay: 0.6 }}

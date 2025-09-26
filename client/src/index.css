@@ -149,13 +149,13 @@ header {
 @media (min-width: 768px) {
   .mobile-video-container {
     aspect-ratio: 16/9; /* Switch to horizontal on tablets+ */
-    max-width: 600px;
+    max-width: 520px; /* Larger for better visibility */
   }
 }
 
 @media (min-width: 1024px) {
   .mobile-video-container {
-    max-width: 800px;
+    max-width: 600px; /* Good size on desktop */
   }
 }
 
@@ -589,15 +589,24 @@ button:hover {
   font-family: var(--font-bengali);
 }
 
+
 .video-container {
   aspect-ratio: 9 / 16;
-  max-width: 280px;
+  max-width: 180px; /* even smaller for above-the-fold */
   width: 100%;
   position: relative;
   cursor: pointer;
   overflow: visible;
   border-radius: 12px;
-  margin: 0 auto;
+  margin: 16px auto 8px auto; /* less top margin, small bottom margin */
+}
+
+.cta-buttons-row {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 0;
+  margin-top: 8px;
 }
 
 /* Mobile-specific optimizations for butter smooth performance */

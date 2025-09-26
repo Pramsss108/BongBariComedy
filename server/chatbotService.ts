@@ -74,6 +74,7 @@ export class ChatbotService {
   private lastAiOk: boolean | null = null;
   private lastAiSource: 'sdk' | 'rest' | 'none' = 'none';
   private lastAiModel: string | null = null;
+  private trainingCache: { text: string; ts: number } = { text: '', ts: 0 };
 
   // Friendly greeting generator for simple hellos
   private makeHelloReply(userMessage: string): string {
@@ -319,8 +320,19 @@ export class ChatbotService {
     opts?: { allowFallback?: boolean }
   ): Promise<string> {
     try {
-      // If user just said hello/hi, reply instantly with a friendly greeting
+      // If user just said hello/hi, reply with saved Greeting template if available; else friendly fallback
       if (/\b(hi|hello|hey|yo)\b/i.test(userMessage) || /নমস্কার|হ্যালো|ওই|হাই/.test(userMessage)) {
+        try {
+          let templates: ChatbotTemplate[] = [];
+          if (typeof (storage as any).getChatbotTemplatesByType === 'function') {
+            templates = await (storage as any).getChatbotTemplatesByType('greeting');
+          } else {
+            const all = await storage.getAllChatbotTemplates();
+            templates = all.filter((t: any) => t.templateType === 'greeting');
+          }
+          const greet = (templates || []).sort((a: any, b: any) => (a.displayOrder ?? 1) - (b.displayOrder ?? 1))[0];
+          if (greet?.content) return greet.content;
+        } catch (_) {}
         return this.makeHelloReply(userMessage);
       }
       // Then check for trained responses in database
@@ -354,7 +366,7 @@ export class ChatbotService {
         languageInstruction = "RESPOND IN THE SAME LANGUAGE MIX AS THE USER.";
       }
 
-      const isJokeIntent = /(joke|jokes|funny|haso|হাস|মজা|মিম|meme)/i.test(userMessage);
+  const isJokeIntent = /(joke|jokes|funny|haso|হাস|মজা|মিম|meme)/i.test(userMessage);
       const isChattyUser = conversationHistory.filter(m => m.role === 'user').length >= 2
         || /(bol|bolo|detail|আরো|আরও|explain|kichu beshi|aro)/i.test(userMessage);
       // Adaptive length: short for quick asks, medium for chatty users
@@ -362,6 +374,30 @@ export class ChatbotService {
       const temperature = isJokeIntent ? 0.85 : isChattyUser ? 0.7 : 0.65;
   const trendHints = isJokeIntent ? trendsService.getTop(6).filter(t => !t.isSomber).slice(0, 4) : [];
   const trendLines = trendHints.length ? `\nToday's hints: ${trendHints.map(t => `[${t.language.toUpperCase()}] ${t.title}`).join(' \u2022 ')}` : '';
+
+      // Load training notes (admin notepad), cached for 60s
+      const nowTs = Date.now();
+      if (nowTs - this.trainingCache.ts > 60_000) {
+        try {
+          const settings = await storage.getPublicSettings?.().catch(() => [])
+            || await (storage as any).getAllAdminSettings?.().catch(() => []);
+          const all = Array.isArray(settings) ? settings : [];
+          // Prefer non-public if available, fall back to any list
+          const fromAll = await (async () => {
+            if (typeof (storage as any).getAllAdminSettings === 'function') {
+              try { return await (storage as any).getAllAdminSettings(); } catch { return all; }
+            }
+            return all;
+          })();
+          const setting = (fromAll || []).find((s: any) => s.settingKey === 'chatbot_training_notepad');
+          const txt = (setting?.settingValue || '').toString();
+          this.trainingCache = { text: txt, ts: nowTs };
+        } catch { this.trainingCache = { text: this.trainingCache.text, ts: nowTs }; }
+      }
+
+      const trainingBlock = this.trainingCache.text
+        ? `\nPROJECT TRAINING NOTES (curated):\n${this.trainingCache.text}\n\n— End of notes —\n`
+        : '';
 
   const systemPrompt = `${BONG_BARI_CONTEXT}
 
@@ -373,6 +409,8 @@ ${conversationContext}
 Current user message: ${userMessage}
 
 ${trendLines}
+
+ ${trainingBlock}
 
  Instructions (STRICT):
   1) Answer-first in a playful, witty, family-friendly tone; use 1–2 short lines for quick asks, or 2–4 compact lines (max 2 bullets) for deeper questions.

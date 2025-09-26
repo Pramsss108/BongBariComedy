@@ -18,7 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { insertUserSchema, insertBlogPostSchema, type CollaborationRequest, type InsertUser, type InsertBlogPost, type BlogPost } from "@shared/schema";
 import { SimpleBannerManager } from "./SimpleBannerManager";
-import { AdminChatbot } from "./AdminChatbot";
+import AdminChatbot from "./AdminChatbot";
 import { AdminLeadManager } from "./AdminLeadManager";
 // import { MemeManager } from "./MemeManager";
 import { PromotionsManager } from "./promotions/PromotionsManager";
@@ -535,13 +535,6 @@ const Admin = () => {
               </TabsContent>
 
               <TabsContent value="chatbot" className="mt-8">
-                <h3 className="text-2xl font-semibold text-brand-blue mb-6 flex items-center">
-                  <Bot className="w-6 h-6 mr-2" />
-                  Bong Bot Training Center
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  Train your Gemini-powered chatbot with custom responses, keywords, and conversation flows.
-                </p>
                 <AdminChatbot />
               </TabsContent>
 

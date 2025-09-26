@@ -19,10 +19,44 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
   const [showTemplates, setShowTemplates] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const greetingMsgIdRef = useRef<number | null>(null);
 
   // Quick reply templates - loaded from database
   const [templates, setTemplates] = useState<string[]>([]);
-  const [templatesSource, setTemplatesSource] = useState<'DB' | 'Default'>('Default');
+  const [templatesSource, setTemplatesSource] = useState<'DB' | 'Default' | 'Cache'>('Default');
+  const TEMPLATES_CACHE_KEY = 'bbc_quick_replies_cache_v1';
+  const GREETING_CACHE_KEY = 'bbc_greeting_cache_v1';
+  const DEFAULT_GREETING = "🙏 Hi! Ami Bong Bot — Bong Bari family-te welcome. Blood relation na, only laughing relation!";
+  const CTA_LINE = "Join family: https://youtube.com/@bongbari | Work with us: /work-with-us#form | team@bongbari.com";
+
+  // Helpers: safe localStorage get/set
+  const readCache = <T,>(key: string): { data: T | null; ts: number | null } => {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return { data: null, ts: null };
+      const parsed = JSON.parse(raw);
+      return { data: parsed?.data ?? null, ts: parsed?.ts ?? null };
+    } catch {
+      return { data: null, ts: null };
+    }
+  };
+  const writeCache = <T,>(key: string, data: T) => {
+    try {
+      localStorage.setItem(key, JSON.stringify({ data, ts: Date.now() }));
+    } catch {}
+  };
+
+  // Helper: fetch with timeout
+  const fetchWithTimeout = async (input: RequestInfo | URL, init?: RequestInit, timeoutMs = 1800) => {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(input, { ...(init || {}), signal: controller.signal });
+      return res;
+    } finally {
+      clearTimeout(id);
+    }
+  };
   
   // Default fallback templates
   const defaultTemplates = [
@@ -31,84 +65,112 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
     "Mon bhalo na lagle halka Subscribe MARO"
   ];
 
-  // Load templates from database
+  // Load templates with cache-first, then fast background refresh
   const loadTemplates = async () => {
-    try {
-      const response = await fetch(buildApiUrl(`/api/chatbot/templates?ts=${Date.now()}`));
-      if (response.ok) {
-        const dbTemplates = await response.json();
-        if (dbTemplates && dbTemplates.length > 0) {
-          const templateTexts = dbTemplates.map((t: any) => t.content);
-          setTemplates(templateTexts);
-          setTemplatesSource('DB');
-          console.log('🔄 Templates loaded from DB:', templateTexts);
-        } else {
-          setTemplates(defaultTemplates);
-          setTemplatesSource('Default');
-          console.log('📝 Using default templates (no DB templates found)');
-        }
-      } else {
-        setTemplates(defaultTemplates);
-        setTemplatesSource('Default');
-        console.log('⚠️ Failed to load templates from DB, using defaults');
-      }
-    } catch (error) {
-      console.error('❌ Error loading templates:', error);
+    // Cache-first
+    const cached = readCache<{ templates: string[] }>(TEMPLATES_CACHE_KEY).data;
+    if (cached?.templates && cached.templates.length > 0) {
+      setTemplates(cached.templates);
+      setTemplatesSource('Cache');
+    } else {
       setTemplates(defaultTemplates);
       setTemplatesSource('Default');
     }
+
+    // Background refresh with short timeout
+    try {
+      const response = await fetchWithTimeout(buildApiUrl(`/api/chatbot/templates?ts=${Date.now()}`), undefined, 1800);
+      if (response.ok) {
+        const dbTemplates = await response.json();
+        if (dbTemplates && dbTemplates.length > 0) {
+          const templateTexts = dbTemplates.map((t: any) => String(t.content || '').trim()).filter(Boolean);
+          if (templateTexts.length > 0) {
+            setTemplates(templateTexts);
+            setTemplatesSource('DB');
+            writeCache(TEMPLATES_CACHE_KEY, { templates: templateTexts });
+          }
+        }
+      }
+    } catch {
+      // Keep cache/default silently
+    }
+  };
+
+  // Read greeting from cache
+  const getCachedGreeting = (): string | null => {
+    const cached = readCache<{ greeting: string }>(GREETING_CACHE_KEY).data;
+    const g = cached?.greeting ? String(cached.greeting).trim() : '';
+    return g && g.length > 0 ? g : null;
+  };
+  const setCachedGreeting = (greeting: string) => {
+    writeCache(GREETING_CACHE_KEY, { greeting });
   };
 
   // Load templates on mount
   useEffect(() => {
     loadTemplates();
+    // Warm greeting cache in background
+    (async () => {
+      try {
+        const res = await fetchWithTimeout(buildApiUrl(`/api/chatbot/templates?type=greeting&ts=${Date.now()}`), undefined, 1800);
+        if (res.ok) {
+          const list = await res.json();
+          if (Array.isArray(list) && list.length > 0) {
+            const greet = String(list[0]?.content || '').trim();
+            if (greet) setCachedGreeting(greet);
+          }
+        }
+      } catch {}
+    })();
   }, []);
 
   // When opening chatbot, position it on the right side
   const handleOpenChatbot = () => {
-  const rightSideX = Math.max(0, window.innerWidth - 340); // Right side position with bounds check
-  const bottomY = Math.max(0, window.innerHeight - 380 - 20); // 20px above bottom edge, never above header
-  setPosition({ x: rightSideX, y: bottomY }); // Open at bottom right corner
+    const rightSideX = Math.max(0, window.innerWidth - 340); // Right side position with bounds check
+    const bottomY = Math.max(0, window.innerHeight - 380 - 20); // 20px above bottom edge, never above header
+    setPosition({ x: rightSideX, y: bottomY }); // Open at bottom right corner
     setIsOpen(true);
+
     // Fresh session each open
     setMessages([]);
     setMessage('');
-    setIsTyping(true);
-    
+
+    // Instant greeting from cache or default (no typing indicator)
+    const cachedGreet = getCachedGreeting();
+    const header = cachedGreet && cachedGreet.length > 0 ? cachedGreet : DEFAULT_GREETING;
+    const firstText = [header, CTA_LINE].join('\n');
+    const greetId = Date.now();
+    greetingMsgIdRef.current = greetId;
+    setMessages([{ id: greetId, text: firstText, sender: 'bot', timestamp: new Date() }]);
+    setShowTemplates(true);
+    setIsTyping(false);
+
     // Play glitter sound when opening
     playGlitterSound();
 
-    // Reload templates on each open
+    // Reload templates on each open (cache-first in function)
     loadTemplates();
 
-    // First message: fetch dynamic greeting template; fallback to default
+    // Background refresh: try fetch newer greeting with fast timeout and update the first message in place
     (async () => {
       try {
-        const res = await fetch(buildApiUrl(`/api/chatbot/templates?type=greeting&ts=${Date.now()}`));
-        let greet = '';
+        const res = await fetchWithTimeout(buildApiUrl(`/api/chatbot/templates?type=greeting&ts=${Date.now()}`), undefined, 1800);
         if (res.ok) {
           const list = await res.json();
           if (Array.isArray(list) && list.length > 0) {
-            greet = String(list[0]?.content || '').trim();
+            const fresh = String(list[0]?.content || '').trim();
+            if (fresh && fresh !== cachedGreet) {
+              setCachedGreeting(fresh);
+              const updatedFirst = [fresh, CTA_LINE].join('\n');
+              const idToUpdate = greetingMsgIdRef.current;
+              if (idToUpdate) {
+                setMessages(prev => prev.map(m => m.id === idToUpdate ? { ...m, text: updatedFirst } : m));
+              }
+            }
           }
         }
-        const header = greet && greet.length > 0
-          ? greet
-          : "🙏 Hi! Ami Bong Bot — Bong Bari family-te welcome. Blood relation na, only laughing relation!";
-        const first = [
-          header,
-          "Join family: https://youtube.com/@bongbari | Work with us: /work-with-us#form | team@bongbari.com"
-        ].join('\n');
-        setMessages([{ id: Date.now(), text: first, sender: 'bot', timestamp: new Date() }]);
-      } catch (e) {
-        const first = [
-          "🙏 Hi! Ami Bong Bot — Bong Bari family-te welcome. Blood relation na, only laughing relation!",
-          "Join family: https://youtube.com/@bongbari | Work with us: /work-with-us#form | team@bongbari.com"
-        ].join('\n');
-        setMessages([{ id: Date.now(), text: first, sender: 'bot', timestamp: new Date() }]);
-      } finally {
-        setIsTyping(false);
-        setShowTemplates(true);
+      } catch {
+        // ignore; keep cached/default
       }
     })();
   };

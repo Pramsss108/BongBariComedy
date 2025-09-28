@@ -29,4 +29,4 @@ jobs:
             sleep 2
           done
       - name: Run integration tests
-        run: npx vitest run tests/api.test.ts
+        run: npm run test:integration

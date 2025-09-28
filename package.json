@@ -29,7 +29,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:integration": "vitest run tests/api.test.ts",
+  "test:integration": "node scripts/test-integration-runner.mjs",
     "db:push": "drizzle-kit push",
     "db:check": "node scripts/db-check.mjs",
     "git:fetch": "git fetch origin --quiet",

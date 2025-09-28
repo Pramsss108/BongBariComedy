@@ -184,18 +184,6 @@ export class ChatbotService {
     return `${firstLine}${maybeNudge}${cta}`.trim();
   }
 
-  // Short neutral nudge when user says "hi" after we've already greeted
-  private makePostGreetNudge(userMessage: string): string {
-    const hasBengaliScript = /[\u0980-\u09ff]/.test(userMessage);
-    const hasEnglishWords = /[a-zA-Z]/.test(userMessage);
-    const bengaliWords = ['ami','tumi','kemon','bhalo','hobe','korbo','chai','meme','roast','adda','haso','hasi'];
-    const isBenglish = !hasBengaliScript && hasEnglishWords && bengaliWords.some(w => (userMessage||'').toLowerCase().includes(w));
-
-    if (hasBengaliScript) return 'Bolo—ki niye start korbo? Meme, collab, na daily roast?';
-    if (isBenglish) return 'Bolo—ki niye start korbo? Meme, collab, na daily roast?';
-    return 'Tell me what you need—memes, collab info, or a quick idea?';
-  }
-
   // Generate text with correct request shape and robust parsing + light retry
   private async generateText(
     prompt: string,
@@ -332,10 +320,8 @@ export class ChatbotService {
     opts?: { allowFallback?: boolean }
   ): Promise<string> {
     try {
-      const helloIntent = /\b(hi|hello|hey|yo)\b/i.test(userMessage) || /নমস্কার|হ্যালো|ওই|হাই/.test(userMessage);
-      const alreadyGreeted = Array.isArray(conversationHistory) && conversationHistory.some(m => m.role === 'assistant');
       // If user just said hello/hi, reply with saved Greeting template if available; else friendly fallback
-      if (helloIntent && !alreadyGreeted) {
+      if (/\b(hi|hello|hey|yo)\b/i.test(userMessage) || /নমস্কার|হ্যালো|ওই|হাই/.test(userMessage)) {
         try {
           let templates: ChatbotTemplate[] = [];
           if (typeof (storage as any).getChatbotTemplatesByType === 'function') {
@@ -427,7 +413,6 @@ ${trendLines}
  ${trainingBlock}
 
  Instructions (STRICT):
-  0) ${alreadyGreeted ? 'Conversation already started — DO NOT greet again or introduce yourself. Start directly; no “Hi/Hello/Namaskar”.' : 'If this is the first turn, you may greet naturally once.'}
   1) Answer-first in a playful, witty, family-friendly tone; use 1–2 short lines for quick asks, or 2–4 compact lines (max 2 bullets) for deeper questions.
   2) Keep it natural (Benglish or Bengali script); avoid formal AI voice. ≤1 emoji only when perfect.
   3) Emotionally intelligent persuasion: acknowledge needs, mirror the vibe, seed confidence with one crisp benefit.
@@ -441,22 +426,14 @@ ${trendLines}
       const allowFallback = opts?.allowFallback !== false; // default true
       if (!ai || !this.model) {
         // If no AI available
-        if (alreadyGreeted && helloIntent) return this.makePostGreetNudge(userMessage);
         return allowFallback ? this.makeFallbackReply(userMessage) : '';
       }
   const text = await this.generateText(systemPrompt, { temperature, maxOutputTokens: maxTokens, timeoutMs: 4500 });
-  if (text && text.trim().length > 0) return text;
-  if (!allowFallback) return '';
-  // On fallback, avoid re-greeting if conversation already started
-  return (alreadyGreeted && helloIntent) ? this.makePostGreetNudge(userMessage) : this.makeFallbackReply(userMessage);
+  return text && text.trim().length > 0 ? text : (allowFallback ? this.makeFallbackReply(userMessage) : '');
     } catch (error) {
       console.error('Chatbot error:', error);
       // On errors: only fallback if allowed
-      if (opts?.allowFallback === false) return '';
-      // Avoid re-greeting on error too
-      const helloIntent = /\b(hi|hello|hey|yo)\b/i.test(userMessage) || /নমস্কার|হ্যালো|ওই|হাই/.test(userMessage);
-      const alreadyGreeted = Array.isArray(conversationHistory) && conversationHistory.some(m => m.role === 'assistant');
-      return (alreadyGreeted && helloIntent) ? this.makePostGreetNudge(userMessage) : this.makeFallbackReply(userMessage);
+      return opts?.allowFallback === false ? '' : this.makeFallbackReply(userMessage);
     }
   }
 

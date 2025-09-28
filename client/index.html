@@ -23,7 +23,8 @@
     <script>
       // Only set API base for live site; use Vite proxy for local dev
       (function(){
-        if (location.host.endsWith('bongbari.com')) {
+        var host = location.host;
+        if (host === 'bongbari.com' || host === 'www.bongbari.com') {
           window.__API_BASE__ = 'https://bongbaricomedy.onrender.com';
         }
         // On localhost, do not set __API_BASE__; Vite proxy will handle /api

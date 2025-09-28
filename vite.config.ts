@@ -130,25 +130,6 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
-    rollupOptions: {
-      output: {
-        manualChunks(id: string) {
-          if (!id.includes('node_modules')) return undefined;
-          // Group common heavy libs into their own chunks to keep the main entry light
-          if (id.includes('/react/')) return 'react-vendor'; // catches react, react-dom
-          if (id.includes('@radix-ui')) return 'radix';
-          if (id.includes('framer-motion')) return 'motion';
-          if (id.includes('lucide-react')) return 'icons';
-          if (id.includes('recharts')) return 'recharts';
-          if (id.includes('embla-carousel')) return 'embla';
-          if (id.includes('react-day-picker')) return 'daypicker';
-          if (id.includes('@tanstack/react-query')) return 'react-query';
-          if (id.includes('wouter')) return 'wouter';
-          // Fallback: let Rollup decide or merge into a generic vendor chunk
-          return undefined;
-        },
-      },
-    },
   },
   
   server: {

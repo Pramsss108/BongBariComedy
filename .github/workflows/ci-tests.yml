@@ -18,15 +18,33 @@ jobs:
         run: npm ci
       - name: TypeScript check
         run: npm run typecheck
+      - name: Create test environment file
+        run: |
+          echo "DATABASE_URL=" >> server/.env
+          echo "GEMINI_API_KEY=test_key" >> server/.env
+          echo "JWT_SECRET=test_secret_for_ci" >> server/.env
+          echo "NODE_ENV=development" >> server/.env
       - name: Start backend
-        run: npm run dev:server:esm &
+        run: |
+          npm run dev:server:esm &
+          SERVER_PID=$!
+          echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
       - name: Wait for backend
         run: |
-          for i in {1..30}; do
-            if curl -s http://localhost:5000/api/version; then
-              echo 'Backend ready'; break
+          echo "Waiting for backend to start..."
+          for i in {1..45}; do
+            if curl -s -f http://localhost:5000/api/version; then
+              echo "Backend ready at attempt $i"
+              break
             fi
-            sleep 2
+            echo "Attempt $i: Backend not ready, waiting 3s..."
+            sleep 3
           done
+          # Final check
+          if ! curl -s -f http://localhost:5000/api/version; then
+            echo "Backend failed to start after 45 attempts"
+            ps aux | grep node || true
+            exit 1
+          fi
       - name: Run integration tests
         run: npx vitest run tests/api.test.ts

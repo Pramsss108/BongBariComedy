@@ -129,8 +129,19 @@ Notes:
 
 ### Blank Site (White Screen) on GitHub Pages
 - If the live site is blank, check browser DevTools → Network tab. If the main JS bundle (e.g., `index-xxxx.js`) returns HTML or a redirect, the deploy is out of sync.
-- **Fix:** Make any client code change (even a comment), commit with `FORCE_PAGES_DEPLOY` in the message, and push to `main`. This forces a full rebuild and asset upload.
-- Always wait for the Pages workflow to finish before checking the live site. Hard refresh (Ctrl+F5) after deploy.
+- Fix (fastest): run `npm run pages:force` to push an empty commit with `FORCE_PAGES_DEPLOY` and trigger a fresh Pages build.
+- Alternate: make any tiny client change (even a comment), commit with `FORCE_PAGES_DEPLOY` in the message, and push to `main`.
+- After pushing, wait for the GitHub Pages deploy workflow to complete, then hard refresh (Ctrl+F5).
+- Quick sanity: open DevTools → Network → look for split vendor chunks (`react-vendor-*.js`, `motion-*.js`, `radix-*.js`) next to `index-*.js`. If those appear, the latest build is live.
+
+#### Why this happens
+- GitHub Pages can briefly serve an older HTML with new asset names, or the reverse, right after a deploy. Our SPA relies on matching `index.html` and hashed asset filenames. A forced rebuild re-syncs them.
+
+#### Operational checklist to avoid repeats
+- Keep `404.html` in sync with `index.html` (handled automatically by `scripts/postbuild-spa-404.cjs`).
+- Don’t commit `dist/`—let Pages build from source.
+- When you change Vite chunking or asset pipeline, expect one forced deploy to refresh CDN caches.
+- Use the helper script when in doubt: `npm run pages:force`.
 
 ## Security Notes
 - Never log tokens; store admin session in `localStorage['admin_session']` only.

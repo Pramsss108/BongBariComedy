@@ -33,10 +33,93 @@
   <body>
     <div id="root"></div>
     <!-- Build version stamp (update this string when deploying to bust caches deterministically) -->
-    <script>window.__BUILD_VERSION__='20250923-1';</script>
+  <script>window.__BUILD_VERSION__='20250928-1';</script>
   <!-- Important: keep entry path EXACT so Vite transforms it during build -->
   <script type="module" src="/src/main.tsx"></script>
-    <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
-    <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
+  <!-- Production boot watchdog: if the app fails to mount (e.g., Pages serves mismatched assets), show a recovery banner -->
+  <script>
+    (function(){
+      try {
+        var host = location.hostname;
+        var isProdSite = host.endsWith('bongbari.com');
+        // Only run on live site; skip localhost and previews
+        if (!isProdSite) return;
+
+        var injected = false;
+        function showRecoveryBanner(message){
+          if (injected) return; injected = true;
+          var bar = document.createElement('div');
+          bar.setAttribute('data-testid','boot-recovery-banner');
+          bar.style.position = 'fixed';
+          bar.style.top = '0';
+          bar.style.left = '0';
+          bar.style.right = '0';
+          bar.style.zIndex = '99999';
+          bar.style.background = '#111827';
+          bar.style.color = '#FDE68A';
+          bar.style.fontFamily = 'system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif';
+          bar.style.display = 'flex';
+          bar.style.alignItems = 'center';
+          bar.style.justifyContent = 'space-between';
+          bar.style.padding = '10px 14px';
+          bar.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+          var span = document.createElement('span');
+          span.textContent = message || 'Site failed to load fully. Click Refresh to fix.';
+          var btn = document.createElement('button');
+          btn.textContent = 'Refresh';
+          btn.style.marginLeft = '12px';
+          btn.style.background = '#F59E0B';
+          btn.style.border = 'none';
+          btn.style.color = '#111827';
+          btn.style.fontWeight = '600';
+          btn.style.padding = '6px 10px';
+          btn.style.borderRadius = '6px';
+          btn.style.cursor = 'pointer';
+          btn.onclick = function(){
+            var url = new URL(location.href);
+            url.searchParams.set('v', String(Date.now()));
+            location.replace(url.toString());
+          };
+          bar.appendChild(span);
+          bar.appendChild(btn);
+          document.body.appendChild(bar);
+        }
+
+        // Global error hook: surface a banner so it's visible on live if something breaks very early
+        window.addEventListener('error', function(e){
+          try { console.error('[boot-error]', e && (e.message || e.error)); } catch {}
+          showRecoveryBanner('A loading error occurred. Try Refresh.');
+        });
+
+        // If React root didn\'t mount within a short window, show banner (helps when HTML and assets get out of sync)
+        var start = Date.now();
+        setTimeout(function(){
+          var root = document.getElementById('root');
+          var hasMounted = !!(root && root.firstElementChild);
+          if (!hasMounted) {
+            var age = Date.now() - start;
+            showRecoveryBanner('Site is taking too long to load ('+age+'ms). Click Refresh.');
+          }
+        }, 3200);
+
+      } catch (err) {
+        // Never throw from watchdog
+        try { console.error('[boot-watchdog-failed]', err); } catch {}
+      }
+    })();
+  </script>
+      <!-- Load Replit dev banner only on dev hosts (never on production) -->
+      <script>
+        (function(){
+          var host = location.hostname;
+          var isDev = host === 'localhost' || host === '127.0.0.1' || host.endsWith('.repl.co');
+          if (isDev) {
+            var s = document.createElement('script');
+            s.type = 'text/javascript';
+            s.src = 'https://replit.com/public/js/replit-dev-banner.js';
+            document.body.appendChild(s);
+          }
+        })();
+      </script>
   </body>
 </html>

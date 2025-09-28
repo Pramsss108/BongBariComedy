@@ -8,14 +8,14 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export default defineConfig({
+export default defineConfig(({ command, mode }) => ({
   plugins: [
     react(),
-    runtimeErrorOverlay(),
+    // Load runtime error overlay only during local development server
+    ...(command === 'serve' ? [runtimeErrorOverlay()] : []),
     // Dev-only: emulate Netlify Functions for promo marquee so no Netlify CLI is required
-  ...(process.env.NETLIFY === "1"
-      ? []
-      : [
+    ...(command === 'serve' && process.env.NETLIFY !== "1"
+      ? [
           {
             name: "dev-functions-mock-homepage-promo",
             configureServer(server: ViteDevServer) {
@@ -109,13 +109,13 @@ export default defineConfig({
               });
             },
           },
-        ]),
-    ...(process.env.NODE_ENV !== "production" &&
-    process.env.REPL_ID !== undefined
+        ]
+      : []),
+    ...(command === 'serve' && process.env.REPL_ID !== undefined
       ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer(),
-          ),
+          // Replit cartographer should be dev-only
+          // Use dynamic import promise without top-level await in factory
+          (async () => (await import("@replit/vite-plugin-cartographer")).cartographer())(),
         ]
       : []),
   ],
@@ -174,7 +174,7 @@ export default defineConfig({
       },
     },
   },
-});
+}));
 
 // Build-test: client change to trigger workflow build
 // Test: deploy from main after removing environment restrictions

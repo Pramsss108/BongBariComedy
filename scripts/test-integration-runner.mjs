@@ -22,9 +22,13 @@ async function waitForReady(url, tries = 40, delayMs = 1500) {
 
 async function isUp() {
   try {
-    const r = await fetch(`${API_BASE}/api/version`, { timeout: 2000 });
+    const r = await fetch(`${API_BASE}/api/version`, { timeout: 3000 });
     return r.ok;
-  } catch {
+  } catch (err) {
+    // In CI, log connection issues for debugging
+    if (process.env.CI) {
+      console.log(`[test-runner] Backend check failed: ${err.code || err.message}`);
+    }
     return false;
   }
 }
@@ -54,24 +58,39 @@ function spawnVitest() {
 
 (async () => {
   let startedServer = null;
-  let alreadyUp = await isUp();
-  if (!alreadyUp) {
-    console.log('[test-runner] Backend not detected, starting temporary server…');
-    startedServer = spawnServer();
-    const ready = await waitForReady(`${API_BASE}/api/version`, 40, 1500);
+  const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
+  
+  // In CI, wait longer for externally-started backend
+  if (isCI) {
+    console.log('[test-runner] CI environment detected. Waiting for backend...');
+    const ready = await waitForReady(`${API_BASE}/api/version`, 45, 2000);
     if (!ready) {
-      console.error('[test-runner] Backend failed to become ready. Exiting.');
-      try { startedServer && startedServer.kill(); } catch {}
+      console.error('[test-runner] Backend not ready in CI after extended wait.');
       process.exit(1);
     }
-    console.log('[test-runner] Backend ready. Running tests…');
+    console.log('[test-runner] Backend ready in CI. Running tests…');
   } else {
-    console.log('[test-runner] Backend already running. Running tests…');
+    // Local environment: check if up, start if needed
+    let alreadyUp = await isUp();
+    if (!alreadyUp) {
+      console.log('[test-runner] Backend not detected, starting temporary server…');
+      startedServer = spawnServer();
+      const ready = await waitForReady(`${API_BASE}/api/version`, 40, 1500);
+      if (!ready) {
+        console.error('[test-runner] Backend failed to become ready. Exiting.');
+        try { startedServer && startedServer.kill(); } catch {}
+        process.exit(1);
+      }
+      console.log('[test-runner] Backend ready. Running tests…');
+    } else {
+      console.log('[test-runner] Backend already running. Running tests…');
+    }
   }
 
   const vitest = spawnVitest();
   vitest.on('exit', (code) => {
-    if (startedServer) {
+    // Only kill server if we started it locally (not in CI)
+    if (startedServer && !isCI) {
       try { startedServer.kill(); } catch {}
     }
     process.exit(code ?? 1);

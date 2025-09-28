@@ -36,8 +36,7 @@
     "remote:file": "node scripts/remote-file.mjs",
     "diff:file": "node scripts/diff-file.mjs",
     "backup:file": "node scripts/backup-file.mjs",
-  "restore:file": "node scripts/restore-file.mjs",
-  "pages:force": "git commit --allow-empty -m \"FORCE_PAGES_DEPLOY: force rebuild of GH Pages assets\" && git push origin main"
+    "restore:file": "node scripts/restore-file.mjs"
     ,"restore:core": "npm run restore:file -- client/src/index.css && npm run restore:file -- client/src/mobile-overrides.css && npm run restore:file -- client/src/components/navigation.tsx"
     ,"diff:core": "npm run git:fetch && npm run diff:file -- client/src/index.css && npm run diff:file -- client/src/mobile-overrides.css && npm run diff:file -- client/src/components/navigation.tsx"
     ,"snapshot:main": "node scripts/snapshot-main.mjs"

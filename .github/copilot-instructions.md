@@ -101,16 +101,6 @@ Then open `http://localhost:5173`.
 - If the live site is blank, check browser DevTools → Network tab. If the main JS bundle (e.g., `index-xxxx.js`) returns HTML or a redirect, the deploy is out of sync.
 - Always wait for the Pages workflow to finish before checking the live site. Hard refresh (Ctrl+F5) after deploy.
 
-### 🚨 CRITICAL: CNAME Domain Mismatch Issue (RED ALERT)
-**PERMANENT FIX REQUIRED - THIS IS THE #1 CAUSE OF BLANK SITES:**
-- If site works locally but `bongbari.com` shows blank page, CHECK THE CNAME FILE IMMEDIATELY
-- The CNAME file MUST match the domain you're accessing:
-  - Accessing `bongbari.com`? → CNAME file must contain `bongbari.com`
-  - Accessing `www.bongbari.com`? → CNAME file must contain `www.bongbari.com`
-- **Solution**: Update CNAME file to match your target domain, commit with `FORCE_PAGES_DEPLOY`, wait 2-3 minutes
-- **Prevention**: Always verify CNAME matches your intended domain before any major deployment
-- This issue causes blank pages even when builds are perfect and all assets exist correctly
-
 ## Security Notes
 - Never log tokens; store admin session in `localStorage['admin_session']` only.
 - Always send `X-CSRF-Token` for non-GET requests when authenticated.

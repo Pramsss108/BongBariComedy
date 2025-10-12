@@ -37,89 +37,59 @@ npm run start:client     # starts frontend (second terminal)
 ```
 Then open `http://localhost:5173`.
 
+### Hassle‑free Deploy (Non‑coder)
+- Use one of these from VS Code Terminal (PowerShell):
+  - Safe deploy (recommended): `npm run deploy:safe` – runs preflight (typecheck + build + verify), commits with `FORCE_PAGES_DEPLOY`, pushes.
 ## Non‑Coder Safe: View/Diff/Restore Any File From GitHub
 - Show remote version (from GitHub `main`) of a file:
-  ```powershell
   npm run git:fetch ; npm run remote:file -- client/src/index.css
   ```
 - See differences between your local file and GitHub `main`:
   ```powershell
   npm run git:fetch ; npm run diff:file -- client/src/index.css
-  ```
 - Safely restore your local file from GitHub `main` (auto‑backup to `.backups/`):
   ```powershell
   npm run restore:file -- client/src/index.css
   ```
-- Make a manual backup anytime:
   ```powershell
   npm run backup:file -- client/src/index.css
   ```
-Notes:
 - These commands never push; they only fetch, view, diff, and restore locally.
 - After restore, you can run locally and verify before committing.
 
 ## Architecture
-- Client: React + Vite SPA in `client/`; build to `dist/public/`. SPA routing via `404.html` copied from `index.html` (see `scripts/postbuild-spa-404.cjs`). Domain: `https://bongbari.com` (GitHub Pages).
 - Server: Express (TS, ESM) in `server/`, all API under `/api/*`. Dev injects Vite middleware; prod serves `dist/public/` (see `server/vite.ts`). Backend hosted on Render `https://bongbaricomedy.onrender.com`.
 - Data: Drizzle ORM with Neon Postgres when `DATABASE_URL` exists; otherwise `MemStorage` stubs. Shared schema/types in `shared/` (`shared/schema.ts`). SQLite schemas exist for local utilities, but **SQLite is not used for app data; all features require Neon/Postgres**.
 - Vite aliases: `@` → `client/src`, `@shared` → `shared`, `@assets` → `attached_assets`.
-
 ## Dev / Build / Test
 - Run local (frees ports first if needed):
   ```powershell
   npm run dev:live
   ```
-- Vite proxy: `/api` → `:5000` (or `:8888` when `NETLIFY=1`). Dev-only mock for `/.netlify/functions/homepage-promo` writes `.dev/promo.json` (see `vite.config.ts`).
 - Build client (creates SPA `404.html`): `npm run build:client`. Full build (client + bundle server): `npm run build`.
 - Type check: `npm run check`. Preflight (non-coder safe): `node scripts/preflight.cjs`.
 - Tests: Vitest integration hits `http://localhost:5000`. CI: start backend `npm run dev:server:esm` → wait for `/api/version` → `npm run test:integration` (see `.github/workflows/ci-tests.yml`, `tests/api.test.ts`).
 
-## API Base & Auth
-- API base resolution lives in `client/src/lib/queryClient.ts`:
-  - Order: `import.meta.env.VITE_API_BASE` → `window.__API_BASE__` (runtime `<script>` support) → if host ends with `bongbari.com`, default to Render URL.
-  - Use `buildApiUrl()` and `apiRequest()` for all client calls; never hardcode relative `/api/...`.
-- Auth: `/api/auth/login` returns `{ sessionId, csrfToken }`. Store session as `localStorage['admin_session']` (also `admin_jwt`).
   - For non-GET requests send `X-CSRF-Token` (managed via `setCSRFToken()` in `queryClient.ts`). Refresh with `GET /api/auth/csrf-token`.
   - Include `Authorization: Bearer <sessionId>` for protected endpoints.
-
-## Routes & Security
-- Implement endpoints in `server/routes.ts`; keep responses JSON and `sanitizeBody` inputs. Admin auth uses an in-memory session map plus CSRF helpers from `server/middleware/security.ts`.
-- Rate limiting: dedupe by device via `x-device-id` or `bbc_device_id` cookie; backed by Upstash or Postgres `rate_limits`, with in-process fallback.
-- Logging: `server/index.ts` logs only `/api` requests, capturing and truncating JSON bodies.
-
-## Storage & Migrations
 - Selection: `server/storage.ts` chooses Postgres (`server/db.pg.ts`) when `DATABASE_URL` exists, else `MemStorage` stubs.
 - Schemas: primary in `shared/schema.ts` (Postgres). Optional local SQLite: `drizzle.sqlite.config.ts` + `shared/schema.sqlite.ts`.
-- Pattern: add table in `shared/schema.ts` → run Drizzle push → add methods in `server/postgresStorage.ts` → consume via the `storage` abstraction in routes.
-
-## Conventions
-- Always call APIs via `apiRequest()`/`buildApiUrl()`; don’t hardcode relative `/api` paths.
-- Keep the runtime API base `<script>` in the built `index.html`; `404.html` mirrors it via postbuild copy, ensuring deep links resolve API correctly.
-- Use path aliases and React Query provider already wired in `client/src/App.tsx`.
 - Don’t commit `dist/`—GitHub Actions handles Pages deploy. Commit messages may use `type(scope): message`.
 - Backend env via `server/.env` (fallback to root `.env`): `DATABASE_URL`, `GEMINI_API_KEY`, `JWT_SECRET`, optional `YOUTUBE_CHANNEL_ID`, Upstash tokens.
-- To force a Pages deploy when no client changes: include `FORCE_PAGES_DEPLOY` in the commit message.
-
-## Daily Workflow
 - Edit features/content; test at `http://localhost:5173`.
 - Commit/push to `main` to deploy frontend (Pages) and backend (Render) automatically.
-- Pull latest before new work: `git pull origin main`.
-
 ## Key Paths
 - API base and helpers: `client/src/lib/queryClient.ts`.
-- Auth flow: `client/src/pages/login.tsx`, `client/src/hooks/useAuth.ts`.
 - Endpoints: `server/routes.ts`.
 - Storage: `server/storage.ts`, `server/postgresStorage.ts`.
 - Build glue: `scripts/postbuild-spa-404.cjs`, `scripts/preflight.cjs`.
 - Tooling: `vite.config.ts`, `server/vite.ts`.
 - CI/Deploy: `.github/workflows/ci-tests.yml`, `.github/workflows/deploy.yml`.
-
 ## Testing Checklist
 - Login works (200 + `sessionId` + CSRF stored).
 - Protected calls succeed (e.g., `/api/auth/me`).
 - Deep links like `/admin` load the SPA (not GH 404); `404.html` mirrors `index.html`.
 - Network calls use absolute API base (Render), not relative `/api`.
-- Chatbot endpoints return JSON if changed.
 - No console errors or mixed-content warnings.
 
 ## Troubleshooting
@@ -129,7 +99,6 @@ Notes:
 
 ### Blank Site (White Screen) on GitHub Pages
 - If the live site is blank, check browser DevTools → Network tab. If the main JS bundle (e.g., `index-xxxx.js`) returns HTML or a redirect, the deploy is out of sync.
-- **Fix:** Make any client code change (even a comment), commit with `FORCE_PAGES_DEPLOY` in the message, and push to `main`. This forces a full rebuild and asset upload.
 - Always wait for the Pages workflow to finish before checking the live site. Hard refresh (Ctrl+F5) after deploy.
 
 ## Security Notes

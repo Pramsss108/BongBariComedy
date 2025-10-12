@@ -48,6 +48,7 @@ header {
   margin: 0 !important;
   padding: 0 !important;
   top: 60px !important;
+  background: none !important;
 }
 
 :root {

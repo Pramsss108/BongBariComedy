@@ -38,6 +38,8 @@ const AdminChatbot = lazy(() => import("@/pages/AdminChatbot"));
 const AdminHomepage = lazy(() => import("@/pages/AdminHomepage").then(m => ({ default: m.AdminHomepage })));
 const AdminModeration = lazy(() => import("@/pages/AdminModeration"));
 const CommunityFeed = lazy(() => import("@/pages/community-feed"));
+const PrivacyPolicy = lazy(() => import("@/pages/PrivacyPolicy"));
+const TermsPage = lazy(() => import("@/pages/TermsPage"));
 
 // Loading fallback component
 function LoadingFallback() {
@@ -219,6 +221,16 @@ function Router() {
         <Route path="/login">
           <Suspense fallback={<LoadingFallback />}>
             <Login />
+          </Suspense>
+        </Route>
+        <Route path="/privacy">
+          <Suspense fallback={<LoadingFallback />}>
+            <PrivacyPolicy />
+          </Suspense>
+        </Route>
+        <Route path="/terms">
+          <Suspense fallback={<LoadingFallback />}>
+            <TermsPage />
           </Suspense>
         </Route>
         <Route>

@@ -784,6 +784,11 @@ const Home = () => {
             <p className="text-sm sm:text-base opacity-80 mt-1 sm:mt-2 bangla-text" data-testid="footer-text-bengali">
               © বং বাড়ি ২০২৫ কলকাতা
             </p>
+            <div className="mt-4 text-xs opacity-80" style={{ fontSize: '0.85rem' }}>
+              <a href="/privacy" className="mx-1 underline hover:text-yellow-200">Privacy Policy</a> |
+              <a href="/terms" className="mx-1 underline hover:text-yellow-200">Terms &amp; Conditions</a> |
+              <a href="mailto:team@bongbari.com" className="mx-1 underline hover:text-yellow-200">team@bongbari.com</a>
+            </div>
           </div>
         </footer>
       </ParallaxContainer>

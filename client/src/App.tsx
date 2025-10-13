@@ -293,6 +293,14 @@ function AppContent() {
 }
 
 function App() {
+  // Remove initial loader when React mounts
+  useEffect(() => {
+    const loader = document.getElementById('initial-loader');
+    if (loader) {
+      loader.remove();
+    }
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AppContent />

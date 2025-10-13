@@ -42,21 +42,15 @@
         min-height: 100vh;
       }
       
-      /* Hide content until fonts load to prevent FOUT */
-      .font-loading body {
-        visibility: hidden;
-      }
-      
-      /* Navigation critical styles */
-      nav {
-        background-color: #ffffff;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      }
-      
-      /* Hero section critical styles */
-      .hero-section {
-        background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-        color: white;
+      /* Loading spinner will be hidden once React loads */
+      #initial-loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #ffffff;
+        z-index: 9999;
       }
     </style>
     
@@ -172,8 +166,8 @@
     src="https://www.facebook.com/tr?id=1438457663902341&ev=PageView&noscript=1"
     /></noscript>
     <div id="root">
-      <!-- Immediate loading indicator -->
-      <div style="display: flex; align-items: center; justify-content: center; height: 100vh; background: #ffffff;">
+      <!-- Immediate loading indicator - will be replaced by React -->
+      <div id="initial-loader" style="display: flex; align-items: center; justify-content: center; height: 100vh; background: #ffffff;">
         <div style="text-align: center;">
           <div style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #f97316; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
           <p style="color: #666; font-size: 14px; margin: 0;">Loading Bong Bari...</p>

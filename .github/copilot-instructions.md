@@ -9,22 +9,25 @@ Purpose: Make AI agents productive fast by documenting how this repo is organize
 - **Features**: Fixed headers, custom scrollbars, mobile-responsive, legal compliance ready
 
 ### **Analytics & Tracking Stack** ✅
-- **Meta Pixel**: ID `1438457663902341` - Facebook/Instagram advertising analytics
+- **Meta Pixel**: ID `1438457663902341` - Facebook/Instagram advertising analytics (correctly placed in head + noscript in body)
 - **Google Analytics**: ID `G-3MYRJ1EJ7N` - Website traffic, user behavior, conversion tracking
 - **Enhanced Measurement**: Auto-tracks page views, scrolls, outbound clicks, file downloads
 - **Coverage**: All pages including SPA routes, 404 errors, deep links
+- **Implementation**: Properly integrated in Vite build template (`client/index.html`)
 
-### **SEO Optimization** ✅
+### **SEO & Structured Data** ✅
+- **Schema Markup (JSON-LD)**: LocalBusiness + Organization structured data for Google Rich Results
 - **sitemap.xml**: 9 pages indexed with proper priorities and change frequencies
 - **robots.txt**: Search engine guidelines, admin protection, asset management
 - **Google Search Console**: Verified domain with sitemap submission ready
-- **Structure**: SEO-friendly URLs, meta tags, canonical links
+- **Rich Results**: Organization details, contact info, business address, geo-coordinates
 
 ### **Domain & Hosting Setup** ✅
 - **Primary Domain**: `www.bongbari.com` (CNAME configured)
 - **SSL Certificate**: Auto-enabled via GitHub Pages
 - **CDN**: Global content delivery through GitHub's infrastructure
 - **Backend API**: `bongbaricomedy.onrender.com` for dynamic features
+- **Build System**: Vite with dual template system (client/index.html for production builds)
 
 ## Responsive CSS Workflow (Non-coder Friendly)
 - Desktop and global styles: edit `client/src/index.css` only. This is the main file for all desktop and default styles.

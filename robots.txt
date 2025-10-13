@@ -1,0 +1,32 @@
+# Robots.txt for Bong Bari Comedy Channel (www.bongbari.com)
+# This file tells search engines which pages they can and cannot crawl
+
+# Allow all search engines to access the entire site
+User-agent: *
+Allow: /
+
+# Block admin and private areas from search engines
+Disallow: /admin
+Disallow: /admin/
+Disallow: /login
+Disallow: /api/
+
+# Block common system files and directories
+Disallow: /assets/
+Disallow: /*.js$
+Disallow: /*.css$
+Disallow: /*.json$
+
+# Allow important static files for SEO
+Allow: /assets/favicon.ico
+Allow: /assets/*.png
+Allow: /assets/*.jpg
+Allow: /assets/*.jpeg
+Allow: /assets/*.gif
+Allow: /assets/*.webp
+
+# Sitemap location for search engines to find all pages
+Sitemap: https://www.bongbari.com/sitemap.xml
+
+# Crawl delay to be friendly to servers (optional)
+Crawl-delay: 1

@@ -12,14 +12,53 @@
     <link rel="manifest" href="/site.webmanifest">
     <link rel="shortcut icon" href="/favicon.ico">
     
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- Speed up YouTube thumbnails/player without UI changes -->
-  <link rel="preconnect" href="https://www.youtube.com">
-  <link rel="preconnect" href="https://i.ytimg.com">
-  <link rel="dns-prefetch" href="https://www.youtube.com">
-  <link rel="dns-prefetch" href="https://i.ytimg.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Critical preconnects only -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="dns-prefetch" href="https://www.youtube.com">
+    <link rel="dns-prefetch" href="https://i.ytimg.com">
+    <!-- Load fonts asynchronously to prevent render blocking -->
+    <script>
+      // Load fonts after page load
+      window.addEventListener('load', function() {
+        var link = document.createElement('link');
+        link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:wght@400;700&display=swap';
+        link.rel = 'stylesheet';
+        document.head.appendChild(link);
+      });
+    </script>
+    <!-- Critical CSS for immediate render -->
+    <style>
+      /* System fonts for immediate render */
+      body { 
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #ffffff;
+      }
+      
+      /* Critical above-the-fold styles */
+      #root {
+        min-height: 100vh;
+      }
+      
+      /* Hide content until fonts load to prevent FOUT */
+      .font-loading body {
+        visibility: hidden;
+      }
+      
+      /* Navigation critical styles */
+      nav {
+        background-color: #ffffff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      
+      /* Hero section critical styles */
+      .hero-section {
+        background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        color: white;
+      }
+    </style>
     
     <!-- Meta Pixel Code (deferred for performance) -->
     <script>
@@ -55,62 +94,67 @@
     });
     </script>
     
-    <!-- Schema Markup (JSON-LD) for Local Business and Organization -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": ["Organization", "LocalBusiness"],
-      "name": "Bong Bari",
-      "alternateName": "BongBari",
-      "url": "https://www.bongbari.com",
-      "logo": "https://www.bongbari.com/logo.png",
-      "image": "https://www.bongbari.com/logo.png",
-      "description": "Bong Bari produces Bengali comedy videos, digital content, and entertainment media. A comedy content and digital media brand under Dopamine creating authentic Bengali entertainment.",
-      "priceRange": "₹–₹₹",
-      "email": "team@bongbari.com",
-      "telephone": "+91 98753 19691",
-      "contactPoint": {
-        "@type": "ContactPoint",
+    <!-- Schema Markup (JSON-LD) - deferred for performance -->
+    <script>
+    window.addEventListener('load', function() {
+      var script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.textContent = JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": ["Organization", "LocalBusiness"],
+        "name": "Bong Bari",
+        "alternateName": "BongBari",
+        "url": "https://www.bongbari.com",
+        "logo": "https://www.bongbari.com/logo.png",
+        "image": "https://www.bongbari.com/logo.png",
+        "description": "Bong Bari produces Bengali comedy videos, digital content, and entertainment media. A comedy content and digital media brand under Dopamine creating authentic Bengali entertainment.",
+        "priceRange": "₹–₹₹",
+        "email": "team@bongbari.com",
         "telephone": "+91 98753 19691",
-        "contactType": "customer support",
-        "areaServed": "IN",
-        "availableLanguage": ["bn", "en"]
-      },
-      "address": {
-        "@type": "PostalAddress",
-        "streetAddress": "222, Laxmi Narayan Rd, Vivekanand Pally, Dum Dum Cantonment",
-        "addressLocality": "Kolkata",
-        "addressRegion": "West Bengal",
-        "postalCode": "700065",
-        "addressCountry": "IN"
-      },
-      "geo": {
-        "@type": "GeoCoordinates",
-        "latitude": "22.6448",
-        "longitude": "88.4119"
-      },
-      "areaServed": {
-        "@type": "Country",
-        "name": "India"
-      },
-      "knowsAbout": [
-        "Bengali Comedy",
-        "Digital Content Creation",
-        "Entertainment Media",
-        "Video Production",
-        "Comedy Content"
-      ],
-      "foundingDate": "2024",
-      "sameAs": [
-        "https://www.bongbari.com"
-      ],
-      "mainEntityOfPage": "https://www.bongbari.com",
-      "publisher": {
-        "@type": "Organization",
-        "name": "Dopamine",
-        "url": "https://www.bongbari.com"
-      }
-    }
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "telephone": "+91 98753 19691",
+          "contactType": "customer support",
+          "areaServed": "IN",
+          "availableLanguage": ["bn", "en"]
+        },
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "222, Laxmi Narayan Rd, Vivekanand Pally, Dum Dum Cantonment",
+          "addressLocality": "Kolkata",
+          "addressRegion": "West Bengal",
+          "postalCode": "700065",
+          "addressCountry": "IN"
+        },
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": "22.6448",
+          "longitude": "88.4119"
+        },
+        "areaServed": {
+          "@type": "Country",
+          "name": "India"
+        },
+        "knowsAbout": [
+          "Bengali Comedy",
+          "Digital Content Creation", 
+          "Entertainment Media",
+          "Video Production",
+          "Comedy Content"
+        ],
+        "foundingDate": "2024",
+        "sameAs": [
+          "https://www.bongbari.com"
+        ],
+        "mainEntityOfPage": "https://www.bongbari.com",
+        "publisher": {
+          "@type": "Organization",
+          "name": "Dopamine",
+          "url": "https://www.bongbari.com"
+        }
+      });
+      document.head.appendChild(script);
+    });
     </script>
     
     <script>
@@ -127,10 +171,24 @@
     <noscript><img height="1" width="1" style="display:none"
     src="https://www.facebook.com/tr?id=1438457663902341&ev=PageView&noscript=1"
     /></noscript>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Immediate loading indicator -->
+      <div style="display: flex; align-items: center; justify-content: center; height: 100vh; background: #ffffff;">
+        <div style="text-align: center;">
+          <div style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #f97316; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
+          <p style="color: #666; font-size: 14px; margin: 0;">Loading Bong Bari...</p>
+        </div>
+      </div>
+    </div>
+    <style>
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
     <!-- Build version stamp (update this string when deploying to bust caches deterministically) -->
     <script>window.__BUILD_VERSION__='20250923-1';</script>
   <!-- Important: keep entry path EXACT so Vite transforms it during build -->
-  <script type="module" src="/src/main.tsx"></script>
+  <script type="module" src="/src/main.tsx" defer></script>
   </body>
 </html>

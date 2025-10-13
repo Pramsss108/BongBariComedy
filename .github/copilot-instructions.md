@@ -2,6 +2,12 @@
 
 Purpose: Make AI agents productive fast by documenting how this repo is organized, how it builds/tests/deploys, and the project-specific patterns to follow.
 
+## Platform policy (read first)
+- Frontend hosting: GitHub Pages (canonical domain: `www.bongbari.com`).
+- Backend: Render (`https://bongbaricomedy.onrender.com`).
+- Replit is banned (legacy/ex-platform). Do not add any Replit scripts, SDKs, or plugins. If you see any Replit banner/scripts, remove them.
+- Do not introduce Netlify/Vercel changes unless explicitly requested; our SPA routing relies on the GitHub Pages `404.html` strategy.
+
 ## 🎯 **Site Features & Integrations (October 2025)**
 ### **Enhanced Legal Pages** ✅
 - **Privacy Policy** (`/privacy`): 17 comprehensive sections, ultra-compact spacing, scrollable UX

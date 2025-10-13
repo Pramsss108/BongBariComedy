@@ -1,7 +1,6 @@
 import { defineConfig, type ViteDevServer } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
-import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 import fs from "fs";
 import type { IncomingMessage, ServerResponse } from "http";
 import { fileURLToPath } from "url";
@@ -11,7 +10,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   plugins: [
     react(),
-    runtimeErrorOverlay(),
     // Dev-only: emulate Netlify Functions for promo marquee so no Netlify CLI is required
   ...(process.env.NETLIFY === "1"
       ? []
@@ -110,14 +108,7 @@ export default defineConfig({
             },
           },
         ]),
-    ...(process.env.NODE_ENV !== "production" &&
-    process.env.REPL_ID !== undefined
-      ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer(),
-          ),
-        ]
-      : []),
+    // Replit dev-only cartographer removed (platform banned)
   ],
   resolve: {
     alias: {

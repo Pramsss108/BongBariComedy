@@ -11,7 +11,7 @@ import { memeService } from "./memeService";
 import { dailyDataService } from "./dailyDataService";
 import { parseStringPromise } from 'xml2js';
 import { youtubeService } from './youtubeService';
-import { ObjectStorageService } from "./objectStorage";
+// Replit object storage removed
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -592,21 +592,7 @@ Output format: JUST the 1–2 sentence greeting. No emojis unless fits naturally
   app.use(trackRequests);
   // app.use(rateLimit(1000, 60000)); // Rate limiting removed permanently
   app.use(sanitizeBody); // Sanitize all request bodies
-  // Object Storage routes - serve public assets
-  app.get("/public-objects/:filePath(*)", async (req, res) => {
-    const filePath = req.params.filePath;
-    const objectStorageService = new ObjectStorageService();
-    try {
-      const file = await objectStorageService.searchPublicObject(filePath);
-      if (!file) {
-        return res.status(404).json({ error: "File not found" });
-      }
-      objectStorageService.downloadObject(file, res);
-    } catch (error) {
-      console.error("Error searching for public object:", error);
-      return res.status(500).json({ error: "Internal server error" });
-    }
-  });
+  // Removed legacy /public-objects route (Replit Object Storage)
 
   // Authentication routes with enhanced security
   app.post("/api/auth/login", async (req, res) => { // No rate limiting

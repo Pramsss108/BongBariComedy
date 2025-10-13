@@ -2,6 +2,30 @@
 
 Purpose: Make AI agents productive fast by documenting how this repo is organized, how it builds/tests/deploys, and the project-specific patterns to follow.
 
+## 🎯 **Site Features & Integrations (October 2025)**
+### **Enhanced Legal Pages** ✅
+- **Privacy Policy** (`/privacy`): 17 comprehensive sections, ultra-compact spacing, scrollable UX
+- **Terms & Conditions** (`/terms`): 18 detailed legal sections, professional layout
+- **Features**: Fixed headers, custom scrollbars, mobile-responsive, legal compliance ready
+
+### **Analytics & Tracking Stack** ✅
+- **Meta Pixel**: ID `1438457663902341` - Facebook/Instagram advertising analytics
+- **Google Analytics**: ID `G-3MYRJ1EJ7N` - Website traffic, user behavior, conversion tracking
+- **Enhanced Measurement**: Auto-tracks page views, scrolls, outbound clicks, file downloads
+- **Coverage**: All pages including SPA routes, 404 errors, deep links
+
+### **SEO Optimization** ✅
+- **sitemap.xml**: 9 pages indexed with proper priorities and change frequencies
+- **robots.txt**: Search engine guidelines, admin protection, asset management
+- **Google Search Console**: Verified domain with sitemap submission ready
+- **Structure**: SEO-friendly URLs, meta tags, canonical links
+
+### **Domain & Hosting Setup** ✅
+- **Primary Domain**: `www.bongbari.com` (CNAME configured)
+- **SSL Certificate**: Auto-enabled via GitHub Pages
+- **CDN**: Global content delivery through GitHub's infrastructure
+- **Backend API**: `bongbaricomedy.onrender.com` for dynamic features
+
 ## Responsive CSS Workflow (Non-coder Friendly)
 - Desktop and global styles: edit `client/src/index.css` only. This is the main file for all desktop and default styles.
 - Mobile-only fixes: edit `client/src/mobile-overrides.css` only. This file uses `@media (max-width: 768px)` to target phones and small screens.
@@ -100,6 +124,33 @@ Then open `http://localhost:5173`.
 ### Blank Site (White Screen) on GitHub Pages
 - If the live site is blank, check browser DevTools → Network tab. If the main JS bundle (e.g., `index-xxxx.js`) returns HTML or a redirect, the deploy is out of sync.
 - Always wait for the Pages workflow to finish before checking the live site. Hard refresh (Ctrl+F5) after deploy.
+
+### 🚨 CRITICAL MISTAKES TO AVOID (Lessons from October 13, 2025 Incident)
+**NEVER DO THESE - THEY BREAK WORKING SITES:**
+
+1. **NEVER TOUCH THE CNAME FILE** unless explicitly asked to change domains
+   - Site was working perfectly at `www.bongbari.com`
+   - Agent saw user accessing `bongbari.com` (without www) showing blank
+   - Agent wrongly changed CNAME from `www.bongbari.com` to `bongbari.com`
+   - This broke the entire DNS setup and caused routing failures
+   - **Correct action**: Tell user to use `www.bongbari.com` instead
+
+2. **Don't "fix" working configurations**
+   - If homepage works but user accesses wrong URL, guide them to correct URL
+   - Don't modify technical files to match user's incorrect URL
+   - DNS/CNAME changes take time to propagate and can break everything
+
+3. **Blank site troubleshooting order:**
+   - First: Check if user is using correct domain (www vs non-www)
+   - Second: Check build assets and deployment
+   - Last resort: Consider CNAME/DNS changes (and ask first!)
+
+4. **When site works locally but not live:**
+   - Usually deployment propagation issue (wait 2-3 minutes)
+   - Or user accessing wrong domain variant
+   - NOT a reason to change CNAME file
+
+**Remember: "If it ain't broke, don't fix it!" - Especially CNAME files.**
 
 ## Security Notes
 - Never log tokens; store admin session in `localStorage['admin_session']` only.

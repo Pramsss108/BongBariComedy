@@ -1,5 +1,23 @@
 # BongBariComedy
 
+🎭 **Bengali Comedy Channel Website** - Live at [www.bongbari.com](https://www.bongbari.com)
+
+## 🚀 **Current Features (October 2025)**
+- ✅ **Enhanced Legal Pages**: Professional Privacy Policy & Terms with scrollable UX
+- ✅ **Analytics Stack**: Meta Pixel + Google Analytics (GA4) with enhanced measurement
+- ✅ **SEO Optimized**: sitemap.xml, robots.txt, Google Search Console verified
+- ✅ **Full-Stack**: React frontend (GitHub Pages) + Express backend (Render)
+- ✅ **Community Features**: User content feed, admin moderation, AI chatbot
+- ✅ **Professional Domain**: Custom domain with SSL certificate
+- ✅ **Responsive Design**: Mobile-first with desktop optimizations
+
+## 🔗 **Live Integrations**
+- **Domain**: `www.bongbari.com` (GitHub Pages)
+- **Backend**: `bongbaricomedy.onrender.com` (Express + Postgres)
+- **Analytics**: Meta Pixel (`1438457663902341`) + Google Analytics (`G-3MYRJ1EJ7N`)
+- **Database**: Neon Postgres for persistent data
+- **AI**: Gemini API for chatbot functionality
+
 ## Quick Start (Simple Local Dev)
 To run everything locally, use:
 
@@ -20,7 +38,27 @@ npm run start:client     # starts frontend (second terminal)
 ```
 Then open `http://localhost:5173` in your browser.
 
-Full-stack app: React (Vite) frontend on GitHub Pages, Express + Postgres (Neon) backend on Render. SPA routing supported with `404.html` copy. Chatbot (Gemini), community feed, admin panels.
+## 🏗️ **Architecture Overview**
+```
+User visits www.bongbari.com
+         ↓
+   GitHub Pages (React SPA)
+   - Meta Pixel tracking
+   - Google Analytics
+   - SEO optimized
+         ↓ 
+   API calls → bongbaricomedy.onrender.com
+   - Express.js backend
+   - JWT authentication
+   - CSRF protection
+         ↓
+   Neon Database (Postgres)
+   - User content
+   - Analytics data
+   - Persistent storage
+```
+
+**Full-stack app**: React (Vite) frontend on GitHub Pages, Express + Postgres (Neon) backend on Render. SPA routing supported with `404.html` copy. Chatbot (Gemini), community feed, admin panels.
 
 ## Quick Scripts
 | Purpose | Command |
@@ -50,6 +88,25 @@ Status Meaning:
 Force a Deploy Even If No Frontend Changes:
 Add `FORCE_PAGES_DEPLOY` anywhere in the commit message.
 
+## 📊 **Analytics & Tracking**
+### **Integrated Tracking Stack**
+- **Meta Pixel** (`1438457663902341`): Facebook/Instagram advertising analytics
+- **Google Analytics** (`G-3MYRJ1EJ7N`): Website traffic, user behavior, conversion tracking
+- **Enhanced Measurement**: Auto-tracks scrolls, outbound clicks, file downloads
+- **Coverage**: All pages via SPA routing, including deep links and 404 errors
+
+### **SEO Infrastructure**
+- **sitemap.xml**: 9 pages indexed with priorities and change frequencies
+- **robots.txt**: Search engine guidelines, protects admin areas
+- **Google Search Console**: Domain verified, sitemap submitted
+- **Meta Tags**: Proper titles, descriptions, canonical URLs
+
+### **Performance Optimizations**
+- **CDN**: GitHub Pages global content delivery
+- **Preconnect**: YouTube, Google Fonts for faster loading
+- **Code Splitting**: Lazy-loaded routes and components
+- **Image Optimization**: WebP format with fallbacks
+
 Common Failure Causes:
 - Pages not enabled: Repo Settings → Pages → Source = GitHub Actions.
 - Missing `index.html`: build failed earlier (see build step log).
@@ -63,11 +120,23 @@ Copy/paste last ~20 lines of the failed step log.
 
 ## Structure
 ```
-client/        React source
-shared/        Shared TypeScript schema/types
-server/        Express + storage logic
-scripts/       Utility & build scripts
-dist/public/   Built frontend (index.html + 404.html)
+client/                         React source code
+├── src/pages/PrivacyPolicy.tsx   Enhanced privacy policy (17 sections)
+├── src/pages/TermsPage.tsx       Terms & conditions (18 sections)
+├── src/index.css                 Desktop & global styles
+└── src/mobile-overrides.css      Mobile-only responsive fixes
+
+shared/                         Shared TypeScript schema/types
+server/                         Express + storage logic  
+scripts/                        Utility & build scripts
+dist/public/                    Built frontend (index.html + 404.html)
+
+Root Files:
+├── index.html                  Main template (Meta Pixel + GA4)
+├── 404.html                    SPA routing fallback
+├── sitemap.xml                 SEO site structure (9 pages)
+├── robots.txt                  Search engine guidelines
+└── CNAME                       Custom domain configuration
 ```
 
 ## Notes

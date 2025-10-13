@@ -208,3 +208,65 @@ Then open `http://localhost:5173`.
   npm run build:client                          # build SPA + 404.html
   npm run test:integration                       # run API tests (needs :5000)
   ```
+
+## ✅ Safe‑Ops Guide & Deploy Checklist (Zero-Regressions)
+
+Follow these rules to avoid the exact mistakes we hit. Treat this as the guardrail playbook.
+
+### 1) Which HTML to edit (critical)
+- Always add tracking/meta/JSON‑LD to `client/index.html` (Vite template).
+- Do NOT add or rely on root `index.html` for production tracking.
+- `404.html` is auto‑generated from the built `index.html` by `scripts/postbuild-spa-404.cjs`.
+
+### 2) Analytics placement rules (Vite/HTML compliant)
+- Meta Pixel script goes in `<head>`. The required `<noscript>` image MUST be in `<body>` (never in `<head>`).
+- GA4 `gtag` `<script async>` in `<head>`, with the config block right after it.
+- Do not mount analytics inside React components; keep them in the HTML template so they load on first paint.
+
+### 3) SEO files must live in Vite public
+- Put `robots.txt` and `sitemap.xml` in `client/public/` so they ship to production at `/robots.txt` and `/sitemap.xml`.
+- If you place them at repo root, the SPA will serve an in‑app 404 instead.
+
+### 4) SPA routing on GitHub Pages
+- We rely on `404.html` to boot the SPA for deep links. Never delete the postbuild script.
+- If a deep link shows GitHub’s native 404, ensure the build ran and `dist/public/404.html` exists and matches `index.html`.
+
+### 5) Canonical domain and CNAME (do not change)
+- Canonical domain: `www.bongbari.com`. Do not edit `CNAME` unless explicitly changing domains.
+- If someone opens `bongbari.com` (apex) and sees issues, guide them to `www.bongbari.com`. Do NOT “fix” CNAME.
+
+### 6) Safe deploy flow
+1. Optional sanity: `npm run check`
+2. Build client: `npm run build:client` (generates SPA `404.html`)
+3. Commit with message containing `FORCE_PAGES_DEPLOY` to bust caches deterministically.
+4. Push to `main`. Wait for GitHub Pages to finish. Hard refresh (Ctrl+F5).
+
+### 7) After‑deploy verification (2 minutes)
+- Open `https://www.bongbari.com`
+- Check `https://www.bongbari.com/robots.txt` returns plain text (no SPA content)
+- Check `https://www.bongbari.com/sitemap.xml` returns XML
+- View source: ensure Meta Pixel and GA4 exist in `<head>`, and Pixel `<noscript>` exists in `<body>`
+- Google Rich Results Test: confirm JSON‑LD detected
+- DevTools Network: main JS bundle returns JS (not HTML)
+
+### Quick Runbooks
+
+• Robots/sitemap return SPA 404
+- Move `robots.txt` and `sitemap.xml` to `client/public/`
+- `npm run build:client` → commit (include `FORCE_PAGES_DEPLOY`) → push
+
+• Schema Markup not detected
+- Ensure `<script type="application/ld+json">…</script>` is in `client/index.html` `<head>`
+- Rebuild and deploy, then re‑test in Google Rich Results
+
+• Vite build fails with `disallowed-content-in-noscript-in-head`
+- Move the `<noscript>` block to `<body>`
+- Keep the Pixel JS in `<head>`
+
+• Deep link shows GitHub 404 page
+- Ensure build ran and `scripts/postbuild-spa-404.cjs` created `dist/public/404.html`
+- Wait for Pages publish, hard refresh
+
+• Homepage blank / JS bundle returns HTML
+- Likely Pages cache mismatch. Wait for Pages workflow to finish, then hard refresh
+- If still broken: verify that `404.html` mirrors `index.html`, and that the built JS bundle URL actually returns JS (not HTML)

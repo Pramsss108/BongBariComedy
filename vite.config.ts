@@ -121,6 +121,23 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Vendor libraries
+          'react-vendor': ['react', 'react-dom'],
+          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-toast', '@radix-ui/react-tooltip'],
+          'query-vendor': ['@tanstack/react-query'],
+          'form-vendor': ['react-hook-form', '@hookform/resolvers', 'zod'],
+          'motion-vendor': ['framer-motion'],
+          'chart-vendor': ['recharts'],
+          // Large components
+          'admin-pages': ['./client/src/pages/admin.tsx', './client/src/pages/AdminChatbot.tsx', './client/src/pages/AdminHomepage.tsx', './client/src/pages/AdminModeration.tsx'],
+          'content-pages': ['./client/src/pages/blog.tsx', './client/src/pages/blog-post.tsx', './client/src/pages/community-feed.tsx'],
+          'legal-pages': ['./client/src/pages/PrivacyPolicy.tsx', './client/src/pages/TermsPage.tsx']
+        }
+      }
+    }
   },
   
   server: {

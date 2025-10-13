@@ -88,6 +88,7 @@ const Contact = () => {
                   src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
                   alt="Contact Us" 
                   className="rounded-2xl shadow-lg w-full mb-6"
+                  loading="lazy"
                   data-testid="contact-image"
                 />
                 

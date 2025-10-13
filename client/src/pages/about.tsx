@@ -53,6 +53,7 @@ const About = () => {
                       src="https://images.unsplash.com/photo-1609220136736-443140cffec6?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
                       alt="Bong Bari Team" 
                       className="rounded-2xl shadow-lg w-full"
+                      loading="lazy"
                     />
                   </motion.div>
               

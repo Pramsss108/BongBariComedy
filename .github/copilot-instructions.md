@@ -130,6 +130,21 @@ Then open `http://localhost:5173`.
 - CI failures: open the failed job log in Actions; copy the last 20 lines for debugging.
 - Local Postgres vs memory: without `DATABASE_URL`, community features are stubs; use Neon for full behavior.
 
+### Google OAuth (Dev/Prod) — Quick Runbook
+- Client builds Google login URL via `buildApiUrl('/api/auth/google')` so base is automatic.
+- Dev: `client/.env` must contain `VITE_API_BASE=http://localhost:5000`.
+- Server decides redirect URI by `process.env.NODE_ENV?.trim() === 'production'`:
+  - Dev → `http://localhost:5000/api/auth/google/callback`
+  - Prod → `https://bongbaricomedy.onrender.com/api/auth/google/callback`
+- Google Cloud Console must include:
+  - JavaScript origins: `https://www.bongbari.com`, `http://localhost:5173` (optionally `http://localhost:5000`)
+  - Redirect URIs: `https://bongbaricomedy.onrender.com/api/auth/google/callback`, `http://localhost:5000/api/auth/google/callback`
+- If you see `redirect_uri_mismatch`:
+  1) Recheck Console URIs (exact match), save, wait 1–10 minutes.
+  2) In dev, ensure `VITE_API_BASE` points to `http://localhost:5000` and restart Vite.
+  3) Hard refresh or use Incognito window.
+  4) Sanity: `GET /api/version` → environment should be `development` (no trailing spaces). Hitting `/api/auth/google` should include the expected `redirect_uri` in the 302 Location.
+
 ### Blank Site (White Screen) on GitHub Pages
 - If the live site is blank, check browser DevTools → Network tab. If the main JS bundle (e.g., `index-xxxx.js`) returns HTML or a redirect, the deploy is out of sync.
 - Always wait for the Pages workflow to finish before checking the live site. Hard refresh (Ctrl+F5) after deploy.

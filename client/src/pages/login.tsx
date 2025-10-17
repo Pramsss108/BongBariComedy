@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import SEOHead from "@/components/seo-head";
 import { Lock, User, Eye, EyeOff, LogIn } from "lucide-react";
 import { insertUserSchema, type InsertUser } from "@shared/schema";
-import { apiRequest, setCSRFToken, clearCSRFToken } from "@/lib/queryClient";
+import { apiRequest, setCSRFToken, clearCSRFToken, buildApiUrl } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { z } from 'zod';
@@ -101,7 +101,9 @@ const CustomerLogin = () => {
 
     try {
       // Redirect to our backend Google OAuth endpoint
-      window.location.href = '/api/auth/google';
+      // Use shared API base resolution to ensure localhost in dev and Render in prod
+      const googleAuthUrl = buildApiUrl('/api/auth/google');
+      window.location.href = googleAuthUrl;
     } catch (error) {
       console.error('Google OAuth error:', error);
       toast({

@@ -43,6 +43,17 @@
 			"presentation": {
 				"reveal": "always"
 			}
+		},
+		{
+			"label": "Ship (Preflight → Commit → Push)",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"node scripts/preflight.cjs; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; git add -A; git commit -m \"docs(auth): add Google OAuth runbook + fix dev API base use FORCE_PAGES_DEPLOY\"; if ($LASTEXITCODE -ne 0) { Write-Host 'No changes to commit, continuing.' }; git push origin main"
+			],
+			"problemMatcher": []
 		}
 	],
 	"inputs": [

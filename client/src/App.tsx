@@ -21,6 +21,7 @@ import { ensureAudioUnlocked } from "@/lib/audioUnlock";
 import GreetingConsent from "@/components/GreetingConsent";
 import { isAudioUnlocked, resumeAudioNow } from "@/lib/audioUnlock";
 import BongBot from "@/components/BongBot";
+import FloatingFAQButton from "@/components/FloatingFAQButton";
 
 // Deploy note: trivial comment to force GitHub Pages rebuild (FORCE_PAGES_DEPLOY)
 
@@ -40,6 +41,7 @@ const AdminModeration = lazy(() => import("@/pages/AdminModeration"));
 const CommunityFeed = lazy(() => import("@/pages/community-feed"));
 const PrivacyPolicy = lazy(() => import("@/pages/PrivacyPolicy"));
 const TermsPage = lazy(() => import("@/pages/TermsPage"));
+const FAQ = lazy(() => import("@/pages/FAQ"));
 
 // Loading fallback component
 function LoadingFallback() {
@@ -233,6 +235,11 @@ function Router() {
             <TermsPage />
           </Suspense>
         </Route>
+        <Route path="/faq">
+          <Suspense fallback={<LoadingFallback />}>
+            <FAQ />
+          </Suspense>
+        </Route>
         <Route>
           <Suspense fallback={<LoadingFallback />}>
             <NotFound />
@@ -242,6 +249,9 @@ function Router() {
       
       {/* Professional Bong Bot - Available on all pages */}
       <BongBot onOpenChange={setIsChatbotOpen} />
+      
+      {/* Floating FAQ Button - Available on all pages */}
+      <FloatingFAQButton />
       
       </div>
     </>

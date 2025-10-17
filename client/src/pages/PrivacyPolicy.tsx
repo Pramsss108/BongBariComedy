@@ -1,6 +1,6 @@
 import React from "react";
 
-const LAST_UPDATED = "October 13, 2025";
+const LAST_UPDATED = "January 17, 2025";
 
 export default function PrivacyPolicy() {
   return (
@@ -43,7 +43,7 @@ export default function PrivacyPolicy() {
             zIndex: 10
           }}>
           <h1 className="privacy-title" style={{ fontSize: "2.25rem", fontWeight: 700, marginBottom: "0.05rem", textAlign: "center", color: "#1a237e", margin: 0 }}>Privacy Policy — Bong Bari</h1>
-          <div style={{ fontSize: "0.85rem", color: "#6b7280", textAlign: "center", marginTop: "0.05rem" }}>Last Updated: October 2025</div>
+          <div style={{ fontSize: "0.85rem", color: "#6b7280", textAlign: "center", marginTop: "0.05rem" }}>Last Updated: {LAST_UPDATED}</div>
         </div>
 
         {/* Scrollable Content */}
@@ -156,6 +156,21 @@ export default function PrivacyPolicy() {
           </ul>
           <h3 style={{ fontSize: "1.25rem", fontWeight: 600, color: "#1976d2", marginBottom: "0.05rem", marginTop: "0.05rem" }}>4.3 Third-Party Integrations</h3>
           <p style={{ lineHeight: 1.4, color: "#333" }}>Our website connects with Google, Meta, Instagram, YouTube, and WhatsApp Business API. Each of these services may collect data under their own privacy policies, which operate independently of ours.</p>
+        </section>
+
+        <section style={{ marginBottom: "0.05rem" }}>
+          <h2 style={{ fontSize: "1.75rem", fontWeight: 600, color: "#1565c0", marginBottom: "0.05rem", marginTop: "0.05rem" }}>4.4 Google Authentication & User Accounts</h2>
+          <p style={{ lineHeight: 1.4, color: "#333", marginBottom: "0.05rem" }}>When you sign up using Google Authentication on our platform, we collect:</p>
+          <ul style={{ lineHeight: 1.4, color: "#333", marginBottom: "0.05rem", paddingLeft: "2rem", listStyleType: "disc", listStylePosition: "outside" }}>
+            <li style={{ marginBottom: "0.05rem" }}>Your Google account name and email address</li>
+            <li style={{ marginBottom: "0.05rem" }}>Profile picture (if provided by Google)</li>
+            <li style={{ marginBottom: "0.05rem" }}>Google user ID for secure session management</li>
+            <li style={{ marginBottom: "0.05rem" }}>Chat history and messages with our Bong Bot</li>
+            <li style={{ marginBottom: "0.05rem" }}>User preferences and community interaction data</li>
+            <li style={{ marginBottom: "0.05rem" }}>Newsletter subscription preferences</li>
+          </ul>
+          <p style={{ lineHeight: 1.4, color: "#333", marginBottom: "0.05rem" }}><strong>Newsletter Benefits:</strong> By signing up, you become eligible for our exclusive newsletter containing behind-the-scenes content, early video releases, special announcements, exciting offers including early access to merchandise, collaboration opportunities, fan meetups, and priority consideration for brand partnerships.</p>
+          <p style={{ lineHeight: 1.4, color: "#333" }}>We use Google's secure OAuth 2.0 protocol and do not store your Google password. You can revoke access through your Google account settings at any time, and manage newsletter preferences through your account dashboard.</p>
         </section>
 
         <section style={{ marginBottom: "0.05rem" }}>

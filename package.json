@@ -12,16 +12,16 @@
     "dev:server:esm": "set NODE_ENV=development && tsx watch server/index.ts",
     "client": "vite --config vite.config.ts",
     "predev:live": "npx --yes kill-port 5000 5173 8888",
-  "dev:live": "npm run start:clean && start powershell -NoExit -Command npm run dev:server:esm && npm run client",
+    "dev:live": "npm run start:clean && start powershell -NoExit -Command npm run dev:server:esm && npm run client",
     "start:clean": "npx --yes kill-port 5000 5173 8888",
     "start:server": "npm run dev:server:esm",
     "start:client": "npm run client",
     "start:all": "npm run start:clean && start powershell -NoExit -Command npm run start:server && npm run start:client",
     "build": "vite build && node scripts/postbuild-spa-404.cjs && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "build:client": "vite build && node scripts/postbuild-spa-404.cjs",
-  "preflight": "node scripts/preflight.cjs",
-  "deploy:safe": "npm run preflight && git add -A && git commit --allow-empty -m \"chore(deploy): safe deploy (preflight ok) FORCE_PAGES_DEPLOY\" && git push origin main",
-  "deploy:force": "git commit --allow-empty -m \"chore(deploy): force pages rebuild FORCE_PAGES_DEPLOY\" && git push origin main",
+    "preflight": "node scripts/preflight.cjs",
+    "deploy:safe": "npm run preflight && git add -A && git commit --allow-empty -m \"chore(deploy): safe deploy (preflight ok) FORCE_PAGES_DEPLOY\" && git push origin main",
+    "deploy:force": "git commit --allow-empty -m \"chore(deploy): force pages rebuild FORCE_PAGES_DEPLOY\" && git push origin main",
     "start": "node dist/index.js",
     "verify-env": "node scripts/verify-env.mjs DATABASE_URL GEMINI_API_KEY JWT_SECRET",
     "health": "node scripts/health-check.mjs http://localhost:5000/health",
@@ -38,10 +38,10 @@
     "remote:file": "node scripts/remote-file.mjs",
     "diff:file": "node scripts/diff-file.mjs",
     "backup:file": "node scripts/backup-file.mjs",
-    "restore:file": "node scripts/restore-file.mjs"
-    ,"restore:core": "npm run restore:file -- client/src/index.css && npm run restore:file -- client/src/mobile-overrides.css && npm run restore:file -- client/src/components/navigation.tsx"
-    ,"diff:core": "npm run git:fetch && npm run diff:file -- client/src/index.css && npm run diff:file -- client/src/mobile-overrides.css && npm run diff:file -- client/src/components/navigation.tsx"
-    ,"snapshot:main": "node scripts/snapshot-main.mjs"
+    "restore:file": "node scripts/restore-file.mjs",
+    "restore:core": "npm run restore:file -- client/src/index.css && npm run restore:file -- client/src/mobile-overrides.css && npm run restore:file -- client/src/components/navigation.tsx",
+    "diff:core": "npm run git:fetch && npm run diff:file -- client/src/index.css && npm run diff:file -- client/src/mobile-overrides.css && npm run diff:file -- client/src/components/navigation.tsx",
+    "snapshot:main": "node scripts/snapshot-main.mjs"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.17.0",

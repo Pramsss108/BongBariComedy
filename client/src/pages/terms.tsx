@@ -1,6 +1,6 @@
 import React from "react";
 
-const LAST_UPDATED = "October 13, 2025";
+const LAST_UPDATED = "January 17, 2025";
 
 export default function TermsPage() {
   return (
@@ -21,6 +21,20 @@ export default function TermsPage() {
       <section>
         <h2>Website Usage</h2>
         <p>By using <a href="https://www.bongbari.com">bongbari.com</a>, you agree to follow these Terms and Conditions. You may browse, share, and enjoy our content for personal, non-commercial use. Do not misuse, copy, or attempt to disrupt our website or services.</p>
+      </section>
+
+      <section>
+        <h2>User Accounts and Google Authentication</h2>
+        <p>By signing up with Google authentication on our platform, you agree to provide accurate information and maintain the security of your account. We use Google's secure authentication system to protect your login credentials.</p>
+        <p><strong>Benefits of Signing Up:</strong></p>
+        <ul style={{ paddingLeft: "1.5rem", marginTop: "0.5rem" }}>
+          <li>Access to our <strong>exclusive newsletter</strong> with behind-the-scenes content, early video releases, and special announcements</li>
+          <li><strong>Exciting offers</strong> including early access to merchandise, collaboration opportunities, and fan meetups</li>
+          <li>Personalized <strong>Bong Bot chat history</strong> - continue conversations and get customized comedy recommendations</li>
+          <li><strong>Community features</strong> - participate in discussions, share feedback, and connect with other Bong Bari fans</li>
+          <li>Priority consideration for <strong>brand collaborations and content submissions</strong></li>
+        </ul>
+        <p>Your account data is securely stored and managed according to our Privacy Policy. You can manage your newsletter preferences and account settings at any time.</p>
       </section>
 
       <section>

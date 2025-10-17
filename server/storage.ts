@@ -1,10 +1,18 @@
-import { type User, type InsertUser, type BlogPost, type InsertBlogPost, type CollaborationRequest, type InsertCollaborationRequest, type CommunityPost, type CommunityPendingPost, type ChatbotTraining, type InsertChatbotTraining, type ChatbotTemplate, type InsertChatbotTemplate, type HomepageContent, type InsertHomepageContent, type AdminSetting, type InsertAdminSetting } from "@shared/schema";
+import { type User, type InsertUser, type BlogPost, type InsertBlogPost, type CollaborationRequest, type InsertCollaborationRequest, type CommunityPost, type CommunityPendingPost, type ChatbotTraining, type InsertChatbotTraining, type ChatbotTemplate, type InsertChatbotTemplate, type HomepageContent, type InsertHomepageContent, type AdminSetting, type InsertAdminSetting, type GoogleUser, type InsertGoogleUser, type ChatSession, type InsertChatSession, type ChatMessage, type InsertChatMessage, type UserPreferences, type InsertUserPreferences } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  
+  // Google Users methods
+  createGoogleUser(user: InsertGoogleUser): Promise<GoogleUser>;
+  getGoogleUserByEmail(email: string): Promise<GoogleUser | null>;
+  createChatSession(sessionData: InsertChatSession): Promise<ChatSession>;
+  saveChatMessage(messageData: InsertChatMessage): Promise<ChatMessage>;
+  getChatHistory(userId: string, limit?: number): Promise<ChatMessage[]>;
+  updateUserPreferences(userId: string, preferences: Partial<InsertUserPreferences>): Promise<UserPreferences>;
   getBlogPosts(): Promise<BlogPost[]>;
   getBlogPost(id: string): Promise<BlogPost | undefined>;
   getBlogPostBySlug(slug: string): Promise<BlogPost | undefined>;
@@ -131,6 +139,37 @@ export class MemStorage implements IStorage {
     const user: User = { ...insertUser, id };
     this.users.set(id, user);
     return user;
+  }
+
+  // Google Users methods (in-memory stubs)
+  async createGoogleUser(user: InsertGoogleUser): Promise<GoogleUser> {
+    // In-memory storage - just return the user with an ID
+    return { id: randomUUID(), ...user, joinedAt: new Date(), lastActiveAt: new Date(), isActive: true } as GoogleUser;
+  }
+
+  async getGoogleUserByEmail(email: string): Promise<GoogleUser | null> {
+    // In-memory storage - stub implementation
+    return null;
+  }
+
+  async createChatSession(sessionData: InsertChatSession): Promise<ChatSession> {
+    // In-memory storage - stub implementation
+    return { id: randomUUID(), ...sessionData, sessionStart: new Date(), lastActiveAt: new Date(), isActive: true } as ChatSession;
+  }
+
+  async saveChatMessage(messageData: InsertChatMessage): Promise<ChatMessage> {
+    // In-memory storage - stub implementation
+    return { id: randomUUID(), ...messageData, timestamp: new Date() } as ChatMessage;
+  }
+
+  async getChatHistory(userId: string, limit: number = 50): Promise<ChatMessage[]> {
+    // In-memory storage - stub implementation
+    return [];
+  }
+
+  async updateUserPreferences(userId: string, preferences: Partial<InsertUserPreferences>): Promise<UserPreferences> {
+    // In-memory storage - stub implementation
+    return { id: randomUUID(), userId, ...preferences, updatedAt: new Date() } as UserPreferences;
   }
 
   async getBlogPosts(): Promise<BlogPost[]> {

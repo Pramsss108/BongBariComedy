@@ -15,8 +15,18 @@ const Navigation = () => {
   const [location] = useLocation();
   const { user, logout } = useAuth();
   
+  // Get Google user info from localStorage
+  const googleUser = localStorage.getItem('google_user') 
+    ? JSON.parse(localStorage.getItem('google_user')!) 
+    : null;
+    
+  // Check if user is logged in (either admin or Google user)
+  const isLoggedIn = user || googleUser;
+  
   const handleLogout = () => {
+    // Clear both admin and Google user sessions
     logout();
+    localStorage.removeItem('google_user');
     setLogoutPopoverOpen(false);
     setTimeout(() => {
       window.location.href = '/';
@@ -28,6 +38,7 @@ const Navigation = () => {
     { href: "/about", label: "About" },
     { href: "/work-with-us", label: "Work with us" },
     { href: "/blog", label: "Blog" },
+    { href: "/faq", label: "FAQ" },
     { href: "/tools", label: "Free Tools" },
   ];
 
@@ -64,15 +75,17 @@ const Navigation = () => {
               
               {/* Left Section - Ultra Premium Layout */}
               <div className="flex items-center space-x-5">
-                {/* Logo - Refined */}
-                <Link href="/" className="group relative cursor-pointer">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-[#FFD200] to-[#FFC000] rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
-                  <img 
-                    src="/logo.png" 
-                    alt="Bong Bari" 
-                    className="relative w-10 h-10 lg:w-11 lg:h-11 rounded-lg object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                </Link>
+                {/* Logo - Hidden when user is logged in */}
+                {!isLoggedIn && (
+                  <Link href="/" className="group relative cursor-pointer">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-[#FFD200] to-[#FFC000] rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
+                    <img 
+                      src="/logo.png" 
+                      alt="Bong Bari" 
+                      className="relative w-10 h-10 lg:w-11 lg:h-11 rounded-lg object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </Link>
+                )}
                 
                 {/* Bengali Title - Moved down to align with logo center */}
                 <h1 
@@ -148,18 +161,44 @@ const Navigation = () => {
                 })}
                 
                 {/* Enhanced Login/Admin Button */}
-                {user ? (
+                {isLoggedIn ? (
                   <div className="flex items-center space-x-3">
-                    <Link href="/admin">
-                      <Button 
-                        size="default"
-                        variant="ghost" 
-                        className="text-white hover:bg-white/20 text-base lg:text-lg h-11 px-4 font-bold transition-all duration-300 hover:scale-105"
-                      >
-                        <User className="w-5 h-5 mr-2" />
-                        Admin
-                      </Button>
-                    </Link>
+                    {googleUser ? (
+                      <div className="flex items-center space-x-2 bg-white/10 rounded-full px-2 py-1">
+                        {googleUser.picture && googleUser.picture !== 'https://via.placeholder.com/40' ? (
+                          <img 
+                            src={googleUser.picture} 
+                            alt={googleUser.name}
+                            className="w-6 h-6 rounded-full border border-white/20"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                              if (fallback) fallback.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div 
+                          className="w-6 h-6 rounded-full border border-white/20 bg-gradient-to-br from-[#FFD200] to-[#FFC000] flex items-center justify-center text-xs font-bold text-black"
+                          style={{ display: googleUser.picture && googleUser.picture !== 'https://via.placeholder.com/40' ? 'none' : 'flex' }}
+                        >
+                          {googleUser.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+                        </div>
+                        <span className="text-white text-sm font-medium hidden sm:inline">
+                          {googleUser.name}
+                        </span>
+                      </div>
+                    ) : (
+                      <Link href="/admin">
+                        <Button 
+                          size="default"
+                          variant="ghost" 
+                          className="text-white hover:bg-white/20 text-base lg:text-lg h-11 px-4 font-bold transition-all duration-300 hover:scale-105"
+                        >
+                          <User className="w-5 h-5 mr-2" />
+                          Admin
+                        </Button>
+                      </Link>
+                    )}
                     <Popover open={logoutPopoverOpen} onOpenChange={setLogoutPopoverOpen}>
                       <PopoverTrigger asChild>
                         <Button 
@@ -286,16 +325,45 @@ const Navigation = () => {
               
               {/* Mobile Login/Admin - Enhanced */}
               <div className="mt-4 pt-4 border-t-2 border-white/30">
-                {user ? (
+                {isLoggedIn ? (
                   <>
-                    <Link 
-                      href="/admin" 
-                      className="block py-4 px-5 mb-2 text-white font-bold text-lg rounded-xl hover:bg-white/20 transition-all duration-300 hover:transform hover:translate-x-2"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      <User className="inline w-5 h-5 mr-2" />
-                      Admin Panel
-                    </Link>
+                    {googleUser ? (
+                      <div className="py-4 px-5 mb-2 bg-white/10 rounded-xl">
+                        <div className="flex items-center space-x-3">
+                          {googleUser.picture && googleUser.picture !== 'https://via.placeholder.com/40' ? (
+                            <img 
+                              src={googleUser.picture} 
+                              alt={googleUser.name}
+                              className="w-10 h-10 rounded-full border-2 border-white/20"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                                if (fallback) fallback.style.display = 'flex';
+                              }}
+                            />
+                          ) : null}
+                          <div 
+                            className="w-10 h-10 rounded-full border-2 border-white/20 bg-gradient-to-br from-[#FFD200] to-[#FFC000] flex items-center justify-center text-sm font-bold text-black"
+                            style={{ display: googleUser.picture && googleUser.picture !== 'https://via.placeholder.com/40' ? 'none' : 'flex' }}
+                          >
+                            {googleUser.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="text-white font-bold text-lg">{googleUser.name}</div>
+                            <div className="text-green-300 text-sm bg-green-100/20 px-2 py-1 rounded-full inline-block">Premium Member</div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <Link 
+                        href="/admin" 
+                        className="block py-4 px-5 mb-2 text-white font-bold text-lg rounded-xl hover:bg-white/20 transition-all duration-300 hover:transform hover:translate-x-2"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <User className="inline w-5 h-5 mr-2" />
+                        Admin Panel
+                      </Link>
+                    )}
                     <button
                       onClick={() => {
                         handleLogout();

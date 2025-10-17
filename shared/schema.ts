@@ -230,3 +230,126 @@ export type InsertHomepageContent = z.infer<typeof insertHomepageContentSchema>;
 
 export type AdminSetting = typeof adminSettings.$inferSelect;
 export type InsertAdminSetting = z.infer<typeof insertAdminSettingSchema>;
+
+// Google Users Table - for customer authentication
+export const googleUsers = pgTable("google_users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  googleId: text("google_id").notNull().unique(),
+  email: text("email").notNull().unique(),
+  name: text("name").notNull(),
+  pictureUrl: text("picture_url"),
+  joinedAt: timestamp("joined_at").defaultNow(),
+  newsletterOptIn: boolean("newsletter_opt_in").default(true),
+  lastActiveAt: timestamp("last_active_at").defaultNow(),
+  isActive: boolean("is_active").default(true),
+});
+
+// Chat Sessions - organize conversations
+export const chatSessions = pgTable("chat_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => googleUsers.id).notNull(),
+  sessionStart: timestamp("session_start").defaultNow(),
+  lastActiveAt: timestamp("last_active_at").defaultNow(),
+  deviceFingerprint: text("device_fingerprint"), // For anonymous tracking
+  isActive: boolean("is_active").default(true),
+});
+
+// Chat Messages - store all conversations
+export const chatMessages = pgTable("chat_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: varchar("session_id").references(() => chatSessions.id).notNull(),
+  userId: varchar("user_id").references(() => googleUsers.id),
+  message: text("message").notNull(),
+  response: text("response").notNull(),
+  timestamp: timestamp("timestamp").defaultNow(),
+  isUserMessage: boolean("is_user_message").notNull(),
+  messageType: text("message_type").default('chat'), // 'chat', 'template', 'system'
+  sentiment: text("sentiment"), // 'positive', 'negative', 'neutral'
+});
+
+// User Preferences - personalization
+export const userPreferences = pgTable("user_preferences", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => googleUsers.id).notNull().unique(),
+  comedyStyle: text("comedy_style"), // 'slapstick', 'witty', 'observational', etc.
+  language: text("language").default('bn'), // 'bn' for Bengali, 'en' for English
+  notificationSettings: text("notification_settings"), // JSON string
+  favoriteTopics: text("favorite_topics"), // JSON array of topics
+  chatPersonality: text("chat_personality").default('friendly'), // 'friendly', 'witty', 'casual'
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Community Interactions - for future social features
+export const communityInteractions = pgTable("community_interactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => googleUsers.id).notNull(),
+  interactionType: text("interaction_type").notNull(), // 'like', 'share', 'comment', 'favorite'
+  targetType: text("target_type").notNull(), // 'chat', 'content', 'joke', 'video'
+  targetId: text("target_id").notNull(),
+  metadata: text("metadata"), // JSON for additional data
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Newsletter Subscriptions - track email campaigns
+export const newsletterSubscriptions = pgTable("newsletter_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => googleUsers.id).notNull().unique(),
+  email: text("email").notNull(),
+  subscribedAt: timestamp("subscribed_at").defaultNow(),
+  isActive: boolean("is_active").default(true),
+  unsubscribedAt: timestamp("unsubscribed_at"),
+  source: text("source").default('google_login'), // 'google_login', 'manual', 'chatbot'
+  preferences: text("preferences"), // JSON for email preferences
+});
+
+// Create insert schemas for new tables
+export const insertGoogleUserSchema = createInsertSchema(googleUsers).omit({
+  id: true,
+  joinedAt: true,
+  lastActiveAt: true,
+});
+
+export const insertChatSessionSchema = createInsertSchema(chatSessions).omit({
+  id: true,
+  sessionStart: true,
+  lastActiveAt: true,
+});
+
+export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
+  id: true,
+  timestamp: true,
+});
+
+export const insertUserPreferencesSchema = createInsertSchema(userPreferences).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export const insertCommunityInteractionSchema = createInsertSchema(communityInteractions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertNewsletterSubscriptionSchema = createInsertSchema(newsletterSubscriptions).omit({
+  id: true,
+  subscribedAt: true,
+});
+
+// Export types for new tables
+export type GoogleUser = typeof googleUsers.$inferSelect;
+export type InsertGoogleUser = z.infer<typeof insertGoogleUserSchema>;
+
+export type ChatSession = typeof chatSessions.$inferSelect;
+export type InsertChatSession = z.infer<typeof insertChatSessionSchema>;
+
+export type ChatMessage = typeof chatMessages.$inferSelect;
+export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
+
+export type UserPreferences = typeof userPreferences.$inferSelect;
+export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
+
+export type CommunityInteraction = typeof communityInteractions.$inferSelect;
+export type InsertCommunityInteraction = z.infer<typeof insertCommunityInteractionSchema>;
+
+export type NewsletterSubscription = typeof newsletterSubscriptions.$inferSelect;
+export type InsertNewsletterSubscription = z.infer<typeof insertNewsletterSubscriptionSchema>;

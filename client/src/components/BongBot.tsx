@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Bot, X, MessageCircle, RotateCcw } from 'lucide-react';
+import { Send, Bot, X, MessageCircle, RotateCcw, LogIn, HelpCircle } from 'lucide-react';
 import { buildApiUrl } from '@/lib/queryClient';
 
 interface BongBotProps {
@@ -8,15 +8,23 @@ interface BongBotProps {
 }
 
 export default function BongBot({ onOpenChange }: BongBotProps) {
-  const [position, setPosition] = useState({ x: 0, y: 100 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState('');
   // Start with no messages; we will fetch a fresh live greeting on open
   const [messages, setMessages] = useState<Array<{id:number;text:string;sender:'bot'|'user';timestamp:Date}>>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [authState, setAuthState] = useState<{
+    isAuthenticated: boolean;
+    sessionId: string | null;
+    questionsRemaining: number;
+    showAuthPrompt: boolean;
+  }>({
+    isAuthenticated: false,
+    sessionId: localStorage.getItem('chatbot_session'),
+    questionsRemaining: 3,
+    showAuthPrompt: false
+  });
   const headerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const greetingMsgIdRef = useRef<number | null>(null);
@@ -44,6 +52,50 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
     try {
       localStorage.setItem(key, JSON.stringify({ data, ts: Date.now() }));
     } catch {}
+  };
+
+  // Google OAuth for unlimited chatbot access
+  const handleGoogleAuth = async () => {
+    try {
+      // In production, you would use Google OAuth library
+      // For now, simulate with a simple email prompt
+      const email = prompt("Enter your email to get unlimited chatbot access:");
+      if (!email || !email.includes('@')) {
+        alert("Please enter a valid email address.");
+        return;
+      }
+
+      const response = await fetch(buildApiUrl('/api/auth/google'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential: email })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('chatbot_session', data.sessionId);
+        setAuthState({
+          isAuthenticated: true,
+          sessionId: data.sessionId,
+          questionsRemaining: -1,
+          showAuthPrompt: false
+        });
+
+        // Add a welcome message
+        const botMessage = {
+          id: Date.now(),
+          text: "🎉 Welcome! You now have unlimited access to our AI chatbot. Ask me anything about Bong Bari Comedy!",
+          sender: 'bot' as const,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, botMessage]);
+      } else {
+        alert("Authentication failed. Please try again.");
+      }
+    } catch (error) {
+      console.error('Auth error:', error);
+      alert("Authentication failed. Please try again.");
+    }
   };
 
   // Helper: fetch with timeout
@@ -107,6 +159,23 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
   };
 
   // Load templates on mount
+  // Check for Google authentication on component mount
+  useEffect(() => {
+    const googleUser = localStorage.getItem('google_user');
+    const adminSession = localStorage.getItem('admin_session');
+    
+    if (googleUser || adminSession) {
+      // User is authenticated via Google or admin
+      setAuthState(prev => ({
+        ...prev,
+        isAuthenticated: true,
+        sessionId: adminSession || 'google-session',
+        questionsRemaining: 999, // Unlimited for authenticated users
+        showAuthPrompt: false
+      }));
+    }
+  }, []);
+
   useEffect(() => {
     loadTemplates();
     // Warm greeting cache in background
@@ -124,11 +193,8 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
     })();
   }, []);
 
-  // When opening chatbot, position it on the right side
+  // Open chatbot
   const handleOpenChatbot = () => {
-    const rightSideX = Math.max(0, window.innerWidth - 340); // Right side position with bounds check
-    const bottomY = Math.max(0, window.innerHeight - 380 - 20); // 20px above bottom edge, never above header
-    setPosition({ x: rightSideX, y: bottomY }); // Open at bottom right corner
     setIsOpen(true);
 
     // Fresh session each open
@@ -205,6 +271,62 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
     onOpenChange?.(isOpen);
   }, [isOpen, onOpenChange]);
 
+  // Listen for external chatbot open events
+  useEffect(() => {
+    const handleOpenChatbot = (event: CustomEvent) => {
+      setIsOpen(true);
+      
+      // If there's a message in the event detail, pre-fill the input
+      if (event.detail?.message) {
+        setMessage(event.detail.message);
+      }
+    };
+
+    window.addEventListener('openChatbot', handleOpenChatbot as EventListener);
+    
+    return () => {
+      window.removeEventListener('openChatbot', handleOpenChatbot as EventListener);
+    };
+  }, []);
+
+  // Check authentication status on component mount
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      if (authState.sessionId) {
+        try {
+          const response = await fetch(buildApiUrl('/api/auth/me'), {
+            headers: {
+              'Authorization': `Bearer ${authState.sessionId}`
+            }
+          });
+          
+          if (response.ok) {
+            setAuthState(prev => ({
+              ...prev,
+              isAuthenticated: true,
+              questionsRemaining: -1,
+              showAuthPrompt: false
+            }));
+          } else {
+            // Session expired
+            localStorage.removeItem('chatbot_session');
+            setAuthState(prev => ({
+              ...prev,
+              isAuthenticated: false,
+              sessionId: null,
+              questionsRemaining: 3,
+              showAuthPrompt: false
+            }));
+          }
+        } catch (error) {
+          console.error('Auth check failed:', error);
+        }
+      }
+    };
+
+    checkAuthStatus();
+  }, [authState.sessionId]);
+
   // Handle sending message (AI-first: wait for Gemini; no local fallback bubbles)
   const handleSendMessage = async (textOverride?: string) => {
     const msgText = (textOverride ?? message).trim();
@@ -235,11 +357,30 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
     }));
 
     const sendOnce = async () => {
-  const res = await fetch(buildApiUrl('/api/chatbot/message?aiOnly=1'), {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      
+      // Add authorization if user is authenticated
+      if (authState.sessionId) {
+        headers.Authorization = `Bearer ${authState.sessionId}`;
+      }
+
+      const res = await fetch(buildApiUrl('/api/chatbot/message?aiOnly=1'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ message: msgText, conversationHistory, aiOnly: true })
       });
+
+      if (res.status === 429) {
+        // Rate limit reached
+        const errorData = await res.json();
+        setAuthState(prev => ({
+          ...prev,
+          questionsRemaining: 0,
+          showAuthPrompt: true
+        }));
+        throw new Error('rate-limit');
+      }
+      
       if (res.status === 202) return null; // pending
       if (!res.ok) throw new Error('bad-status');
       return res.json();
@@ -248,14 +389,30 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
     const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
     let attempts = 0;
     let data: any = null;
+    let rateLimitReached = false;
+    
     while (attempts < 3) {
       attempts++;
       try {
-  data = await sendOnce();
-  const txt = String(data?.response || '').trim();
-  if (txt.length > 0) break;
+        data = await sendOnce();
+        const txt = String(data?.response || '').trim();
+        
+        // Update rate limit info if available
+        if (data?.rateLimit) {
+          setAuthState(prev => ({
+            ...prev,
+            questionsRemaining: data.rateLimit.remaining,
+            showAuthPrompt: data.rateLimit.needsAuth
+          }));
+        }
+        
+        if (txt.length > 0) break;
       } catch (e) {
-        // ignore and retry after short wait
+        if (e instanceof Error && e.message === 'rate-limit') {
+          rateLimitReached = true;
+          break;
+        }
+        // ignore other errors and retry after short wait
       }
       await sleep(1200 * attempts);
     }
@@ -263,6 +420,19 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
     // Stop typing sound now (either success or gave up)
     typingAudio.pause();
     typingAudio.currentTime = 0;
+    setIsTyping(false);
+
+    // Handle rate limit reached
+    if (rateLimitReached) {
+      const rateLimitMessage = {
+        id: Date.now() + 1,
+        text: "🚀 You've used your 3 questions today! Want unlimited access?\n\n📋 Check our FAQ page for instant answers\n🆔 Sign up with Google for unlimited chat\n💬 Come back tomorrow for 3 more questions",
+        sender: 'bot' as const,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, rateLimitMessage]);
+      return;
+    }
 
     // If we got a valid AI text, post it; otherwise end typing silently
     const finalText = String(data?.response || '').trim();
@@ -276,54 +446,9 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
       setMessages(prev => [...prev, botResponse]);
       playGlitterSound();
     }
-    setIsTyping(false);
   };
 
-  // Drag functionality
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      
-      e.preventDefault();
-      
-      const newX = position.x + (e.clientX - dragStart.x);
-      const newY = position.y + (e.clientY - dragStart.y);
-      
-      // Keep in bounds
-      const maxX = window.innerWidth - 320;
-      const maxY = window.innerHeight - 380;
-      
-      const boundedX = Math.max(0, Math.min(newX, maxX));
-      const boundedY = Math.max(0, Math.min(newY, maxY));
-      
-      setPosition({ x: boundedX, y: boundedY });
-      setDragStart({ x: e.clientX, y: e.clientY });
-    };
 
-    const handleMouseUp = () => {
-      if (isDragging) {
-        setIsDragging(false);
-      }
-    };
-
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
-  }, [isDragging, position, dragStart]);
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    setIsDragging(true);
-    setDragStart({ x: e.clientX, y: e.clientY });
-  };
 
   if (!isOpen) {
     return (
@@ -348,10 +473,8 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
 
   return (
     <motion.div
-      className="fixed z-50 select-none"
+      className="fixed bottom-20 right-4 z-50 select-none"
       style={{
-        left: position.x + 'px',
-        top: Math.max(80, position.y) + 'px', // Ensure minimum 80px from top to prevent header cutting
         width: '320px',
         height: '360px',
         padding: '0px'
@@ -366,8 +489,7 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
         {/* COMPACT PROFESSIONAL HEADER */}
         <motion.div
           ref={headerRef}
-          onMouseDown={handleMouseDown}
-          className="relative w-full bg-gradient-to-r from-[#1363DF]/70 via-[#FFCC00]/70 to-[#FF4D4D]/70 backdrop-blur-xl cursor-grab active:cursor-grabbing flex items-center justify-between border-b border-white/20 shadow-md rounded-t-2xl"
+          className="relative w-full bg-gradient-to-r from-[#1363DF]/70 via-[#FFCC00]/70 to-[#FF4D4D]/70 backdrop-blur-xl flex items-center justify-between border-b border-white/20 shadow-md rounded-t-2xl"
           style={{ 
             userSelect: 'none', 
             height: '40px',
@@ -507,6 +629,49 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
               </div>
               
               {/* QUICK REPLY TEMPLATES moved to top */}
+              
+              {/* RATE LIMIT & AUTH STATUS */}
+              {!authState.isAuthenticated && (
+                <div className="px-2 py-1 bg-gradient-to-r from-orange-100 to-yellow-100 border-t border-orange-200">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-orange-700 font-medium">
+                      {authState.questionsRemaining > 0 
+                        ? `${authState.questionsRemaining} questions left without signup`
+                        : "Daily limit reached"
+                      }
+                    </span>
+                    <div className="flex gap-1">
+                      <a 
+                        href="/faq" 
+                        className="text-blue-600 hover:text-blue-800 font-medium"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        <HelpCircle className="w-3 h-3 inline mr-1" />FAQ
+                      </a>
+                      {authState.showAuthPrompt && (
+                        <button
+                          onClick={handleGoogleAuth}
+                          className="flex items-center gap-1 px-2 py-0.5 bg-blue-500 hover:bg-blue-600 text-white rounded text-xs font-medium"
+                        >
+                          <LogIn className="w-3 h-3" />
+                          Sign Up
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {authState.isAuthenticated && (
+                <div className="px-2 py-1 bg-gradient-to-r from-green-100 to-emerald-100 border-t border-green-200">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-green-700 font-medium flex items-center gap-1">
+                      ✅ Unlimited Access
+                    </span>
+                    <span className="text-green-600 text-[10px]">Welcome back!</span>
+                  </div>
+                </div>
+              )}
               
               {/* COMPACT TYPING AREA */}
               <div className="p-2 bg-gradient-to-r from-[#1363DF]/20 via-[#FFCC00]/20 to-[#FF4D4D]/20 backdrop-blur-lg border-t border-white/40 rounded-b-2xl shadow-inner">

@@ -3,13 +3,18 @@ import { pgDb } from './db.pg';
 import { 
   users, blogPosts, collaborationRequests, communityPosts, communityReactions, communityPendingPosts, rateLimits,
   chatbotTraining, chatbotTemplates, homepageContent, adminSettings,
+  googleUsers, chatSessions, chatMessages, userPreferences, communityInteractions, newsletterSubscriptions,
   type User, type BlogPost,
   type CollaborationRequest,
   type CommunityPost, type CommunityReaction, type CommunityPendingPost,
   type ChatbotTraining, type InsertChatbotTraining,
   type ChatbotTemplate, type InsertChatbotTemplate,
   type HomepageContent, type InsertHomepageContent,
-  type AdminSetting, type InsertAdminSetting
+  type AdminSetting, type InsertAdminSetting,
+  type GoogleUser, type InsertGoogleUser,
+  type ChatSession, type InsertChatSession,
+  type ChatMessage, type InsertChatMessage,
+  type UserPreferences, type InsertUserPreferences
 } from '../shared/schema';
 
 type InsertBlogPost = Omit<BlogPost, 'id' | 'createdAt' | 'updatedAt'>;
@@ -22,6 +27,57 @@ export class PostgresStorage {
   async getUser(id: string): Promise<User | undefined> { if(!this.db) return undefined; const [u]= await this.db.select().from(users).where(eq(users.id,id)); return u; }
   async getUserByUsername(username: string): Promise<User | undefined> { if(!this.db) return undefined; const [u]= await this.db.select().from(users).where(eq(users.username,username)); return u; }
   async createUser(insert: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> { if(!this.db) throw new Error('db'); const [u]= await this.db.insert(users).values(insert).returning(); return u; }
+
+  // Google Users methods
+  async createGoogleUser(user: InsertGoogleUser): Promise<GoogleUser> { 
+    if(!this.db) throw new Error('db'); 
+    const [u] = await this.db.insert(googleUsers).values(user).onConflictDoNothing().returning(); 
+    if (!u) {
+      // User already exists, return existing user
+      const [existing] = await this.db.select().from(googleUsers).where(eq(googleUsers.email, user.email));
+      return existing;
+    }
+    return u;
+  }
+  
+  async getGoogleUserByEmail(email: string): Promise<GoogleUser | null> { 
+    if(!this.db) return null; 
+    const [u] = await this.db.select().from(googleUsers).where(eq(googleUsers.email, email));
+    return u || null;
+  }
+  
+  async createChatSession(sessionData: InsertChatSession): Promise<ChatSession> { 
+    if(!this.db) throw new Error('db'); 
+    const [s] = await this.db.insert(chatSessions).values(sessionData).returning();
+    return s;
+  }
+  
+  async saveChatMessage(messageData: InsertChatMessage): Promise<ChatMessage> { 
+    if(!this.db) throw new Error('db'); 
+    const [m] = await this.db.insert(chatMessages).values(messageData).returning();
+    return m;
+  }
+  
+  async getChatHistory(userId: string, limit: number = 50): Promise<ChatMessage[]> { 
+    if(!this.db) return []; 
+    return await this.db.select()
+      .from(chatMessages)
+      .where(eq(chatMessages.userId, userId))
+      .orderBy(desc(chatMessages.timestamp))
+      .limit(limit);
+  }
+  
+  async updateUserPreferences(userId: string, preferences: Partial<InsertUserPreferences>): Promise<UserPreferences> { 
+    if(!this.db) throw new Error('db'); 
+    const [p] = await this.db.insert(userPreferences)
+      .values({ userId, ...preferences })
+      .onConflictDoUpdate({
+        target: userPreferences.userId,
+        set: { ...preferences, updatedAt: new Date() }
+      })
+      .returning();
+    return p;
+  }
 
   async getBlogPosts(): Promise<BlogPost[]> { if(!this.db) return []; return await this.db.select().from(blogPosts).orderBy(desc(blogPosts.createdAt)); }
   async getBlogPost(id: string): Promise<BlogPost | undefined> { if(!this.db) return undefined; const [p]= await this.db.select().from(blogPosts).where(eq(blogPosts.id,id)); return p; }

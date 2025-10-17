@@ -101,7 +101,9 @@ export default function CommunityFeed() {
     } catch {/* ignore */}
   }, []);
 
-  // Periodic auto generation (simulate someone posting)
+  // Periodic auto generation (DISABLED - policy compliance)
+  // Commented out to prevent spammy auto-content generation
+  /*
   useEffect(() => {
     if (items.length > GEN_STOP_THRESHOLD) return; // too many items -> stop
     let stop = false;
@@ -127,6 +129,7 @@ export default function CommunityFeed() {
     loop();
     return () => { stop = true; clearTimeout(timeout); };
   }, [items.length]);
+  */
 
   // Periodic sync of authoritative reaction counts (every 45s)
   useEffect(() => {

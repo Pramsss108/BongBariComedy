@@ -1192,12 +1192,37 @@ Output format: JUST the 1–2 sentence greeting. No emojis unless fits naturally
         return res.status(400).json({ error: "Message is required" });
       }
 
+      // SECURITY: Input moderation for Gemini API compliance
+      const moderationResult = await analyzeStory(message);
+      if (moderationResult.decision === 'rejected') {
+        return res.status(400).json({
+          error: "Content policy violation",
+          message: "Content doesn't meet our family-friendly guidelines. Please try a different question!",
+          moderationReason: moderationResult.reason,
+          flags: moderationResult.flags
+        });
+      }
+
   let response = '';
       try {
         response = await chatbotService.generateResponse(message, conversationHistory, { allowFallback: !aiOnly });
       } catch (e) {
         console.error('generateResponse failed, using fallback', e);
         response = aiOnly ? '' : chatbotService.getFallback(message);
+      }
+
+      // SECURITY: Output sanitization for Gemini API compliance
+      if (response) {
+        const outputModeration = await analyzeStory(response);
+        if (outputModeration.decision === 'rejected') {
+          console.warn('Gemini output rejected by moderation:', { 
+            input: message, 
+            output: response, 
+            flags: outputModeration.flags,
+            reason: outputModeration.reason 
+          });
+          response = chatbotService.getFallback(message); // Use safe fallback
+        }
       }
 
       if (!response || typeof response !== 'string' || response.trim().length === 0) {

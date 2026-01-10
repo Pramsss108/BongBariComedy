@@ -132,18 +132,27 @@
 
   /* Text Contrast Fix & Typography Compliance */
   .hero-section h1 {
-    text-shadow: 0 4px 12px rgba(0,0,0,0.9) !important;
-    font-size: 36px !important; /* MD Standard */
+    text-shadow: 0 4px 12px rgba(0,0,0,0.5) !important; /* Softer shadow */
+    font-size: 36px !important; 
     font-weight: 800 !important;
     line-height: 1.1 !important;
-    margin-bottom: 0.5rem !important;
+    margin-bottom: 0.75rem !important;
   }
   
   .hero-section p {
-    text-shadow: 0 2px 8px rgba(0,0,0,0.8) !important;
-    font-size: 18px !important; /* MD Standard */
-    line-height: 1.4 !important;
-    opacity: 0.95 !important;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8) !important; /* Crisp shadow */
+    font-size: 16px !important; 
+    line-height: 1.5 !important;
+    opacity: 1 !important;
+    max-width: 90% !important;
+    margin: 0 auto !important;
+  }
+  
+  /* BANGLA TEXT FIX - Needs height to breathe */
+  .hero-section p.bangla-text {
+    line-height: 1.8 !important; /* Extra breathing room for script */
+    font-size: 17px !important;
+    margin-top: 8px !important;
   }
 
   /* HEADINGS SIZE FIX - Prevent "Small" titles */
@@ -164,16 +173,16 @@
   /* Mobile CTA Buttons - Premium Polish */
   .hero-section button {
     width: 100% !important;
-    max-width: 320px !important; /* Max width for aesthetics */
-    border-radius: 9999px !important;
-    padding: 16px 24px !important;
-    font-size: 18px !important;
+    max-width: 320px !important;
+    border-radius: 20px !important; /* Softer Curve (Apple style) */
+    padding: 18px 24px !important;
+    font-size: 16px !important;
     font-weight: 700 !important;
     letter-spacing: 0.5px !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
-    margin-bottom: 12px !important;
-    /* Ensure they stack nicely */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 10px 15px -3px rgba(0,0,0,0.1) !important; /* Deep "Float" shadow */
+    margin-bottom: 16px !important;
     flex: none !important; 
+    text-transform: uppercase !important;
   }
 
   h3, .text-xl {

@@ -232,35 +232,34 @@ const Home = () => {
 
             {/* 3. Subtitles & CTAs - PREMIUM MAKEOVER */}
             <motion.div
-              className="flex flex-col items-center gap-6 px-4 w-full max-w-md mx-auto"
+              className="flex flex-col items-center gap-6 px-4 w-full max-w-sm mx-auto mt-6"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
             >
-              <div className="text-center space-y-3 opacity-100">
-                <p className="text-white font-medium tracking-wide drop-shadow-md leading-relaxed" style={{ fontSize: '1.125rem' }}>
-                  Experience authentic Bengali family comedy that feels like home
+              <div className="text-center space-y-2">
+                <p className="text-gray-100 font-medium tracking-normal drop-shadow-sm">
+                  Authentic Bengali Family Comedy
                 </p>
-                <p className="text-gray-200 bangla-text font-medium tracking-wide drop-shadow-sm leading-relaxed" style={{ fontSize: '1.125rem' }}>
-                  ঘরোয়া পরিবেশের মজার গল্প যা আপনার নিজের বাড়ির মতোই লাগবে
+                <p className="bangla-text text-white font-semibold drop-shadow-md">
+                  ঘরোয়া পরিবেশের মজার গল্প
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-4 w-full">
-                {/* Premium "Bong Kahini" Button - Gradient + Glow */}
+              <div className="flex flex-col gap-3 w-full items-center">
+                {/* Premium "Bong Kahini" Button - Deep Gloss Red */}
                 <Button
                   onClick={() => setLocation('/tools')}
-                  className="relative overflow-hidden w-full bg-gradient-to-r from-rose-600 via-red-500 to-orange-500 hover:from-rose-500 hover:to-orange-400 text-white rounded-full py-6 text-lg font-bold tracking-wider shadow-[0_0_25px_rgba(225,29,72,0.4)] hover:shadow-[0_0_35px_rgba(225,29,72,0.6)] border border-white/20 transition-all duration-300 transform hover:scale-[1.02] active:scale-95 group"
+                  className="w-full bg-gradient-to-b from-red-500 to-red-700 hover:from-red-400 hover:to-red-600 text-white border-t border-white/20 shadow-xl transition-all active:scale-95 relative overflow-hidden group"
                 >
                   <span className="relative z-10 flex items-center justify-center gap-2">
-                    <Sparkles className="w-5 h-5 animate-pulse text-yellow-200" />
+                    <Sparkles className="w-5 h-5 text-yellow-300" />
                     BONG KAHINI
                   </span>
-                  {/* Sheen Effect */}
-                  <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12" />
+                  <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Button>
 
-                {/* Premium "Subscribe" Button - Glass/Metal Look */}
+                {/* Premium "Subscribe" Button - Deep Gloss White */}
                 <Button
                   onClick={() => {
                     const subscribeUrl = channelId
@@ -268,9 +267,9 @@ const Home = () => {
                       : `https://www.youtube.com/@BongBari?sub_confirmation=1`;
                     window.open(subscribeUrl, '_blank', 'noopener,noreferrer');
                   }}
-                  className="w-full bg-white hover:bg-zinc-50 text-slate-900 border-2 border-slate-200 rounded-full py-6 text-lg font-bold tracking-wider shadow-[0_8px_16px_rgba(0,0,0,0.1)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.15)] transition-all duration-300 transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
+                  className="w-full bg-white text-slate-900 border-b-4 border-slate-200 hover:border-slate-300 shadow-xl transition-all active:translate-y-[2px] active:border-b-0"
                 >
-                   <Youtube className="w-6 h-6 text-red-600 fill-current" />
+                   <Youtube className="w-5 h-5 text-red-600 fill-current mr-2" />
                    SUBSCRIBE
                 </Button>
               </div>

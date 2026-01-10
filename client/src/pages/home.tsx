@@ -186,12 +186,16 @@ const Home = () => {
 
         <main className="relative z-10 w-full flex flex-col items-center">
 
-          {/* HERO SECTION */}
-          <div className="relative w-full flex flex-col items-center justify-start pt-24 pb-12 px-0 sm:px-4 hero-section">
+          {/* HERO SECTION - Responsive Breakpoints (Mobile First vs Desktop) */}
+          {/* Mobile: Top Padding 16 (pt-16) to show button above fold */}
+          {/* Desktop: Top Padding 24 (md:pt-24) for spacious look */}
+          <div className="relative w-full flex flex-col items-center justify-start pt-16 md:pt-24 pb-12 px-0 sm:px-4 hero-section">
 
-            {/* 2. Video Container - "Levitating Glass Console" */}
+            {/* 2. Video Container - Responsive Sizing */}
+            {/* Mobile: Full Width + Aspect Video */}
+            {/* Desktop: Max-width 4xl (to prevent "Crushed" look) + margins */}
             <div
-              className="relative w-full sm:w-full md:max-w-4xl aspect-video sm:rounded-2xl overflow-hidden shadow-2xl z-10 bg-black group mb-10 cursor-pointer border border-white/10 ring-1 ring-white/5"
+              className="relative w-full md:max-w-4xl lg:max-w-5xl aspect-video rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl z-10 bg-black group mb-6 md:mb-10 cursor-pointer border border-white/10 ring-1 ring-white/5 mx-auto"
               style={{ boxShadow: '0 0 50px -12px rgba(0,0,0,0.5)' }} /* Deep Ambient Shadow */
               onClick={() => setEnteredSite(true)}
             >
@@ -239,40 +243,41 @@ const Home = () => {
 
             {/* 3. Subtitles & CTAs - "Ultra-Premium Glass Interface" */}
             <motion.div
-              className="flex flex-col items-center gap-6 px-4 w-full max-w-sm mx-auto mt-2"
+              className="flex flex-col items-center gap-4 md:gap-6 px-4 w-full max-w-sm md:max-w-md mx-auto mt-2"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
             >
-              <div className="text-center space-y-3 relative">
+              <div className="text-center space-y-2 md:space-y-3 relative">
                 {/* Glow Effect behind Text */}
                 <div className="absolute inset-0 bg-blue-500/20 blur-2xl rounded-full pointer-events-none mix-blend-screen" />
                 
                 {/* English Title - Crisp White on Dark */}
                 <h1 
-                  className="relative font-bold tracking-tight leading-none text-white drop-shadow-2xl" 
-                  style={{ fontSize: '2rem', textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}
+                  className="relative font-bold tracking-tight leading-none text-white drop-shadow-2xl text-2xl md:text-4xl" 
+                  style={{ textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}
                 >
                   Authentic <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-amber-500">Bengali</span> Comedy
                 </h1>
                 
                 {/* Bangla Subtitle - Silver/Metallic */}
                 <p 
-                  className="bangla-text text-zinc-400 font-medium leading-relaxed" 
-                  style={{ fontSize: '1.35rem', letterSpacing: '0.01em' }}
+                  className="bangla-text text-zinc-400 font-medium leading-relaxed text-lg md:text-xl" 
+                  style={{ letterSpacing: '0.01em' }}
                 >
                   ঘরোয়া পরিবেশের মজার গল্প
                 </p>
               </div>
 
-              <div className="flex flex-col gap-4 w-full items-center mt-2">
-                {/* Bong Kahini - "The Glass Pill" (Blinkit Style Transparency) */}
+              {/* CTAs - Side-by-Side on Mobile (Fit Above Fold) / Stacked on Tiny screens */}
+              <div className="flex flex-row md:flex-col gap-3 w-full items-center justify-center mt-2">
+                {/* Bong Kahini - "The Glass Pill" */}
                  <Button
                   onClick={() => setLocation('/tools')}
-                  className="relative w-full overflow-hidden group backdrop-blur-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 py-7 text-lg font-bold rounded-2xl shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all hover:shadow-[0_0_30px_rgba(255,255,255,0.2)]"
+                  className="flex-1 md:w-full relative overflow-hidden group backdrop-blur-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 py-6 md:py-7 text-base md:text-lg font-bold rounded-xl md:rounded-2xl shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all hover:shadow-[0_0_30px_rgba(255,255,255,0.2)]"
                 >
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                    <Sparkles className="w-5 h-5 mr-3 text-yellow-400 fill-yellow-400/20" />
+                    <Sparkles className="w-4 h-4 md:w-5 md:h-5 mr-2 text-yellow-400 fill-yellow-400/20" />
                     <span className="tracking-wide">Bong Kahini</span>
                 </Button>
 
@@ -284,9 +289,9 @@ const Home = () => {
                       : `https://www.youtube.com/@BongBari?sub_confirmation=1`;
                     window.open(subscribeUrl, '_blank', 'noopener,noreferrer');
                   }}
-                  className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white border-0 py-7 text-lg font-bold rounded-2xl shadow-lg shadow-red-900/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  className="flex-1 md:w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white border-0 py-6 md:py-7 text-base md:text-lg font-bold rounded-xl md:rounded-2xl shadow-lg shadow-red-900/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
                 >
-                   <Youtube className="w-6 h-6 fill-white mr-3" />
+                   <Youtube className="w-5 h-5 md:w-6 md:h-6 fill-white mr-2" />
                    Subscribe
                 </Button>
               </div>

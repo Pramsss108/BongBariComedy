@@ -90,30 +90,32 @@
   }
 
   /* ==================================================
-   Hero & video scaling
+   Hero & video scaling (RESPONSIVE FIX)
    ================================================== */
   .hero-section { 
-    /* Push content down to center video more/clear header */
-    padding-top: 120px !important; /* FIXED: Safe distance from header */
-    min-height: 90vh !important;
+    /* Reduce top padding on mobile to bring buttons up */
+    padding-top: 80px !important; 
+    min-height: auto !important; /* Allow natural height */
     display: flex !important;
     flex-direction: column !important;
     justify-content: flex-start !important;
   }
   
-  /* Ensure Hero Video is prominent but not too tall */
+  /* Ensure Hero Video is correct aspect ratio but smaller on mobile */
+  /* This prevents it from pushing content off screen */
   .aspect-video {
-    width: auto !important; /* Allow margins to take effect */
-    max-width: calc(100% - 32px) !important; /* Enforce visual gap from edges */
+    width: auto !important; 
+    max-width: calc(100% - 20px) !important; /* Smaller gaps */
+    height: auto !important;
+    min-height: 200px !important; /* Don't force massive height */
     max-height: 50vh !important;
-    min-height: 300px !important;
     object-fit: cover !important;
-    margin: 0 auto !important; /* Center alignment */
-    /* Visual Container Styling - Premium Card Look */
-    border-radius: 20px !important;
-    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5) !important;
-    border: 3px solid rgba(255,255,255,0.15) !important;
-    background: #111 !important; 
+    margin: 0 auto !important;
+    /* Visual Container Styling */
+    border-radius: 16px !important;
+    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.4) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important; /* Thinner border for mobile */
+    background: #000 !important; 
     overflow: hidden !important;
     position: relative !important;
     z-index: 10 !important;

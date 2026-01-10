@@ -171,13 +171,17 @@ const Home = () => {
       {/* Mobile Sticky Nav - Glass Pill Restored */}
       <MobileNavBar />
 
-      {/* Main Layout - "Yellow Page" Standard (Brand Yellow BG) */}
-      <div className="min-h-screen bg-brand-yellow relative selection:bg-black selection:text-white font-sans overflow-x-hidden pb-32 sm:pb-0">
+      {/* Main Layout - "700 Years UX" - PREMIUM GLASS & MESH GRADIENT */}
+      <div className="min-h-screen bg-black relative selection:bg-brand-yellow selection:text-black font-sans overflow-x-hidden pb-32 sm:pb-0">
 
-        {/* Background Mesh (Subtle decoration) */}
-        <div className="fixed inset-0 z-0 pointer-events-none opacity-20">
-          <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-white/40 rounded-full mix-blend-overlay blur-3xl" />
-          <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-brand-red/10 rounded-full mix-blend-multiply blur-3xl" />
+        {/* 1. Dynamic Aurora Background (Premium & Powerful) */}
+        <div className="fixed inset-0 z-0 pointer-events-none">
+           {/* Deep Base */}
+           <div className="absolute inset-0 bg-neutral-950" />
+           {/* Moving Orbs (Simulated Mesh) */}
+           <div className="absolute top-[-10%] left-[-20%] w-[80vw] h-[80vw] bg-yellow-500/20 rounded-full blur-[120px] mix-blend-screen animate-pulse-soft" />
+           <div className="absolute bottom-[-10%] right-[-20%] w-[80vw] h-[80vw] bg-red-600/20 rounded-full blur-[120px] mix-blend-screen animate-pulse-soft delay-1000" />
+           <div className="absolute top-[40%] left-[50%] transform -translate-x-1/2 w-[60vw] h-[60vw] bg-blue-600/10 rounded-full blur-[100px] mix-blend-screen" />
         </div>
 
         <main className="relative z-10 w-full flex flex-col items-center">
@@ -185,9 +189,10 @@ const Home = () => {
           {/* HERO SECTION */}
           <div className="relative w-full flex flex-col items-center justify-start pt-24 pb-12 px-0 sm:px-4 hero-section">
 
-            {/* 1. Video Container - Clean Card Style */}
+            {/* 2. Video Container - "Levitating Glass Console" */}
             <div
-              className="relative w-full sm:w-full md:max-w-4xl aspect-video sm:rounded-2xl overflow-hidden shadow-2xl border-4 border-white/50 z-10 bg-black group mb-8 cursor-pointer"
+              className="relative w-full sm:w-full md:max-w-4xl aspect-video sm:rounded-2xl overflow-hidden shadow-2xl z-10 bg-black group mb-10 cursor-pointer border border-white/10 ring-1 ring-white/5"
+              style={{ boxShadow: '0 0 50px -12px rgba(0,0,0,0.5)' }} /* Deep Ambient Shadow */
               onClick={() => setEnteredSite(true)}
             >
               {!enteredSite ? (
@@ -197,7 +202,8 @@ const Home = () => {
                     alt="Featured Comedy"
                     className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
                   />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
+                  {/* Premium Dark Glass Overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/10 transition-colors backdrop-blur-[2px]">
                     <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-lg backdrop-blur-sm transform group-hover:scale-110 transition-transform">
                       <Play className="w-8 h-8 sm:w-10 sm:h-10 ml-1 fill-current" />
                     </div>
@@ -231,42 +237,46 @@ const Home = () => {
               )}
             </div>
 
-            {/* 3. Subtitles & CTAs - "Simple & Solid" */}
+            {/* 3. Subtitles & CTAs - "Ultra-Premium Glass Interface" */}
             <motion.div
-              className="flex flex-col items-center gap-6 px-4 w-full max-w-sm mx-auto mt-6"
+              className="flex flex-col items-center gap-6 px-4 w-full max-w-sm mx-auto mt-2"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
             >
-              <div className="text-center space-y-2">
-                {/* Main English Title - Solid Brand Blue (High Contrast on Yellow) */}
+              <div className="text-center space-y-3 relative">
+                {/* Glow Effect behind Text */}
+                <div className="absolute inset-0 bg-blue-500/20 blur-2xl rounded-full pointer-events-none mix-blend-screen" />
+                
+                {/* English Title - Crisp White on Dark */}
                 <h1 
-                  className="font-bold tracking-tight leading-tight text-brand-blue drop-shadow-sm" 
-                  style={{ fontSize: '1.75rem' }}
+                  className="relative font-bold tracking-tight leading-none text-white drop-shadow-2xl" 
+                  style={{ fontSize: '2rem', textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}
                 >
-                  Authentic Bengali Family Comedy
+                  Authentic <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-amber-500">Bengali</span> Comedy
                 </h1>
                 
-                {/* Bangla Subtitle - Solid Slate Text */}
+                {/* Bangla Subtitle - Silver/Metallic */}
                 <p 
-                  className="bangla-text text-slate-800 font-semibold leading-relaxed" 
-                  style={{ fontSize: '1.25rem' }}
+                  className="bangla-text text-zinc-400 font-medium leading-relaxed" 
+                  style={{ fontSize: '1.35rem', letterSpacing: '0.01em' }}
                 >
                   ঘরোয়া পরিবেশের মজার গল্প
                 </p>
               </div>
 
-              <div className="flex flex-col gap-3 w-full items-center">
-                {/* Bong Kahini - White Button to pop on Yellow */}
+              <div className="flex flex-col gap-4 w-full items-center mt-2">
+                {/* Bong Kahini - "The Glass Pill" (Blinkit Style Transparency) */}
                  <Button
                   onClick={() => setLocation('/tools')}
-                  className="w-full bg-white hover:bg-slate-50 text-brand-blue py-6 text-lg font-bold shadow-lg transition-transform active:scale-95 border-2 border-brand-blue"
+                  className="relative w-full overflow-hidden group backdrop-blur-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 py-7 text-lg font-bold rounded-2xl shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all hover:shadow-[0_0_30px_rgba(255,255,255,0.2)]"
                 >
-                    <Sparkles className="w-5 h-5 mr-2 text-brand-blue" />
-                    Bong Kahini
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                    <Sparkles className="w-5 h-5 mr-3 text-yellow-400 fill-yellow-400/20" />
+                    <span className="tracking-wide">Bong Kahini</span>
                 </Button>
 
-                {/* Subscribe - Brand Red Button (Contrast on Yellow) */}
+                {/* Subscribe - "Neon Red Pulse" */}
                 <Button
                   onClick={() => {
                     const subscribeUrl = channelId
@@ -274,9 +284,9 @@ const Home = () => {
                       : `https://www.youtube.com/@BongBari?sub_confirmation=1`;
                     window.open(subscribeUrl, '_blank', 'noopener,noreferrer');
                   }}
-                  className="w-full bg-brand-red hover:bg-[#ff4f5e] text-white py-6 text-lg font-bold shadow-lg transition-transform active:scale-95"
+                  className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white border-0 py-7 text-lg font-bold rounded-2xl shadow-lg shadow-red-900/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
                 >
-                   <Youtube className="w-5 h-5 fill-current mr-2" />
+                   <Youtube className="w-6 h-6 fill-white mr-3" />
                    Subscribe
                 </Button>
               </div>

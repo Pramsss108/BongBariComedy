@@ -171,12 +171,13 @@ const Home = () => {
       {/* Mobile Sticky Nav - Glass Pill Restored */}
       <MobileNavBar />
 
-      <div className="min-h-screen bg-black relative selection:bg-brand-yellow selection:text-black font-sans overflow-x-hidden pb-32 sm:pb-0">
+      {/* Main Layout - Switched to "Normal" Light/Yellow Gradient Theme per User Request */}
+      <div className="min-h-screen bg-gradient-to-b from-yellow-50 via-white to-slate-50 relative selection:bg-brand-yellow selection:text-black font-sans overflow-x-hidden pb-32 sm:pb-0">
 
-        {/* Background Mesh (Removed Blur for Perf) */}
-        <div className="fixed inset-0 z-0 pointer-events-none">
-          <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-brand-blue/5 rounded-full mix-blend-screen opacity-20" />
-          <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-brand-red/5 rounded-full mix-blend-screen opacity-20" />
+        {/* Background Mesh (Subtle decoration) */}
+        <div className="fixed inset-0 z-0 pointer-events-none opacity-30">
+          <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-brand-yellow/10 rounded-full mix-blend-multiply blur-3xl" />
+          <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-brand-red/5 rounded-full mix-blend-multiply blur-3xl" />
         </div>
 
         <main className="relative z-10 w-full flex flex-col items-center">
@@ -184,9 +185,9 @@ const Home = () => {
           {/* HERO SECTION */}
           <div className="relative w-full flex flex-col items-center justify-start pt-24 pb-12 px-0 sm:px-4 hero-section">
 
-            {/* 1. Video Container (Thumbnail First) - Fixed Mobile Width */}
+            {/* 1. Video Container - Clean Card Style */}
             <div
-              className="relative w-full sm:w-full md:max-w-4xl aspect-video sm:rounded-2xl overflow-hidden shadow-2xl border-y-2 sm:border-2 border-zinc-800 z-10 bg-zinc-900 group mb-8 cursor-pointer"
+              className="relative w-full sm:w-full md:max-w-4xl aspect-video sm:rounded-2xl overflow-hidden shadow-2xl border-4 border-white/50 z-10 bg-black group mb-8 cursor-pointer"
               onClick={() => setEnteredSite(true)}
             >
               {!enteredSite ? (
@@ -196,7 +197,7 @@ const Home = () => {
                     alt="Featured Comedy"
                     className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
                   />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 group-hover:bg-black/20 transition-colors">
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
                     <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-lg backdrop-blur-sm transform group-hover:scale-110 transition-transform">
                       <Play className="w-8 h-8 sm:w-10 sm:h-10 ml-1 fill-current" />
                     </div>
@@ -230,7 +231,7 @@ const Home = () => {
               )}
             </div>
 
-            {/* 3. Subtitles & CTAs - CYBER-BONG RESTGORED */}
+            {/* 3. Subtitles & CTAs - "Gradient Yellow" & Normalcy Restored */}
             <motion.div
               className="flex flex-col items-center gap-6 px-4 w-full max-w-sm mx-auto mt-6"
               initial={{ opacity: 0, y: 20 }}
@@ -238,10 +239,19 @@ const Home = () => {
               transition={{ duration: 0.6, delay: 0.4 }}
             >
               <div className="text-center space-y-2">
-                <p className="text-zinc-200 font-medium tracking-normal drop-shadow-sm leading-relaxed" style={{ fontSize: '1.25rem' }}>
+                {/* Main English Title - Brand Gradient (Red/Yellow/Blue mix) */}
+                <h1 
+                  className="font-bold tracking-tight leading-tight text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-orange-600 to-yellow-500 drop-shadow-sm" 
+                  style={{ fontSize: '1.75rem' }}
+                >
                   Authentic Bengali Family Comedy
-                </p>
-                <p className="bangla-text text-zinc-400 font-medium drop-shadow-sm leading-relaxed" style={{ fontSize: '1.25rem' }}>
+                </h1>
+                
+                {/* Bangla Subtitle - Clear Slate Text */}
+                <p 
+                  className="bangla-text text-slate-600 font-semibold leading-relaxed" 
+                  style={{ fontSize: '1.25rem' }}
+                >
                   ঘরোয়া পরিবেশের মজার গল্প
                 </p>
               </div>

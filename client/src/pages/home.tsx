@@ -171,13 +171,13 @@ const Home = () => {
       {/* Mobile Sticky Nav - Glass Pill Restored */}
       <MobileNavBar />
 
-      {/* Main Layout - Switched to "Normal" Light/Yellow Gradient Theme per User Request */}
-      <div className="min-h-screen bg-gradient-to-b from-yellow-50 via-white to-slate-50 relative selection:bg-brand-yellow selection:text-black font-sans overflow-x-hidden pb-32 sm:pb-0">
+      {/* Main Layout - "Yellow Page" Standard (Brand Yellow BG) */}
+      <div className="min-h-screen bg-brand-yellow relative selection:bg-black selection:text-white font-sans overflow-x-hidden pb-32 sm:pb-0">
 
         {/* Background Mesh (Subtle decoration) */}
-        <div className="fixed inset-0 z-0 pointer-events-none opacity-30">
-          <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-brand-yellow/10 rounded-full mix-blend-multiply blur-3xl" />
-          <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-brand-red/5 rounded-full mix-blend-multiply blur-3xl" />
+        <div className="fixed inset-0 z-0 pointer-events-none opacity-20">
+          <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-white/40 rounded-full mix-blend-overlay blur-3xl" />
+          <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-brand-red/10 rounded-full mix-blend-multiply blur-3xl" />
         </div>
 
         <main className="relative z-10 w-full flex flex-col items-center">
@@ -231,7 +231,7 @@ const Home = () => {
               )}
             </div>
 
-            {/* 3. Subtitles & CTAs - "Gradient Yellow" & Normalcy Restored */}
+            {/* 3. Subtitles & CTAs - "Simple & Solid" */}
             <motion.div
               className="flex flex-col items-center gap-6 px-4 w-full max-w-sm mx-auto mt-6"
               initial={{ opacity: 0, y: 20 }}
@@ -239,17 +239,17 @@ const Home = () => {
               transition={{ duration: 0.6, delay: 0.4 }}
             >
               <div className="text-center space-y-2">
-                {/* Main English Title - Brand Gradient (Red/Yellow/Blue mix) */}
+                {/* Main English Title - Solid Brand Blue (High Contrast on Yellow) */}
                 <h1 
-                  className="font-bold tracking-tight leading-tight text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-orange-600 to-yellow-500 drop-shadow-sm" 
+                  className="font-bold tracking-tight leading-tight text-brand-blue drop-shadow-sm" 
                   style={{ fontSize: '1.75rem' }}
                 >
                   Authentic Bengali Family Comedy
                 </h1>
                 
-                {/* Bangla Subtitle - Clear Slate Text */}
+                {/* Bangla Subtitle - Solid Slate Text */}
                 <p 
-                  className="bangla-text text-slate-600 font-semibold leading-relaxed" 
+                  className="bangla-text text-slate-800 font-semibold leading-relaxed" 
                   style={{ fontSize: '1.25rem' }}
                 >
                   ঘরোয়া পরিবেশের মজার গল্প
@@ -257,16 +257,16 @@ const Home = () => {
               </div>
 
               <div className="flex flex-col gap-3 w-full items-center">
-                {/* Bong Kahini - Default Brand Red Button */}
+                {/* Bong Kahini - White Button to pop on Yellow */}
                  <Button
                   onClick={() => setLocation('/tools')}
-                  className="w-full bg-brand-red hover:bg-[#ff4f5e] text-white py-6 text-lg font-bold shadow-lg transition-transform active:scale-95"
+                  className="w-full bg-white hover:bg-slate-50 text-brand-blue py-6 text-lg font-bold shadow-lg transition-transform active:scale-95 border-2 border-brand-blue"
                 >
-                    <Sparkles className="w-5 h-5 mr-2 text-yellow-300" />
+                    <Sparkles className="w-5 h-5 mr-2 text-brand-blue" />
                     Bong Kahini
                 </Button>
 
-                {/* Subscribe - Default Brand Outline Button */}
+                {/* Subscribe - Brand Red Button (Contrast on Yellow) */}
                 <Button
                   onClick={() => {
                     const subscribeUrl = channelId
@@ -274,7 +274,7 @@ const Home = () => {
                       : `https://www.youtube.com/@BongBari?sub_confirmation=1`;
                     window.open(subscribeUrl, '_blank', 'noopener,noreferrer');
                   }}
-                  className="w-full bg-transparent hover:bg-white/10 text-brand-blue border-2 border-brand-blue py-6 text-lg font-bold shadow-lg transition-transform active:scale-95"
+                  className="w-full bg-brand-red hover:bg-[#ff4f5e] text-white py-6 text-lg font-bold shadow-lg transition-transform active:scale-95"
                 >
                    <Youtube className="w-5 h-5 fill-current mr-2" />
                    Subscribe

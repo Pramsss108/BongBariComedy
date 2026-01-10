@@ -94,7 +94,7 @@
    ================================================== */
   .hero-section { 
     /* Push content down to center video more/clear header */
-    padding-top: 50vw !important; /* Dynamic padding based on width to force aspect ratio gap */
+    padding-top: 120px !important; /* FIXED: Safe distance from header */
     min-height: 90vh !important;
     display: flex !important;
     flex-direction: column !important;
@@ -203,10 +203,18 @@
   }
   
   [data-testid="collaboration-form"] {
+    display: block !important; /* Ensure visibility */
     background: #fff !important;
     padding: 1.5rem !important;
     border-radius: 16px !important;
     box-shadow: 0 4px 20px rgba(0,0,0,0.06) !important;
+    position: relative !important;
+    z-index: 20 !important;
+    margin-bottom: 120px !important; /* Clear bottom dock/footer */
+  }
+
+  [data-testid="collaboration-section"] {
+    padding-bottom: 20px !important;
   }
 
   /* ==================================================
@@ -225,6 +233,8 @@
   [data-testid="loved-videos-grid"] {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 0.75rem !important;
+    padding-left: 12px !important; /* Prevent edge-to-edge touching */
+    padding-right: 12px !important;
   }
   
   /* Fix card sizes in grid */

@@ -103,20 +103,27 @@
   
   /* Ensure Hero Video is prominent but not too tall */
   .aspect-video {
-    width: 100% !important;
+    width: auto !important; /* Allow margins to take effect */
+    max-width: calc(100% - 32px) !important; /* Enforce visual gap from edges */
     max-height: 50vh !important;
     min-height: 300px !important;
     object-fit: cover !important;
-    margin: 0 auto !important;
-    /* Visual Container Styling */
-    border-radius: 16px !important;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.2) !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
-    background: #000 !important; /* Visual container frame */
+    margin: 0 auto !important; /* Center alignment */
+    /* Visual Container Styling - Premium Card Look */
+    border-radius: 20px !important;
+    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5) !important;
+    border: 3px solid rgba(255,255,255,0.15) !important;
+    background: #111 !important; 
     overflow: hidden !important;
     position: relative !important;
     z-index: 10 !important;
   }
+  
+  /* Hero Video Inner Media */
+  .video-container, .hero-section iframe, .hero-section video {
+     border-radius: 18px !important; 
+  }
+
 
   /* Force hide floating FAQ but KEEP Mobile Nav for Glass Pill */
   .floating-faq-button {
@@ -146,10 +153,27 @@
   h2.text-2xl, 
   h2.font-bold {
     font-size: 28px !important;
+    font-weight: 800 !important;
     line-height: 1.2 !important;
     letter-spacing: -0.02em !important;
     padding-left: 12px !important; /* Align with grid */
+    margin-bottom: 8px !important;
+    color: #1e293b !important; /* Dark Slate for headers against light bg */
+  }
+  
+  /* Mobile CTA Buttons - Premium Polish */
+  .hero-section button {
+    width: 100% !important;
+    max-width: 320px !important; /* Max width for aesthetics */
+    border-radius: 9999px !important;
+    padding: 16px 24px !important;
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
     margin-bottom: 12px !important;
+    /* Ensure they stack nicely */
+    flex: none !important; 
   }
 
   h3, .text-xl {

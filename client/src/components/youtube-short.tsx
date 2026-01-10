@@ -48,7 +48,7 @@ const YouTubeShort = ({ videoId, title, thumbnail }: YouTubeShortProps) => {
 
           {/* Title Overlay: Gradient for readability */}
           <div className="absolute inset-x-0 bottom-0 p-2 pt-8 bg-gradient-to-t from-black via-black/80 to-transparent">
-            <h3 className="text-white font-bold text-[9px] sm:text-xs leading-tight line-clamp-2 drop-shadow-md tracking-tight">
+            <h3 className="text-white font-bold text-xs sm:text-sm leading-tight line-clamp-2 drop-shadow-md tracking-tight">
               {title || "Now Playing"}
             </h3>
             {/* Accent Line */}

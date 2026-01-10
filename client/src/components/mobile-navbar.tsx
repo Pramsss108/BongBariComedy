@@ -111,7 +111,7 @@ const MobileNavBar = () => {
                                     `}
                                         strokeWidth={item.active ? 2.5 : 2}
                                     />
-                                    <span className={`text-[9px] font-medium transition-all leading-tight ${item.active ? "text-brand-blue" : "text-zinc-500"}`}>
+                                    <span className={`text-[10px] sm:text-xs font-medium transition-all leading-tight ${item.active ? "text-brand-blue" : "text-zinc-500"}`}>
                                         {item.label}
                                     </span>
                                 </button>
@@ -129,7 +129,7 @@ const MobileNavBar = () => {
                             `}>
                                 {isMenuOpen ? <X size={18} /> : <CategoryIcon />}
                             </div>
-                            <span className={`text-[9px] font-medium transition-all leading-tight ${isMenuOpen ? "text-brand-yellow" : "text-zinc-500"}`}>
+                            <span className={`text-[10px] sm:text-xs font-medium transition-all leading-tight ${isMenuOpen ? "text-brand-yellow" : "text-zinc-500"}`}>
                                 Menu
                             </span>
                         </button>

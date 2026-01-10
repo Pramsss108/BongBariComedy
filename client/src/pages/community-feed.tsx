@@ -488,7 +488,7 @@ export default function CommunityFeed() {
                     return (
                       <button key={em} onClick={()=>chooseReaction(it.id, em)} className={`text-[10px] px-2 py-1 rounded-full flex items-center gap-1 border transition ${active ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-white/70 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 border-gray-200 dark:border-white/15 text-gray-700 dark:text-gray-200'}`}>
                         <span>{em}</span>
-                        <span className="text-[9px] opacity-70">{(it.reactions||{})[em]||0}</span>
+                        <span className="text-[10px] sm:text-xs opacity-70">{(it.reactions||{})[em]||0}</span>
                       </button>
                     );
                   })}

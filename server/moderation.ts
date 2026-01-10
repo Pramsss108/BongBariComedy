@@ -1,4 +1,4 @@
-// Enhanced moderation service for BongBariComedy - Google Gemini Policy Compliant
+// Enhanced moderation service for BongBariComedy - LLM Policy Compliant
 export interface ModerationResult {
   decision: 'approved' | 'rejected' | 'pending';
   reason: string;
@@ -11,16 +11,16 @@ export interface ModerationResult {
 const PROHIBITED_PATTERNS = [
   // Adult/Sexual content
   /\b(sex|sexual|porn|adult|nude|naked|xxx|erotic)\b/i,
-  
+
   // Harmful activities
   /\b(suicide|self.?harm|kill|murder|violence|weapon|bomb|drug|illegal)\b/i,
-  
+
   // Hate speech indicators
   /\b(hate|racist|nazi|terrorist|extremist)\b/i,
-  
+
   // Personal information requests
   /\b(phone|address|email|password|credit.?card|ssn|social.?security)\b/i,
-  
+
   // Medical/legal advice
   /\b(medical.?advice|legal.?advice|diagnose|prescription|lawsuit)\b/i
 ];
@@ -87,7 +87,7 @@ export async function analyzeStory(content: string): Promise<ModerationResult> {
   if (severity >= 3) {
     return {
       decision: 'rejected',
-      reason: 'Contains prohibited content that violates Gemini API policies',
+      reason: 'Contains prohibited content that violates content policies',
       flags,
       usedAI: false,
       severity

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Bot, X, MessageCircle, RotateCcw, LogIn, HelpCircle } from 'lucide-react';
+import { Send, Bot, X, MessageCircle, LogIn, HelpCircle } from 'lucide-react';
 import { buildApiUrl } from '@/lib/queryClient';
 
 interface BongBotProps {
@@ -10,723 +10,193 @@ interface BongBotProps {
 export default function BongBot({ onOpenChange }: BongBotProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState('');
-  // Start with no messages; we will fetch a fresh live greeting on open
-  const [messages, setMessages] = useState<Array<{id:number;text:string;sender:'bot'|'user';timestamp:Date}>>([]);
+  const [messages, setMessages] = useState<Array<{ id: number; text: string; sender: 'bot' | 'user'; timestamp: Date }>>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
-  const [authState, setAuthState] = useState<{
-    isAuthenticated: boolean;
-    sessionId: string | null;
-    questionsRemaining: number;
-    showAuthPrompt: boolean;
-  }>({
+  const [authState, setAuthState] = useState({
     isAuthenticated: false,
     sessionId: localStorage.getItem('chatbot_session'),
     questionsRemaining: 3,
     showAuthPrompt: false
   });
-  const headerRef = useRef<HTMLDivElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const greetingMsgIdRef = useRef<number | null>(null);
 
-  // Quick reply templates - loaded from database
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [templates, setTemplates] = useState<string[]>([]);
-  const [templatesSource, setTemplatesSource] = useState<'DB' | 'Default' | 'Cache'>('Default');
-  const TEMPLATES_CACHE_KEY = 'bbc_quick_replies_cache_v1';
-  const GREETING_CACHE_KEY = 'bbc_greeting_cache_v1';
+
   const DEFAULT_GREETING = "🙏 Hi! Ami Bong Bot — Bong Bari family-te welcome. Blood relation na, only laughing relation!";
   const CTA_LINE = "Join family: https://youtube.com/@bongbari | Work with us: /work-with-us#form | team@bongbari.com";
 
-  // Helpers: safe localStorage get/set
-  const readCache = <T,>(key: string): { data: T | null; ts: number | null } => {
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) return { data: null, ts: null };
-      const parsed = JSON.parse(raw);
-      return { data: parsed?.data ?? null, ts: parsed?.ts ?? null };
-    } catch {
-      return { data: null, ts: null };
-    }
-  };
-  const writeCache = <T,>(key: string, data: T) => {
-    try {
-      localStorage.setItem(key, JSON.stringify({ data, ts: Date.now() }));
-    } catch {}
-  };
-
-  // Google OAuth for unlimited chatbot access
-  const handleGoogleAuth = async () => {
-    try {
-      // In production, you would use Google OAuth library
-      // For now, simulate with a simple email prompt
-      const email = prompt("Enter your email to get unlimited chatbot access:");
-      if (!email || !email.includes('@')) {
-        alert("Please enter a valid email address.");
-        return;
-      }
-
-      const response = await fetch(buildApiUrl('/api/auth/google'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ credential: email })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('chatbot_session', data.sessionId);
-        setAuthState({
-          isAuthenticated: true,
-          sessionId: data.sessionId,
-          questionsRemaining: -1,
-          showAuthPrompt: false
-        });
-
-        // Add a welcome message
-        const botMessage = {
-          id: Date.now(),
-          text: "🎉 Welcome! You now have unlimited access to our AI chatbot. Ask me anything about Bong Bari Comedy!",
-          sender: 'bot' as const,
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, botMessage]);
-      } else {
-        alert("Authentication failed. Please try again.");
-      }
-    } catch (error) {
-      console.error('Auth error:', error);
-      alert("Authentication failed. Please try again.");
-    }
-  };
-
-  // Helper: fetch with timeout
-  const fetchWithTimeout = async (input: RequestInfo | URL, init?: RequestInit, timeoutMs = 1800) => {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-      const res = await fetch(input, { ...(init || {}), signal: controller.signal });
-      return res;
-    } finally {
-      clearTimeout(id);
-    }
-  };
-  
-  // Default fallback templates
-  const defaultTemplates = [
-    "Collab korte chai — process ta bolben?",
-    "Brand sponsor hole kivabe kaj hoy?", 
-    "Mon bhalo na lagle halka Subscribe MARO"
-  ];
-
-  // Load templates with cache-first, then fast background refresh
   const loadTemplates = async () => {
-    // Cache-first
-    const cached = readCache<{ templates: string[] }>(TEMPLATES_CACHE_KEY).data;
-    if (cached?.templates && cached.templates.length > 0) {
-      setTemplates(cached.templates);
-      setTemplatesSource('Cache');
-    } else {
-      setTemplates(defaultTemplates);
-      setTemplatesSource('Default');
-    }
-
-    // Background refresh with short timeout
     try {
-      const response = await fetchWithTimeout(buildApiUrl(`/api/chatbot/templates?ts=${Date.now()}`), undefined, 1800);
+      const response = await fetch(buildApiUrl(`/api/chatbot/templates?ts=${Date.now()}`));
       if (response.ok) {
         const dbTemplates = await response.json();
-        if (dbTemplates && dbTemplates.length > 0) {
-          const templateTexts = dbTemplates.map((t: any) => String(t.content || '').trim()).filter(Boolean);
-          if (templateTexts.length > 0) {
-            setTemplates(templateTexts);
-            setTemplatesSource('DB');
-            writeCache(TEMPLATES_CACHE_KEY, { templates: templateTexts });
-          }
+        if (Array.isArray(dbTemplates)) {
+          setTemplates(dbTemplates.map((t: any) => String(t.content || '').trim()).filter(Boolean));
         }
       }
     } catch {
-      // Keep cache/default silently
+      setTemplates(["Collab korte chai?", "Brand sponsor?", "Subscribe MARO"]);
     }
   };
 
-  // Read greeting from cache
-  const getCachedGreeting = (): string | null => {
-    const cached = readCache<{ greeting: string }>(GREETING_CACHE_KEY).data;
-    const g = cached?.greeting ? String(cached.greeting).trim() : '';
-    return g && g.length > 0 ? g : null;
-  };
-  const setCachedGreeting = (greeting: string) => {
-    writeCache(GREETING_CACHE_KEY, { greeting });
-  };
-
-  // Load templates on mount
-  // Check for Google authentication on component mount
-  useEffect(() => {
-    const googleUser = localStorage.getItem('google_user');
-    const adminSession = localStorage.getItem('admin_session');
-    
-    if (googleUser || adminSession) {
-      // User is authenticated via Google or admin
-      setAuthState(prev => ({
-        ...prev,
-        isAuthenticated: true,
-        sessionId: adminSession || 'google-session',
-        questionsRemaining: 999, // Unlimited for authenticated users
-        showAuthPrompt: false
-      }));
-    }
-  }, []);
-
-  useEffect(() => {
-    loadTemplates();
-    // Warm greeting cache in background
-    (async () => {
-      try {
-        const res = await fetchWithTimeout(buildApiUrl(`/api/chatbot/templates?type=greeting&ts=${Date.now()}`), undefined, 1800);
-        if (res.ok) {
-          const list = await res.json();
-          if (Array.isArray(list) && list.length > 0) {
-            const greet = String(list[0]?.content || '').trim();
-            if (greet) setCachedGreeting(greet);
-          }
-        }
-      } catch {}
-    })();
-  }, []);
-
-  // Open chatbot
-  const handleOpenChatbot = () => {
-    setIsOpen(true);
-
-    // Fresh session each open
-    setMessages([]);
-    setMessage('');
-
-    // Instant greeting from cache or default (no typing indicator)
-    const cachedGreet = getCachedGreeting();
-    const header = cachedGreet && cachedGreet.length > 0 ? cachedGreet : DEFAULT_GREETING;
-    const firstText = [header, CTA_LINE].join('\n');
-    const greetId = Date.now();
-    greetingMsgIdRef.current = greetId;
-    setMessages([{ id: greetId, text: firstText, sender: 'bot', timestamp: new Date() }]);
-    setShowTemplates(true);
-    setIsTyping(false);
-
-    // Play glitter sound when opening
-    playGlitterSound();
-
-    // Reload templates on each open (cache-first in function)
-    loadTemplates();
-
-    // Background refresh: try fetch newer greeting with fast timeout and update the first message in place
-    (async () => {
-      try {
-        const res = await fetchWithTimeout(buildApiUrl(`/api/chatbot/templates?type=greeting&ts=${Date.now()}`), undefined, 1800);
-        if (res.ok) {
-          const list = await res.json();
-          if (Array.isArray(list) && list.length > 0) {
-            const fresh = String(list[0]?.content || '').trim();
-            if (fresh && fresh !== cachedGreet) {
-              setCachedGreeting(fresh);
-              const updatedFirst = [fresh, CTA_LINE].join('\n');
-              const idToUpdate = greetingMsgIdRef.current;
-              if (idToUpdate) {
-                setMessages(prev => prev.map(m => m.id === idToUpdate ? { ...m, text: updatedFirst } : m));
-              }
-            }
-          }
-        }
-      } catch {
-        // ignore; keep cached/default
-      }
-    })();
-  };
-
-  // Sound effects
-  const playGlitterSound = () => {
-  const audio = new Audio('/sounds/glitter.mp3');
-    audio.volume = 0.3;
-    audio.play().catch(() => {}); // Ignore errors
-  };
-
-  const playSendSound = () => {
-  const audio = new Audio('/sounds/whatsapp-send.mp3');
-    audio.volume = 0.4;
-    audio.play().catch(() => {}); // Ignore errors
-  };
-
-  const playTypingSound = () => {
-  const audio = new Audio('/sounds/typing.mp3');
-    audio.volume = 0.2;
-    audio.loop = true;
-    return audio;
-  };
-
-  // Auto scroll to bottom when new messages arrive
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  // Notify parent component when chatbot opens/closes
   useEffect(() => {
     onOpenChange?.(isOpen);
-  }, [isOpen, onOpenChange]);
+    if (isOpen) {
+      setMessages([{ id: Date.now(), text: `${DEFAULT_GREETING}\n${CTA_LINE}`, sender: 'bot', timestamp: new Date() }]);
+      setShowTemplates(true);
+      loadTemplates();
+    }
+  }, [isOpen]);
 
-  // Listen for external chatbot open events
-  useEffect(() => {
-    const handleOpenChatbot = (event: CustomEvent) => {
-      setIsOpen(true);
-      
-      // If there's a message in the event detail, pre-fill the input
-      if (event.detail?.message) {
-        setMessage(event.detail.message);
-      }
-    };
-
-    window.addEventListener('openChatbot', handleOpenChatbot as EventListener);
-    
-    return () => {
-      window.removeEventListener('openChatbot', handleOpenChatbot as EventListener);
-    };
-  }, []);
-
-  // Check authentication status on component mount
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      if (authState.sessionId) {
-        try {
-          const response = await fetch(buildApiUrl('/api/auth/me'), {
-            headers: {
-              'Authorization': `Bearer ${authState.sessionId}`
-            }
-          });
-          
-          if (response.ok) {
-            setAuthState(prev => ({
-              ...prev,
-              isAuthenticated: true,
-              questionsRemaining: -1,
-              showAuthPrompt: false
-            }));
-          } else {
-            // Session expired
-            localStorage.removeItem('chatbot_session');
-            setAuthState(prev => ({
-              ...prev,
-              isAuthenticated: false,
-              sessionId: null,
-              questionsRemaining: 3,
-              showAuthPrompt: false
-            }));
-          }
-        } catch (error) {
-          console.error('Auth check failed:', error);
-        }
-      }
-    };
-
-    checkAuthStatus();
-  }, [authState.sessionId]);
-
-  // Handle sending message (AI-first: wait for Gemini; no local fallback bubbles)
   const handleSendMessage = async (textOverride?: string) => {
     const msgText = (textOverride ?? message).trim();
     if (!msgText) return;
-    
-    // Play WhatsApp send sound
-    playSendSound();
-    
-    const userMessage = {
-      id: Date.now(),
-      text: msgText,
-      sender: 'user' as const,
-      timestamp: new Date()
-    };
-    
-    setMessages(prev => [...prev, userMessage]);
+
+    setMessages(prev => [...prev, { id: Date.now(), text: msgText, sender: 'user', timestamp: new Date() }]);
     setMessage('');
-    setShowTemplates(false); // Hide templates after sending
     setIsTyping(true);
-    
-    // Play typing sound when bot starts typing
-    const typingAudio = playTypingSound();
-    
-    // Try Gemini with small retries; keep typing; do not post local fallback
-    const conversationHistory = messages.slice(-6).map(msg => ({
-      role: msg.sender === 'user' ? 'user' : 'assistant',
-      content: msg.text
-    }));
+    setShowTemplates(false);
 
-    const sendOnce = async () => {
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      
-      // Add authorization if user is authenticated
-      if (authState.sessionId) {
-        headers.Authorization = `Bearer ${authState.sessionId}`;
-      }
-
-      const res = await fetch(buildApiUrl('/api/chatbot/message?aiOnly=1'), {
+    try {
+      const res = await fetch(buildApiUrl('/api/chatbot/message'), {
         method: 'POST',
-        headers,
-        body: JSON.stringify({ message: msgText, conversationHistory, aiOnly: true })
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authState.sessionId ? { 'Authorization': `Bearer ${authState.sessionId}` } : {})
+        },
+        body: JSON.stringify({ message: msgText, aiOnly: true })
       });
 
-      if (res.status === 429) {
-        // Rate limit reached
-        const errorData = await res.json();
-        setAuthState(prev => ({
-          ...prev,
-          questionsRemaining: 0,
-          showAuthPrompt: true
-        }));
-        throw new Error('rate-limit');
+      if (res.ok) {
+        const data = await res.json();
+        setMessages(prev => [...prev, { id: Date.now(), text: data.response, sender: 'bot', timestamp: new Date() }]);
+      } else if (res.status === 429) {
+        setAuthState(prev => ({ ...prev, questionsRemaining: 0, showAuthPrompt: true }));
+        setMessages(prev => [...prev, {
+          id: Date.now(),
+          text: "🚀 Daily limit reached! Sign up with Google for unlimited chat.",
+          sender: 'bot',
+          timestamp: new Date()
+        }]);
       }
-      
-      if (res.status === 202) return null; // pending
-      if (!res.ok) throw new Error('bad-status');
-      return res.json();
-    };
-
-    const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
-    let attempts = 0;
-    let data: any = null;
-    let rateLimitReached = false;
-    
-    while (attempts < 3) {
-      attempts++;
-      try {
-        data = await sendOnce();
-        const txt = String(data?.response || '').trim();
-        
-        // Update rate limit info if available
-        if (data?.rateLimit) {
-          setAuthState(prev => ({
-            ...prev,
-            questionsRemaining: data.rateLimit.remaining,
-            showAuthPrompt: data.rateLimit.needsAuth
-          }));
-        }
-        
-        if (txt.length > 0) break;
-      } catch (e) {
-        if (e instanceof Error && e.message === 'rate-limit') {
-          rateLimitReached = true;
-          break;
-        }
-        // ignore other errors and retry after short wait
-      }
-      await sleep(1200 * attempts);
-    }
-
-    // Stop typing sound now (either success or gave up)
-    typingAudio.pause();
-    typingAudio.currentTime = 0;
-    setIsTyping(false);
-
-    // Handle rate limit reached
-    if (rateLimitReached) {
-      const rateLimitMessage = {
-        id: Date.now() + 1,
-        text: "🚀 You've used your 3 questions today! Want unlimited access?\n\n📋 Check our FAQ page for instant answers\n🆔 Sign up with Google for unlimited chat\n💬 Come back tomorrow for 3 more questions",
-        sender: 'bot' as const,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, rateLimitMessage]);
-      return;
-    }
-
-    // If we got a valid AI text, post it; otherwise end typing silently
-    const finalText = String(data?.response || '').trim();
-    if (finalText.length > 0) {
-      const botResponse = {
-        id: Date.now() + 1,
-        text: finalText,
-        sender: 'bot' as const,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, botResponse]);
-      playGlitterSound();
+    } catch {
+      setMessages(prev => [...prev, { id: Date.now(), text: "Ektu problem hocche, pore try koro!", sender: 'bot', timestamp: new Date() }]);
+    } finally {
+      setIsTyping(false);
     }
   };
 
-
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isTyping]);
 
   if (!isOpen) {
     return (
       <motion.button
-        onClick={handleOpenChatbot}
-        className="fixed bottom-4 right-4 w-16 h-16 bg-gradient-to-br from-[#1363DF]/90 to-[#FF4D4D]/90 backdrop-blur-sm rounded-full flex items-center justify-center text-white font-bold shadow-2xl border border-white/20 z-50"
-        data-testid="open-chatbot"
-        whileHover={{ 
-          scale: 1.1,
-          boxShadow: '0 20px 40px rgba(19, 99, 223, 0.3)',
-          background: 'linear-gradient(135deg, rgba(19, 99, 223, 0.95), rgba(255, 77, 77, 0.95))'
-        }}
-        whileTap={{ scale: 0.95 }}
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+        onClick={() => setIsOpen(true)}
+        className="fixed bottom-4 right-4 w-14 h-14 bg-gradient-to-br from-blue-600 to-red-600 rounded-full flex items-center justify-center text-white shadow-2xl z-50 border border-white/20"
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
       >
-        <MessageCircle size={24} className="drop-shadow-lg" />
+        <MessageCircle size={24} />
       </motion.button>
     );
   }
 
   return (
     <motion.div
-      className="fixed bottom-20 right-4 z-50 select-none"
+      className="fixed bottom-20 right-4 z-50 select-none flex flex-col overflow-hidden"
       style={{
-        width: '320px',
-        height: '360px',
-        padding: '0px'
+        width: window.innerWidth < 640 ? 'calc(100vw - 32px)' : '350px',
+        maxHeight: '60vh',
+        minHeight: '400px'
       }}
-      initial={{ opacity: 0, scale: 0.8, y: 50 }}
+      initial={{ opacity: 0, scale: 0.9, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
     >
-      {/* GLASS MORPHISM CONTAINER */}
-      <div className="w-full h-full bg-gradient-to-br from-white/15 via-white/10 to-white/5 backdrop-blur-xl rounded-2xl border border-white/30 shadow-2xl overflow-hidden">
-        
-        {/* COMPACT PROFESSIONAL HEADER */}
-        <motion.div
-          ref={headerRef}
-          className="relative w-full bg-gradient-to-r from-[#1363DF]/70 via-[#FFCC00]/70 to-[#FF4D4D]/70 backdrop-blur-xl flex items-center justify-between border-b border-white/20 shadow-md rounded-t-2xl"
-          style={{ 
-            userSelect: 'none', 
-            height: '40px',
-            paddingLeft: '10px',
-            paddingRight: '8px'
-          }}
-        >
-          {/* LEFT SIDE - COMPACT PROFILE & TEXT */}
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-gradient-to-br from-[#FFCC00] to-[#FF4D4D] rounded-full flex items-center justify-center shadow-md">
-              <Bot size={14} className="text-white" />
+      <div className="flex-1 bg-slate-900/90 backdrop-blur-2xl rounded-3xl border border-white/10 shadow-2xl flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="p-4 bg-gradient-to-r from-blue-600/20 to-red-600/20 border-b border-white/10 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+              <Bot size={18} className="text-white" />
             </div>
-            <div className="flex flex-col justify-center">
-              <span className="text-white font-semibold text-xs leading-tight">Bong Bot</span>
-              <div className="flex items-center gap-0.5">
-                <span className="w-1 h-1 bg-green-400 rounded-full"></span>
-                <span className="text-white/80 text-[9px] leading-tight">online</span>
-              </div>
+            <div>
+              <h3 className="text-white font-bold text-sm">Bong Bot</h3>
+              <p className="text-blue-400 text-[10px] flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse" /> Active Now
+              </p>
             </div>
           </div>
-          
-          {/* RIGHT SIDE - CLOSE BUTTON */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsOpen(false);
-            }}
-            className="w-6 h-6 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
-          >
-            <X size={12} className="text-white/80" />
+          <button onClick={() => setIsOpen(false)} className="p-1 hover:bg-white/10 rounded-lg text-white/50">
+            <X size={18} />
           </button>
-        </motion.div>
-        
-        {/* CHAT CONTENT */}
-        <AnimatePresence>
-          {
-            <motion.div 
-              className="flex flex-col h-full"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'calc(100% - 44px)' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3 }}
+        </div>
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 hide-scrollbar">
+          {messages.map((msg) => (
+            <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[85%] p-3 rounded-2xl text-[12px] leading-relaxed ${msg.sender === 'user'
+                  ? 'bg-blue-600 text-white rounded-tr-none'
+                  : 'bg-white/10 text-white/90 rounded-tl-none border border-white/5'
+                }`}>
+                {msg.text}
+              </div>
+            </div>
+          ))}
+          {isTyping && (
+            <div className="flex justify-start">
+              <div className="bg-white/5 p-3 rounded-2xl animate-pulse flex gap-1">
+                <div className="w-1.5 h-1.5 bg-white/40 rounded-full" />
+                <div className="w-1.5 h-1.5 bg-white/40 rounded-full" />
+                <div className="w-1.5 h-1.5 bg-white/40 rounded-full" />
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Templates */}
+        {showTemplates && templates.length > 0 && (
+          <div className="px-4 py-2 flex flex-wrap gap-2">
+            {templates.map((t, i) => (
+              <button
+                key={i}
+                onClick={() => handleSendMessage(t)}
+                className="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-full text-[10px] text-white/70 border border-white/10 transition-all"
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Input */}
+        <div className="p-4 bg-white/5 border-t border-white/10">
+          <div className="flex gap-2 items-end">
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Bolo ki bolbe..."
+              className="flex-1 bg-white/10 border border-white/10 rounded-xl px-4 py-2.5 text-[12px] text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/50 resize-none h-[42px] hide-scrollbar"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
+            />
+            <button
+              onClick={() => handleSendMessage()}
+              disabled={!message.trim()}
+              className="w-[42px] h-[42px] bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl flex items-center justify-center transition-all shadow-lg shadow-blue-600/20"
             >
-              {/* QUICK REPLY TEMPLATES (TOP) */}
-              {showTemplates && (
-                <motion.div 
-                  className="px-2 py-1.5 bg-gradient-to-r from-[#FFCC00]/30 via-[#FF4D4D]/30 to-[#1363DF]/30 backdrop-blur-lg border-b border-white/30"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                >
-                  <div className="flex flex-wrap gap-1">
-                    {templates.map((template, index) => (
-                      <motion.button
-                        key={index}
-                        onClick={() => {
-                          setShowTemplates(false);
-                          handleSendMessage(template);
-                        }}
-                        className="px-2 py-1 bg-slate-700/90 hover:bg-slate-600/90 text-white text-[10px] font-medium rounded-md shadow-sm border border-slate-500/50 hover:border-slate-400/70 transition-all whitespace-nowrap"
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        {template}
-                      </motion.button>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-
-              {/* SCROLLABLE MESSAGES AREA */}
-              <div className="flex-1 overflow-y-auto p-1.5 space-y-1.5 hide-scrollbar">
-                {messages.map((msg) => (
-                  <motion.div
-                    key={msg.id}
-                    initial={{ opacity: 0, y: 5, scale: 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                    className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div 
-                      className={`relative max-w-[92%] px-2 pt-1 pb-0.5 rounded-lg text-[11px] shadow-sm backdrop-blur-sm border ${
-                        msg.sender === 'user' 
-                          ? 'bg-gradient-to-r from-[#1363DF]/80 to-[#FF4D4D]/80 text-white border-white/20' 
-                          : 'bg-white/90 text-gray-800 border-white/30'
-                      }`}
-                    >
-                      {msg.sender === 'bot' ? (
-                        <p className="leading-tight pr-10 pb-0.5 break-words mb-0 whitespace-pre-line" dangerouslySetInnerHTML={{
-                          __html: msg.text.replace(/(https?:\/\/[^\s]+|\/(?:work-with-us)(?:#\w+)?)/g, (u) => `<a href="${u}" target="_blank" rel="noopener noreferrer" class="underline text-blue-600 hover:text-blue-800">${u}</a>`)
-                              // Linkify plain emails
-                              .replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, (e) => `<a href="mailto:${e}" class="underline text-blue-600 hover:text-blue-800">${e}</a>`)
-                        }} />
-                      ) : (
-                        <p className="leading-tight pr-10 pb-0.5 break-words mb-0">{msg.text}</p>
-                      )}
-                      <span className={`absolute right-2 bottom-0.5 text-[9px] opacity-60 ${msg.sender === 'user' ? 'text-white/70' : 'text-gray-500'}`}>
-                        {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </div>
-                  </motion.div>
-                ))}
-                
-                {/* TYPING INDICATOR */}
-                {isTyping && (
-                  <motion.div 
-                    className="flex justify-start"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                  >
-                    <div className="bg-white/90 p-2 rounded-xl shadow-md backdrop-blur-sm border border-white/30">
-                      <div className="flex items-center gap-1.5">
-                        <div className="flex gap-0.5">
-                          <motion.div 
-                            className="w-1.5 h-1.5 bg-[#1363DF] rounded-full"
-                            animate={{ y: [0, -8, 0] }}
-                            transition={{ duration: 0.8, repeat: Infinity, delay: 0 }}
-                          />
-                          <motion.div 
-                            className="w-1.5 h-1.5 bg-[#FFCC00] rounded-full"
-                            animate={{ y: [0, -8, 0] }}
-                            transition={{ duration: 0.8, repeat: Infinity, delay: 0.2 }}
-                          />
-                          <motion.div 
-                            className="w-1.5 h-1.5 bg-[#FF4D4D] rounded-full"
-                            animate={{ y: [0, -8, 0] }}
-                            transition={{ duration: 0.8, repeat: Infinity, delay: 0.4 }}
-                          />
-                        </div>
-                        <span className="text-[10px] text-gray-500">typing...</span>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-                
-                <div ref={messagesEndRef} />
-              </div>
-              
-              {/* QUICK REPLY TEMPLATES moved to top */}
-              
-              {/* RATE LIMIT & AUTH STATUS */}
-              {!authState.isAuthenticated && (
-                <div className="px-2 py-1 bg-gradient-to-r from-orange-100 to-yellow-100 border-t border-orange-200">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-orange-700 font-medium">
-                      {authState.questionsRemaining > 0 
-                        ? `${authState.questionsRemaining} questions left without signup`
-                        : "Daily limit reached"
-                      }
-                    </span>
-                    <div className="flex gap-1">
-                      <a 
-                        href="/faq" 
-                        className="text-blue-600 hover:text-blue-800 font-medium"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        <HelpCircle className="w-3 h-3 inline mr-1" />FAQ
-                      </a>
-                      {authState.showAuthPrompt && (
-                        <button
-                          onClick={handleGoogleAuth}
-                          className="flex items-center gap-1 px-2 py-0.5 bg-blue-500 hover:bg-blue-600 text-white rounded text-xs font-medium"
-                        >
-                          <LogIn className="w-3 h-3" />
-                          Sign Up
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {authState.isAuthenticated && (
-                <div className="px-2 py-1 bg-gradient-to-r from-green-100 to-emerald-100 border-t border-green-200">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-green-700 font-medium flex items-center gap-1">
-                      ✅ Unlimited Access
-                    </span>
-                    <span className="text-green-600 text-[10px]">Welcome back!</span>
-                  </div>
-                </div>
-              )}
-              
-              {/* COMPACT TYPING AREA */}
-              <div className="p-2 bg-gradient-to-r from-[#1363DF]/20 via-[#FFCC00]/20 to-[#FF4D4D]/20 backdrop-blur-lg border-t border-white/40 rounded-b-2xl shadow-inner">
-                <div className="flex gap-1.5 items-end">
-                    <a
-                      href="/work-with-us#form"
-                      className="px-2.5 py-1.5 bg-white/80 hover:bg-white text-[#1363DF] rounded-md text-[11px] font-medium shadow-sm border border-[#1363DF]/30 transition-colors"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      Contact Us
-                    </a>
-                  <textarea
-                    value={message}
-                    onChange={(e) => {
-                      setMessage(e.target.value);
-                      if (e.target.value.length > 0) {
-                        setShowTemplates(false);
-                      } else {
-                        // Show templates again when input is cleared
-                        setShowTemplates(true);
-                      }
-                    }}
-                    placeholder="Kotha Hok Naki?"
-                    className="flex-1 px-2 py-1 bg-white/95 backdrop-blur-sm border border-white/40 rounded-md text-[11px] focus:outline-none focus:ring-1 focus:ring-[#1363DF]/70 focus:border-[#1363DF]/70 resize-none hide-scrollbar transition-all placeholder-gray-600 shadow-sm"
-                    style={{
-                      minHeight: '28px',
-                      maxHeight: '28px',
-                      lineHeight: '14px'
-                    }}
-                    rows={2}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage();
-                      }
-                    }}
-                  />
-                  <motion.button
-                    onClick={() => handleSendMessage()}
-                    className="px-2 py-1 bg-gradient-to-r from-[#1363DF] to-[#FF4D4D] text-white rounded-md font-semibold shadow-md backdrop-blur-sm border border-white/30 flex items-center gap-0.5 flex-shrink-0"
-                    whileHover={{ 
-                      scale: 1.05,
-                      boxShadow: '0 15px 30px rgba(19, 99, 223, 0.4)'
-                    }}
-                    whileTap={{ scale: 0.95 }}
-                    disabled={!message.trim()}
-                  >
-                    <Send size={12} className="drop-shadow-sm" />
-                    <span className="text-[10px] font-bold">Send</span>
-                  </motion.button>
-                </div>
-              </div>
-            </motion.div>
-          }
-        </AnimatePresence>
+              <Send size={18} />
+            </button>
+          </div>
+        </div>
       </div>
     </motion.div>
   );

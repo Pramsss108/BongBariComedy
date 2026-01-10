@@ -1,0 +1,18 @@
+--------------------------------------------------- 
+DIAGNOSTIC LOG GENERATED ON 10-01-2026 19:52:47.19 
+--------------------------------------------------- 
+ 
+[*] Dumping recent Critical System Errors... 
+LCID 2 cannot be found.
+The parameter is incorrect.
+ 
+[*] Checking Audio/Media Filter Drivers (Focusrite Check)... 
+
+HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\{4d36e96c-e325-11ce-bfc1-08002be10318}
+    UpperFilters    REG_MULTI_SZ    ksthunk
+
+ 
+[*] Checking USB Controller Filters... 
+
+
+ERROR: The system was unable to find the specified registry key or value.

@@ -1,0 +1,21 @@
+Starting Antigravity Repair... 
+10-01-2026 19:48:14.47 
+[1/4] Terminating Antigravity process... 
+SUCCESS: The process "Antigravity.exe" with PID 22164 has been terminated.
+SUCCESS: The process "Antigravity.exe" with PID 22652 has been terminated.
+SUCCESS: The process "Antigravity.exe" with PID 4868 has been terminated.
+SUCCESS: The process "Antigravity.exe" with PID 6028 has been terminated.
+SUCCESS: The process "Antigravity.exe" with PID 23412 has been terminated.
+SUCCESS: The process "Antigravity.exe" with PID 18572 has been terminated.
+SUCCESS: The process "Antigravity.exe" with PID 16700 has been terminated.
+SUCCESS: The process "Antigravity.exe" with PID 10592 has been terminated.
+SUCCESS: The process "Antigravity.exe" with PID 19140 has been terminated.
+SUCCESS: The process "Antigravity.exe" with PID 3644 has been terminated.
+SUCCESS: The process "Antigravity.exe" with PID 10920 has been terminated.
+SUCCESS: The process "Antigravity.exe" with PID 17880 has been terminated.
+SUCCESS: The process "Antigravity.exe" with PID 9092 has been terminated.
+SUCCESS: The process "Antigravity.exe" with PID 20052 has been terminated.
+SUCCESS: The process "Antigravity.exe" with PID 6496 has been terminated.
+SUCCESS: The process "Antigravity.exe" with PID 23304 has been terminated.
+SUCCESS: The process "Antigravity.exe" with PID 10952 has been terminated.
+SUCCESS: The process "Antigravity.exe" with PID 5256 has been terminated.

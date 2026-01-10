@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Menu, X, User, LogIn, LogOut } from "lucide-react";
+import { Menu, X, User, LogIn, LogOut, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Popover,
   PopoverContent,
@@ -12,25 +13,30 @@ import {
 const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [logoutPopoverOpen, setLogoutPopoverOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const [location] = useLocation();
   const { user, logout } = useAuth();
-  
+
+  // Handle Scroll Effect for "Glass" activation
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   // Get Google user info from localStorage
-  const googleUser = localStorage.getItem('google_user') 
-    ? JSON.parse(localStorage.getItem('google_user')!) 
+  const googleUser = localStorage.getItem('google_user')
+    ? JSON.parse(localStorage.getItem('google_user')!)
     : null;
-    
-  // Check if user is logged in (either admin or Google user)
+
+  // Check if user is logged in
   const isLoggedIn = user || googleUser;
-  
+
   const handleLogout = () => {
-    // Clear both admin and Google user sessions
     logout();
     localStorage.removeItem('google_user');
     setLogoutPopoverOpen(false);
-    setTimeout(() => {
-      window.location.href = '/';
-    }, 100);
+    setTimeout(() => window.location.href = '/', 100);
   };
 
   const navItems = [
@@ -50,349 +56,168 @@ const Navigation = () => {
 
   return (
     <>
-      {/* Navigation Container - Completely Fixed */}
-      <div className="fixed top-0 left-0 right-0 z-50 w-full">
-        
-        {/* Main Header - Ultra Premium Futuristic Design */}
-        <header 
-          className="bg-[#0E47FF] relative overflow-hidden"
-          style={{ 
-            height: '75px',
-            background: 'linear-gradient(135deg, #0E47FF 0%, #0A3ACC 100%)',
-            backdropFilter: 'blur(20px)',
-            isolation: 'auto'
-          }}
-        >
-          {/* Futuristic Background Pattern */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute inset-0" style={{
-              backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%)',
-            }}></div>
-          </div>
-          
-          <div className="relative max-w-[1400px] mx-auto px-6 lg:px-8 h-full">
-            <div className="flex justify-between items-center h-full">
-              
-              {/* Left Section - Ultra Premium Layout */}
-              <div className="flex items-center space-x-5">
-                {/* Logo - Hidden when user is logged in */}
-                {!isLoggedIn && (
-                  <Link href="/" className="group relative cursor-pointer">
-                    <div className="absolute -inset-1 bg-gradient-to-r from-[#FFD200] to-[#FFC000] rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
-                    <img 
-                      src="/logo.png" 
-                      alt="Bong Bari" 
-                      className="relative w-10 h-10 lg:w-11 lg:h-11 rounded-lg object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                  </Link>
-                )}
-                
-                {/* Bengali Title - Moved down to align with logo center */}
-                <h1 
-                  className="text-[26px] lg:text-[30px] font-bold text-[#FFD200] bangla-text tracking-wide cursor-pointer self-center"
-                  style={{ 
-                    fontFamily: 'var(--font-bengali)',
-                    textShadow: '0 2px 10px rgba(255,210,0,0.2)',
-                    marginTop: '2px'
-                  }}
-                >
-                  বং বাড়ি
-                </h1>
-                
-                {/* Vertical Separator - Subtle */}
-                <div className="hidden md:block w-[1px] h-8 bg-gradient-to-b from-transparent via-white/20 to-transparent"></div>
-                
-                {/* Dual Tagline - Stacked with darker English */}
-                <div className="hidden md:flex flex-col justify-center leading-none">
-                  <span className="text-xs lg:text-[13px] text-black/60 font-medium tracking-wider uppercase">
-                    Every Home's Story
-                  </span>
-                  <span className="text-[10px] lg:text-[11px] text-white/40 font-light bangla-text mt-0.5">
-                    প্রতিটা বাড়ির গল্প
-                  </span>
-                </div>
-              </div>
-              
-              {/* Desktop Navigation - Futuristic */}
-              <nav className="hidden md:flex items-center gap-7 lg:gap-9">
-                {navItems.map((item) => {
-                  if (item.href === '/tools') {
-                    return (
-                      <div key={item.href} className="relative group">
-                        <Link
-                          href={item.href}
-                          className={`relative text-sm lg:text-[15px] font-medium tracking-wide transition-all duration-300 cursor-pointer ${isActive(item.href) ? 'text-[#FFD200]' : 'text-white/80 hover:text-white'}`}
-                        >
-                          <span className="relative z-10">{item.label}</span>
-                          {isActive(item.href) && (
-                            <>
-                              <span className="absolute -bottom-[21px] left-0 right-0 h-[2px] bg-[#FFD200] rounded-full" />
-                              <span className="absolute -bottom-[21px] left-0 right-0 h-[2px] bg-[#FFD200] rounded-full blur-sm" />
-                            </>
-                          )}
-                        </Link>
-                        {/* Dropdown for Bong Kahini */}
-                        <div className="invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200 absolute top-full left-0 mt-4 min-w-[180px] rounded-xl bg-[#0E47FF]/95 backdrop-blur border border-white/10 shadow-xl p-3 flex flex-col gap-2">
-                          <Link
-                            href="/community/feed"
-                            className="text-xs font-semibold text-white/80 hover:text-white bg-white/0 hover:bg-white/10 rounded-lg px-3 py-2 transition"
-                          >
-                            Bong Kahini
-                          </Link>
-                        </div>
-                      </div>
-                    );
-                  }
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`relative text-sm lg:text-[15px] font-medium tracking-wide transition-all duration-300 cursor-pointer ${isActive(item.href) ? 'text-[#FFD200]' : 'text-white/80 hover:text-white'}`}
-                    >
-                      <span className="relative z-10">{item.label}</span>
-                      {isActive(item.href) && (
-                        <>
-                          <span className="absolute -bottom-[21px] left-0 right-0 h-[2px] bg-[#FFD200] rounded-full" />
-                          <span className="absolute -bottom-[21px] left-0 right-0 h-[2px] bg-[#FFD200] rounded-full blur-sm" />
-                        </>
-                      )}
-                    </Link>
-                  );
-                })}
-                
-                {/* Enhanced Login/Admin Button */}
-                {isLoggedIn ? (
-                  <div className="flex items-center space-x-3">
-                    {googleUser ? (
-                      <div className="flex items-center space-x-2 bg-white/10 rounded-full px-2 py-1">
-                        {googleUser.picture && googleUser.picture !== 'https://via.placeholder.com/40' ? (
-                          <img 
-                            src={googleUser.picture} 
-                            alt={googleUser.name}
-                            className="w-6 h-6 rounded-full border border-white/20"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                              const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                              if (fallback) fallback.style.display = 'flex';
-                            }}
-                          />
-                        ) : null}
-                        <div 
-                          className="w-6 h-6 rounded-full border border-white/20 bg-gradient-to-br from-[#FFD200] to-[#FFC000] flex items-center justify-center text-xs font-bold text-black"
-                          style={{ display: googleUser.picture && googleUser.picture !== 'https://via.placeholder.com/40' ? 'none' : 'flex' }}
-                        >
-                          {googleUser.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
-                        </div>
-                        <span className="text-white text-sm font-medium hidden sm:inline">
-                          {googleUser.name}
-                        </span>
-                      </div>
-                    ) : (
-                      <Link href="/admin">
-                        <Button 
-                          size="default"
-                          variant="ghost" 
-                          className="text-white hover:bg-white/20 text-base lg:text-lg h-11 px-4 font-bold transition-all duration-300 hover:scale-105"
-                        >
-                          <User className="w-5 h-5 mr-2" />
-                          Admin
-                        </Button>
-                      </Link>
-                    )}
-                    <Popover open={logoutPopoverOpen} onOpenChange={setLogoutPopoverOpen}>
-                      <PopoverTrigger asChild>
-                        <Button 
-                          size="default"
-                          className="bg-green-500 hover:bg-green-600 text-white text-base h-11 px-4 transition-all duration-300 hover:scale-105"
-                        >
-                          ✓
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-32 p-2">
-                        <Button
-                          onClick={handleLogout}
-                          variant="ghost"
-                          size="sm"
-                          className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 text-sm h-8"
-                        >
-                          <LogOut className="w-4 h-4 mr-2" />
-                          Logout
-                        </Button>
-                      </PopoverContent>
-                    </Popover>
+      <motion.header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled || isMobileMenuOpen
+            ? "border-b border-white/10 shadow-lg"
+            : "border-b border-transparent"
+          }`}
+        style={{
+          background: (scrolled || isMobileMenuOpen) ? "var(--glass-bg)" : "transparent",
+          backdropFilter: (scrolled || isMobileMenuOpen) ? "var(--glass-blur)" : "none",
+          height: "var(--header-height, 70px)"
+        }}
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.6, ease: "circOut" }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
+
+          {/* --- LEFT: LOGO CLUSTER --- */}
+          <Link href="/" className="flex items-center gap-3 group cursor-pointer z-50">
+            <motion.div
+              whileHover={{ rotate: 10, scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="relative"
+            >
+              <div className="absolute inset-0 bg-brand-yellow blur-md opacity-40 rounded-full group-hover:opacity-70 transition-opacity" />
+              <img src="/logo.png" alt="Bong Bari" className="relative w-10 h-10 rounded-xl shadow-2xl object-cover" />
+            </motion.div>
+
+            <div className="flex flex-col leading-none">
+              <span className="font-bengali text-2xl font-bold text-white tracking-wide drop-shadow-md group-hover:text-brand-yellow transition-colors">
+                বং বাড়ি
+              </span>
+            </div>
+          </Link>
+
+          {/* --- CENTER: DESKTOP NAV (Pills) --- */}
+          <nav className="hidden md:flex items-center gap-1 bg-black/20 backdrop-blur-md px-2 py-1.5 rounded-full border border-white/5">
+            {navItems.map((item) => {
+              const active = isActive(item.href);
+              return (
+                <Link key={item.href} href={item.href}>
+                  <div className={`relative px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 cursor-pointer ${active ? "text-brand-blue bg-white shadow-sm" : "text-white/80 hover:text-white hover:bg-white/10"
+                    }`}>
+                    {item.label}
+                    {active && <motion.div layoutId="nav-pill" className="absolute inset-0 bg-white rounded-full -z-10" />}
                   </div>
-                ) : (
-                  <Link href="/admin">
-                    <Button 
-                      size="sm"
-                      className="relative group bg-[#FFD200] text-[#0E47FF] hover:bg-[#FFC000] font-semibold text-[13px] h-9 px-6 rounded-full transition-all duration-300 shadow-lg shadow-black/10 cursor-pointer"
-                    >
-                      <span className="absolute inset-0 rounded-full bg-gradient-to-r from-[#FFD200] to-[#FFC000] blur-sm opacity-50 group-hover:opacity-70 transition duration-300"></span>
-                      <span className="relative flex items-center">
-                        <LogIn className="w-3.5 h-3.5 mr-1.5" />
-                        Login
-                      </span>
-                    </Button>
-                  </Link>
-                )}
-              </nav>
-              
-              {/* Mobile Menu Button - Minimal */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="md:hidden text-white hover:bg-white/10 h-10 w-10 rounded-lg"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              >
-                {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-              </Button>
-            </div>
-          </div>
-        </header>
-        
-        {/* Promo Banner - Ultra Sleek */}
-        <div 
-          className="relative overflow-hidden"
-          style={{ 
-            height: '36px',
-            background: 'linear-gradient(90deg, #FFD200 0%, #FFC000 50%, #FFD200 100%)',
-            backgroundSize: '200% 100%',
-            animation: 'gradient-flow 8s ease infinite'
-          }}
-        >
-          <div className="h-full overflow-hidden relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="animate-scroll-smooth whitespace-nowrap flex">
-                <span className="text-[#0E47FF] font-medium text-[13px] lg:text-sm px-8 flex items-center h-full tracking-wide">
-                  <span className="mr-3">⚡</span>
-                  <span className="mr-8">Special Offer: Flat 50% off on your first subscription</span>
-                  <span className="mr-3">🎯</span>
-                  <span className="mr-8">New comedy content every week</span>
-                  <span className="mr-3">✨</span>
-                  <span className="mr-8">Join 10,000+ laughter lovers</span>
-                </span>
-                <span className="text-[#0E47FF] font-medium text-[13px] lg:text-sm px-8 flex items-center h-full tracking-wide">
-                  <span className="mr-3">⚡</span>
-                  <span className="mr-8">Special Offer: Flat 50% off on your first subscription</span>
-                  <span className="mr-3">🎯</span>
-                  <span className="mr-8">New comedy content every week</span>
-                  <span className="mr-3">✨</span>
-                  <span className="mr-8">Join 10,000+ laughter lovers</span>
-                </span>
-              </div>
-            </div>
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* --- RIGHT: ACTIONS & MOBILE TOGGLE --- */}
+          <div className="flex items-center gap-3 z-50">
+            {/* Login / User Status */}
+            {isLoggedIn ? (
+              <Popover open={logoutPopoverOpen} onOpenChange={setLogoutPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="hidden md:flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-1.5 rounded-full backdrop-blur-sm transition-all"
+                  >
+                    {googleUser?.picture ? (
+                      <img src={googleUser.picture} className="w-6 h-6 rounded-full" alt="User" />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-brand-blue flex items-center justify-center text-xs text-white font-bold">
+                        {googleUser?.name?.[0] || <User size={14} />}
+                      </div>
+                    )}
+                    <span className="text-sm font-medium text-white max-w-[100px] truncate">{googleUser?.name || "Member"}</span>
+                  </motion.button>
+                </PopoverTrigger>
+                <PopoverContent className="w-40 p-1 bg-white/90 backdrop-blur-xl border-white/20 shadow-xl">
+                  <Button onClick={handleLogout} variant="ghost" size="sm" className="w-full text-red-600 justify-start">
+                    <LogOut className="w-4 h-4 mr-2" /> Logout
+                  </Button>
+                </PopoverContent>
+              </Popover>
+            ) : (
+              <Link href="/admin">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="hidden md:flex bg-brand-yellow text-brand-blue font-bold px-5 py-2 rounded-full shadow-[0_0_20px_rgba(255,200,0,0.4)] hover:shadow-[0_0_30px_rgba(255,200,0,0.6)] transition-all items-center gap-2 text-sm"
+                >
+                  <LogIn size={16} /> Login
+                </motion.button>
+              </Link>
+            )}
+
+            {/* Mobile Menu Toggle (Rockstar Hamburger) */}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden text-white p-2 bg-white/10 rounded-full backdrop-blur-md border border-white/10"
+            >
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </motion.button>
           </div>
         </div>
-        
-        {/* Mobile Navigation Menu - Enhanced */}
+      </motion.header>
+
+      {/* --- CINEMATIC MOBILE MENU OVERLAY --- */}
+      <AnimatePresence>
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-gradient-to-b from-[#0E47FF] to-[#0A3ACC] border-t-2 border-[#FFD200] shadow-lg animate-slide-down">
-            <div className="container mx-auto px-4 py-4">
-              {navItems.map((item, index) => {
-                if (item.href === '/tools') {
-                  return (
-                    <div key={item.href} className="mb-4">
-                      <Link
-                        href={item.href}
-                        className={`block py-4 px-5 mb-2 text-white font-bold text-lg rounded-xl transition-all duration-300 ${isActive(item.href) ? 'bg-[#FFD200] text-[#0E47FF] shadow-lg transform scale-105' : 'hover:bg-white/20 hover:transform hover:translate-x-2'}`}
-                        style={{ animationDelay: `${index * 50}ms` }}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        {item.label}
-                      </Link>
-                      <Link
-                        href="/community/feed"
-                        className="block ml-4 py-3 px-4 text-white/80 font-semibold text-base rounded-lg transition-all duration-300 hover:bg-white/10 hover:text-white"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        Bong Kahini
-                      </Link>
+          <motion.div
+            initial={{ opacity: 0, y: "-100%" }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: "-100%" }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }} // smooth apple-style ease
+            className="fixed inset-0 z-40 bg-brand-blue/95 backdrop-blur-2xl flex flex-col pt-24 pb-8 px-6 md:hidden overflow-y-auto"
+          >
+            <div className="flex flex-col gap-2">
+              {navItems.map((item, i) => (
+                <motion.div
+                  key={item.href}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.1 + (i * 0.05) }}
+                >
+                  <Link href={item.href} onClick={() => setIsMobileMenuOpen(false)}>
+                    <div className={`text-3xl font-bold py-3 border-b border-white/10 flex items-center justify-between ${isActive(item.href) ? "text-brand-yellow" : "text-white"
+                      }`}>
+                      {item.label}
+                      {isActive(item.href) && <Sparkles size={24} className="text-brand-yellow animate-pulse" />}
                     </div>
-                  );
-                }
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`block py-4 px-5 mb-2 text-white font-bold text-lg rounded-xl transition-all duration-300 ${isActive(item.href) ? 'bg-[#FFD200] text-[#0E47FF] shadow-lg transform scale-105' : 'hover:bg-white/20 hover:transform hover:translate-x-2'}`}
-                    style={{ animationDelay: `${index * 50}ms` }}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {item.label}
                   </Link>
-                );
-              })}
-              
-              {/* Mobile Login/Admin - Enhanced */}
-              <div className="mt-4 pt-4 border-t-2 border-white/30">
-                {isLoggedIn ? (
-                  <>
-                    {googleUser ? (
-                      <div className="py-4 px-5 mb-2 bg-white/10 rounded-xl">
-                        <div className="flex items-center space-x-3">
-                          {googleUser.picture && googleUser.picture !== 'https://via.placeholder.com/40' ? (
-                            <img 
-                              src={googleUser.picture} 
-                              alt={googleUser.name}
-                              className="w-10 h-10 rounded-full border-2 border-white/20"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                                const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                                if (fallback) fallback.style.display = 'flex';
-                              }}
-                            />
-                          ) : null}
-                          <div 
-                            className="w-10 h-10 rounded-full border-2 border-white/20 bg-gradient-to-br from-[#FFD200] to-[#FFC000] flex items-center justify-center text-sm font-bold text-black"
-                            style={{ display: googleUser.picture && googleUser.picture !== 'https://via.placeholder.com/40' ? 'none' : 'flex' }}
-                          >
-                            {googleUser.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="text-white font-bold text-lg">{googleUser.name}</div>
-                            <div className="text-green-300 text-sm bg-green-100/20 px-2 py-1 rounded-full inline-block">Premium Member</div>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <Link 
-                        href="/admin" 
-                        className="block py-4 px-5 mb-2 text-white font-bold text-lg rounded-xl hover:bg-white/20 transition-all duration-300 hover:transform hover:translate-x-2"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        <User className="inline w-5 h-5 mr-2" />
-                        Admin Panel
-                      </Link>
-                    )}
-                    <button
-                      onClick={() => {
-                        handleLogout();
-                        setIsMobileMenuOpen(false);
-                      }}
-                      className="block w-full text-left py-4 px-5 text-red-300 font-bold text-lg rounded-xl hover:bg-red-500/20 transition-all duration-300 hover:transform hover:translate-x-2"
-                    >
-                      <LogOut className="inline w-5 h-5 mr-2" />
-                      Logout
-                    </button>
-                  </>
+                </motion.div>
+              ))}
+
+              {/* Mobile Actions */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="mt-8 grid grid-cols-2 gap-4"
+              >
+                {!isLoggedIn ? (
+                  <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button className="w-full bg-brand-yellow text-brand-blue hover:bg-brand-yellow/90 h-12 text-lg font-bold rounded-xl shadow-xl">
+                      Login
+                    </Button>
+                  </Link>
                 ) : (
-                  <Link 
-                    href="/admin" 
-                    className="block py-4 px-5 bg-[#FFD200] text-[#0E47FF] font-bold text-lg rounded-xl hover:bg-yellow-400 transition-all duration-300 shadow-lg hover:transform hover:scale-105"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <LogIn className="inline w-5 h-5 mr-2" />
-                    Login
-                  </Link>
+                  <Button onClick={handleLogout} className="w-full bg-red-500/20 text-red-100 hover:bg-red-500/30 h-12 text-lg border border-red-500/30 rounded-xl">
+                    Logout
+                  </Button>
                 )}
+                <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Button variant="outline" className="w-full h-12 text-lg border-white/20 text-white hover:bg-white/10 rounded-xl">
+                    Contact
+                  </Button>
+                </Link>
+              </motion.div>
+
+              <div className="mt-auto pt-8 text-center text-white/40 text-sm">
+                <p>© 2025 Bong Bari Comedy</p>
+                <p className="font-bengali">প্রতিটা বাড়ির গল্প</p>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
-      </div>
-      
-      {/* Spacer for fixed navigation */}
-      <div style={{ height: '111px' }}></div>
+      </AnimatePresence>
     </>
   );
 };

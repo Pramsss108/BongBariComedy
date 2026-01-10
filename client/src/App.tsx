@@ -22,6 +22,8 @@ import GreetingConsent from "@/components/GreetingConsent";
 import { isAudioUnlocked, resumeAudioNow } from "@/lib/audioUnlock";
 import BongBot from "@/components/BongBot";
 import FloatingFAQButton from "@/components/FloatingFAQButton";
+import { DebugOverlay } from "@/components/DebugOverlay";
+import "@/lib/layout-sentry"; // Auto-registers window.runLayoutAudit
 
 // Deploy note: trivial comment to force GitHub Pages rebuild (FORCE_PAGES_DEPLOY)
 
@@ -46,8 +48,11 @@ const FAQ = lazy(() => import("@/pages/FAQ"));
 // Loading fallback component
 function LoadingFallback() {
   return (
-    <div className="flex items-center justify-center min-h-[200px]">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+    <div className="w-full h-screen bg-black flex flex-col items-center justify-center space-y-4 p-4">
+      {/* 💀 SKELETON DECEPTION (Black Ops Phase 7.4) */}
+      <div className="w-full max-w-4xl aspect-video bg-gray-800/50 rounded-xl animate-pulse" />
+      <div className="w-2/3 h-8 bg-gray-800/50 rounded animate-pulse" />
+      <div className="w-1/2 h-4 bg-gray-800/50 rounded animate-pulse" />
     </div>
   );
 }
@@ -59,39 +64,49 @@ function Router() {
   const [showGreeting, setShowGreeting] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     const params = new URLSearchParams(window.location.search);
-  // In local development, always show greeting on the main URL (root) without needing query params
-  // This makes http://localhost:5173/ behave like http://localhost:5173/?resetAudio=1
-  const forceRootInDev = (import.meta as any).env?.DEV && window.location.pathname === '/';
-  const hasReset = forceRootInDev || params.get('resetAudio') === '1' || window.location.hash.includes('reset-audio');
+    // In local development, always show greeting on the main URL (root) without needing query params
+    // This makes http://localhost:5173/ behave like http://localhost:5173/?resetAudio=1
+    const forceRootInDev = (import.meta as any).env?.DEV && window.location.pathname === '/';
+    const hasReset = forceRootInDev || params.get('resetAudio') === '1' || window.location.hash.includes('reset-audio');
     if (hasReset) {
-      try { localStorage.removeItem('bbc.audioDecision'); } catch {}
+      try { localStorage.removeItem('bbc.audioDecision'); } catch { }
     }
     return !localStorage.getItem('bbc.audioDecision');
   });
 
   // Show greeting immediately when pending (no click gating)
-  
+
   // Initialize professional site-wide cursor effect
   useGlobalCursor();
-  
+
   // Initialize fast engaging parallax scroll effects
   useParallaxScroll();
-  
+
   // Initialize authentic Bengali rickshaw sound on taps (disabled when chatbot is open or logged in)
   useRickshawSound({ enabled: !isChatbotOpen && !isAuthenticated, volume: 0.3, cooldownMs: 200 });
-  
+
   // Initialize magical hover sounds to complement cursor effects (disabled when logged in)
   useMagicalHoverSounds({ enabled: !isAuthenticated, volume: 0.12 });
-  
+
   // Initialize custom charm sound that follows mouse movement (disabled when logged in)
-  useSimpleCharmSound({ 
-    enabled: !isAuthenticated, 
-    volume: 0.06, 
+  useSimpleCharmSound({
+    enabled: !isAuthenticated,
+    volume: 0.06,
     audioFile: '/sounds/charm.mp3' // Your custom charm sound
   });
 
   // Ensure audio unlock listeners attached
   useEffect(() => { ensureAudioUnlocked(); }, []);
+
+  // 🏴‍☠️ TAB NUDGE (Black Ops Phase 7.3): Guilt-trip users who switch tabs
+  useEffect(() => {
+    const originalTitle = document.title;
+    const handleVisibilityChange = () => {
+      document.title = document.hidden ? "🥺 Wait, come back!" : "Bong Bari - Bengali Comedy Channel";
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
 
   // Handle greeting consent decisions
   const handleDecision = async (d: 'granted' | 'denied') => {
@@ -100,12 +115,12 @@ function Router() {
     if (d === 'granted' && !isAudioUnlocked()) {
       await resumeAudioNow();
     }
-  // Notify any listeners (e.g., Home hero) that user has fully entered site
-  window.dispatchEvent(new Event('bbc:audio-decision'));
+    // Notify any listeners (e.g., Home hero) that user has fully entered site
+    window.dispatchEvent(new Event('bbc:audio-decision'));
   };
-  
+
   // Remove the auto-refresh logic from here - it will be handled in login/logout actions only
-  
+
   // Apply cursor styles based on current auth state
   useEffect(() => {
     if (isAuthenticated) {
@@ -113,11 +128,11 @@ function Router() {
       document.body.classList.add('admin-logged-in');
       document.body.style.cursor = 'default';
       document.documentElement.style.cursor = 'default';
-      
+
       // Remove belan cursor elements
       const belanElements = document.querySelectorAll('.magical-belan-portal, .particle-container, .global-cursor-follower');
       belanElements.forEach(el => el.remove());
-      
+
       // Apply professional cursor styles
       const style = document.createElement('style');
       style.id = 'admin-cursor-override';
@@ -134,16 +149,16 @@ function Router() {
       document.body.classList.remove('admin-logged-in');
       document.body.style.cursor = '';
       document.documentElement.style.cursor = '';
-      
+
       const overrideStyle = document.getElementById('admin-cursor-override');
       if (overrideStyle) {
         overrideStyle.remove();
       }
     }
-    
+
     // Notify cursor component of auth state change
     window.dispatchEvent(new Event('auth-state-changed'));
-    
+
     return () => {
       // Cleanup
       document.body.style.cursor = '';
@@ -154,105 +169,108 @@ function Router() {
       }
     };
   }, [isAuthenticated]);
-  
+
   return (
     <>
       <Navigation />
       <div className="min-h-screen bg-brand-yellow relative m-0 p-0">
-  <GreetingConsent open={showGreeting} onDecision={handleDecision} />
-      <FloatingElements />
-      {/* Show MagicalCursor (belan) only for public audience, not for logged-in admin */}
-      {!isAuthenticated && <MagicalCursor />}
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route path="/about">
-          <Suspense fallback={<LoadingFallback />}>
-            <About />
-          </Suspense>
-        </Route>
-        <Route path="/work-with-us">
-          <Suspense fallback={<LoadingFallback />}>
-            <WorkWithUs />
-          </Suspense>
-        </Route>
-        <Route path="/contact">
-          <Suspense fallback={<LoadingFallback />}>
-            <Contact />
-          </Suspense>
-        </Route>
-        <Route path="/blog">
-          <Suspense fallback={<LoadingFallback />}>
-            <Blog />
-          </Suspense>
-        </Route>
-        <Route path="/tools">
-          <Suspense fallback={<LoadingFallback />}>
-            <FreeTools />
-          </Suspense>
-        </Route>
-        <Route path="/community/feed">
-          <Suspense fallback={<LoadingFallback />}>
-            <CommunityFeed />
-          </Suspense>
-        </Route>
-        <Route path="/blog/:slug">
-          <Suspense fallback={<LoadingFallback />}>
-            <BlogPost />
-          </Suspense>
-        </Route>
-        <Route path="/admin">
-          <Suspense fallback={<LoadingFallback />}>
-            <Admin />
-          </Suspense>
-        </Route>
-        <Route path="/admin/chatbot">
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminChatbot />
-          </Suspense>
-        </Route>
-        <Route path="/admin/homepage">
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminHomepage />
-          </Suspense>
-        </Route>
-        <Route path="/admin/moderation">
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminModeration />
-          </Suspense>
-        </Route>
-        <Route path="/login">
-          <Suspense fallback={<LoadingFallback />}>
-            <Login />
-          </Suspense>
-        </Route>
-        <Route path="/privacy">
-          <Suspense fallback={<LoadingFallback />}>
-            <PrivacyPolicy />
-          </Suspense>
-        </Route>
-        <Route path="/terms">
-          <Suspense fallback={<LoadingFallback />}>
-            <TermsPage />
-          </Suspense>
-        </Route>
-        <Route path="/faq">
-          <Suspense fallback={<LoadingFallback />}>
-            <FAQ />
-          </Suspense>
-        </Route>
-        <Route>
-          <Suspense fallback={<LoadingFallback />}>
-            <NotFound />
-          </Suspense>
-        </Route>
-      </Switch>
-      
-      {/* Professional Bong Bot - Available on all pages */}
-      <BongBot onOpenChange={setIsChatbotOpen} />
-      
-      {/* Floating FAQ Button - Available on all pages */}
-      <FloatingFAQButton />
-      
+        <GreetingConsent open={showGreeting} onDecision={handleDecision} />
+        <FloatingElements />
+        {/* Show MagicalCursor (belan) only for public audience, not for logged-in admin */}
+        {!isAuthenticated && <MagicalCursor />}
+        <Switch>
+          <Route path="/" component={Home} />
+          <Route path="/about">
+            <Suspense fallback={<LoadingFallback />}>
+              <About />
+            </Suspense>
+          </Route>
+          <Route path="/work-with-us">
+            <Suspense fallback={<LoadingFallback />}>
+              <WorkWithUs />
+            </Suspense>
+          </Route>
+          <Route path="/contact">
+            <Suspense fallback={<LoadingFallback />}>
+              <Contact />
+            </Suspense>
+          </Route>
+          <Route path="/blog">
+            <Suspense fallback={<LoadingFallback />}>
+              <Blog />
+            </Suspense>
+          </Route>
+          <Route path="/tools">
+            <Suspense fallback={<LoadingFallback />}>
+              <FreeTools />
+            </Suspense>
+          </Route>
+          <Route path="/community/feed">
+            <Suspense fallback={<LoadingFallback />}>
+              <CommunityFeed />
+            </Suspense>
+          </Route>
+          <Route path="/blog/:slug">
+            <Suspense fallback={<LoadingFallback />}>
+              <BlogPost />
+            </Suspense>
+          </Route>
+          <Route path="/admin">
+            <Suspense fallback={<LoadingFallback />}>
+              <Admin />
+            </Suspense>
+          </Route>
+          <Route path="/admin/chatbot">
+            <Suspense fallback={<LoadingFallback />}>
+              <AdminChatbot />
+            </Suspense>
+          </Route>
+          <Route path="/admin/homepage">
+            <Suspense fallback={<LoadingFallback />}>
+              <AdminHomepage />
+            </Suspense>
+          </Route>
+          <Route path="/admin/moderation">
+            <Suspense fallback={<LoadingFallback />}>
+              <AdminModeration />
+            </Suspense>
+          </Route>
+          <Route path="/login">
+            <Suspense fallback={<LoadingFallback />}>
+              <Login />
+            </Suspense>
+          </Route>
+          <Route path="/privacy">
+            <Suspense fallback={<LoadingFallback />}>
+              <PrivacyPolicy />
+            </Suspense>
+          </Route>
+          <Route path="/terms">
+            <Suspense fallback={<LoadingFallback />}>
+              <TermsPage />
+            </Suspense>
+          </Route>
+          <Route path="/faq">
+            <Suspense fallback={<LoadingFallback />}>
+              <FAQ />
+            </Suspense>
+          </Route>
+          <Route>
+            <Suspense fallback={<LoadingFallback />}>
+              <NotFound />
+            </Suspense>
+          </Route>
+        </Switch>
+
+        {/* Professional Bong Bot - Available on all pages */}
+        <BongBot onOpenChange={setIsChatbotOpen} />
+
+        {/* Floating FAQ Button - Available on all pages */}
+        <FloatingFAQButton />
+        
+        {/* Production Debug overlay (Hidden triggers only) */}
+        <DebugOverlay />
+
       </div>
     </>
   );

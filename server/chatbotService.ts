@@ -1,4 +1,3 @@
-import { GoogleGenAI } from "@google/genai";
 import dotenv from 'dotenv';
 import path from 'path';
 // Ensure env is loaded even if this module is imported before server/index
@@ -8,16 +7,13 @@ try {
   if (r.error) {
     dotenv.config();
   }
-} catch (_) {}
+} catch (_) { }
 import { storage } from "./storage";
 import { type ChatbotTraining, type ChatbotTemplate } from "@shared/schema";
 import { trendsService } from "./trendsService";
 
-// Gracefully handle missing API key in development/preview
-const ai = process.env.GEMINI_API_KEY
-  ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
-  : null;
-const API_KEY = process.env.GEMINI_API_KEY || '';
+// Grok API Endpoint
+const GROK_ENDPOINT = "https://ghost-worker.guitarguitarabhijit.workers.dev/ai/chat";
 
 // Custom training data about Bong Bari
 const BONG_BARI_CONTEXT = `
@@ -63,17 +59,15 @@ PERSONALITY:
 `;
 
 interface ChatMessage {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
 }
 
 export class ChatbotService {
-  private model = ai?.models.generateContent;
   private lastCtaTs = 0;
   private lastAiCheckTs = 0;
   private lastAiOk: boolean | null = null;
-  private lastAiSource: 'sdk' | 'rest' | 'none' = 'none';
-  private lastAiModel: string | null = null;
+  private lastAiSource: 'grok' | 'none' = 'none';
   private trainingCache: { text: string; ts: number } = { text: '', ts: 0 };
 
   // Friendly greeting generator for simple hellos
@@ -101,7 +95,7 @@ export class ChatbotService {
     prompt: string,
     options?: { temperature?: number; maxOutputTokens?: number; timeoutMs?: number }
   ): Promise<string | null> {
-    return await this.generateText(prompt, options);
+    return await this.generateText([{ role: 'user', content: prompt }], options);
   }
 
   // Public: get a local graceful fallback quickly
@@ -139,33 +133,30 @@ export class ChatbotService {
 
     // Understand quick intents
     if (isJoke) {
-      // Answer-first: 2 quick topical lines (no prompt request)
       const trends = trendsService.getTop(8).filter(t => !t.isSomber);
       const topic = trends[0]?.title || '';
       let topicShort = topic ? topic.replace(/[|:–—-].*$/, '').split(/\s+/).slice(0, 3).join(' ') : '';
-  if (!topicShort || /viral\s+funny\s+name/i.test(topicShort)) topicShort = 'Trending now';
+      if (!topicShort || /viral\s+funny\s+name/i.test(topicShort)) topicShort = 'Trending now';
 
       const hasBn = /[\u0980-\u09ff]/.test(userMessage);
       const hasEn = /[a-zA-Z]/.test(userMessage);
-      const bengaliWords = ['ami','tumi','kemon','bhalo','hobe','korbo','chai','meme','roast','adda','haso','hasi'];
-      const isBenglish = !hasBn && hasEn && bengaliWords.some(w => (userMessage||'').toLowerCase().includes(w));
+      const bengaliWords = ['ami', 'tumi', 'kemon', 'bhalo', 'hobe', 'korbo', 'chai', 'meme', 'roast', 'adda', 'haso', 'hasi'];
+      const isBenglish = !hasBn && hasEn && bengaliWords.some(w => (userMessage || '').toLowerCase().includes(w));
 
       if (hasBn) {
         const l1 = `আজকের টপিক: ${topicShort}—হালকা মজা, ভারী হাসি।`;
-  const l2 = `টেনশন কম, পাঞ্চলাইন অন—বাংলা স্টাইলে!`;
+        const l2 = `টেনশন কম, পাঞ্চলাইন অন—বাংলা স্টাইলে!`;
         return `${l1}\n${l2}`.trim();
       }
       if (isBenglish) {
         const l1 = `Ajker topic: ${topicShort} — halka roast, full hasi.`;
-  const l2 = `Stress off, punchline on — Bangla style!`;
+        const l2 = `Stress off, punchline on — Bangla style!`;
         return `${l1}\n${l2}`.trim();
       }
-      // Pure English fallback
       const l1 = `Today’s pick: ${topicShort} — light roast, big laughs.`;
-  const l2 = `Zero stress, punchline on — Bangla vibe.`;
+      const l2 = `Zero stress, punchline on — Bangla vibe.`;
       return `${l1}\n${l2}`.trim();
     }
-    // Generic graceful fallback—engaging first; nudge for context only ~25%
     const engaging: string[] = [
       'Adda ta shuru—tumi bol, ami punchline dei.',
       'Cholo normal kotha thekei hasi tule ani.',
@@ -176,142 +167,84 @@ export class ChatbotService {
       'Ek line hint dile khub jambe.',
       'Ekta clue dile punch korte pari.'
     ];
-  // Tiny echo if user wrote a 1–2 word cue
-  const words = um.split(/\s+/).filter(Boolean);
-  const echo = words.length > 0 && words.length <= 2 ? `${words.join(' ')}? — thik ache, ami spice debo.` : '';
-  const firstLine = echo || pick(engaging);
+    const words = um.split(/\s+/).filter(Boolean);
+    const echo = words.length > 0 && words.length <= 2 ? `${words.join(' ')}? — thik ache, ami spice debo.` : '';
+    const firstLine = echo || pick(engaging);
     const maybeNudge = Math.random() < 0.25 ? `\n${pick(nudges)}` : '';
     return `${firstLine}${maybeNudge}${cta}`.trim();
   }
 
-  // Generate text with correct request shape and robust parsing + light retry
+  // Grok implementation: Connects to the Cloudflare Worker endpoint
   private async generateText(
-    prompt: string,
+    messages: ChatMessage[],
     options?: { temperature?: number; maxOutputTokens?: number; timeoutMs?: number }
   ): Promise<string | null> {
-  if (!ai || !this.model) return null;
-  const model = this.model; // capture to satisfy TS inside closures
-  const { temperature = 0.7, maxOutputTokens = 500, timeoutMs = 5000 } = options || {};
+    const { timeoutMs = 8000 } = options || {};
 
-    const attempt = async () => {
-      const buildReq = (modelName: string) => model!({
-        model: modelName,
-        contents: [
-          { role: "user", parts: [{ text: prompt }] },
-        ],
-        config: { temperature, maxOutputTokens },
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+      const response = await fetch(GROK_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages }),
+        signal: controller.signal,
       });
 
-      const modelsToTry = [
-        "gemini-1.5-flash",
-        "gemini-2.0-flash-lite-preview",
-        "gemini-2.5-flash",
-      ];
+      clearTimeout(timeout);
 
-      // Try SDK first across models
-      for (const m of modelsToTry) {
-        try {
-          const response = await Promise.race([
-            buildReq(m),
-            new Promise((_resolve, reject) => setTimeout(() => reject(new Error('ai-timeout')), timeoutMs)),
-          ]);
-          const text = (response as any)?.text
-            ?? (response as any)?.output_text
-            ?? ((response as any)?.candidates?.[0]?.content?.parts
-                  ? (response as any).candidates[0].content.parts.map((p: any) => p?.text ?? '').join('')
-                  : undefined)
-            ?? ((response as any)?.candidates?.[0]?.content?.text)
-            ?? ((response as any)?.candidates?.[0]?.content)
-            ?? '';
-          const final = typeof text === 'string' ? text.trim() : '';
-          if (final.length > 0) {
-            this.lastAiSource = 'sdk';
-            this.lastAiModel = m;
-            return final;
-          }
-        } catch (_) {
-          // try next model
-        }
+      if (!response.ok) {
+        console.error(`Grok API Error: ${response.status} ${response.statusText}`);
+        return null;
       }
 
-      // REST fallback if SDK route fails
-      if (!API_KEY) return null;
-      const restModels = ["gemini-1.5-flash", "gemini-2.0-flash-lite-preview", "gemini-2.5-flash"];
-      for (const m of restModels) {
-        try {
-          const ctrl = new AbortController();
-          const to = setTimeout(() => ctrl.abort(), timeoutMs);
-          const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${API_KEY}`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                contents: [{ role: 'user', parts: [{ text: prompt }] }],
-                generationConfig: { temperature, maxOutputTokens },
-              }),
-              signal: ctrl.signal,
-            }
-          ).then(r => r.ok ? r.json() : Promise.reject(new Error('rest-fail')));
-          clearTimeout(to);
-          const text = (resp?.candidates?.[0]?.content?.parts || [])
-            .map((p: any) => p?.text || '')
-            .join('')
-            .trim();
-          if (text) {
-            this.lastAiSource = 'rest';
-            this.lastAiModel = m;
-            return text;
-          }
-        } catch (_) {
-          // continue to next model
-        }
-      }
+      const data = await response.json();
+      const content = data?.content?.trim() || "";
 
+      if (content) {
+        this.lastAiSource = 'grok';
+        return content;
+      }
       return null;
-    };
-
-  // Single fast attempt; if it fails or is empty, let caller use local fallback
-  const first = await attempt().catch(() => null);
-  return first;
+    } catch (error) {
+      console.error("Grok generation fail:", error);
+      return null;
+    }
   }
 
-  // Health check with 60s cache; verifies API key reachability
-  public async checkAIReady(): Promise<{ ok: boolean; aiKeyPresent: boolean; reason?: string }>
-  {
-    const aiKeyPresent = Boolean(API_KEY);
+  // Health check for Grok Worker
+  public async checkAIReady(): Promise<{ ok: boolean; aiKeyPresent: boolean; reason?: string }> {
     const now = Date.now();
-    if (!aiKeyPresent) return { ok: false, aiKeyPresent, reason: 'no-key' };
-
     if (this.lastAiOk !== null && now - this.lastAiCheckTs < 60_000) {
-      return { ok: this.lastAiOk, aiKeyPresent };
+      return { ok: this.lastAiOk, aiKeyPresent: true };
     }
 
     try {
-      const ctrl = new AbortController();
-      const to = setTimeout(() => ctrl.abort(), 1200);
-      const m = 'gemini-1.5-flash';
-      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'ping' }] }], generationConfig: { maxOutputTokens: 4 } }),
-          signal: ctrl.signal,
-        }
-      ).then(r => r.ok ? r.json() : Promise.reject(new Error('rest-fail')));
-      clearTimeout(to);
-      const ok = Boolean(resp?.candidates?.length);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2000);
+
+      const resp = await fetch(GROK_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [{ role: 'user', content: 'ping' }] }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeout);
+      const ok = resp.ok;
       this.lastAiOk = ok;
       this.lastAiCheckTs = now;
-      return { ok, aiKeyPresent };
+      return { ok, aiKeyPresent: true };
     } catch (e: any) {
       this.lastAiOk = false;
       this.lastAiCheckTs = now;
-      return { ok: false, aiKeyPresent, reason: e?.message || 'error' };
+      return { ok: false, aiKeyPresent: true, reason: e?.message || 'error' };
     }
   }
 
-  public getLastAiInfo(): { source: 'sdk' | 'rest' | 'none'; model: string | null } {
-    return { source: this.lastAiSource, model: this.lastAiModel };
+  public getLastAiInfo(): { source: 'grok' | 'none'; model: string | null } {
+    return { source: this.lastAiSource, model: 'grok-1' };
   }
 
   async generateResponse(
@@ -320,7 +253,6 @@ export class ChatbotService {
     opts?: { allowFallback?: boolean }
   ): Promise<string> {
     try {
-      // If user just said hello/hi, reply with saved Greeting template if available; else friendly fallback
       if (/\b(hi|hello|hey|yo)\b/i.test(userMessage) || /নমস্কার|হ্যালো|ওই|হাই/.test(userMessage)) {
         try {
           let templates: ChatbotTemplate[] = [];
@@ -332,31 +264,23 @@ export class ChatbotService {
           }
           const greet = (templates || []).sort((a: any, b: any) => (a.displayOrder ?? 1) - (b.displayOrder ?? 1))[0];
           if (greet?.content) return greet.content;
-        } catch (_) {}
+        } catch (_) { }
         return this.makeHelloReply(userMessage);
       }
-      // Then check for trained responses in database
       const trainedResponse = await this.getTrainedResponse(userMessage);
       if (trainedResponse) {
         return trainedResponse;
       }
-      // Build conversation context
-      const conversationContext = conversationHistory
-        .map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
-        .join('\n');
 
-      // Enhanced language detection
       const hasBengaliScript = /[\u0980-\u09ff]/.test(userMessage);
       const hasEnglishWords = /[a-zA-Z]/.test(userMessage);
-      
+
       let languageInstruction = "";
       if (hasBengaliScript && !hasEnglishWords) {
         languageInstruction = "RESPOND ONLY IN BENGALI SCRIPT. Do not use any English words.";
       } else if (hasEnglishWords && !hasBengaliScript) {
-        // Check if it's Benglish (Bengali words in English script)
         const bengaliWords = ['ami', 'tumi', 'achi', 'kemon', 'bhalo', 'hobe', 'korbo', 'chai', 'khabo', 'jabo', 'asbo', 'dekho', 'bolo', 'shono', 'fuckka', 'cha', 'familir', 'ekjon'];
         const isBenglish = bengaliWords.some(word => userMessage.toLowerCase().includes(word));
-        
         if (isBenglish) {
           languageInstruction = "RESPOND ONLY IN BENGLISH (Bengali words written in English script). Do not use Bengali script.";
         } else {
@@ -366,32 +290,20 @@ export class ChatbotService {
         languageInstruction = "RESPOND IN THE SAME LANGUAGE MIX AS THE USER.";
       }
 
-  const isJokeIntent = /(joke|jokes|funny|haso|হাস|মজা|মিম|meme)/i.test(userMessage);
+      const isJokeIntent = /(joke|jokes|funny|haso|হাস|মজা|মিম|meme)/i.test(userMessage);
       const isChattyUser = conversationHistory.filter(m => m.role === 'user').length >= 2
         || /(bol|bolo|detail|আরো|আরও|explain|kichu beshi|aro)/i.test(userMessage);
-      // Adaptive length: short for quick asks, medium for chatty users
       const maxTokens = isJokeIntent ? 80 : isChattyUser ? 220 : 140;
       const temperature = isJokeIntent ? 0.85 : isChattyUser ? 0.7 : 0.65;
-  const trendHints = isJokeIntent ? trendsService.getTop(6).filter(t => !t.isSomber).slice(0, 4) : [];
-  const trendLines = trendHints.length ? `\nToday's hints: ${trendHints.map(t => `[${t.language.toUpperCase()}] ${t.title}`).join(' \u2022 ')}` : '';
 
-      // Load training notes (admin notepad), cached for 60s
       const nowTs = Date.now();
       if (nowTs - this.trainingCache.ts > 60_000) {
         try {
-          const settings = await storage.getPublicSettings?.().catch(() => [])
+          const settings = await (storage as any).getPublicSettings?.().catch(() => [])
             || await (storage as any).getAllAdminSettings?.().catch(() => []);
-          const all = Array.isArray(settings) ? settings : [];
-          // Prefer non-public if available, fall back to any list
-          const fromAll = await (async () => {
-            if (typeof (storage as any).getAllAdminSettings === 'function') {
-              try { return await (storage as any).getAllAdminSettings(); } catch { return all; }
-            }
-            return all;
-          })();
-          const setting = (fromAll || []).find((s: any) => s.settingKey === 'chatbot_training_notepad');
-          const txt = (setting?.settingValue || '').toString();
-          this.trainingCache = { text: txt, ts: nowTs };
+          const fromAll = Array.isArray(settings) ? settings : [];
+          const setting = fromAll.find((s: any) => s.settingKey === 'chatbot_training_notepad');
+          this.trainingCache = { text: (setting?.settingValue || '').toString(), ts: nowTs };
         } catch { this.trainingCache = { text: this.trainingCache.text, ts: nowTs }; }
       }
 
@@ -399,103 +311,65 @@ export class ChatbotService {
         ? `\nPROJECT TRAINING NOTES (curated):\n${this.trainingCache.text}\n\n— End of notes —\n`
         : '';
 
-  const systemPrompt = `${BONG_BARI_CONTEXT}
+      const systemMessage: ChatMessage = {
+        role: 'system',
+        content: `${BONG_BARI_CONTEXT}\n\nLANGUAGE INSTRUCTION: ${languageInstruction}\n\n${trainingBlock}\n\nSTRICT INSTRUCTIONS:\n1) Answer-first, playful, family-friendly tone.\n2) Natural Benglish or Bengali script (≤1 emoji).\n3) Quick asks ≤2 short lines; deep questions ≤4 lines (max 2 bullets).\n4) Business/collab? Include value-point and: Apply: /work-with-us#form\n5) Witty Bong quip; no politics/tragedy.\n6) Mention YouTube @bongbari or Insta @thebongbari if relevant.`
+      };
 
-LANGUAGE INSTRUCTION: ${languageInstruction}
+      const grokMessages: ChatMessage[] = [
+        systemMessage,
+        ...conversationHistory.map(m => ({
+          role: (m.role === 'assistant' ? 'assistant' : 'user') as 'assistant' | 'user',
+          content: m.content
+        })),
+        { role: 'user', content: userMessage }
+      ];
 
-Previous conversation:
-${conversationContext}
-
-Current user message: ${userMessage}
-
-${trendLines}
-
- ${trainingBlock}
-
- Instructions (STRICT):
-  1) Answer-first in a playful, witty, family-friendly tone; use 1–2 short lines for quick asks, or 2–4 compact lines (max 2 bullets) for deeper questions.
-  2) Keep it natural (Benglish or Bengali script); avoid formal AI voice. ≤1 emoji only when perfect.
-  3) Emotionally intelligent persuasion: acknowledge needs, mirror the vibe, seed confidence with one crisp benefit.
-  4) If user asks about business benefits or collaboration, include one concrete value-point (e.g., reach, authenticity, Bengali family connect) and END with: "Apply: /work-with-us#form" (always include this exact link on such intents).
-  5) Add at most one clean, cheeky bong-style quip. Never rude. No tragedy/politics jokes; if mentioned, acknowledge softly then pivot positive.
-  6) If unsure, say you’re not sure in 1 short line and ask 1 crisp follow-up.
-  7) You may briefly mention YouTube @bongbari or Instagram @thebongbari when relevant.
-
- Keep it tight: quick ≤3 short sentences; deep ≤4 short lines or 2 bullets.`;
-
-      const allowFallback = opts?.allowFallback !== false; // default true
-      if (!ai || !this.model) {
-        // If no AI available
-        return allowFallback ? this.makeFallbackReply(userMessage) : '';
-      }
-  const text = await this.generateText(systemPrompt, { temperature, maxOutputTokens: maxTokens, timeoutMs: 4500 });
-  return text && text.trim().length > 0 ? text : (allowFallback ? this.makeFallbackReply(userMessage) : '');
+      const allowFallback = opts?.allowFallback !== false;
+      const text = await this.generateText(grokMessages, { temperature, maxOutputTokens: maxTokens, timeoutMs: 6500 });
+      return text && text.trim().length > 0 ? text : (allowFallback ? this.makeFallbackReply(userMessage) : '');
     } catch (error) {
       console.error('Chatbot error:', error);
-      // On errors: only fallback if allowed
       return opts?.allowFallback === false ? '' : this.makeFallbackReply(userMessage);
     }
   }
 
   async searchWeb(query: string): Promise<string> {
     try {
-      // Enhanced prompt for web search simulation using Gemini's knowledge
-      const searchPrompt = `
-      You are helping users find information about: "${query}"
-      
-      Based on your training data and knowledge, provide helpful, accurate information about this topic.
-      If this is related to Bengali culture, comedy, or entertainment, provide detailed insights.
-      If it's about Bong Bari specifically, use the context provided earlier.
-      
-      Format your response as if you found relevant information online, but make it clear this is based on your knowledge, not real-time web search.
-      
-      Query: ${query}
-      `;
-
-      if (!ai || !this.model) {
-        return this.makeFallbackReply(query);
-      }
-  const text = await this.generateText(searchPrompt, { temperature: 0.8, maxOutputTokens: 400 });
-  return text && text.trim().length > 0 ? text : this.makeFallbackReply(query);
+      const messages: ChatMessage[] = [
+        { role: 'system', content: 'You are helping users find information about a topic. Provide helpful, accurate information based on your knowledge. If it is about Bong Bari (Bengali comedy), use that context.' },
+        { role: 'user', content: `Find info about: ${query}` }
+      ];
+      const text = await this.generateText(messages, { temperature: 0.8, maxOutputTokens: 400 });
+      return text && text.trim().length > 0 ? text : this.makeFallbackReply(query);
     } catch (error) {
       console.error('Web search error:', error);
-      // Provide a light fallback instead of an error line
       return this.makeFallbackReply(query);
     }
   }
 
   async getBengaliComedyTips(): Promise<string> {
     try {
-      const prompt = `
-      As Bong Bari's AI assistant, provide 3-4 quick tips about creating authentic Bengali comedy content.
-      Make it practical and actionable for content creators.
-      Respond in a mix of Bengali and English that feels natural.
-      `;
-
-      if (!ai || !this.model) {
-        return this.makeFallbackReply('tips');
-      }
-  const text = await this.generateText(prompt, { temperature: 0.6, maxOutputTokens: 300 });
-  return text && text.trim().length > 0 ? text : this.makeFallbackReply('tips');
+      const messages: ChatMessage[] = [
+        { role: 'system', content: 'You are Bong Bari\'s AI assistant.' },
+        { role: 'user', content: 'Provide 3-4 quick tips about creating authentic Bengali comedy content. Natural mix of Bengali/English.' }
+      ];
+      const text = await this.generateText(messages, { temperature: 0.6, maxOutputTokens: 300 });
+      return text && text.trim().length > 0 ? text : this.makeFallbackReply('tips');
     } catch (error) {
       console.error('Tips generation error:', error);
-      // Use graceful local fallback instead of surfacing an error message
       return this.makeFallbackReply('tips');
     }
   }
 
-  // 🎯 NEW: Use database training data for intelligent responses
   private async getTrainedResponse(userMessage: string): Promise<string | null> {
     try {
       const keywords = this.extractKeywords(userMessage.toLowerCase());
-      
-      // Search for trained responses with different strategies
       for (const keyword of keywords) {
         let trainingData = [] as ChatbotTraining[];
         if (typeof storage.searchChatbotTraining === 'function') {
-          trainingData = await storage.searchChatbotTraining(keyword);
+          trainingData = await (storage as any).searchChatbotTraining(keyword);
         } else {
-          // Fallback: fetch all and filter in memory
           const all = await storage.getAllChatbotTraining();
           trainingData = all.filter(d => d.keyword.toLowerCase().includes(keyword));
         }
@@ -504,39 +378,32 @@ ${trendLines}
             data.keyword.toLowerCase() === keyword ||
             userMessage.toLowerCase().includes(data.keyword.toLowerCase())
           ) || trainingData[0];
-          console.log(`🎯 Found trained response for keyword: "${keyword}"`);
           return bestMatch.botResponse;
         }
       }
-      
-      return null; // No trained response found, use AI
+      return null;
     } catch (error) {
       console.error('Error getting trained response:', error);
-      return null; // Fallback to AI on error
+      return null;
     }
   }
 
-  // Extract meaningful keywords from user message
   private extractKeywords(message: string): string[] {
-    // Remove common words and extract meaningful terms
     const commonWords = ['ami', 'tumi', 'ki', 'kemon', 'what', 'how', 'is', 'are', 'the', 'a', 'an', 'and', 'or', 'but'];
     const words = message
       .toLowerCase()
-      .replace(/[^\w\s\u0980-\u09ff]/g, '') // Keep alphanumeric and Bengali characters
+      .replace(/[^\w\s\u0980-\u09ff]/g, '')
       .split(/\s+/)
       .filter(word => word.length > 2 && !commonWords.includes(word));
-    
-    // Return unique keywords, prioritizing longer ones
-  const unique = Array.from(new Set(words));
-  return unique.sort((a, b) => b.length - a.length);
+    const unique = Array.from(new Set(words));
+    return unique.sort((a, b) => b.length - a.length);
   }
 
-  // 📝 Get greeting templates from database
   async getGreetingTemplates(): Promise<string[]> {
     try {
       let templates: ChatbotTemplate[];
-      if (typeof storage.getChatbotTemplatesByType === 'function') {
-        templates = await storage.getChatbotTemplatesByType('greeting');
+      if (typeof (storage as any).getChatbotTemplatesByType === 'function') {
+        templates = await (storage as any).getChatbotTemplatesByType('greeting');
       } else {
         templates = (await storage.getAllChatbotTemplates()).filter(t => (t as any).templateType === 'greeting');
       }
@@ -547,12 +414,11 @@ ${trendLines}
     }
   }
 
-  // 🚀 Get quick reply templates from database
   async getQuickReplyTemplates(): Promise<string[]> {
     try {
       let templates: ChatbotTemplate[];
-      if (typeof storage.getChatbotTemplatesByType === 'function') {
-        templates = await storage.getChatbotTemplatesByType('quick_reply');
+      if (typeof (storage as any).getChatbotTemplatesByType === 'function') {
+        templates = await (storage as any).getChatbotTemplatesByType('quick_reply');
       } else {
         templates = (await storage.getAllChatbotTemplates()).filter(t => (t as any).templateType === 'quick_reply');
       }

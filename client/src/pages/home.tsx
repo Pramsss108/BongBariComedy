@@ -230,7 +230,7 @@ const Home = () => {
               )}
             </div>
 
-            {/* 3. Subtitles & CTAs - PREMIUM MAKEOVER */}
+            {/* 3. Subtitles & CTAs - CYBER-BONG RESTGORED */}
             <motion.div
               className="flex flex-col items-center gap-6 px-4 w-full max-w-sm mx-auto mt-6"
               initial={{ opacity: 0, y: 20 }}
@@ -238,28 +238,25 @@ const Home = () => {
               transition={{ duration: 0.6, delay: 0.4 }}
             >
               <div className="text-center space-y-2">
-                <p className="text-gray-100 font-medium tracking-normal drop-shadow-sm">
+                <p className="text-zinc-200 font-medium tracking-normal drop-shadow-sm leading-relaxed" style={{ fontSize: '1.25rem' }}>
                   Authentic Bengali Family Comedy
                 </p>
-                <p className="bangla-text text-white font-semibold drop-shadow-md">
+                <p className="bangla-text text-zinc-400 font-medium drop-shadow-sm leading-relaxed" style={{ fontSize: '1.25rem' }}>
                   ঘরোয়া পরিবেশের মজার গল্প
                 </p>
               </div>
 
               <div className="flex flex-col gap-3 w-full items-center">
-                {/* Premium "Bong Kahini" Button - Deep Gloss Red */}
-                <Button
+                {/* Bong Kahini - Default Brand Red Button */}
+                 <Button
                   onClick={() => setLocation('/tools')}
-                  className="w-full bg-gradient-to-b from-red-500 to-red-700 hover:from-red-400 hover:to-red-600 text-white border-t border-white/20 shadow-xl transition-all active:scale-95 relative overflow-hidden group"
+                  className="w-full bg-brand-red hover:bg-[#ff4f5e] text-white py-6 text-lg font-bold shadow-lg transition-transform active:scale-95"
                 >
-                  <span className="relative z-10 flex items-center justify-center gap-2">
-                    <Sparkles className="w-5 h-5 text-yellow-300" />
-                    BONG KAHINI
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <Sparkles className="w-5 h-5 mr-2 text-yellow-300" />
+                    Bong Kahini
                 </Button>
 
-                {/* Premium "Subscribe" Button - Deep Gloss White */}
+                {/* Subscribe - Default Brand Outline Button */}
                 <Button
                   onClick={() => {
                     const subscribeUrl = channelId
@@ -267,10 +264,10 @@ const Home = () => {
                       : `https://www.youtube.com/@BongBari?sub_confirmation=1`;
                     window.open(subscribeUrl, '_blank', 'noopener,noreferrer');
                   }}
-                  className="w-full bg-white text-slate-900 border-b-4 border-slate-200 hover:border-slate-300 shadow-xl transition-all active:translate-y-[2px] active:border-b-0"
+                  className="w-full bg-transparent hover:bg-white/10 text-brand-blue border-2 border-brand-blue py-6 text-lg font-bold shadow-lg transition-transform active:scale-95"
                 >
-                   <Youtube className="w-5 h-5 text-red-600 fill-current mr-2" />
-                   SUBSCRIBE
+                   <Youtube className="w-5 h-5 fill-current mr-2" />
+                   Subscribe
                 </Button>
               </div>
             </motion.div >

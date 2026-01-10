@@ -132,15 +132,23 @@
 
   /* Text Contrast Fix & Typography Compliance */
   .hero-section h1 {
-    text-shadow: 0 4px 12px rgba(0,0,0,0.5) !important; /* Softer shadow */
-    font-size: 36px !important; 
+    /* "Neon" Gradient Text per Cyber-Bong System */
+    background: linear-gradient(to right, #60a5fa, #c084fc) !important; /* Blue to Purple */
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    color: transparent !important;
+    text-shadow: none !important; /* Gradient handles pop */
+    font-size: 32px !important; 
     font-weight: 800 !important;
-    line-height: 1.1 !important;
+    line-height: 1.2 !important;
     margin-bottom: 0.75rem !important;
+    display: inline-block !important; /* Required for clip */
+    padding-bottom: 4px !important; /* allow descenders */
   }
   
   .hero-section p {
-    text-shadow: 0 1px 3px rgba(0,0,0,0.8) !important; /* Crisp shadow */
+    color: #e2e8f0 !important; /* Slate-200 (Off-white) */
+    text-shadow: none !important;
     font-size: 16px !important; 
     line-height: 1.5 !important;
     opacity: 1 !important;
@@ -153,6 +161,7 @@
     line-height: 1.8 !important; /* Extra breathing room for script */
     font-size: 17px !important;
     margin-top: 8px !important;
+    color: #94a3b8 !important; /* Slate-400 for contrast hierarchy */
   }
 
   /* HEADINGS SIZE FIX - Prevent "Small" titles */
@@ -170,19 +179,61 @@
     color: #1e293b !important; /* Dark Slate for headers against light bg */
   }
   
-  /* Mobile CTA Buttons - Premium Polish */
+  /* Mobile CTA Buttons - Brand Gradient Restore */
   .hero-section button {
     width: 100% !important;
     max-width: 320px !important;
-    border-radius: 20px !important; /* Softer Curve (Apple style) */
-    padding: 18px 24px !important;
-    font-size: 16px !important;
+    border-radius: 9999px !important; /* Full pills per Cyber-Bong */
+    padding: 16px 24px !important;
+    font-size: 18px !important;
     font-weight: 700 !important;
     letter-spacing: 0.5px !important;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 10px 15px -3px rgba(0,0,0,0.1) !important; /* Deep "Float" shadow */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
     margin-bottom: 16px !important;
     flex: none !important; 
-    text-transform: uppercase !important;
+    text-transform: none !important;
+    /* Reset premium 3D effects to standard brand look */
+    border: none !important;
+  }
+  
+  /* Collaboration Form - Glassmorphic Integration ("No White Form") */
+  [data-testid="collaboration-form"] {
+    display: block !important;
+    background: rgba(15, 23, 42, 0.6) !important; /* Slate-900 60% opacity */
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important; /* Thin glass border */
+    padding: 1.5rem !important;
+    border-radius: 24px !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.36) !important;
+    position: relative !important;
+    z-index: 20 !important;
+    margin-bottom: 120px !important;
+  }
+  
+  form label {
+    color: #e2e8f0 !important; /* Slate-200 label */
+    font-weight: 600 !important;
+    text-transform: none !important; /* Normal case */
+    letter-spacing: normal !important;
+  }
+  
+  input, select, textarea {
+    background: rgba(0, 0, 0, 0.4) !important; /* Dark inputs */
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: #fff !important; /* White text input */
+  }
+  
+  /* Latest Comedy Title Readability - Gradient H2 */
+  [data-testid="latest-videos-header"] h2,
+  h2.text-2xl {
+    background: linear-gradient(to right, #3b82f6, #06b6d4) !important; /* Blue to Cyan */
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    color: transparent !important;
+    font-size: 28px !important;
+    font-weight: 800 !important;
+    text-shadow: none !important;
   }
 
   h3, .text-xl {

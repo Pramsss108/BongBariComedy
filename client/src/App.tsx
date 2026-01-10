@@ -262,15 +262,17 @@ function Router() {
           </Route>
         </Switch>
 
-        {/* Professional Bong Bot - Available on all pages */}
+        {/* Professional Bong Bot - Triggered via Header on Mobile */}
         <BongBot onOpenChange={setIsChatbotOpen} />
 
-        {/* Floating FAQ Button - Available on all pages */}
-        <FloatingFAQButton />
+        {/* Floating FAQ Button - REMOVED per cleanup request */}
+        {/* <FloatingFAQButton /> */}
         
-        {/* Production Debug overlay (Hidden triggers only) */}
+        {/* Mobile Navigation Dock - Hidden for clean "App" look */}
+        {/* <MobileNavBar /> */}
+        
+        {/* Production Debug overlay - Available via Console/Hidden Trigger */}
         <DebugOverlay />
-
       </div>
     </>
   );

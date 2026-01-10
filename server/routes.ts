@@ -11,7 +11,8 @@ import {
   registerCommunityRoutes,
   registerAiRoutes,
   registerCmsRoutes,
-  registerSystemRoutes
+  registerSystemRoutes,
+  registerDebugRoutes
 } from "./routes/index";
 
 /**
@@ -67,6 +68,10 @@ export const validateCSRF = (req: any, res: any, next: any) => {
  * Register all application routes.
  */
 export async function registerRoutes(app: Express): Promise<Server> {
+  // --- Debug Routes (For AI Agents) ---
+  const debugRouter = registerDebugRoutes();
+  app.use("/api/debug", debugRouter);
+
   // --- Infrastructure Setup ---
   interface DeviceLogEvent { ts: number; deviceId: string; ip: string | undefined; action: string; meta?: any; }
   const deviceLogs: DeviceLogEvent[] = [];

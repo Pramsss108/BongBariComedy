@@ -1,6 +1,16 @@
 /* Mobile-only overrides: keep desktop unchanged. */
 @media (max-width: 768px) {
   /* ==================================================
+   Safe Area Enforcements (Notch/Home Bar Protection)
+   ================================================== */
+  body {
+    padding-top: env(safe-area-inset-top) !important;
+    padding-left: env(safe-area-inset-left) !important;
+    padding-right: env(safe-area-inset-right) !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
+  }
+
+  /* ==================================================
    Base typography compression
    ================================================== */
   html {
@@ -20,9 +30,30 @@
   h1 { line-height: 1.2 !important; }
   h2, h3, h4 { line-height: 1.25 !important; }
   p { line-height: 1.5 !important; }
-  img, video, iframe {
+  
+  /* Fix Image aspect ratios on mobile - allow absolute positioning to work */
+  img:not(.absolute), 
+  video:not(.absolute), 
+  iframe:not(.absolute) {
     max-width: 100% !important;
     height: auto !important;
+  }
+  
+  /* Allow absolute images (like thumbnails) to fill their parents */
+  img.absolute,
+  iframe.absolute {
+    height: 100% !important;
+    width: 100% !important;
+    object-fit: cover !important;
+  }
+  
+  /* Force aspect-video to actually work on mobile (16/9) */
+  .aspect-video {
+    aspect-ratio: 16 / 9 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 56.25vw !important; /* Fallback: Force vertical height based on viewport width */
+    display: block !important;
   }
 
   /* ==================================================
@@ -31,6 +62,13 @@
   [data-testid="main-navigation"] {
     min-height: 56px !important; /* ensure <=64px total */
     padding: 0.5rem 0 !important;
+    /* Ensure header respects notch */
+    padding-top: max(0.5rem, env(safe-area-inset-top)) !important; 
+  }
+  
+  /* Fixed Bottom Nav (Glass Dock) Safe Area */
+  nav.fixed.bottom-6 {
+    bottom: max(1.5rem, env(safe-area-inset-bottom)) !important;
   }
   [data-testid="main-navigation"] .container {
     padding-left: 0.75rem !important;
@@ -55,13 +93,36 @@
    Hero & video scaling
    ================================================== */
   .hero-section { 
-    padding-top: 0.75rem !important; 
+    /* Push content down to center video more/clear header */
+    padding-top: 50vw !important; /* Dynamic padding based on width to force aspect ratio gap */
+    min-height: 90vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
   }
-  .hero-section h1 {
-    font-size: 1.75rem !important;
-    line-height: 1.25 !important;
-    margin-bottom: 0.5rem !important;
+  
+  /* Ensure Hero Video is prominent but not too tall */
+  .aspect-video {
+    width: 100% !important;
+    max-height: 50vh !important;
+    min-height: 300px !important;
+    object-fit: cover !important;
+    margin: 0 auto !important;
   }
+
+  /* Force hide floating FAQ but KEEP Mobile Nav for Glass Pill */
+  .floating-faq-button {
+    display: none !important;
+  }
+
+  /* Text Contrast Fix */
+  .hero-section h1, .hero-section p, .hero-section span {
+    text-shadow: 0 2px 10px rgba(0,0,0,0.8) !important;
+    color: #fff !important;
+    position: relative;
+    z-index: 20;
+  }
+
   .hero-section p {
     font-size: 0.95rem !important;
   }
@@ -95,13 +156,57 @@
    ================================================== */
   input, select, textarea {
     font-size: 16px !important; /* avoid iOS zoom */
-    min-height: 44px !important;
-    padding: 12px 14px !important;
+    min-height: 48px !important;
+    padding: 12px 16px !important;
     width: 100% !important;
+    background: rgba(255, 255, 255, 1) !important;
+    border: 1px solid #ddd !important;
+    border-radius: 12px !important;
+    color: #000 !important;
+    margin-bottom: 0.5rem !important;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02) !important;
   }
-  button, .button, [role="button"], .magnetic-button {
-    min-height: 44px !important;
-    padding: 0.75rem 1rem !important;
+  
+  /* Fix phone input flex layout */
+  [data-testid="input-phone"] {
+    width: auto !important; 
+    flex: 1 !important;
+    margin-bottom: 0 !important;
+  }
+  
+  [data-testid="select-country-code"] {
+    min-height: 48px !important;
+    border-radius: 12px !important;
+    background: #f8fafc !important;
+  }
+
+  form label {
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    margin-bottom: 6px !important;
+    display: block !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  button[type="submit"] {
+    width: 100% !important;
+    border-radius: 9999px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    padding: 18px !important;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+    color: white !important;
+    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3) !important;
+  }
+  
+  [data-testid="collaboration-form"] {
+    background: #fff !important;
+    padding: 1.5rem !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06) !important;
   }
 
   /* ==================================================
@@ -116,11 +221,17 @@
   .card { margin: 0.5rem !important; }
 
   /* ANTIGRAVITY GRID PROTECTION: Force 2-3 columns on mobile for Main Home Grids */
-  /* [data-testid="latest-videos-grid"],
+  [data-testid="latest-videos-grid"],
   [data-testid="loved-videos-grid"] {
-    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)) !important;
-    gap: 0.5rem !important;
-  } */
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+  
+  /* Fix card sizes in grid */
+  [data-testid="latest-videos-grid"] > div,
+  [data-testid="loved-videos-grid"] > div {
+    min-height: 200px !important;
+  }
 
   /* ==================================================
    Footer stack

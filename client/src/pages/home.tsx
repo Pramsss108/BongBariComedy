@@ -134,14 +134,18 @@ const Home = () => {
   });
 
   /* --- MISSING VARS MAPPING (Batch Fix) --- */
-  const latestMemes = []; // Fallback for unused meme section
+  const latestMemes: any[] = []; // Fallback for unused meme section
   const { isValid: isFormValid } = form.formState;
   const hasPhone = !!form.watch("phone");
   const hasEmail = !!form.watch("email");
 
   const collaborationMutation = useMutation({
     mutationFn: async (data: CollaborationRequest) => {
-      await apiRequest("POST", "/api/collaboration", data);
+      await apiRequest("/api/collaboration", {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" }
+      });
     },
     onSuccess: () => {
       toast({ title: "Message Sent!", description: "We will reach out to you soon." });
@@ -164,7 +168,7 @@ const Home = () => {
     <>
       <SEOHead title="Bong Bari Comedy | Home" description="Authentic Bengali Family Comedy" />
 
-      {/* Mobile Sticky Nav */}
+      {/* Mobile Sticky Nav - Glass Pill Restored */}
       <MobileNavBar />
 
       <div className="min-h-screen bg-black relative selection:bg-brand-yellow selection:text-black font-sans overflow-x-hidden pb-32 sm:pb-0">
@@ -188,7 +192,7 @@ const Home = () => {
               {!enteredSite ? (
                 <>
                   <img
-                    src={`https://i.ytimg.com/vi/${landscapeId}/maxresdefault.jpg`}
+                    src={`https://i.ytimg.com/vi/${landscapeId}/hqdefault.jpg`}
                     alt="Featured Comedy"
                     className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
                   />
@@ -292,7 +296,7 @@ const Home = () => {
                     return (
                       <div
                         key={video.videoId + i}
-                        className={`transition-opacity duration-300 hover:opacity-90 ${i >= 2 ? 'hidden sm:block' : ''}`}
+                        className={`transition-opacity duration-300 hover:opacity-90`}
                       >
                         <YouTubeShort
                           videoId={video.videoId}
@@ -341,7 +345,7 @@ const Home = () => {
                     return (
                       <div
                         key={video.videoId + i}
-                        className={`transition-opacity duration-300 hover:opacity-90 ${i >= 2 ? 'hidden sm:block' : ''}`}
+                        className={`transition-opacity duration-300 hover:opacity-90`}
                       >
                         <YouTubeShort
                           videoId={video.videoId}
@@ -609,15 +613,6 @@ const Home = () => {
           </div>
         </div>
       </footer>
-
-      {/* DEBUG OVERLAY */}
-      <div className="fixed bottom-0 left-0 w-full bg-black/90 text-green-400 p-2 text-[10px] font-mono border-t border-green-900 z-[9999] opacity-90 pointer-events-none">
-        <div className="flex justify-between items-center max-w-7xl mx-auto">
-          <span>DATA: L{latestVideoData.length} | P{popularVideoData.length} | F{fallbackVideoData.length}</span>
-          <span>GRID: 6-ITEM FIXED</span>
-          <span>STATUS: {isLoadingLatest ? 'LOADING...' : 'READY'}</span>
-        </div>
-      </div>
     </>
   );
 };

@@ -91,17 +91,18 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
+
+  useEffect(() => {
+    // Listen for custom toggle event from Header
+    const handleToggle = () => setIsOpen(prev => !prev);
+    window.addEventListener('toggle-chatbot', handleToggle);
+    return () => window.removeEventListener('toggle-chatbot', handleToggle);
+  }, []);
+
   if (!isOpen) {
-    return (
-      <motion.button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 w-14 h-14 bg-gradient-to-br from-blue-600 to-red-600 rounded-full flex items-center justify-center text-white shadow-2xl z-50 border border-white/20"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-      >
-        <MessageCircle size={24} />
-      </motion.button>
-    );
+    // Hide default floating button on mobile - Triggered via Header now
+    // Keep it for desktop or specific scenarios if needed, currently hiding to match request "remove every floating"
+    return null; 
   }
 
   return (

@@ -62,8 +62,9 @@ const Navigation = () => {
             : "border-b border-transparent"
           }`}
         style={{
-          background: (scrolled || isMobileMenuOpen) ? "var(--glass-bg)" : "transparent",
-          backdropFilter: (scrolled || isMobileMenuOpen) ? "var(--glass-blur)" : "none",
+          // Always show glass on mobile for visibility, transparent-to-glass on desktop
+          background: (scrolled || isMobileMenuOpen || window.innerWidth < 768) ? "var(--glass-bg)" : "transparent",
+          backdropFilter: (scrolled || isMobileMenuOpen || window.innerWidth < 768) ? "var(--glass-blur)" : "none",
           height: "var(--header-height, 70px)"
         }}
         initial={{ y: -100 }}
@@ -71,24 +72,44 @@ const Navigation = () => {
         transition={{ duration: 0.6, ease: "circOut" }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
+          
+          {/* Mobile Glass Gradient Overlay (Extra readability) */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-transparent pointer-events-none md:hidden" />
 
-          {/* --- LEFT: LOGO CLUSTER --- */}
-          <Link href="/" className="flex items-center gap-3 group cursor-pointer z-50">
-            <motion.div
-              whileHover={{ rotate: 10, scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className="relative"
+          {/* --- LEFT: LOGO CLUSTER (Clean Design) --- */}
+          <Link href="/" className="relative z-50">
+            <motion.div 
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-2 sm:gap-3"
             >
-              <div className="absolute inset-0 bg-brand-yellow blur-md opacity-40 rounded-full group-hover:opacity-70 transition-opacity" />
-              <img src="/logo.png" alt="Bong Bari" className="relative w-10 h-10 rounded-xl shadow-2xl object-cover" />
-            </motion.div>
+              <motion.div
+                whileHover={{ rotate: 10, scale: 1.1 }}
+                className="relative"
+              >
+                <div className="absolute inset-0 bg-brand-yellow blur-md opacity-40 rounded-full hover:opacity-70 transition-opacity" />
+                <img src="/logo.png" alt="Bong Bari" className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-xl shadow-2xl object-cover" />
+              </motion.div>
 
-            <div className="flex flex-col leading-none">
-              <span className="font-bengali text-2xl font-bold text-white tracking-wide drop-shadow-md group-hover:text-brand-yellow transition-colors">
-                বং বাড়ি
-              </span>
-            </div>
+              <div className="flex flex-col leading-none">
+                <span className="font-bengali text-xl sm:text-2xl font-bold text-white tracking-wide drop-shadow-md">
+                  বং বাড়ি
+                </span>
+              </div>
+            </motion.div>
           </Link>
+
+          {/* --- RIGHT: MOBILE HEADER ACTIONS (BongBot + Menu) --- */}
+          <div className="flex md:hidden items-center gap-3 z-50 ml-auto mr-0">
+             {/* Bong Bot Trigger (Right Side) */}
+             <motion.button 
+                whileTap={{ scale: 0.9 }}
+                onClick={() => window.dispatchEvent(new Event('toggle-chatbot'))}
+                className="flex items-center gap-2 bg-gradient-to-r from-purple-600/80 to-blue-600/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 shadow-[0_0_15px_rgba(124,58,237,0.3)]"
+             >
+                <Sparkles className="text-white w-4 h-4 animate-pulse" />
+                <span className="text-xs font-bold text-white tracking-wide">AI Bot</span>
+             </motion.button>
+          </div>
 
           {/* --- CENTER: DESKTOP NAV (Pills) --- */}
           <nav className="hidden md:flex items-center gap-1 bg-black/20 backdrop-blur-md px-2 py-1.5 rounded-full border border-white/5">
@@ -145,11 +166,11 @@ const Navigation = () => {
               </Link>
             )}
 
-            {/* Mobile Menu Toggle (Rockstar Hamburger) */}
+            {/* Mobile Menu Toggle (Rockstar Hamburger) - HIDDEN ON MOBILE NOW (Moved to bottom dock) */}
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden text-white p-2 bg-white/10 rounded-full backdrop-blur-md border border-white/10"
+              className="hidden md:hidden text-white p-2 bg-white/10 rounded-full backdrop-blur-md border border-white/10"
             >
               {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </motion.button>
@@ -157,9 +178,9 @@ const Navigation = () => {
         </div>
       </motion.header>
 
-      {/* --- CINEMATIC MOBILE MENU OVERLAY --- */}
+      {/* --- CINEMATIC MOBILE MENU OVERLAY - DISABLED ON MOBILE (Use Bottom Dock) --- */}
       <AnimatePresence>
-        {isMobileMenuOpen && (
+        {false && isMobileMenuOpen && (
           <motion.div
             initial={{ opacity: 0, y: "-100%" }}
             animate={{ opacity: 1, y: 0 }}

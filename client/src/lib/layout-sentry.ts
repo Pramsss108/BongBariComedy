@@ -68,13 +68,59 @@ export function runLayoutAudit(): LayoutIssue[] {
         // console.warn('Small touch target:', el); 
       }
     }
+
+    // 4. Check for Broken Images
+    if (el.tagName === 'IMG') {
+        const img = el as HTMLImageElement;
+        // Check if image has src but has 0 natural dimension after loading
+        if (img.src && img.complete && img.naturalWidth === 0) {
+            issues.push({
+                type: 'broken-image',
+                element: `img[src="${img.src.substring(0, 30)}..."]`,
+                details: `Image failed to load (0x0px)`
+            });
+        }
+    }
   });
+
+  // Prepare Context
+  const isPortrait = window.innerHeight > window.innerWidth;
+  const deviceType = window.innerWidth < 768 ? 'Mobile' : window.innerWidth < 1024 ? 'Tablet' : 'Desktop';
+  const context = {
+      userAgent: navigator.userAgent,
+      orientation: isPortrait ? 'Portrait' : 'Landscape',
+      deviceType: deviceType,
+      platform: navigator.platform
+  };
 
   if (issues.length === 0) {
     console.log("✅ Layout Audit Passed: No critical issues found.");
+    // Send "Pass" report so agent knows it was run
+    fetch('/api/debug/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            issues: [],
+            url: window.location.href,
+            viewport: { width: window.innerWidth, height: window.innerHeight },
+            context
+        })
+    }).catch(err => console.error("Failed to send logs:", err));
   } else {
     console.error(`❌ Layout Audit Failed: Found ${issues.length} issues.`);
     console.table(issues);
+
+    // Send to Backend for AI Agent Inspection
+    fetch('/api/debug/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            issues,
+            url: window.location.href,
+            viewport: { width: window.innerWidth, height: window.innerHeight },
+            context
+        })
+    }).catch(err => console.error("Failed to send logs to agent:", err));
   }
 
   return issues;

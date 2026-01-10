@@ -141,6 +141,7 @@ export default defineConfig({
   },
   
   server: {
+    host: true, // Allow network access (for mobile testing)
     fs: {
       strict: true,
       deny: ["**/.*"],

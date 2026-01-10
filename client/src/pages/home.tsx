@@ -17,7 +17,7 @@ import MobileNavBar from "@/components/mobile-navbar";
 import SEOHead from "@/components/seo-head";
 // Removed PromoMarquee (promo API disabled)
 // Parallax removed for performance
-import { Youtube, Instagram, Phone, Mail, Twitter, Send, Home as HomeIcon, Users, TrendingUp, Smile, Edit3, Volume2, VolumeX, Play } from "lucide-react";
+import { Youtube, Instagram, Phone, Mail, Twitter, Send, Home as HomeIcon, Users, TrendingUp, Smile, Edit3, Volume2, VolumeX, Play, Sparkles } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { insertCollaborationRequestSchema, type CollaborationRequest } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
@@ -230,30 +230,37 @@ const Home = () => {
               )}
             </div>
 
-            {/* 3. Subtitles & CTAs */}
+            {/* 3. Subtitles & CTAs - PREMIUM MAKEOVER */}
             <motion.div
-              className="flex flex-col items-center gap-6 px-4"
+              className="flex flex-col items-center gap-6 px-4 w-full max-w-md mx-auto"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
             >
-              <div className="text-center space-y-2 opacity-90">
-                <p className="text-gray-300 font-medium" style={{ fontSize: 'var(--text-body)' }}>
+              <div className="text-center space-y-3 opacity-100">
+                <p className="text-white font-medium tracking-wide drop-shadow-md leading-relaxed" style={{ fontSize: '1.125rem' }}>
                   Experience authentic Bengali family comedy that feels like home
                 </p>
-                <p className="text-gray-300 bangla-text font-medium" style={{ fontSize: 'var(--text-body)' }}>
+                <p className="text-gray-200 bangla-text font-medium tracking-wide drop-shadow-sm leading-relaxed" style={{ fontSize: '1.125rem' }}>
                   ঘরোয়া পরিবেশের মজার গল্প যা আপনার নিজের বাড়ির মতোই লাগবে
                 </p>
               </div>
 
-              <div className="flex flex-wrap justify-center gap-4">
+              <div className="flex flex-col sm:flex-row gap-4 w-full">
+                {/* Premium "Bong Kahini" Button - Gradient + Glow */}
                 <Button
                   onClick={() => setLocation('/tools')}
-                  className="bg-brand-red hover:bg-[#D93D3D] text-white rounded-full px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-red-500/30 hover:scale-105 transition-all"
+                  className="relative overflow-hidden w-full bg-gradient-to-r from-rose-600 via-red-500 to-orange-500 hover:from-rose-500 hover:to-orange-400 text-white rounded-full py-6 text-lg font-bold tracking-wider shadow-[0_0_25px_rgba(225,29,72,0.4)] hover:shadow-[0_0_35px_rgba(225,29,72,0.6)] border border-white/20 transition-all duration-300 transform hover:scale-[1.02] active:scale-95 group"
                 >
-                  Bong Kahini <span className="ml-2 text-white/80 text-sm font-normal hidden sm:inline">Free AI</span>
+                  <span className="relative z-10 flex items-center justify-center gap-2">
+                    <Sparkles className="w-5 h-5 animate-pulse text-yellow-200" />
+                    BONG KAHINI
+                  </span>
+                  {/* Sheen Effect */}
+                  <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12" />
                 </Button>
 
+                {/* Premium "Subscribe" Button - Glass/Metal Look */}
                 <Button
                   onClick={() => {
                     const subscribeUrl = channelId
@@ -261,9 +268,10 @@ const Home = () => {
                       : `https://www.youtube.com/@BongBari?sub_confirmation=1`;
                     window.open(subscribeUrl, '_blank', 'noopener,noreferrer');
                   }}
-                  className="bg-white text-brand-blue hover:bg-gray-50 border border-brand-blue/20 rounded-full px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-brand-blue/10 hover:scale-105 transition-all"
+                  className="w-full bg-white hover:bg-zinc-50 text-slate-900 border-2 border-slate-200 rounded-full py-6 text-lg font-bold tracking-wider shadow-[0_8px_16px_rgba(0,0,0,0.1)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.15)] transition-all duration-300 transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
                 >
-                  Subscribe
+                   <Youtube className="w-6 h-6 text-red-600 fill-current" />
+                   SUBSCRIBE
                 </Button>
               </div>
             </motion.div >

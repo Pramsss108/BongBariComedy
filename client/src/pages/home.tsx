@@ -187,15 +187,15 @@ const Home = () => {
         <main className="relative z-10 w-full flex flex-col items-center">
 
           {/* HERO SECTION - Responsive Breakpoints (Mobile First vs Desktop) */}
-          {/* Mobile: Top Padding 16 (pt-16) to show button above fold */}
+          {/* Mobile: Top Padding Reduced (pt-4) to fit everything above fold */}
           {/* Desktop: Top Padding 24 (md:pt-24) for spacious look */}
-          <div className="relative w-full flex flex-col items-center justify-start pt-16 md:pt-24 pb-12 px-0 sm:px-4 hero-section">
+          <div className="relative w-full flex flex-col items-center justify-start pt-2 md:pt-24 pb-8 md:pb-12 px-0 sm:px-4 hero-section min-h-[85vh] md:min-h-0">
 
             {/* 2. Video Container - Responsive Sizing */}
             {/* Mobile: Full Width + Aspect Video */}
-            {/* Desktop: Max-width 4xl (to prevent "Crushed" look) + margins */}
+            {/* Desktop: Max-width 4xl + margins */}
             <div
-              className="relative w-full md:max-w-4xl lg:max-w-5xl aspect-video rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl z-10 bg-black group mb-6 md:mb-10 cursor-pointer border border-white/10 ring-1 ring-white/5 mx-auto"
+              className="relative w-full md:max-w-4xl lg:max-w-5xl aspect-video rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl z-10 bg-black group mb-3 md:mb-10 cursor-pointer border border-white/10 ring-1 ring-white/5 mx-auto"
               style={{ boxShadow: '0 0 50px -12px rgba(0,0,0,0.5)' }} /* Deep Ambient Shadow */
               onClick={() => setEnteredSite(true)}
             >

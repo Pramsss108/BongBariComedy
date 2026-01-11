@@ -142,6 +142,11 @@ export default defineConfig({
   
   server: {
     host: true, // Allow network access (for mobile testing)
+    watch: {
+        // Windows WSL/File system watcher fix
+        usePolling: true,
+        interval: 100,
+    },
     fs: {
       strict: true,
       deny: ["**/.*"],

@@ -150,12 +150,13 @@
     margin: 0 auto !important;
   }
   
-  /* BANGLA TEXT FIX - Needs height to breathe */
+  /* BANGLA TEXT FIX */
   .hero-section p.bangla-text {
-    line-height: 1.8 !important; /* Extra breathing room for script */
-    font-size: 17px !important;
-    margin-top: 8px !important;
-    color: #334155 !important; /* Slate-700 High Contrast */
+    line-height: 1.4 !important;
+    font-size: 15px !important;
+    margin-top: 4px !important;
+    margin-bottom: 8px !important;
+    color: #94a3b8 !important; /* Lighter slate for contrast on dark bg */
   }
 
   /* HEADINGS SIZE FIX - Prevent "Small" titles */
@@ -173,21 +174,19 @@
     color: #1e293b !important; /* Dark Slate for headers against light bg */
   }
   
-  /* Mobile CTA Buttons - Brand Gradient Restore */
+  /* Mobile CTA Buttons - Simplified Layout */
   .hero-section button {
-    width: 100% !important;
-    max-width: 320px !important;
-    border-radius: 9999px !important; /* Full pills per Cyber-Bong */
-    padding: 16px 24px !important;
-    font-size: 18px !important;
-    font-weight: 700 !important;
-    letter-spacing: 0.5px !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
-    margin-bottom: 16px !important;
-    flex: none !important; 
-    text-transform: none !important;
-    /* Reset premium 3D effects to standard brand look */
-    border: none !important;
+    /* Remove the forced width/max-width from previous overrides */
+    width: auto !important; 
+    max-width: none !important;
+    margin-bottom: 0 !important; /* Managed by container gap */
+    
+    /* Ensure text doesn't overflow */
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    overflow: hidden !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
   }
   
   /* Collaboration Form - "Normal" Light/Glass Style */

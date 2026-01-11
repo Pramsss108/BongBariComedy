@@ -17,6 +17,7 @@ import React from "react";
 import { useAuth } from "@/hooks/useAuth";
 import Home from "@/pages/home";
 import Navigation from "@/components/navigation";
+import  MobileNavBar  from "@/components/mobile-navbar";
 import { ensureAudioUnlocked } from "@/lib/audioUnlock";
 import GreetingConsent from "@/components/GreetingConsent";
 import { isAudioUnlocked, resumeAudioNow } from "@/lib/audioUnlock";
@@ -268,8 +269,8 @@ function Router() {
         {/* Floating FAQ Button - REMOVED per cleanup request */}
         {/* <FloatingFAQButton /> */}
         
-        {/* Mobile Navigation Dock - Hidden for clean "App" look */}
-        {/* <MobileNavBar /> */}
+        {/* Mobile Navigation Dock */}
+        <MobileNavBar />
         
         {/* Production Debug overlay - Available via Console/Hidden Trigger */}
         <DebugOverlay />

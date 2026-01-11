@@ -11,7 +11,7 @@ export function DebugOverlay() {
 
   const [isCapturing, setIsCapturing] = useState(false);
 
-  const handleScreenshot = async () => {
+  const handleScreenshot = async (mode: 'viewport' | 'full') => {
     setIsCapturing(true);
     try {
         if (!(window as any).html2canvas) {
@@ -24,7 +24,31 @@ export function DebugOverlay() {
             });
         }
 
-        const canvas = await (window as any).html2canvas(document.body, { useCORS: true });
+        const options: any = { 
+            useCORS: true,
+            scale: window.devicePixelRatio || 1 
+        };
+
+        if (mode === 'viewport') {
+            // Capture only visible area
+            options.x = window.scrollX;
+            options.y = window.scrollY;
+            options.width = window.innerWidth;
+            options.height = window.innerHeight;
+            // Prevent html2canvas from scrolling/expanding
+            options.ignoreElements = (element: Element) => {
+                // Optional: Ignore elements strictly outside viewport if needed for perf
+                return false;
+            };
+        } else {
+            // Full Page - Start from top
+            options.windowWidth = document.documentElement.scrollWidth;
+            options.windowHeight = document.documentElement.scrollHeight;
+            options.scrollX = 0;
+            options.scrollY = -window.scrollY; // Correct usage for full scroll capture
+        }
+
+        const canvas = await (window as any).html2canvas(document.body, options);
         const image = canvas.toDataURL("image/png");
 
         await fetch('/api/debug/screenshot', {
@@ -33,13 +57,14 @@ export function DebugOverlay() {
             body: JSON.stringify({ 
                 image, 
                 context: {
+                    type: mode, // Log which type of SS it was
                     width: window.innerWidth,
                     height: window.innerHeight,
                     ...deviceInfo
                 }
             })
         });
-        alert("📸 Screenshot sent to VS Code!");
+        alert(`📸 ${mode === 'viewport' ? 'Viewport' : 'Full Page'} Screenshot sent to VS Code!`);
     } catch (e) {
         console.error(e);
         alert("Failed to take screenshot: " + e);
@@ -143,11 +168,20 @@ export function DebugOverlay() {
             <span className="font-bold">GHOST GRID</span>
             <div className="flex gap-2">
                 <button 
-                    onClick={handleScreenshot} 
+                    onClick={() => handleScreenshot('viewport')} 
+                    disabled={isCapturing}
+                    className="bg-cyan-900/50 hover:bg-cyan-800 text-white px-2 rounded text-[10px] border border-cyan-500/30"
+                    title="Capture Current View"
+                >
+                    {isCapturing ? '...' : '👁️ VIEW'}
+                </button>
+                <button 
+                    onClick={() => handleScreenshot('full')} 
                     disabled={isCapturing}
                     className="bg-green-900/50 hover:bg-green-800 text-white px-2 rounded text-[10px] border border-green-500/30"
+                    title="Capture Full Page"
                 >
-                    {isCapturing ? 'Saving...' : '📸 SNAP'}
+                    {isCapturing ? '...' : '📜 FULL'}
                 </button>
                 <button 
                     onClick={() => setIsVisible(false)} 

@@ -7,11 +7,16 @@ const MobileNavBar = () => {
     const [location] = useLocation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
+    const toggleButtonRef = useRef<HTMLButtonElement>(null);
 
     // Close menu when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+            if (
+                menuRef.current && 
+                !menuRef.current.contains(event.target as Node) &&
+                (!toggleButtonRef.current || !toggleButtonRef.current.contains(event.target as Node))
+            ) {
                 setIsMenuOpen(false);
             }
         };
@@ -120,6 +125,7 @@ const MobileNavBar = () => {
 
                         {/* MENU TOGGLE BUTTON (Slim) */}
                         <button
+                            ref={toggleButtonRef}
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
                             className="relative flex flex-col items-center justify-center group outline-none w-14"
                         >

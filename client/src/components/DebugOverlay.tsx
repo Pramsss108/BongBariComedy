@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from "@/lib/logger";
 
 /**
  * Ghost Grid - Visual Debugger
@@ -6,10 +7,18 @@ import { useState, useEffect } from "react";
  */
 export function DebugOverlay() {
   const [isVisible, setIsVisible] = useState(false);
+  const [activeTab, setActiveTab] = useState<'info' | 'logs'>('info');
   const [auditStats, setAuditStats] = useState<{ count: number; pass: boolean; issues: any[] } | null>(null);
   const [deviceInfo, setDeviceInfo] = useState<{ type: string; orientation: string; platform: string } | null>(null);
+  const [logs, setLogs] = useState(logger.getLogs());
 
   const [isCapturing, setIsCapturing] = useState(false);
+
+  useEffect(() => {
+    const handleLogUpdate = () => setLogs(logger.getLogs());
+    window.addEventListener('bongbari-log-update', handleLogUpdate);
+    return () => window.removeEventListener('bongbari-log-update', handleLogUpdate);
+  }, []);
 
   const handleScreenshot = async (mode: 'viewport' | 'full') => {
     setIsCapturing(true);
@@ -167,13 +176,27 @@ export function DebugOverlay() {
         <div className="flex justify-between items-center mb-2 border-b border-green-500/30 pb-1">
             <span className="font-bold">GHOST GRID</span>
             <div className="flex gap-2">
+                {/* Tab Switcher */}
+                <button 
+                  onClick={() => setActiveTab('info')}
+                  className={`px-2 rounded text-[10px] ${activeTab==='info' ? 'bg-green-500 text-black' : 'text-green-500'}`}
+                >
+                  INFO
+                </button>
+                <button 
+                  onClick={() => setActiveTab('logs')}
+                  className={`px-2 rounded text-[10px] ${activeTab==='logs' ? 'bg-red-500 text-white' : 'text-red-500'}`}
+                >
+                  LOGS ({logs.length})
+                </button>
+
                 <button 
                     onClick={() => handleScreenshot('viewport')} 
                     disabled={isCapturing}
                     className="bg-cyan-900/50 hover:bg-cyan-800 text-white px-2 rounded text-[10px] border border-cyan-500/30"
                     title="Capture Current View"
                 >
-                    {isCapturing ? '...' : '👁️ VIEW'}
+                    {isCapturing ? '...' : '👁️'}
                 </button>
                 <button 
                     onClick={() => handleScreenshot('full')} 
@@ -181,7 +204,7 @@ export function DebugOverlay() {
                     className="bg-green-900/50 hover:bg-green-800 text-white px-2 rounded text-[10px] border border-green-500/30"
                     title="Capture Full Page"
                 >
-                    {isCapturing ? '...' : '📜 FULL'}
+                    {isCapturing ? '...' : '📜'}
                 </button>
                 <button 
                     onClick={() => setIsVisible(false)} 
@@ -192,46 +215,68 @@ export function DebugOverlay() {
             </div>
         </div>
         
-        <div className="space-y-1">
-            <p>viewport: <span className="text-white">{window.innerWidth}</span>x{window.innerHeight}</p>
-            <p>device: <span className="text-yellow-400">{deviceInfo?.type}</span></p>
-        </div>
+        {activeTab === 'info' ? (
+        <>
+            <div className="space-y-1">
+                <p>viewport: <span className="text-white">{window.innerWidth}</span>x{window.innerHeight}</p>
+                <p>device: <span className="text-yellow-400">{deviceInfo?.type}</span></p>
+            </div>
 
-        <div className="mt-2 pt-2 border-t border-green-500/30">
-            {auditStats ? (
-                <>
-                    {auditStats.pass ? (
-                        <p className="text-green-400 font-bold mb-2">✅ AUDIT: PASS</p>
-                    ) : (
-                        <p className="text-red-400 font-bold mb-2">❌ ISSUES: {auditStats.count}</p>
-                    )}
-                    
-                    {/* On-Screen Logs for Copy/Paste */}
-                    <div className="bg-black/50 p-2 rounded border border-green-500/20 text-[10px] text-gray-300 font-mono select-text cursor-text">
+            <div className="mt-2 pt-2 border-t border-green-500/30">
+                {auditStats ? (
+                    <>
                         {auditStats.pass ? (
-                            <div className="opacity-70">
-                                No layout violations found.<br/>
-                                • Horizontal Overflow: OK<br/>
-                                • Text Legibility: OK<br/>
-                                • Tap Targets: OK
-                            </div>
+                            <p className="text-green-400 font-bold mb-2">✅ AUDIT: PASS</p>
                         ) : (
-                            <ul className="list-disc pl-3 space-y-2">
-                                {auditStats.issues.map((issue, idx) => (
-                                    <li key={idx} className="break-all">
-                                        <span className="text-red-300 font-bold">[{issue.type}]</span> {issue.details}
-                                        <br/>
-                                        <span className="opacity-50 text-[9px]">{issue.element}</span>
-                                    </li>
-                                ))}
-                            </ul>
+                            <p className="text-red-400 font-bold mb-2">❌ ISSUES: {auditStats.count}</p>
                         )}
+                        
+                        {/* On-Screen Logs for Copy/Paste */}
+                        <div className="bg-black/50 p-2 rounded border border-green-500/20 text-[10px] text-gray-300 font-mono select-text cursor-text">
+                            {auditStats.pass ? (
+                                <div className="opacity-70">
+                                    No layout violations found.<br/>
+                                    • Horizontal Overflow: OK<br/>
+                                    • Text Legibility: OK<br/>
+                                    • Tap Targets: OK
+                                </div>
+                            ) : (
+                                <ul className="list-disc pl-3 space-y-2">
+                                    {auditStats.issues.map((issue, idx) => (
+                                        <li key={idx} className="break-all">
+                                            <span className="text-red-300 font-bold">[{issue.type}]</span> {issue.details}
+                                            <br/>
+                                            <span className="opacity-50 text-[9px]">{issue.element}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    </>
+                ) : (
+                    <p className="opacity-50">Running Audit...</p>
+                )}
+            </div>
+        </>
+        ) : (
+            <div className="max-h-64 overflow-auto space-y-2">
+                <div className="flex justify-between">
+                    <span className="text-xs font-bold text-gray-400">System Logs</span>
+                    <button onClick={() => { logger.clear(); setLogs([]); }} className="text-[10px] text-red-400 underline">Clear</button>
+                </div>
+                {logs.length === 0 && <p className="opacity-50 italic">No logs recorded.</p>}
+                {logs.map((log, i) => (
+                    <div key={i} className={`p-1 rounded text-[10px] font-mono border-l-2 ${log.level === 'error' ? 'border-red-500 bg-red-900/20' : 'border-blue-500 bg-blue-900/10'}`}>
+                        <div className="flex justify-between opacity-50 text-[9px]">
+                            <span>{log.timestamp.split('T')[1].split('.')[0]}</span>
+                            <span>{log.source}</span>
+                        </div>
+                        <p className={log.level === 'error' ? 'text-red-300 font-bold' : 'text-gray-300'}>{log.message}</p>
+                        {log.stack && <p className="text-[8px] opacity-50 truncate">{log.stack}</p>}
                     </div>
-                </>
-            ) : (
-                <p className="opacity-50">Running Audit...</p>
-            )}
-        </div>
+                ))}
+            </div>
+        )}
       </div>
     </div>
   );

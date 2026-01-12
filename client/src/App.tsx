@@ -24,6 +24,7 @@ import { isAudioUnlocked, resumeAudioNow } from "@/lib/audioUnlock";
 import BongBot from "@/components/BongBot";
 import FloatingFAQButton from "@/components/FloatingFAQButton";
 import { DebugOverlay } from "@/components/DebugOverlay";
+import { AdvancedErrorBoundary } from "@/components/AdvancedErrorBoundary";
 import "@/lib/layout-sentry"; // Auto-registers window.runLayoutAudit
 
 // Deploy note: trivial comment to force GitHub Pages rebuild (FORCE_PAGES_DEPLOY)
@@ -315,11 +316,13 @@ function GlobalErrorBanner() {
 
 function AppContent() {
   return (
-    <TooltipProvider>
-      <GlobalErrorBanner />
-      <Toaster />
-      <Router />
-    </TooltipProvider>
+    <AdvancedErrorBoundary>
+      <TooltipProvider>
+        <GlobalErrorBanner />
+        <Toaster />
+        <Router />
+      </TooltipProvider>
+    </AdvancedErrorBoundary>
   );
 }
 

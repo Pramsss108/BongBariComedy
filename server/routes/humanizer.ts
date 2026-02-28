@@ -79,71 +79,132 @@ export function registerHumanizerRoutes(app: Express, sessions: Map<string, any>
                 return data.choices?.[0]?.message?.content?.trim() || "";
             }
 
-            console.log(`[Humanizer] Starting 3-Stage Pipeline. Vibe: ${vibe}, Flaw: ${flawLevel}`);
-
-            // ==========================================
-            // PRE-STAGE: Analytics
-            // ==========================================
+            // Word count bounds (calculated first, used throughout the pipeline)
             const wordCount = prompt.trim().split(/\s+/).length;
-            const minWords = Math.max(10, Math.floor(wordCount * 0.85)); // Allow 15% reduction
-            const maxWords = Math.floor(wordCount * 1.15); // Allow 15% expansion
+            const minWords = Math.max(10, Math.floor(wordCount * 0.85));
+            const maxWords = Math.floor(wordCount * 1.15);
 
-            console.log(`[Humanizer] Starting 3-Stage Pipeline. Vibe: ${vibe}, Flaw: ${flawLevel}. Target words: ${minWords}-${maxWords}`);
+            console.log(`[Humanizer v2] Starting Cognitive Simulation Pipeline. Vibe: ${vibe}, Flaw: ${flawLevel}. Target: ${minWords}-${maxWords}w`);
+
+            // ==========================================
+            // STAGE 0: Cognitive Decoder (NEW v2)
+            // Extract tone intent, emphasis, and narrative — not just facts.
+            // This is what stops it from being a "data rewrite" instead of a "thought rewrite".
+            // ==========================================
+            const stage0Messages = [
+                {
+                    role: "system",
+                    content: `You are a meta-analyst. Read the following text and output a JSON object with exactly these three fields:
+- "intent": One of: "persuading", "warning", "explaining", "questioning", "observing". What is the author trying to make the reader feel?
+- "emphasis": The single most important idea or claim in the text (one short sentence, the "load-bearing" point).
+- "narrative": One of: "building_to_conclusion", "opening_a_question", "stating_a_fact", "arguing". What direction is the author pulling the reader?
+
+Output ONLY valid JSON. No markdown, no explanation, no code block.`
+                },
+                { role: "user", content: prompt }
+            ];
+            let cognitive = { intent: "explaining", emphasis: "", narrative: "stating_a_fact" };
+            try {
+                const cogRaw = await callGroq(stage0Messages, 0.1);
+                cognitive = JSON.parse(cogRaw);
+            } catch { /* keep defaults if parse fails */ }
 
             // ==========================================
             // STAGE 1: Semantic Deconstruction
+            // Use cognitive context to tag which bullets are "load-bearing" vs "supporting"
             // ==========================================
             const stage1Messages = [
-                { role: "system", content: "You are an expert semantic analyzer. Extract the core meaning, arguments, and facts from the following text into a condensed bulleted list. Strip away all transitional phrases, complex grammar, and AI-like formatting. Output ONLY the raw facts/points." },
+                {
+                    role: "system",
+                    content: `You are a semantic analyst. Extract facts from the text as bulleted points.
+IMPORTANT: The author's key emphasis is: "${cognitive.emphasis || 'the main point'}"
+Mark the most important bullet with [KEY] prefix. Mark supporting details with [SUP] prefix.
+Output ONLY the bulleted list. No explanations.`
+                },
                 { role: "user", content: prompt }
             ];
             const bulletPoints = await callGroq(stage1Messages, 0.2);
 
             // ==========================================
-            // STAGE 2: Persona Drafter (High Perplexity/Burstiness)
+            // STAGE 2: Cognitive Drafter — Opinion Spine + Micro-Contradictions + Imperfect Compression
+            // This is the core of v2. Shifting from linguistic tricks → cognitive simulation.
             // ==========================================
+            const narrativeInstruction =
+                cognitive.narrative === "building_to_conclusion" ? "Build momentum as you write. The final sentence should feel like a natural landing." :
+                    cognitive.narrative === "opening_a_question" ? "End with a thought that leaves something unresolved — don't tie it up perfectly." :
+                        cognitive.narrative === "arguing" ? "Take a clear position. Don't be neutral." :
+                            "Present the idea as if discovering it while writing.";
+
+            const intentInstruction =
+                cognitive.intent === "warning" ? "The author is cautious. Let that skepticism bleed through subtly." :
+                    cognitive.intent === "persuading" ? "The author wants the reader convinced. Have a point of view." :
+                        cognitive.intent === "questioning" ? "Hold some uncertainty. You don't have all the answers." :
+                            "Be direct and slightly opinionated, like someone who has thought about this before.";
+
             const stage2Messages = [
                 {
-                    role: "system", content: `You are a creative writer. Your ONLY job is to take the provided bullet points and write a continuous, engaging text. 
-CRITICAL RULES:
-1. STRICT LENGTH CONSTRAINT: You MUST write exactly between ${minWords} and ${maxWords} words. Do not exceed this limit under any circumstances.
-2. NO HALLUCINATION: DO NOT invent new examples, names, or applications. ONLY use the facts provided in the bullet points.
-3. EXTREME BURSTINESS: You MUST mix brutally short sentences (2-4 words) with very long, meandering sentences. Let your thoughts wander slightly.
-4. NO AI WORDS: Do not use "Furthermore", "In conclusion", "It is important to note", "Delve", "Tapestry", "Crucial", "Underscores", "Testament".
-5. NO LISTS: Write as fluid paragraphs. Never use bullet points or numbered lists.
-6. NO SUMMARY: Never summarize at the end. End abruptly if needed.` },
-                { role: "user", content: `Here are the points to expand on:\n\n${bulletPoints}` }
+                    role: "system",
+                    content: `You are a human writer reconstructing an argument from notes. Your output must read like a real person thinking through an idea, not reciting information.
+
+COGNITIVE RULES (most important):
+1. OPINION SPINE: You have a perspective on this. Lean into it subtly — imply judgment without stating "I think". The reader should sense your position.
+2. MICRO-CONTRADICTIONS: After making a strong claim, soften or complicate it in the next sentence. Humans rarely state anything with 100% certainty. e.g. "it's genuinely impressive... though maybe also a bit unsettling."
+3. IMPERFECT COMPRESSION: The [KEY] bullet gets more words and attention. The [SUP] bullets can be compressed abruptly or mentioned in passing. Do NOT distribute attention evenly — that's an AI trait.
+4. SEMANTIC RHYTHM: Let sentence length follow thought. Write short when certain. Write long when exploring or qualifying. Do NOT use mathematical patterns.
+
+STYLE RULES:
+5. NO HALLUCINATION: Only use facts from the provided notes. Zero new examples.
+6. LENGTH: Write between ${minWords} and ${maxWords} words total.
+7. NO AI WORDS: Ban: "Furthermore", "In conclusion", "It is important to note", "Delve", "Tapestry", "Crucial", "Underscores", "Moreover", "Testament", "Notably".
+8. NO LISTS: Fluid prose only.
+
+NARRATIVE DIRECTION: ${narrativeInstruction}
+INTENT: ${intentInstruction}`
+                },
+                { role: "user", content: `Reconstruct this from notes:\n\n${bulletPoints}` }
             ];
-            const draft = await callGroq(stage2Messages, 0.85);
+            const draft = await callGroq(stage2Messages, 0.88);
 
             // ==========================================
-            // STAGE 3: The "Flaw & Vibe" Injector
+            // STAGE 3: Restrained Vibe & Context-Aware Imperfections
+            // v2 fix: inject vibe ONCE where natural, not throughout the text
             // ==========================================
             let vibePrompt = "";
-            if (vibe === 'academic') vibePrompt = "Tone: Academic and Professional. Use sophisticated but accessible vocabulary. Avoid internet slang, but keep the sentence structure engaging and slightly conversational to bypass computational detectors.";
-            else if (vibe === 'genz') vibePrompt = "Tone: Gen-Z / Modern Internet Native. Use modern internet slang naturally (e.g., lowkey, honestly, vibing, totally, NGL, unhinged, era, literal). Do not overdo it. Write like a highly upvoted Reddit comment or Twitter thread.";
-            else vibePrompt = "Tone: Casual and Relatable. Write like a friendly blogger or a conversational email to a friend. Warm, accessible, and strongly opinionated.";
+            if (vibe === 'academic') {
+                vibePrompt = `Tone adjustment: Academic and precise. If there is a place where a sophisticated but slightly informal turn of phrase would fit naturally, use it ONCE. Do not force this. The text should feel like a knowledgeable person speaking without jargon.`;
+            } else if (vibe === 'genz') {
+                vibePrompt = `Tone adjustment: Find ONE place — and only one — where a modern casual expression would land completely naturally (e.g., "which is wild", "honestly kind of impressive", "that tracks"). Do not add slang everywhere. If nowhere feels natural, do not add it at all.`;
+            } else {
+                vibePrompt = `Tone adjustment: Casual and direct. Write like someone with an informed opinion explaining something to a friend. One moment of warmth or human admission is fine — but do not overdo it.`;
+            }
 
             let flawPrompt = "";
-            if (flawLevel === 'high') flawPrompt = "Human Imperfections (HIGH): Deliberately include 1-2 minor typos or grammatical shortcuts. Examples: occasionally use lowercase 'i', use 'kinda' or 'gonna', start sentences with 'And' or 'But', and use comma splices. Make it look like a fast, messy first draft typed on a phone.";
-            else if (flawLevel === 'low') flawPrompt = "Human Imperfections (LOW): Write conversationally. It is okay to start sentences with conjunctions ('And', 'But'). Use contractions heavily (they're, it's). Keep grammar generally correct but relaxed.";
-            else flawPrompt = "Human Imperfections (NONE): Keep perfect grammar and spelling, but absolutely maintain the requested human tone and burstiness.";
+            if (flawLevel === 'high') {
+                flawPrompt = `Imperfections: The writer is smart but typing quickly. One slight grammatical shortcut is fine — a conjunction starting a sentence, a contraction, one comma splice. These should feel natural to the moment, not sprinkled randomly.`;
+            } else if (flawLevel === 'low') {
+                flawPrompt = `Imperfections: Use contractions freely (they're, it's, wasn't). It's fine to start one sentence with "And" or "But". Otherwise, keep grammar clean.`;
+            } else {
+                flawPrompt = `Imperfections: Keep grammar clean. The human quality comes from cognitive framing, not surface errors.`;
+            }
 
             const stage3Messages = [
                 {
-                    role: "system", content: `You are the final humanizing editor. Your job is to take the provided draft and inject a specific persona and human imperfections to ensure it passes as 100% human-written.
-                
+                    role: "system",
+                    content: `You are the final editor. Make minimal, targeted adjustments to the draft below.
+
 ${vibePrompt}
 ${flawPrompt}
 
-CRITICAL RULES: 
-1. LENGTH CONSTRAINT: Your output must be between ${minWords} and ${maxWords} words to match the original text length. Cut fluff if needed.
-2. NO HALLUCINATION: DO NOT ADD NEW FACTS, EXAMPLES, OR METAPHORS.
-3. Output ONLY the final text. Do not add any introductory or concluding remarks. Do not use quotes around the text. Preserve the original meaning completely.` },
-                { role: "user", content: `Draft to humanize:\n\n${draft}` }
+CRITICAL: 
+1. LENGTH CONSTRAINT: Keep between ${minWords} and ${maxWords} words. Don't add new ideas.
+2. NO HALLUCINATION: Do not add new facts, examples, or metaphors.
+3. Preserve the opinion spine and micro-contradictions from the draft. Do NOT smooth them out.
+4. Output ONLY the final text. No labels, no preamble, no quotes.`
+                },
+                { role: "user", content: `Draft:\n\n${draft}` }
             ];
 
-            // Use faster 8B model for final pass
+            // Use faster 8B model for Stage 3 final polish
             const rewrittenText = await callGroq(stage3Messages, 0.75, "llama-3.1-8b-instant");
 
 

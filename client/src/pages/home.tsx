@@ -176,45 +176,40 @@ const Home = () => {
 
         {/* 1. Dynamic Aurora Background (Premium & Powerful) */}
         <div className="fixed inset-0 z-0 pointer-events-none">
-           {/* Deep Base */}
-           <div className="absolute inset-0 bg-neutral-950" />
-           {/* Moving Orbs (Simulated Mesh) */}
-           <div className="absolute top-[-10%] left-[-20%] w-[80vw] h-[80vw] bg-yellow-500/20 rounded-full blur-[120px] mix-blend-screen animate-pulse-soft" />
-           <div className="absolute bottom-[-10%] right-[-20%] w-[80vw] h-[80vw] bg-red-600/20 rounded-full blur-[120px] mix-blend-screen animate-pulse-soft delay-1000" />
-           <div className="absolute top-[40%] left-[50%] transform -translate-x-1/2 w-[60vw] h-[60vw] bg-blue-600/10 rounded-full blur-[100px] mix-blend-screen" />
+          {/* Deep Base */}
+          <div className="absolute inset-0 bg-neutral-950" />
+          {/* Moving Orbs (Simulated Mesh) */}
+          <div className="absolute top-[-10%] left-[-20%] w-[80vw] h-[80vw] bg-yellow-500/20 rounded-full blur-[120px] mix-blend-screen animate-pulse-soft" />
+          <div className="absolute bottom-[-10%] right-[-20%] w-[80vw] h-[80vw] bg-red-600/20 rounded-full blur-[120px] mix-blend-screen animate-pulse-soft delay-1000" />
+          <div className="absolute top-[40%] left-[50%] transform -translate-x-1/2 w-[60vw] h-[60vw] bg-blue-600/10 rounded-full blur-[100px] mix-blend-screen" />
         </div>
 
         <main className="relative z-10 w-full flex flex-col items-center">
 
-          {/* HERO SECTION - Responsive Breakpoints (Mobile First vs Desktop) */}
-          {/* Mobile: Top Padding Reduced (pt-4) to fit everything above fold */}
-          {/* Desktop: Top Padding 24 (md:pt-24) for spacious look */}
-          <div className="relative w-full flex flex-col items-center justify-start pt-2 md:pt-24 pb-8 md:pb-12 px-0 sm:px-4 hero-section min-h-[85vh] md:min-h-0">
-
-            {/* 2. Video Container - Responsive Sizing */}
-            {/* Mobile: Full Width + Aspect Video */}
-            {/* Desktop: Max-width 4xl + margins */}
-            <div
-              className="relative w-full md:max-w-4xl lg:max-w-5xl aspect-video rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl z-10 bg-black group mb-3 md:mb-10 cursor-pointer border border-white/10 ring-1 ring-white/5 mx-auto"
-              style={{ boxShadow: '0 0 50px -12px rgba(0,0,0,0.5)' }} /* Deep Ambient Shadow */
+          {/* ===== HERO — AIDA First View ===== */}
+          <section className="min-h-[100svh] w-full flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 pt-20 pb-6 relative" data-testid="hero-section">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.7, ease: 'easeOut' }}
+              className={`relative w-full max-w-2xl md:max-w-3xl mx-auto rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.6)] border border-white/10 cursor-pointer mb-6 md:mb-8 aspect-video flex-shrink-0 transition-all duration-500 ${enteredSite ? 'ring-2 ring-[#E53935]/60' : 'hover:shadow-[0_0_40px_rgba(229,57,53,0.3)] hover:-translate-y-1'}`}
               onClick={() => setEnteredSite(true)}
             >
               {!enteredSite ? (
                 <>
-                  <img
-                    src={`https://i.ytimg.com/vi/${landscapeId}/hqdefault.jpg`}
-                    alt="Featured Comedy"
-                    className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
-                  />
-                  {/* Premium Dark Glass Overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/10 transition-colors backdrop-blur-[2px]">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-lg backdrop-blur-sm transform group-hover:scale-110 transition-transform">
-                      <Play className="w-8 h-8 sm:w-10 sm:h-10 ml-1 fill-current" />
+                  <img src={`https://i.ytimg.com/vi/${landscapeId}/hqdefault.jpg`} alt="Featured Comedy" className="w-full h-full object-cover brightness-90" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent pointer-events-none" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="relative">
+                      <div className="absolute -inset-3 bg-red-600/30 rounded-full blur-xl animate-pulse" />
+                      <div className="relative w-14 h-14 md:w-16 md:h-16 bg-[#E53935] rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(229,57,53,0.6)]">
+                        <Play className="w-6 h-6 md:w-7 md:h-7 ml-1 text-white fill-white" />
+                      </div>
                     </div>
                   </div>
-                  <div className="absolute bottom-4 left-0 right-0 text-center z-10">
-                    <span className="text-white text-xs sm:text-sm font-medium drop-shadow-md bg-black/60 px-4 py-2 rounded-full backdrop-blur-md">
-                      Tap to Watch (Unmute)
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-md text-[11px] font-semibold text-white/80 border border-white/10">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />Tap to Watch
                     </span>
                   </div>
                 </>
@@ -229,387 +224,163 @@ const Home = () => {
                   allowFullScreen
                 />
               )}
-
-              {/* Mute Toggle (Only visible if playing) */}
               {enteredSite && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); setIsMuted(m => !m); setVideoKey(k => k + 1); }}
-                  className="absolute bottom-6 right-6 z-20 bg-black/60 hover:bg-brand-red text-white p-3 rounded-full backdrop-blur-md transition-all border border-white/20 hover:scale-110 active:scale-95"
-                >
-                  {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                <button onClick={(e) => { e.stopPropagation(); setIsMuted(m => !m); setVideoKey(k => k + 1); }} className="absolute bottom-3 right-3 z-20 bg-black/60 hover:bg-red-600 text-white p-2 rounded-full backdrop-blur-md transition-all border border-white/20 active:scale-95">
+                  {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
                 </button>
               )}
-            </div>
+            </motion.div>
 
-            {/* 3. Subtitles & CTAs - "Ultra-Premium Glass Interface" */}
-            <motion.div
-              className="flex flex-col items-center gap-4 md:gap-6 px-4 w-full max-w-sm md:max-w-md mx-auto mt-2"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-            >
-              <div className="text-center space-y-2 md:space-y-3 relative">
-                {/* Glow Effect behind Text */}
-                <div className="absolute inset-0 bg-blue-500/20 blur-2xl rounded-full pointer-events-none mix-blend-screen" />
-                
-                {/* English Title - Crisp White on Dark */}
-                <h1 
-                  className="relative font-bold tracking-tight leading-none text-white drop-shadow-2xl text-2xl md:text-4xl" 
-                  style={{ textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}
-                >
-                  Authentic <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-amber-500">Bengali</span> Comedy
-                </h1>
-                
-                {/* Bangla Subtitle - Silver/Metallic */}
-                <p 
-                  className="bangla-text text-zinc-400 font-medium leading-relaxed text-lg md:text-xl" 
-                  style={{ letterSpacing: '0.01em' }}
-                >
-                  ঘরোয়া পরিবেশের মজার গল্প
-                </p>
+            <motion.div className="text-center space-y-3 md:space-y-4 w-full max-w-2xl mx-auto" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
+                Authentic{' '}<span className="relative"><span className="text-[#F4C430] drop-shadow-[0_2px_12px_rgba(244,196,48,0.5)]">Bengali</span><span className="absolute -bottom-1 left-0 w-full h-[3px] bg-[#F4C430]/50 rounded-full" /></span>{' '}Comedy
+              </h1>
+              <p className="font-bengali text-base sm:text-lg md:text-xl text-gray-400 font-medium">ঘরোয়া পরিবেশের মজার গল্প</p>
+              <div className="flex flex-col sm:flex-row justify-center items-center gap-3 pt-2">
+                <button onClick={() => setLocation('/tools')} className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3.5 rounded-full bg-[#1a1a2e]/80 hover:bg-[#1a1a2e] border border-white/15 text-white font-semibold text-sm md:text-base backdrop-blur-md transition-all active:scale-95 hover:border-white/30">
+                  <Sparkles className="w-4 h-4 text-[#F4C430]" />Bong Kahini
+                </button>
+                <button onClick={() => { const u = channelId ? `https://www.youtube.com/channel/${channelId}?sub_confirmation=1` : `https://www.youtube.com/@BongBari?sub_confirmation=1`; window.open(u, '_blank', 'noopener,noreferrer'); }} className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3.5 rounded-full bg-[#E53935] hover:bg-[#c62828] text-white font-semibold text-sm md:text-base shadow-[0_4px_20px_rgba(229,57,53,0.5)] transition-all active:scale-95">
+                  <Youtube className="w-5 h-5 fill-white" />Subscribe
+                </button>
               </div>
+            </motion.div>
 
-              {/* CTAs - Side-by-Side on Mobile (Fit Above Fold) / Stacked on Tiny screens */}
-              <div className="flex flex-row md:flex-col gap-3 w-full items-center justify-center mt-2">
-                {/* Bong Kahini - "The Glass Pill" */}
-                 <Button
-                  onClick={() => setLocation('/tools')}
-                  className="flex-1 md:w-full relative overflow-hidden group backdrop-blur-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 py-6 md:py-7 text-base md:text-lg font-bold rounded-xl md:rounded-2xl shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all hover:shadow-[0_0_30px_rgba(255,255,255,0.2)]"
-                >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                    <Sparkles className="w-4 h-4 md:w-5 md:h-5 mr-2 text-yellow-400 fill-yellow-400/20" />
-                    <span className="tracking-wide">Bong Kahini</span>
-                </Button>
+            <motion.div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-white/30" animate={{ y: [0, 8, 0] }} transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}>
+              <span className="text-[9px] font-semibold uppercase tracking-widest">scroll</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14" /><path d="m19 12-7 7-7-7" /></svg>
+            </motion.div>
+          </section>
 
-                {/* Subscribe - "Neon Red Pulse" */}
-                <Button
-                  onClick={() => {
-                    const subscribeUrl = channelId
-                      ? `https://www.youtube.com/channel/${channelId}?sub_confirmation=1`
-                      : `https://www.youtube.com/@BongBari?sub_confirmation=1`;
-                    window.open(subscribeUrl, '_blank', 'noopener,noreferrer');
-                  }}
-                  className="flex-1 md:w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white border-0 py-6 md:py-7 text-base md:text-lg font-bold rounded-xl md:rounded-2xl shadow-lg shadow-red-900/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                >
-                   <Youtube className="w-5 h-5 md:w-6 md:h-6 fill-white mr-2" />
-                   Subscribe
-                </Button>
+          {/* ===== LATEST COMEDY ===== */}
+          <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-16 md:py-24">
+            <section data-testid="latest-comedy-section">
+              <motion.div className="flex flex-col mb-10 items-start text-left w-full" initial={{ opacity: 0, x: -40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, margin: '-80px' }} transition={{ duration: 0.6, ease: 'easeOut' }}>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-[#00E5FF] to-blue-400 mb-2 tracking-tight">LATEST COMEDY</h2>
+                <div className="h-1.5 w-28 bg-gradient-to-r from-[#00E5FF] to-blue-400 rounded-full" />
+                <p className="bangla-text text-base text-gray-400 mt-2 font-semibold">সর্বশেষ কমেডি কালেকশন</p>
+              </motion.div>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6" data-testid="latest-videos-grid">
+                {[0, 1, 2, 3].map((i) => {
+                  const video = latestVideoData[i] || fallbackVideoData[i];
+                  return (
+                    <motion.div key={video.videoId + i} className="relative rounded-3xl overflow-hidden bg-zinc-900/40 border border-white/5 cursor-pointer h-full p-2 transition-shadow duration-300 hover:shadow-[0_0_30px_rgba(0,229,255,0.12)]" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-40px' }} transition={{ duration: 0.5, delay: i * 0.08, ease: 'easeOut' }}>
+                      <YouTubeShort videoId={video.videoId} thumbnail={video.thumbnail} title={video.title} />
+                    </motion.div>
+                  );
+                })}
               </div>
-            </motion.div >
-          </div >
+            </section>
+          </div>
 
-          {/* Latest Comedy Section (Horizontal Scroll on Mobile) */}
-          <div className="py-8 w-full max-w-7xl mx-auto px-0 sm:px-4">
-            {/* Latest Comedy Section - Modern Left Align */}
-            <section className="mb-4 sm:mb-8 w-full max-w-6xl mx-auto" data-testid="latest-comedy-section">
-
-              <div className="flex flex-col mb-4 px-3 items-start text-left">
-                <div className="flex flex-col sm:flex-row items-baseline gap-2">
-                  <h3 className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600">
-                    Latest Comedy
-                  </h3>
-                  <span className="text-zinc-500 text-xs sm:text-sm tracking-wide font-medium">
-                    সর্বশেষ কমেডি
-                  </span>
-                </div>
-                <div className="h-1 w-12 bg-blue-500/50 rounded-full mt-1"></div>
-              </div>
-
-              <div className="w-full px-2">
-                <div
-                  className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 w-full mx-auto min-h-[200px]"
-                  data-testid="latest-videos-grid"
-                >
-                  {[0, 1, 2, 3, 4, 5].map((i) => {
-                    const video = latestVideoData[i] || fallbackVideoData[i];
-                    return (
-                      <div
-                        key={video.videoId + i}
-                        className={`transition-opacity duration-300 hover:opacity-90`}
-                      >
-                        <YouTubeShort
-                          videoId={video.videoId}
-                          thumbnail={video.thumbnail}
-                          title={video.title}
-                        />
+          {/* ===== MOST LOVED ===== */}
+          <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 pb-16 md:pb-24">
+            <section data-testid="loved-comedy-section">
+              <motion.div className="flex flex-col mb-10 items-start text-left w-full" initial={{ opacity: 0, x: 40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, margin: '-80px' }} transition={{ duration: 0.6, ease: 'easeOut' }}>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-[#D500F9] to-pink-400 mb-2 tracking-tight">MOST LOVED</h2>
+                <div className="h-1.5 w-28 bg-gradient-to-r from-[#D500F9] to-pink-400 rounded-full" />
+                <p className="bangla-text text-base text-gray-400 mt-2 font-semibold">দর্শকদের পছন্দের তালিকা</p>
+              </motion.div>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6" data-testid="loved-videos-grid">
+                {[0, 1, 2, 3].map((i) => {
+                  const video = popularVideoData[i] || fallbackVideoData[5 - i] || fallbackVideoData[0];
+                  return (
+                    <motion.div key={video.videoId + i} className="relative rounded-3xl overflow-hidden bg-zinc-900/40 border border-white/5 cursor-pointer h-full p-2 transition-shadow duration-300 hover:shadow-[0_0_30px_rgba(213,0,249,0.12)]" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-40px' }} transition={{ duration: 0.5, delay: i * 0.08, ease: 'easeOut' }}>
+                      <div className="absolute top-3 left-3 z-10 flex items-center gap-1 bg-black/60 backdrop-blur-md border border-pink-500/40 text-pink-400 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        <span className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-pulse" />POPULAR
                       </div>
-                    );
-                  })}
-                </div>
+                      <YouTubeShort videoId={video.videoId} thumbnail={video.thumbnail} title={video.title} />
+                    </motion.div>
+                  );
+                })}
               </div>
             </section>
           </div>
 
-          {/* Most Loved Comedy Section (Horizontal Scroll on Mobile) */}
-          <div className="py-8 w-full max-w-7xl mx-auto px-0 sm:px-4">
-            <section className="mb-3 sm:mb-4 lg:mb-6" data-testid="loved-comedy-section">
-              <div className="flex flex-col mb-4 px-2 items-start text-left">
-                <div className="flex flex-col sm:flex-row items-baseline gap-2">
-                  <h3 className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-purple-600">
-                    Most Loved
-                  </h3>
-                  <span className="text-zinc-500 text-xs sm:text-sm tracking-wide font-medium">
-                    জনপ্রিয় কমেডি
-                  </span>
+          {/* ===== WORK WITH US ===== */}
+          <motion.div className="py-8 w-full px-4 sm:px-6 lg:px-8" initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-60px' }} transition={{ duration: 0.7, ease: 'easeOut' }}>
+            <section className="max-w-4xl mx-auto relative mb-32" data-testid="collaboration-section">
+              <div className="absolute inset-0 -z-10 bg-radial-glow opacity-30"></div>
+              <motion.div className="relative overflow-hidden rounded-[2.5rem] bg-black/60 shadow-2xl border border-white/10 text-white backdrop-blur-sm" whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}>
+                <div className="p-8 md:p-12 pb-4 text-center relative z-10 w-full">
+                  <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-2 drop-shadow-md tracking-tight">Work with Us</h2>
+                  <h3 className="text-2xl md:text-3xl font-bengali font-bold text-yellow-400/90">আমাদের সাথে কাজ করুন</h3>
+                  <p className="mt-4 text-center text-gray-300 max-w-2xl mx-auto leading-relaxed md:text-lg">
+                    Ready to collaborate? Let's create some amazing Bengali comedy content together!<br />
+                    <span className="font-bengali text-sm md:text-base text-gray-400">কোলাবোরেট করতে প্রস্তুত? চলুন একসাথে দুর্দান্ত বাংলা কমেডি কন্টেন্ট তৈরি করি!</span>
+                  </p>
                 </div>
-                <div className="h-1 w-12 bg-purple-500/50 rounded-full mt-1"></div>
-              </div>
-              <motion.p
-                className="text-left text-gray-500 mb-6 text-xs sm:text-sm italic px-2"
-                data-testid="loved-comedy-subtitle"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-              >
-                If others love it → you'll love it too!
-              </motion.p>
-
-              <div className="w-full px-2">
-                <div
-                  className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 w-full mx-auto min-h-[200px]"
-                  data-testid="loved-videos-grid"
-                >
-                  {[0, 1, 2, 3, 4, 5].map((i) => {
-                    const video = popularVideoData[i] || fallbackVideoData[5 - i] || fallbackVideoData[0]; // Logic to vary data if possible
-                    return (
-                      <div
-                        key={video.videoId + i}
-                        className={`transition-opacity duration-300 hover:opacity-90`}
-                      >
-                        <YouTubeShort
-                          videoId={video.videoId}
-                          thumbnail={video.thumbnail}
-                          title={video.title}
-                        />
+                <div className="p-6 sm:p-8 md:p-12">
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" data-testid="collaboration-form">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <FormField control={form.control} name="name" render={({ field }) => (
+                          <FormItem><FormLabel>Name / নাম <span className="text-red-500">*</span></FormLabel>
+                            <FormControl><Input placeholder="Your Name" data-testid="input-name" className="focus:ring-2 focus:ring-[#00E5FF]/40 focus:border-[#00E5FF]/40 transition-all" {...field} /></FormControl>
+                            <FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name="email" render={({ field }) => (
+                          <FormItem><FormLabel>Email {!hasPhone ? <span className="text-red-500">*</span> : <span className="text-gray-400">(Optional)</span>}</FormLabel>
+                            <FormControl><Input type="email" placeholder="your@email.com" data-testid="input-email" className="focus:ring-2 focus:ring-[#00E5FF]/40 focus:border-[#00E5FF]/40 transition-all" {...field} value={field.value ?? ""} /></FormControl>
+                            <FormMessage /></FormItem>
+                        )} />
                       </div>
-                    );
-                  })}
+                      <FormField control={form.control} name="phone" render={({ field }) => (
+                        <FormItem><FormLabel>Phone / ফোন {!hasEmail ? <span className="text-red-500">*</span> : <span className="text-gray-400">(Optional)</span>}</FormLabel>
+                          <FormControl>
+                            <div className="flex gap-2">
+                              <Select value={field.value?.split(' ')[0] || "+91"} onValueChange={(code) => { const n = field.value?.split(' ').slice(1).join(' ') || ''; field.onChange(code + (n ? ' ' + n : '')); }}>
+                                <SelectTrigger className="w-24" data-testid="select-country-code"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="+91">🇮🇳 +91</SelectItem>
+                                  <SelectItem value="+880">🇧🇩 +880</SelectItem>
+                                  <SelectItem value="+1">🇺🇸 +1</SelectItem>
+                                  <SelectItem value="+44">🇬🇧 +44</SelectItem>
+                                  <SelectItem value="+86">🇨🇳 +86</SelectItem>
+                                  <SelectItem value="+81">🇯🇵 +81</SelectItem>
+                                  <SelectItem value="+49">🇩🇪 +49</SelectItem>
+                                  <SelectItem value="+33">🇫🇷 +33</SelectItem>
+                                  <SelectItem value="+61">🇦🇺 +61</SelectItem>
+                                  <SelectItem value="+971">🇦🇪 +971</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Input placeholder="Enter phone number" data-testid="input-phone" type="tel" value={field.value?.split(' ').slice(1).join(' ') || ''} onChange={(e) => { const n = e.target.value.replace(/[^0-9]/g, ''); const c = field.value?.split(' ')[0] || '+91'; field.onChange(c + (n ? ' ' + n : '')); }} onKeyPress={(e) => { if (!/[0-9]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'Tab') e.preventDefault(); }} className="flex-1" />
+                            </div>
+                          </FormControl>
+                          <FormMessage /></FormItem>
+                      )} />
+                      <FormField control={form.control} name="company" render={({ field }) => (
+                        <FormItem><FormLabel>Company / Brand <span className="text-red-500">*</span></FormLabel>
+                          <FormControl><Input placeholder="Your Company or Brand" data-testid="input-company" {...field} value={field.value ?? ''} /></FormControl>
+                          <FormMessage /></FormItem>
+                      )} />
+                      <FormField control={form.control} name="message" render={({ field }) => (
+                        <FormItem><FormLabel>Message / বার্তা <span className="text-gray-400">(Optional)</span></FormLabel>
+                          <FormControl><Textarea rows={4} className="min-h-[120px] resize-none text-base" placeholder="Tell us about your collaboration idea..." data-testid="textarea-message" {...field} value={field.value ?? ""} /></FormControl>
+                          <FormMessage /></FormItem>
+                      )} />
+                      <MagneticButton
+                        disabled={collaborationMutation.isPending || !isFormValid}
+                        className={`w-full py-4 rounded-full font-semibold text-base transition-all duration-300 no-rickshaw-sound overflow-hidden ${!isFormValid ? 'bg-gray-400 text-gray-200 cursor-not-allowed opacity-60' : 'bg-brand-red text-white hover:bg-red-600 hover:shadow-[0_0_20px_rgba(229,57,53,0.5)]'} ${collaborationMutation.isPending ? 'opacity-50' : ''}`}
+                        data-testid="button-submit-collaboration"
+                        strength={isFormValid ? 0.3 : 0}
+                        onClick={() => isFormValid && form.handleSubmit(onSubmit)()}
+                      >
+                        <Send className="mr-2 h-5 w-5" />
+                        {collaborationMutation.isPending ? "Sending..." : isFormValid ? "Send Message" : "Fill Name, Company & Contact Info *"}
+                      </MagneticButton>
+                    </form>
+                  </Form>
                 </div>
-              </div>
+              </motion.div>
             </section>
-          </div>
-
-
-
-
-
-          {/* Latest Memes */}
-          {
-            latestMemes.length > 0 && (
-              <section className="py-6 sm:py-8 lg:py-12">
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-brand-blue mb-4">Latest Memes</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {latestMemes.map((m: any) => (
-                    <div key={m.id} className="bg-white rounded-lg p-4 shadow">
-                      <div className="text-xs text-gray-500 mb-1">{m.dateKey}</div>
-                      <p className="text-gray-800 whitespace-pre-wrap">{m.idea}</p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )
-          }
-          {/* Collaboration Form */}
-          <div className="py-8">
-            <section className="mb-2 sm:mb-3 py-1 sm:py-2" data-testid="collaboration-section">
-              <div className="max-w-4xl mx-auto">
-                {/* Work with Us Header with Yellow Background */}
-                <motion.div
-                  className="bg-brand-yellow rounded-xl sm:rounded-2xl p-2 sm:p-3 lg:p-4 mb-0 text-center shadow-lg transition-all duration-400"
-                  whileHover={{
-                    scale: 1.02,
-                    transition: { duration: 0.2 }
-                  }}
-                >
-                  <h3 className="font-bold text-brand-blue mb-1 sm:mb-2 hover-pulse cursor-pointer transition-all duration-300" data-testid="collaboration-title-english" style={{ fontSize: 'clamp(2.5rem, 8vw, 8rem)' }}>
-                    Work with Us
-                  </h3>
-                  <h4 className="font-bold text-gray-800 bangla-text hover-wobble cursor-pointer transition-all duration-300" data-testid="collaboration-title-bengali" style={{ fontSize: 'clamp(2rem, 6vw, 6rem)' }}>
-                    আমাদের সাথে কাজ করুন
-                  </h4>
-                </motion.div>
-
-                <motion.div
-                  whileHover={{
-                    scale: 1.01,
-                    transition: { duration: 0.2 }
-                  }}
-                >
-                  <Card className="bg-white shadow-lg transition-all duration-300 hover:shadow-2xl">
-                    <CardContent className="p-3 sm:p-4 lg:p-6">
-                      <p className="text-center text-gray-700 mb-2 sm:mb-3 text-base sm:text-lg">
-                        Ready to collaborate? Let's create some amazing Bengali comedy content together!
-                      </p>
-                      <p className="text-center text-gray-700 mb-3 sm:mb-4 bangla-text text-base sm:text-lg">
-                        কোলাবোরেট করতে প্রস্তুত? চলুন একসাথে দুর্দান্ত বাংলা কমেডি কন্টেন্ট তৈরি করি!
-                      </p>
-
-                      <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6" data-testid="collaboration-form">
-                          <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
-                            <FormField
-                              control={form.control}
-                              name="name"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Name / নাম <span className="text-red-500">*</span></FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      placeholder="Your Name"
-                                      data-testid="input-name"
-                                      {...field}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="email"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Email {!hasPhone ? <span className="text-red-500">*</span> : <span className="text-gray-400">(Optional)</span>}</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="email"
-                                      placeholder="your@email.com"
-                                      data-testid="input-email"
-                                      {...field}
-                                      value={field.value ?? ""}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-
-                            <FormField
-                              control={form.control}
-                              name="phone"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Phone / ফোন {!hasEmail ? <span className="text-red-500">*</span> : <span className="text-gray-400">(Optional)</span>}</FormLabel>
-                                  <FormControl>
-                                    <div className="flex gap-2">
-                                      <Select
-                                        value={field.value?.split(' ')[0] || "+91"}
-                                        onValueChange={(code) => {
-                                          const number = field.value?.split(' ').slice(1).join(' ') || '';
-                                          field.onChange(code + (number ? ' ' + number : ''));
-                                        }}
-                                      >
-                                        <SelectTrigger className="w-24" data-testid="select-country-code">
-                                          <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="+91">🇮🇳 +91</SelectItem>
-                                          <SelectItem value="+880">🇧🇩 +880</SelectItem>
-                                          <SelectItem value="+1">🇺🇸 +1</SelectItem>
-                                          <SelectItem value="+44">🇬🇧 +44</SelectItem>
-                                          <SelectItem value="+86">🇨🇳 +86</SelectItem>
-                                          <SelectItem value="+81">🇯🇵 +81</SelectItem>
-                                          <SelectItem value="+49">🇩🇪 +49</SelectItem>
-                                          <SelectItem value="+33">🇫🇷 +33</SelectItem>
-                                          <SelectItem value="+61">🇦🇺 +61</SelectItem>
-                                          <SelectItem value="+971">🇦🇪 +971</SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                      <Input
-                                        placeholder="Enter phone number"
-                                        data-testid="input-phone"
-                                        type="tel"
-                                        value={field.value?.split(' ').slice(1).join(' ') || ''}
-                                        onChange={(e) => {
-                                          // Only allow numbers - remove any non-digit characters
-                                          const numbersOnly = e.target.value.replace(/[^0-9]/g, '');
-                                          const code = field.value?.split(' ')[0] || '+91';
-                                          field.onChange(code + (numbersOnly ? ' ' + numbersOnly : ''));
-                                        }}
-                                        onKeyPress={(e) => {
-                                          // Prevent typing non-numeric characters
-                                          if (!/[0-9]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'Tab') {
-                                            e.preventDefault();
-                                          }
-                                        }}
-                                        className="flex-1"
-                                      />
-                                    </div>
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-
-                          <FormField
-                            control={form.control}
-                            name="company"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Company / Brand <span className="text-red-500">*</span></FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="Your Company or Brand"
-                                    data-testid="input-company"
-                                    {...field}
-                                    value={field.value ?? ''}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={form.control}
-                            name="message"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Message / বার্তা <span className="text-gray-400">(Optional)</span></FormLabel>
-                                <FormControl>
-                                  <Textarea
-                                    rows={4}
-                                    className="min-h-[120px] resize-none text-base"
-                                    placeholder="Tell us about your collaboration idea... (Optional)"
-                                    data-testid="textarea-message"
-                                    {...field}
-                                    value={field.value ?? ""}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <MagneticButton
-                            disabled={collaborationMutation.isPending || !isFormValid}
-                            className={`w-full py-4 sm:py-3 rounded-full font-semibold text-base sm:text-lg hover-lift min-h-[52px] touch-manipulation transition-all duration-400 no-rickshaw-sound ${!isFormValid
-                              ? 'bg-gray-400 text-gray-200 cursor-not-allowed opacity-60'
-                              : 'bg-brand-red text-white hover:bg-red-600 hover:scale-110 hover:-translate-y-3 hover:shadow-2xl'
-                              } ${collaborationMutation.isPending ? 'opacity-50' : ''}`}
-                            data-testid="button-submit-collaboration"
-                            strength={isFormValid ? 0.5 : 0}
-                            onClick={() => isFormValid && form.handleSubmit(onSubmit)()}
-                          >
-                            <Send className="mr-2 h-5 w-5" />
-                            {collaborationMutation.isPending ? "Sending..." : isFormValid ? "Send Message" : "Fill Name, Company & Contact Info *"}
-                          </MagneticButton>
-                        </form>
-                      </Form>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              </div>
-            </section>
-          </div>
+          </motion.div>
         </main>
       </div>
 
       {/* Footer */}
       <footer className="bg-brand-blue text-white py-4 sm:py-6 mt-0" data-testid="footer">
         <div className="container mx-auto px-4 sm:px-6 text-center">
-          {/* Enhanced Social Buttons */}
           <div className="flex justify-center gap-3 sm:gap-4 mb-4 sm:mb-6">
             <button
               className="bg-red-500 hover:bg-red-600 active:bg-red-700 text-white px-4 sm:px-5 py-3 sm:py-2 rounded-full text-sm sm:text-base flex items-center gap-2 transition-all duration-400 hover:scale-150 hover:-translate-y-4 hover:rotate-6 hover:shadow-2xl active:scale-95 min-h-[44px] touch-manipulation shadow-md"
@@ -628,13 +399,8 @@ const Home = () => {
               <span className="hidden xs:inline">Instagram</span>
             </button>
           </div>
-
-          <p className="text-base sm:text-lg font-medium" data-testid="footer-text">
-            © Bong Bari 2025 Kolkata
-          </p>
-          <p className="text-sm sm:text-base opacity-80 mt-1 sm:mt-2 bangla-text" data-testid="footer-text-bengali">
-            © বং বাড়ি ২০২৫ কলকাতা
-          </p>
+          <p className="text-base sm:text-lg font-medium" data-testid="footer-text">© Bong Bari 2025 Kolkata</p>
+          <p className="text-sm sm:text-base opacity-80 mt-1 sm:mt-2 bangla-text" data-testid="footer-text-bengali">© বং বাড়ি ২০২৫ কলকাতা</p>
           <div className="mt-4 text-xs opacity-80" style={{ fontSize: '0.85rem' }}>
             <a href="/privacy" className="mx-1 underline hover:text-yellow-200">Privacy Policy</a> |
             <a href="/terms" className="mx-1 underline hover:text-yellow-200">Terms &amp; Conditions</a> |

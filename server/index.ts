@@ -1,4 +1,4 @@
-// Load environment configuration first
+// Load environment configuration first (Reload trigger for .env changes)
 import './env';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
@@ -83,9 +83,9 @@ app.get('/health', (_req, res) => {
   const shutdown = () => {
     try {
       server.close(() => log("HTTP server closed"));
-    } catch {}
-    try { youtubeService.stop(); } catch {}
-    try { trendsService.stop(); } catch {}
+    } catch { }
+    try { youtubeService.stop(); } catch { }
+    try { trendsService.stop(); } catch { }
   };
   process.once('SIGINT', shutdown);
   process.once('SIGTERM', shutdown);
@@ -140,13 +140,13 @@ app.get('/health', (_req, res) => {
           console.error('[express] listen error:', err);
           // Prevent endless loops during dev restarts: if we cannot bind after retries,
           // exit gracefully so the first instance can continue serving.
-          try { server.close(); } catch {}
+          try { server.close(); } catch { }
           setTimeout(() => process.exit(0), 50);
         }
       };
       server.once('error', onError);
       try {
-  server.listen(port, "0.0.0.0", () => {
+        server.listen(port, "0.0.0.0", () => {
           server.removeListener('error', onError);
           log(`serving on port ${port}`);
         });
@@ -160,3 +160,4 @@ app.get('/health', (_req, res) => {
   listenWithRetry();
 
 })();
+// Triggering reload to pick up GROQ_API_KEY from .env

@@ -1,0 +1,47 @@
+﻿node.exe : 
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], Re 
+   moteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[1m[33mwarn[39m[22m - The `content` option in your 
+Tailwind CSS configuration is missing or empty.
+[1m[33mwarn[39m[22m - Configure your content sources or 
+your generated CSS will be missing styles.
+[1m[33mwarn[39m[22m - 
+https://tailwindcss.com/docs/content-configuration
+[31mx[39m Build failed in 844ms
+[31merror during build:
+[31m[vite]: Rollup failed to resolve import 
+"@/components/ui/tooltip" from "D:/barir Mashla/website/BongB
+ariComedy/BongBariComedy/client/src/App.tsx".
+This is most likely unintended because it can break your 
+application at runtime.
+If you do want to externalize this module explicitly add it 
+to
+`build.rollupOptions.external`[31m
+    at viteWarn (file:///D:/barir%20Mashla/website/BongBariCo
+medy/BongBariComedy/node_modules/vite/dist/node/chunks/dep-C6
+uTJdX2.js:65839:17)
+    at onRollupWarning (file:///D:/barir%20Mashla/website/Bon
+gBariComedy/BongBariComedy/node_modules/vite/dist/node/chunks
+/dep-C6uTJdX2.js:65871:5)
+    at onwarn (file:///D:/barir%20Mashla/website/BongBariCome
+dy/BongBariComedy/node_modules/vite/dist/node/chunks/dep-C6uT
+JdX2.js:65534:7)
+    at file:///D:/barir%20Mashla/website/BongBariComedy/BongB
+ariComedy/node_modules/rollup/dist/es/shared/node-entry.js:19
+452:13
+    at Object.logger [as onLog] (file:///D:/barir%20Mashla/we
+bsite/BongBariComedy/BongBariComedy/node_modules/rollup/dist/
+es/shared/node-entry.js:21178:9)
+    at ModuleLoader.handleInvalidResolvedId (file:///D:/barir
+%20Mashla/website/BongBariComedy/BongBariComedy/node_modules/
+rollup/dist/es/shared/node-entry.js:20067:26)
+    at file:///D:/barir%20Mashla/website/BongBariComedy/BongB
+ariComedy/node_modules/rollup/dist/es/shared/node-entry.js:20
+025:26[39m

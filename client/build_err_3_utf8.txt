@@ -1,0 +1,55 @@
+﻿node.exe : 
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) 
+[], Re    moteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[1m[33mwarn[39m[22m - The `content` option in your 
+Tailwind CSS configuration is missing or empty.
+[1m[33mwarn[39m[22m - Configure your content 
+sources or your generated CSS will be missing styles.
+[1m[33mwarn[39m[22m - 
+https://tailwindcss.com/docs/content-configuration
+[31mx[39m Build failed in 727ms
+[31merror during build:
+[31m[vite:css] [postcss] D:/barir Mashla/website/BongBa
+riComedy/BongBariComedy/client/src/index.css:2:1: The 
+`text-foreground` class does not exist. If 
+`text-foreground` is a custom class, make sure it is 
+defined within a `@layer` directive.[31m
+file: [36mD:/barir Mashla/website/BongBariComedy/BongBa
+riComedy/client/src/index.css:2:0[31m
+    at Input.error (D:\barir Mashla\website\BongBariCome
+dy\BongBariComedy\node_modules\postcss\lib\input.js:135:
+16)
+    at AtRule.error (D:\barir Mashla\website\BongBariCom
+edy\BongBariComedy\node_modules\postcss\lib\node.js:146:
+32)
+    at processApply (D:\barir Mashla\website\BongBariCom
+edy\BongBariComedy\node_modules\tailwindcss\lib\lib\expa
+ndApplyAtRules.js:380:29)
+    at D:\barir Mashla\website\BongBariComedy\BongBariCo
+medy\node_modules\tailwindcss\lib\lib\expandApplyAtRules
+.js:551:9
+    at D:\barir Mashla\website\BongBariComedy\BongBariCo
+medy\node_modules\tailwindcss\lib\processTailwindFeature
+s.js:55:50
+    at async plugins (D:\barir Mashla\website\BongBariCo
+medy\BongBariComedy\node_modules\tailwindcss\lib\plugin.
+js:38:17)
+    at async LazyResult.runAsync (D:\barir Mashla\websit
+e\BongBariComedy\BongBariComedy\node_modules\postcss\lib
+\lazy-result.js:293:11)
+    at async compileCSS (file:///D:/barir%20Mashla/websi
+te/BongBariComedy/BongBariComedy/node_modules/vite/dist/
+node/chunks/dep-C6uTJdX2.js:36898:21)
+    at async Object.transform (file:///D:/barir%20Mashla
+/website/BongBariComedy/BongBariComedy/node_modules/vite
+/dist/node/chunks/dep-C6uTJdX2.js:36171:11)
+    at async transform (file:///D:/barir%20Mashla/websit
+e/BongBariComedy/BongBariComedy/node_modules/rollup/dist
+/es/shared/node-entry.js:19640:16)[39m

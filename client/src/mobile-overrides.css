@@ -1,5 +1,28 @@
 /* Mobile-only overrides: keep desktop unchanged. */
+
+/* ======================================================
+   Collaboration Form: Force single-column below sm (640px)
+   Prevents Name/Email side-by-side on narrow phones.
+   ====================================================== */
+@media (max-width: 639px) {
+  [data-testid="collaboration-form"] .grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  [data-testid="collaboration-form"] {
+    width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  [data-testid="button-submit-collaboration"] {
+    width: 100% !important;
+    overflow: hidden !important;
+    transform: none !important;
+  }
+}
+
 @media (max-width: 768px) {
+
   /* ==================================================
    Safe Area Enforcements (Notch/Home Bar Protection)
    ================================================== */
@@ -16,9 +39,11 @@
   html {
     overflow-x: hidden !important;
   }
+
   body {
     overflow-x: hidden !important;
   }
+
   /* Prevent Bengali clipping and improve wrapping */
   .bangla-text {
     line-height: 1.6 !important;
@@ -26,19 +51,30 @@
     overflow-wrap: anywhere !important;
     text-rendering: optimizeLegibility !important;
   }
+
   /* Keep headings readable but tighter */
-  h1 { line-height: 1.2 !important; }
-  h2, h3, h4 { line-height: 1.25 !important; }
-  p { line-height: 1.5 !important; }
-  
+  h1 {
+    line-height: 1.2 !important;
+  }
+
+  h2,
+  h3,
+  h4 {
+    line-height: 1.25 !important;
+  }
+
+  p {
+    line-height: 1.5 !important;
+  }
+
   /* Fix Image aspect ratios on mobile - allow absolute positioning to work */
-  img:not(.absolute), 
-  video:not(.absolute), 
+  img:not(.absolute),
+  video:not(.absolute),
   iframe:not(.absolute) {
     max-width: 100% !important;
     height: auto !important;
   }
-  
+
   /* Allow absolute images (like thumbnails) to fill their parents */
   img.absolute,
   iframe.absolute {
@@ -46,13 +82,14 @@
     width: 100% !important;
     object-fit: cover !important;
   }
-  
+
   /* Force aspect-video to actually work on mobile (16/9) */
   .aspect-video {
     aspect-ratio: 16 / 9 !important;
     width: 100% !important;
     height: auto !important;
-    min-height: 56.25vw !important; /* Fallback: Force vertical height based on viewport width */
+    min-height: 56.25vw !important;
+    /* Fallback: Force vertical height based on viewport width */
     display: block !important;
   }
 
@@ -60,29 +97,34 @@
    Header & navigation adjustments
    ================================================== */
   [data-testid="main-navigation"] {
-    min-height: 56px !important; /* ensure <=64px total */
+    min-height: 56px !important;
+    /* ensure <=64px total */
     padding: 0.5rem 0 !important;
     /* Ensure header respects notch */
-    padding-top: max(0.5rem, env(safe-area-inset-top)) !important; 
+    padding-top: max(0.5rem, env(safe-area-inset-top)) !important;
   }
-  
+
   /* Fixed Bottom Nav (Glass Dock) Safe Area */
   nav.fixed.bottom-6 {
     bottom: max(1.5rem, env(safe-area-inset-bottom)) !important;
   }
+
   [data-testid="main-navigation"] .container {
     padding-left: 0.75rem !important;
     padding-right: 0.75rem !important;
   }
+
   [data-testid="logo-link"] img {
     width: 32px !important;
     height: 32px !important;
   }
+
   [data-testid="logo-link"] h1 {
     font-size: 1.125rem !important;
     line-height: 1.25rem !important;
     margin: 0 !important;
   }
+
   [data-testid="mobile-menu-toggle"] {
     min-width: 44px !important;
     min-height: 44px !important;
@@ -90,42 +132,17 @@
   }
 
   /* ==================================================
-   Hero & video scaling (RESPONSIVE FIX)
+   Hero & video scaling
    ================================================== */
-  .hero-section { 
+  .hero-section {
     /* Reduce top padding on mobile to bring buttons up */
-    padding-top: 80px !important; 
-    min-height: auto !important; /* Allow natural height */
+    padding-top: 80px !important;
+    min-height: auto !important;
+    /* Allow natural height */
     display: flex !important;
     flex-direction: column !important;
     justify-content: flex-start !important;
   }
-  
-  /* Ensure Hero Video is correct aspect ratio but smaller on mobile */
-  /* This prevents it from pushing content off screen */
-  .aspect-video {
-    width: auto !important; 
-    max-width: calc(100% - 20px) !important; /* Smaller gaps */
-    height: auto !important;
-    min-height: 200px !important; /* Don't force massive height */
-    max-height: 50vh !important;
-    object-fit: cover !important;
-    margin: 0 auto !important;
-    /* Visual Container Styling */
-    border-radius: 16px !important;
-    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.4) !important;
-    border: 1px solid rgba(255,255,255,0.1) !important; /* Thinner border for mobile */
-    background: #000 !important; 
-    overflow: hidden !important;
-    position: relative !important;
-    z-index: 10 !important;
-  }
-  
-  /* Hero Video Inner Media */
-  .video-container, .hero-section iframe, .hero-section video {
-     border-radius: 18px !important; 
-  }
-
 
   /* Force hide floating FAQ but KEEP Mobile Nav for Glass Pill */
   .floating-faq-button {
@@ -136,103 +153,61 @@
   .hero-section h1 {
     /* Gradient Text per User Spec (Yellow/Red Warmth) */
     /* Remove !important overrides handled by inline classes in home.tsx */
-    display: inline-block !important; 
+    display: inline-block !important;
     padding-bottom: 4px !important;
   }
-  
+
   .hero-section p {
-    color: #475569 !important; /* Slate-600 (Readable on Light) */
+    color: #475569 !important;
+    /* Slate-600 (Readable on Light) */
     text-shadow: none !important;
-    font-size: 16px !important; 
+    font-size: 16px !important;
     line-height: 1.5 !important;
     opacity: 1 !important;
     max-width: 90% !important;
     margin: 0 auto !important;
   }
-  
+
   /* BANGLA TEXT FIX */
   .hero-section p.bangla-text {
     line-height: 1.4 !important;
     font-size: 15px !important;
     margin-top: 4px !important;
     margin-bottom: 8px !important;
-    color: #94a3b8 !important; /* Lighter slate for contrast on dark bg */
+    color: #94a3b8 !important;
+    /* Lighter slate for contrast on dark bg */
   }
 
   /* HEADINGS SIZE FIX - Prevent "Small" titles */
-  section h2, 
+  section h2,
   [data-testid="latest-videos-header"] h2,
-  [data-testid="loved-videos-header"] h2, 
-  h2.text-2xl, 
-  h2.font-bold {
+  [data-testid="loved-videos-header"] h2 {
     font-size: 28px !important;
     font-weight: 800 !important;
     line-height: 1.2 !important;
     letter-spacing: -0.02em !important;
-    padding-left: 12px !important; /* Align with grid */
+    padding-left: 12px !important;
+    /* Align with grid */
     margin-bottom: 8px !important;
-    color: #1e293b !important; /* Dark Slate for headers against light bg */
+    color: #fff !important;
+    /* We want light text on dark background from Stitch */
   }
-  
+
   /* Mobile CTA Buttons - Simplified Layout */
   .hero-section button {
     /* Remove the forced width/max-width from previous overrides */
-    width: auto !important; 
+    width: auto !important;
     max-width: none !important;
-    margin-bottom: 0 !important; /* Managed by container gap */
-    
-    /* Ensure text doesn't overflow */
-    white-space: nowrap !important;
-    text-overflow: ellipsis !important;
-    overflow: hidden !important;
-    padding-left: 12px !important;
-    padding-right: 12px !important;
-  }
-  
-  /* Collaboration Form - "Normal" Light/Glass Style */
-  [data-testid="collaboration-form"] {
-    display: block !important;
-    background: rgba(255, 255, 255, 0.8) !important; /* White glass */
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.8) !important; 
-    padding: 1.5rem !important;
-    border-radius: 24px !important;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05) !important; /* Soft shadow */
-    position: relative !important;
-    z-index: 20 !important;
-    margin-bottom: 120px !important;
-  }
-  
-  form label {
-    color: #334155 !important; /* Slate-700 label (Readable on white) */
-    font-weight: 600 !important;
-    text-transform: none !important; /* Normal case */
-    letter-spacing: normal !important;
-  }
-  
-  input, select, textarea {
-    background: #fff !important; /* White inputs */
-    border: 1px solid #cbd5e1 !important; /* Slate-300 border */
-    color: #0f172a !important; /* Dark text */
-  }
-  
-  /* Latest Comedy Title Readability - Gradient H2 */
-  [data-testid="latest-videos-header"] h2,
-  h2.text-2xl {
-    background: linear-gradient(to right, #3b82f6, #06b6d4) !important; /* Blue to Cyan */
-    -webkit-background-clip: text !important;
-    background-clip: text !important;
-    color: transparent !important;
-    font-size: 28px !important;
-    font-weight: 800 !important;
-    text-shadow: none !important;
+    margin-bottom: 0 !important;
+    /* Managed by container gap */
   }
 
-  h3, .text-xl {
+  h3,
+  .text-xl {
     font-size: 20px !important;
-    padding-left: 12px !important; 
+    padding-left: 12px !important;
   }
+
   .hero-section .video-container,
   .hero-section iframe,
   .hero-section video {
@@ -240,7 +215,10 @@
     max-height: 40vh !important;
     border-radius: 10px !important;
   }
-  .youtube-short { max-width: 100% !important; }
+
+  .youtube-short {
+    max-width: 100% !important;
+  }
 
   /* ==================================================
    Promo/pill adjustments
@@ -250,37 +228,42 @@
     font-size: 0.875rem !important;
     line-height: 1.2 !important;
   }
-  .promo-banner * { 
-    white-space: nowrap; 
+
+  .promo-banner * {
+    white-space: nowrap;
   }
-  .badge, .pill {
+
+  .badge,
+  .pill {
     padding: 0.25rem 0.5rem !important;
     font-size: 0.75rem !important;
   }
 
-  /* ==================================================
-   Forms & inputs
-   ================================================== */
-  input, select, textarea {
-    font-size: 16px !important; /* avoid iOS zoom */
-    min-height: 48px !important;
-    padding: 12px 16px !important;
-    width: 100% !important;
-    background: rgba(255, 255, 255, 1) !important;
-    border: 1px solid #ddd !important;
-    border-radius: 12px !important;
-    color: #000 !important;
-    margin-bottom: 0.5rem !important;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02) !important;
+  /* Removed forced white input backgrounds to restore dark theme form inputs */
+
+  /* Collaboration Form - "Normal" Light/Glass Style */
+  [data-testid="collaboration-form"] {
+    display: block !important;
+    background: transparent !important;
+    /* Let the React container handle the background */
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    position: relative !important;
+    z-index: 20 !important;
+    margin-bottom: 0 !important;
   }
-  
+
   /* Fix phone input flex layout */
   [data-testid="input-phone"] {
-    width: auto !important; 
+    width: auto !important;
     flex: 1 !important;
     margin-bottom: 0 !important;
   }
-  
+
   [data-testid="select-country-code"] {
     min-height: 48px !important;
     border-radius: 12px !important;
@@ -288,9 +271,10 @@
   }
 
   form label {
-    font-size: 14px !important;
+    font-size: 13px !important;
     font-weight: 700 !important;
-    color: #1e293b !important;
+    color: #cbd5e1 !important;
+    /* Light text for dark form */
     margin-bottom: 6px !important;
     display: block !important;
     text-transform: uppercase;
@@ -299,26 +283,19 @@
 
   button[type="submit"] {
     width: 100% !important;
-    border-radius: 9999px !important;
+    border-radius: 12px !important;
     font-weight: 800 !important;
     text-transform: uppercase !important;
     letter-spacing: 1px !important;
     padding: 18px !important;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+    background: linear-gradient(135deg, #eab308, #d97706) !important;
+    /* Yellow/Orange to match Bong motif */
     color: white !important;
-    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3) !important;
+    box-shadow: 0 4px 15px rgba(234, 179, 8, 0.3) !important;
+    margin-top: 1rem !important;
   }
-  
-  [data-testid="collaboration-form"] {
-    display: block !important; /* Ensure visibility */
-    background: #fff !important;
-    padding: 1.5rem !important;
-    border-radius: 16px !important;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.06) !important;
-    position: relative !important;
-    z-index: 20 !important;
-    margin-bottom: 120px !important; /* Clear bottom dock/footer */
-  }
+
+  /* Removed duplicate collaboration form overrides */
 
   [data-testid="collaboration-section"] {
     padding-bottom: 20px !important;
@@ -333,37 +310,45 @@
     grid-template-columns: 1fr !important;
     gap: 0.75rem !important;
   }
-  .card { margin: 0.5rem !important; }
+
+  .card {
+    margin: 0.5rem !important;
+  }
 
   /* ANTIGRAVITY GRID PROTECTION: Force 2-3 columns on mobile for Main Home Grids */
   [data-testid="latest-videos-grid"],
   [data-testid="loved-videos-grid"] {
     display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important; /* STRICT 2-COL */
+    grid-template-columns: repeat(2, 1fr) !important;
+    /* STRICT 2-COL */
     gap: 12px !important;
-    padding-left: 16px !important; 
+    padding-left: 16px !important;
     padding-right: 16px !important;
     width: 100% !important;
     box-sizing: border-box !important;
   }
-  
+
   /* Fix card sizes in grid */
-  [data-testid="latest-videos-grid"] > div,
-  [data-testid="loved-videos-grid"] > div {
-    min-height: auto !important; /* Allow growing */
+  [data-testid="latest-videos-grid"]>div,
+  [data-testid="loved-videos-grid"]>div {
+    min-height: auto !important;
+    /* Allow growing */
     height: auto !important;
     background: transparent !important;
-    box-shadow: none !important; /* Let inner content handle shadow */
+    box-shadow: none !important;
+    /* Let inner content handle shadow */
   }
 
   /* Titles inside Cards - STRICT COMPLIANCE with UX Standards */
   [data-testid="youtube-short-title"],
   .video-card h3 {
-     font-size: 16px !important; /* Bumped from 14px -> 16px */
-     line-height: 1.35 !important; 
-     font-weight: 600 !important;
-     padding: 4px 0 !important;
-     color: #1e293b !important; /* Ensure high contrast */
+    font-size: 16px !important;
+    /* Bumped from 14px -> 16px */
+    line-height: 1.35 !important;
+    font-weight: 600 !important;
+    padding: 4px 0 !important;
+    color: #1e293b !important;
+    /* Ensure high contrast */
   }
 
   /* ==================================================
@@ -375,5 +360,9 @@
     align-items: flex-start !important;
     gap: 0.75rem !important;
   }
-  footer nav, footer ul { width: 100% !important; }
+
+  footer nav,
+  footer ul {
+    width: 100% !important;
+  }
 }

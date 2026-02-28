@@ -1,21 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { Menu, X, User, LogIn, LogOut, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 
 const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [logoutPopoverOpen, setLogoutPopoverOpen] = useState(false);
+  const [showLogoutMenu, setShowLogoutMenu] = useState(false);
+  const [imgErrorMobile, setImgErrorMobile] = useState(false);
+  const [imgErrorDesktop, setImgErrorDesktop] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [location] = useLocation();
   const { user, logout } = useAuth();
+  const logoutMenuRef = useRef<HTMLDivElement>(null);
 
   // Handle Scroll Effect for "Glass" activation
   useEffect(() => {
@@ -24,19 +22,26 @@ const Navigation = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Get Google user info from localStorage
-  const googleUser = localStorage.getItem('google_user')
-    ? JSON.parse(localStorage.getItem('google_user')!)
-    : null;
+  // Close logout menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (logoutMenuRef.current && !logoutMenuRef.current.contains(e.target as Node)) {
+        setShowLogoutMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-  // Check if user is logged in
-  const isLoggedIn = user || googleUser;
+  // Check if user is logged in via Firebase
+  const isLoggedIn = !!user;
+  const displayName = user?.displayName || user?.email?.split('@')[0] || "Member";
+  const photoURL = user?.photoURL;
 
-  const handleLogout = () => {
-    logout();
-    localStorage.removeItem('google_user');
-    setLogoutPopoverOpen(false);
-    setTimeout(() => window.location.href = '/', 100);
+  const handleLogout = async () => {
+    await logout();
+    setShowLogoutMenu(false);
+    window.location.href = '/';
   };
 
   const navItems = [
@@ -58,8 +63,8 @@ const Navigation = () => {
     <>
       <motion.header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled || isMobileMenuOpen
-            ? "border-b border-white/10 shadow-lg"
-            : "border-b border-transparent"
+          ? "border-b border-white/10 shadow-lg"
+          : "border-b border-transparent"
           }`}
         style={{
           // Always show glass on mobile for visibility, transparent-to-glass on desktop
@@ -72,13 +77,13 @@ const Navigation = () => {
         transition={{ duration: 0.6, ease: "circOut" }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
-          
+
           {/* Mobile Glass Gradient Overlay (Extra readability) */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-transparent pointer-events-none md:hidden" />
 
           {/* --- LEFT: LOGO CLUSTER (Clean Design) --- */}
           <Link href="/" className="relative z-50">
-            <motion.div 
+            <motion.div
               whileTap={{ scale: 0.95 }}
               className="flex items-center gap-2 sm:gap-3"
             >
@@ -98,17 +103,46 @@ const Navigation = () => {
             </motion.div>
           </Link>
 
-          {/* --- RIGHT: MOBILE HEADER ACTIONS (BongBot + Menu) --- */}
+          {/* --- RIGHT: MOBILE HEADER ACTIONS (Login + Menu) --- */}
           <div className="flex md:hidden items-center gap-3 z-50 ml-auto mr-0">
-             {/* Bong Bot Trigger (Right Side) */}
-             <motion.button 
-                whileTap={{ scale: 0.9 }}
-                onClick={() => window.dispatchEvent(new Event('toggle-chatbot'))}
-                className="flex items-center gap-2 bg-gradient-to-r from-purple-600/80 to-blue-600/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 shadow-[0_0_15px_rgba(124,58,237,0.3)]"
-             >
-                <Sparkles className="text-white w-4 h-4 animate-pulse" />
-                <span className="text-xs font-bold text-white tracking-wide">AI Bot</span>
-             </motion.button>
+            {isLoggedIn ? (
+              <div ref={logoutMenuRef} className="relative">
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowLogoutMenu(!showLogoutMenu)}
+                  className="flex items-center gap-2 bg-white/10 border border-white/10 px-3 py-1.5 rounded-full backdrop-blur-sm"
+                >
+                  {photoURL && !imgErrorMobile ? (
+                    <img src={photoURL} className="w-5 h-5 rounded-full object-cover" alt="User" onError={() => setImgErrorMobile(true)} />
+                  ) : (
+                    <div className="w-5 h-5 rounded-full bg-brand-blue flex items-center justify-center text-[10px] text-white font-bold">
+                      {displayName[0]?.toUpperCase() || <User size={12} />}
+                    </div>
+                  )}
+                </motion.button>
+                {showLogoutMenu && (
+                  <div className="absolute right-0 top-full mt-2 w-44 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-[999]">
+                    <div className="px-3 py-2 border-b border-gray-100">
+                      <p className="text-xs text-gray-500">Signed in as</p>
+                      <p className="text-sm font-semibold text-gray-800 truncate">{displayName}</p>
+                    </div>
+                    <button onClick={handleLogout} className="w-full flex items-center gap-2 px-3 py-2.5 text-red-600 hover:bg-red-50 transition-colors text-sm font-medium">
+                      <LogOut className="w-4 h-4" /> Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link href="/login">
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  className="flex items-center gap-1.5 bg-brand-yellow px-3 py-1.5 rounded-full shadow-[0_0_15px_rgba(255,200,0,0.4)]"
+                >
+                  <LogIn className="text-brand-blue w-3.5 h-3.5" />
+                  <span className="text-xs font-bold text-brand-blue tracking-wide">Login</span>
+                </motion.button>
+              </Link>
+            )}
           </div>
 
           {/* --- CENTER: DESKTOP NAV (Pills) --- */}
@@ -131,31 +165,37 @@ const Navigation = () => {
           <div className="flex items-center gap-3 z-50">
             {/* Login / User Status */}
             {isLoggedIn ? (
-              <Popover open={logoutPopoverOpen} onOpenChange={setLogoutPopoverOpen}>
-                <PopoverTrigger asChild>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="hidden md:flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-1.5 rounded-full backdrop-blur-sm transition-all"
-                  >
-                    {googleUser?.picture ? (
-                      <img src={googleUser.picture} className="w-6 h-6 rounded-full" alt="User" />
-                    ) : (
-                      <div className="w-6 h-6 rounded-full bg-brand-blue flex items-center justify-center text-xs text-white font-bold">
-                        {googleUser?.name?.[0] || <User size={14} />}
-                      </div>
-                    )}
-                    <span className="text-sm font-medium text-white max-w-[100px] truncate">{googleUser?.name || "Member"}</span>
-                  </motion.button>
-                </PopoverTrigger>
-                <PopoverContent className="w-40 p-1 bg-white/90 backdrop-blur-xl border-white/20 shadow-xl">
-                  <Button onClick={handleLogout} variant="ghost" size="sm" className="w-full text-red-600 justify-start">
-                    <LogOut className="w-4 h-4 mr-2" /> Logout
-                  </Button>
-                </PopoverContent>
-              </Popover>
+              <div ref={logoutMenuRef} className="relative hidden md:block">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowLogoutMenu(!showLogoutMenu)}
+                  className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-1.5 rounded-full backdrop-blur-sm transition-all"
+                >
+                  {photoURL && !imgErrorDesktop ? (
+                    <img src={photoURL} className="w-6 h-6 rounded-full object-cover" alt="User" onError={() => setImgErrorDesktop(true)} />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-brand-blue flex items-center justify-center text-xs text-white font-bold">
+                      {displayName[0]?.toUpperCase() || <User size={14} />}
+                    </div>
+                  )}
+                  <span className="text-sm font-medium text-white max-w-[100px] truncate">{displayName}</span>
+                </motion.button>
+                {showLogoutMenu && (
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-[999]">
+                    <div className="px-3 py-2 border-b border-gray-100">
+                      <p className="text-xs text-gray-500">Signed in as</p>
+                      <p className="text-sm font-semibold text-gray-800 truncate">{displayName}</p>
+                      {user?.email && <p className="text-xs text-gray-400 truncate">{user.email}</p>}
+                    </div>
+                    <button onClick={handleLogout} className="w-full flex items-center gap-2 px-3 py-2.5 text-red-600 hover:bg-red-50 transition-colors text-sm font-medium">
+                      <LogOut className="w-4 h-4" /> Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
-              <Link href="/admin">
+              <Link href="/login">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}

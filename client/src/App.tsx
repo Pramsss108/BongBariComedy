@@ -1,10 +1,8 @@
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-import { FloatingElements } from "@/components/floating-elements";
 import MagicalCursor from "@/components/MagicalCursor";
 import { useGlobalCursor } from "@/hooks/useGlobalCursor";
 import { useParallaxScroll } from "@/hooks/useParallaxScroll";
@@ -14,17 +12,16 @@ import { useSimpleCharmSound } from "@/hooks/useSimpleCharmSound";
 import { CharmSoundSelector } from "@/components/CharmSoundSelector";
 import { useState, useEffect, Suspense, lazy } from "react";
 import React from "react";
-import { useAuth } from "@/hooks/useAuth";
 import Home from "@/pages/home";
 import Navigation from "@/components/navigation";
-import  MobileNavBar  from "@/components/mobile-navbar";
+import MobileNavBar from "@/components/mobile-navbar";
 import { ensureAudioUnlocked } from "@/lib/audioUnlock";
 import GreetingConsent from "@/components/GreetingConsent";
 import { isAudioUnlocked, resumeAudioNow } from "@/lib/audioUnlock";
 import BongBot from "@/components/BongBot";
+import { useAuth } from "@/hooks/useAuth";
 import FloatingFAQButton from "@/components/FloatingFAQButton";
 import { DebugOverlay } from "@/components/DebugOverlay";
-import { AdvancedErrorBoundary } from "@/components/AdvancedErrorBoundary";
 import "@/lib/layout-sentry"; // Auto-registers window.runLayoutAudit
 
 // Deploy note: trivial comment to force GitHub Pages rebuild (FORCE_PAGES_DEPLOY)
@@ -35,6 +32,7 @@ const WorkWithUs = lazy(() => import("@/pages/work-with-us"));
 const Contact = lazy(() => import("@/pages/contact"));
 const Blog = lazy(() => import("@/pages/blog"));
 const FreeTools = lazy(() => import("./pages/free-tools"));
+const FreeToolsHumanizer = lazy(() => import("./pages/free-tools-humanizer"));
 const Admin = lazy(() => import("@/pages/admin"));
 const Login = lazy(() => import("@/pages/login"));
 const BlogPost = lazy(() => import("@/pages/blog-post"));
@@ -82,23 +80,33 @@ function Router() {
   useGlobalCursor();
 
   // Initialize fast engaging parallax scroll effects
-  useParallaxScroll();
+  // useParallaxScroll();
 
   // Initialize authentic Bengali rickshaw sound on taps (disabled when chatbot is open or logged in)
-  useRickshawSound({ enabled: !isChatbotOpen && !isAuthenticated, volume: 0.3, cooldownMs: 200 });
+  // useRickshawSound({ enabled: !isChatbotOpen && !isAuthenticated, volume: 0.3, cooldownMs: 200 });
 
   // Initialize magical hover sounds to complement cursor effects (disabled when logged in)
-  useMagicalHoverSounds({ enabled: !isAuthenticated, volume: 0.12 });
+  // useMagicalHoverSounds({ enabled: !isAuthenticated, volume: 0.12 });
 
   // Initialize custom charm sound that follows mouse movement (disabled when logged in)
-  useSimpleCharmSound({
-    enabled: !isAuthenticated,
-    volume: 0.06,
-    audioFile: '/sounds/charm.mp3' // Your custom charm sound
-  });
+  // useSimpleCharmSound({
+  //   enabled: !isAuthenticated,
+  //   volume: 0.06,
+  //   audioFile: '/sounds/charm.mp3' // Your custom charm sound
+  // });
 
   // Ensure audio unlock listeners attached
   useEffect(() => { ensureAudioUnlocked(); }, []);
+
+  // Toggle body class for cursor: when logged in, switch to normal cursor
+  useEffect(() => {
+    if (isAuthenticated) {
+      document.body.classList.add('admin-logged-in');
+    } else {
+      document.body.classList.remove('admin-logged-in');
+    }
+    return () => document.body.classList.remove('admin-logged-in');
+  }, [isAuthenticated]);
 
   // 🏴‍☠️ TAB NUDGE (Black Ops Phase 7.3): Guilt-trip users who switch tabs
   useEffect(() => {
@@ -123,62 +131,12 @@ function Router() {
 
   // Remove the auto-refresh logic from here - it will be handled in login/logout actions only
 
-  // Apply cursor styles based on current auth state
-  useEffect(() => {
-    if (isAuthenticated) {
-      // Professional cursor for admin
-      document.body.classList.add('admin-logged-in');
-      document.body.style.cursor = 'default';
-      document.documentElement.style.cursor = 'default';
-
-      // Remove belan cursor elements
-      const belanElements = document.querySelectorAll('.magical-belan-portal, .particle-container, .global-cursor-follower');
-      belanElements.forEach(el => el.remove());
-
-      // Apply professional cursor styles
-      const style = document.createElement('style');
-      style.id = 'admin-cursor-override';
-      style.textContent = `
-        * { cursor: default !important; }
-        button, a, [role="button"] { cursor: pointer !important; }
-        input, textarea, [contenteditable] { cursor: text !important; }
-      `;
-      if (!document.getElementById('admin-cursor-override')) {
-        document.head.appendChild(style);
-      }
-    } else {
-      // Remove professional cursor styles for public
-      document.body.classList.remove('admin-logged-in');
-      document.body.style.cursor = '';
-      document.documentElement.style.cursor = '';
-
-      const overrideStyle = document.getElementById('admin-cursor-override');
-      if (overrideStyle) {
-        overrideStyle.remove();
-      }
-    }
-
-    // Notify cursor component of auth state change
-    window.dispatchEvent(new Event('auth-state-changed'));
-
-    return () => {
-      // Cleanup
-      document.body.style.cursor = '';
-      document.documentElement.style.cursor = '';
-      const overrideStyle = document.getElementById('admin-cursor-override');
-      if (overrideStyle) {
-        overrideStyle.remove();
-      }
-    };
-  }, [isAuthenticated]);
-
   return (
     <>
       <Navigation />
       <div className="min-h-screen bg-brand-yellow relative m-0 p-0">
         <GreetingConsent open={showGreeting} onDecision={handleDecision} />
-        <FloatingElements />
-        {/* Show MagicalCursor (belan) only for public audience, not for logged-in admin */}
+        {/* Custom belan cursor - hidden for logged-in users (normal cursor instead) */}
         {!isAuthenticated && <MagicalCursor />}
         <Switch>
           <Route path="/" component={Home} />
@@ -205,6 +163,11 @@ function Router() {
           <Route path="/tools">
             <Suspense fallback={<LoadingFallback />}>
               <FreeTools />
+            </Suspense>
+          </Route>
+          <Route path="/tools/humanizer">
+            <Suspense fallback={<LoadingFallback />}>
+              <FreeToolsHumanizer />
             </Suspense>
           </Route>
           <Route path="/community/feed">
@@ -269,10 +232,10 @@ function Router() {
 
         {/* Floating FAQ Button - REMOVED per cleanup request */}
         {/* <FloatingFAQButton /> */}
-        
+
         {/* Mobile Navigation Dock */}
         <MobileNavBar />
-        
+
         {/* Production Debug overlay - Available via Console/Hidden Trigger */}
         <DebugOverlay />
       </div>
@@ -316,13 +279,9 @@ function GlobalErrorBanner() {
 
 function AppContent() {
   return (
-    <AdvancedErrorBoundary>
-      <TooltipProvider>
-        <GlobalErrorBanner />
-        <Toaster />
-        <Router />
-      </TooltipProvider>
-    </AdvancedErrorBoundary>
+    <>
+      <Router />
+    </>
   );
 }
 

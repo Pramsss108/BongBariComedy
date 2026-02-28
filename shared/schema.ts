@@ -10,6 +10,14 @@ export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  googleId: text("google_id").unique(),
+  email: text("email").unique(),
+  isEmailVerified: boolean("is_email_verified").default(false),
+  otpCode: text("otp_code"),
+  otpExpiry: timestamp("otp_expiry"),
+  knownIps: text("known_ips"), // JSON array of IPs
+  knownDevices: text("known_devices"), // JSON array of device hashes
+  loginCount: integer("login_count").default(0),
 });
 
 export const blogPosts = pgTable("blog_posts", {
@@ -47,7 +55,7 @@ export const communityPosts = pgTable("community_posts", {
   likes: integer("likes").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-  
+
   // Moderation fields
   moderationFlags: text("moderation_flags"), // JSON array of flags
   moderationReason: text("moderation_reason"),
@@ -74,14 +82,14 @@ export const communityPendingPosts = pgTable("community_pending_posts", {
   author: text("author"), // null for anonymous
   language: varchar("language", { length: 2 }).notNull().default("en"),
   flaggedTerms: text("flagged_terms"), // JSON array
-  
+
   // Moderation fields
   moderationFlags: text("moderation_flags"), // JSON array of flags
   moderationReason: text("moderation_reason"),
   moderationUsedAI: boolean("moderation_used_ai").default(false),
   moderationSeverity: integer("moderation_severity").default(0),
   moderationDecision: varchar("moderation_decision", { length: 50 }).default("pending"),
-  
+
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -96,6 +104,8 @@ export const rateLimits = pgTable("rate_limits", {
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
+  email: true,
+  googleId: true,
 });
 
 export const insertBlogPostSchema = createInsertSchema(blogPosts).omit({

@@ -10,6 +10,7 @@ import {
   registerAuthRoutes,
   registerCommunityRoutes,
   registerAiRoutes,
+  registerHumanizerRoutes,
   registerCmsRoutes,
   registerSystemRoutes,
   registerDebugRoutes
@@ -124,6 +125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerAuthRoutes(app, sessions);
   registerCommunityRoutes(app, logEvent, upstashUtils, recentPostsInMemory);
   registerAiRoutes(app, sessions, getDeviceIdFromReq);
+  registerHumanizerRoutes(app, sessions, getDeviceIdFromReq);
   registerCmsRoutes(app);
   registerSystemRoutes(app);
 

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BongBari Humanizer | AI to Human Text Converter</title>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            accent: '#11d411',
+            darkBg: '#050505',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            script: ['cursive'], // Fallback for script-inspired typography
+          },
+          borderRadius: {
+            'twelve': '12px',
+          },
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-glassmorphism">/* Glassmorphism effect */
+.glass-panel {
+    background: rgba(15, 15, 15, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1)
+    }
+/* Background setup */
+.hero-bg {
+    background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url(https://lh3.googleusercontent.com/aida-public/AB6AXuCEwo0gcn1UKotPSmcj4NxKkZVRtQzbMHJt6jBq_GcJK19YadZu24GNwugdzz7Nydw37K2AswMgpuFwMBmKgwDR8PADzDMNn8xt4sb1bPOKj2bpJ-CHe-OmUgjyKJGyKr_vUN-UJO2Lv70X4h_6qE_yZh-5ABvNIxsd3z9SsWetvrk5xw136i0IyagT7fYHKqm2Radi6guJwNIZQNUJRlLuUHRWA6I2F-5oOpepGd7bL4vHGhfWrQgj8mJ8s-7vL-AtJ2VhGlDFOfI);
+    background-size: cover;
+    background-position: center;
+    height: 100vh;
+    overflow: hidden
+    }
+/* Zero scroll policy */
+body, html {
+    height: 100%;
+    margin: 0;
+    overflow: hidden
+    }
+/* Custom Scrollbar for textareas (internal only) */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px
+    }
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent
+    }
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(17, 212, 17, 0.3);
+    border-radius: 10px
+    }
+/* Glowing Button */
+.glow-accent {
+    box-shadow: 0 0 20px rgba(17, 212, 17, 0.4);
+    transition: all 0.3s ease
+    }
+.glow-accent:hover {
+    box-shadow: 0 0 35px rgba(17, 212, 17, 0.7);
+    transform: scale(1.05)
+    }
+/* Progress Loader Ring */
+.loader-ring {
+    border: 4px solid rgba(17, 212, 17, 0.1);
+    border-top: 4px solid #11d411;
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    animation: spin 1s linear infinite
+    }
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+        } 100% {
+        transform: rotate(360deg);
+        }
+    }</style>
+</head>
+<body class="font-sans text-gray-100 hero-bg">
+<!-- BEGIN: MainHeader -->
+<header class="h-16 flex items-center justify-between px-8 border-b border-white/10 glass-panel z-50 relative" data-purpose="top-navigation">
+<div class="flex items-center gap-4">
+<button class="px-4 py-1.5 rounded-twelve border border-accent/40 text-accent text-sm font-medium hover:bg-accent/10 transition-all duration-300" data-purpose="back-button">
+        ← Back to Tools
+      </button>
+</div>
+<div class="absolute left-1/2 -translate-x-1/2 text-center">
+<h1 class="text-2xl italic tracking-tight font-light" style="font-family: 'Times New Roman', serif;">
+        BongBari <span class="text-accent font-semibold not-italic ml-1">Humanizer</span>
+</h1>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[10px] uppercase tracking-widest text-white/40">Powered by WebGPU</span>
+</div>
+</header>
+<!-- END: MainHeader -->
+<!-- BEGIN: MainContent -->
+<main class="h-[calc(100vh-64px)] w-full flex relative overflow-hidden" data-purpose="app-container">
+<!-- BEGIN: LeftPanel -->
+<section class="w-1/2 h-full p-8 flex flex-col relative" data-purpose="input-zone">
+<div class="flex-1 glass-panel rounded-twelve p-6 flex flex-col relative shadow-2xl border-white/5">
+<label class="text-xs uppercase tracking-widest text-white/40 mb-3 font-semibold">Input AI Content</label>
+<textarea class="flex-1 bg-transparent border-none focus:ring-0 text-lg leading-relaxed resize-none custom-scrollbar placeholder-white/20" id="input-text" placeholder="Paste your AI-generated text here..."></textarea>
+<!-- Floating Paste Button -->
+<button class="absolute bottom-6 right-6 bg-white/5 hover:bg-white/10 p-3 rounded-full border border-white/10 transition-all duration-300 group" id="paste-btn" title="Paste AI Text">
+<svg class="h-5 w-5 text-accent" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+</section>
+<!-- END: LeftPanel -->
+<!-- BEGIN: CenterEngine -->
+<div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-40">
+<button class="w-24 h-24 rounded-full bg-darkBg border-2 border-accent flex items-center justify-center glow-accent group relative active:scale-95 transition-all" data-purpose="humanize-trigger" id="humanize-btn">
+<div class="absolute inset-0 rounded-full border border-accent animate-pulse-slow"></div>
+<div class="text-accent text-[10px] font-bold uppercase tracking-tighter text-center leading-none">
+          Humanize<br/><span class="text-lg">✦</span>
+</div>
+</button>
+</div>
+<!-- END: CenterEngine -->
+<!-- BEGIN: RightPanel -->
+<section class="w-1/2 h-full p-8 flex flex-col relative" data-purpose="output-zone">
+<div class="flex-1 glass-panel rounded-twelve p-6 flex flex-col relative shadow-2xl border-white/5">
+<label class="text-xs uppercase tracking-widest text-white/40 mb-3 font-semibold">Humanized Result</label>
+<!-- Output Area (Initially empty or showing results) -->
+<div class="flex-1 relative" id="output-area">
+<!-- Text Display -->
+<div class="text-lg leading-relaxed text-white/90 overflow-y-auto h-full custom-scrollbar pr-2 hidden" id="result-text">
+<!-- Result content injected here -->
+</div>
+<!-- Progress Loader (Hidden initially, shown during processing) -->
+<div class="absolute inset-0 flex flex-col items-center justify-center gap-6 hidden" id="loader">
+<div class="loader-ring"></div>
+<div class="text-center">
+<p class="text-accent text-sm font-medium tracking-widest uppercase">Downloading Brain</p>
+<p class="text-white/40 text-[10px] mt-1">(WebGPU Neural Accelerator)</p>
+</div>
+</div>
+<!-- Placeholder State -->
+<div class="absolute inset-0 flex items-center justify-center text-white/20 italic text-sm" id="placeholder-msg">
+            Humanized text will appear here...
+          </div>
+</div>
+<!-- Footer Actions -->
+<div class="mt-6 flex gap-4">
+<button class="flex-1 py-3 bg-white/5 hover:bg-white/10 rounded-twelve border border-white/10 text-xs uppercase tracking-widest font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed" disabled="" id="copy-btn">
+            Copy Text
+          </button>
+<button class="flex-1 py-3 border border-accent/20 hover:border-accent/60 text-accent rounded-twelve text-xs uppercase tracking-widest font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed" disabled="" id="score-btn">
+            Check AI Score
+          </button>
+</div>
+</div>
+</section>
+<!-- END: RightPanel -->
+</main>
+<!-- END: MainContent -->
+<script data-purpose="ui-logic">
+    // Selectors
+    const humanizeBtn = document.getElementById('humanize-btn');
+    const loader = document.getElementById('loader');
+    const placeholder = document.getElementById('placeholder-msg');
+    const resultText = document.getElementById('result-text');
+    const copyBtn = document.getElementById('copy-btn');
+    const scoreBtn = document.getElementById('score-btn');
+    const inputText = document.getElementById('input-text');
+
+    // Simulation of "Humanizing"
+    humanizeBtn.addEventListener('click', () => {
+      const text = inputText.value.trim();
+      if (!text) return;
+
+      // Show loader
+      placeholder.classList.add('hidden');
+      resultText.classList.add('hidden');
+      loader.classList.remove('hidden');
+      
+      copyBtn.disabled = true;
+      scoreBtn.disabled = true;
+
+      // Artificial Delay for Effect
+      setTimeout(() => {
+        loader.classList.add('hidden');
+        resultText.classList.remove('hidden');
+        
+        // Mock output - just a variation for demo
+        resultText.innerText = "The lush landscapes of Mandarmani whisper stories of the sea, blending perfectly with the modern comforts of BongBari. This experience isn't just a stay; it's a connection to the soul of Bengal's coastline, crafted with a human touch that AI simply cannot replicate. " + text.substring(0, 100) + "...";
+        
+        copyBtn.disabled = false;
+        scoreBtn.disabled = false;
+        
+        // Haptic Feedback Simulation (Visual)
+        humanizeBtn.classList.add('scale-110');
+        setTimeout(() => humanizeBtn.classList.remove('scale-110'), 200);
+      }, 3500);
+    });
+
+    // Copy to clipboard
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(resultText.innerText);
+      const originalText = copyBtn.innerText;
+      copyBtn.innerText = "COPIED!";
+      copyBtn.classList.add('text-accent');
+      setTimeout(() => {
+        copyBtn.innerText = originalText;
+        copyBtn.classList.remove('text-accent');
+      }, 2000);
+    });
+
+    // Paste from clipboard
+    document.getElementById('paste-btn').addEventListener('click', async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        inputText.value = text;
+      } catch (err) {
+        console.error('Failed to read clipboard');
+      }
+    });
+  </script>
+</body></html>

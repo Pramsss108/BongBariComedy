@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BongBari Humanizer | AI to Human Text Converter</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Playfair+Display:ital,wght@1,400;1,600&amp;family=Orbitron:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            accent: '#39FF14', // Neon electric green
+            darkBg: '#050505',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            serif: ['Playfair Display', 'serif'],
+            tech: ['Orbitron', 'sans-serif'],
+          },
+          borderRadius: {
+            'twelve': '12px',
+          },
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'spin-slow': 'spin 3s linear infinite',
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-glassmorphism">.glass-panel {
+    background: rgba(10, 10, 10, 0.75);
+    backdrop-filter: blur(24px);-webkit-backdrop-filter: blur(24px);
+    border: 1px solid transparent;
+    border-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05)) 1;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    border-radius: 12px;border: 1px solid rgba(255,255,255,0.1);background-clip: padding-box;}.panel-border {
+    position: relative;
+    border-radius: 12px;
+    background: rgba(10, 10, 10, 0.7);
+    z-index: 1;
+}
+.panel-border::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    padding: 1px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.02) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 2;
+}.hero-bg {
+    background-image: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.9)), url(https://lh3.googleusercontent.com/aida-public/AB6AXuCEwo0gcn1UKotPSmcj4NxKkZVRtQzbMHJt6jBq_GcJK19YadZu24GNwugdzz7Nydw37K2AswMgpuFwMBmKgwDR8PADzDMNn8xt4sb1bPOKj2bpJ-CHe-OmUgjyKJGyKr_vUN-UJO2Lv70X4h_6qE_yZh-5ABvNIxsd3z9SsWetvrk5xw136i0IyagT7fYHKqm2Radi6guJwNIZQNUJRlLuUHRWA6I2F-5oOpepGd7bL4vHGhfWrQgj8mJ8s-7vL-AtJ2VhGlDFOfI);
+    background-size: cover;
+    background-position: center;
+    height: 100vh;
+    overflow: hidden
+}body, html {
+    height: 100%;
+    margin: 0;
+    overflow: hidden
+}.custom-scrollbar::-webkit-scrollbar {
+    width: 4px
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(57, 255, 20, 0.3);border-radius: 10px
+}.glow-accent {
+    box-shadow: 0 0 25px rgba(57, 255, 20, 0.3), inset 0 0 10px rgba(57, 255, 20, 0.1);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.glow-accent:hover {
+    box-shadow: 0 0 50px rgba(57, 255, 20, 0.6), inset 0 0 20px rgba(57, 255, 20, 0.3);
+    transform: scale(1.05);
+    border-color: #39FF14;
+}.metallic-ring {
+    background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
+    box-shadow:  5px 5px 10px #050505, -5px -5px 10px #202020;
+}.loader-ring {
+    border: 3px solid rgba(57, 255, 20, 0.1);
+    border-top: 3px solid #39FF14;
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    animation: spin 1s linear infinite;
+    filter: drop-shadow(0 0 8px #39FF14);
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}.tactile-btn {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
+}
+.tactile-btn:active {
+    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.6);
+    transform: translateY(1px);
+}
+.tactile-btn:hover:not(:disabled) {
+    box-shadow: 0 0 15px rgba(57, 255, 20, 0.2);
+    border-color: rgba(57, 255, 20, 0.4);
+}
+</style>
+</head>
+<body class="font-sans text-gray-100 hero-bg">
+<header class="h-16 flex items-center justify-between px-8 border-b border-white/5 bg-black/40 backdrop-blur-md z-50 relative" data-purpose="top-navigation">
+<div class="flex items-center gap-4">
+<button class="px-4 py-1.5 rounded-twelve border border-white/10 text-white/70 text-sm font-medium hover:text-accent hover:border-accent/50 hover:bg-white/5 transition-all duration-300 flex items-center gap-2 group" data-purpose="back-button">
+<span class="group-hover:-translate-x-1 transition-transform duration-300">←</span> Back to Tools
+      </button>
+</div>
+<div class="absolute left-1/2 -translate-x-1/2 text-center flex items-baseline gap-2">
+<h1 class="text-3xl font-serif italic tracking-wide text-white drop-shadow-lg">
+        BongBari
+      </h1>
+<span class="text-accent font-tech text-xl uppercase tracking-widest font-bold glow-text" style="text-shadow: 0 0 10px rgba(57,255,20,0.5);">Humanizer</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[10px] font-tech uppercase tracking-widest text-accent/80 border border-accent/20 px-2 py-1 rounded">WebGPU Enabled</span>
+</div>
+</header>
+<main class="h-[calc(100vh-64px)] w-full flex relative overflow-hidden" data-purpose="app-container">
+<section class="w-1/2 h-full p-8 flex flex-col relative" data-purpose="input-zone">
+<div class="flex-1 panel-border glass-panel p-6 flex flex-col relative shadow-2xl">
+<div class="flex justify-between items-center mb-4 border-b border-white/5 pb-2">
+<label class="text-xs font-tech uppercase tracking-widest text-accent/90 font-bold">Input AI Content</label>
+<span class="text-[10px] text-white/30 font-mono">0 / 5000</span>
+</div>
+<textarea class="flex-1 bg-transparent border-none focus:ring-0 text-lg leading-relaxed resize-none custom-scrollbar placeholder-white/10 font-light tracking-wide text-gray-200" id="input-text" placeholder="Paste your AI-generated text here for humanization..."></textarea>
+<button class="absolute bottom-6 right-6 bg-black/60 hover:bg-accent/20 p-3 rounded-full border border-white/10 hover:border-accent transition-all duration-300 group backdrop-blur-sm shadow-lg" id="paste-btn" title="Paste AI Text">
+<svg class="h-5 w-5 text-white/70 group-hover:text-accent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+</section>
+<div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-40">
+<div class="absolute inset-0 -m-4 border border-accent/20 rounded-full animate-spin-slow pointer-events-none"></div>
+<button class="w-28 h-28 rounded-full bg-darkBg border-2 border-accent/80 flex items-center justify-center glow-accent group relative active:scale-95 transition-all shadow-2xl metallic-ring" data-purpose="humanize-trigger" id="humanize-btn">
+<div class="absolute inset-0 rounded-full border border-accent animate-pulse-slow opacity-60"></div>
+<div class="absolute inset-1 rounded-full border border-white/10"></div>
+<div class="relative z-10 flex flex-col items-center justify-center">
+<div class="text-accent font-tech text-[11px] font-bold uppercase tracking-wider text-center leading-tight group-hover:text-white transition-colors duration-300" style="text-shadow: 0 0 5px rgba(57,255,20,0.8);">
+            Humanize
+          </div>
+<div class="mt-1 text-accent group-hover:scale-125 transition-transform duration-300">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+</button>
+</div>
+<section class="w-1/2 h-full p-8 flex flex-col relative" data-purpose="output-zone">
+<div class="flex-1 panel-border glass-panel p-6 flex flex-col relative shadow-2xl">
+<div class="flex justify-between items-center mb-4 border-b border-white/5 pb-2">
+<label class="text-xs font-tech uppercase tracking-widest text-accent/90 font-bold">Humanized Result</label>
+<div class="flex gap-2">
+<span class="w-2 h-2 rounded-full bg-red-500/20"></span>
+<span class="w-2 h-2 rounded-full bg-yellow-500/20"></span>
+<span class="w-2 h-2 rounded-full bg-accent/20"></span>
+</div>
+</div>
+<div class="flex-1 relative" id="output-area">
+<div class="text-lg leading-relaxed text-gray-100 overflow-y-auto h-full custom-scrollbar pr-2 hidden font-light" id="result-text">
+</div>
+<div class="absolute inset-0 flex flex-col items-center justify-center gap-6 hidden z-20" id="loader">
+<div class="loader-ring"></div>
+<div class="text-center">
+<p class="text-accent font-tech text-sm font-bold tracking-widest uppercase animate-pulse">Processing Neural Net</p>
+<p class="text-white/40 text-[10px] mt-2 font-mono border border-white/10 px-2 py-1 inline-block rounded">WebGPU Active</p>
+</div>
+</div>
+<div class="absolute inset-0 flex items-center justify-center text-white/10 italic text-sm select-none" id="placeholder-msg">
+<div class="text-center">
+<p class="mb-2 text-3xl opacity-20">✦</p>
+<p>Humanized text will manifest here...</p>
+</div>
+</div>
+</div>
+<div class="mt-6 flex gap-4">
+<button class="flex-1 py-3.5 bg-gradient-to-br from-gray-800 to-black hover:from-gray-700 hover:to-gray-900 rounded-twelve border border-white/10 text-white text-xs uppercase tracking-widest font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed tactile-btn relative overflow-hidden group" disabled="" id="copy-btn">
+<span class="relative z-10 flex items-center justify-center gap-2">
+<svg class="w-4 h-4 text-white/50 group-hover:text-accent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+            Copy Text
+            </span>
+</button>
+<button class="flex-1 py-3.5 bg-black/40 border border-accent/30 hover:border-accent hover:bg-accent/10 text-accent rounded-twelve text-xs uppercase tracking-widest font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed tactile-btn relative overflow-hidden group" disabled="" id="score-btn">
+<span class="relative z-10 flex items-center justify-center gap-2">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+            Check AI Score
+            </span>
+</button>
+</div>
+</div>
+</section>
+</main>
+<script data-purpose="ui-logic">
+    // Selectors
+    const humanizeBtn = document.getElementById('humanize-btn');
+    const loader = document.getElementById('loader');
+    const placeholder = document.getElementById('placeholder-msg');
+    const resultText = document.getElementById('result-text');
+    const copyBtn = document.getElementById('copy-btn');
+    const scoreBtn = document.getElementById('score-btn');
+    const inputText = document.getElementById('input-text');
+    // Simulation of "Humanizing"
+    humanizeBtn.addEventListener('click', () => {
+      const text = inputText.value.trim();
+      if (!text) return;
+      // Show loader
+      placeholder.classList.add('hidden');
+      resultText.classList.add('hidden');
+      loader.classList.remove('hidden');
+      copyBtn.disabled = true;
+      scoreBtn.disabled = true;
+      // Artificial Delay for Effect
+      setTimeout(() => {
+        loader.classList.add('hidden');
+        resultText.classList.remove('hidden');
+        // Mock output - just a variation for demo
+        resultText.innerText = "The lush landscapes of Mandarmani whisper stories of the sea, blending perfectly with the modern comforts of BongBari. This experience isn't just a stay; it's a connection to the soul of Bengal's coastline, crafted with a human touch that AI simply cannot replicate. " + text.substring(0, 100) + "...";
+        copyBtn.disabled = false;
+        scoreBtn.disabled = false;
+        // Haptic Feedback Simulation (Visual)
+        humanizeBtn.classList.add('scale-110');
+        setTimeout(() => humanizeBtn.classList.remove('scale-110'), 200);
+      }, 3500);
+    });
+    // Copy to clipboard
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(resultText.innerText);
+      const originalText = copyBtn.querySelector('span').innerHTML;
+      copyBtn.querySelector('span').innerText = "COPIED!";
+      copyBtn.classList.add('text-accent', 'border-accent');
+      setTimeout(() => {
+        copyBtn.querySelector('span').innerHTML = originalText;
+        copyBtn.classList.remove('text-accent', 'border-accent');
+      }, 2000);
+    });
+    // Paste from clipboard
+    document.getElementById('paste-btn').addEventListener('click', async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        inputText.value = text;
+      } catch (err) {
+        console.error('Failed to read clipboard');
+      }
+    });
+  </script>
+
+</body></html>

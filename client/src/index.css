@@ -582,14 +582,15 @@ button:hover {
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
     margin: 0;
     padding: 0;
     box-sizing: border-box;
   }
 
   body {
-    @apply font-sans antialiased bg-brand-yellow text-foreground;
+    color: hsl(var(--foreground));
+    background-color: var(--brand-yellow);
     background: linear-gradient(135deg,
         hsl(48, 100%, 80%) 0%,
         hsl(48, 100%, 75%) 25%,
@@ -698,10 +699,9 @@ button:hover {
     animation-duration: 6s !important;
   }
 
-  /* Disable all cursor-related styles on mobile */
+  /* Disable custom cursor styles on mobile but protect tailwind utilities */
   .global-cursor-follower,
-  .cursor-trail,
-  [class*="cursor"] {
+  .cursor-trail {
     display: none !important;
   }
 

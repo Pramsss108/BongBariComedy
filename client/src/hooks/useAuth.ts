@@ -1,71 +1,63 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest, clearCSRFToken } from "@/lib/queryClient";
+import { useQueryClient } from "@tanstack/react-query";
+import { auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
-interface AuthUser {
-  username: string;
+export interface AuthUser {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
 }
 
 export function useAuth() {
-  const [sessionId, setSessionId] = useState<string | null>(
-    localStorage.getItem('admin_session') || localStorage.getItem('admin_jwt')
-  );
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const queryClient = useQueryClient();
 
-  const { data: user, isLoading, error } = useQuery({
-    queryKey: ['/api/auth/me'],
-  queryFn: () => apiRequest('/api/auth/me', {
-      headers: {
-        Authorization: `Bearer ${sessionId}`
-      }
-    }),
-    enabled: !!sessionId,
-    retry: false
-  });
-
-  const logoutMutation = useMutation({
-    mutationFn: () => apiRequest('/api/auth/logout', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${sessionId}`
-      }
-    }),
-    onSuccess: () => {
-      localStorage.removeItem('admin_session');
-      localStorage.removeItem('admin_jwt');
-      setSessionId(null);
-      clearCSRFToken(); // Clear CSRF token on logout
-      queryClient.clear();
-    }
-  });
-
-  const setSession = (newSessionId: string) => {
-  // Support both legacy session and new JWT
-  localStorage.setItem('admin_session', newSessionId);
-  localStorage.setItem('admin_jwt', newSessionId);
-    setSessionId(newSessionId);
-    queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
-  };
-
-  const logout = () => {
-    logoutMutation.mutate();
-  };
-
-  // Clear session on auth error
   useEffect(() => {
-    if (error && sessionId) {
-      localStorage.removeItem('admin_session');
-  localStorage.removeItem('admin_jwt');
-      setSessionId(null);
-      clearCSRFToken(); // Clear CSRF token on auth error
+    // Synchronize React state with Firebase Auth state
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          // Get the Real JWT token to access God Tier
+          const token = await firebaseUser.getIdToken();
+          setSessionId(token);
+          setUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName || 'Bong Bari Member',
+            photoURL: firebaseUser.photoURL,
+          });
+        } catch (err) {
+          console.error("Error retrieving Firebase token:", err);
+          setUser(null);
+          setSessionId(null);
+        }
+      } else {
+        setUser(null);
+        setSessionId(null);
+      }
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const logout = async () => {
+    try {
+      await auth.signOut();
+      queryClient.clear();
+    } catch (error) {
+      console.error("Logout failed:", error);
     }
-  }, [error, sessionId]);
+  };
 
   return {
-    user: user as AuthUser | undefined,
+    user,
     isLoading,
     isAuthenticated: !!user && !!sessionId,
-    setSession,
     logout,
     sessionId
   };

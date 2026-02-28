@@ -4,3 +4,4 @@ export * from "./ai";
 export * from "./cms";
 export * from "./system";
 export * from "./debug";
+export * from "./humanizer";

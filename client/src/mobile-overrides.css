@@ -257,6 +257,26 @@
     margin-bottom: 0 !important;
   }
 
+  /* Prevent form card from overflowing on narrow phones */
+  [data-testid="collaboration-section"] {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-bottom: 2rem !important;
+  }
+
+  [data-testid="collaboration-section"] > div {
+    overflow: hidden !important;
+  }
+
+  /* All form inputs must stay inside container */
+  [data-testid="collaboration-form"] input,
+  [data-testid="collaboration-form"] textarea,
+  [data-testid="collaboration-form"] select,
+  [data-testid="collaboration-form"] button {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
   /* Fix phone input flex layout */
   [data-testid="input-phone"] {
     width: auto !important;

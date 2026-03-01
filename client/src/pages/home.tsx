@@ -301,16 +301,16 @@ const Home = () => {
           <motion.div className="py-8 w-full px-4 sm:px-6 lg:px-8" initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-60px' }} transition={{ duration: 0.7, ease: 'easeOut' }}>
             <section className="max-w-4xl mx-auto relative mb-32" data-testid="collaboration-section">
               <div className="absolute inset-0 -z-10 bg-radial-glow opacity-30"></div>
-              <motion.div className="relative overflow-hidden rounded-[2.5rem] bg-black/60 shadow-2xl border border-white/10 text-white backdrop-blur-sm" whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}>
-                <div className="p-8 md:p-12 pb-4 text-center relative z-10 w-full">
-                  <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-2 drop-shadow-md tracking-tight">Work with Us</h2>
-                  <h3 className="text-2xl md:text-3xl font-bengali font-bold text-yellow-400/90">আমাদের সাথে কাজ করুন</h3>
-                  <p className="mt-4 text-center text-gray-300 max-w-2xl mx-auto leading-relaxed md:text-lg">
+              <motion.div className="relative overflow-hidden rounded-2xl sm:rounded-[2.5rem] bg-black/60 shadow-2xl border border-white/10 text-white backdrop-blur-sm" whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}>
+                <div className="px-5 pt-6 pb-3 sm:p-8 md:p-12 md:pb-4 text-center relative z-10 w-full">
+                  <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-2 drop-shadow-md tracking-tight">Work with Us</h2>
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-bengali font-bold text-yellow-400/90">আমাদের সাথে কাজ করুন</h3>
+                  <p className="mt-3 sm:mt-4 text-center text-gray-300 max-w-2xl mx-auto leading-relaxed text-sm sm:text-base md:text-lg">
                     Ready to collaborate? Let's create some amazing Bengali comedy content together!<br />
-                    <span className="font-bengali text-sm md:text-base text-gray-400">কোলাবোরেট করতে প্রস্তুত? চলুন একসাথে দুর্দান্ত বাংলা কমেডি কন্টেন্ট তৈরি করি!</span>
+                    <span className="font-bengali text-xs sm:text-sm md:text-base text-gray-400">কোলাবোরেট করতে প্রস্তুত? চলুন একসাথে দুর্দান্ত বাংলা কমেডি কন্টেন্ট তৈরি করি!</span>
                   </p>
                 </div>
-                <div className="p-6 sm:p-8 md:p-12">
+                <div className="px-4 pb-6 sm:p-8 md:p-12">
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" data-testid="collaboration-form">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -328,9 +328,9 @@ const Home = () => {
                       <FormField control={form.control} name="phone" render={({ field }) => (
                         <FormItem><FormLabel>Phone / ফোন {!hasEmail ? <span className="text-red-500">*</span> : <span className="text-gray-400">(Optional)</span>}</FormLabel>
                           <FormControl>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 w-full min-w-0">
                               <Select value={field.value?.split(' ')[0] || "+91"} onValueChange={(code) => { const n = field.value?.split(' ').slice(1).join(' ') || ''; field.onChange(code + (n ? ' ' + n : '')); }}>
-                                <SelectTrigger className="w-24" data-testid="select-country-code"><SelectValue /></SelectTrigger>
+                                <SelectTrigger className="w-[85px] flex-shrink-0" data-testid="select-country-code"><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="+91">🇮🇳 +91</SelectItem>
                                   <SelectItem value="+880">🇧🇩 +880</SelectItem>
@@ -344,7 +344,7 @@ const Home = () => {
                                   <SelectItem value="+971">🇦🇪 +971</SelectItem>
                                 </SelectContent>
                               </Select>
-                              <Input placeholder="Enter phone number" data-testid="input-phone" type="tel" value={field.value?.split(' ').slice(1).join(' ') || ''} onChange={(e) => { const n = e.target.value.replace(/[^0-9]/g, ''); const c = field.value?.split(' ')[0] || '+91'; field.onChange(c + (n ? ' ' + n : '')); }} onKeyPress={(e) => { if (!/[0-9]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'Tab') e.preventDefault(); }} className="flex-1" />
+                              <Input placeholder="Enter phone number" data-testid="input-phone" type="tel" value={field.value?.split(' ').slice(1).join(' ') || ''} onChange={(e) => { const n = e.target.value.replace(/[^0-9]/g, ''); const c = field.value?.split(' ')[0] || '+91'; field.onChange(c + (n ? ' ' + n : '')); }} onKeyPress={(e) => { if (!/[0-9]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'Tab') e.preventDefault(); }} className="flex-1 min-w-0" />
                             </div>
                           </FormControl>
                           <FormMessage /></FormItem>
@@ -361,9 +361,9 @@ const Home = () => {
                       )} />
                       <MagneticButton
                         disabled={collaborationMutation.isPending || !isFormValid}
-                        className={`w-full py-4 rounded-full font-semibold text-base transition-all duration-300 no-rickshaw-sound overflow-hidden ${!isFormValid ? 'bg-gray-400 text-gray-200 cursor-not-allowed opacity-60' : 'bg-brand-red text-white hover:bg-red-600 hover:shadow-[0_0_20px_rgba(229,57,53,0.5)]'} ${collaborationMutation.isPending ? 'opacity-50' : ''}`}
+                        className={`w-full py-4 rounded-2xl sm:rounded-full font-semibold text-base transition-all duration-300 no-rickshaw-sound overflow-hidden ${!isFormValid ? 'bg-gray-400 text-gray-200 cursor-not-allowed opacity-60' : 'bg-brand-red text-white hover:bg-red-600 hover:shadow-[0_0_20px_rgba(229,57,53,0.5)]'} ${collaborationMutation.isPending ? 'opacity-50' : ''}`}
                         data-testid="button-submit-collaboration"
-                        strength={isFormValid ? 0.3 : 0}
+                        strength={window.innerWidth < 768 ? 0 : (isFormValid ? 0.3 : 0)}
                         onClick={() => isFormValid && form.handleSubmit(onSubmit)()}
                       >
                         <Send className="mr-2 h-5 w-5" />

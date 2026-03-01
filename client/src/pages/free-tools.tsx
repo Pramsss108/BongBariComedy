@@ -43,7 +43,7 @@ const FreeTools = () => {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="relative group rounded-2xl p-[1px] bg-gradient-to-br from-yellow-500/50 via-amber-500/30 to-orange-400/50 shadow-2xl hover:shadow-yellow-500/20 transition-all duration-500">
             <div className="rounded-2xl h-full w-full bg-black/80 backdrop-blur-xl p-8 flex flex-col border border-white/5 group-hover:bg-black/60 transition-colors">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold font-sans tracking-tight text-white group-hover:text-amber-400 transition-colors">V8 Humanizer</h2>
+                <h2 className="text-xl font-bold font-sans tracking-tight text-white group-hover:text-amber-400 transition-colors">V12 Humanizer</h2>
                 <div className="flex gap-1.5">
                   <span className="text-[9px] uppercase tracking-wider bg-zinc-800 border border-zinc-700 text-zinc-300 px-2 py-1 rounded-md font-medium">Local Free</span>
                   <span className="text-[9px] uppercase tracking-wider bg-amber-500/20 border border-amber-500/30 text-amber-300 px-2 py-1 rounded-md font-medium">Cloud Pro</span>

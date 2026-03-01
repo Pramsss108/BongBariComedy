@@ -7,13 +7,15 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [showLogoutMenu, setShowLogoutMenu] = useState(false);
+  const [showMobileLogout, setShowMobileLogout] = useState(false);
+  const [showDesktopLogout, setShowDesktopLogout] = useState(false);
   const [imgErrorMobile, setImgErrorMobile] = useState(false);
   const [imgErrorDesktop, setImgErrorDesktop] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [location] = useLocation();
   const { user, logout } = useAuth();
-  const logoutMenuRef = useRef<HTMLDivElement>(null);
+  const mobileLogoutRef = useRef<HTMLDivElement>(null);
+  const desktopLogoutRef = useRef<HTMLDivElement>(null);
 
   // Handle Scroll Effect for "Glass" activation
   useEffect(() => {
@@ -22,11 +24,14 @@ const Navigation = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close logout menu when clicking outside
+  // Close logout menus when clicking outside (separate handlers for mobile/desktop)
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (logoutMenuRef.current && !logoutMenuRef.current.contains(e.target as Node)) {
-        setShowLogoutMenu(false);
+      if (mobileLogoutRef.current && !mobileLogoutRef.current.contains(e.target as Node)) {
+        setShowMobileLogout(false);
+      }
+      if (desktopLogoutRef.current && !desktopLogoutRef.current.contains(e.target as Node)) {
+        setShowDesktopLogout(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -40,7 +45,8 @@ const Navigation = () => {
 
   const handleLogout = async () => {
     await logout();
-    setShowLogoutMenu(false);
+    setShowMobileLogout(false);
+    setShowDesktopLogout(false);
     window.location.href = '/';
   };
 
@@ -106,31 +112,42 @@ const Navigation = () => {
           {/* --- RIGHT: MOBILE HEADER ACTIONS (Login + Menu) --- */}
           <div className="flex md:hidden items-center gap-3 z-50 ml-auto mr-0">
             {isLoggedIn ? (
-              <div ref={logoutMenuRef} className="relative">
+              <div ref={mobileLogoutRef} className="relative">
                 <motion.button
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowLogoutMenu(!showLogoutMenu)}
-                  className="flex items-center gap-2 bg-white/10 border border-white/10 px-3 py-1.5 rounded-full backdrop-blur-sm"
+                  onClick={(e) => { e.stopPropagation(); setShowMobileLogout(prev => !prev); }}
+                  className="flex items-center gap-2 bg-white/10 border border-white/10 px-3 py-1.5 rounded-full backdrop-blur-sm min-h-[44px] min-w-[44px] justify-center"
                 >
                   {photoURL && !imgErrorMobile ? (
-                    <img src={photoURL} className="w-5 h-5 rounded-full object-cover" alt="User" onError={() => setImgErrorMobile(true)} />
+                    <img src={photoURL} className="w-6 h-6 rounded-full object-cover" alt="User" onError={() => setImgErrorMobile(true)} />
                   ) : (
-                    <div className="w-5 h-5 rounded-full bg-brand-blue flex items-center justify-center text-[10px] text-white font-bold">
-                      {displayName[0]?.toUpperCase() || <User size={12} />}
+                    <div className="w-6 h-6 rounded-full bg-brand-blue flex items-center justify-center text-[11px] text-white font-bold">
+                      {displayName[0]?.toUpperCase() || <User size={14} />}
                     </div>
                   )}
                 </motion.button>
-                {showLogoutMenu && (
-                  <div className="absolute right-0 top-full mt-2 w-44 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-[999]">
-                    <div className="px-3 py-2 border-b border-gray-100">
-                      <p className="text-xs text-gray-500">Signed in as</p>
-                      <p className="text-sm font-semibold text-gray-800 truncate">{displayName}</p>
-                    </div>
-                    <button onClick={handleLogout} className="w-full flex items-center gap-2 px-3 py-2.5 text-red-600 hover:bg-red-50 transition-colors text-sm font-medium">
-                      <LogOut className="w-4 h-4" /> Sign Out
-                    </button>
-                  </div>
-                )}
+                <AnimatePresence>
+                  {showMobileLogout && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-[999]"
+                    >
+                      <div className="px-3 py-2 border-b border-gray-100">
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Signed in as</p>
+                        <p className="text-sm font-semibold text-gray-800 truncate">{displayName}</p>
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleLogout(); }}
+                        className="w-full flex items-center gap-2 px-3 py-3 text-red-600 hover:bg-red-50 active:bg-red-100 transition-colors text-sm font-bold min-h-[48px]"
+                      >
+                        <LogOut className="w-4 h-4" /> Sign Out
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             ) : (
               <Link href="/login">
@@ -165,11 +182,11 @@ const Navigation = () => {
           <div className="flex items-center gap-3 z-50">
             {/* Login / User Status */}
             {isLoggedIn ? (
-              <div ref={logoutMenuRef} className="relative hidden md:block">
+              <div ref={desktopLogoutRef} className="relative hidden md:block">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowLogoutMenu(!showLogoutMenu)}
+                  onClick={(e) => { e.stopPropagation(); setShowDesktopLogout(prev => !prev); }}
                   className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-1.5 rounded-full backdrop-blur-sm transition-all"
                 >
                   {photoURL && !imgErrorDesktop ? (
@@ -181,18 +198,29 @@ const Navigation = () => {
                   )}
                   <span className="text-sm font-medium text-white max-w-[100px] truncate">{displayName}</span>
                 </motion.button>
-                {showLogoutMenu && (
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-[999]">
-                    <div className="px-3 py-2 border-b border-gray-100">
-                      <p className="text-xs text-gray-500">Signed in as</p>
-                      <p className="text-sm font-semibold text-gray-800 truncate">{displayName}</p>
-                      {user?.email && <p className="text-xs text-gray-400 truncate">{user.email}</p>}
-                    </div>
-                    <button onClick={handleLogout} className="w-full flex items-center gap-2 px-3 py-2.5 text-red-600 hover:bg-red-50 transition-colors text-sm font-medium">
-                      <LogOut className="w-4 h-4" /> Sign Out
-                    </button>
-                  </div>
-                )}
+                <AnimatePresence>
+                  {showDesktopLogout && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 top-full mt-2 w-52 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-[999]"
+                    >
+                      <div className="px-3 py-2 border-b border-gray-100">
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Signed in as</p>
+                        <p className="text-sm font-semibold text-gray-800 truncate">{displayName}</p>
+                        {user?.email && <p className="text-xs text-gray-400 truncate">{user.email}</p>}
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleLogout(); }}
+                        className="w-full flex items-center gap-2 px-3 py-3 text-red-600 hover:bg-red-50 active:bg-red-100 transition-colors text-sm font-bold"
+                      >
+                        <LogOut className="w-4 h-4" /> Sign Out
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             ) : (
               <Link href="/login">

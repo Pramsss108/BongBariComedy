@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CreateMLCEngine, InitProgressReport } from '@mlc-ai/web-llm';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from "@/hooks/useAuth";
+import { auth } from "@/lib/firebase";
 import { useLocation } from "wouter";
 import { buildApiUrl } from '@/lib/queryClient';
 import { cleanInputText } from '@/lib/nlp';
@@ -380,7 +381,12 @@ export default function FreeToolsHumanizer() {
   const infer = useCallback(async (prompt: string, onChunk: (t: string) => void = () => { }) => {
     if (internalMode === 'groq' || enginePhase === 'gpu_lost') {
       const authHeader: Record<string, string> = {};
-      if (sessionId) authHeader['Authorization'] = `Bearer ${sessionId}`;
+      try {
+        const freshToken = await auth.currentUser?.getIdToken();
+        if (freshToken) authHeader['Authorization'] = `Bearer ${freshToken}`;
+      } catch (e) {
+        console.error("Failed to fetch fresh token", e);
+      }
       const gRes = await fetch(buildApiUrl('/api/humanize/groq'), {
         method: "POST", headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({ prompt, vibe, flawLevel, intensity })
@@ -396,7 +402,7 @@ export default function FreeToolsHumanizer() {
     let full = '';
     for await (const chunk of stream) { full += chunk.choices?.[0]?.delta?.content || ''; onChunk(full); }
     return full;
-  }, [internalMode, enginePhase, sessionId, vibe, flawLevel]);
+  }, [internalMode, enginePhase, vibe, flawLevel]);
 
   const handleHumanize = useCallback(async () => {
     if (!inputText.trim() || isProcessing || isOverLimit || (enginePhase !== 'ready' && enginePhase !== 'gpu_lost')) return;
@@ -628,9 +634,9 @@ export default function FreeToolsHumanizer() {
         </section>
 
         {/* CONTROLS & HUMANIZE */}
-        <div className={`relative md:flex-none flex flex-col items-center justify-center flex-none md:w-[150px] lg:w-[180px] gap-4 my-2 md:my-0 z-40 ${mobileActiveTab === 'output' ? 'hidden md:flex' : 'flex'}`}>
+        <div className={`relative w-full md:w-[150px] lg:w-[180px] md:flex-none flex flex-col items-center justify-center gap-4 my-2 md:my-0 z-40 ${mobileActiveTab === 'output' ? 'hidden md:flex' : 'flex'}`}>
 
-          <div className={`flex w-full gap-1.5 md:gap-3 bg-black/40 border border-white/5 rounded-2xl p-2 md:p-3 backdrop-blur-sm transition-opacity duration-300 ${modeIsGroq ? 'opacity-100 shadow-xl' : 'opacity-40 pointer-events-none'}`} title={!modeIsGroq ? "Cloud Engine Features Only" : ""}>
+          <div className={`flex w-full gap-2 md:gap-3 bg-black/40 border border-white/5 rounded-2xl p-2.5 md:p-3 backdrop-blur-sm transition-opacity duration-300 ${modeIsGroq ? 'opacity-100 shadow-xl' : 'opacity-40 pointer-events-none'}`} title={!modeIsGroq ? "Cloud Engine Features Only" : ""}>
             <PremiumSelect
               label="Vibe" value={vibe} onChange={(v) => setVibe(v as Vibe)} disabled={!modeIsGroq}
               options={[{ value: 'academic', label: 'Academic' }, { value: 'casual', label: 'Casual' }, { value: 'genz', label: 'Gen-Z' }]}

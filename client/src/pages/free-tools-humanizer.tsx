@@ -394,7 +394,7 @@ export default function FreeToolsHumanizer() {
   const handleHumanize = useCallback(async () => {
     if (!inputText.trim() || isProcessing || isOverLimit || (enginePhase !== 'ready' && enginePhase !== 'gpu_lost')) return;
     setIsProcessing(true); setResultText(''); setScore(null);
-    setStatusMsg('Initializing V10 Pipeline...');
+    setStatusMsg('Initializing V12 Pipeline...');
     setMobileActiveTab('output');
     setStatusLog(["Extracting AST nodes..."]);
 
@@ -457,7 +457,7 @@ export default function FreeToolsHumanizer() {
         }
         const final = stitch(phrases, humanized);
 
-        // Local WebLLM mode is a free preview. It DOES NOT rely on the V10 Server-Side Fortress.
+        // Local WebLLM mode is a free preview. It DOES NOT rely on the V12 Server-Side Fortress.
         // It outputs the raw LLM output without the proprietary algorithms, keeping our IP secure.
         setResultText(final);
 
@@ -609,7 +609,7 @@ export default function FreeToolsHumanizer() {
           <span className="hidden sm:inline text-lg md:text-xl font-serif italic text-white truncate" style={{ fontFamily: 'Georgia, serif' }}>BongBari</span>
           <div className="flex items-center gap-1 md:gap-2 truncate">
             <span className="font-tech text-xs md:text-sm text-amber-500 uppercase tracking-widest font-bold truncate" style={{ textShadow: '0 0 10px rgba(245,158,11,0.38)' }}>Humanizer</span>
-            <span className="font-tech text-[9px] text-amber-500 border border-amber-500/50 px-1 py-0.5 rounded-md tracking-widest shadow-[0_0_8px_rgba(245,158,11,0.2)] flex-shrink-0">V10</span>
+            <span className="font-tech text-[9px] text-amber-500 border border-amber-500/50 px-1 py-0.5 rounded-md tracking-widest shadow-[0_0_8px_rgba(245,158,11,0.2)] flex-shrink-0">V12</span>
           </div>
         </div>
 
@@ -793,7 +793,7 @@ export default function FreeToolsHumanizer() {
                 </button>
               </div>
 
-              <p className="mt-6 text-[9px] text-white/20 uppercase tracking-[0.2em]">BongBari V10 Security Protocol</p>
+              <p className="mt-6 text-[9px] text-white/20 uppercase tracking-[0.2em]">BongBari V12 Security Protocol</p>
             </motion.div>
           </div>
         )}

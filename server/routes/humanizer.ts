@@ -1,6 +1,6 @@
 import { Express } from "express";
 import admin from "firebase-admin";
-import { forceBurstiness, applyVocabularyEngine, applySemanticCloaking, applyHumanFlaws, applyConjunctionPurge, applyIMFApproximation, applySentenceStarterDiversifier, applyParagraphRhythm, computeBurstiness, computeCliche, runVerificationAgent } from "../utils/nlp";
+import { forceBurstiness, applyVocabularyEngine, applySemanticCloaking, applyHumanFlaws, applyConjunctionPurge, applyIMFApproximation, applySentenceStarterDiversifier, applyParagraphRhythm, applyDeicticInjection, applyDenominalization, applyClauseReordering, applySemanticDrift, applyZipfNormalization, computeBurstiness, computeCliche, runVerificationAgent } from "../utils/nlp";
 
 // In-Memory Device Fingerprint Tracker to prevent Account Sharing
 const userActiveDevices = new Map<string, string>();
@@ -39,8 +39,8 @@ export function registerHumanizerRoutes(app: Express, sessions: Map<string, any>
 
             // 1. V10 Absolute Authentication Lockdown
             if (!isAuthenticated) {
-                console.warn(`[Security Alert] Unauthenticated access attempt to V10 Cloud Pipeline from ${deviceId}`);
-                return res.status(401).json({ error: "Unauthorized", message: "Authentication required to access the BongBari V10 Cloud Engine." });
+                console.warn(`[Security Alert] Unauthenticated access attempt to V12 Cloud Pipeline from ${deviceId}`);
+                return res.status(401).json({ error: "Unauthorized", message: "Authentication required to access the BongBari V12 Cloud Engine." });
             }
 
             // 3. Extract configuration
@@ -108,7 +108,7 @@ export function registerHumanizerRoutes(app: Express, sessions: Map<string, any>
                 : 0;
             const isSparse = avgLineWords < 6 || nonEmptyLines.length > wordCount * 0.4;
 
-            console.log(`[Humanizer V10] Mode: ${isSparse ? 'HOLISTIC (sparse input)' : 'AST-BLOCK (dense prose)'} | AvgLineWords: ${avgLineWords.toFixed(1)} | Target: ${minWords}-${maxWords}w`);
+            console.log(`[Humanizer V12] Mode: ${isSparse ? 'HOLISTIC (sparse input)' : 'AST-BLOCK (dense prose)'} | AvgLineWords: ${avgLineWords.toFixed(1)} | Target: ${minWords}-${maxWords}w`);
 
             // ==========================================
             // PHASE 2: Vibe & Flaw Vectors
@@ -160,10 +160,12 @@ RESEARCH-BACKED RULES:
 5. ${bulletRule}
 6. PRESERVE ALL CONTENT: Every idea, name, and term from the input must appear in the output. Do not drop anything.
 7. LENGTH: Output word count should be close to input (within ±20%). Do not pad. Do not over-expand.
-8. NO META-COMMENTARY: Output ONLY the rewritten content. No intro phrases like "Here is the rewritten text:".`;
+8. NO META-COMMENTARY: Output ONLY the rewritten content. No intro phrases like "Here is the rewritten text:".
+9. PRONOUN INJECTION: Use "you", "we", "I" naturally. AI text almost never uses first/second person pronouns — humans always do. Target: at least 1-2 pronouns per 100 words.
+10. DE-NOMINALIZE: Replace stiff nominalizations like "the implementation of X" with active verbal forms like "implementing X" or "how we implement X". Write with verbs, not noun chains.`;
 
             // AST-BLOCK MODE: For dense AI prose paragraphs
-            const buildASTPrompt = () => `You are the V11 Chameleon Engine — the world's most advanced AI text humanizer. Operating in AST Tokenization Mode.
+            const buildASTPrompt = () => `You are the V12 Dominator Engine — the world's most advanced AI text humanizer. Operating in AST Tokenization Mode.
 
 ${vibePrompt}
 ${flawPrompt}
@@ -176,6 +178,8 @@ RESEARCH-BACKED ABSOLUTE CONSTRAINTS:
 5. LENGTH LOCK: Total word count must be ${minWords}–${maxWords} words. No filler.
 6. MEANING LOCK: Use only facts from the original text.
 7. SELF-OUTPUT: For each block, generate 3 structural variations internally. Output only the most human-sounding one.
+8. PRONOUN INJECTION: Weave "you", "we", "I" into the rewrite naturally. AI text starves on first/second person — humans don't. Target: 1-2 pronouns per 100 words minimum.
+9. DE-NOMINALIZE: Convert noun-heavy constructions ("the utilization of", "the development of") into active verbal forms ("using", "developing"). Verbs over nouns.
 
 OUTPUT FORMAT: EXCLUSIVELY valid XML blocks.`;
 
@@ -291,12 +295,27 @@ OUTPUT FORMAT: EXCLUSIVELY valid XML blocks.`;
                 // V11 LAYER 9: Paragraph Rhythm Controller — inject single-line punch paragraphs
                 bestVariant = applyParagraphRhythm(bestVariant);
 
-                // V10 LAYER 10: Headless Verification Agent (In-House AI Detector, $0)
+                // V12 LAYER 10: Zipf Normalization — flatten over-represented mid-frequency words
+                bestVariant = applyZipfNormalization(bestVariant);
+
+                // V12 LAYER 11: Denominalization — convert noun chains to active verbs
+                bestVariant = applyDenominalization(bestVariant);
+
+                // V12 LAYER 12: Clause Reordering — move subordinate clauses to front position
+                bestVariant = applyClauseReordering(bestVariant);
+
+                // V12 LAYER 13: Deictic Injection — weave pronouns + spatial/temporal anchors
+                bestVariant = applyDeicticInjection(bestVariant, vibe as any);
+
+                // V12 LAYER 14: Semantic Drift — inject hedging bridge phrases for natural uncertainty
+                bestVariant = applySemanticDrift(bestVariant);
+
+                // V12 LAYER 15: Headless Verification Agent (7-metric In-House AI Detector, $0)
                 report = runVerificationAgent(bestVariant);
-                console.log(`[Humanizer V11 Detector] Score: ${report.humanScore}/100 | Passed: ${report.passed} | Failures: [${report.failures.join(', ')}]`);
+                console.log(`[Humanizer V12 Detector] Score: ${report.humanScore}/100 | Passed: ${report.passed} | Failures: [${report.failures.join(', ')}]`);
 
                 if (!report.passed) {
-                    console.log(`[Humanizer V11 Auto-Heal] Triggered. Rewriting with aggressive burstiness + zero clichés...`);
+                    console.log(`[Humanizer V12 Auto-Heal] Triggered. Rewriting with aggressive burstiness + zero clichés...`);
                     const healingPrompt = `This text was flagged as AI-generated. Rewrite it with:
 - Dramatic sentence length variation (mix 3-word punchy sentences with 30+ word complex ones)
 - Zero AI discourse markers (no Furthermore, Moreover, Additionally, In conclusion)
@@ -308,7 +327,7 @@ OUTPUT FORMAT: EXCLUSIVELY valid XML blocks.`;
                         { role: "user", content: healingPrompt }
                     ], Math.min(0.95, targetTemp + 0.15), Math.min(0.98, targetTopP + 0.05), "llama-3.3-70b-versatile");
 
-                    // Re-run the FULL V11 NLP pipeline on healed text
+                    // Re-run the FULL V12 NLP pipeline on healed text
                     bestVariant = applyConjunctionPurge(healedRaw);
                     bestVariant = applyVocabularyEngine(bestVariant, vibe as any);
                     bestVariant = applyIMFApproximation(bestVariant);
@@ -317,17 +336,22 @@ OUTPUT FORMAT: EXCLUSIVELY valid XML blocks.`;
                     bestVariant = forceBurstiness(bestVariant);
                     bestVariant = applyHumanFlaws(bestVariant, flawLevel as any);
                     bestVariant = applyParagraphRhythm(bestVariant);
+                    bestVariant = applyZipfNormalization(bestVariant);
+                    bestVariant = applyDenominalization(bestVariant);
+                    bestVariant = applyClauseReordering(bestVariant);
+                    bestVariant = applyDeicticInjection(bestVariant, vibe as any);
+                    bestVariant = applySemanticDrift(bestVariant);
 
                     // Re-verify after healing
                     const healedReport = runVerificationAgent(bestVariant);
-                    console.log(`[Humanizer V11 Auto-Heal] Post-Heal Score: ${healedReport.humanScore}/100 | Passed: ${healedReport.passed}`);
+                    console.log(`[Humanizer V12 Auto-Heal] Post-Heal Score: ${healedReport.humanScore}/100 | Passed: ${healedReport.passed}`);
                     report = healedReport;
                 }
 
-                console.log(`[Humanizer V11] 10-Layer Pipeline Complete. Score: ${report?.humanScore}/100`);
+                console.log(`[Humanizer V12] 15-Layer Pipeline Complete. Score: ${report?.humanScore}/100`);
 
             } catch (e) {
-                console.error("[Humanizer V10] Execution failed:", e);
+                console.error("[Humanizer V12] Execution failed:", e);
                 if (!bestVariant) bestVariant = prompt;
             }
 

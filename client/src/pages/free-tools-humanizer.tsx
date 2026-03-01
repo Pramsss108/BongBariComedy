@@ -634,9 +634,9 @@ export default function FreeToolsHumanizer() {
         </section>
 
         {/* CONTROLS & HUMANIZE */}
-        <div className={`relative w-full md:w-[150px] lg:w-[180px] md:flex-none flex flex-col items-center justify-center gap-4 my-2 md:my-0 z-40 ${mobileActiveTab === 'output' ? 'hidden md:flex' : 'flex'}`}>
+        <div className={`relative w-full md:w-[200px] lg:w-[220px] md:flex-none flex flex-col items-center justify-center gap-5 my-2 md:my-0 z-40 ${mobileActiveTab === 'output' ? 'hidden md:flex' : 'flex'}`}>
 
-          <div className={`flex w-full gap-2 md:gap-3 bg-black/40 border border-white/5 rounded-2xl p-2.5 md:p-3 backdrop-blur-sm transition-opacity duration-300 ${modeIsGroq ? 'opacity-100 shadow-xl' : 'opacity-40 pointer-events-none'}`} title={!modeIsGroq ? "Cloud Engine Features Only" : ""}>
+          <div className={`flex flex-row md:flex-col w-full gap-2 md:gap-4 bg-black/40 border border-white/5 rounded-2xl p-2.5 md:p-4 backdrop-blur-sm transition-opacity duration-300 ${modeIsGroq ? 'opacity-100 shadow-xl' : 'opacity-40 pointer-events-none'}`} title={!modeIsGroq ? "Cloud Engine Features Only" : ""}>
             <PremiumSelect
               label="Vibe" value={vibe} onChange={(v) => setVibe(v as Vibe)} disabled={!modeIsGroq}
               options={[{ value: 'academic', label: 'Academic' }, { value: 'casual', label: 'Casual' }, { value: 'genz', label: 'Gen-Z' }]}

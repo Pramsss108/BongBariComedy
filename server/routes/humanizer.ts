@@ -2,6 +2,12 @@ import { Express } from "express";
 import admin from "firebase-admin";
 import { forceBurstiness, applyVocabularyEngine, applyHumanFlaws, computeBurstiness, computeCliche } from "../utils/nlp";
 
+// Ensure Firebase Admin is initialized so we can verify JWT tokens.
+// A full Service Account is NOT required just to verify tokens, only the projectId.
+if (admin.apps.length === 0) {
+    admin.initializeApp({ projectId: process.env.VITE_FIREBASE_PROJECT_ID || "bong-bari" });
+}
+
 export function registerHumanizerRoutes(app: Express, sessions: Map<string, any>, getDeviceIdFromReq: Function) {
     // V10 Security Lockdown: No Anonymous Access to the Cloud Engine
     // The previous rate limiter for anonymous users has been permanently removed.

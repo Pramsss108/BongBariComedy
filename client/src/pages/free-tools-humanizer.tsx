@@ -434,15 +434,45 @@ export default function FreeToolsHumanizer() {
       {/* Welcome Modal */}
       <AnimatePresence>
         {showWelcome && (
-          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="panel w-full max-w-md p-8 border-amber-500/20 shadow-2xl">
-              <h2 className="text-2xl font-black text-amber-400 mb-2">BongBari Humanizer</h2>
-              <p className="text-gray-300 text-sm mb-6 leading-relaxed">Choose your engine to continue. Cloud is faster, Local stays 100% on your device.</p>
-              <div className="flex gap-3 mb-8 w-full">
-                <button onClick={() => { setInternalMode('groq'); setShowWelcome(false); }} className="flex-1 p-3 rounded-2xl bg-amber-500 text-black font-bold uppercase tracking-wide text-xs md:text-sm hover:scale-[1.02] transition-transform">🚀 Cloud Power</button>
-                <button onClick={() => { setInternalMode('webllm'); setShowWelcome(false); }} className="flex-1 p-3 rounded-2xl bg-white/5 border border-white/20 text-white font-bold uppercase tracking-wide text-xs md:text-sm hover:bg-white/10 transition-colors">⚡ Local (Free)</button>
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="panel w-full max-w-xl p-6 md:p-8 border-amber-500/20 shadow-2xl my-auto">
+              <h2 className="text-2xl md:text-3xl font-black text-amber-500 mb-2 text-center">BongBari Humanizer</h2>
+              <p className="text-gray-300 text-sm mb-6 leading-relaxed text-center font-medium">Please choose your AI engine. (Explained simply for our Bong community!)</p>
+
+              <div className="flex flex-col md:flex-row gap-4 mb-6 w-full">
+                {/* Cloud Power */}
+                <div
+                  onClick={() => { setInternalMode('groq'); setShowWelcome(false); }}
+                  className="flex-1 p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 hover:scale-[1.02] transition-all cursor-pointer flex flex-col items-center text-center gap-2 group shadow-[0_0_15px_rgba(245,158,11,0.1)]"
+                >
+                  <div className="text-4xl mb-1 drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]">🚀</div>
+                  <h3 className="font-black text-amber-500 uppercase tracking-widest text-sm md:text-base">Cloud AI</h3>
+                  <div className="flex-1 flex flex-col justify-center">
+                    <p className="text-xs text-amber-100/80 leading-relaxed font-medium">
+                      <strong className="text-amber-400">Best Quality & Fastest Speed.</strong><br />
+                      Sign in <span className="underline decoration-amber-500/50 underline-offset-2">one time</span> for Lifetime Free access. Highly recommended!
+                    </p>
+                  </div>
+                  <button className="mt-3 text-[11px] bg-amber-500 text-black px-6 py-2.5 rounded-full font-black uppercase tracking-widest group-hover:bg-amber-400 transition-colors shadow-lg">Choose Cloud</button>
+                </div>
+
+                {/* Local Free */}
+                <div
+                  onClick={() => { setInternalMode('webllm'); setShowWelcome(false); }}
+                  className="flex-1 p-5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:scale-[1.02] transition-all cursor-pointer flex flex-col items-center text-center gap-2 group"
+                >
+                  <div className="text-4xl mb-1 opacity-80">⚡</div>
+                  <h3 className="font-black text-gray-300 uppercase tracking-widest text-sm md:text-base">Local AI</h3>
+                  <div className="flex-1 flex flex-col justify-center">
+                    <p className="text-xs text-gray-400 leading-relaxed font-medium">
+                      <strong className="text-gray-200">No Sign In Needed.</strong><br />
+                      Works on your device, but quality is lower and it takes much longer.
+                    </p>
+                  </div>
+                  <button className="mt-3 text-[11px] bg-white/10 text-white border border-white/20 px-6 py-2.5 rounded-full font-bold uppercase tracking-widest group-hover:bg-white/20 transition-colors">Choose Local</button>
+                </div>
               </div>
-              <p className="text-[10px] text-white/50 text-center uppercase tracking-widest font-semibold">Premium AI Text Transformation</p>
+              <p className="text-[10px] text-white/40 text-center uppercase tracking-widest font-bold">Premium AI Text Transformation</p>
             </motion.div>
           </div>
         )}
@@ -496,20 +526,20 @@ export default function FreeToolsHumanizer() {
         </section>
 
         {/* CONTROLS & HUMANIZE */}
-        <div className="relative md:flex-none flex flex-col items-center justify-center flex-none md:w-[140px] gap-2 md:gap-3 my-3 md:my-0 z-40">
+        <div className="relative md:flex-none flex flex-col items-center justify-center flex-none md:w-[150px] lg:w-[180px] gap-4 my-2 md:my-0 z-40">
 
-          <div className={`flex w-full md:w-auto md:flex-col gap-2 bg-black/40 border border-white/5 rounded-xl p-2 backdrop-blur-sm transition-opacity duration-300 ${modeIsGroq ? 'opacity-100' : 'opacity-40 pointer-events-none'}`} title={!modeIsGroq ? "Cloud Engine Features Only" : ""}>
-            <div className="flex flex-col gap-1 flex-1">
-              <label className="text-[7px] font-tech text-amber-500 uppercase tracking-widest px-1">Vibe</label>
-              <select disabled={!modeIsGroq} value={vibe} onChange={e => setVibe(e.target.value as Vibe)} className="bg-white/5 border border-white/10 rounded-md text-[9px] text-white/80 p-1.5 outline-none focus:border-amber-500/50 hover:bg-white/10 transition-colors cursor-pointer w-full text-center appearance-none">
+          <div className={`flex w-full gap-3 bg-black/40 border border-white/5 rounded-2xl p-3 backdrop-blur-sm transition-opacity duration-300 ${modeIsGroq ? 'opacity-100 shadow-xl' : 'opacity-40 pointer-events-none'}`} title={!modeIsGroq ? "Cloud Engine Features Only" : ""}>
+            <div className="flex flex-col gap-1.5 flex-1">
+              <label className="text-[8px] lg:text-[9px] font-black text-amber-500 uppercase tracking-widest text-center">Vibe</label>
+              <select disabled={!modeIsGroq} value={vibe} onChange={e => setVibe(e.target.value as Vibe)} className="bg-white/5 border border-white/10 rounded-lg text-[10px] lg:text-[11px] font-semibold text-white/90 p-2 outline-none focus:border-amber-500/50 hover:bg-white/10 transition-colors cursor-pointer w-full text-center appearance-none shadow-inner">
                 <option className="bg-zinc-900" value="academic">Academic</option>
                 <option className="bg-zinc-900" value="casual">Casual</option>
                 <option className="bg-zinc-900" value="genz">Gen-Z</option>
               </select>
             </div>
-            <div className="flex flex-col gap-1 flex-1">
-              <label className="text-[7px] font-tech text-amber-500 uppercase tracking-widest px-1">Human Flaws</label>
-              <select disabled={!modeIsGroq} value={flawLevel} onChange={e => setFlawLevel(e.target.value as FlawLevel)} className="bg-white/5 border border-white/10 rounded-md text-[9px] text-white/80 p-1.5 outline-none focus:border-amber-500/50 hover:bg-white/10 transition-colors cursor-pointer w-full text-center appearance-none">
+            <div className="flex flex-col gap-1.5 flex-1">
+              <label className="text-[8px] lg:text-[9px] font-black text-amber-500 uppercase tracking-widest text-center">Flaws</label>
+              <select disabled={!modeIsGroq} value={flawLevel} onChange={e => setFlawLevel(e.target.value as FlawLevel)} className="bg-white/5 border border-white/10 rounded-lg text-[10px] lg:text-[11px] font-semibold text-white/90 p-2 outline-none focus:border-amber-500/50 hover:bg-white/10 transition-colors cursor-pointer w-full text-center appearance-none shadow-inner">
                 <option className="bg-zinc-900" value="none">Perfect</option>
                 <option className="bg-zinc-900" value="low">Natural</option>
                 <option className="bg-zinc-900" value="high">Messy</option>
@@ -517,16 +547,16 @@ export default function FreeToolsHumanizer() {
             </div>
           </div>
 
-          <motion.div className="flex-1 w-full flex items-center justify-center">
+          <motion.div className="w-full flex items-center justify-center">
             <motion.button onClick={handleHumanize} disabled={!canHumanize} whileHover={canHumanize ? { scale: 1.05 } : {}} whileTap={canHumanize ? { scale: 0.95 } : {}}
-              className={`w-[112px] h-[112px] rounded-[24px] flex flex-col items-center justify-center gap-2 transition-all shadow-xl hover:shadow-amber-500/20 ${canHumanize ? 'bg-amber-500 border-2 border-amber-400' : 'bg-white/5 border-2 border-white/10 opacity-30 cursor-not-allowed'}`}
-              style={canHumanize ? { boxShadow: '0 0 30px -10px #f59e0b' } : {}}>
-              {isProcessing ? <div className="spin" style={{ width: 26, height: 26, borderTopColor: '#000', borderColor: 'rgba(0,0,0,0.1)' }} /> : <svg className="w-8 h-8 text-black" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>}
-              <span className={`text-[11px] font-black uppercase tracking-widest ${canHumanize ? 'text-black' : 'text-white'}`}>{isProcessing ? 'Working' : 'Rewrite'}</span>
+              className={`w-full max-w-[140px] aspect-square rounded-[32px] flex flex-col items-center justify-center gap-3 transition-all shadow-[0_4px_30px_rgba(0,0,0,0.5)] hover:shadow-amber-500/30 ${canHumanize ? 'bg-amber-500 border-2 border-amber-400' : 'bg-white/5 border border-white/10 opacity-30 cursor-not-allowed'}`}
+              style={canHumanize ? { boxShadow: '0 0 40px -10px #f59e0b' } : {}}>
+              {isProcessing ? <div className="spin" style={{ width: 32, height: 32, borderTopColor: '#000', borderColor: 'rgba(0,0,0,0.1)' }} /> : <svg className="w-10 h-10 text-black" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>}
+              <span className={`text-[12px] font-black uppercase tracking-widest ${canHumanize ? 'text-black' : 'text-white'}`}>{isProcessing ? 'Working' : 'Rewrite'}</span>
             </motion.button>
           </motion.div>
 
-          <div className="hidden md:flex flex-col items-center gap-1 opacity-20 text-[9px] font-mono mt-1">
+          <div className="hidden md:flex flex-col items-center gap-1 opacity-20 text-[10px] font-mono mt-2">
             <span>Ctrl + Enter</span>
           </div>
         </div>

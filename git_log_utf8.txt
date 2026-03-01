@@ -1,0 +1,204 @@
+﻿commit eb868bef7f32acc7df9189d4de4749be5c330322
+Author: Abhijit Pramanik <133572351+Pramsss108@users.noreply.github.com>
+Date:   Sun Mar 1 10:43:18 2026 +0530
+
+    fix(ui): Wrap humanizer cloud fetch with buildApiUrl to resolve Nginx 405 POST error
+
+diff --git a/client/src/pages/free-tools-humanizer.tsx b/client/src/pages/free-tools-humanizer.tsx
+index 8038143..a5b436d 100644
+--- a/client/src/pages/free-tools-humanizer.tsx
++++ b/client/src/pages/free-tools-humanizer.tsx
+@@ -5,6 +5,7 @@ import { CreateMLCEngine, InitProgressReport } from '@mlc-ai/web-llm';
+ import ReactMarkdown from 'react-markdown';
+ import { useAuth } from "@/hooks/useAuth";
+ import { useLocation } from "wouter";
++import { buildApiUrl } from '@/lib/queryClient';
+ 
+ // ÔöÇÔöÇÔöÇ Config ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+ const WEBLLM_MODEL = "Llama-3.2-1B-Instruct-q4f16_1-MLC";
+@@ -463,7 +464,7 @@ export default function FreeToolsHumanizer() {
+     if (sessionId) {
+       headers['Authorization'] = `Bearer ${sessionId}`;
+     }
+-    const res = await fetch("/api/humanize/groq", {
++    const res = await fetch(buildApiUrl("/api/humanize/groq"), {
+       method: 'POST',
+       headers,
+       body: JSON.stringify({ prompt, model: GROQ_MODEL, vibe, flawLevel }),
+
+commit f8403bca4005a30e3142a81b5adc13d52ac872c4
+Author: Abhijit Pramanik <133572351+Pramsss108@users.noreply.github.com>
+Date:   Sun Mar 1 10:31:23 2026 +0530
+
+    fix(api): Fix GitHub Actions CI test suite API requirements, add strict 404 JSON, and remove Groq branding
+
+diff --git a/client/src/pages/free-tools-humanizer.tsx b/client/src/pages/free-tools-humanizer.tsx
+index b5fe865..8038143 100644
+--- a/client/src/pages/free-tools-humanizer.tsx
++++ b/client/src/pages/free-tools-humanizer.tsx
+@@ -709,22 +709,7 @@ export default function FreeToolsHumanizer() {
+     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); handleHumanize(); }
+   }, [handleHumanize]);
+ 
+-  // Inject global <style> into document.head to nuke belan cursor while on this page
+-  useEffect(() => {
+-    const style = document.createElement('style');
+-    style.id = 'humanizer-cursor-override';
+-    style.textContent = `
+-      .magical-belan-portal, .belan-cursor-responsive, .particle-container,
+-      [data-belan-cursor], .magical-cursor-container, .global-cursor-follower {
+-        display: none !important;
+-        opacity: 0 !important;
+-        visibility: hidden !important;
+-      }
+-      body, body * { cursor: none !important; }
+-    `;
+-    document.head.appendChild(style);
+-    return () => { document.getElementById('humanizer-cursor-override')?.remove(); };
+-  }, []);
++  // Cursor hiding logic removed as per user feedback
+ 
+   const handleCopy = async () => {
+     try { await navigator.clipboard.writeText(resultText); setCopyText('COPIED!'); setTimeout(() => setCopyText('Copy Result'), 2500); }
+@@ -769,8 +754,6 @@ export default function FreeToolsHumanizer() {
+         .mon-free{background:rgba(57,255,20,.12);color:#39FF14}
+         .mon-groq{background:rgba(99,102,241,.16);color:#818cf8}
+         .moff{background:transparent;color:rgba(255,255,255,.2)}.moff:hover{color:rgba(255,255,255,.42)}
+-        /* Suppress all native cursors on humanizer */
+-        *{cursor:none!important}
+       ` }} />
+ 
+       {/* Cyber cursor dot removed to respect global system cursors */}
+@@ -802,7 +785,7 @@ export default function FreeToolsHumanizer() {
+             </div>
+             <button onClick={() => { setMode('groq'); }}
+               className="mt-8 text-white/20 text-[10px] border border-white/7 px-5 py-2 rounded-full hover:text-indigo-400 hover:border-indigo-400/30 transition-all cursor-pointer">
+-              Skip ÔåÆ Use Groq Cloud Power (Faster)
++              Skip ÔåÆ Use Cloud Power (Faster)
+             </button>
+           </motion.div>
+         )}
+@@ -820,12 +803,12 @@ export default function FreeToolsHumanizer() {
+             </h2>
+             <p className="text-white/30 text-sm max-w-sm">
+               {enginePhase === 'gpu_lost'
+-                ? 'Your GPU ran out of memory. Switch to Groq Cloud ÔÇö it\'s faster, more powerful, and free.'
+-                : 'Your browser can\'t run AI locally. Use Groq Cloud ÔÇö free and more powerful.'}
++                ? 'Your GPU ran out of memory. Switch to Cloud mode ÔÇö it\'s faster, more powerful, and free.'
++                : 'Your browser can\'t run AI locally. Use Cloud mode ÔÇö free and more powerful.'}
+             </p>
+             <button onClick={() => { setMode('groq'); setEnginePhase('ready'); }}
+               className="mt-2 bg-indigo-500/14 border border-indigo-400/32 text-indigo-300 font-tech text-[11px] uppercase tracking-widest px-6 py-3 rounded-xl cursor-pointer hover:bg-indigo-500/20 transition-all">
+-              Use Groq Cloud Mode ÔåÆ
++              Use Cloud Mode ÔåÆ
+             </button>
+           </motion.div>
+         )}
+@@ -850,13 +833,13 @@ export default function FreeToolsHumanizer() {
+ 
+         <div className="flex items-center gap-2">
+           <div className="mpill hidden md:flex">
+-            <button className={`mbtn ${!modeIsGroq ? 'mon-free' : 'moff'}`} onClick={() => setMode('webllm')}>ÔÜí Free</button>
+-            <button className={`mbtn ${modeIsGroq ? 'mon-groq' : 'moff'}`} onClick={() => setMode('groq')}>­ƒÜÇ Groq</button>
++            <button className={`mbtn cursor-pointer ${!modeIsGroq ? 'mon-free' : 'moff'}`} onClick={() => setMode('webllm')}>ÔÜí Free</button>
++            <button className={`mbtn cursor-pointer ${modeIsGroq ? 'mon-groq' : 'moff'}`} onClick={() => setMode('groq')}>­ƒÜÇ Cloud</button>
+           </div>
+           {isReady && (
+             <span className="hidden md:block text-[7px] font-tech uppercase tracking-widest border px-2 py-1 rounded"
+               style={{ color: accent, borderColor: accentDim + '44', background: modeIsGroq ? 'rgba(99,102,241,0.07)' : 'rgba(57,255,20,0.07)' }}>
+-              {modeIsGroq ? 'Groq Ô£ô' : 'WebGPU Ô£ô'}
++              {modeIsGroq ? 'Cloud Ô£ô' : 'WebGPU Ô£ô'}
+             </span>
+           )}
+           {enginePhase === 'booting' && (
+@@ -870,8 +853,8 @@ export default function FreeToolsHumanizer() {
+       {/* Mobile mode toggle */}
+       < div className="flex md:hidden items-center justify-center py-2 border-b border-white/5 flex-none" >
+         <div className="mpill">
+-          <button className={`mbtn ${!modeIsGroq ? 'mon-free' : 'moff'}`} onClick={() => setMode('webllm')}>ÔÜí Free Unlimited</button>
+-          <button className={`mbtn ${modeIsGroq ? 'mon-groq' : 'moff'}`} onClick={() => setMode('groq')}>­ƒÜÇ Groq Power</button>
++          <button className={`mbtn cursor-pointer ${!modeIsGroq ? 'mon-free' : 'moff'}`} onClick={() => setMode('webllm')}>ÔÜí Free Unlimited</button>
++          <button className={`mbtn cursor-pointer ${modeIsGroq ? 'mon-groq' : 'moff'}`} onClick={() => setMode('groq')}>­ƒÜÇ Cloud Power</button>
+         </div>
+       </div >
+ 
+@@ -910,7 +893,7 @@ export default function FreeToolsHumanizer() {
+             {/* Word limit hint */}
+             {wordCount === 0 && (
+               <p className="text-white/14 text-[8px] font-mono mb-2 flex-none flex items-center gap-1.5">
+-                {modeIsGroq ? `Max ${GROQ_MAX_WORDS} words (Groq cloud)` : `Max ${hardwareLimit} words (On-device limit)`}
++                {modeIsGroq ? `Max ${GROQ_MAX_WORDS} words (Cloud processing)` : `Max ${hardwareLimit} words (On-device limit)`}
+                 {!modeIsGroq && (
+                   <span className="px-1 py-0.5 rounded text-[7px] uppercase tracking-widest border"
+                     style={{
+@@ -1076,7 +1059,7 @@ export default function FreeToolsHumanizer() {
+                       </div>
+                     )}
+                     <p className="text-white/14 text-[7px] font-mono border border-white/5 px-2 py-0.5 rounded-full">
+-                      {modeIsGroq ? 'Groq ┬À Llama 3.1 8B ┬À Fast' : 'WebGPU ┬À Phrase-by-Phrase ┬À Local'}
++                      {modeIsGroq ? 'Cloud Engine ┬À High Performance' : 'WebGPU ┬À Phrase-by-Phrase ┬À Local'}
+                     </p>
+                   </motion.div>
+                 )}
+
+commit 4b82543a8e7ed8c053d9c345dc5ee4b096395b94
+Author: Abhijit Pramanik <133572351+Pramsss108@users.noreply.github.com>
+Date:   Sun Mar 1 10:01:12 2026 +0530
+
+    Update Humanizer engine to V8 AST Tokenization with 5000 word limit and UI badge
+
+diff --git a/client/src/pages/free-tools-humanizer.tsx b/client/src/pages/free-tools-humanizer.tsx
+index f88f2e1..b5fe865 100644
+--- a/client/src/pages/free-tools-humanizer.tsx
++++ b/client/src/pages/free-tools-humanizer.tsx
+@@ -9,7 +9,7 @@ import { useLocation } from "wouter";
+ // ÔöÇÔöÇÔöÇ Config ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+ const WEBLLM_MODEL = "Llama-3.2-1B-Instruct-q4f16_1-MLC";
+ const GROQ_MODEL = "llama-3.1-8b-instant";
+-const GROQ_MAX_WORDS = 2000; // Groq handles more (cloud, no VRAM limit)
++const GROQ_MAX_WORDS = 5000; // Groq handles up to 5000+ words easily using the AST engine
+ 
+ // ÔöÇÔöÇÔöÇ AI Clich├®s ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+ const AI_CLICHES = [
+@@ -541,19 +541,16 @@ export default function FreeToolsHumanizer() {
+       let outputText = '';
+ 
+       if (isGroq) {
+-        // ÔöÇÔöÇ GROQ: Full-text 2-pass approach (8B model handles full context) ÔöÇÔöÇ
+-        const inputWordCount = inputText.trim().split(/\s+/).length;
+-        let currentText = inputText;
+-        for (let pass = 1; pass <= 2; pass++) {
+-          setStatusMsg(`Humanizing ÔÇö Pass ${pass}/2...`);
+-          outputText = await infer(buildHumanizePrompt(currentText, inputWordCount), t => setResultText(t));
+-          currentText = outputText;
+-          const burstiness = computeBurstiness(outputText);
+-          const { count } = computeCliche(outputText);
+-          const s: Score = { total: Math.round(burstiness * 0.7 + Math.max(0, 100 - count * 12) * 0.3), burstiness, clicheCount: count };
+-          setScore(s);
+-          if (s.total >= 78) break; // Good enough, stop early
+-        }
++        // ÔöÇÔöÇ GROQ: Single-pass V8 Cognitive Engine (Handles formatting & logic mathematically) ÔöÇÔöÇ
++        setStatusMsg(`Humanizing...`);
++        // Send the exact raw text. The backend AST Engine handles ALL prompting and instructions now.
++        outputText = await infer(inputText, t => setResultText(t));
++
++        // Calculate score
++        const burstiness = computeBurstiness(outputText);
++        const { count } = computeCliche(outputText);
++        const s: Score = { total: Math.round(burstiness * 0.7 + Math.max(0, 100 - count * 12) * 0.3), burstiness, clicheCount: count };
++        setScore(s);
+       } else {
+         // ÔöÇÔöÇ WEBLLM: Phrase-by-phrase with local Judge ÔöÇÔöÇ
+         // Pipeline: Atomize ÔåÆ Humanize ÔåÆ Judge ÔåÆ Accept/Fallback ÔåÆ Stitch
+@@ -845,7 +842,10 @@ export default function FreeToolsHumanizer() {
+ 
+         <div className="absolute left-1/2 -translate-x-1/2 flex items-baseline gap-1.5">
+           <span className="text-lg md:text-xl font-serif italic text-white">BongBari</span>
+-          <span className="font-tech text-xs md:text-sm text-[#39FF14] uppercase tracking-widest font-bold" style={{ textShadow: '0 0 10px rgba(57,255,20,0.38)' }}>Humanizer</span>
++          <div className="flex items-center gap-2">
++            <span className="font-tech text-xs md:text-sm text-[#39FF14] uppercase tracking-widest font-bold" style={{ textShadow: '0 0 10px rgba(57,255,20,0.38)' }}>Humanizer</span>
++            <span className="font-tech text-[9px] text-[#39FF14] border border-[#39FF14]/50 px-1.5 py-0.5 rounded-md tracking-widest shadow-[0_0_8px_rgba(57,255,20,0.2)]">V8</span>
++          </div>
+         </div>
+ 
+         <div className="flex items-center gap-2">

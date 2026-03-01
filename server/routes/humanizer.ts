@@ -145,7 +145,7 @@ export function registerHumanizerRoutes(app: Express, sessions: Map<string, any>
             // ==========================================
             // PHASE 3: The Master Prompt & AST Lock
             // ==========================================
-            const buildV8Prompt = () => `You are the ultimate internal cognitive engine for bypassing AI detection. You are currently operating in AST Tokenization Mode.
+            const buildV8Prompt = () => `You are the ultimate internal cognitive engine for bypassing AI detection. You are currently operating in V9 AST Tokenization Mode.
 
 ${vibePrompt}
 ${flawPrompt}
@@ -156,7 +156,8 @@ ABSOLUTE SYSTEM CONSTRAINTS:
 3. CONTEXTUAL AWARENESS: The blocks are contiguous parts of a single document. Keep the flow natural between them.
 4. LENGTH LOCK: The total word count of your output must be between ${minWords} and ${maxWords} words. Do not summarize. Do not add intro/outro conversational filler like "Sure thing" or "Here is the rewritten text".
 5. MEANING LOCK: Only use the exact facts provided in the original text.
-6. PERPLEXITY ENGINE: Swap highly robotic words (Crucial, Delve, Tapestry, Testament, Furthermore, Moreover, Elevate) for natural synonyms. Vary sentence lengths dramatically.
+6. V9 SELF-OUTPUT METHOD: For each block, internally generate 3 drastically different structural variations (differing sentence lengths, differing vocabulary). Select the one with the highest linguistic burstiness and the least predictable phrasing. Output ONLY the winning variation inside the <block> tag.
+7. PERPLEXITY ENGINE: Swap highly robotic words (Crucial, Delve, Tapestry, Testament, Furthermore, Moreover, Elevate) for natural synonyms. Vary sentence lengths dramatically.
 
 OUTPUT FORMAT MUST BE EXCLUSIVELY VALID XML BLOCKS.`;
 

@@ -40,15 +40,18 @@ const FreeTools = () => {
           </motion.div>
 
           {/* AI Humanizer Card */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="relative group rounded-2xl p-[1px] bg-gradient-to-br from-green-400/50 via-emerald-500/30 to-teal-400/50 shadow-2xl hover:shadow-green-500/20 transition-all duration-500">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="relative group rounded-2xl p-[1px] bg-gradient-to-br from-yellow-500/50 via-amber-500/30 to-orange-400/50 shadow-2xl hover:shadow-yellow-500/20 transition-all duration-500">
             <div className="rounded-2xl h-full w-full bg-black/80 backdrop-blur-xl p-8 flex flex-col border border-white/5 group-hover:bg-black/60 transition-colors">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-600 font-tech uppercase tracking-wider group-hover:from-white group-hover:to-green-400 transition-all">AI Humanizer</h2>
-                <span className="text-[10px] uppercase tracking-wider bg-green-500/10 border border-green-500/30 text-green-400 px-3 py-1 rounded-full font-bold">WebGPU</span>
+                <h2 className="text-xl font-bold font-sans tracking-tight text-white group-hover:text-amber-400 transition-colors">V8 Humanizer</h2>
+                <div className="flex gap-1.5">
+                  <span className="text-[9px] uppercase tracking-wider bg-zinc-800 border border-zinc-700 text-zinc-300 px-2 py-1 rounded-md font-medium">Local Free</span>
+                  <span className="text-[9px] uppercase tracking-wider bg-amber-500/20 border border-amber-500/30 text-amber-300 px-2 py-1 rounded-md font-medium">Cloud Pro</span>
+                </div>
               </div>
-              <p className="text-sm text-gray-400 leading-relaxed flex-1">Convert robotic AI text into natural, flowing Bong-style language that bypasses AI detectors natively.</p>
+              <p className="text-sm text-gray-400 leading-relaxed flex-1">Convert robotic AI text into natural Bengali-style flow. Dual-engine options available for lightning speeds or free unlimited usage.</p>
               <Link href="/tools/humanizer" className="mt-8 block">
-                <Button className="w-full bg-green-500/10 border border-green-500/30 text-green-400 hover:bg-green-500 hover:text-black font-tech tracking-widest transition-all shadow-lg rounded-xl h-12 uppercase text-xs font-bold">Initialize</Button>
+                <Button className="w-full bg-amber-600/20 border border-amber-500/30 text-amber-300 hover:bg-amber-600 hover:text-black hover:font-bold transition-all shadow-lg rounded-xl h-12">Open App</Button>
               </Link>
             </div>
           </motion.div>

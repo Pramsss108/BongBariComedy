@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
 import { buildApiUrl } from '@/lib/queryClient';
+import { cleanInputText, forceBurstiness, applyVocabularyEngine, applyHumanFlaws } from '@/lib/nlp';
 
 // ─── Config ────────────────────────────────────────────────────────────────────
 const WEBLLM_MODEL = "Llama-3.2-1B-Instruct-q4f16_1-MLC";
@@ -338,14 +339,43 @@ export default function FreeToolsHumanizer() {
     if (!inputText.trim() || isProcessing || isOverLimit || (enginePhase !== 'ready' && enginePhase !== 'gpu_lost')) return;
     setIsProcessing(true); setResultText(''); setScore(null);
 
+    // LAYER 1: V9 Input Cleaning & Pre-processing
+    // Strip predictable AI formats and conversational filler before it even hits the engine
+    const { cleanedText } = cleanInputText(inputText);
+
     try {
       if (internalMode === 'groq') {
         setStatusMsg('Humanizing...');
-        const out = await infer(inputText, t => setResultText(t));
-        const b = computeBurstiness(out); const { count } = computeCliche(out);
+        const out = await infer(cleanedText, t => setResultText(t));
+
+        // V9 LAYER 3: Burstiness Engine
+        const variedOut = forceBurstiness(out);
+
+        // V9 LAYER 4: Vocabulary Engine
+        const refinedOut = applyVocabularyEngine(variedOut, vibe);
+
+        // V9 LAYER 5: Selective Token Masking / Human Flaws
+        const flawedOut = applyHumanFlaws(refinedOut, flawLevel);
+
+        let finalOutput = flawedOut;
+        let b = computeBurstiness(finalOutput);
+        let { count } = computeCliche(finalOutput);
+
+        // V9 LAYER 6: Agentic Verification Loop (Cloud)
+        // If the AI gave us back mathematical garbage (low burstiness, high clichés), heal it instantly.
+        if (b < 15 || count > 3) {
+          setStatusMsg('Auto-Healing Robotic Text...');
+          const healingPrompt = `The previous text was flagged by AI detectors for being too robotic. Rewrite it again emphasizing dramatic sentence length variance and zero clichés:\n\n"${finalOutput}"`;
+          const healedOut = await infer(healingPrompt, t => setResultText(t));
+          finalOutput = applyHumanFlaws(applyVocabularyEngine(forceBurstiness(healedOut), vibe), flawLevel);
+          b = computeBurstiness(finalOutput);
+          count = computeCliche(finalOutput).count;
+        }
+
+        setResultText(finalOutput);
         setScore({ total: Math.round(b * 0.7 + Math.max(0, 100 - count * 12) * 0.3), burstiness: b, clicheCount: count });
       } else {
-        const phrases = splitIntoPhrases(inputText);
+        const phrases = splitIntoPhrases(cleanedText);
         setTotalPhrases(phrases.length); setStatusLog([]);
         const humanized: string[] = []; const log: string[] = [];
 
@@ -383,8 +413,33 @@ export default function FreeToolsHumanizer() {
           }
           humanized.push(human); setStatusLog([...log]); setResultText(stitch(phrases, humanized));
         }
-        const final = stitch(phrases, humanized); const b = computeBurstiness(final); const { count } = computeCliche(final);
-        setScore({ total: Math.round(b * 0.7 + Math.max(0, 100 - count * 12) * 0.3), burstiness: b, clicheCount: count });
+        const final = stitch(phrases, humanized);
+
+        // V9 LAYER 3: Burstiness Engine
+        const variedFinal = forceBurstiness(final);
+
+        // V9 LAYER 4: Vocabulary Engine
+        const refinedFinal = applyVocabularyEngine(variedFinal, vibe);
+
+        // V9 LAYER 5: Selective Token Masking / Human Flaws
+        const flawedFinal = applyHumanFlaws(refinedFinal, flawLevel);
+
+        let outputText = flawedFinal;
+        let finalB = computeBurstiness(outputText);
+        let finalCount = computeCliche(outputText).count;
+
+        // V9 LAYER 6: Agentic Verification Loop (Local)
+        if (finalB < 15 || finalCount > 3) {
+          setStatusMsg('Auto-Healing Robotic Text...');
+          const healingPrompt = `The previous text was flagged by AI detectors for being too robotic. Rewrite it again emphasizing dramatic sentence length variance and zero clichés:\n\n"${outputText}"`;
+          const healedFinal = await infer(healingPrompt, t => setResultText(t));
+          outputText = applyHumanFlaws(applyVocabularyEngine(forceBurstiness(healedFinal), vibe), flawLevel);
+          finalB = computeBurstiness(outputText);
+          finalCount = computeCliche(outputText).count;
+        }
+
+        setResultText(outputText);
+        setScore({ total: Math.round(finalB * 0.7 + Math.max(0, 100 - finalCount * 12) * 0.3), burstiness: finalB, clicheCount: finalCount });
       }
     } catch { } finally { setIsProcessing(false); setStatusMsg(''); }
   }, [inputText, isProcessing, isOverLimit, enginePhase, internalMode, infer]);

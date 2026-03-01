@@ -384,8 +384,8 @@ export default function FreeToolsHumanizer() {
       try {
         const freshToken = await auth.currentUser?.getIdToken();
         if (freshToken) authHeader['Authorization'] = `Bearer ${freshToken}`;
-      } catch (e) {
-        console.error("Failed to fetch fresh token", e);
+      } catch (err: any) {
+        console.error("Failed to fetch fresh token", err.message || err);
       }
       const gRes = await fetch(buildApiUrl('/api/humanize/groq'), {
         method: "POST", headers: { "Content-Type": "application/json", ...authHeader },
@@ -612,10 +612,10 @@ export default function FreeToolsHumanizer() {
       </div>
 
       {/* Main Area */}
-      <main className="flex-1 flex flex-col md:flex-row p-4 gap-4 overflow-hidden min-h-0 relative z-10">
+      <main className="flex-1 flex flex-col md:flex-row p-3 md:p-4 gap-3 md:gap-4 overflow-y-auto overflow-x-hidden md:overflow-hidden min-h-0 relative z-10 pb-20 md:pb-4">
 
         {/* INPUT */}
-        <section className={`flex-1 flex flex-col min-h-[40vh] md:min-h-0 ${mobileActiveTab === 'output' ? 'hidden md:flex' : 'flex'}`}>
+        <section className={`flex-1 flex flex-col min-h-[35vh] md:min-h-0 ${mobileActiveTab === 'output' ? 'hidden md:flex' : 'flex'}`}>
           <div className="panel flex-1 p-5 md:p-6 flex flex-col min-h-0">
             <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
               <label className="text-xs font-bold text-amber-500 uppercase tracking-[0.2em] bg-amber-500/10 px-3 py-1 rounded border border-amber-500/20">Input Layer</label>
@@ -634,7 +634,7 @@ export default function FreeToolsHumanizer() {
         </section>
 
         {/* CONTROLS & HUMANIZE */}
-        <div className={`relative w-full md:w-[200px] lg:w-[220px] md:flex-none flex flex-col items-center justify-center gap-5 my-2 md:my-0 z-40 ${mobileActiveTab === 'output' ? 'hidden md:flex' : 'flex'}`}>
+        <div className={`relative w-full md:w-[200px] lg:w-[220px] md:flex-none flex flex-col items-center justify-center gap-5 my-2 md:my-0 z-40 flex-shrink-0 ${mobileActiveTab === 'output' ? 'hidden md:flex' : 'flex'}`}>
 
           <div className={`flex flex-row md:flex-col w-full gap-2 md:gap-4 bg-black/40 border border-white/5 rounded-2xl p-2.5 md:p-4 backdrop-blur-sm transition-opacity duration-300 ${modeIsGroq ? 'opacity-100 shadow-xl' : 'opacity-40 pointer-events-none'}`} title={!modeIsGroq ? "Cloud Engine Features Only" : ""}>
             <PremiumSelect

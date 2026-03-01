@@ -8,6 +8,7 @@ export interface AuthUser {
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
+  username?: string;
 }
 
 export function useAuth() {

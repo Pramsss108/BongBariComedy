@@ -5,7 +5,7 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  
+
   // Google Users methods
   createGoogleUser(user: InsertGoogleUser): Promise<GoogleUser>;
   getGoogleUserByEmail(email: string): Promise<GoogleUser | null>;
@@ -25,7 +25,7 @@ export interface IStorage {
   markLeadAsOpened(id: string): Promise<CollaborationRequest | undefined>;
   updateLeadStatus(id: string, leadStatus: string): Promise<CollaborationRequest | undefined>;
   updateFollowUpNotes(id: string, notes: string): Promise<CollaborationRequest | undefined>;
-  
+
   // Community methods
   getCommunityFeed(): Promise<(CommunityPost & { reactions?: Record<string, number> })[]>;
   createCommunityPost(data: { text: string; author: string | null; language: 'bn' | 'en'; featured?: boolean; moderationFlags?: string[]; moderationReason?: string; moderationUsedAI?: boolean; moderationSeverity?: number; moderationDecision?: string; }): Promise<CommunityPost>;
@@ -38,7 +38,7 @@ export interface IStorage {
   deletePendingCommunityPost(postId: string): Promise<boolean>;
   checkRateLimit(key: string): Promise<boolean>;
   setRateLimit(key: string, expiresInMs: number): Promise<boolean>;
-  
+
   // Chatbot methods
   getAllChatbotTraining(): Promise<ChatbotTraining[]>;
   // Optional search; if not implemented caller will fallback
@@ -46,14 +46,14 @@ export interface IStorage {
   createChatbotTraining(data: InsertChatbotTraining): Promise<ChatbotTraining>;
   updateChatbotTraining(id: number, data: Partial<InsertChatbotTraining>): Promise<ChatbotTraining | undefined>;
   deleteChatbotTraining(id: number): Promise<boolean>;
-  
+
   // Template methods
   getAllChatbotTemplates(): Promise<ChatbotTemplate[]>;
   getChatbotTemplatesByType?(type: string): Promise<ChatbotTemplate[]>;
   createChatbotTemplate(data: InsertChatbotTemplate): Promise<ChatbotTemplate>;
   updateChatbotTemplate(id: number, data: Partial<InsertChatbotTemplate>): Promise<ChatbotTemplate | undefined>;
   deleteChatbotTemplate(id: number): Promise<boolean>;
-  
+
   // Homepage content methods
   getAllHomepageContent(): Promise<HomepageContent[]>;
   getActiveHomepageContent(): Promise<HomepageContent[]>;
@@ -61,7 +61,7 @@ export interface IStorage {
   createHomepageContent(data: InsertHomepageContent): Promise<HomepageContent>;
   updateHomepageContent(id: number, data: Partial<InsertHomepageContent>): Promise<HomepageContent | undefined>;
   deleteHomepageContent(id: number): Promise<boolean>;
-  
+
   // Admin settings methods
   getAllAdminSettings(): Promise<AdminSetting[]>;
   getPublicSettings(): Promise<AdminSetting[]>;
@@ -78,7 +78,7 @@ export class MemStorage implements IStorage {
     this.users = new Map();
     this.blogPosts = new Map();
     this.collaborationRequests = new Map();
-    
+
     // Initialize with some sample blog posts
     this.initializeSampleData();
     // Initialize default admin user
@@ -136,7 +136,18 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
-    const user: User = { ...insertUser, id };
+    const user: User = {
+      ...insertUser,
+      id,
+      email: insertUser.email ?? null,
+      googleId: insertUser.googleId ?? null,
+      isEmailVerified: false,
+      otpCode: null,
+      otpExpiry: null,
+      knownIps: null,
+      knownDevices: null,
+      loginCount: 0,
+    };
     this.users.set(id, user);
     return user;
   }
@@ -219,7 +230,7 @@ export class MemStorage implements IStorage {
 
   async getCollaborationRequests(filters?: any): Promise<CollaborationRequest[]> {
     let requests = Array.from(this.collaborationRequests.values());
-    
+
     if (filters) {
       if (filters.leadStatus) {
         requests = requests.filter(r => r.leadStatus === filters.leadStatus);
@@ -232,7 +243,7 @@ export class MemStorage implements IStorage {
         requests = requests.filter(r => idSet.has(r.id));
       }
     }
-    
+
     return requests.sort(
       (a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()
     );
@@ -266,7 +277,7 @@ export class MemStorage implements IStorage {
   async markLeadAsOpened(id: string): Promise<CollaborationRequest | undefined> {
     const request = this.collaborationRequests.get(id);
     if (!request) return undefined;
-    
+
     const updated = {
       ...request,
       opened: true,
@@ -279,7 +290,7 @@ export class MemStorage implements IStorage {
   async updateLeadStatus(id: string, leadStatus: string): Promise<CollaborationRequest | undefined> {
     const request = this.collaborationRequests.get(id);
     if (!request) return undefined;
-    
+
     const updated = {
       ...request,
       leadStatus: leadStatus as any,
@@ -291,7 +302,7 @@ export class MemStorage implements IStorage {
   async updateFollowUpNotes(id: string, notes: string): Promise<CollaborationRequest | undefined> {
     const request = this.collaborationRequests.get(id);
     if (!request) return undefined;
-    
+
     const updated = {
       ...request,
       followUpNotes: notes,
@@ -335,7 +346,7 @@ export class MemStorage implements IStorage {
   async setRateLimit(): Promise<boolean> {
     return false;
   }
-  
+
   // Chatbot methods (not implemented in MemStorage)
   async getAllChatbotTraining(): Promise<ChatbotTraining[]> {
     return [];
@@ -349,7 +360,7 @@ export class MemStorage implements IStorage {
   async deleteChatbotTraining(): Promise<boolean> {
     return false;
   }
-  
+
   // Template methods (not implemented in MemStorage)
   async getAllChatbotTemplates(): Promise<ChatbotTemplate[]> {
     return [];
@@ -363,7 +374,7 @@ export class MemStorage implements IStorage {
   async deleteChatbotTemplate(): Promise<boolean> {
     return false;
   }
-  
+
   // Homepage content methods (not implemented in MemStorage)
   async getAllHomepageContent(): Promise<HomepageContent[]> {
     return [];
@@ -383,7 +394,7 @@ export class MemStorage implements IStorage {
   async deleteHomepageContent(): Promise<boolean> {
     return false;
   }
-  
+
   // Admin settings methods (not implemented in MemStorage)
   async getAllAdminSettings(): Promise<AdminSetting[]> {
     return [];

@@ -533,27 +533,28 @@ export default function FreeToolsHumanizer() {
         )}
       </AnimatePresence>
 
-      {/* Header */}
-      <header className="h-[56px] flex-none flex items-center justify-between px-3 md:px-5 border-b border-white/5 bg-zinc-950/50 backdrop-blur-md z-40">
+      <header className="h-[56px] flex-none flex items-center justify-between px-3 md:px-5 border-b border-white/5 bg-zinc-950/50 backdrop-blur-md z-40 relative">
         <Link href="/tools">
-          <button className="px-3 py-1.5 rounded-xl border border-white/7 text-white/35 text-xs hover:text-amber-500 hover:border-amber-500/30 transition-all flex items-center gap-1.5 group cursor-pointer">
+          <button className="px-3 py-1.5 rounded-xl border border-white/7 text-white/35 text-xs hover:text-amber-500 hover:border-amber-500/30 transition-all flex items-center gap-1.5 group cursor-pointer z-10 flex-shrink-0">
             <span className="group-hover:-translate-x-0.5 transition-transform text-xs">←</span>
             <span className="hidden md:inline font-tech text-[9px] uppercase tracking-wider">Tools</span>
           </button>
         </Link>
 
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-baseline gap-1.5">
-          <span className="text-lg md:text-xl font-serif italic text-white" style={{ fontFamily: 'Georgia, serif' }}>BongBari</span>
-          <div className="flex items-center gap-2">
-            <span className="font-tech text-xs md:text-sm text-amber-500 uppercase tracking-widest font-bold" style={{ textShadow: '0 0 10px rgba(245,158,11,0.38)' }}>Humanizer</span>
-            <span className="font-tech text-[9px] text-amber-500 border border-amber-500/50 px-1.5 py-0.5 rounded-md tracking-widest shadow-[0_0_8px_rgba(245,158,11,0.2)]">V8</span>
+        {/* Center Title - Responsive Flex instead of Absolute positioning */}
+        <div className="flex-1 flex justify-center items-center gap-1.5 px-2 min-w-0">
+          <span className="hidden sm:inline text-lg md:text-xl font-serif italic text-white truncate" style={{ fontFamily: 'Georgia, serif' }}>BongBari</span>
+          <div className="flex items-center gap-1 md:gap-2 truncate">
+            <span className="font-tech text-xs md:text-sm text-amber-500 uppercase tracking-widest font-bold truncate" style={{ textShadow: '0 0 10px rgba(245,158,11,0.38)' }}>Humanizer</span>
+            <span className="font-tech text-[9px] text-amber-500 border border-amber-500/50 px-1 py-0.5 rounded-md tracking-widest shadow-[0_0_8px_rgba(245,158,11,0.2)] flex-shrink-0">V9</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="mpill hidden md:flex">
-            <button className={`mbtn ${!modeIsGroq ? 'mon-free' : 'moff'}`} onClick={() => setInternalMode('webllm')}>⚡ Free</button>
-            <button className={`mbtn ${modeIsGroq ? 'mon-groq' : 'moff'}`} onClick={() => setInternalMode('groq')}>🚀 Cloud</button>
+        {/* Model Toggle - Visible on Mobile now */}
+        <div className="flex items-center gap-2 z-10 flex-shrink-0">
+          <div className="mpill flex">
+            <button className={`mbtn ${!modeIsGroq ? 'mon-free' : 'moff'} !px-2 sm:!px-3`} onClick={() => setInternalMode('webllm')}>⚡<span className="hidden sm:inline ml-1">Free</span></button>
+            <button className={`mbtn ${modeIsGroq ? 'mon-groq' : 'moff'} !px-2 sm:!px-3`} onClick={() => setInternalMode('groq')}>🚀<span className="hidden sm:inline ml-1">Cloud</span></button>
           </div>
         </div>
       </header>

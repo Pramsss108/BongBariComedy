@@ -109,17 +109,23 @@ const Home = () => {
 
   /* --- FALLBACK DATA & VAR MAPPING --- */
   /* --- FALLBACK DATA & VAR MAPPING --- */
-  const fallbackVideoData: YouTubeVideo[] = [
+  // Latest fallback — 4 different real BongBari shorts
+  const latestFallback: YouTubeVideo[] = [
     { videoId: "JetnSt8yP74", title: "Ke Kise Kom? | Bong Bari", thumbnail: "https://i.ytimg.com/vi/JetnSt8yP74/hqdefault.jpg", publishedAt: "2024-01-01" },
-    { videoId: "JetnSt8yP74", title: "Funny Bengali Drama | Bong Bari", thumbnail: "https://i.ytimg.com/vi/JetnSt8yP74/hqdefault.jpg", publishedAt: "2024-01-02" },
-    { videoId: "JetnSt8yP74", title: "Comedy Skit | Bong Bari", thumbnail: "https://i.ytimg.com/vi/JetnSt8yP74/hqdefault.jpg", publishedAt: "2024-01-03" },
-    { videoId: "JetnSt8yP74", title: "Laugh Riot | Bong Bari", thumbnail: "https://i.ytimg.com/vi/JetnSt8yP74/hqdefault.jpg", publishedAt: "2024-01-04" },
-    { videoId: "JetnSt8yP74", title: "Family Fun | Bong Bari", thumbnail: "https://i.ytimg.com/vi/JetnSt8yP74/hqdefault.jpg", publishedAt: "2024-01-05" },
-    { videoId: "JetnSt8yP74", title: "Weekend Vibes | Bong Bari", thumbnail: "https://i.ytimg.com/vi/JetnSt8yP74/hqdefault.jpg", publishedAt: "2024-01-06" },
+    { videoId: "C2r8L_Yfsss", title: "Bangla Comedy Short | Bong Bari", thumbnail: "https://i.ytimg.com/vi/C2r8L_Yfsss/hqdefault.jpg", publishedAt: "2024-01-02" },
+    { videoId: "K9_yPDdlcAI", title: "Funny Skit | Bong Bari", thumbnail: "https://i.ytimg.com/vi/K9_yPDdlcAI/hqdefault.jpg", publishedAt: "2024-01-03" },
+    { videoId: "XmDPpvMzWkI", title: "Laugh Riot | Bong Bari", thumbnail: "https://i.ytimg.com/vi/XmDPpvMzWkI/hqdefault.jpg", publishedAt: "2024-01-04" },
+  ];
+  // Popular fallback — 4 different videos (older viral ones)
+  const popularFallback: YouTubeVideo[] = [
+    { videoId: "bHoZ-JFAVcA", title: "Most Loved | Bong Bari", thumbnail: "https://i.ytimg.com/vi/bHoZ-JFAVcA/hqdefault.jpg", publishedAt: "2023-06-01" },
+    { videoId: "7kPy6y5sFWk", title: "Fan Favourite | Bong Bari", thumbnail: "https://i.ytimg.com/vi/7kPy6y5sFWk/hqdefault.jpg", publishedAt: "2023-06-02" },
+    { videoId: "VGwrZPbsAF8", title: "Viral Comedy | Bong Bari", thumbnail: "https://i.ytimg.com/vi/VGwrZPbsAF8/hqdefault.jpg", publishedAt: "2023-06-03" },
+    { videoId: "Dz27AZE8Bnk", title: "Weekend Vibes | Bong Bari", thumbnail: "https://i.ytimg.com/vi/Dz27AZE8Bnk/hqdefault.jpg", publishedAt: "2023-06-04" },
   ];
 
-  const latestVideoData = latestVideos || [];
-  const popularVideoData = popularVideos || [];
+  const latestVideoData = (latestVideos && latestVideos.length > 0) ? latestVideos : latestFallback;
+  const popularVideoData = (popularVideos && popularVideos.length > 0) ? popularVideos : popularFallback;
 
   /* --- LOGIC RESTORATION --- */
   const form = useForm<CollaborationRequest>({
@@ -168,11 +174,8 @@ const Home = () => {
     <>
       <SEOHead title="Bong Bari Comedy | Home" description="Authentic Bengali Family Comedy" />
 
-      {/* Mobile Sticky Nav - Glass Pill Restored */}
-      <MobileNavBar />
-
       {/* Main Layout - "700 Years UX" - PREMIUM GLASS & MESH GRADIENT */}
-      <div className="min-h-screen bg-black relative selection:bg-brand-yellow selection:text-black font-sans overflow-x-hidden pb-32 sm:pb-0">
+      <div className="min-h-screen bg-black relative selection:bg-brand-yellow selection:text-black font-sans overflow-x-hidden pb-24 sm:pb-0">
 
         {/* 1. Dynamic Aurora Background (Premium & Powerful) */}
         <div className="fixed inset-0 z-0 pointer-events-none">
@@ -187,12 +190,12 @@ const Home = () => {
         <main className="relative z-10 w-full flex flex-col items-center">
 
           {/* ===== HERO — AIDA First View ===== */}
-          <section className="min-h-[100svh] w-full flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 pt-20 pb-6 relative" data-testid="hero-section">
+          <section className="w-full flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 pt-20 pb-6 relative" style={{ minHeight: '100svh' }} data-testid="hero-section">
             <motion.div
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.7, ease: 'easeOut' }}
-              className={`relative w-full max-w-2xl md:max-w-3xl mx-auto rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.6)] border border-white/10 cursor-pointer mb-6 md:mb-8 aspect-video flex-shrink-0 transition-all duration-500 ${enteredSite ? 'ring-2 ring-[#E53935]/60' : 'hover:shadow-[0_0_40px_rgba(229,57,53,0.3)] hover:-translate-y-1'}`}
+              className={`relative w-full max-w-xl md:max-w-2xl mx-auto rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.6)] border border-white/10 cursor-pointer mb-4 md:mb-5 aspect-video flex-shrink-0 transition-all duration-500 ${enteredSite ? 'ring-2 ring-[#E53935]/60' : 'hover:shadow-[0_0_40px_rgba(229,57,53,0.3)] hover:-translate-y-1'}`}
               onClick={() => setEnteredSite(true)}
             >
               {!enteredSite ? (
@@ -231,16 +234,16 @@ const Home = () => {
               )}
             </motion.div>
 
-            <motion.div className="text-center space-y-3 md:space-y-4 w-full max-w-2xl mx-auto" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
+            <motion.div className="text-center space-y-2 md:space-y-3 w-full max-w-2xl mx-auto" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight">
                 Authentic{' '}<span className="relative"><span className="text-[#F4C430] drop-shadow-[0_2px_12px_rgba(244,196,48,0.5)]">Bengali</span><span className="absolute -bottom-1 left-0 w-full h-[3px] bg-[#F4C430]/50 rounded-full" /></span>{' '}Comedy
               </h1>
-              <p className="font-bengali text-base sm:text-lg md:text-xl text-gray-400 font-medium">ঘরোয়া পরিবেশের মজার গল্প</p>
-              <div className="flex flex-col sm:flex-row justify-center items-center gap-3 pt-2">
-                <button onClick={() => setLocation('/tools')} className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3.5 rounded-full bg-[#1a1a2e]/80 hover:bg-[#1a1a2e] border border-white/15 text-white font-semibold text-sm md:text-base backdrop-blur-md transition-all active:scale-95 hover:border-white/30">
+              <p className="font-bengali text-sm sm:text-base md:text-lg text-gray-400 font-medium">ঘরোয়া পরিবেশের মজার গল্প</p>
+              <div className="flex flex-row justify-center items-center gap-3 pt-1">
+                <button onClick={() => setLocation('/tools')} className="flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-[#1a1a2e]/80 hover:bg-[#1a1a2e] border border-white/15 text-white font-semibold text-sm backdrop-blur-md transition-all active:scale-95 hover:border-white/30 whitespace-nowrap">
                   <Sparkles className="w-4 h-4 text-[#F4C430]" />Bong Kahini
                 </button>
-                <button onClick={() => { const u = channelId ? `https://www.youtube.com/channel/${channelId}?sub_confirmation=1` : `https://www.youtube.com/@BongBari?sub_confirmation=1`; window.open(u, '_blank', 'noopener,noreferrer'); }} className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3.5 rounded-full bg-[#E53935] hover:bg-[#c62828] text-white font-semibold text-sm md:text-base shadow-[0_4px_20px_rgba(229,57,53,0.5)] transition-all active:scale-95">
+                <button onClick={() => { const u = channelId ? `https://www.youtube.com/channel/${channelId}?sub_confirmation=1` : `https://www.youtube.com/@BongBari?sub_confirmation=1`; window.open(u, '_blank', 'noopener,noreferrer'); }} className="flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-[#E53935] hover:bg-[#c62828] text-white font-semibold text-sm shadow-[0_4px_20px_rgba(229,57,53,0.5)] transition-all active:scale-95 whitespace-nowrap">
                   <Youtube className="w-5 h-5 fill-white" />Subscribe
                 </button>
               </div>
@@ -262,7 +265,8 @@ const Home = () => {
               </motion.div>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6" data-testid="latest-videos-grid">
                 {[0, 1, 2, 3].map((i) => {
-                  const video = latestVideoData[i] || fallbackVideoData[i];
+                  const video = latestVideoData[i];
+                  if (!video) return null;
                   return (
                     <div key={video.videoId + i} className="rounded-3xl p-[1px] bg-gradient-to-br from-[#00E5FF]/30 via-blue-500/10 to-indigo-500/25 hover:from-[#00E5FF]/55 hover:to-indigo-500/45 transition-all duration-500 h-full shadow-[0_0_18px_rgba(0,229,255,0.08)] hover:shadow-[0_0_35px_rgba(0,229,255,0.22)]">
                       <motion.div className="rounded-3xl overflow-hidden bg-zinc-950/90 cursor-pointer h-full hover:bg-zinc-950 transition-colors duration-300" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-40px' }} transition={{ duration: 0.5, delay: i * 0.08, ease: 'easeOut' }}>
@@ -285,7 +289,8 @@ const Home = () => {
               </motion.div>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6" data-testid="loved-videos-grid">
                 {[0, 1, 2, 3].map((i) => {
-                  const video = popularVideoData[i] || fallbackVideoData[5 - i] || fallbackVideoData[0];
+                  const video = popularVideoData[i];
+                  if (!video) return null;
                   return (
                     <div key={video.videoId + i} className="rounded-3xl p-[1px] bg-gradient-to-br from-[#D500F9]/30 via-pink-500/10 to-rose-500/25 hover:from-[#D500F9]/55 hover:to-rose-500/45 transition-all duration-500 h-full shadow-[0_0_18px_rgba(213,0,249,0.08)] hover:shadow-[0_0_35px_rgba(213,0,249,0.22)]">
                       <motion.div className="relative rounded-3xl overflow-hidden bg-zinc-950/90 cursor-pointer h-full hover:bg-zinc-950 transition-colors duration-300" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-40px' }} transition={{ duration: 0.5, delay: i * 0.08, ease: 'easeOut' }}>
@@ -334,10 +339,10 @@ const Home = () => {
                       <FormField control={form.control} name="phone" render={({ field }) => (
                         <FormItem><FormLabel>Phone / ফোন {!hasEmail ? <span className="text-red-500">*</span> : <span className="text-gray-400">(Optional)</span>}</FormLabel>
                           <FormControl>
-                            <div className="flex gap-2 w-full min-w-0">
-                              <Select value={field.value?.split(' ')[0] || "+91"} onValueChange={(code) => { const n = field.value?.split(' ').slice(1).join(' ') || ''; field.onChange(code + (n ? ' ' + n : '')); }}>
-                                <SelectTrigger className="w-[85px] flex-shrink-0" data-testid="select-country-code"><SelectValue /></SelectTrigger>
-                                <SelectContent>
+                              <div className="flex gap-2 w-full" style={{ minWidth: 0 }}>
+                                <Select value={field.value?.split(' ')[0] || "+91"} onValueChange={(code) => { const n = field.value?.split(' ').slice(1).join(' ') || ''; field.onChange(code + (n ? ' ' + n : '')); }}>
+                                  <SelectTrigger className="w-[90px] flex-shrink-0 text-sm" data-testid="select-country-code"><SelectValue /></SelectTrigger>
+                                  <SelectContent position="popper" className="z-[9999]">
                                   <SelectItem value="+91">🇮🇳 +91</SelectItem>
                                   <SelectItem value="+880">🇧🇩 +880</SelectItem>
                                   <SelectItem value="+1">🇺🇸 +1</SelectItem>

@@ -242,6 +242,7 @@ export default function FreeToolsHumanizer() {
   const [vibe, setVibe] = useState<Vibe>('casual');
   const [flawLevel, setFlawLevel] = useState<FlawLevel>('low');
   const [intensity, setIntensity] = useState<Intensity>('balanced');
+  const [mobileActiveTab, setMobileActiveTab] = useState<'input' | 'output'>('input');
   const [isProcessing, setIsProcessing] = useState(false);
   const [copyText, setCopyText] = useState('Copy Result');
   const [statusMsg, setStatusMsg] = useState('');
@@ -343,6 +344,9 @@ export default function FreeToolsHumanizer() {
   const handleHumanize = useCallback(async () => {
     if (!inputText.trim() || isProcessing || isOverLimit || (enginePhase !== 'ready' && enginePhase !== 'gpu_lost')) return;
     setIsProcessing(true); setResultText(''); setScore(null);
+    setStatusMsg('Initializing V10 Pipeline...');
+    setMobileActiveTab('output');
+    setStatusLog(["Extracting AST nodes..."]);
 
     // LAYER 1: V9 Input Cleaning & Pre-processing
     // Strip predictable AI formats and conversational filler before it even hits the engine
@@ -447,7 +451,7 @@ export default function FreeToolsHumanizer() {
         setScore({ total: Math.round(finalB * 0.7 + Math.max(0, 100 - finalCount * 12) * 0.3), burstiness: finalB, clicheCount: finalCount });
       }
     } catch { } finally { setIsProcessing(false); setStatusMsg(''); }
-  }, [inputText, isProcessing, isOverLimit, enginePhase, internalMode, infer]);
+  }, [inputText, isProcessing, isOverLimit, enginePhase, internalMode, infer, mobileActiveTab]);
 
   const isReady = enginePhase === 'ready' || enginePhase === 'gpu_lost';
   const modeIsGroq = internalMode === 'groq' || enginePhase === 'gpu_lost';
@@ -502,7 +506,11 @@ export default function FreeToolsHumanizer() {
               <div className="flex flex-col md:flex-row gap-4 mb-6 w-full">
                 {/* Cloud Power */}
                 <div
-                  onClick={() => { setInternalMode('groq'); setShowWelcome(false); }}
+                  onClick={() => {
+                    if (!isAuthenticated) return setLocation('/login');
+                    setInternalMode('groq');
+                    setShowWelcome(false);
+                  }}
                   className="flex-1 p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 hover:scale-[1.02] transition-all cursor-pointer flex flex-col items-center text-center gap-2 group shadow-[0_0_15px_rgba(245,158,11,0.1)]"
                 >
                   <div className="text-4xl mb-1 drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]">🚀</div>
@@ -559,16 +567,28 @@ export default function FreeToolsHumanizer() {
         <div className="flex items-center gap-2 z-10 flex-shrink-0">
           <div className="mpill flex">
             <button className={`mbtn ${!modeIsGroq ? 'mon-free' : 'moff'} !px-2 sm:!px-3`} onClick={() => setInternalMode('webllm')}>⚡<span className="hidden sm:inline ml-1">Free</span></button>
-            <button className={`mbtn ${modeIsGroq ? 'mon-groq' : 'moff'} !px-2 sm:!px-3`} onClick={() => setInternalMode('groq')}>🚀<span className="hidden sm:inline ml-1">Cloud</span></button>
+            <button className={`mbtn ${modeIsGroq ? 'mon-groq' : 'moff'} !px-2 sm:!px-3`} onClick={() => {
+              if (!isAuthenticated) return setLocation('/login');
+              setInternalMode('groq');
+            }}>🚀<span className="hidden sm:inline ml-1">Cloud</span></button>
           </div>
         </div>
       </header>
+
+      {/* Mobile Tabs */}
+      <div className="flex md:hidden bg-zinc-950/80 backdrop-blur-md border-b border-zinc-500/20 m-3 mb-0 rounded-xl overflow-hidden shadow-lg p-1 gap-1 relative z-20">
+        <button onClick={() => setMobileActiveTab('input')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-lg transition-colors shadow-inner ${mobileActiveTab === 'input' ? 'bg-amber-500/15 text-amber-500 border border-amber-500/30' : 'text-zinc-500 hover:text-zinc-300'}`}>Inputs & Config</button>
+        <button onClick={() => setMobileActiveTab('output')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-lg transition-colors shadow-inner relative ${mobileActiveTab === 'output' ? 'bg-amber-500/15 text-amber-500 border border-amber-500/30' : 'text-zinc-500 hover:text-zinc-300'}`}>
+          Result
+          {isProcessing && <div className="absolute top-1/2 -translate-y-1/2 right-3 w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />}
+        </button>
+      </div>
 
       {/* Main Area */}
       <main className="flex-1 flex flex-col md:flex-row p-4 gap-4 overflow-hidden min-h-0 relative z-10">
 
         {/* INPUT */}
-        <section className="flex-1 flex flex-col min-h-[40vh] md:min-h-0">
+        <section className={`flex-1 flex flex-col min-h-[40vh] md:min-h-0 ${mobileActiveTab === 'output' ? 'hidden md:flex' : 'flex'}`}>
           <div className="panel flex-1 p-5 md:p-6 flex flex-col min-h-0">
             <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
               <label className="text-xs font-bold text-amber-500 uppercase tracking-[0.2em] bg-amber-500/10 px-3 py-1 rounded border border-amber-500/20">Input Layer</label>
@@ -587,7 +607,7 @@ export default function FreeToolsHumanizer() {
         </section>
 
         {/* CONTROLS & HUMANIZE */}
-        <div className="relative md:flex-none flex flex-col items-center justify-center flex-none md:w-[150px] lg:w-[180px] gap-4 my-2 md:my-0 z-40">
+        <div className={`relative md:flex-none flex flex-col items-center justify-center flex-none md:w-[150px] lg:w-[180px] gap-4 my-2 md:my-0 z-40 ${mobileActiveTab === 'output' ? 'hidden md:flex' : 'flex'}`}>
 
           <div className={`flex w-full gap-3 bg-black/40 border border-white/5 rounded-2xl p-3 backdrop-blur-sm transition-opacity duration-300 ${modeIsGroq ? 'opacity-100 shadow-xl' : 'opacity-40 pointer-events-none'}`} title={!modeIsGroq ? "Cloud Engine Features Only" : ""}>
             <div className="flex flex-col gap-1.5 flex-1">
@@ -631,8 +651,8 @@ export default function FreeToolsHumanizer() {
         </div>
 
         {/* OUTPUT */}
-        <section className="flex-1 flex flex-col min-h-[40vh] md:min-h-0">
-          <div className="panel flex-1 p-5 md:p-6 flex flex-col min-h-0">
+        <section className={`flex-1 flex flex-col min-h-[40vh] md:min-h-0 ${mobileActiveTab === 'input' ? 'hidden md:flex' : 'flex'}`}>
+          <div className="panel flex-1 p-5 md:p-6 flex flex-col min-h-0 relative">
             <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
               <label className="text-xs font-bold text-amber-500 uppercase tracking-[0.2em] bg-amber-500/10 px-3 py-1 rounded border border-amber-500/20">Final Result</label>
               <div className="flex gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-red-500/40" /><div className="w-2.5 h-2.5 rounded-full bg-amber-500/40" /><div className="w-2.5 h-2.5 rounded-full bg-emerald-500/40" /></div>

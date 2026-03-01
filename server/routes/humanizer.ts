@@ -2,25 +2,8 @@ import { Express } from "express";
 import admin from "firebase-admin";
 
 export function registerHumanizerRoutes(app: Express, sessions: Map<string, any>, getDeviceIdFromReq: Function) {
-    // Basic rate limit map (memory only - suitable since we only have one instance)
-    const humanizerRateLimit = new Map<string, { count: number, resetTime: number }>();
-
-    function checkLimit(deviceId: string, isAuthenticated: boolean) {
-        if (isAuthenticated) return { allowed: true, remaining: -1 }; // Unlimited for logged in
-
-        const now = Date.now();
-        const dailyResetTime = new Date().setHours(24, 0, 0, 0); // Reset at midnight
-        let userLimit = humanizerRateLimit.get(deviceId);
-
-        if (!userLimit || now >= userLimit.resetTime) {
-            userLimit = { count: 0, resetTime: dailyResetTime };
-            humanizerRateLimit.set(deviceId, userLimit);
-        }
-
-        const max = 50; // 50 phrase generations per day for anon users
-        if (userLimit.count >= max) return { allowed: false, remaining: 0 };
-        return { allowed: true, remaining: max - userLimit.count - 1 };
-    }
+    // V10 Security Lockdown: No Anonymous Access to the Cloud Engine
+    // The previous rate limiter for anonymous users has been permanently removed.
 
     app.post("/api/humanize/groq", async (req, res) => {
         try {
@@ -42,10 +25,10 @@ export function registerHumanizerRoutes(app: Express, sessions: Map<string, any>
                 }
             }
 
-            // 1. Rate Limiting Check
-            const limit = checkLimit(deviceId, isAuthenticated);
-            if (!limit.allowed) {
-                return res.status(429).json({ error: "Limit reached", message: "Sign up to unlock unlimited Groq Power!" });
+            // 1. V10 Absolute Authentication Lockdown
+            if (!isAuthenticated) {
+                console.warn(`[Security Alert] Unauthenticated access attempt to V10 Cloud Pipeline from ${deviceId}`);
+                return res.status(401).json({ error: "Unauthorized", message: "Authentication required to access the BongBari V10 Cloud Engine." });
             }
 
             // 2. Extract configuration
@@ -217,16 +200,10 @@ OUTPUT FORMAT MUST BE EXCLUSIVELY VALID XML BLOCKS.`;
 
             console.log(`[Humanizer V8] Finished AST cognitive execution.`);
 
-            // Update Rate Limit usage
-            if (!isAuthenticated) {
-                const ul = humanizerRateLimit.get(deviceId);
-                if (ul) ul.count++;
-            }
-
             // Return response safely
             res.json({
                 text: bestVariant,
-                rateLimit: { remaining: limit.remaining, isAuthenticated }
+                rateLimit: { remaining: "unlimited", isAuthenticated }
             });
 
         } catch (e: any) {

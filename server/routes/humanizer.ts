@@ -2,6 +2,9 @@ import { Express } from "express";
 import admin from "firebase-admin";
 import { forceBurstiness, applyVocabularyEngine, applyHumanFlaws, computeBurstiness, computeCliche } from "../utils/nlp";
 
+// In-Memory Device Fingerprint Tracker to prevent Account Sharing
+const userActiveDevices = new Map<string, string>();
+
 // Ensure Firebase Admin is initialized so we can verify JWT tokens.
 // A full Service Account is NOT required just to verify tokens, only the projectId.
 if (admin.apps.length === 0) {
@@ -16,6 +19,7 @@ export function registerHumanizerRoutes(app: Express, sessions: Map<string, any>
         try {
             const deviceId = getDeviceIdFromReq(req);
             let isAuthenticated = false;
+            let authenticatedUid = "";
 
             // Check for Firebase Auth Token
             const authHeader = req.headers.authorization;
@@ -24,11 +28,12 @@ export function registerHumanizerRoutes(app: Express, sessions: Map<string, any>
                 try {
                     // Try to verify the Firebase token
                     if (admin.apps.length > 0) {
-                        await admin.auth().verifyIdToken(idToken);
-                        isAuthenticated = true; // JWT is valid! Give unlimited access!
+                        const decodedToken = await admin.auth().verifyIdToken(idToken);
+                        isAuthenticated = true; // JWT is valid!
+                        authenticatedUid = decodedToken.uid;
                     }
-                } catch (err) {
-                    console.error("Invalid Firebase token presented to Humanizer.");
+                } catch (err: any) {
+                    console.error("Invalid Firebase token presented to Humanizer:", err.message || err);
                 }
             }
 
@@ -38,7 +43,16 @@ export function registerHumanizerRoutes(app: Express, sessions: Map<string, any>
                 return res.status(401).json({ error: "Unauthorized", message: "Authentication required to access the BongBari V10 Cloud Engine." });
             }
 
-            // 2. Extract configuration
+            // 2. Anti-Sharing Device Fingerprinting System
+            // Binds an account strictly to the first device that uses it during the server lifecycle
+            if (!userActiveDevices.has(authenticatedUid)) {
+                userActiveDevices.set(authenticatedUid, deviceId);
+            } else if (userActiveDevices.get(authenticatedUid) !== deviceId) {
+                console.warn(`[Security Alert] Account sharing detected for UID ${authenticatedUid}. Binding mismatch.`);
+                return res.status(403).json({ error: "Device Mismatch", message: "This premium account is currently bound to another device. Account sharing is strictly prohibited." });
+            }
+
+            // 3. Extract configuration
             const { prompt, vibe = 'casual', flawLevel = 'low', intensity = 'balanced' } = req.body || {};
             if (!prompt) {
                 return res.status(400).json({ error: "Prompt is required" });

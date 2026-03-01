@@ -49,7 +49,7 @@ export function registerHumanizerRoutes(app: Express, sessions: Map<string, any>
             }
 
             // 2. Extract configuration
-            const { prompt, vibe = 'casual', flawLevel = 'low' } = req.body || {};
+            const { prompt, vibe = 'casual', flawLevel = 'low', intensity = 'balanced' } = req.body || {};
             if (!prompt) {
                 return res.status(400).json({ error: "Prompt is required" });
             }
@@ -61,14 +61,16 @@ export function registerHumanizerRoutes(app: Express, sessions: Map<string, any>
             }
 
             // Helper for fast internal API calls to Groq
-            const callGroq = async (messages: any[], temperature: number, model: string = "llama-3.3-70b-versatile") => {
+            // V10 PART 1: Typical Sampling Integration (Now heavily user-controlled via 'Intensity')
+            // Utilizing top_p to trim the highly predictable tokens and force the AI into human-like entropy bands.
+            const callGroq = async (messages: any[], temp: number, topP: number, model: string = "llama-3.3-70b-versatile") => {
                 const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                     method: "POST",
                     headers: {
                         "Authorization": `Bearer ${apiKey}`,
                         "Content-Type": "application/json"
                     },
-                    body: JSON.stringify({ model, messages, temperature, max_tokens: 4096 })
+                    body: JSON.stringify({ model, messages, temperature: temp, top_p: topP, max_tokens: 4096 })
                 });
                 if (!groqRes.ok) {
                     const errText = await groqRes.text();
@@ -170,8 +172,15 @@ OUTPUT FORMAT MUST BE EXCLUSIVELY VALID XML BLOCKS.`;
             ];
 
             let bestVariant = "";
+            let targetTemp = 0.6;
+            let targetTopP = 0.9;
+
+            if (intensity === 'safe') { targetTemp = 0.3; targetTopP = 0.75; }
+            if (intensity === 'wild') { targetTemp = 0.95; targetTopP = 0.98; }
+
             try {
-                const rawLLMOutput = await callGroq(msgs, temperature, "llama-3.3-70b-versatile");
+                // Execute V9 AST Self-Output Prompt with V10 Typical Sampling Parameters
+                const rawLLMOutput = await callGroq(msgs, targetTemp, targetTopP, "llama-3.3-70b-versatile");
 
                 // AST XML Deserialization Map
                 const blockMap = new Map<number, string>();

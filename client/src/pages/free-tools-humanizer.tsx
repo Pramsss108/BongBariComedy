@@ -230,6 +230,7 @@ type EnginePhase = 'booting' | 'ready' | 'no_webgpu' | 'gpu_lost' | 'error';
 interface Score { total: number; burstiness: number; clicheCount: number }
 type Vibe = 'academic' | 'casual' | 'genz';
 type FlawLevel = 'none' | 'low' | 'high';
+type Intensity = 'safe' | 'balanced' | 'wild';
 
 export default function FreeToolsHumanizer() {
   const [, setLocation] = useLocation();
@@ -240,6 +241,7 @@ export default function FreeToolsHumanizer() {
   const [resultText, setResultText] = useState('');
   const [vibe, setVibe] = useState<Vibe>('casual');
   const [flawLevel, setFlawLevel] = useState<FlawLevel>('low');
+  const [intensity, setIntensity] = useState<Intensity>('balanced');
   const [isProcessing, setIsProcessing] = useState(false);
   const [copyText, setCopyText] = useState('Copy Result');
   const [statusMsg, setStatusMsg] = useState('');
@@ -319,13 +321,16 @@ export default function FreeToolsHumanizer() {
 
   const infer = useCallback(async (prompt: string, onChunk: (t: string) => void = () => { }) => {
     if (internalMode === 'groq' || enginePhase === 'gpu_lost') {
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (sessionId) headers['Authorization'] = `Bearer ${sessionId}`;
-      const res = await fetch(buildApiUrl("/api/humanize/groq"), { method: 'POST', headers, body: JSON.stringify({ prompt, vibe, flawLevel }) });
-      if (!res.ok) throw new Error("Cloud Engine Error.");
-      const data = await res.json();
-      onChunk(data.text || "");
-      return data.text || "";
+      const authHeader: Record<string, string> = {};
+      if (sessionId) authHeader['Authorization'] = `Bearer ${sessionId}`;
+      const gRes = await fetch(buildApiUrl('/api/humanize/groq'), {
+        method: "POST", headers: { "Content-Type": "application/json", ...authHeader },
+        body: JSON.stringify({ prompt, vibe, flawLevel, intensity })
+      });
+      if (!gRes.ok) throw new Error("Cloud Engine Error.");
+      const gData = await gRes.json();
+      onChunk(gData.text || "");
+      return gData.text || "";
     }
     const e = engineRef.current;
     if (!e) throw new Error('Engine not ready');
@@ -599,6 +604,14 @@ export default function FreeToolsHumanizer() {
                 <option className="bg-zinc-900" value="none">Perfect</option>
                 <option className="bg-zinc-900" value="low">Natural</option>
                 <option className="bg-zinc-900" value="high">Messy</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5 flex-1">
+              <label className="text-[8px] lg:text-[9px] font-black text-amber-500 uppercase tracking-widest text-center">Intensity</label>
+              <select disabled={!modeIsGroq} value={intensity} onChange={e => setIntensity(e.target.value as Intensity)} className="bg-white/5 border border-white/10 rounded-lg text-[10px] lg:text-[11px] font-semibold text-white/90 p-2 outline-none focus:border-amber-500/50 hover:bg-white/10 transition-colors cursor-pointer w-full text-center appearance-none shadow-inner">
+                <option className="bg-zinc-900" value="safe">Safe</option>
+                <option className="bg-zinc-900" value="balanced">Balanced</option>
+                <option className="bg-zinc-900" value="wild">Wild</option>
               </select>
             </div>
           </div>

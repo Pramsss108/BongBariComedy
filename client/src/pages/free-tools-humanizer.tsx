@@ -5,6 +5,7 @@ import { CreateMLCEngine, InitProgressReport } from '@mlc-ai/web-llm';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
+import { buildApiUrl } from '@/lib/queryClient';
 
 // ─── Config ────────────────────────────────────────────────────────────────────
 const WEBLLM_MODEL = "Llama-3.2-1B-Instruct-q4f16_1-MLC";
@@ -463,7 +464,7 @@ export default function FreeToolsHumanizer() {
     if (sessionId) {
       headers['Authorization'] = `Bearer ${sessionId}`;
     }
-    const res = await fetch("/api/humanize/groq", {
+    const res = await fetch(buildApiUrl("/api/humanize/groq"), {
       method: 'POST',
       headers,
       body: JSON.stringify({ prompt, model: GROQ_MODEL, vibe, flawLevel }),

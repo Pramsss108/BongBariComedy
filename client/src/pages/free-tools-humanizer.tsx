@@ -437,12 +437,12 @@ export default function FreeToolsHumanizer() {
           <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="panel w-full max-w-md p-8 border-amber-500/20 shadow-2xl">
               <h2 className="text-2xl font-black text-amber-400 mb-2">BongBari Humanizer</h2>
-              <p className="text-white/60 text-sm mb-6 leading-relaxed">Choose your engine to continue. Cloud is faster, Local stays 100% on your device.</p>
-              <div className="grid grid-cols-1 gap-3 mb-8">
-                <button onClick={() => { setInternalMode('groq'); setShowWelcome(false); }} className="p-4 rounded-2xl bg-amber-500 text-black font-bold uppercase tracking-widest text-sm hover:scale-[1.02] transition-transform">🚀 Cloud Power (FAST)</button>
-                <button onClick={() => { setInternalMode('webllm'); setShowWelcome(false); }} className="p-4 rounded-2xl bg-white/5 border border-white/10 text-white font-bold uppercase tracking-widest text-sm hover:bg-white/10 transition-colors">⚡ Local Unlimited (FREE)</button>
+              <p className="text-gray-300 text-sm mb-6 leading-relaxed">Choose your engine to continue. Cloud is faster, Local stays 100% on your device.</p>
+              <div className="flex gap-3 mb-8 w-full">
+                <button onClick={() => { setInternalMode('groq'); setShowWelcome(false); }} className="flex-1 p-3 rounded-2xl bg-amber-500 text-black font-bold uppercase tracking-wide text-xs md:text-sm hover:scale-[1.02] transition-transform">🚀 Cloud Power</button>
+                <button onClick={() => { setInternalMode('webllm'); setShowWelcome(false); }} className="flex-1 p-3 rounded-2xl bg-white/5 border border-white/20 text-white font-bold uppercase tracking-wide text-xs md:text-sm hover:bg-white/10 transition-colors">⚡ Local (Free)</button>
               </div>
-              <p className="text-[10px] text-white/30 text-center uppercase tracking-widest">Premium AI Text Transformation</p>
+              <p className="text-[10px] text-white/50 text-center uppercase tracking-widest font-semibold">Premium AI Text Transformation</p>
             </motion.div>
           </div>
         )}
@@ -477,15 +477,15 @@ export default function FreeToolsHumanizer() {
       <main className="flex-1 flex flex-col md:flex-row p-4 gap-4 overflow-hidden min-h-0 relative z-10">
 
         {/* INPUT */}
-        <section className="flex-1 flex flex-col min-h-0">
-          <div className="panel flex-1 p-6 flex flex-col min-h-0">
-            <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
-              <label className="text-[10px] font-bold text-amber-500 uppercase tracking-[0.2em] bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">Input Layer</label>
-              <span className={`font-mono text-[10px] ${isOverLimit ? 'text-red-400' : 'text-white/30'}`}>{wordCount}/{wordLimit}w</span>
+        <section className="flex-1 flex flex-col min-h-[40vh] md:min-h-0">
+          <div className="panel flex-1 p-5 md:p-6 flex flex-col min-h-0">
+            <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
+              <label className="text-xs font-bold text-amber-500 uppercase tracking-[0.2em] bg-amber-500/10 px-3 py-1 rounded border border-amber-500/20">Input Layer</label>
+              <span className={`font-mono text-xs ${isOverLimit ? 'text-red-400' : 'text-gray-400 font-semibold'}`}>{wordCount}/{wordLimit}w</span>
             </div>
             <div className="flex-1 relative">
               <textarea ref={textAreaRef} value={inputText} onChange={e => setInputText(e.target.value)} onKeyDown={e => (e.ctrlKey && e.key === 'Enter' && handleHumanize())} onPaste={handlePaste}
-                className="absolute inset-0 w-full h-full bg-transparent border-none focus:ring-0 text-white leading-relaxed text-[15px] resize-none cs placeholder-white/5"
+                className="absolute inset-0 w-full h-full bg-transparent border-none focus:ring-0 text-white leading-relaxed text-[16px] resize-none cs placeholder-white/30"
                 placeholder="Paste AI text here... It stays editable even after humanizing." />
             </div>
             <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-white/5">
@@ -532,24 +532,24 @@ export default function FreeToolsHumanizer() {
         </div>
 
         {/* OUTPUT */}
-        <section className="flex-1 flex flex-col min-h-0">
-          <div className="panel flex-1 p-6 flex flex-col min-h-0">
-            <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
-              <label className="text-[10px] font-bold text-amber-500 uppercase tracking-[0.2em] bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">Final Result</label>
-              <div className="flex gap-1"><div className="w-2 h-2 rounded-full bg-red-500/20" /><div className="w-2 h-2 rounded-full bg-amber-500/20" /><div className="w-2 h-2 rounded-full bg-emerald-500/20" /></div>
+        <section className="flex-1 flex flex-col min-h-[40vh] md:min-h-0">
+          <div className="panel flex-1 p-5 md:p-6 flex flex-col min-h-0">
+            <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
+              <label className="text-xs font-bold text-amber-500 uppercase tracking-[0.2em] bg-amber-500/10 px-3 py-1 rounded border border-amber-500/20">Final Result</label>
+              <div className="flex gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-red-500/40" /><div className="w-2.5 h-2.5 rounded-full bg-amber-500/40" /><div className="w-2.5 h-2.5 rounded-full bg-emerald-500/40" /></div>
             </div>
 
             <AnimatePresence>
               {score && (
                 <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="mb-6 p-4 rounded-2xl bg-white/5 border border-white/10 shadow-lg">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-black uppercase text-white/40 tracking-widest">Human Score</span>
-                    <span className="text-2xl font-black" style={{ color: scoreColor(score.total) }}>{score.total}<span className="text-xs text-white/20 ml-1">/100</span></span>
+                    <span className="text-xs font-black uppercase text-gray-400 tracking-widest">Human Score</span>
+                    <span className="text-2xl font-black" style={{ color: scoreColor(score.total) }}>{score.total}<span className="text-sm text-gray-400 ml-1">/100</span></span>
                   </div>
-                  <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden mb-3">
+                  <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden mb-3">
                     <motion.div className="h-full" animate={{ width: `${score.total}%` }} style={{ background: scoreColor(score.total) }} />
                   </div>
-                  <div className="flex gap-4 text-[9px] font-mono text-white/40">
+                  <div className="flex gap-4 text-xs font-mono font-semibold text-gray-300">
                     <span>Burst: <span style={{ color: scoreColor(score.burstiness) }}>{score.burstiness}</span></span>
                     <span>Clichés: <span className={score.clicheCount === 0 ? 'text-emerald-400' : 'text-amber-400'}>{score.clicheCount}</span></span>
                   </div>
@@ -567,9 +567,9 @@ export default function FreeToolsHumanizer() {
               )}
 
               {!isProcessing && !resultText && (
-                <div className="absolute inset-0 flex items-center justify-center opacity-10 flex-col gap-2">
-                  <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-                  <span className="text-xs uppercase tracking-widest font-black">Waiting for Input</span>
+                <div className="absolute inset-0 flex items-center justify-center opacity-30 flex-col gap-3">
+                  <svg className="w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                  <span className="text-sm uppercase tracking-widest font-black text-gray-300">Waiting for Input</span>
                 </div>
               )}
 

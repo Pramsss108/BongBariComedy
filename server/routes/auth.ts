@@ -38,11 +38,12 @@ export function registerAuthRoutes(app: Express, sessions: Map<string, any>) {
 
             const csrfToken = generateCSRFToken(sessionId);
             res.json({ sessionId, username: user.username, csrfToken });
-        } catch (error) {
+        } catch (error: any) {
+            console.error("Login failed inner core:", error);
             if (error instanceof z.ZodError) {
                 return res.status(400).json({ message: "Invalid login data", errors: error.errors });
             }
-            res.status(500).json({ message: "Login failed" });
+            res.status(500).json({ message: "Login failed", details: error?.message || String(error) });
         }
     });
 

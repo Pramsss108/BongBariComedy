@@ -79,6 +79,18 @@ app.get('/health', (_req, res) => {
 (async () => {
   const server = await registerRoutes(app);
 
+  // Strict 404 JSON response for any unmet API routes to explicitly prevent React HTML fallback
+  app.use('/api', (req, res) => {
+    res.status(404).json({ message: "API endpoint not found", path: req.path });
+  });
+
+  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    const status = err.status || err.statusCode || 500;
+    const message = err.message || "Internal Server Error";
+    res.status(status).json({ message, details: err?.message });
+    console.error('[express] route error:', err);
+  });
+
   // Graceful shutdown to prevent EADDRINUSE on fast restarts (Windows/nodemon)
   const shutdown = () => {
     try {
@@ -99,15 +111,6 @@ app.get('/health', (_req, res) => {
   } else {
     log('YOUTUBE_CHANNEL_ID not set; YouTube sections will be empty.');
   }
-
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    // Do not crash the process on route errors in dev; keep server alive
-    console.error('[express] route error:', err);
-  });
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route

@@ -709,22 +709,7 @@ export default function FreeToolsHumanizer() {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); handleHumanize(); }
   }, [handleHumanize]);
 
-  // Inject global <style> into document.head to nuke belan cursor while on this page
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.id = 'humanizer-cursor-override';
-    style.textContent = `
-      .magical-belan-portal, .belan-cursor-responsive, .particle-container,
-      [data-belan-cursor], .magical-cursor-container, .global-cursor-follower {
-        display: none !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
-      }
-      body, body * { cursor: none !important; }
-    `;
-    document.head.appendChild(style);
-    return () => { document.getElementById('humanizer-cursor-override')?.remove(); };
-  }, []);
+  // Cursor hiding logic removed as per user feedback
 
   const handleCopy = async () => {
     try { await navigator.clipboard.writeText(resultText); setCopyText('COPIED!'); setTimeout(() => setCopyText('Copy Result'), 2500); }
@@ -769,8 +754,6 @@ export default function FreeToolsHumanizer() {
         .mon-free{background:rgba(57,255,20,.12);color:#39FF14}
         .mon-groq{background:rgba(99,102,241,.16);color:#818cf8}
         .moff{background:transparent;color:rgba(255,255,255,.2)}.moff:hover{color:rgba(255,255,255,.42)}
-        /* Suppress all native cursors on humanizer */
-        *{cursor:none!important}
       ` }} />
 
       {/* Cyber cursor dot removed to respect global system cursors */}
@@ -802,7 +785,7 @@ export default function FreeToolsHumanizer() {
             </div>
             <button onClick={() => { setMode('groq'); }}
               className="mt-8 text-white/20 text-[10px] border border-white/7 px-5 py-2 rounded-full hover:text-indigo-400 hover:border-indigo-400/30 transition-all cursor-pointer">
-              Skip → Use Groq Cloud Power (Faster)
+              Skip → Use Cloud Power (Faster)
             </button>
           </motion.div>
         )}
@@ -820,12 +803,12 @@ export default function FreeToolsHumanizer() {
             </h2>
             <p className="text-white/30 text-sm max-w-sm">
               {enginePhase === 'gpu_lost'
-                ? 'Your GPU ran out of memory. Switch to Groq Cloud — it\'s faster, more powerful, and free.'
-                : 'Your browser can\'t run AI locally. Use Groq Cloud — free and more powerful.'}
+                ? 'Your GPU ran out of memory. Switch to Cloud mode — it\'s faster, more powerful, and free.'
+                : 'Your browser can\'t run AI locally. Use Cloud mode — free and more powerful.'}
             </p>
             <button onClick={() => { setMode('groq'); setEnginePhase('ready'); }}
               className="mt-2 bg-indigo-500/14 border border-indigo-400/32 text-indigo-300 font-tech text-[11px] uppercase tracking-widest px-6 py-3 rounded-xl cursor-pointer hover:bg-indigo-500/20 transition-all">
-              Use Groq Cloud Mode →
+              Use Cloud Mode →
             </button>
           </motion.div>
         )}
@@ -850,13 +833,13 @@ export default function FreeToolsHumanizer() {
 
         <div className="flex items-center gap-2">
           <div className="mpill hidden md:flex">
-            <button className={`mbtn ${!modeIsGroq ? 'mon-free' : 'moff'}`} onClick={() => setMode('webllm')}>⚡ Free</button>
-            <button className={`mbtn ${modeIsGroq ? 'mon-groq' : 'moff'}`} onClick={() => setMode('groq')}>🚀 Groq</button>
+            <button className={`mbtn cursor-pointer ${!modeIsGroq ? 'mon-free' : 'moff'}`} onClick={() => setMode('webllm')}>⚡ Free</button>
+            <button className={`mbtn cursor-pointer ${modeIsGroq ? 'mon-groq' : 'moff'}`} onClick={() => setMode('groq')}>🚀 Cloud</button>
           </div>
           {isReady && (
             <span className="hidden md:block text-[7px] font-tech uppercase tracking-widest border px-2 py-1 rounded"
               style={{ color: accent, borderColor: accentDim + '44', background: modeIsGroq ? 'rgba(99,102,241,0.07)' : 'rgba(57,255,20,0.07)' }}>
-              {modeIsGroq ? 'Groq ✓' : 'WebGPU ✓'}
+              {modeIsGroq ? 'Cloud ✓' : 'WebGPU ✓'}
             </span>
           )}
           {enginePhase === 'booting' && (
@@ -870,8 +853,8 @@ export default function FreeToolsHumanizer() {
       {/* Mobile mode toggle */}
       < div className="flex md:hidden items-center justify-center py-2 border-b border-white/5 flex-none" >
         <div className="mpill">
-          <button className={`mbtn ${!modeIsGroq ? 'mon-free' : 'moff'}`} onClick={() => setMode('webllm')}>⚡ Free Unlimited</button>
-          <button className={`mbtn ${modeIsGroq ? 'mon-groq' : 'moff'}`} onClick={() => setMode('groq')}>🚀 Groq Power</button>
+          <button className={`mbtn cursor-pointer ${!modeIsGroq ? 'mon-free' : 'moff'}`} onClick={() => setMode('webllm')}>⚡ Free Unlimited</button>
+          <button className={`mbtn cursor-pointer ${modeIsGroq ? 'mon-groq' : 'moff'}`} onClick={() => setMode('groq')}>🚀 Cloud Power</button>
         </div>
       </div >
 
@@ -910,7 +893,7 @@ export default function FreeToolsHumanizer() {
             {/* Word limit hint */}
             {wordCount === 0 && (
               <p className="text-white/14 text-[8px] font-mono mb-2 flex-none flex items-center gap-1.5">
-                {modeIsGroq ? `Max ${GROQ_MAX_WORDS} words (Groq cloud)` : `Max ${hardwareLimit} words (On-device limit)`}
+                {modeIsGroq ? `Max ${GROQ_MAX_WORDS} words (Cloud processing)` : `Max ${hardwareLimit} words (On-device limit)`}
                 {!modeIsGroq && (
                   <span className="px-1 py-0.5 rounded text-[7px] uppercase tracking-widest border"
                     style={{
@@ -1076,7 +1059,7 @@ export default function FreeToolsHumanizer() {
                       </div>
                     )}
                     <p className="text-white/14 text-[7px] font-mono border border-white/5 px-2 py-0.5 rounded-full">
-                      {modeIsGroq ? 'Groq · Llama 3.1 8B · Fast' : 'WebGPU · Phrase-by-Phrase · Local'}
+                      {modeIsGroq ? 'Cloud Engine · High Performance' : 'WebGPU · Phrase-by-Phrase · Local'}
                     </p>
                   </motion.div>
                 )}

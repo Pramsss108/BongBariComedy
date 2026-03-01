@@ -38,6 +38,11 @@ export function registerCmsRoutes(app: Express) {
         try { res.json({ items: memeService.getPublic(30) }); } catch { res.status(500).json({ error: 'Failed' }); }
     });
 
+    // Collaboration Leads Management
+    app.get("/api/collaboration-requests", async (req, res) => {
+        try { res.json(await storage.getCollaborationRequests()); } catch { res.status(500).json({ message: "Failed" }); }
+    });
+
     // Collaboration Leads Export (Excel/PDF)
     app.get("/api/collaboration-requests/export", async (req, res) => {
         try {

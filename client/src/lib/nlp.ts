@@ -67,9 +67,15 @@ export function cleanInputText(text: string): { cleanedText: string; originalSta
     }
 
     // 2. Strip bold/italic markdown asterisks which AI loves to overuse
-    // We keep the inner text, just remove the ** or * boundaries
     cleaned = cleaned.replace(/\*\*([^*]+)\*\*/g, '$1');
     cleaned = cleaned.replace(/\*([^*]+)\*/g, '$1');
+
+    // 2b. Strip heading markers (## Title → Title) keeping the text
+    cleaned = cleaned.replace(/^#{1,6}\s+/gm, '');
+
+    // NOTE: Bullet/dash markers (- * •) are intentionally PRESERVED.
+    // They represent user-intended structure and must survive into the server pipeline.
+    // Only HTML-artifact formatting (**, ##) is stripped above.
 
     // 3. Normalize spacing
     cleaned = cleaned.replace(/\n{3,}/g, '\n\n');

@@ -9,67 +9,42 @@ import { useLocation } from "wouter";
 import { buildApiUrl } from '@/lib/queryClient';
 import { cleanInputText } from '@/lib/nlp';
 
-// ─── Custom Premium Select Component ───────────────────────────────────────────
-function PremiumSelect({
+// ─── Segmented Pill Control (replaces dropdown — no z-index clashes) ──────────
+function PillSelect({
   value, onChange, options, disabled, label
 }: {
   value: string; onChange: (v: string) => void;
   options: { value: string, label: string }[]; disabled: boolean; label: string
 }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) setIsOpen(false);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const selectedEntry = options.find(o => o.value === value) || options[0];
-
   return (
-    <div className={`flex flex-col gap-1.5 flex-1 relative ${disabled ? 'opacity-50 pointer-events-none' : ''}`} ref={ref}>
-      <label className="text-[8px] lg:text-[9px] font-black text-amber-500 uppercase tracking-widest text-center">{label}</label>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full bg-white/5 border border-white/10 rounded-lg text-[10px] lg:text-[11px] font-semibold text-white/90 p-2 outline-none hover:bg-white/10 hover:border-amber-500/30 transition-all shadow-inner relative z-10"
-      >
-        <span className="truncate">{selectedEntry.label}</span>
-        <svg className={`w-3 h-3 text-amber-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
-      </button>
-
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scaleY: 0.8 }}
-            animate={{ opacity: 1, y: 0, scaleY: 1 }}
-            exit={{ opacity: 0, y: -10, scaleY: 0.8 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
-            className="absolute top-[110%] left-0 w-full min-w-[100px] bg-zinc-950/95 backdrop-blur-xl border border-white/10 rounded-lg shadow-[0_10px_40px_rgba(0,0,0,0.8)] z-50 overflow-hidden origin-top"
+    <div className={`flex flex-col gap-1 ${disabled ? 'opacity-40 pointer-events-none' : ''}`}>
+      <label className="text-[7px] font-black text-amber-500 uppercase tracking-widest text-center">{label}</label>
+      <div className="flex rounded-lg overflow-hidden border border-white/10 bg-black/30">
+        {options.map((opt) => (
+          <button
+            key={opt.value}
+            onClick={() => onChange(opt.value)}
+            className={`flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider transition-all ${
+              value === opt.value
+                ? 'bg-amber-500 text-black shadow-inner'
+                : 'text-white/40 hover:text-white/80 hover:bg-white/5'
+            }`}
           >
-            {options.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => { onChange(opt.value); setIsOpen(false); }}
-                className={`w-full text-left px-3 py-2.5 text-[11px] font-semibold transition-colors ${value === opt.value ? 'bg-amber-500/20 text-amber-400 border-l-2 border-amber-500' : 'text-gray-300 hover:bg-white/10 hover:text-white border-l-2 border-transparent'}`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
+            {opt.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
+// Keep PremiumSelect as alias so nothing else breaks
+const PremiumSelect = PillSelect;
 
 
 // ─── Config ────────────────────────────────────────────────────────────────────
 const WEBLLM_MODEL = "Llama-3.2-1B-Instruct-q4f16_1-MLC";
 const GROQ_MODEL = "llama-3.1-8b-instant";
-const GROQ_MAX_WORDS = 5000;
+const GROQ_MAX_WORDS = 1000;
 
 // ─── AI Clichés ────────────────────────────────────────────────────────────────
 const AI_CLICHES = [
@@ -89,7 +64,7 @@ const BOOT_MSGS = [
 ];
 
 // ─── HTML → Markdown converter ─────────────────────────────────────
-function htmlToMarkdown(html: string): string {
+function htmlToPlainText(html: string): string {
   const div = document.createElement('div');
   div.innerHTML = html;
 
@@ -102,27 +77,25 @@ function htmlToMarkdown(html: string): string {
     if (!inner) return '';
 
     switch (tag) {
-      case 'b': case 'strong': return `**${inner}**`;
-      case 'i': case 'em': return `*${inner}*`;
-      case 'h1': return `\n## ${inner}\n`;
-      case 'h2': return `\n## ${inner}\n`;
-      case 'h3': return `\n### ${inner}\n`;
-      case 'p': { const t = inner.trim(); return t ? `\n${t}\n` : ''; }
+      case 'h1': case 'h2': case 'h3': case 'h4': case 'h5': case 'h6':
+        return `\n\n${inner}\n\n`;
+      case 'p': return `\n\n${inner}\n\n`;
       case 'br': return '\n';
-      case 'li': { const t = inner.trim(); return t ? `- ${t}\n` : ''; }
-      case 'ul': case 'ol': return `\n${inner}\n`;
-      case 'a': return inner;
-      case 'code': return `\`${inner}\``;
-      case 'blockquote': return `\n> ${inner}\n`;
+      case 'li': return `\n- ${inner}`;
+      case 'ul': case 'ol': return `${inner}\n`;
+      case 'hr': return '\n\n';
+      // Strip all formatting — just return inner text
       default: return inner;
     }
   };
 
   return convert(div)
-    .replace(/^\s*-\s*$/gm, '')
-    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\n{3,}/g, '\n\n')  // max 2 newlines
+    .replace(/[ \t]{2,}/g, ' ')  // collapse spaces
     .trim();
 }
+// Keep old name as alias so nothing else breaks
+const htmlToMarkdown = htmlToPlainText;
 
 // ─── Local Humanization Functions ────────────────
 function insertContractions(text: string): string {
@@ -285,7 +258,7 @@ const mdC = {
 // ─── Main Logic ────────────────────────────────────────────────────────────────
 type EngineMode = 'webllm' | 'groq';
 type EnginePhase = 'booting' | 'ready' | 'no_webgpu' | 'gpu_lost' | 'error';
-interface Score { total: number; burstiness: number; clicheCount: number }
+interface Score { total: number; burstiness: number; clicheCount: number; failures?: string[] }
 type Vibe = 'academic' | 'casual' | 'genz';
 type FlawLevel = 'none' | 'low' | 'high';
 type Intensity = 'safe' | 'balanced' | 'wild';
@@ -312,8 +285,11 @@ export default function FreeToolsHumanizer() {
   const [enginePhase, setEnginePhase] = useState<EnginePhase>('booting');
   const [loadingProgress, setLoadingProgress] = useState<InitProgressReport | null>(null);
   const [bootMsgIndex, setBootMsgIndex] = useState(0);
+  const [showDeviceOverride, setShowDeviceOverride] = useState(false);
+  const [lastPrompt, setLastPrompt] = useState('');
   const engineRef = useRef<any>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const lastVerificationRef = useRef<any>(null);
 
   useEffect(() => { document.title = 'BongBari Humanizer | Free AI Text Converter'; }, []);
   useEffect(() => { localStorage.setItem('hum_mode', internalMode); }, [internalMode]);
@@ -364,6 +340,8 @@ export default function FreeToolsHumanizer() {
   const wordLimit = internalMode === 'groq' ? GROQ_MAX_WORDS : hardwareLimit;
   const wordCount = inputText.trim() ? inputText.trim().split(/\s+/).length : 0;
   const isOverLimit = wordCount > wordLimit;
+  const outputWordCount = resultText.trim() ? resultText.trim().split(/\s+/).length : 0;
+  const wordDrift = outputWordCount && wordCount ? outputWordCount - wordCount : 0;
 
   const handlePaste = useCallback(async (e?: React.ClipboardEvent) => {
     if (e) {
@@ -401,6 +379,7 @@ export default function FreeToolsHumanizer() {
 
       if (!gRes.ok) throw new Error("Cloud Engine Error.");
       const gData = await gRes.json();
+      lastVerificationRef.current = gData.verification || null;
       onChunk(gData.text || "");
       return gData.text || "";
     }
@@ -427,12 +406,16 @@ export default function FreeToolsHumanizer() {
       if (internalMode === 'groq') {
         setStatusMsg('Humanizing...');
         const finalOutput = await infer(cleanedText, t => setResultText(t));
-
-        let b = computeBurstiness(finalOutput);
-        let count = computeCliche(finalOutput).count;
-
         setResultText(finalOutput);
-        setScore({ total: Math.round(b * 0.7 + Math.max(0, 100 - count * 12) * 0.3), burstiness: b, clicheCount: count });
+
+        const v = lastVerificationRef.current;
+        if (v) {
+          setScore({ total: v.humanScore, burstiness: v.metrics.burstiness.score, clicheCount: v.metrics.cliches.count, failures: v.failures || [] });
+        } else {
+          const b = computeBurstiness(finalOutput);
+          const count = computeCliche(finalOutput).count;
+          setScore({ total: Math.round(b * 0.7 + Math.max(0, 100 - count * 12) * 0.3), burstiness: b, clicheCount: count, failures: [] });
+        }
       } else {
         const phrases = splitIntoPhrases(cleanedText);
         setTotalPhrases(phrases.length); setStatusLog([]);
@@ -503,10 +486,15 @@ export default function FreeToolsHumanizer() {
     setStatusMsg('Re-authorizing device...');
     try {
       const finalOutput = await infer(lastPrompt, t => setResultText(t), true);
-      let b = computeBurstiness(finalOutput);
-      let count = computeCliche(finalOutput).count;
       setResultText(finalOutput);
-      setScore({ total: Math.round(b * 0.7 + Math.max(0, 100 - count * 12) * 0.3), burstiness: b, clicheCount: count });
+      const v = lastVerificationRef.current;
+      if (v) {
+        setScore({ total: v.humanScore, burstiness: v.metrics.burstiness.score, clicheCount: v.metrics.cliches.count, failures: v.failures || [] });
+      } else {
+        const b = computeBurstiness(finalOutput);
+        const count = computeCliche(finalOutput).count;
+        setScore({ total: Math.round(b * 0.7 + Math.max(0, 100 - count * 12) * 0.3), burstiness: b, clicheCount: count, failures: [] });
+      }
     } catch (e) {
       console.error(e);
       setStatusMsg('Override Failed.');
@@ -621,7 +609,7 @@ export default function FreeToolsHumanizer() {
           <span className="hidden sm:inline text-lg md:text-xl font-serif italic text-white truncate" style={{ fontFamily: 'Georgia, serif' }}>BongBari</span>
           <div className="flex items-center gap-1 md:gap-2 truncate">
             <span className="font-tech text-xs md:text-sm text-amber-500 uppercase tracking-widest font-bold truncate" style={{ textShadow: '0 0 10px rgba(245,158,11,0.38)' }}>Humanizer</span>
-            <span className="font-tech text-[9px] text-amber-500 border border-amber-500/50 px-1 py-0.5 rounded-md tracking-widest shadow-[0_0_8px_rgba(245,158,11,0.2)] flex-shrink-0">V9</span>
+            <span className="font-tech text-[9px] text-amber-500 border border-amber-500/50 px-1 py-0.5 rounded-md tracking-widest shadow-[0_0_8px_rgba(245,158,11,0.2)] flex-shrink-0">V10</span>
           </div>
         </div>
 
@@ -671,16 +659,16 @@ export default function FreeToolsHumanizer() {
         {/* CONTROLS & HUMANIZE */}
         <div className={`relative w-full md:w-[200px] lg:w-[220px] md:flex-none flex flex-col items-center justify-center gap-5 my-2 md:my-0 z-40 flex-shrink-0 ${mobileActiveTab === 'output' ? 'hidden md:flex' : 'flex'}`}>
 
-          <div className={`flex flex-row md:flex-col w-full gap-2 md:gap-4 bg-black/40 border border-white/5 rounded-2xl p-2.5 md:p-4 backdrop-blur-sm transition-opacity duration-300 ${modeIsGroq ? 'opacity-100 shadow-xl' : 'opacity-40 pointer-events-none'}`} title={!modeIsGroq ? "Cloud Engine Features Only" : ""}>
-            <PremiumSelect
+          <div className={`flex flex-col w-full gap-3 bg-black/40 border border-white/5 rounded-2xl p-3 md:p-4 backdrop-blur-sm transition-opacity duration-300 ${modeIsGroq ? 'opacity-100 shadow-xl' : 'opacity-40 pointer-events-none'}`} title={!modeIsGroq ? "Cloud Engine Features Only" : ""}>
+            <PillSelect
               label="Vibe" value={vibe} onChange={(v) => setVibe(v as Vibe)} disabled={!modeIsGroq}
               options={[{ value: 'academic', label: 'Academic' }, { value: 'casual', label: 'Casual' }, { value: 'genz', label: 'Gen-Z' }]}
             />
-            <PremiumSelect
+            <PillSelect
               label="Flaws" value={flawLevel} onChange={(v) => setFlawLevel(v as FlawLevel)} disabled={!modeIsGroq}
               options={[{ value: 'none', label: 'Perfect' }, { value: 'low', label: 'Natural' }, { value: 'high', label: 'Messy' }]}
             />
-            <PremiumSelect
+            <PillSelect
               label="Intensity" value={intensity} onChange={(v) => setIntensity(v as Intensity)} disabled={!modeIsGroq}
               options={[{ value: 'safe', label: 'Safe' }, { value: 'balanced', label: 'Balanced' }, { value: 'wild', label: 'Wild' }]}
             />
@@ -705,6 +693,14 @@ export default function FreeToolsHumanizer() {
           <div className="panel flex-1 p-5 md:p-6 flex flex-col min-h-0 relative">
             <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
               <label className="text-xs font-bold text-amber-500 uppercase tracking-[0.2em] bg-amber-500/10 px-3 py-1 rounded border border-amber-500/20">Final Result</label>
+              {outputWordCount > 0 && (
+                <span className="text-[10px] font-mono text-gray-500">
+                  {wordCount}w → <span className="text-gray-300 font-semibold">{outputWordCount}w</span>
+                  <span className={`ml-1 ${Math.abs(wordDrift) / Math.max(wordCount, 1) < 0.10 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    ({wordDrift > 0 ? '+' : ''}{wordDrift})
+                  </span>
+                </span>
+              )}
               <div className="flex gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-red-500/40" /><div className="w-2.5 h-2.5 rounded-full bg-amber-500/40" /><div className="w-2.5 h-2.5 rounded-full bg-emerald-500/40" /></div>
             </div>
 
@@ -722,6 +718,13 @@ export default function FreeToolsHumanizer() {
                     <span>Burst: <span style={{ color: scoreColor(score.burstiness) }}>{score.burstiness}</span></span>
                     <span>Clichés: <span className={score.clicheCount === 0 ? 'text-emerald-400' : 'text-amber-400'}>{score.clicheCount}</span></span>
                   </div>
+                  {score.failures && score.failures.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {score.failures.map(f => (
+                        <span key={f} className="text-[8px] bg-red-500/10 text-red-400 border border-red-500/20 px-1.5 py-0.5 rounded font-black uppercase tracking-wider">⚠ {f}</span>
+                      ))}
+                    </div>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>

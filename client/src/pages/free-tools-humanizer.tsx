@@ -8,6 +8,63 @@ import { useLocation } from "wouter";
 import { buildApiUrl } from '@/lib/queryClient';
 import { cleanInputText } from '@/lib/nlp';
 
+// ─── Custom Premium Select Component ───────────────────────────────────────────
+function PremiumSelect({
+  value, onChange, options, disabled, label
+}: {
+  value: string; onChange: (v: string) => void;
+  options: { value: string, label: string }[]; disabled: boolean; label: string
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) setIsOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedEntry = options.find(o => o.value === value) || options[0];
+
+  return (
+    <div className={`flex flex-col gap-1.5 flex-1 relative ${disabled ? 'opacity-50 pointer-events-none' : ''}`} ref={ref}>
+      <label className="text-[8px] lg:text-[9px] font-black text-amber-500 uppercase tracking-widest text-center">{label}</label>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-between w-full bg-white/5 border border-white/10 rounded-lg text-[10px] lg:text-[11px] font-semibold text-white/90 p-2 outline-none hover:bg-white/10 hover:border-amber-500/30 transition-all shadow-inner relative z-10"
+      >
+        <span className="truncate">{selectedEntry.label}</span>
+        <svg className={`w-3 h-3 text-amber-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scaleY: 0.8 }}
+            animate={{ opacity: 1, y: 0, scaleY: 1 }}
+            exit={{ opacity: 0, y: -10, scaleY: 0.8 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="absolute top-[110%] left-0 w-full min-w-[100px] bg-zinc-950/95 backdrop-blur-xl border border-white/10 rounded-lg shadow-[0_10px_40px_rgba(0,0,0,0.8)] z-50 overflow-hidden origin-top"
+          >
+            {options.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => { onChange(opt.value); setIsOpen(false); }}
+                className={`w-full text-left px-3 py-2.5 text-[11px] font-semibold transition-colors ${value === opt.value ? 'bg-amber-500/20 text-amber-400 border-l-2 border-amber-500' : 'text-gray-300 hover:bg-white/10 hover:text-white border-l-2 border-transparent'}`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+
 // ─── Config ────────────────────────────────────────────────────────────────────
 const WEBLLM_MODEL = "Llama-3.2-1B-Instruct-q4f16_1-MLC";
 const GROQ_MODEL = "llama-3.1-8b-instant";
@@ -573,31 +630,19 @@ export default function FreeToolsHumanizer() {
         {/* CONTROLS & HUMANIZE */}
         <div className={`relative md:flex-none flex flex-col items-center justify-center flex-none md:w-[150px] lg:w-[180px] gap-4 my-2 md:my-0 z-40 ${mobileActiveTab === 'output' ? 'hidden md:flex' : 'flex'}`}>
 
-          <div className={`flex w-full gap-3 bg-black/40 border border-white/5 rounded-2xl p-3 backdrop-blur-sm transition-opacity duration-300 ${modeIsGroq ? 'opacity-100 shadow-xl' : 'opacity-40 pointer-events-none'}`} title={!modeIsGroq ? "Cloud Engine Features Only" : ""}>
-            <div className="flex flex-col gap-1.5 flex-1">
-              <label className="text-[8px] lg:text-[9px] font-black text-amber-500 uppercase tracking-widest text-center">Vibe</label>
-              <select disabled={!modeIsGroq} value={vibe} onChange={e => setVibe(e.target.value as Vibe)} className="bg-white/5 border border-white/10 rounded-lg text-[10px] lg:text-[11px] font-semibold text-white/90 p-2 outline-none focus:border-amber-500/50 hover:bg-white/10 transition-colors cursor-pointer w-full text-center appearance-none shadow-inner">
-                <option className="bg-zinc-900" value="academic">Academic</option>
-                <option className="bg-zinc-900" value="casual">Casual</option>
-                <option className="bg-zinc-900" value="genz">Gen-Z</option>
-              </select>
-            </div>
-            <div className="flex flex-col gap-1.5 flex-1">
-              <label className="text-[8px] lg:text-[9px] font-black text-amber-500 uppercase tracking-widest text-center">Flaws</label>
-              <select disabled={!modeIsGroq} value={flawLevel} onChange={e => setFlawLevel(e.target.value as FlawLevel)} className="bg-white/5 border border-white/10 rounded-lg text-[10px] lg:text-[11px] font-semibold text-white/90 p-2 outline-none focus:border-amber-500/50 hover:bg-white/10 transition-colors cursor-pointer w-full text-center appearance-none shadow-inner">
-                <option className="bg-zinc-900" value="none">Perfect</option>
-                <option className="bg-zinc-900" value="low">Natural</option>
-                <option className="bg-zinc-900" value="high">Messy</option>
-              </select>
-            </div>
-            <div className="flex flex-col gap-1.5 flex-1">
-              <label className="text-[8px] lg:text-[9px] font-black text-amber-500 uppercase tracking-widest text-center">Intensity</label>
-              <select disabled={!modeIsGroq} value={intensity} onChange={e => setIntensity(e.target.value as Intensity)} className="bg-white/5 border border-white/10 rounded-lg text-[10px] lg:text-[11px] font-semibold text-white/90 p-2 outline-none focus:border-amber-500/50 hover:bg-white/10 transition-colors cursor-pointer w-full text-center appearance-none shadow-inner">
-                <option className="bg-zinc-900" value="safe">Safe</option>
-                <option className="bg-zinc-900" value="balanced">Balanced</option>
-                <option className="bg-zinc-900" value="wild">Wild</option>
-              </select>
-            </div>
+          <div className={`flex w-full gap-1.5 md:gap-3 bg-black/40 border border-white/5 rounded-2xl p-2 md:p-3 backdrop-blur-sm transition-opacity duration-300 ${modeIsGroq ? 'opacity-100 shadow-xl' : 'opacity-40 pointer-events-none'}`} title={!modeIsGroq ? "Cloud Engine Features Only" : ""}>
+            <PremiumSelect
+              label="Vibe" value={vibe} onChange={(v) => setVibe(v as Vibe)} disabled={!modeIsGroq}
+              options={[{ value: 'academic', label: 'Academic' }, { value: 'casual', label: 'Casual' }, { value: 'genz', label: 'Gen-Z' }]}
+            />
+            <PremiumSelect
+              label="Flaws" value={flawLevel} onChange={(v) => setFlawLevel(v as FlawLevel)} disabled={!modeIsGroq}
+              options={[{ value: 'none', label: 'Perfect' }, { value: 'low', label: 'Natural' }, { value: 'high', label: 'Messy' }]}
+            />
+            <PremiumSelect
+              label="Intensity" value={intensity} onChange={(v) => setIntensity(v as Intensity)} disabled={!modeIsGroq}
+              options={[{ value: 'safe', label: 'Safe' }, { value: 'balanced', label: 'Balanced' }, { value: 'wild', label: 'Wild' }]}
+            />
           </div>
 
           <motion.div className="w-full flex items-center justify-center">

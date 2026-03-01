@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -58,6 +58,7 @@ function LoadingFallback() {
 }
 
 function Router() {
+  const [location] = useLocation();
   const [showCharmSelector, setShowCharmSelector] = useState(false);
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
   const { isAuthenticated } = useAuth();
@@ -233,8 +234,8 @@ function Router() {
         {/* Floating FAQ Button - REMOVED per cleanup request */}
         {/* <FloatingFAQButton /> */}
 
-        {/* Mobile Navigation Dock */}
-        <MobileNavBar />
+        {/* Mobile Navigation Dock - Hidden on full-screen tool pages */}
+        {location !== '/tools/humanizer' && <MobileNavBar />}
 
         {/* Production Debug overlay - Available via Console/Hidden Trigger */}
         <DebugOverlay />

@@ -264,9 +264,11 @@ const Home = () => {
                 {[0, 1, 2, 3].map((i) => {
                   const video = latestVideoData[i] || fallbackVideoData[i];
                   return (
-                    <motion.div key={video.videoId + i} className="relative rounded-3xl overflow-hidden bg-zinc-900/40 border border-white/5 cursor-pointer h-full p-2 transition-shadow duration-300 hover:shadow-[0_0_30px_rgba(0,229,255,0.12)]" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-40px' }} transition={{ duration: 0.5, delay: i * 0.08, ease: 'easeOut' }}>
-                      <YouTubeShort videoId={video.videoId} thumbnail={video.thumbnail} title={video.title} />
-                    </motion.div>
+                    <div key={video.videoId + i} className="rounded-3xl p-[1px] bg-gradient-to-br from-[#00E5FF]/30 via-blue-500/10 to-indigo-500/25 hover:from-[#00E5FF]/55 hover:to-indigo-500/45 transition-all duration-500 h-full shadow-[0_0_18px_rgba(0,229,255,0.08)] hover:shadow-[0_0_35px_rgba(0,229,255,0.22)]">
+                      <motion.div className="rounded-3xl overflow-hidden bg-zinc-950/90 cursor-pointer h-full hover:bg-zinc-950 transition-colors duration-300" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-40px' }} transition={{ duration: 0.5, delay: i * 0.08, ease: 'easeOut' }}>
+                        <YouTubeShort videoId={video.videoId} thumbnail={video.thumbnail} title={video.title} />
+                      </motion.div>
+                    </div>
                   );
                 })}
               </div>
@@ -285,12 +287,14 @@ const Home = () => {
                 {[0, 1, 2, 3].map((i) => {
                   const video = popularVideoData[i] || fallbackVideoData[5 - i] || fallbackVideoData[0];
                   return (
-                    <motion.div key={video.videoId + i} className="relative rounded-3xl overflow-hidden bg-zinc-900/40 border border-white/5 cursor-pointer h-full p-2 transition-shadow duration-300 hover:shadow-[0_0_30px_rgba(213,0,249,0.12)]" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-40px' }} transition={{ duration: 0.5, delay: i * 0.08, ease: 'easeOut' }}>
-                      <div className="absolute top-3 left-3 z-10 flex items-center gap-1 bg-black/60 backdrop-blur-md border border-pink-500/40 text-pink-400 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                        <span className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-pulse" />POPULAR
-                      </div>
-                      <YouTubeShort videoId={video.videoId} thumbnail={video.thumbnail} title={video.title} />
-                    </motion.div>
+                    <div key={video.videoId + i} className="rounded-3xl p-[1px] bg-gradient-to-br from-[#D500F9]/30 via-pink-500/10 to-rose-500/25 hover:from-[#D500F9]/55 hover:to-rose-500/45 transition-all duration-500 h-full shadow-[0_0_18px_rgba(213,0,249,0.08)] hover:shadow-[0_0_35px_rgba(213,0,249,0.22)]">
+                      <motion.div className="relative rounded-3xl overflow-hidden bg-zinc-950/90 cursor-pointer h-full hover:bg-zinc-950 transition-colors duration-300" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-40px' }} transition={{ duration: 0.5, delay: i * 0.08, ease: 'easeOut' }}>
+                        <div className="absolute top-3 left-3 z-10 flex items-center gap-1 bg-black/60 backdrop-blur-md border border-pink-500/40 text-pink-400 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          <span className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-pulse" />POPULAR
+                        </div>
+                        <YouTubeShort videoId={video.videoId} thumbnail={video.thumbnail} title={video.title} />
+                      </motion.div>
+                    </div>
                   );
                 })}
               </div>
@@ -299,18 +303,20 @@ const Home = () => {
 
           {/* ===== WORK WITH US ===== */}
           <motion.div className="py-8 w-full px-4 sm:px-6 lg:px-8" initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-60px' }} transition={{ duration: 0.7, ease: 'easeOut' }}>
-            <section className="max-w-4xl mx-auto relative mb-32" data-testid="collaboration-section">
+            <section className="max-w-4xl mx-auto relative pb-8 sm:pb-16" data-testid="collaboration-section">
               <div className="absolute inset-0 -z-10 bg-radial-glow opacity-30"></div>
+              {/* Section heading — above the card, not inside it */}
+              <div className="text-center mb-6 sm:mb-8">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-2 drop-shadow-md tracking-tight">Work with Us</h2>
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-bengali font-bold text-yellow-400/90">আমাদের সাথে কাজ করুন</h3>
+                <p className="mt-3 sm:mt-4 text-center text-gray-300 max-w-2xl mx-auto leading-relaxed text-sm sm:text-base md:text-lg">
+                  Ready to collaborate? Let's create some amazing Bengali comedy content together!<br />
+                  <span className="font-bengali text-xs sm:text-sm md:text-base text-gray-400">কোলাবোরেট করতে প্রস্তুত? চলুন একসাথে দুর্দান্ত বাংলা কমেডি কন্টেন্ট তৈরি করি!</span>
+                </p>
+              </div>
+              {/* Form card — only the form fields inside */}
               <motion.div className="relative overflow-hidden rounded-2xl sm:rounded-[2.5rem] bg-black/60 shadow-2xl border border-white/10 text-white backdrop-blur-sm" whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}>
-                <div className="px-5 pt-6 pb-3 sm:p-8 md:p-12 md:pb-4 text-center relative z-10 w-full">
-                  <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-2 drop-shadow-md tracking-tight">Work with Us</h2>
-                  <h3 className="text-xl sm:text-2xl md:text-3xl font-bengali font-bold text-yellow-400/90">আমাদের সাথে কাজ করুন</h3>
-                  <p className="mt-3 sm:mt-4 text-center text-gray-300 max-w-2xl mx-auto leading-relaxed text-sm sm:text-base md:text-lg">
-                    Ready to collaborate? Let's create some amazing Bengali comedy content together!<br />
-                    <span className="font-bengali text-xs sm:text-sm md:text-base text-gray-400">কোলাবোরেট করতে প্রস্তুত? চলুন একসাথে দুর্দান্ত বাংলা কমেডি কন্টেন্ট তৈরি করি!</span>
-                  </p>
-                </div>
-                <div className="px-4 pb-6 sm:p-8 md:p-12">
+                <div className="p-5 sm:p-8 md:p-12">
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" data-testid="collaboration-form">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -29,7 +29,17 @@ export function registerCmsRoutes(app: Express) {
             if (!channelId) return res.json([]);
             youtubeService.start(channelId);
             await youtubeService.forceRefresh();
-            res.json(youtubeService.getLatest(3));
+            res.json(youtubeService.getLatest(4));
+        } catch { res.status(200).json([]); }
+    });
+
+    app.get("/api/youtube/popular", async (req, res) => {
+        try {
+            const channelId = (req.query.channelId as string) || process.env.YOUTUBE_CHANNEL_ID;
+            if (!channelId) return res.json([]);
+            youtubeService.start(channelId);
+            // Popular data is refreshed as part of the same cycle as latest
+            res.json(youtubeService.getPopular(4));
         } catch { res.status(200).json([]); }
     });
 

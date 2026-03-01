@@ -378,7 +378,7 @@ export default function FreeToolsHumanizer() {
     try { const t = await navigator.clipboard.readText(); setInputText(prev => (prev + t).slice(0, wordLimit * 7)); } catch { }
   }, [wordLimit]);
 
-  const infer = useCallback(async (prompt: string, onChunk: (t: string) => void = () => { }) => {
+  const infer = useCallback(async (prompt: string, onChunk: (t: string) => void = () => { }, isOverride = false) => {
     if (internalMode === 'groq' || enginePhase === 'gpu_lost') {
       const authHeader: Record<string, string> = {};
       try {
@@ -389,8 +389,16 @@ export default function FreeToolsHumanizer() {
       }
       const gRes = await fetch(buildApiUrl('/api/humanize/groq'), {
         method: "POST", headers: { "Content-Type": "application/json", ...authHeader },
-        body: JSON.stringify({ prompt, vibe, flawLevel, intensity })
+        body: JSON.stringify({ prompt, vibe, flawLevel, intensity, override: isOverride })
       });
+
+      if (gRes.status === 409) {
+        setLastPrompt(prompt);
+        // We can't easily store onChunk in state if it's a callback, but we can store the intention
+        setShowDeviceOverride(true);
+        throw new Error("DEVICE_MISMATCH");
+      }
+
       if (!gRes.ok) throw new Error("Cloud Engine Error.");
       const gData = await gRes.json();
       onChunk(gData.text || "");
@@ -418,8 +426,6 @@ export default function FreeToolsHumanizer() {
     try {
       if (internalMode === 'groq') {
         setStatusMsg('Humanizing...');
-        // The BongBari V10 Server-Side Fortress handles Layers 3-6 (Burstiness, Vocab, Flaws, Agentic Verification) internally.
-        // We simply receive the perfect, unblockable text.
         const finalOutput = await infer(cleanedText, t => setResultText(t));
 
         let b = computeBurstiness(finalOutput);
@@ -477,8 +483,37 @@ export default function FreeToolsHumanizer() {
 
         setScore({ total: Math.round(finalB * 0.7 + Math.max(0, 100 - finalCount * 12) * 0.3), burstiness: finalB, clicheCount: finalCount });
       }
-    } catch { } finally { setIsProcessing(false); setStatusMsg(''); }
+    } catch (e: any) {
+      if (e.message === "DEVICE_MISMATCH") {
+        setIsProcessing(false);
+        setStatusMsg('Security Check Required');
+        return;
+      }
+      console.error(e);
+      setIsProcessing(false);
+      setStatusMsg('Error. Check connection.');
+    } finally {
+      setIsProcessing(false);
+    }
   }, [inputText, isProcessing, isOverLimit, enginePhase, internalMode, infer, mobileActiveTab]);
+
+  const handleDeviceOverride = async () => {
+    setShowDeviceOverride(false);
+    setIsProcessing(true);
+    setStatusMsg('Re-authorizing device...');
+    try {
+      const finalOutput = await infer(lastPrompt, t => setResultText(t), true);
+      let b = computeBurstiness(finalOutput);
+      let count = computeCliche(finalOutput).count;
+      setResultText(finalOutput);
+      setScore({ total: Math.round(b * 0.7 + Math.max(0, 100 - count * 12) * 0.3), burstiness: b, clicheCount: count });
+    } catch (e) {
+      console.error(e);
+      setStatusMsg('Override Failed.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const isReady = enginePhase === 'ready' || enginePhase === 'gpu_lost';
   const modeIsGroq = internalMode === 'groq' || enginePhase === 'gpu_lost';
@@ -722,6 +757,44 @@ export default function FreeToolsHumanizer() {
           </div>
         </section>
       </main>
+
+      {/* DEVICE OVERRIDE POPUP */}
+      <AnimatePresence>
+        {showDeviceOverride && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="w-full max-w-sm bg-zinc-900 border border-white/10 rounded-3xl p-8 text-center shadow-2xl relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent" />
+              <div className="text-4xl mb-4">📱</div>
+              <h2 className="text-xl font-black text-white uppercase tracking-widest mb-3">Device Conflict</h2>
+              <p className="text-gray-400 text-sm leading-relaxed mb-8">
+                Your account is currently active on <span className="text-amber-500 font-bold">another device</span>. To protect your credits, only one device is allowed at a time.
+              </p>
+
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={handleDeviceOverride}
+                  className="w-full py-4 bg-amber-500 text-black font-black uppercase tracking-widest rounded-2xl hover:bg-amber-400 transition-all shadow-lg active:scale-95"
+                >
+                  Use here instead
+                </button>
+                <button
+                  onClick={() => setShowDeviceOverride(false)}
+                  className="w-full py-3 bg-white/5 text-gray-400 font-bold uppercase tracking-widest rounded-2xl hover:bg-white/10 transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+
+              <p className="mt-6 text-[9px] text-white/20 uppercase tracking-[0.2em]">BongBari V10 Security Protocol</p>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -43,17 +43,24 @@ export function registerHumanizerRoutes(app: Express, sessions: Map<string, any>
                 return res.status(401).json({ error: "Unauthorized", message: "Authentication required to access the BongBari V10 Cloud Engine." });
             }
 
+            // 3. Extract configuration
+            const { prompt, vibe = 'casual', flawLevel = 'low', intensity = 'balanced', override = false } = req.body || {};
+
             // 2. Anti-Sharing Device Fingerprinting System
             // Binds an account strictly to the first device that uses it during the server lifecycle
-            if (!userActiveDevices.has(authenticatedUid)) {
+            if (!userActiveDevices.has(authenticatedUid) || override === true) {
                 userActiveDevices.set(authenticatedUid, deviceId);
             } else if (userActiveDevices.get(authenticatedUid) !== deviceId) {
                 console.warn(`[Security Alert] Account sharing detected for UID ${authenticatedUid}. Binding mismatch.`);
-                return res.status(403).json({ error: "Device Mismatch", message: "This premium account is currently bound to another device. Account sharing is strictly prohibited." });
+                // V10 UPGRADE: Return 409 Conflict so the frontend can offer an "Override/Kick" option
+                return res.status(409).json({
+                    error: "Device Mismatch",
+                    message: "This account is bound to another device.",
+                    currentDevice: deviceId,
+                    boundDevice: userActiveDevices.get(authenticatedUid)
+                });
             }
 
-            // 3. Extract configuration
-            const { prompt, vibe = 'casual', flawLevel = 'low', intensity = 'balanced' } = req.body || {};
             if (!prompt) {
                 return res.status(400).json({ error: "Prompt is required" });
             }

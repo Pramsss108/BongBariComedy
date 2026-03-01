@@ -6,7 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
 import { buildApiUrl } from '@/lib/queryClient';
-import { cleanInputText, forceBurstiness, applyVocabularyEngine, applyHumanFlaws } from '@/lib/nlp';
+import { cleanInputText } from '@/lib/nlp';
 
 // ─── Config ────────────────────────────────────────────────────────────────────
 const WEBLLM_MODEL = "Llama-3.2-1B-Instruct-q4f16_1-MLC";
@@ -355,31 +355,12 @@ export default function FreeToolsHumanizer() {
     try {
       if (internalMode === 'groq') {
         setStatusMsg('Humanizing...');
-        const out = await infer(cleanedText, t => setResultText(t));
+        // The BongBari V10 Server-Side Fortress handles Layers 3-6 (Burstiness, Vocab, Flaws, Agentic Verification) internally.
+        // We simply receive the perfect, unblockable text.
+        const finalOutput = await infer(cleanedText, t => setResultText(t));
 
-        // V9 LAYER 3: Burstiness Engine
-        const variedOut = forceBurstiness(out);
-
-        // V9 LAYER 4: Vocabulary Engine
-        const refinedOut = applyVocabularyEngine(variedOut, vibe);
-
-        // V9 LAYER 5: Selective Token Masking / Human Flaws
-        const flawedOut = applyHumanFlaws(refinedOut, flawLevel);
-
-        let finalOutput = flawedOut;
         let b = computeBurstiness(finalOutput);
-        let { count } = computeCliche(finalOutput);
-
-        // V9 LAYER 6: Agentic Verification Loop (Cloud)
-        // If the AI gave us back mathematical garbage (low burstiness, high clichés), heal it instantly.
-        if (b < 15 || count > 3) {
-          setStatusMsg('Auto-Healing Robotic Text...');
-          const healingPrompt = `The previous text was flagged by AI detectors for being too robotic. Rewrite it again emphasizing dramatic sentence length variance and zero clichés:\n\n"${finalOutput}"`;
-          const healedOut = await infer(healingPrompt, t => setResultText(t));
-          finalOutput = applyHumanFlaws(applyVocabularyEngine(forceBurstiness(healedOut), vibe), flawLevel);
-          b = computeBurstiness(finalOutput);
-          count = computeCliche(finalOutput).count;
-        }
+        let count = computeCliche(finalOutput).count;
 
         setResultText(finalOutput);
         setScore({ total: Math.round(b * 0.7 + Math.max(0, 100 - count * 12) * 0.3), burstiness: b, clicheCount: count });
@@ -424,30 +405,13 @@ export default function FreeToolsHumanizer() {
         }
         const final = stitch(phrases, humanized);
 
-        // V9 LAYER 3: Burstiness Engine
-        const variedFinal = forceBurstiness(final);
+        // Local WebLLM mode is a free preview. It DOES NOT rely on the V10 Server-Side Fortress.
+        // It outputs the raw LLM output without the proprietary algorithms, keeping our IP secure.
+        setResultText(final);
 
-        // V9 LAYER 4: Vocabulary Engine
-        const refinedFinal = applyVocabularyEngine(variedFinal, vibe);
+        let finalB = computeBurstiness(final);
+        let finalCount = computeCliche(final).count;
 
-        // V9 LAYER 5: Selective Token Masking / Human Flaws
-        const flawedFinal = applyHumanFlaws(refinedFinal, flawLevel);
-
-        let outputText = flawedFinal;
-        let finalB = computeBurstiness(outputText);
-        let finalCount = computeCliche(outputText).count;
-
-        // V9 LAYER 6: Agentic Verification Loop (Local)
-        if (finalB < 15 || finalCount > 3) {
-          setStatusMsg('Auto-Healing Robotic Text...');
-          const healingPrompt = `The previous text was flagged by AI detectors for being too robotic. Rewrite it again emphasizing dramatic sentence length variance and zero clichés:\n\n"${outputText}"`;
-          const healedFinal = await infer(healingPrompt, t => setResultText(t));
-          outputText = applyHumanFlaws(applyVocabularyEngine(forceBurstiness(healedFinal), vibe), flawLevel);
-          finalB = computeBurstiness(outputText);
-          finalCount = computeCliche(outputText).count;
-        }
-
-        setResultText(outputText);
         setScore({ total: Math.round(finalB * 0.7 + Math.max(0, 100 - finalCount * 12) * 0.3), burstiness: finalB, clicheCount: finalCount });
       }
     } catch { } finally { setIsProcessing(false); setStatusMsg(''); }

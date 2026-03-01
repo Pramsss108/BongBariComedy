@@ -1,5 +1,6 @@
 import { Express } from "express";
 import admin from "firebase-admin";
+import { forceBurstiness, applyVocabularyEngine, applyHumanFlaws, computeBurstiness, computeCliche } from "../utils/nlp";
 
 export function registerHumanizerRoutes(app: Express, sessions: Map<string, any>, getDeviceIdFromReq: Function) {
     // V10 Security Lockdown: No Anonymous Access to the Cloud Engine
@@ -193,12 +194,41 @@ OUTPUT FORMAT MUST BE EXCLUSIVELY VALID XML BLOCKS.`;
                 });
 
                 bestVariant = reconstructedLines.join('\n');
-            } catch (e) {
-                console.error("[Humanizer V8] Execution failed:", e);
-                bestVariant = prompt;
-            }
+                // ==========================================
+                // PHASE 5: V10 Server-Side Lockdown Pipeline
+                // ==========================================
+                // V9 LAYER 3: Burstiness Engine
+                bestVariant = forceBurstiness(bestVariant);
 
-            console.log(`[Humanizer V8] Finished AST cognitive execution.`);
+                // V9 LAYER 4: Vocabulary Engine
+                bestVariant = applyVocabularyEngine(bestVariant, vibe as any);
+
+                // V9 LAYER 5: Selective Token Masking / Human Flaws
+                bestVariant = applyHumanFlaws(bestVariant, flawLevel as any);
+
+                // V9 LAYER 6: Server-Side Agentic Verification Loop
+                let b = computeBurstiness(bestVariant);
+                let count = computeCliche(bestVariant).count;
+
+                if (b < 15 || count > 3) {
+                    console.log(`[Humanizer V10 Verification] Text failed metrics (B: ${b}, C: ${count}). Triggering Server-Side Auto-Heal...`);
+                    const healingPrompt = `The previous text was flagged by AI detectors for being too robotic. Rewrite it again emphasizing dramatic sentence length variance and zero clichés:\n\n"${bestVariant}"`;
+
+                    const healedRaw = await callGroq([
+                        { role: "system", content: "You are an expert humanizer fixing robotic text." },
+                        { role: "user", content: healingPrompt }
+                    ], targetTemp, targetTopP, "llama-3.3-70b-versatile");
+
+                    bestVariant = applyHumanFlaws(applyVocabularyEngine(forceBurstiness(healedRaw), vibe as any), flawLevel as any);
+                    console.log(`[Humanizer V10 Verification] Auto-Heal Complete.`);
+                }
+
+                console.log(`[Humanizer V10] Finished Server-Side Cognitive Execution & Verification.`);
+
+            } catch (e) {
+                console.error("[Humanizer V10] Execution failed:", e);
+                if (!bestVariant) bestVariant = prompt;
+            }
 
             // Return response safely
             res.json({

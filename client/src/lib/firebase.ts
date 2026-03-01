@@ -1,16 +1,18 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
 
-// Your web app's Firebase configuration (Bong Bari Project)
-// Using Vite environment variables to prevent GitHub scanner alerts
+// Firebase configuration for Bong Bari project
+// NOTE: Firebase web API keys are intentionally public and designed to be in client code.
+// Security is enforced via: (1) Firebase Security Rules, (2) API key HTTP referrer restrictions.
+// See: https://firebase.google.com/docs/projects/api-keys
 const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-    appId: import.meta.env.VITE_FIREBASE_APP_ID,
-    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+    apiKey: "AIzaSyC_QMhm7zvzVg9WHP68KXHIROsf5jAuouY",
+    authDomain: "bong-bari.firebaseapp.com",
+    projectId: "bong-bari",
+    storageBucket: "bong-bari.firebasestorage.app",
+    messagingSenderId: "775734354044",
+    appId: "1:775734354044:web:a16359d519441eb8a5e9f9",
+    measurementId: "G-BN8L2G4QF4"
 };
 
 // Initialize Firebase

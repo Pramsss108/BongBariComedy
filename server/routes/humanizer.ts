@@ -79,144 +79,143 @@ export function registerHumanizerRoutes(app: Express, sessions: Map<string, any>
                 return data.choices?.[0]?.message?.content?.trim() || "";
             }
 
-            // Word count bounds (calculated first, used throughout the pipeline)
+            // Word count bounds (V8 Constraints)
             const wordCount = prompt.trim().split(/\s+/).length;
-            const minWords = Math.max(10, Math.floor(wordCount * 0.85));
-            const maxWords = Math.floor(wordCount * 1.15);
+            const minWords = Math.max(10, Math.floor(wordCount * 0.90));
+            const maxWords = Math.floor(wordCount * 1.10);
 
-            console.log(`[Humanizer v2] Starting Cognitive Simulation Pipeline. Vibe: ${vibe}, Flaw: ${flawLevel}. Target: ${minWords}-${maxWords}w`);
-
-            // ==========================================
-            // STAGE 0: Cognitive Decoder (NEW v2)
-            // Extract tone intent, emphasis, and narrative — not just facts.
-            // This is what stops it from being a "data rewrite" instead of a "thought rewrite".
-            // ==========================================
-            const stage0Messages = [
-                {
-                    role: "system",
-                    content: `You are a meta-analyst. Read the following text and output a JSON object with exactly these three fields:
-- "intent": One of: "persuading", "warning", "explaining", "questioning", "observing". What is the author trying to make the reader feel?
-- "emphasis": The single most important idea or claim in the text (one short sentence, the "load-bearing" point).
-- "narrative": One of: "building_to_conclusion", "opening_a_question", "stating_a_fact", "arguing". What direction is the author pulling the reader?
-
-Output ONLY valid JSON. No markdown, no explanation, no code block.`
-                },
-                { role: "user", content: prompt }
-            ];
-            let cognitive = { intent: "explaining", emphasis: "", narrative: "stating_a_fact" };
-            try {
-                const cogRaw = await callGroq(stage0Messages, 0.1);
-                cognitive = JSON.parse(cogRaw);
-            } catch { /* keep defaults if parse fails */ }
+            console.log(`[Humanizer V8-AST Mapping] Target: ${minWords}-${maxWords}w, Vibe: ${vibe}, Flaw: ${flawLevel}`);
 
             // ==========================================
-            // STAGE 1: Semantic Deconstruction
-            // Use cognitive context to tag which bullets are "load-bearing" vs "supporting"
+            // PHASE 1: AST Tokenization (Mathematical Structure Mapping)
             // ==========================================
-            const stage1Messages = [
-                {
-                    role: "system",
-                    content: `You are a semantic analyst. Extract facts from the text as bulleted points.
-IMPORTANT: The author's key emphasis is: "${cognitive.emphasis || 'the main point'}"
-Mark the most important bullet with [KEY] prefix. Mark supporting details with [SUP] prefix.
-Output ONLY the bulleted list. No explanations.`
-                },
-                { role: "user", content: prompt }
-            ];
-            const bulletPoints = await callGroq(stage1Messages, 0.2);
+            const lines = prompt.split('\n');
+            const lineMap: { id: number, prefix: string, core: string, isBlank: boolean }[] = [];
+            let tokenizedPrompt = "";
+            let blockId = 1;
 
-            // ==========================================
-            // STAGE 2: Cognitive Drafter — Opinion Spine + Micro-Contradictions + Imperfect Compression
-            // This is the core of v2. Shifting from linguistic tricks → cognitive simulation.
-            // ==========================================
-            const narrativeInstruction =
-                cognitive.narrative === "building_to_conclusion" ? "Build momentum as you write. The final sentence should feel like a natural landing." :
-                    cognitive.narrative === "opening_a_question" ? "End with a thought that leaves something unresolved — don't tie it up perfectly." :
-                        cognitive.narrative === "arguing" ? "Take a clear position. Don't be neutral." :
-                            "Present the idea as if discovering it while writing.";
+            lines.forEach((line: string) => {
+                const trimmed = line.trim();
+                // If it's pure whitespace/empty, preserve exact spacing, don't ping LLM
+                if (!trimmed) {
+                    lineMap.push({ id: -1, prefix: line, core: "", isBlank: true });
+                } else {
+                    let prefix = "";
+                    let coreText = line;
 
-            const intentInstruction =
-                cognitive.intent === "warning" ? "The author is cautious. Let that skepticism bleed through subtly." :
-                    cognitive.intent === "persuading" ? "The author wants the reader convinced. Have a point of view." :
-                        cognitive.intent === "questioning" ? "Hold some uncertainty. You don't have all the answers." :
-                            "Be direct and slightly opinionated, like someone who has thought about this before.";
+                    // Regex maps deep leading whitespace strings + bullet indicators (- * • > 1.)
+                    const match = line.match(/^([ \t]*[*\-•>]\s*|[ \t]*\d+\.\s*|[ \t]+)/);
+                    if (match) {
+                        prefix = match[1];
+                        coreText = line.substring(prefix.length);
+                    }
 
-            const stage2Messages = [
-                {
-                    role: "system",
-                    content: `You are a human writer reconstructing an argument from notes. Your output must read like a real person thinking through an idea, not reciting information.
-
-COGNITIVE RULES (most important):
-1. OPINION SPINE: You have a perspective on this. Lean into it subtly — imply judgment without stating "I think". The reader should sense your position.
-2. MICRO-CONTRADICTIONS: After making a strong claim, soften or complicate it in the next sentence. Humans rarely state anything with 100% certainty. e.g. "it's genuinely impressive... though maybe also a bit unsettling."
-3. IMPERFECT COMPRESSION: The [KEY] bullet gets more words and attention. The [SUP] bullets can be compressed abruptly or mentioned in passing. Do NOT distribute attention evenly — that's an AI trait.
-4. SEMANTIC RHYTHM: Let sentence length follow thought. Write short when certain. Write long when exploring or qualifying. Do NOT use mathematical patterns.
-
-STYLE RULES:
-5. NO HALLUCINATION: Only use facts from the provided notes. Zero new examples.
-6. LENGTH: Write between ${minWords} and ${maxWords} words total.
-7. NO AI WORDS: Ban: "Furthermore", "In conclusion", "It is important to note", "Delve", "Tapestry", "Crucial", "Underscores", "Moreover", "Testament", "Notably".
-8. NO LISTS: Fluid prose only.
-
-NARRATIVE DIRECTION: ${narrativeInstruction}
-INTENT: ${intentInstruction}`
-                },
-                { role: "user", content: `Reconstruct this from notes:\n\n${bulletPoints}` }
-            ];
-            const draft = await callGroq(stage2Messages, 0.88);
+                    lineMap.push({ id: blockId, prefix: prefix, core: coreText, isBlank: false });
+                    tokenizedPrompt += `<block id="${blockId}">${coreText}</block>\n`;
+                    blockId++;
+                }
+            });
 
             // ==========================================
-            // STAGE 3: Restrained Vibe & Context-Aware Imperfections
-            // v2 fix: inject vibe ONCE where natural, not throughout the text
+            // PHASE 2: Independent Mathematical Vectors
             // ==========================================
+            let temperature = 0.7; // Base temp
+
             let vibePrompt = "";
-            if (vibe === 'academic') {
-                vibePrompt = `Tone adjustment: Academic and precise. If there is a place where a sophisticated but slightly informal turn of phrase would fit naturally, use it ONCE. Do not force this. The text should feel like a knowledgeable person speaking without jargon.`;
-            } else if (vibe === 'genz') {
-                vibePrompt = `Tone adjustment: Find ONE place — and only one — where a modern casual expression would land completely naturally (e.g., "which is wild", "honestly kind of impressive", "that tracks"). Do not add slang everywhere. If nowhere feels natural, do not add it at all.`;
+            if (vibe === 'genz') {
+                temperature = 0.95;
+                vibePrompt = "VIBE VECTOR: Gen-Z. Use extremely erratic conversational pacing. Occasionally use modern casual phrasing naturally (e.g., 'honestly,', 'not gonna lie'). Do NOT overdo slang. Lowercase some vocabulary unpredictably.";
+            } else if (vibe === 'academic') {
+                temperature = 0.40;
+                vibePrompt = "VIBE VECTOR: Academic. Use highly precise, collegiate vocabulary and formal thesis structures. Zero contractions. Zero slang.";
             } else {
-                vibePrompt = `Tone adjustment: Casual and direct. Write like someone with an informed opinion explaining something to a friend. One moment of warmth or human admission is fine — but do not overdo it.`;
+                temperature = 0.70;
+                vibePrompt = "VIBE VECTOR: Casual. Write like a friendly peer on a professional forum. Unbuttoned but grammatically solid.";
             }
 
             let flawPrompt = "";
             if (flawLevel === 'high') {
-                flawPrompt = `Imperfections: The writer is smart but typing quickly. One slight grammatical shortcut is fine — a conjunction starting a sentence, a contraction, one comma splice. These should feel natural to the moment, not sprinkled randomly.`;
+                flawPrompt = "FLAW VECTOR: High. Intentionally insert 1-2 minor typographical errors (e.g. miss a comma, or use slightly awkward syntax) to mathematically mimic human phone-typing.";
             } else if (flawLevel === 'low') {
-                flawPrompt = `Imperfections: Use contractions freely (they're, it's, wasn't). It's fine to start one sentence with "And" or "But". Otherwise, keep grammar clean.`;
+                flawPrompt = "FLAW VECTOR: Low. Use colloquial contractions freely. Slightly messy but mostly correct.";
             } else {
-                flawPrompt = `Imperfections: Keep grammar clean. The human quality comes from cognitive framing, not surface errors.`;
+                flawPrompt = "FLAW VECTOR: Zero. Output grammatically perfect syntactical structures.";
             }
 
-            const stage3Messages = [
-                {
-                    role: "system",
-                    content: `You are the final editor. Make minimal, targeted adjustments to the draft below.
+            // ==========================================
+            // PHASE 3: The Master Prompt & AST Lock
+            // ==========================================
+            const buildV8Prompt = () => `You are the ultimate internal cognitive engine for bypassing AI detection. You are currently operating in AST Tokenization Mode.
 
 ${vibePrompt}
 ${flawPrompt}
 
-CRITICAL: 
-1. LENGTH CONSTRAINT: Keep between ${minWords} and ${maxWords} words. Don't add new ideas.
-2. NO HALLUCINATION: Do not add new facts, examples, or metaphors.
-3. Preserve the opinion spine and micro-contradictions from the draft. Do NOT smooth them out.
-4. Output ONLY the final text. No labels, no preamble, no quotes.`
-                },
-                { role: "user", content: `Draft:\n\n${draft}` }
+ABSOLUTE SYSTEM CONSTRAINTS:
+1. AST REWRITE LOCK: You will receive text wrapped in <block id="X">...</block> tags. You MUST output your humanized response inside the exact same <block id="X">...</block> tags. 
+2. NO BLOCK MERGING: Do not combine blocks. Do not omit any blocks. Do not add any blocks.
+3. CONTEXTUAL AWARENESS: The blocks are contiguous parts of a single document. Keep the flow natural between them.
+4. LENGTH LOCK: The total word count of your output must be between ${minWords} and ${maxWords} words. Do not summarize. Do not add intro/outro conversational filler like "Sure thing" or "Here is the rewritten text".
+5. MEANING LOCK: Only use the exact facts provided in the original text.
+6. PERPLEXITY ENGINE: Swap highly robotic words (Crucial, Delve, Tapestry, Testament, Furthermore, Moreover, Elevate) for natural synonyms. Vary sentence lengths dramatically.
+
+OUTPUT FORMAT MUST BE EXCLUSIVELY VALID XML BLOCKS.`;
+
+            // ==========================================
+            // PHASE 4: Execution & Deserialization
+            // ==========================================
+            const msgs = [
+                { role: "system", content: buildV8Prompt() },
+                { role: "user", content: `HUMANIZE THIS EXACT XML AST STRUCTURE OBEYING ALL FORMATTING LOCKS. OUTPUT ONLY XML:\n\n${tokenizedPrompt}` }
             ];
 
-            // Use faster 8B model for Stage 3 final polish
-            const rewrittenText = await callGroq(stage3Messages, 0.75, "llama-3.1-8b-instant");
+            let bestVariant = "";
+            try {
+                const rawLLMOutput = await callGroq(msgs, temperature, "llama-3.3-70b-versatile");
 
+                // AST XML Deserialization Map
+                const blockMap = new Map<number, string>();
+                const regex = /<block id="?(\d+)"?>([\s\S]*?)<\/block>/g;
+                let match;
+                while ((match = regex.exec(rawLLMOutput)) !== null) {
+                    const id = parseInt(match[1]);
+                    const content = match[2].trim();
+                    blockMap.set(id, content);
+                }
 
-            // 5. Update Rate Limit usage
+                // Perfect Reconstruction Sequence
+                const reconstructedLines = lineMap.map(node => {
+                    // 1. Spacing/Padding
+                    if (node.isBlank) return node.prefix;
+
+                    // 2. Fetch matched Rewrite
+                    const rewrittenText = blockMap.get(node.id);
+                    if (rewrittenText !== undefined) {
+                        // Swap the LLM text strictly back behind the original Node.js Prefix (bullets, numbers, whitespace tabs)
+                        return node.prefix + rewrittenText;
+                    } else {
+                        // 3. Fallback Engine
+                        console.warn(`[Humanizer V8] Dropped AST block ${node.id} during LLM hallucination. Retaining original.`);
+                        return node.prefix + node.core;
+                    }
+                });
+
+                bestVariant = reconstructedLines.join('\n');
+            } catch (e) {
+                console.error("[Humanizer V8] Execution failed:", e);
+                bestVariant = prompt;
+            }
+
+            console.log(`[Humanizer V8] Finished AST cognitive execution.`);
+
+            // Update Rate Limit usage
             if (!isAuthenticated) {
                 const ul = humanizerRateLimit.get(deviceId);
                 if (ul) ul.count++;
             }
 
-            // 6. Return response safely
+            // Return response safely
             res.json({
-                text: rewrittenText,
+                text: bestVariant,
                 rateLimit: { remaining: limit.remaining, isAuthenticated }
             });
 

@@ -9,7 +9,7 @@ import { useLocation } from "wouter";
 // ─── Config ────────────────────────────────────────────────────────────────────
 const WEBLLM_MODEL = "Llama-3.2-1B-Instruct-q4f16_1-MLC";
 const GROQ_MODEL = "llama-3.1-8b-instant";
-const GROQ_MAX_WORDS = 2000; // Groq handles more (cloud, no VRAM limit)
+const GROQ_MAX_WORDS = 5000; // Groq handles up to 5000+ words easily using the AST engine
 
 // ─── AI Clichés ────────────────────────────────────────────────────────────────
 const AI_CLICHES = [
@@ -541,19 +541,16 @@ export default function FreeToolsHumanizer() {
       let outputText = '';
 
       if (isGroq) {
-        // ── GROQ: Full-text 2-pass approach (8B model handles full context) ──
-        const inputWordCount = inputText.trim().split(/\s+/).length;
-        let currentText = inputText;
-        for (let pass = 1; pass <= 2; pass++) {
-          setStatusMsg(`Humanizing — Pass ${pass}/2...`);
-          outputText = await infer(buildHumanizePrompt(currentText, inputWordCount), t => setResultText(t));
-          currentText = outputText;
-          const burstiness = computeBurstiness(outputText);
-          const { count } = computeCliche(outputText);
-          const s: Score = { total: Math.round(burstiness * 0.7 + Math.max(0, 100 - count * 12) * 0.3), burstiness, clicheCount: count };
-          setScore(s);
-          if (s.total >= 78) break; // Good enough, stop early
-        }
+        // ── GROQ: Single-pass V8 Cognitive Engine (Handles formatting & logic mathematically) ──
+        setStatusMsg(`Humanizing...`);
+        // Send the exact raw text. The backend AST Engine handles ALL prompting and instructions now.
+        outputText = await infer(inputText, t => setResultText(t));
+
+        // Calculate score
+        const burstiness = computeBurstiness(outputText);
+        const { count } = computeCliche(outputText);
+        const s: Score = { total: Math.round(burstiness * 0.7 + Math.max(0, 100 - count * 12) * 0.3), burstiness, clicheCount: count };
+        setScore(s);
       } else {
         // ── WEBLLM: Phrase-by-phrase with local Judge ──
         // Pipeline: Atomize → Humanize → Judge → Accept/Fallback → Stitch
@@ -845,7 +842,10 @@ export default function FreeToolsHumanizer() {
 
         <div className="absolute left-1/2 -translate-x-1/2 flex items-baseline gap-1.5">
           <span className="text-lg md:text-xl font-serif italic text-white">BongBari</span>
-          <span className="font-tech text-xs md:text-sm text-[#39FF14] uppercase tracking-widest font-bold" style={{ textShadow: '0 0 10px rgba(57,255,20,0.38)' }}>Humanizer</span>
+          <div className="flex items-center gap-2">
+            <span className="font-tech text-xs md:text-sm text-[#39FF14] uppercase tracking-widest font-bold" style={{ textShadow: '0 0 10px rgba(57,255,20,0.38)' }}>Humanizer</span>
+            <span className="font-tech text-[9px] text-[#39FF14] border border-[#39FF14]/50 px-1.5 py-0.5 rounded-md tracking-widest shadow-[0_0_8px_rgba(57,255,20,0.2)]">V8</span>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">

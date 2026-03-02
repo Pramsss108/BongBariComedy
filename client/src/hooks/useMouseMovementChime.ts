@@ -31,19 +31,34 @@ export function useMouseMovementChime(options: MouseMovementChimeOptions = {}) {
   const lastMousePosRef = useRef({ x: 0, y: 0 });
   const movementTimeoutRef = useRef<number | null>(null);
 
-  // Load audio buffer once when enabled / file changes
+  // Lazy-init AudioContext on first user gesture to avoid browser autoplay warnings
+  const ensureAudioContext = useCallback(() => {
+    if (audioContextRef.current) return audioContextRef.current;
+    try {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    } catch { /* unsupported browser */ }
+    return audioContextRef.current;
+  }, []);
+
+  // Pre-fetch the audio file once when enabled / file changes, but decode lazily
+  const audioDataRef = useRef<ArrayBuffer | null>(null);
   useEffect(() => {
     if (!enabled || !audioFile) return;
-    if (!audioContextRef.current) {
-      try { audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)(); } catch {}
-    }
-    const ctx = audioContextRef.current;
-    if (!ctx) return;
     let cancelled = false;
     fetch(audioFile)
       .then(r => r.arrayBuffer())
-      .then(buf => ctx.decodeAudioData(buf))
-      .then(decoded => { if (!cancelled) audioBufferRef.current = decoded; })
+      .then(buf => {
+        if (!cancelled) {
+          audioDataRef.current = buf;
+          // If AudioContext already exists (user interacted), decode immediately
+          const ctx = audioContextRef.current;
+          if (ctx) {
+            ctx.decodeAudioData(buf.slice(0))
+              .then(decoded => { if (!cancelled) audioBufferRef.current = decoded; })
+              .catch(() => {});
+          }
+        }
+      })
       .catch(() => {});
     return () => { cancelled = true; };
   }, [enabled, audioFile]);
@@ -51,7 +66,20 @@ export function useMouseMovementChime(options: MouseMovementChimeOptions = {}) {
   // Stable startChime implementation
   const chimeCooldownRef = useRef<number>(0);
   const startChime = useCallback(() => {
-    if (!enabled || !audioContextRef.current || !audioBufferRef.current) return;
+    if (!enabled) return;
+
+      // Lazy-create AudioContext on first real user gesture (mousemove counts)
+      const ctx = ensureAudioContext();
+      if (!ctx) return;
+
+      // Decode audio buffer if not yet done (AudioContext just created)
+      if (!audioBufferRef.current && audioDataRef.current) {
+        ctx.decodeAudioData(audioDataRef.current.slice(0))
+          .then(decoded => { audioBufferRef.current = decoded; })
+          .catch(() => {});
+        return; // will play next time — buffer is decoding
+      }
+      if (!audioBufferRef.current) return;
 
       // Do not play when tab is hidden or window not focused
       if (typeof document !== 'undefined') {
@@ -78,33 +106,32 @@ export function useMouseMovementChime(options: MouseMovementChimeOptions = {}) {
 
       // Try to resume context in case it was suspended by browser policy
       try {
-        if ((audioContextRef.current as any).state === 'suspended') {
-          (audioContextRef.current as any).resume().catch(() => {});
+        if (ctx.state === 'suspended') {
+          ctx.resume().catch(() => {});
         }
       } catch {}
 
       // Start new sound (never overlaps)
       try {
-        const audioContext = audioContextRef.current;
-        if (!audioContext || !audioBufferRef.current) return;
-        const audioSource = audioContext.createBufferSource();
-        const gainNode = audioContext.createGain();
+        if (!audioBufferRef.current) return;
+        const audioSource = ctx.createBufferSource();
+        const gainNode = ctx.createGain();
         const maxGain = 0.08;
-        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(Math.min(volume, maxGain), audioContext.currentTime + fadeInTime);
+        gainNode.gain.setValueAtTime(0, ctx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(Math.min(volume, maxGain), ctx.currentTime + fadeInTime);
         audioSource.connect(gainNode);
-        gainNode.connect(audioContext.destination);
+        gainNode.connect(ctx.destination);
         audioSource.buffer = audioBufferRef.current;
         audioSource.loop = false;
-        audioSource.start(audioContext.currentTime);
-        audioSource.stop(audioContext.currentTime + audioSource.buffer.duration);
+        audioSource.start(ctx.currentTime);
+        audioSource.stop(ctx.currentTime + audioSource.buffer.duration);
         audioSourceRef.current = audioSource;
         gainNodeRef.current = gainNode;
         isPlayingRef.current = true;
     } catch (error) {
       isPlayingRef.current = false;
     }
-  }, [enabled, volume, fadeInTime]);
+  }, [enabled, volume, fadeInTime, ensureAudioContext]);
 
   const stopChime = useCallback(() => {
     if (!isPlayingRef.current) return;

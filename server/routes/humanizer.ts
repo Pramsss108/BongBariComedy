@@ -284,7 +284,7 @@ OUTPUT FORMAT: EXCLUSIVELY valid XML blocks.`;
                 bestVariant = applySemanticCloaking(bestVariant);
 
                 // V11 LAYER 6: Sentence Starter Diversifier — humanize The/It/This starters
-                bestVariant = applySentenceStarterDiversifier(bestVariant);
+                bestVariant = applySentenceStarterDiversifier(bestVariant, vibe as any);
 
                 // V9 LAYER 7: Burstiness Engine
                 bestVariant = forceBurstiness(bestVariant);
@@ -308,7 +308,7 @@ OUTPUT FORMAT: EXCLUSIVELY valid XML blocks.`;
                 bestVariant = applyDeicticInjection(bestVariant, vibe as any);
 
                 // V12 LAYER 14: Semantic Drift — inject hedging bridge phrases for natural uncertainty
-                bestVariant = applySemanticDrift(bestVariant);
+                bestVariant = applySemanticDrift(bestVariant, vibe as any);
 
                 // V12 LAYER 15: Headless Verification Agent (7-metric In-House AI Detector, $0)
                 report = runVerificationAgent(bestVariant);
@@ -332,7 +332,7 @@ OUTPUT FORMAT: EXCLUSIVELY valid XML blocks.`;
                     bestVariant = applyVocabularyEngine(bestVariant, vibe as any);
                     bestVariant = applyIMFApproximation(bestVariant);
                     bestVariant = applySemanticCloaking(bestVariant);
-                    bestVariant = applySentenceStarterDiversifier(bestVariant);
+                    bestVariant = applySentenceStarterDiversifier(bestVariant, vibe as any);
                     bestVariant = forceBurstiness(bestVariant);
                     bestVariant = applyHumanFlaws(bestVariant, flawLevel as any);
                     bestVariant = applyParagraphRhythm(bestVariant);
@@ -340,7 +340,7 @@ OUTPUT FORMAT: EXCLUSIVELY valid XML blocks.`;
                     bestVariant = applyDenominalization(bestVariant);
                     bestVariant = applyClauseReordering(bestVariant);
                     bestVariant = applyDeicticInjection(bestVariant, vibe as any);
-                    bestVariant = applySemanticDrift(bestVariant);
+                    bestVariant = applySemanticDrift(bestVariant, vibe as any);
 
                     // Re-verify after healing
                     const healedReport = runVerificationAgent(bestVariant);

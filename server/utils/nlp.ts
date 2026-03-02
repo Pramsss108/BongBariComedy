@@ -93,7 +93,8 @@ export function forceBurstiness(text: string): string {
         const len = words.length;
 
         // Condition 1: Long, winding AI sentence. Try to split into a punchy short sentence.
-        if (len > 25 && s.includes(', and ')) {
+        // V12.1: Lowered threshold from 25 to 18 words — AI sentences are typically 15-25 words
+        if (len > 18 && s.includes(', and ')) {
             const splitPoint = s.lastIndexOf(', and ');
             if (splitPoint > 10) {
                 let part1 = s.substring(0, splitPoint) + '.';
@@ -106,14 +107,35 @@ export function forceBurstiness(text: string): string {
             }
         }
 
+        // V12.1: Also split at ", which ", ", so ", ", but " for 20+ word sentences
+        if (len > 20) {
+            const splitPatterns = [', which ', ', so ', ', but '];
+            for (const pat of splitPatterns) {
+                const splitIdx = s.lastIndexOf(pat);
+                if (splitIdx > 10 && splitIdx < s.length - 15) {
+                    let part1 = s.substring(0, splitIdx) + '.';
+                    let part2 = s.substring(splitIdx + pat.length);
+                    part2 = part2.charAt(0).toUpperCase() + part2.slice(1);
+                    output.push(part1);
+                    output.push(part2);
+                    i++;
+                    break;
+                }
+            }
+            if (output.length > 0 && output[output.length - 1] !== s) {
+                // Already split above
+                continue;
+            }
+        }
+
         // Condition 2: Monotonic short blocks. Join to create flow.
         if (i < sentences.length - 1) {
             const nextS = sentences[i + 1];
             const nextWords = nlp.readDoc(nextS).tokens().filter(t => t.out(its.type) === 'word').out();
             if (len < 10 && nextWords.length < 10 && !s.endsWith('?') && !nextS.endsWith('?')) {
                 // Strip the trailing period from the first sentence and join with em-dash or conjunction
-                let part1 = s.replace(/\.+$/, '');
-                let part2 = nextS.charAt(0).toLowerCase() + nextS.slice(1);
+                const part1: string = s.replace(/\.+$/, '');
+                const part2: string = nextS.charAt(0).toLowerCase() + nextS.slice(1);
                 output.push(`${part1} — ${part2}`);
                 i += 2;
                 continue;
@@ -166,7 +188,23 @@ export function applyVocabularyEngine(text: string, vibe: 'academic' | 'casual' 
         'innovative': ['new', 'fresh', 'creative', 'original'],
         'innovation': ['new thinking', 'fresh ideas', 'progress'],
         'empower': ['help', 'enable', 'allow', 'give a boost to'],
-        'empowering': ['helping', 'enabling', 'allowing']
+        'empowering': ['helping', 'enabling', 'allowing'],
+        // V12.1 FIX: Added missing high-priority AI clichés that slipped through
+        'cutting-edge': ['modern', 'current', 'advanced', 'latest'],
+        'state-of-the-art': ['modern', 'advanced', 'top-tier', 'latest'],
+        'ecosystem': ['landscape', 'environment', 'space', 'world'],
+        'journey': ['path', 'process', 'progression', 'experience'],
+        'seamless': ['smooth', 'easy', 'clean', 'effortless'],
+        'revolutionize': ['reshape', 'transform', 'overhaul', 'rethink'],
+        'revolutionized': ['reshaped', 'transformed', 'overhauled'],
+        'game-changer': ['turning point', 'breakthrough', 'shift'],
+        'impactful': ['meaningful', 'significant', 'real', 'substantial'],
+        'paradigm shift': ['major shift', 'fundamental change', 'new direction', 'standard shift'],
+        'streamline': ['simplify', 'speed up', 'clean up', 'tighten'],
+        'streamlined': ['simplified', 'sped up', 'cleaned up', 'tightened'],
+        'scalable': ['flexible', 'adaptable', 'extensible'],
+        'actionable': ['practical', 'concrete', 'doable', 'hands-on'],
+        'synergy': ['teamwork', 'cooperation', 'collaboration'],
     };
 
     // V10 Phase 3: Sentiment-aware synonym overlays
@@ -232,6 +270,13 @@ export function applyVocabularyEngine(text: string, vibe: 'academic' | 'casual' 
             return (andCount % 4 === 0) ? ' + ' : match;
         });
     }
+
+    // V12.1 FIX: Article agreement — "a" → "an" before vowel sounds after synonym replacement
+    // e.g., "a paradigm" → VocabEngine → "a example" → this fixer → "an example"
+    refinedText = refinedText.replace(/\b(a) ([aeiou])/gi, (match, article, vowel) => {
+        // Preserve capitalization of the article
+        return (article === 'A' ? 'An' : 'an') + ' ' + vowel;
+    });
 
     return refinedText;
 }
@@ -321,37 +366,12 @@ export function applySemanticCloaking(text: string): string {
             }
         }
 
-        // Detect ACTIVE: [NOUN/PRON] + [VERB] + [DET?] + [NOUN] (no AUX "be" before verb)
-        const subjIdx = tokens.findIndex(t => t.pos === 'NOUN' || t.pos === 'PRON' || t.pos === 'PROPN');
-        const mainVerbIdx = tokens.findIndex((t, i) => i > subjIdx && t.pos === 'VERB');
-        const objStartIdx = tokens.findIndex((t, i) => i > mainVerbIdx && (t.pos === 'NOUN' || t.pos === 'PRON' || t.pos === 'PROPN'));
-        const hasAuxBe = tokens.some((t, i) => i < mainVerbIdx && t.pos === 'AUX' && t.lemma === 'be');
-
-        if (subjIdx >= 0 && mainVerbIdx > subjIdx && objStartIdx > mainVerbIdx && !hasAuxBe) {
-            // ACTIVE → PASSIVE conversion
-            // Gather subject, verb, object
-            // Filter PUNCT and AUX — prevents "by years have" type broken grammar
-            const subjectParts = tokens.slice(subjIdx, mainVerbIdx).filter(t => t.pos !== 'PUNCT' && t.pos !== 'AUX');
-            const verb = tokens[mainVerbIdx];
-
-            // Object = everything from objStartIdx to end (minus punctuation)
-            const objParts = tokens.slice(objStartIdx).filter(t => t.pos !== 'PUNCT');
-
-            if (subjectParts.length > 0 && objParts.length > 0) {
-                const subjectText = subjectParts.map(t => t.text).join(' ');
-                const objText = objParts.map(t => t.text).join(' ').replace(/\.$/, '');
-
-                // Determine past participle
-                const lemma = verb.lemma.toLowerCase();
-                const pp = IRREGULAR_PP[lemma] || (verb.text.endsWith('ed') ? verb.text : verb.text + 'ed');
-
-                // Determine was/were based on object (crude: plural check)
-                const auxVerb = objText.toLowerCase().endsWith('s') || objText.includes(' and ') ? 'were' : 'was';
-
-                const passiveObj = objText.charAt(0).toUpperCase() + objText.slice(1);
-                return `${passiveObj} ${auxVerb} ${pp} by ${subjectText.toLowerCase()}.`;
-            }
-        }
+        // V12.1: Active→Passive conversion DISABLED
+        // The POS-based SVO detection without a real dependency parser is too unreliable.
+        // It produced garbled output like "indicatesed", "continuesed", reversed meanings,
+        // and grabbed subordinate clauses as objects.
+        // Only Passive→Active (above) is safe because it has clear structural markers (was/were + V + by).
+        // Active→Passive may be re-enabled in V13 with a proper dependency parser.
 
         // No pattern matched — return original
         return sentence;
@@ -515,10 +535,10 @@ export function applyIMFApproximation(text: string): string {
  * Research: AI relies heavily on repetitive starters. Humans begin sentences
  * with conjunctions (And, But), prepositional phrases, or conversational openers.
  */
-export function applySentenceStarterDiversifier(text: string): string {
+export function applySentenceStarterDiversifier(text: string, vibe: 'academic' | 'casual' | 'genz' = 'casual'): string {
     const paragraphs = text.split(/\n\n+/);
     if (paragraphs.length > 1) {
-        return paragraphs.map(p => applySentenceStarterDiversifier(p)).join('\n\n');
+        return paragraphs.map(p => applySentenceStarterDiversifier(p, vibe)).join('\n\n');
     }
 
     // Skip bullet/numbered list paragraphs — don't touch list item structure
@@ -531,14 +551,19 @@ export function applySentenceStarterDiversifier(text: string): string {
     if (sentences.length < 2) return text;
 
     const diversified = sentences.map((sentence, idx) => {
-        // Skip first sentence of each paragraph + only change ~25% of candidates
-        if (idx === 0 || Math.random() > 0.25) return sentence;
+        // Skip first sentence of each paragraph + only change ~40% of candidates (V12.1: raised from 25%)
+        if (idx === 0 || Math.random() > 0.40) return sentence;
 
         const s = sentence.trim();
 
-        // Pattern 1: "The [noun] is/was/has/can/will/shows/makes/provides..."
-        if (/^The \w+ (is|are|was|were|has|have|can|will|shows?|makes?|provides?|allows?|helps?)\b/i.test(s)) {
-            const openers = ['Honestly,', 'Look,', "Here's the thing —", 'Worth noting:', 'And honestly,'];
+        // V12.1 FIX: Expanded Pattern 1 to match multi-word noun phrases
+        // Old: ^The \w+ (is|are|...) — only matched "The X is/are" (one word after The)
+        // New: also matches "The X of Y has/have/is/..." and "The X Y Z verb..." forms
+        if (/^The (\w+ ){1,8}(is|are|was|were|has|have|can|will|shows?|makes?|provides?|allows?|helps?|continues?|represents?|requires?|developed|improved|demonstrated|enabled)\b/i.test(s)) {
+            // V12.1 FIX: Vibe-aware openers — academic gets formal, casual/genz gets conversational
+            const casualOpeners = ['Honestly,', 'Look,', "Here's the thing —", 'Worth noting:', 'And honestly,'];
+            const academicOpeners = ['Notably,', 'Importantly,', 'Critically,', 'In particular,', 'Significantly,'];
+            const openers = vibe === 'academic' ? academicOpeners : casualOpeners;
             const opener = openers[Math.floor(Math.random() * openers.length)];
             return `${opener} ${s.charAt(0).toLowerCase() + s.slice(1)}`;
         }
@@ -597,9 +622,9 @@ export function applyParagraphRhythm(text: string): string {
         const doc = nlp.readDoc(para);
         const sentences = doc.sentences().out() as string[];
 
-        // Only process every 3rd paragraph to avoid over-structuring
-        // Also require 4+ sentences in the paragraph to extract one
-        if (sentences.length >= 4 && i % 3 === 1) {
+        // V12.1 FIX: Lowered from every 3rd to every 2nd paragraph, and from 4+ to 3+ sentences
+        // Also require 3+ sentences in the paragraph to extract one
+        if (sentences.length >= 3 && i % 2 === 1) {
             // Find the best "punch" sentence: short (4–12 words), declarative (no question marks), not the first sentence
             const candidates = sentences
                 .map((s, idx) => ({
@@ -676,19 +701,21 @@ export function applyDeicticInjection(text: string, vibe: 'academic' | 'casual' 
     ];
 
     const bridges = vibe === 'academic' ? academicBridges : casualBridges;
+    // V12.1: Higher bridge probability for academic (needs "we" pronouns to pass detector)
+    const bridgeProb = vibe === 'academic' ? 0.70 : 0.55;
     const result = sentences.map((s, idx) => {
-        // Inject bridge phrase every 4th sentence (not first, not last)
-        if (idx > 0 && idx < sentences.length - 1 && idx % 4 === 0 && Math.random() < 0.6) {
+        // V12.1 FIX: Removed "not last sentence" guard — it's OK to modify final sentence
+        // Bridge phrase injection on idx=2, 5, 8 etc.
+        if (idx > 0 && (idx + 1) % 3 === 0 && Math.random() < bridgeProb) {
             const bridge = bridges[Math.floor(Math.random() * bridges.length)];
-            // Insert before the period
             const trimmed = s.trim();
             if (trimmed.endsWith('.')) {
                 return trimmed.slice(0, -1) + bridge + '.';
             }
             return trimmed + bridge;
         }
-        // Deictic starter injection every 5th sentence
-        if (idx > 1 && idx % 5 === 0 && Math.random() < 0.35) {
+        // Deictic starter injection for idx>=3
+        if (idx >= 3 && Math.random() < 0.35) {
             const starter = deicticStarters[Math.floor(Math.random() * deicticStarters.length)];
             const trimmed = s.trim();
             return starter + trimmed.charAt(0).toLowerCase() + trimmed.slice(1);
@@ -696,13 +723,49 @@ export function applyDeicticInjection(text: string, vibe: 'academic' | 'casual' 
         return s;
     });
 
-    // Replace some "users/individuals/people" → "you" in casual mode
+    // V12.1 FIX: Phrase-aware pronoun injection (prevents "healthcare you" broken grammar)
+    // Only replace when target noun follows a determiner, preposition, or verb — NOT another noun
     let joined = result.join(' ');
     if (vibe !== 'academic') {
-        joined = joined.replace(/\b(users|individuals|people)\b/gi, (match) => {
-            if (Math.random() < 0.3) return 'you';
+        const safePrefix = /(?:(?:^|[.!?]\s+)|(?:(?:the|these|those|for|to|by|from|with|among|between|enable|enabling|help|helping|allow|allowing|empower|empowering) ))(?:users|individuals|people|professionals|stakeholders|participants|researchers|practitioners|consumers|audiences|learners|readers|developers)/gi;
+        joined = joined.replace(safePrefix, (match) => {
+            if (Math.random() < 0.40) {
+                // Preserve the prefix part, replace only the noun
+                const lastSpace = match.lastIndexOf(' ');
+                if (lastSpace > 0) {
+                    return match.substring(0, lastSpace + 1) + 'you';
+                }
+                return 'You'; // Sentence start
+            }
             return match;
         });
+        // Also inject "we" for collective impersonal phrases
+        joined = joined.replace(/\b(one can|one could|it is possible to|it can be)\b/gi, (match) => {
+            if (Math.random() < 0.4) return 'we can';
+            return match;
+        });
+    }
+
+    // V12.1: Pronoun floor guarantee — if NO first/second person pronouns exist,
+    // force-inject one bridge into the 2nd sentence to ensure minimum pronoun rate.
+    // This prevents random-chance zero-pronoun outputs that fail AI detection.
+    const pronounCheck = joined.match(/\b(you|your|you're|you'll|you'd|I|I'm|I've|I'll|we|we're|we've|our|us|myself|ourselves)\b/g);
+    if (!pronounCheck || pronounCheck.length === 0) {
+        // Find the 2nd sentence and inject a pronoun bridge
+        const sentenceSplit = joined.match(/[^.!?]+[.!?]+/g);
+        if (sentenceSplit && sentenceSplit.length >= 2) {
+            const targetIdx = 1; // 2nd sentence
+            const s = sentenceSplit[targetIdx].trim();
+            const fallbackBridge = vibe === 'academic'
+                ? ', as we can observe here'
+                : ', and you\'ll notice this quickly';
+            if (s.endsWith('.')) {
+                sentenceSplit[targetIdx] = ' ' + s.slice(0, -1) + fallbackBridge + '.';
+            } else {
+                sentenceSplit[targetIdx] = ' ' + s + fallbackBridge;
+            }
+            joined = sentenceSplit.join('');
+        }
     }
 
     return joined;
@@ -751,7 +814,8 @@ export function applyDenominalization(text: string): string {
 
     for (const [regex, replacement] of patterns) {
         output = output.replace(regex, (match) => {
-            if (Math.random() > 0.40) return match;
+            // V12.1: Increased rate from 40% to 65% to reliably catch nominalizations
+            if (Math.random() > 0.65) return match;
             // Preserve sentence start capitalization
             if (match.charAt(0) === match.charAt(0).toUpperCase()) {
                 return replacement.charAt(0).toUpperCase() + replacement.slice(1);
@@ -811,10 +875,10 @@ export function applyClauseReordering(text: string): string {
  * AI text has anomalously HIGH adjacent-sentence similarity (0.84 vs human 0.61).
  * Injects hedging/personalizing bridge phrases to break sentence-similarity chains.
  */
-export function applySemanticDrift(text: string): string {
+export function applySemanticDrift(text: string, vibe: 'academic' | 'casual' | 'genz' = 'casual'): string {
     const paragraphs = text.split(/\n\n+/);
     if (paragraphs.length > 1) {
-        return paragraphs.map(p => applySemanticDrift(p)).join('\n\n');
+        return paragraphs.map(p => applySemanticDrift(p, vibe)).join('\n\n');
     }
 
     // Skip bullet/numbered list paragraphs
@@ -824,9 +888,10 @@ export function applySemanticDrift(text: string): string {
 
     const doc = nlp.readDoc(text);
     const sentences = doc.sentences().out() as string[];
-    if (sentences.length < 4) return text;
+    if (sentences.length < 3) return text;
 
-    const driftBridges = [
+    // V12.1 FIX: Vibe-aware drift bridges
+    const casualBridges = [
         ' — though context matters here',
         ', at least in most cases',
         ' (worth pausing on, honestly)',
@@ -836,16 +901,25 @@ export function applySemanticDrift(text: string): string {
         ', which is more nuanced than it sounds',
         ' — but that\'s a whole other thing',
     ];
+    const academicBridges = [
+        ', though this warrants further analysis',
+        ', at least within the scope examined here',
+        ' — a distinction that merits attention',
+        ', which complicates the broader picture',
+        ', though the evidence remains mixed',
+        ' — a point often overlooked in the literature',
+    ];
+    const driftBridges = vibe === 'academic' ? academicBridges : casualBridges;
 
-    let lastBridgeIdx = -4; // Enforce minimum 3-sentence gap between bridges
+    let lastBridgeIdx = -3;
 
     const result = sentences.map((s, idx) => {
-        // Only inject into every 4th–5th sentence, with 45% probability
-        const targetGap = 4 + Math.floor(Math.random() * 2); // 4 or 5
-        if (idx < 2 || idx === sentences.length - 1) return s;
-        if (idx - lastBridgeIdx < 3) return s;
-        if (idx % targetGap !== 0) return s;
-        if (Math.random() > 0.45) return s;
+        // V12.1 FIX: Simplified targeting — fire on idx=2, then every 3rd after
+        // Old approach with targetGap=4-5 and idx%targetGap never fired on short paragraphs
+        if (idx < 1 || idx === sentences.length - 1) return s;
+        if (idx - lastBridgeIdx < 2) return s;
+        if ((idx + 1) % 3 !== 0) return s; // Fires on idx=2, 5, 8
+        if (Math.random() > 0.50) return s;
 
         const bridge = driftBridges[Math.floor(Math.random() * driftBridges.length)];
         const trimmed = s.trim();

@@ -22,17 +22,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Bong Bari - Bengali Comedy Channel</title>
 
-  <!-- 🏴‍☠️ SOCIAL GRAPH HIJACK (Black Ops Phase 7.1) -->
-  <meta property="og:title" content="Bong Bari Comedy | Authentic Bengali Laughter" />
+  <!-- 🏴‍☠️ SOCIAL GRAPH — default brand tags (per-page overrides via react-helmet-async) -->
+  <meta property="og:title" content="Bong Bari — Free Tools, Comedy &amp; Digital Content" />
   <meta property="og:description"
-    content="Join the madness! The funniest Bengali family comedy videos that feel just like home. Watch now! 🤣🎬" />
-  <meta property="og:image" content="https://i.ytimg.com/vi/JetnSt8yP74/maxresdefault.jpg" />
-  <meta property="og:url" content="https://bongbaricomedy.com" />
+    content="Free AI humanizer tool + Bengali comedy content. Made by Bong Bari. Try the free AI text humanizer that beats ZeroGPT!" />
+  <meta property="og:image" content="https://www.bongbari.com/logo.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:url" content="https://www.bongbari.com" />
   <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Bong Bari" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Bong Bari Comedy" />
-  <meta name="twitter:description" content="Authentic Bengali Family Comedy. Warning: Extreme laughter ahead." />
-  <meta name="twitter:image" content="https://i.ytimg.com/vi/JetnSt8yP74/maxresdefault.jpg" />
+  <meta name="twitter:title" content="Bong Bari — Free AI Humanizer &amp; Bengali Comedy" />
+  <meta name="twitter:description" content="Free AI text humanizer that beats ZeroGPT + authentic Bengali comedy." />
+  <meta name="twitter:image" content="https://www.bongbari.com/logo.png" />
+  <meta name="twitter:site" content="@BongBari" />
 
   <!-- Favicon -->
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
@@ -190,6 +194,17 @@
         window.__API_BASE__ = 'https://bongbaricomedy.onrender.com';
       }
       // On localhost, do not set __API_BASE__; Vite proxy will handle /api
+    })();
+  </script>
+  <script>
+    // Restore SPA route when arriving from a per-route meta preview page.
+    // Those pages redirect to /?_r=<encoded-path> so crawlers get proper OG
+    // tags while browsers still land on the correct React route.
+    (function () {
+      var r = new URLSearchParams(window.location.search).get('_r');
+      if (r) {
+        try { history.replaceState(null, '', decodeURIComponent(r)); } catch (e) {}
+      }
     })();
   </script>
 </head>

@@ -1,127 +1,45 @@
-# Homepage & UX Enhancement Plan — Bong Bari
-> Agent-authored plan. Execute in this exact order to avoid regressions.
+#  Bong Bari Homepage: Vibe Coder Enhancement Masterplan
+
+##  Objective Note
+Create a radical, glitch-free, premium homepage experience that looks absolutely stunning ("rad") on both desktop and mobile. This document serves as the absolute source of truth for all AI agents. Read carefully. **DO NOT CODE WITHOUT REFERENCING THIS PLAN. NEVER HALLUCINATE.**
 
 ---
 
-## 1. Unique Favicon Per Page (DONE: humanizer ⚡ amber, TODO: /tools ⚙ purple)
+##  Phase 1: Environment & Cleanup Housekeeping
+- **Action 1:** Empty out trash or bugged static assets (e.g., recursive user folders accidentally inserted into client/public). *(COMPLETED)*
+- **Action 2:** Verify zero console errors on root load. Ensure scrollbar CSS doesn't bleed white on browsers. 
 
-| Page | Icon | Color | Files |
-|------|------|-------|-------|
-| `/tools` | ⚙ Gear (tools) | Purple/Violet `#8B5CF6` | `tools-favicon-*.png` + `.ico` |
-| `/tools/humanizer` | ⚡ Lightning | Amber `#f59e0b` | `humanizer-favicon-*.png` + `.ico` ✅ |
-| All other pages | 🅱 Bong Bari Logo | Yellow | `favicon-*.png` ✅ |
+##  Phase 2: Mobile Header & Glass Dock Synergy (The Core Fix)
+- **Action 1:** **Diagnose Header Independence:** Currently, when scrolling on phones, the top header unhooks or clashes with the overall viewport intent while the bottom glass dock floats. We need a fluid, unified aesthetic.
+- **Action 2:** **Sync the Sticky Header:** Refactor the top Navbar to stick smoothly with a frosted backdrop-blur on scroll. It must never jump, jitter, or leave the structure behind.
+- **Action 3:** **Z-Index Harmonization:** Ensure the mobile-navbar.tsx (bottom glass dock) and the top navigation share a harmonious z-index stack so one doesn't swallow the page while the other vanishes.
+- **Action 4:** Adjust the viewport heights and bottom-padding so the fixed mobile dock never eclipses the page footer.
 
-**Action**: Generate `tools-favicon-{16,32,48,180,192}.png` + `tools-favicon.ico` via Node+sharp.  
-Change `free-tools.tsx` `faviconBase` from `/humanizer-favicon` → `/tools-favicon`.
+##  Phase 3: The "Rad" Footer Redesign
+- **Action 1:** The ultra-slim footer was made *too* dull. It needs to look sexy and minimalist without losing its identity.
+- **Action 2:** **Desktop Layout:** Center the logo, inject a super subtle breathing glow behind the Bong Bari copyright, and use elegant, airy spacing for social media icons. Make it feel like an Apple-level product footer.
+- **Action 3:** **Mobile Layout:** Make sure the footer gracefully sits *above* the mobile glass dock. Add a pb-24 or similar bottom padding explicitly on mobile so users can scroll down enough to see the footer without the floating dock blocking it.
 
----
+##  Phase 4: Desktop Homepage Visuals (Hero & Upgrades)
+- **Action 1:** Fine-tune video boundaries. The video header must capture attention immediately without squishing content beneath the fold.
+- **Action 2:** Audit call-to-actions (CTAs: Subscribe, Bong Kahini, Collab). Ensure they immediately draw the eye with hover-state elegance.
+- **Action 3:** Tighten up "Work with Us" Section on Desktop. Reduce gaps, but keep it breathing naturally�no more massive voids of dead space.
 
-## 2. Premium Glass Footer
+##  Phase 5: Mobile Content Safe-Area Formatting
+- **Action 1:** Audit all mobile section padding (px-4, px-6). Ensure elements hug the edge tastefully. Standardize a premium 16px to 20px safe area.
+- **Action 2:** Ensure typography scales flawlessly�prevent giant hero text from breaking awkwardly on narrow mobile screens (e.g., iPhone SE).
 
-**Current**: Flat `bg-brand-blue` minimal footer — no structure, no hierarchy, looks 2019.
+##  Phase 6: Micro-Interactions & Flair
+- **Action 1:** Refine the SVG brush-stroke underline animation for "Bong Bari". Let it paint beautifully every time.
+- **Action 2:** Add luxurious hover states for all the new ultra-slim footer links. Focus on buttery smooth color transitions instead of abrupt hard switches.
 
-**New Design**:
-```
-┌──────────────── glassmorphism border-top glow ─────────────────┐
-│  [Logo] বং বাড়ি           [YT] [IG] [Email]                    │
-│  ঘরোয়া পরিবেশের মজার গল্প                                     │
-│                                                                 │
-│  Navigation: Home | About | Blog | FAQ | Free Tools            │
-│                                                                 │
-│  ─────────────────────────────────────────────────────────     │
-│  © বং বাড়ি ২০২৫ কলকাতা   Privacy | Terms | team@bongbari.com  │
-└─────────────────────────────────────────────────────────────── ┘
-```
+##  Phase 7: Extensive QA Checks
+- **Action 1:** Emulate Mobile rendering. Scroll rapidly up and down. Evaluate if the top menu hides properly or sticks smoothly.
+- **Action 2:** Emulate Desktop standard (1080p+). Ensure the ultra-slim footer stretches perfectly and feels deliberate.
 
-**CSS**: `bg-black/40 backdrop-blur-xl border-t border-white/10`  
-**Glow top-edge**: `linear-gradient(to right, transparent, #F4C430/30, transparent)`  
-**Mobile**: Stack columns vertically, center-align.  
-**Desktop**: 3-column grid — brand left, nav center, socials right.
-
----
-
-## 3. Bengali Creative Underline — "Authentic **Bengali** Comedy"
-
-**Current**: Simple `h-[3px] bg-[#F4C430]/50 rounded-full` bar below "Bengali"
-
-**New**: Animated SVG brush/pen stroke underline that **draws itself** on load.
-- SVG `<path>` with stroke-dasharray + dashoffset animation  
-- Wavy/organic shape (not a straight line) — like ink from a pen  
-- Color: `#F4C430` (brand yellow) with slight blur glow  
-- Duration: 0.8s ease-out, starts with 0.3s delay  
-- On mobile: slightly shorter stroke
+##  Phase 8: Safe Deployment Protocol
+- **Action 1:** Type-checking check npm run check.
+- **Action 2:** Git pipeline through npm run deploy:safe with FORCE_PAGES_DEPLOY. Wait 2 minutes for edge networks to clear cache before giving the user the green light.
 
 ---
-
-## 4. Scroll Indicator Fix
-
-**Current**: Bouncing "SCROLL ↓" text+arrow with infinite Framer motion — looks distracting, cheap.
-
-**New**: 
-- Tiny animated scroll-mouse icon (SVG) — a rectangle with inner dot bobbing  
-- Auto-fades out after 2s OR when user scrolls past 80px  
-- `opacity-0` on mobile/touch = hide entirely (use touch, not scroll cues)  
-- Or just **remove it** — video + CTA has enough visual weight
-
-**Decision: Remove it.** Modern premium sites don't need scroll hints when above-the-fold is full.
-
----
-
-## 5. Custom Scrollbar
-
-**Current**: Browser default scrollbar — thick, ugly on right edge, very visible.
-
-**New** (`client/src/index.css`):
-```css
-/* Hide scrollbar track on modern browsers */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
-/* Firefox */
-* { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.12) transparent; }
-```
-
----
-
-## 6. Mobile Nav — Fix "Litchy" Scroll Feeling
-
-**Root cause**: `fixed` element without `will-change` forces repaint on scroll.  
-**Fix**: Add `will-change: transform` + `transform: translateZ(0)` + `contain: layout` to the dock div.  
-Also ensure the scroll container uses `-webkit-overflow-scrolling: touch` (already on iOS by default in modern).
-
----
-
-## 7. Homepage Section Spacing — Device Guide
-
-| Section | Mobile (≤768px) | Tablet (769–1023px) | Desktop (≥1024px) |
-|---------|----------------|--------------------|--------------------|
-| Hero `pt-*` | `pt-20` | `pt-24` | `pt-24` |
-| Hero `pb-*` | `pb-6` | `pb-8` | `pb-10` |
-| Between sections | `py-12` | `py-16` | `py-24` |
-| Footer top padding | `pt-10` | `pt-12` | `pt-16` |
-| Footer bottom (above mobile nav) | `pb-24` | `pb-10` | `pb-10` |
-
----
-
-## 8. SEO Notes (already implemented, keep as-is)
-
-- ✅ react-helmet-async with SEOHead component  
-- ✅ JSON-LD structured data per page  
-- ✅ sitemap.xml with /tools + /tools/humanizer  
-- ✅ Static HTML for WhatsApp crawler workaround  
-- ✅ 1200×630 OG banner  
-
----
-
-## Execution Order
-
-1. `scripts/generate-tools-favicon.cjs` → generate purple gear favicon  
-2. Update `free-tools.tsx` faviconBase  
-3. Replace footer in `home.tsx` with glass design  
-4. Update Bengali underline (SVG brush stroke)  
-5. Remove scroll indicator  
-6. Add scrollbar CSS to `index.css`  
-7. Add `will-change: transform` to mobile navbar dock  
-8. Adjust spacing + `pb-24` for footer above mobile nav  
-9. Commit + push  
+**Protocol For AI Agents:** You are to execute this sequentially. Move deliberately, phase by phase. Keep the vibes high. Do not hallucinate code. Plan it, build it, ship it.

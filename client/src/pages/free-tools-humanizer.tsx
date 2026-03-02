@@ -313,6 +313,7 @@ export default function FreeToolsHumanizer() {
   const [currentPhrase, setCurrentPhrase] = useState(0);
   const [totalPhrases, setTotalPhrases] = useState(0);
   const [score, setScore] = useState<Score | null>(null);
+  const [hfScore, setHfScore] = useState<{ aiProb: number; humanProb: number; available: boolean } | null>(null);
   const [hardwareLimit, setHardwareLimit] = useState(300);
   const [enginePhase, setEnginePhase] = useState<EnginePhase>('booting');
   const [loadingProgress, setLoadingProgress] = useState<InitProgressReport | null>(null);
@@ -427,6 +428,7 @@ export default function FreeToolsHumanizer() {
       if (!gRes.ok) throw new Error("Cloud Engine Error.");
       const gData = await gRes.json();
       lastVerificationRef.current = gData.verification || null;
+      if (gData.hfDetector?.available) setHfScore(gData.hfDetector);
       onChunk(gData.text || "");
       return gData.text || "";
     }
@@ -440,7 +442,7 @@ export default function FreeToolsHumanizer() {
 
   const handleHumanize = useCallback(async () => {
     if (!inputText.trim() || isProcessing || isOverLimit || (enginePhase !== 'ready' && enginePhase !== 'gpu_lost')) return;
-    setIsProcessing(true); setResultText(''); setScore(null);
+    setIsProcessing(true); setResultText(''); setScore(null); setHfScore(null);
     setStatusMsg('Initializing V12 Pipeline...');
     setMobileActiveTab('output');
     setStatusLog(["Extracting AST nodes..."]);
@@ -780,6 +782,40 @@ export default function FreeToolsHumanizer() {
                       {score.failures.map(f => (
                         <span key={f} className="text-[8px] bg-red-500/10 text-red-400 border border-red-500/20 px-1.5 py-0.5 rounded font-black uppercase tracking-wider">⚠ {f}</span>
                       ))}
+                    </div>
+                  )}
+                  {/* HF Real ML Detector score row */}
+                  {hfScore && hfScore.available && (
+                    <div className={`mt-3 px-3 py-2.5 rounded-xl border flex items-center justify-between ${
+                      hfScore.aiProb < 0.35 ? 'bg-emerald-500/10 border-emerald-500/30' :
+                      hfScore.aiProb < 0.65 ? 'bg-amber-500/10 border-amber-500/30' :
+                      'bg-red-500/10 border-red-500/30'
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">ML Detector</span>
+                        <span className="text-[8px] text-white/20 font-mono">(RoBERTa)</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-black ${
+                          hfScore.aiProb < 0.35 ? 'text-emerald-400' :
+                          hfScore.aiProb < 0.65 ? 'text-amber-400' :
+                          'text-red-400'
+                        }`}>{Math.round(hfScore.humanProb * 100)}% Human</span>
+                        <span className="text-[9px] text-white/30">/</span>
+                        <span className="text-[9px] text-white/40 font-mono">{Math.round(hfScore.aiProb * 100)}% AI</span>
+                      </div>
+                    </div>
+                  )}
+                  {hfScore && !hfScore.available && (
+                    <div className="mt-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 flex items-center gap-2">
+                      <span className="text-[9px] text-white/20 font-mono uppercase tracking-wider">ML Detector — warming up (retry)</span>
+                    </div>
+                  )}
+                  {/* V13 PHRASE 20: Amber warning when score is below safe threshold */}
+                  {score.total < 65 && (
+                    <div className="mt-3 px-3 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2">
+                      <span className="text-amber-400 text-sm leading-none mt-0.5">⚠</span>
+                      <p className="text-[10px] text-amber-300 leading-relaxed">Score below 65 — may still be detected. Try <strong className="text-amber-200">re-running</strong> or switch to <strong className="text-amber-200">Academic</strong> vibe.</p>
                     </div>
                   )}
                 </motion.div>

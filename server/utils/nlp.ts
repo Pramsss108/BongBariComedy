@@ -85,6 +85,8 @@ export function forceBurstiness(text: string): string {
 
     let output = [];
     let i = 0;
+    // V13 PHRASE 5: Limit em-dash joins to MAX 1 per paragraph to prevent AI-humanizer fingerprint
+    let emDashCount = 0;
 
     while (i < sentences.length) {
         let s = sentences[i];
@@ -135,11 +137,13 @@ export function forceBurstiness(text: string): string {
             const nextS = sentences[i + 1];
             const nextWords = nlp.readDoc(nextS).tokens().filter(t => t.out(its.type) === 'word').out();
             // V12.5: Raised from 10 to 14 words, with total guard < 25 to prevent overly long merges
-            if (len < 14 && nextWords.length < 14 && (len + nextWords.length) < 25 && !s.endsWith('?') && !nextS.endsWith('?')) {
+            // V13 PHRASE 5: Added emDashCount guard — max 1 em-dash join per paragraph
+            if (len < 14 && nextWords.length < 14 && (len + nextWords.length) < 25 && !s.endsWith('?') && !nextS.endsWith('?') && emDashCount === 0) {
                 // Strip the trailing period from the first sentence and join with em-dash or conjunction
                 const part1: string = s.replace(/\.+$/, '');
                 const part2: string = nextS.charAt(0).toLowerCase() + nextS.slice(1);
                 output.push(`${part1} — ${part2}`);
+                emDashCount++; // V13: Track em-dash usage — only 1 allowed per paragraph
                 i += 2;
                 continue;
             }
@@ -237,8 +241,32 @@ export function applyVocabularyEngine(text: string, vibe: 'academic' | 'casual' 
         neutral: {} // use base synonyms as-is
     };
 
+    // V13 PHRASE 15: For casual/genz vibes, use a slim scope — only the top 10 blatant AI-fingerprint
+    // words that no real human would use. Replacing common words like 'crucial', 'furthermore',
+    // 'elevate' in casual text creates over-polished prose that detectors flag.
+    // Academic keeps the full list (those words fit formal writing).
+    const casualOnlySynonyms: Record<string, string[]> = {
+        'delve':          ['look into', 'explore', 'examine'],
+        'tapestry':       ['mix', 'blend', 'collection'],
+        'leverage':       ['use', 'apply', 'tap into'],
+        'leveraging':     ['using', 'applying', 'tapping into'],
+        'utilize':        ['use', 'apply'],
+        'seamlessly':     ['smoothly', 'easily'],
+        'seamless':       ['smooth', 'easy', 'clean'],
+        'holistic':       ['complete', 'overall'],
+        'robust':         ['strong', 'solid', 'powerful'],
+        'paradigm':       ['model', 'pattern', 'standard'],
+        'foster':         ['encourage', 'help grow'],
+        'multifaceted':   ['complex', 'layered'],
+        'transformative': ['meaningful', 'significant'],
+        'in order to':    ['to'],
+    };
+
     // Merge: sentiment overlays take priority over base
-    const synonymMap = { ...baseSynonyms, ...sentimentOverlays[sentiment] };
+    // V13: casual/genz use slim scope, academic uses full base + overlays
+    const synonymMap = (vibe === 'academic')
+        ? { ...baseSynonyms, ...sentimentOverlays[sentiment] }
+        : { ...casualOnlySynonyms, ...sentimentOverlays[sentiment] };
 
     let refinedText = text;
 
@@ -395,14 +423,24 @@ export function applyHumanFlaws(text: string, flawLevel: 'none' | 'low' | 'high'
     let flawed = text;
 
     // LOW FLAW LEVEL: Very mild colloquialisms
-    // Occasional lowercase 'i' instead of 'I', missing trailing commas
     if (flawLevel === 'low' || flawLevel === 'high') {
         // 15% chance to lowercase an isolated 'I'
         flawed = flawed.replace(/\bI\b/g, (match) => Math.random() < 0.15 ? 'i' : match);
 
-        // Contractions normally expanded by AI: "do not" -> "don't" (50% chance)
-        flawed = flawed.replace(/\bdo not\b/gi, (match) => Math.random() < 0.5 ? 'don\'t' : match);
-        flawed = flawed.replace(/\bcannot\b/gi, (match) => Math.random() < 0.5 ? 'can\'t' : match);
+        // V13 PHRASE 11: Expanded full contraction list at 70% rate (was only 2 contractions at 50%)
+        // Full list of contractions humans use naturally — detectors look for expanded forms as AI signals
+        flawed = flawed.replace(/\bdo not\b/gi, (m) => Math.random() < 0.70 ? "don't" : m);
+        flawed = flawed.replace(/\bcannot\b/gi, (m) => Math.random() < 0.70 ? "can't" : m);
+        flawed = flawed.replace(/\bwill not\b/gi, (m) => Math.random() < 0.70 ? "won't" : m);
+        flawed = flawed.replace(/\bis not\b/gi, (m) => Math.random() < 0.70 ? "isn't" : m);
+        flawed = flawed.replace(/\bare not\b/gi, (m) => Math.random() < 0.70 ? "aren't" : m);
+        flawed = flawed.replace(/\bdoes not\b/gi, (m) => Math.random() < 0.70 ? "doesn't" : m);
+        flawed = flawed.replace(/\bhas not\b/gi, (m) => Math.random() < 0.70 ? "hasn't" : m);
+        flawed = flawed.replace(/\bcould not\b/gi, (m) => Math.random() < 0.70 ? "couldn't" : m);
+        flawed = flawed.replace(/\bwould not\b/gi, (m) => Math.random() < 0.70 ? "wouldn't" : m);
+        flawed = flawed.replace(/\bshould not\b/gi, (m) => Math.random() < 0.70 ? "shouldn't" : m);
+        flawed = flawed.replace(/\bwas not\b/gi, (m) => Math.random() < 0.70 ? "wasn't" : m);
+        flawed = flawed.replace(/\bwere not\b/gi, (m) => Math.random() < 0.70 ? "weren't" : m);
     }
 
     // HIGH FLAW LEVEL: Aggressive structural typos
@@ -550,9 +588,9 @@ export function applyIMFApproximation(text: string): string {
                 if (guards.after && guards.after.test(after)) return match;
                 if (guards.before && guards.before.test(before)) return match;
             }
-            // V12.5: Raised from 25% to 35% — phrasal guards protect important phrases,
-            // higher rate pushes perplexity into human range (20-50)
-            if (Math.random() > 0.35) return match;
+            // V13 PHRASE 6: Dropped from 35% to 10% — over-replacement was corrupting grammar
+            // (e.g. "result in curd" instead of "make curd"). 10% is a safe, subtle rate.
+            if (Math.random() > 0.10) return match;
             const alt = alts[Math.floor(Math.random() * alts.length)];
             // Preserve capitalization
             if (match.charAt(0) === match.charAt(0).toUpperCase() && match.charAt(0).toLowerCase() !== match.charAt(0).toUpperCase()) {
@@ -587,16 +625,16 @@ export function applySentenceStarterDiversifier(text: string, vibe: 'academic' |
     if (sentences.length < 2) return text;
 
     const diversified = sentences.map((sentence, idx) => {
-        // V12.4: Raised back to 40% — structural rewriting needs starter variation to defeat detectors
-        if (idx === 0 || Math.random() > 0.40) return sentence;
+        // V13 PHRASE 8: Dropped from 40% to 15% — mechanical starter changes create detectable density
+        // Also removed 'Still,' and 'In practice,' — they sound obviously forced
+        if (idx === 0 || Math.random() > 0.15) return sentence;
 
         const s = sentence.trim();
 
-        // V12.2 FIX: Pattern 1 — "The X is/are..." starters
-        // Restructure by dropping "The" or converting to a more natural start
-        // V12.4: Added "And", "But", "So" starters — real humans use these constantly
+        // Pattern 1 — "The X is/are..." starters
+        // V13: Removed 'Still,' and 'In practice,' — they are mechanical AI-humanizer signatures
         if (/^The (\w+ ){1,8}(is|are|was|were|has|have|can|will|shows?|makes?|provides?|allows?|helps?|continues?|represents?|requires?|developed|improved|demonstrated|enabled)\b/i.test(s)) {
-            const casualOpeners = ['Still,', 'In practice,', 'And', 'But', 'So', 'Right now,'];
+            const casualOpeners = ['And', 'But', 'So', 'Right now,'];
             const academicOpeners = ['Notably,', 'In particular,', 'Significantly,', 'To that end,'];
             const openers = vibe === 'academic' ? academicOpeners : casualOpeners;
             const opener = openers[Math.floor(Math.random() * openers.length)];
@@ -1039,67 +1077,14 @@ export function applyHumanPatterns(text: string, vibe: 'academic' | 'casual' | '
     const sentences = doc.sentences().out() as string[];
     if (sentences.length < 3) return text;
 
-    // Meaning-neutral parenthetical asides (don't add new information)
-    const casualAsides = [
-        '(and it shows)',
-        '(at least for now)',
-        '(not always, but often)',
-        '(to put it simply)',
-        '(for better or worse)',
-        '(which is a big deal)',
-        '(no surprise there)',
-    ];
-    const academicAsides = [
-        '(as noted)',
-        '(with caveats)',
-        '(to varying degrees)',
-        '(a notable point)',
-    ];
-    const asides = vibe === 'academic' ? academicAsides : casualAsides;
+    // V13 PHRASE 7: Removed ALL filler injection arrays.
+    // casualAsides: "(no surprise there)", "(for better or worse)" etc — meaning-neutral filler, detector flag.
+    // casualFragments: "That matters.", "Not ideal.", "Big difference." — forced fragments, detector flag.
+    // The function is also DISABLED in the pipeline (Phrase 4), but cleaned here for safety.
+    // This function is now a no-op passthrough — kept in codebase in case data analysis needed later.
 
-    // Short reaction fragments that summarize the preceding sentence
-    const casualFragments = [
-        "That matters.",
-        "Not ideal.",
-        "That's the tricky part.",
-        "Worth noting.",
-        "Big difference.",
-        "That's the thing.",
-    ];
-    const academicFragments = [
-        "This is significant.",
-        "A critical distinction.",
-        "This warrants attention.",
-    ];
-    const fragments = vibe === 'academic' ? academicFragments : casualFragments;
-
-    let asideUsed = false;
-    let fragmentUsed = false;
-
-    const result = sentences.map((s, idx) => {
-        if (idx === 0) return s; // Don't touch first sentence
-        const trimmed = s.trim();
-        const wordCount = trimmed.split(/\s+/).length;
-
-        // Parenthetical aside: ~15% of medium sentences (8-20 words), max 1 per paragraph
-        if (!asideUsed && wordCount >= 8 && wordCount <= 20 && Math.random() < 0.18 && trimmed.endsWith('.')) {
-            asideUsed = true;
-            const aside = asides[Math.floor(Math.random() * asides.length)];
-            return trimmed.slice(0, -1) + ' ' + aside + '.';
-        }
-
-        // Reaction fragment: after a long sentence (15+ words), max 1 per paragraph
-        // Creates a very short sentence that breaks uniformity — the #1 human signal
-        if (!fragmentUsed && wordCount >= 15 && idx < sentences.length - 1 && Math.random() < 0.22) {
-            fragmentUsed = true;
-            const fragment = fragments[Math.floor(Math.random() * fragments.length)];
-            return s + ' ' + fragment;
-        }
-
-        return s;
-    });
-
-    return result.join(' ');
+    // Return text unmodified — all injection logic removed in V13
+    return sentences.join(' ');
 }
 
 // ─── Verification Metrics (Layer 6 Support) ────────────────────────────────────────────────
@@ -1272,8 +1257,42 @@ export function runVerificationAgent(text: string): VerificationReport {
     const nomVerdict = nomScore >= 40 ? 'PASS' : 'FAIL';
     if (nomVerdict === 'FAIL') failures.push('nominalizationRate');
 
-    // ── Overall Human Score (weighted average — V12 updated) ──
-    const humanScore = Math.round(
+    // ── BONUS METRIC 1: Trigram Repetition Penalty (V13 Advanced) ──
+    // Research: Gehrmann et al. (2019) GLTR paper — AI text repeats n-grams statistically more
+    // than human text. Count unique content trigrams that appear more than once.
+    // Real human writing rarely repeats 3-word content sequences within the same document.
+    const allWordsList = text.toLowerCase().match(/\b[a-z]+\b/g) || [];
+    let repeatedTrigrams = 0;
+    if (allWordsList.length >= 6) {
+        const stopSet = new Set(['the','a','an','is','are','was','were','it','this','that','of','in','to','for','and','but','or','so','as','if','be','by','at','on','with','from','not']);
+        const trigramCounts: Record<string, number> = {};
+        for (let ti = 0; ti <= allWordsList.length - 3; ti++) {
+            const w0 = allWordsList[ti], w1 = allWordsList[ti+1], w2 = allWordsList[ti+2];
+            // Only track trigrams with at least one non-stopword
+            if (!stopSet.has(w0) || !stopSet.has(w1) || !stopSet.has(w2)) {
+                const tg = `${w0} ${w1} ${w2}`;
+                trigramCounts[tg] = (trigramCounts[tg] || 0) + 1;
+            }
+        }
+        repeatedTrigrams = Object.values(trigramCounts).filter(c => c > 1).length;
+    }
+    // Penalty: repeated content trigrams beyond 2 deduct up to 12 points from humanScore
+    const trigramPenalty = Math.min(12, Math.max(0, (repeatedTrigrams - 2) * 3));
+    if (repeatedTrigrams > 4) failures.push('trigramRepetition');
+
+    // ── BONUS METRIC 2: Flesch-Kincaid Grade Level Guard (V13 Advanced) ──
+    // Research: Kincaid et al. (1975) readability formula. Human casual text: FK Grade 6-10.
+    // AI text in "casual" mode consistently scores FK Grade 11-14 (over-formal, over-complex).
+    // Simplified syllable approximation: count vowel groups (accurate to ~±15% vs full Flesch).
+    const syllableApprox = (text.toLowerCase().match(/[aeiouy]+/g) || []).length;
+    const fkSentenceCount = Math.max(1, (text.match(/[^.!?]+[.!?]+/g) || []).length);
+    const fkWordCount = Math.max(1, allWordsList.length);
+    const fkGL = Math.max(0, 0.39 * (fkWordCount / fkSentenceCount) + 11.8 * (syllableApprox / fkWordCount) - 15.59);
+    // Penalty: FK Grade > 12 = detectable over-complexity (max -10 points)
+    const fkPenalty = fkGL > 12 ? Math.min(10, Math.round((fkGL - 12) * 2)) : 0;
+
+    // ── Overall Human Score (weighted average — V13 with bonus science penalties) ──
+    const baseScore = Math.round(
         burstyScore * 0.20 +
         clicheResult.score * 0.18 +
         vocabScore * 0.15 +
@@ -1282,10 +1301,12 @@ export function runVerificationAgent(text: string): VerificationReport {
         pronounScore * 0.10 +
         nomScore * 0.10
     );
+    // Apply bonus penalties from advanced n-gram and readability analysis
+    const humanScore = Math.max(0, Math.min(100, baseScore - trigramPenalty - fkPenalty));
 
     return {
         humanScore,
-        passed: failures.length === 0 && humanScore >= 50,
+        passed: failures.length === 0 && humanScore >= 65,
         metrics: {
             burstiness: { score: burstyScore, verdict: burstyVerdict },
             cliches: { count: clicheResult.count, score: clicheResult.score, verdict: clicheVerdict },

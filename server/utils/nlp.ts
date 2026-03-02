@@ -93,8 +93,8 @@ export function forceBurstiness(text: string): string {
         const len = words.length;
 
         // Condition 1: Long, winding AI sentence. Try to split into a punchy short sentence.
-        // V12.1: Lowered threshold from 25 to 18 words — AI sentences are typically 15-25 words
-        if (len > 18 && s.includes(', and ')) {
+        // V12.3: Raised threshold from 18 back to 22 — 18 was too aggressive, broke natural flow
+        if (len > 22 && s.includes(', and ')) {
             const splitPoint = s.lastIndexOf(', and ');
             if (splitPoint > 10) {
                 let part1 = s.substring(0, splitPoint) + '.';
@@ -513,12 +513,44 @@ const PREDICTABLE_TOKENS: Record<string, string[]> = {
 export function applyIMFApproximation(text: string): string {
     let output = text;
 
-    // Replace 40% of each target token's occurrences (not 100% — preserves natural distribution)
+    // V12.3: Context-aware phrasal verb protection
+    // Each token can have "skipAfter" (words following it) and "skipBefore" (words preceding it)
+    // that signal a phrasal verb where replacement would garble meaning.
+    const PHRASAL_GUARDS: Record<string, { after?: RegExp; before?: RegExp }> = {
+        'make':  { after: /^\s+(sure|up|out|do|sense|it|way|room|time|use)/i },
+        'makes': { after: /^\s+(sure|up|out|sense|it|way|room|time|use)/i },
+        'show':  { after: /^\s+(up|off|around|that|how)/i },
+        'shows': { after: /^\s+(up|off|around|that|how)/i },
+        'get':   { after: /^\s+(up|out|in|rid|along|over|away|back|through|into|to)/i },
+        'help':  { after: /^\s+(out|up|with)/i },
+        'helps': { after: /^\s+(out|up|with)/i },
+        'said':  { before: /(?:that|having|after)\s*$/i },
+        'need':  { after: /^\s+to\b/i },
+        'needs': { after: /^\s+to\b/i },
+        'part':  { before: /(?:a|the|key|big|major|important|essential|vital|integral|significant)\s+$/i, after: /^\s+(of|with|in)\b/i },
+        'good':  { after: /^\s+(at|for|with|to|enough|thing|idea|point|reason)/i },
+        'big':   { after: /^\s+(deal|picture|time|fan)/i },
+        'real':  { after: /^\s+(deal|time|world|life|estate)/i },
+        'allows':{ after: /^\s+for\b/i },
+        'ways':  { before: /(?:in\s+(?:many|some|several|different|various|other))\s*$/i },
+        'area':  { before: /(?:in\s+(?:the|this|that|an?))\s*$/i },
+        'often': { before: /(?:more|how)\s*$/i },
+    };
+
+    // V12.3: Lowered from 40% to 25% — 40% caused too much vocabulary garbling
     for (const [token, alts] of Object.entries(PREDICTABLE_TOKENS)) {
         const regex = new RegExp(`\\b${token}\\b`, 'g');
-        output = output.replace(regex, (match) => {
-            // 40% replacement rate — mirrors what real IMF does statistically
-            if (Math.random() > 0.40) return match;
+        output = output.replace(regex, (match, offset, fullText) => {
+            // Check phrasal verb context before replacing
+            const guards = PHRASAL_GUARDS[token.toLowerCase()];
+            if (guards) {
+                const before = fullText.substring(Math.max(0, offset - 30), offset);
+                const after = fullText.substring(offset + match.length, Math.min(fullText.length, offset + match.length + 20));
+                if (guards.after && guards.after.test(after)) return match;
+                if (guards.before && guards.before.test(before)) return match;
+            }
+            // 25% replacement rate — balanced perplexity boost without garbling
+            if (Math.random() > 0.25) return match;
             const alt = alts[Math.floor(Math.random() * alts.length)];
             // Preserve capitalization
             if (match.charAt(0) === match.charAt(0).toUpperCase() && match.charAt(0).toLowerCase() !== match.charAt(0).toUpperCase()) {
@@ -553,8 +585,8 @@ export function applySentenceStarterDiversifier(text: string, vibe: 'academic' |
     if (sentences.length < 2) return text;
 
     const diversified = sentences.map((sentence, idx) => {
-        // Skip first sentence of each paragraph + only change ~40% of candidates (V12.1: raised from 25%)
-        if (idx === 0 || Math.random() > 0.40) return sentence;
+        // V12.3: Lowered from 40% back to 30% — too many starter rewrites broke reading flow
+        if (idx === 0 || Math.random() > 0.30) return sentence;
 
         const s = sentence.trim();
 
@@ -682,26 +714,14 @@ export function applyDeicticInjection(text: string, vibe: 'academic' | 'casual' 
 
     // V12.2 FIX: Bridges must be MEANING-NEUTRAL — no opinions, no new claims
     // Old bridges like "and you'll notice this quickly" injected meaning drift.
-    const casualBridges = [
-        ', at least broadly speaking',
-        ', in a way',
-        ', roughly speaking',
-        ', more or less',
-    ];
-    const academicBridges = [
-        ', as observed here',
-        ', within this context',
-        ', broadly speaking',
-        ', in this regard',
-    ];
-    // V12.2: Removed deictic starters ("At this point,", "Right now,") — they inject temporal claims not in original
-
-    const bridges = vibe === 'academic' ? academicBridges : casualBridges;
-    // V12.2: Drastically lowered bridge probability — bridges should be rare, not every 3rd sentence
-    const bridgeProb = vibe === 'academic' ? 0.30 : 0.20;
+    // V12.3: Removed all bridge phrases from DeicticInjection — they add filler words that inflate word count
+    // and stack with SemanticDrift bridges creating "more or less", "at least in most cases" spam.
+    // Deictic layer now ONLY does pronoun injection (genz) — no bridge injection for casual/academic.
+    const bridges: string[] = [];
+    const bridgeProb = 0;
     const result = sentences.map((s, idx) => {
-        // Bridge phrase injection — only on longer sentences, every 4th eligible
-        if (idx > 1 && (idx + 1) % 4 === 0 && Math.random() < bridgeProb) {
+        // V12.3: Bridge injection disabled — was adding filler that broke meaning lock
+        if (false && idx > 1 && (idx + 1) % 4 === 0 && Math.random() < bridgeProb) {
             const bridge = bridges[Math.floor(Math.random() * bridges.length)];
             const trimmed = s.trim();
             if (trimmed.endsWith('.')) {
@@ -833,8 +853,8 @@ export function applyClauseReordering(text: string): string {
 
     const reordered = sentences.map(sentence => {
         const s = sentence.trim();
-        // Only apply to ~35% of eligible sentences
-        if (Math.random() > 0.35) return sentence;
+        // V12.3: Lowered from 35% to 20% — too much reordering broke logical flow
+        if (Math.random() > 0.20) return sentence;
 
         // Pattern: "[Main clause], because/since/although/while/whereas [sub clause]."
         const trailingMatch = s.match(/^(.{15,}?),?\s+(because|since|although|while|whereas|even though|given that)\s+(.+)\.$/i);
@@ -874,29 +894,20 @@ export function applySemanticDrift(text: string, vibe: 'academic' | 'casual' | '
     const sentences = doc.sentences().out() as string[];
     if (sentences.length < 3) return text;
 
-    // V12.2 FIX: Drift bridges must be SHORT and MEANING-NEUTRAL
-    // Old bridges like "or that's how it tends to play out" injected filler/opinions.
-    const casualBridges = [
-        ', at least in most cases',
-        ', generally speaking',
-        ', more or less',
-        ', to some degree',
-    ];
-    const academicBridges = [
-        ', broadly speaking',
-        ', to varying degrees',
-        ', within this framework',
-        ', at least in principle',
-    ];
-    const driftBridges = vibe === 'academic' ? academicBridges : casualBridges;
+    // V12.3: SemanticDrift bridges DISABLED — they injected filler phrases ("more or less",
+    // "at least in most cases", "generally speaking") that inflated word count and broke meaning lock.
+    // The cosine similarity disruption goal is already handled by VocabEngine + IMF + ClauseReordering.
+    // Keeping function skeleton so it can be re-enabled with better bridges in V13.
+    const driftBridges: string[] = [];
 
     let lastBridgeIdx = -4;
 
     const result = sentences.map((s, idx) => {
-        // V12.2: Fire much less often — every 5th sentence, 30% probability
+        // V12.3: Bridge injection disabled — was the #1 source of filler inflation
+        return s;
         if (idx < 2 || idx === sentences.length - 1) return s;
         if (idx - lastBridgeIdx < 3) return s;
-        if ((idx + 1) % 5 !== 0) return s; // Fires on idx=4, 9, 14
+        if ((idx + 1) % 5 !== 0) return s;
         if (Math.random() > 0.30) return s;
 
         const bridge = driftBridges[Math.floor(Math.random() * driftBridges.length)];
@@ -1150,10 +1161,10 @@ export function runVerificationAgent(text: string): VerificationReport {
     const pronounRatePer100 = (pronouns / totalWordCount) * 100;
     // Score: >= 2.0 per 100w = excellent (100), 0 = very robotic (0)
     const pronounScore = Math.min(100, Math.round(Math.max(0, pronounRatePer100 / 2.5) * 100));
-    // V12.2: Lowered pronoun threshold — formal/objective text naturally has fewer pronouns
-    // Old threshold was too aggressive and forced pronoun injection that caused meaning drift
+    // V12.3: Pronoun rate is advisory only — formal/objective text naturally has zero pronouns.
+    // Making this a hard failure forced filler injection ("you know", "honestly") that broke meaning.
+    // It's tracked for visibility but NEVER added to failures array.
     const pronounVerdict = pronounScore >= 10 ? 'PASS' : 'WARN';
-    if (pronounVerdict === 'WARN' && pronounScore < 5) failures.push('pronounRate');
 
     // ── Metric 7: Nominalization Rate (V12 NEW) ──
     // Research: Biber (1988), Koppel & Schler (2004) — AI over-nominalizes.

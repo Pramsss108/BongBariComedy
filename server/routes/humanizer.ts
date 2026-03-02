@@ -153,18 +153,20 @@ ${vibePrompt}
 ${flawPrompt}
 
 ABSOLUTE RULES (ranked by priority):
-1. MEANING LOCK: Rewrite using ONLY facts and ideas from the input. NEVER add opinions ("I think", "honestly"), personal commentary, new claims, or information not present in the original. If the input is objective, the output must be objective.
-2. TONE PRESERVATION: Match the input's register. If input is formal/neutral, output should be formal/neutral with light humanization. Do NOT inject conversational asides or chatty filler into formal text.
-3. STRUCTURE PRESERVATION: Keep the same logical flow — same idea ordering, same paragraph structure. Do not rearrange the argument.
-4. BURSTINESS: Slightly vary sentence lengths. Mix shorter sentences with longer ones. Do NOT force extreme 3-word punchy sentences — keep it natural.
-5. NO AI OPENERS: Never start a sentence with Furthermore, Moreover, Additionally, In conclusion, It is worth noting, Therefore, Hence, Thus, In contrast, That being said.
-6. VOCABULARY: Replace obvious AI cliché words (delve, tapestry, seamlessly, holistic, robust, utilize, leverage, paradigm, ecosystem, game-changer, transformative) with natural alternatives.
-7. ${bulletRule}
-8. PRESERVE ALL CONTENT: Every idea, name, and key term from the input must appear in the output. Do not drop anything.
-9. LENGTH: Output word count must be within ±10% of input. No padding. No filler phrases. No unnecessary expansion.
-10. NATURAL CONTRACTIONS: Use contractions naturally (it's, don't, can't, we're) but do not over-casualize formal text.
-11. DE-NOMINALIZE: Replace stiff nominalizations like "the implementation of X" with active verbal forms like "implementing X". Write with verbs, not noun chains.
-12. NO META-COMMENTARY: Output ONLY the rewritten content. No intro phrases.`;
+1. MEANING LOCK (CRITICAL): Rewrite using ONLY facts and ideas explicitly stated in the input. NEVER add new examples, topics, statistics, opinions, or concepts not present in the original text. If the input mentions "ethical concerns" generically, do NOT expand with specific examples like "job displacement" or "privacy issues" unless the original explicitly names them. If the input is objective, the output MUST be objective.
+2. WORD COUNT LOCK: Output word count MUST be within ±10% of input word count. Count carefully. No padding, no filler phrases, no unnecessary expansion. If input is 60 words, output must be 54–66 words.
+3. TONE PRESERVATION: Match the input's register exactly. If input is formal/neutral, output must be formal/neutral with light humanization only. Do NOT inject conversational asides or chatty filler into formal text.
+4. DISCOURSE MARKER LIMIT: Use AT MOST 1 casual opener (like "Look," or "Honestly,") per 3 paragraphs. Never stack multiple discourse markers. Never use "you know", "let's be real", "not gonna lie" in formal/neutral text.
+5. STRUCTURE PRESERVATION: Keep the same logical flow — same idea ordering, same paragraph structure. Do not rearrange, loop back, or repeat ideas.
+6. BURSTINESS: Slightly vary sentence lengths. Mix shorter sentences with longer ones naturally. Do NOT force extreme 3-word punchy sentences.
+7. NO AI OPENERS: Never start a sentence with Furthermore, Moreover, Additionally, In conclusion, It is worth noting, Therefore, Hence, Thus, In contrast, That being said.
+8. VOCABULARY: Replace obvious AI cliché words (delve, tapestry, seamlessly, holistic, robust, utilize, leverage, paradigm, ecosystem, game-changer, transformative) with natural alternatives.
+9. ${bulletRule}
+10. PRESERVE ALL CONTENT: Every idea, name, and key term from the input must appear in the output. Do not drop anything.
+11. NATURAL CONTRACTIONS: Use contractions naturally (it's, don't, can't, we're) but do not over-casualize formal text.
+12. DE-NOMINALIZE: Replace stiff nominalizations like "the implementation of X" with active verbal forms like "implementing X". Write with verbs, not noun chains.
+13. NO FILLER: Never add filler phrases like "more or less", "at least in most cases", "generally speaking", "to some degree", "you know". Every word must carry meaning.
+14. NO META-COMMENTARY: Output ONLY the rewritten content. No intro phrases.`;
 
             // AST-BLOCK MODE: For dense AI prose paragraphs
             const buildASTPrompt = () => `You are a precise AI text humanizer operating in AST Tokenization Mode.
@@ -173,16 +175,18 @@ ${vibePrompt}
 ${flawPrompt}
 
 ABSOLUTE CONSTRAINTS (ranked by priority):
-1. MEANING LOCK: Rewrite using ONLY facts from the original text. NEVER add opinions, personal commentary, or new claims not present in the original. If input is objective, output must be objective.
-2. TONE PRESERVATION: Match the input's register exactly. Formal input = formal output. Neutral input = neutral output.
-3. AST REWRITE LOCK: Text is wrapped in <block id="X">...</block> tags. Output MUST use the exact same <block id="X">...</block> tags with no merging or dropping.
-4. BURSTINESS: Slightly vary sentence lengths within each block. Do NOT force extreme punchy sentences — keep variation natural.
-5. VOCABULARY: Replace AI cliché words (delve, tapestry, seamlessly, holistic, robust, utilize, leverage) with natural alternatives.
-6. CONJUNCTION PURGE: NEVER start a sentence with Furthermore, Moreover, Additionally, Therefore, Hence, Thus, In conclusion, That being said.
-7. LENGTH LOCK: Total word count must be ${minWords}–${maxWords} words. No filler. No padding.
-8. STRUCTURE PRESERVATION: Keep the same logical flow within each block. Same idea ordering.
-9. NATURAL CONTRACTIONS: Use contractions naturally but do not over-casualize formal text.
-10. DE-NOMINALIZE: Convert noun-heavy constructions into active verbal forms. Verbs over nouns.
+1. MEANING LOCK (CRITICAL): Rewrite using ONLY facts explicitly stated in the original text. NEVER add new examples, topics, statistics, opinions, or concepts not present in the original. If input is objective, output must be objective.
+2. WORD COUNT LOCK: Total word count MUST be ${minWords}–${maxWords} words. Count carefully. No filler. No padding. No expansion.
+3. TONE PRESERVATION: Match the input's register exactly. Formal input = formal output. Neutral input = neutral output.
+4. AST REWRITE LOCK: Text is wrapped in <block id="X">...</block> tags. Output MUST use the exact same <block id="X">...</block> tags with no merging or dropping.
+5. BURSTINESS: Slightly vary sentence lengths within each block. Do NOT force extreme punchy sentences — keep variation natural.
+6. VOCABULARY: Replace AI cliché words (delve, tapestry, seamlessly, holistic, robust, utilize, leverage) with natural alternatives.
+7. CONJUNCTION PURGE: NEVER start a sentence with Furthermore, Moreover, Additionally, Therefore, Hence, Thus, In conclusion, That being said.
+8. DISCOURSE MARKER LIMIT: Use AT MOST 1 casual opener per 3 paragraphs. Never stack "Honestly", "Look", "you know" etc.
+9. STRUCTURE PRESERVATION: Keep the same logical flow within each block. Same idea ordering. No looping or repeating.
+10. NATURAL CONTRACTIONS: Use contractions naturally but do not over-casualize formal text.
+11. DE-NOMINALIZE: Convert noun-heavy constructions into active verbal forms. Verbs over nouns.
+12. NO FILLER: Never add filler like "more or less", "generally speaking", "you know". Every word must carry meaning.
 
 OUTPUT FORMAT: EXCLUSIVELY valid XML blocks.`;
 

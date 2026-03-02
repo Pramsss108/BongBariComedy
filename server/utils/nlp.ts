@@ -93,8 +93,8 @@ export function forceBurstiness(text: string): string {
         const len = words.length;
 
         // Condition 1: Long, winding AI sentence. Try to split into a punchy short sentence.
-        // V12.3: Raised threshold from 18 back to 22 — 18 was too aggressive, broke natural flow
-        if (len > 22 && s.includes(', and ')) {
+        // V12.4: Lowered to 20 — need more splits for genuine burstiness that defeats ZeroGPT
+        if (len > 20 && s.includes(', and ')) {
             const splitPoint = s.lastIndexOf(', and ');
             if (splitPoint > 10) {
                 let part1 = s.substring(0, splitPoint) + '.';
@@ -134,7 +134,8 @@ export function forceBurstiness(text: string): string {
         if (i < sentences.length - 1) {
             const nextS = sentences[i + 1];
             const nextWords = nlp.readDoc(nextS).tokens().filter(t => t.out(its.type) === 'word').out();
-            if (len < 10 && nextWords.length < 10 && !s.endsWith('?') && !nextS.endsWith('?')) {
+            // V12.5: Raised from 10 to 14 words, with total guard < 25 to prevent overly long merges
+            if (len < 14 && nextWords.length < 14 && (len + nextWords.length) < 25 && !s.endsWith('?') && !nextS.endsWith('?')) {
                 // Strip the trailing period from the first sentence and join with em-dash or conjunction
                 const part1: string = s.replace(/\.+$/, '');
                 const part2: string = nextS.charAt(0).toLowerCase() + nextS.slice(1);
@@ -168,7 +169,7 @@ export function applyVocabularyEngine(text: string, vibe: 'academic' | 'casual' 
         'testament': ['proof', 'evidence', 'sign', 'clear sign'],
         'furthermore': ['also', 'in addition', 'plus', 'what\'s more'],
         'moreover': ['also', 'additionally', 'on top of that'],
-        'crucial': ['key', 'important', 'vital', 'main'],
+        'crucial': ['key', 'important', 'vital', 'critical'],
         'elevate': ['raise', 'boost', 'lift', 'improve'],
         'underscore': ['highlight', 'show', 'stress', 'point out'],
         'multifaceted': ['complex', 'detailed', 'layered'],
@@ -549,8 +550,9 @@ export function applyIMFApproximation(text: string): string {
                 if (guards.after && guards.after.test(after)) return match;
                 if (guards.before && guards.before.test(before)) return match;
             }
-            // 25% replacement rate — balanced perplexity boost without garbling
-            if (Math.random() > 0.25) return match;
+            // V12.5: Raised from 25% to 35% — phrasal guards protect important phrases,
+            // higher rate pushes perplexity into human range (20-50)
+            if (Math.random() > 0.35) return match;
             const alt = alts[Math.floor(Math.random() * alts.length)];
             // Preserve capitalization
             if (match.charAt(0) === match.charAt(0).toUpperCase() && match.charAt(0).toLowerCase() !== match.charAt(0).toUpperCase()) {
@@ -585,20 +587,23 @@ export function applySentenceStarterDiversifier(text: string, vibe: 'academic' |
     if (sentences.length < 2) return text;
 
     const diversified = sentences.map((sentence, idx) => {
-        // V12.3: Lowered from 40% back to 30% — too many starter rewrites broke reading flow
-        if (idx === 0 || Math.random() > 0.30) return sentence;
+        // V12.4: Raised back to 40% — structural rewriting needs starter variation to defeat detectors
+        if (idx === 0 || Math.random() > 0.40) return sentence;
 
         const s = sentence.trim();
 
         // V12.2 FIX: Pattern 1 — "The X is/are..." starters
         // Restructure by dropping "The" or converting to a more natural start
-        // V12.2: Removed chatty openers ("Honestly,", "Look,", "Here's the thing")
-        // These injected tone/opinions not present in input. Use NEUTRAL restructuring only.
+        // V12.4: Added "And", "But", "So" starters — real humans use these constantly
         if (/^The (\w+ ){1,8}(is|are|was|were|has|have|can|will|shows?|makes?|provides?|allows?|helps?|continues?|represents?|requires?|developed|improved|demonstrated|enabled)\b/i.test(s)) {
-            const casualOpeners = ['Still,', 'In practice,', 'As it stands,', 'On that note,'];
+            const casualOpeners = ['Still,', 'In practice,', 'And', 'But', 'So', 'Right now,'];
             const academicOpeners = ['Notably,', 'In particular,', 'Significantly,', 'To that end,'];
             const openers = vibe === 'academic' ? academicOpeners : casualOpeners;
             const opener = openers[Math.floor(Math.random() * openers.length)];
+            // "And"/"But"/"So" connect to the previous sentence — lowercase 'the'
+            if (['And', 'But', 'So'].includes(opener)) {
+                return `${opener} ${s.charAt(0).toLowerCase() + s.slice(1)}`;
+            }
             return `${opener} ${s.charAt(0).toLowerCase() + s.slice(1)}`;
         }
 
@@ -732,12 +737,15 @@ export function applyDeicticInjection(text: string, vibe: 'academic' | 'casual' 
         return s;
     });
 
-    // V12.2: Pronoun injection — only for genz vibe (casual/academic should preserve input tone)
+    // V12.5: Pronoun injection enabled for CASUAL + GENZ (not just genz)
+    // Research: GPTZero 2025 — pronoun rate < 0.8% is a strong AI signal.
+    // Casual text naturally uses "you" and "we" — disabling this was a V12.3 mistake.
     let joined = result.join(' ');
-    if (vibe === 'genz') {
+    if (vibe === 'genz' || vibe === 'casual') {
         const safePrefix = /(?:(?:^|[.!?]\s+)|(?:(?:the|these|those|for|to|by|from|with|among|between|enable|enabling|help|helping|allow|allowing|empower|empowering) ))(?:users|individuals|people|professionals|stakeholders|participants|researchers|practitioners|consumers|audiences|learners|readers|developers)/gi;
+        const pronounRate = vibe === 'genz' ? 0.35 : 0.20; // casual is less aggressive
         joined = joined.replace(safePrefix, (match) => {
-            if (Math.random() < 0.35) {
+            if (Math.random() < pronounRate) {
                 const lastSpace = match.lastIndexOf(' ');
                 if (lastSpace > 0) {
                     return match.substring(0, lastSpace + 1) + 'you';
@@ -853,8 +861,8 @@ export function applyClauseReordering(text: string): string {
 
     const reordered = sentences.map(sentence => {
         const s = sentence.trim();
-        // V12.3: Lowered from 35% to 20% — too much reordering broke logical flow
-        if (Math.random() > 0.20) return sentence;
+        // V12.4: Raised to 30% — need more structural variation to defeat ZeroGPT
+        if (Math.random() > 0.30) return sentence;
 
         // Pattern: "[Main clause], because/since/although/while/whereas [sub clause]."
         const trailingMatch = s.match(/^(.{15,}?),?\s+(because|since|although|while|whereas|even though|given that)\s+(.+)\.$/i);
@@ -1005,6 +1013,93 @@ export function applyZipfNormalization(text: string): string {
     }
 
     return output;
+}
+
+/**
+ * Human Writing Pattern Injection (V12.5 NEW — Layer 14b)
+ * Injects parenthetical asides, em-dash interruptions, and short reaction fragments
+ * that are characteristic of human writing but ABSENT from AI text.
+ * Research: ZeroGPT and GPTZero specifically flag the absence of these patterns.
+ * 
+ * This layer is ADDITIVE only — it adds patterns to existing sentences without
+ * restructuring them, making it safe for meaning preservation.
+ */
+export function applyHumanPatterns(text: string, vibe: 'academic' | 'casual' | 'genz' = 'casual'): string {
+    const paragraphs = text.split(/\n\n+/);
+    if (paragraphs.length > 1) {
+        return paragraphs.map(p => applyHumanPatterns(p, vibe)).join('\n\n');
+    }
+
+    // Skip bullet/numbered list paragraphs
+    const bulletLines = (text.match(/^[\s]*[-*•\d][\.\)]?\s/gm) || []).length;
+    const lineCount = text.split('\n').filter(l => l.trim()).length;
+    if (bulletLines / Math.max(lineCount, 1) > 0.4) return text;
+
+    const doc = nlp.readDoc(text);
+    const sentences = doc.sentences().out() as string[];
+    if (sentences.length < 3) return text;
+
+    // Meaning-neutral parenthetical asides (don't add new information)
+    const casualAsides = [
+        '(and it shows)',
+        '(at least for now)',
+        '(not always, but often)',
+        '(to put it simply)',
+        '(for better or worse)',
+        '(which is a big deal)',
+        '(no surprise there)',
+    ];
+    const academicAsides = [
+        '(as noted)',
+        '(with caveats)',
+        '(to varying degrees)',
+        '(a notable point)',
+    ];
+    const asides = vibe === 'academic' ? academicAsides : casualAsides;
+
+    // Short reaction fragments that summarize the preceding sentence
+    const casualFragments = [
+        "That matters.",
+        "Not ideal.",
+        "That's the tricky part.",
+        "Worth noting.",
+        "Big difference.",
+        "That's the thing.",
+    ];
+    const academicFragments = [
+        "This is significant.",
+        "A critical distinction.",
+        "This warrants attention.",
+    ];
+    const fragments = vibe === 'academic' ? academicFragments : casualFragments;
+
+    let asideUsed = false;
+    let fragmentUsed = false;
+
+    const result = sentences.map((s, idx) => {
+        if (idx === 0) return s; // Don't touch first sentence
+        const trimmed = s.trim();
+        const wordCount = trimmed.split(/\s+/).length;
+
+        // Parenthetical aside: ~15% of medium sentences (8-20 words), max 1 per paragraph
+        if (!asideUsed && wordCount >= 8 && wordCount <= 20 && Math.random() < 0.18 && trimmed.endsWith('.')) {
+            asideUsed = true;
+            const aside = asides[Math.floor(Math.random() * asides.length)];
+            return trimmed.slice(0, -1) + ' ' + aside + '.';
+        }
+
+        // Reaction fragment: after a long sentence (15+ words), max 1 per paragraph
+        // Creates a very short sentence that breaks uniformity — the #1 human signal
+        if (!fragmentUsed && wordCount >= 15 && idx < sentences.length - 1 && Math.random() < 0.22) {
+            fragmentUsed = true;
+            const fragment = fragments[Math.floor(Math.random() * fragments.length)];
+            return s + ' ' + fragment;
+        }
+
+        return s;
+    });
+
+    return result.join(' ');
 }
 
 // ─── Verification Metrics (Layer 6 Support) ────────────────────────────────────────────────

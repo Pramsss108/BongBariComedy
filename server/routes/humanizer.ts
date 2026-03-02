@@ -1,6 +1,6 @@
 import { Express } from "express";
 import admin from "firebase-admin";
-import { forceBurstiness, applyVocabularyEngine, applySemanticCloaking, applyHumanFlaws, applyConjunctionPurge, applyIMFApproximation, applySentenceStarterDiversifier, applyParagraphRhythm, applyDeicticInjection, applyDenominalization, applyClauseReordering, applySemanticDrift, applyZipfNormalization, computeBurstiness, computeCliche, runVerificationAgent } from "../utils/nlp";
+import { forceBurstiness, applyVocabularyEngine, applySemanticCloaking, applyHumanFlaws, applyConjunctionPurge, applyIMFApproximation, applySentenceStarterDiversifier, applyParagraphRhythm, applyDeicticInjection, applyDenominalization, applyClauseReordering, applySemanticDrift, applyZipfNormalization, applyHumanPatterns, computeBurstiness, computeCliche, runVerificationAgent } from "../utils/nlp";
 
 // In-Memory Device Fingerprint Tracker to prevent Account Sharing
 const userActiveDevices = new Map<string, string>();
@@ -120,11 +120,14 @@ export function registerHumanizerRoutes(app: Express, sessions: Map<string, any>
                 temperature = 0.95;
                 vibePrompt = "VIBE: Gen-Z. Erratic conversational pacing. Occasional natural casual phrasing ('honestly,', 'not gonna lie'). No forced slang. Lowercase some words unpredictably.";
             } else if (vibe === 'academic') {
-                temperature = 0.40;
+                // V12.5: Raised from 0.40 — was too conservative, produced pure synonym swaps
+                temperature = 0.55;
                 vibePrompt = "VIBE: Academic. Precise, collegiate vocabulary. Formal structure. Zero contractions. Zero slang.";
             } else {
-                temperature = 0.55;
-                vibePrompt = "VIBE: Casual. Light, natural tone — like a well-written blog post. Contractions OK. Direct but not sloppy. Do NOT inject opinions or personal commentary.";
+                // V12.5: Raised from 0.55 to 0.80 — CRITICAL fix. At 0.55 the model just does synonym
+                // swapping and keeps sentence structure identical. 0.80 forces genuine restructuring.
+                temperature = 0.80;
+                vibePrompt = "VIBE: Casual. Natural tone — like a human blogger. Contractions always (it's, don't, can't, that's, they're). Direct and punchy.";
             }
 
             let flawPrompt = "";
@@ -147,48 +150,63 @@ export function registerHumanizerRoutes(app: Express, sessions: Map<string, any>
                 ? `FORMATTING LOCK: The input contains bullet points or numbered lists. Your output MUST preserve the EXACT same format — if input uses "- item", output uses "- item". If input uses "1. item", output uses "1. item". Never convert bullets to prose sentences. Never drop the list markers.`
                 : `STRUCTURE: Use short paragraphs. Mix 1-sentence paragraphs with longer ones for human-like rhythm.`;
 
-            const buildHolisticPrompt = () => `You are a world-class human writing assistant. Rewrite the given text so it reads naturally — like a real person wrote it — while preserving the original meaning exactly.
+            const buildHolisticPrompt = () => `You are a human ghostwriter. You take AI-generated text and COMPLETELY REBUILD it as a human would naturally write it. You are NOT doing synonym replacement — you are creating NEW sentences that express the same ideas.
+
+STUDY THIS EXAMPLE CAREFULLY:
+
+INPUT: "Artificial intelligence has become an essential part of modern technology, allowing systems to analyze data, recognize patterns, and automate decision-making processes. These systems are designed to improve efficiency and reduce the need for manual effort in repetitive tasks."
+
+WRONG (synonym swap — AI detectors catch this instantly):
+"AI is now a key part of modern tech, enabling systems to analyze data, spot patterns, and make decisions automatically. They're designed to boost efficiency and cut down on manual work."
+
+RIGHT (rebuilt from scratch — undetectable):
+"Data analysis, pattern recognition, automated decisions — AI handles all of that now. It's not just a buzzword anymore. The whole point? Cutting out repetitive grunt work so people don't have to."
+
+WHY the RIGHT version works:
+- Completely different sentence structure (starts with a list, not "AI is...")
+- Em-dash creates human rhythm
+- Very short sentence in the middle ("It's not just a buzzword anymore.")
+- Rhetorical question fragment ("The whole point?")
+- Different framing ("so people don't have to" vs "reduce the need for manual effort")
 
 ${vibePrompt}
 ${flawPrompt}
 
-ABSOLUTE RULES (ranked by priority):
-1. MEANING LOCK (CRITICAL): Rewrite using ONLY facts and ideas explicitly stated in the input. NEVER add new examples, topics, statistics, opinions, or concepts not present in the original text. If the input mentions "ethical concerns" generically, do NOT expand with specific examples like "job displacement" or "privacy issues" unless the original explicitly names them. If the input is objective, the output MUST be objective.
-2. WORD COUNT LOCK: Output word count MUST be within ±10% of input word count. Count carefully. No padding, no filler phrases, no unnecessary expansion. If input is 60 words, output must be 54–66 words.
-3. TONE PRESERVATION: Match the input's register exactly. If input is formal/neutral, output must be formal/neutral with light humanization only. Do NOT inject conversational asides or chatty filler into formal text.
-4. DISCOURSE MARKER LIMIT: Use AT MOST 1 casual opener (like "Look," or "Honestly,") per 3 paragraphs. Never stack multiple discourse markers. Never use "you know", "let's be real", "not gonna lie" in formal/neutral text.
-5. STRUCTURE PRESERVATION: Keep the same logical flow — same idea ordering, same paragraph structure. Do not rearrange, loop back, or repeat ideas.
-6. BURSTINESS: Slightly vary sentence lengths. Mix shorter sentences with longer ones naturally. Do NOT force extreme 3-word punchy sentences.
-7. NO AI OPENERS: Never start a sentence with Furthermore, Moreover, Additionally, In conclusion, It is worth noting, Therefore, Hence, Thus, In contrast, That being said.
-8. VOCABULARY: Replace obvious AI cliché words (delve, tapestry, seamlessly, holistic, robust, utilize, leverage, paradigm, ecosystem, game-changer, transformative) with natural alternatives.
-9. ${bulletRule}
-10. PRESERVE ALL CONTENT: Every idea, name, and key term from the input must appear in the output. Do not drop anything.
-11. NATURAL CONTRACTIONS: Use contractions naturally (it's, don't, can't, we're) but do not over-casualize formal text.
-12. DE-NOMINALIZE: Replace stiff nominalizations like "the implementation of X" with active verbal forms like "implementing X". Write with verbs, not noun chains.
-13. NO FILLER: Never add filler phrases like "more or less", "at least in most cases", "generally speaking", "to some degree", "you know". Every word must carry meaning.
-14. NO META-COMMENTARY: Output ONLY the rewritten content. No intro phrases.`;
+RULES (in priority order):
+1. STRUCTURAL REBUILD (CRITICAL): Do NOT map input sentences to output sentences 1:1. Merge 2 input ideas into 1 sentence. Split 1 long input idea into 2-3 short sentences. Change how ideas are framed: "X leads to Y" → "Y? That's because of X." or "Without X, no Y." Your sentence sequence MUST be different from the input.
+2. BURSTINESS (CRITICAL): Mix sentence lengths dramatically. Every paragraph MUST have at least one sentence under 7 words ("That's the point.", "Not always.", "It depends."). At least one sentence should be 20+ words. This single feature is what separates human from AI.
+3. HUMAN SENTENCE STARTERS: Start 3+ sentences with "And", "But", "So", "Still", "Yet". Use at least one em-dash aside mid-sentence — like this. Use at least one sentence fragment or rhetorical question.
+4. MEANING LOCK: Use ONLY facts from the input. Never add examples, topics, opinions, or statistics not in the original.
+5. WORD COUNT: Stay within ±10% of input word count. Restructuring ≠ expanding.
+6. NO AI FINGERPRINTS: Never start with Furthermore/Moreover/Additionally/Therefore/In conclusion. Never use delve/tapestry/seamlessly/holistic/robust/utilize/leverage/paradigm.
+7. CONTRACTIONS: Always use (it's, don't, can't, that's, they're, won't, isn't, aren't, doesn't, hasn't).
+8. ${bulletRule}
+9. NO FILLER: Never add "more or less", "generally speaking", "you know".
+10. OUTPUT ONLY the rewritten text.`;
 
             // AST-BLOCK MODE: For dense AI prose paragraphs
-            const buildASTPrompt = () => `You are a precise AI text humanizer operating in AST Tokenization Mode.
+            const buildASTPrompt = () => `You are a human ghostwriter in AST mode. COMPLETELY REBUILD each block's sentences — not synonym swap.
+
+EXAMPLE:
+INPUT: <block id="1">Artificial intelligence has become an essential part of modern technology, allowing systems to analyze data, recognize patterns, and automate decision-making processes.</block>
+WRONG: <block id="1">AI is now a key part of modern tech, enabling systems to analyze data, spot patterns, and make decisions automatically.</block>
+RIGHT: <block id="1">Data analysis, pattern recognition, automated decisions — AI handles all of it now. It's become a core piece of how modern tech actually works.</block>
 
 ${vibePrompt}
 ${flawPrompt}
 
-ABSOLUTE CONSTRAINTS (ranked by priority):
-1. MEANING LOCK (CRITICAL): Rewrite using ONLY facts explicitly stated in the original text. NEVER add new examples, topics, statistics, opinions, or concepts not present in the original. If input is objective, output must be objective.
-2. WORD COUNT LOCK: Total word count MUST be ${minWords}–${maxWords} words. Count carefully. No filler. No padding. No expansion.
-3. TONE PRESERVATION: Match the input's register exactly. Formal input = formal output. Neutral input = neutral output.
-4. AST REWRITE LOCK: Text is wrapped in <block id="X">...</block> tags. Output MUST use the exact same <block id="X">...</block> tags with no merging or dropping.
-5. BURSTINESS: Slightly vary sentence lengths within each block. Do NOT force extreme punchy sentences — keep variation natural.
-6. VOCABULARY: Replace AI cliché words (delve, tapestry, seamlessly, holistic, robust, utilize, leverage) with natural alternatives.
-7. CONJUNCTION PURGE: NEVER start a sentence with Furthermore, Moreover, Additionally, Therefore, Hence, Thus, In conclusion, That being said.
-8. DISCOURSE MARKER LIMIT: Use AT MOST 1 casual opener per 3 paragraphs. Never stack "Honestly", "Look", "you know" etc.
-9. STRUCTURE PRESERVATION: Keep the same logical flow within each block. Same idea ordering. No looping or repeating.
-10. NATURAL CONTRACTIONS: Use contractions naturally but do not over-casualize formal text.
-11. DE-NOMINALIZE: Convert noun-heavy constructions into active verbal forms. Verbs over nouns.
-12. NO FILLER: Never add filler like "more or less", "generally speaking", "you know". Every word must carry meaning.
+RULES:
+1. STRUCTURAL REBUILD: Do NOT map input sentences 1:1. Merge, split, reframe. "X leads to Y" → "Y? That's X at work." Sentence sequence MUST differ from input.
+2. BURSTINESS: Each block MUST mix very short (3-7 word) sentences with longer ones (20+ words). Use fragments, rhetorical questions.
+3. HUMAN STARTERS: Use "And", "But", "So", "Still" to start 2+ sentences. Use em-dashes for asides.
+4. MEANING LOCK: Only facts from the original. No new topics/opinions.
+5. WORD COUNT: Total ${minWords}–${maxWords} words.
+6. AST LOCK: Same <block id="X">...</block> tags. No merge/drop.
+7. NO AI WORDS: No Furthermore/Moreover/Additionally/Therefore. No delve/tapestry/seamlessly/holistic/robust.
+8. CONTRACTIONS: Always (it's, don't, can't, that's, they're).
+9. NO FILLER: No "more or less", "generally speaking".
 
-OUTPUT FORMAT: EXCLUSIVELY valid XML blocks.`;
+OUTPUT: ONLY valid XML blocks.`;
 
             // ==========================================
             // PHASE 4: AST Tokenization (Dense mode only)
@@ -317,20 +335,32 @@ OUTPUT FORMAT: EXCLUSIVELY valid XML blocks.`;
                 // V12 LAYER 14: Semantic Drift — inject hedging bridge phrases for natural uncertainty
                 bestVariant = applySemanticDrift(bestVariant, vibe as any);
 
+                // V12.5 LAYER 14b: Human Pattern Injection — parenthetical asides + reaction fragments
+                bestVariant = applyHumanPatterns(bestVariant, vibe as any);
+
                 // V12 LAYER 15: Headless Verification Agent (7-metric In-House AI Detector, $0)
                 report = runVerificationAgent(bestVariant);
                 console.log(`[Humanizer V12 Detector] Score: ${report.humanScore}/100 | Passed: ${report.passed} | Failures: [${report.failures.join(', ')}]`);
 
                 if (!report.passed) {
-                    console.log(`[Humanizer V12 Auto-Heal] Triggered. Rewriting with aggressive burstiness + zero clichés...`);
-                    const healingPrompt = `This text was flagged as AI-generated. Rewrite it with:
-- Dramatic sentence length variation (mix 3-word punchy sentences with 30+ word complex ones)
+                    console.log(`[Humanizer V12 Auto-Heal] Triggered. Rewriting with structural variation + zero clichés...`);
+                    const healingPrompt = `This text was flagged as AI-generated because its sentence structure is too uniform and predictable. COMPLETELY RESTRUCTURE it:
+
+CRITICAL CHANGES NEEDED:
+- Merge some sentences together with em-dashes or conjunctions
+- Split at least 2 long sentences into short punchy ones (3-7 words)
+- Start 2-3 sentences with "And", "But", "So", or "Still"
+- Do NOT follow the original sentence order — rearrange how ideas are presented
+- Mix very short paragraphs (1 sentence) with longer ones (3-4 sentences)
+- Use at least one rhetorical question or short aside
 - Zero AI discourse markers (no Furthermore, Moreover, Additionally, In conclusion)
-- Conversational human connectors (honestly, look, so, and, but)
-- Unexpected word choices instead of predictable ones\n\n"${bestVariant}"`;
+- Keep the EXACT same meaning and facts — just restructure the architecture
+- Word count must stay within ±10% of the original
+
+Text to restructure:\n\n"${bestVariant}"`;
 
                     const healedRaw = await callGroq([
-                        { role: "system", content: "You are an expert at making AI text undetectable. You understand burstiness, perplexity, and human writing patterns at a mathematical level." },
+                        { role: "system", content: "You are an expert at making AI text undetectable. You understand that AI detection works by analyzing sentence structure patterns, not just vocabulary. Your weapon is STRUCTURAL CHAOS — mixing sentence lengths, merging/splitting ideas, changing presentation order — while preserving meaning perfectly." },
                         { role: "user", content: healingPrompt }
                     ], Math.min(0.95, targetTemp + 0.15), Math.min(0.98, targetTopP + 0.05), "llama-3.3-70b-versatile");
 
@@ -348,6 +378,7 @@ OUTPUT FORMAT: EXCLUSIVELY valid XML blocks.`;
                     bestVariant = applyClauseReordering(bestVariant);
                     bestVariant = applyDeicticInjection(bestVariant, vibe as any);
                     bestVariant = applySemanticDrift(bestVariant, vibe as any);
+                    bestVariant = applyHumanPatterns(bestVariant, vibe as any);
 
                     // Re-verify after healing
                     const healedReport = runVerificationAgent(bestVariant);

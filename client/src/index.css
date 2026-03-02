@@ -921,7 +921,7 @@ button:hover {
 /* Firefox Support — slim scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.10) transparent;
+  scrollbar-color: rgba(255,255,255,0.15) #050505;
 }
 
 /* Bengali SVG brush-stroke underline animation */
@@ -1005,14 +1005,14 @@ body:not(.scroll-idle) .rotating-gradient-border {
   width: 3px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: hsl(var(--background));
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.15);
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.30);
 }
 
 /* Removed global transform transition - let components handle their own transitions */

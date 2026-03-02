@@ -332,8 +332,8 @@ const Home = () => {
           </div>
 
           {/* ===== WORK WITH US ===== */}
-          <motion.div className="py-8 w-full px-4 sm:px-6 lg:px-8" initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-60px' }} transition={{ duration: 0.7, ease: 'easeOut' }}>
-            <section className="max-w-4xl mx-auto relative pb-8 sm:pb-16" data-testid="collaboration-section">
+          <motion.div className="py-4 sm:py-8 w-full px-4 sm:px-6 lg:px-8" initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-60px' }} transition={{ duration: 0.7, ease: 'easeOut' }}>
+            <section className="max-w-4xl mx-auto relative pb-4 sm:pb-8" data-testid="collaboration-section">
               <div className="absolute inset-0 -z-10 bg-radial-glow opacity-30"></div>
               {/* Section heading — above the card, not inside it */}
               <div className="text-center mb-6 sm:mb-8">
@@ -414,75 +414,35 @@ const Home = () => {
         </main>
       </div>
 
-      {/* ── PREMIUM GLASS FOOTER ── */}
-      <footer className="relative mt-0" data-testid="footer">
-        {/* Top glow edge */}
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#F4C430]/30 to-transparent" />
-        <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-[#F4C430]/6 to-transparent pointer-events-none" />
-
-        <div className="bg-black/60 backdrop-blur-2xl border-t border-white/[0.07]">
-          <div className="max-w-6xl mx-auto px-5 sm:px-8 pt-12 pb-28 sm:pb-10">
-
-            {/* ── 3-column grid ── */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-6 mb-10 text-center sm:text-left">
-
-              {/* Brand */}
-              <div className="flex flex-col items-center sm:items-start gap-3">
-                <div className="flex items-center gap-2.5">
-                  <img src="/logo.png" alt="Bong Bari logo" className="w-9 h-9 rounded-xl ring-1 ring-white/10" />
-                  <span className="text-white font-bold text-lg tracking-tight">বং বাড়ি</span>
-                </div>
-                <p className="text-gray-400 text-sm leading-relaxed max-w-[200px] font-bengali">
-                  ঘরোয়া পরিবেশের মজার গল্প
-                </p>
-                <p className="text-gray-600 text-[11px]">Authentic Bengali Comedy · Kolkata</p>
-              </div>
-
-              {/* Navigation */}
-              <div className="flex flex-col items-center gap-2">
-                <p className="text-white/30 text-[9px] uppercase tracking-[0.15em] font-semibold mb-1">Explore</p>
-                {([['/', 'Home'], ['/about', 'About'], ['/blog', 'Blog'], ['/faq', 'FAQ'], ['/tools', 'Free Tools'], ['/work-with-us', 'Collaborate']] as [string, string][]).map(([href, label]) => (
-                  <a key={href} href={href} className="text-gray-400 hover:text-[#F4C430] text-sm transition-colors duration-200 leading-none py-0.5">{label}</a>
-                ))}
-              </div>
-
-              {/* Social + Contact */}
-              <div className="flex flex-col items-center sm:items-end gap-3">
-                <p className="text-white/30 text-[9px] uppercase tracking-[0.15em] font-semibold">Connect</p>
-                <button
-                  onClick={() => window.open('https://youtube.com/@bongbari', '_blank')}
-                  data-testid="button-youtube-footer"
-                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#E53935]/10 hover:bg-[#E53935]/25 border border-[#E53935]/25 hover:border-[#E53935]/50 text-[#E53935] text-sm font-medium transition-all duration-200 hover:scale-105 active:scale-95 w-[140px] justify-center"
-                >
-                  <Youtube className="w-4 h-4 fill-[#E53935] shrink-0" />
-                  YouTube
-                </button>
-                <button
-                  onClick={() => window.open('https://instagram.com/thebongbari', '_blank')}
-                  data-testid="button-instagram-footer"
-                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 hover:bg-purple-500/25 border border-purple-500/25 hover:border-purple-500/50 text-purple-400 text-sm font-medium transition-all duration-200 hover:scale-105 active:scale-95 w-[140px] justify-center"
-                >
-                  <Instagram className="w-4 h-4 shrink-0" />
-                  Instagram
-                </button>
-                <a href="mailto:team@bongbari.com" className="text-gray-600 hover:text-[#F4C430] text-xs transition-colors duration-200 mt-1">team@bongbari.com</a>
-              </div>
+      {/* ── ULTRA-SLIM GLASS FOOTER ── */}
+      <footer className="relative mt-4 sm:mt-6 pb-24 sm:pb-6" data-testid="footer">
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#F4C430]/20 to-transparent" />
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 mt-4">
+          <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
+            
+            {/* Brand */}
+            <div className="flex items-center gap-3">
+              <img src="/logo.png" alt="Bong Bari logo" className="w-6 h-6 rounded-md ring-1 ring-white/10" />
+              <span className="text-white/80 font-medium text-xs tracking-wide">© Bong Bari 2025</span>
             </div>
 
-            {/* Divider */}
-            <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-5" />
+            {/* Links */}
+            <div className="flex items-center gap-4 text-[10px] sm:text-xs text-gray-500 font-medium tracking-wide">
+              <a href="/privacy" className="hover:text-[#F4C430] transition-colors">Privacy</a>
+              <span className="text-white/10">•</span>
+              <a href="/terms" className="hover:text-[#F4C430] transition-colors">Terms</a>
+              <span className="text-white/10">•</span>
+              <a href="mailto:team@bongbari.com" className="hover:text-[#F4C430] transition-colors">Contact</a>
+            </div>
 
-            {/* Bottom bar */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-              <div className="text-center sm:text-left">
-                <p className="text-gray-500 text-xs font-medium" data-testid="footer-text">© Bong Bari 2025 Kolkata</p>
-                <p className="text-gray-700 text-[11px] bangla-text mt-0.5" data-testid="footer-text-bengali">© বং বাড়ি ২০২৫ কলকাতা</p>
-              </div>
-              <div className="flex items-center gap-4 text-[11px] text-gray-600">
-                <a href="/privacy" className="hover:text-[#F4C430] transition-colors duration-200">Privacy Policy</a>
-                <span className="text-white/10">|</span>
-                <a href="/terms" className="hover:text-[#F4C430] transition-colors duration-200">Terms &amp; Conditions</a>
-              </div>
+            {/* Socials */}
+            <div className="flex items-center gap-3">
+              <button onClick={() => window.open('https://youtube.com/@bongbari', '_blank')} className="text-gray-500 hover:text-[#E53935] transition-colors">
+                <Youtube className="w-4 h-4" />
+              </button>
+              <button onClick={() => window.open('https://instagram.com/thebongbari', '_blank')} className="text-gray-500 hover:text-purple-400 transition-colors">
+                <Instagram className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>

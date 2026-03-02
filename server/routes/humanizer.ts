@@ -123,8 +123,8 @@ export function registerHumanizerRoutes(app: Express, sessions: Map<string, any>
                 temperature = 0.40;
                 vibePrompt = "VIBE: Academic. Precise, collegiate vocabulary. Formal structure. Zero contractions. Zero slang.";
             } else {
-                temperature = 0.70;
-                vibePrompt = "VIBE: Casual. Write like a thoughtful person explaining something to a friend. Contractions OK. Direct but not sloppy.";
+                temperature = 0.55;
+                vibePrompt = "VIBE: Casual. Light, natural tone — like a well-written blog post. Contractions OK. Direct but not sloppy. Do NOT inject opinions or personal commentary.";
             }
 
             let flawPrompt = "";
@@ -147,39 +147,42 @@ export function registerHumanizerRoutes(app: Express, sessions: Map<string, any>
                 ? `FORMATTING LOCK: The input contains bullet points or numbered lists. Your output MUST preserve the EXACT same format — if input uses "- item", output uses "- item". If input uses "1. item", output uses "1. item". Never convert bullets to prose sentences. Never drop the list markers.`
                 : `STRUCTURE: Use short paragraphs. Mix 1-sentence paragraphs with longer ones for human-like rhythm.`;
 
-            const buildHolisticPrompt = () => `You are a world-class human writing assistant. Rewrite the given text so it reads exactly like a real person wrote it — natural, varied, and undetectable by AI detectors.
+            const buildHolisticPrompt = () => `You are a world-class human writing assistant. Rewrite the given text so it reads naturally — like a real person wrote it — while preserving the original meaning exactly.
 
 ${vibePrompt}
 ${flawPrompt}
 
-RESEARCH-BACKED RULES:
-1. BURSTINESS: Mix very short sentences (3–5 words) with long complex ones (25+ words). Never write three sentences of similar length in a row. Human CoV target: 56.95+.
-2. NO AI OPENERS: Never start a sentence with Furthermore, Moreover, Additionally, In conclusion, It is worth noting, Therefore, Hence, Thus, In contrast, That being said.
-3. HUMAN CONNECTORS: Use conversational transitions — "so", "and", "but", "honestly", "look", "here's the thing" — instead of formal discourse markers.
-4. VOCABULARY VARIETY: Use unexpected, specific word choices. Avoid: delve, tapestry, seamlessly, holistic, robust, utilize, leverage, paradigm, ecosystem, game-changer, transformative.
-5. ${bulletRule}
-6. PRESERVE ALL CONTENT: Every idea, name, and term from the input must appear in the output. Do not drop anything.
-7. LENGTH: Output word count should be close to input (within ±20%). Do not pad. Do not over-expand.
-8. NO META-COMMENTARY: Output ONLY the rewritten content. No intro phrases like "Here is the rewritten text:".
-9. PRONOUN INJECTION: Use "you", "we", "I" naturally. AI text almost never uses first/second person pronouns — humans always do. Target: at least 1-2 pronouns per 100 words.
-10. DE-NOMINALIZE: Replace stiff nominalizations like "the implementation of X" with active verbal forms like "implementing X" or "how we implement X". Write with verbs, not noun chains.`;
+ABSOLUTE RULES (ranked by priority):
+1. MEANING LOCK: Rewrite using ONLY facts and ideas from the input. NEVER add opinions ("I think", "honestly"), personal commentary, new claims, or information not present in the original. If the input is objective, the output must be objective.
+2. TONE PRESERVATION: Match the input's register. If input is formal/neutral, output should be formal/neutral with light humanization. Do NOT inject conversational asides or chatty filler into formal text.
+3. STRUCTURE PRESERVATION: Keep the same logical flow — same idea ordering, same paragraph structure. Do not rearrange the argument.
+4. BURSTINESS: Slightly vary sentence lengths. Mix shorter sentences with longer ones. Do NOT force extreme 3-word punchy sentences — keep it natural.
+5. NO AI OPENERS: Never start a sentence with Furthermore, Moreover, Additionally, In conclusion, It is worth noting, Therefore, Hence, Thus, In contrast, That being said.
+6. VOCABULARY: Replace obvious AI cliché words (delve, tapestry, seamlessly, holistic, robust, utilize, leverage, paradigm, ecosystem, game-changer, transformative) with natural alternatives.
+7. ${bulletRule}
+8. PRESERVE ALL CONTENT: Every idea, name, and key term from the input must appear in the output. Do not drop anything.
+9. LENGTH: Output word count must be within ±10% of input. No padding. No filler phrases. No unnecessary expansion.
+10. NATURAL CONTRACTIONS: Use contractions naturally (it's, don't, can't, we're) but do not over-casualize formal text.
+11. DE-NOMINALIZE: Replace stiff nominalizations like "the implementation of X" with active verbal forms like "implementing X". Write with verbs, not noun chains.
+12. NO META-COMMENTARY: Output ONLY the rewritten content. No intro phrases.`;
 
             // AST-BLOCK MODE: For dense AI prose paragraphs
-            const buildASTPrompt = () => `You are the V12 Dominator Engine — the world's most advanced AI text humanizer. Operating in AST Tokenization Mode.
+            const buildASTPrompt = () => `You are a precise AI text humanizer operating in AST Tokenization Mode.
 
 ${vibePrompt}
 ${flawPrompt}
 
-RESEARCH-BACKED ABSOLUTE CONSTRAINTS:
-1. AST REWRITE LOCK: Text is wrapped in <block id="X">...</block> tags. Output MUST use the exact same <block id="X">...</block> tags with no merging or dropping.
-2. BURSTINESS MANDATE: Human CoV target = 56.95. In every block, mix very short sentences (3–5 words) with long complex ones (25+ words). Never write uniform rhythm.
-3. PERPLEXITY SPIKING: Choose unexpected, lower-probability word choices. Avoid the most obvious phrasing. Replace: Furthermore→(drop), Moreover→(drop), Additionally→(drop), crucial→key/central, delve→explore/look into, seamlessly→smoothly, holistic→complete, robust→strong, utilize→use.
-4. CONJUNCTION PURGE: NEVER start a sentence with Furthermore, Moreover, Additionally, Therefore, Hence, Thus, In conclusion, That being said, Needless to say, Last but not least.
-5. LENGTH LOCK: Total word count must be ${minWords}–${maxWords} words. No filler.
-6. MEANING LOCK: Use only facts from the original text.
-7. SELF-OUTPUT: For each block, generate 3 structural variations internally. Output only the most human-sounding one.
-8. PRONOUN INJECTION: Weave "you", "we", "I" into the rewrite naturally. AI text starves on first/second person — humans don't. Target: 1-2 pronouns per 100 words minimum.
-9. DE-NOMINALIZE: Convert noun-heavy constructions ("the utilization of", "the development of") into active verbal forms ("using", "developing"). Verbs over nouns.
+ABSOLUTE CONSTRAINTS (ranked by priority):
+1. MEANING LOCK: Rewrite using ONLY facts from the original text. NEVER add opinions, personal commentary, or new claims not present in the original. If input is objective, output must be objective.
+2. TONE PRESERVATION: Match the input's register exactly. Formal input = formal output. Neutral input = neutral output.
+3. AST REWRITE LOCK: Text is wrapped in <block id="X">...</block> tags. Output MUST use the exact same <block id="X">...</block> tags with no merging or dropping.
+4. BURSTINESS: Slightly vary sentence lengths within each block. Do NOT force extreme punchy sentences — keep variation natural.
+5. VOCABULARY: Replace AI cliché words (delve, tapestry, seamlessly, holistic, robust, utilize, leverage) with natural alternatives.
+6. CONJUNCTION PURGE: NEVER start a sentence with Furthermore, Moreover, Additionally, Therefore, Hence, Thus, In conclusion, That being said.
+7. LENGTH LOCK: Total word count must be ${minWords}–${maxWords} words. No filler. No padding.
+8. STRUCTURE PRESERVATION: Keep the same logical flow within each block. Same idea ordering.
+9. NATURAL CONTRACTIONS: Use contractions naturally but do not over-casualize formal text.
+10. DE-NOMINALIZE: Convert noun-heavy constructions into active verbal forms. Verbs over nouns.
 
 OUTPUT FORMAT: EXCLUSIVELY valid XML blocks.`;
 

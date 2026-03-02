@@ -556,13 +556,13 @@ export function applySentenceStarterDiversifier(text: string, vibe: 'academic' |
 
         const s = sentence.trim();
 
-        // V12.1 FIX: Expanded Pattern 1 to match multi-word noun phrases
-        // Old: ^The \w+ (is|are|...) — only matched "The X is/are" (one word after The)
-        // New: also matches "The X of Y has/have/is/..." and "The X Y Z verb..." forms
+        // V12.2 FIX: Pattern 1 — "The X is/are..." starters
+        // Restructure by dropping "The" or converting to a more natural start
+        // V12.2: Removed chatty openers ("Honestly,", "Look,", "Here's the thing")
+        // These injected tone/opinions not present in input. Use NEUTRAL restructuring only.
         if (/^The (\w+ ){1,8}(is|are|was|were|has|have|can|will|shows?|makes?|provides?|allows?|helps?|continues?|represents?|requires?|developed|improved|demonstrated|enabled)\b/i.test(s)) {
-            // V12.1 FIX: Vibe-aware openers — academic gets formal, casual/genz gets conversational
-            const casualOpeners = ['Honestly,', 'Look,', "Here's the thing —", 'Worth noting:', 'And honestly,'];
-            const academicOpeners = ['Notably,', 'Importantly,', 'Critically,', 'In particular,', 'Significantly,'];
+            const casualOpeners = ['Still,', 'In practice,', 'As it stands,', 'On that note,'];
+            const academicOpeners = ['Notably,', 'In particular,', 'Significantly,', 'To that end,'];
             const openers = vibe === 'academic' ? academicOpeners : casualOpeners;
             const opener = openers[Math.floor(Math.random() * openers.length)];
             return `${opener} ${s.charAt(0).toLowerCase() + s.slice(1)}`;
@@ -571,7 +571,8 @@ export function applySentenceStarterDiversifier(text: string, vibe: 'academic' |
         // Pattern 2: "It is [important/crucial/clear/essential/worth/necessary]..."
         const itIsMatch = s.match(/^It (is|was|has been) (important|crucial|essential|clear|obvious|evident|worth|necessary|key)/i);
         if (itIsMatch) {
-            const openers = ["And it's genuinely", "Honestly, it's", "That makes it"];
+            // V12.2: Neutral restructuring — no opinion injection
+            const openers = ["That's", "This remains", "It's clearly"];
             const opener = openers[Math.floor(Math.random() * openers.length)];
             const rest = s.slice(itIsMatch[0].length);
             return `${opener} ${itIsMatch[2].toLowerCase()}${rest}`;
@@ -581,7 +582,8 @@ export function applySentenceStarterDiversifier(text: string, vibe: 'academic' |
         const thereMatch = s.match(/^There (are|is) /i);
         if (thereMatch) {
             const rest = s.slice(thereMatch[0].length);
-            const openers = ["You'll find ", "Expect to see ", "There's actually "];
+            // V12.2: Neutral restructuring — no "You'll find" injection
+            const openers = ["Several ", "A number of ", "Some "];
             return openers[Math.floor(Math.random() * openers.length)] + rest;
         }
 
@@ -622,9 +624,9 @@ export function applyParagraphRhythm(text: string): string {
         const doc = nlp.readDoc(para);
         const sentences = doc.sentences().out() as string[];
 
-        // V12.1 FIX: Lowered from every 3rd to every 2nd paragraph, and from 4+ to 3+ sentences
-        // Also require 3+ sentences in the paragraph to extract one
-        if (sentences.length >= 3 && i % 2 === 1) {
+        // V12.2 FIX: Only extract punch paragraphs from very large paragraphs (5+ sentences)
+        // in every 3rd paragraph — old behavior (3+ sentences, every 2nd) broke short text structure
+        if (sentences.length >= 5 && i % 3 === 2) {
             // Find the best "punch" sentence: short (4–12 words), declarative (no question marks), not the first sentence
             const candidates = sentences
                 .map((s, idx) => ({
@@ -676,37 +678,28 @@ export function applyDeicticInjection(text: string, vibe: 'academic' | 'casual' 
     const sentences = doc.sentences().out() as string[];
     if (sentences.length < 3) return text;
 
-    // Casual bridges inject "you" address
+    // V12.2 FIX: Bridges must be MEANING-NEUTRAL — no opinions, no new claims
+    // Old bridges like "and you'll notice this quickly" injected meaning drift.
     const casualBridges = [
-        ' — and you\'ll notice this quickly',
-        ' — worth thinking about, honestly',
-        ', which matters more than you\'d think',
-        ' — and that\'s the part that catches people off guard',
-        ', if you really look at it',
+        ', at least broadly speaking',
+        ', in a way',
+        ', roughly speaking',
+        ', more or less',
     ];
-    // Academic bridges inject "we" framing
     const academicBridges = [
-        ', as we can observe here',
-        ' — something we should note at this point',
-        ', and this distinction matters for our understanding',
-        ', which we find particularly relevant',
-        ' — and here the pattern becomes clear',
+        ', as observed here',
+        ', within this context',
+        ', broadly speaking',
+        ', in this regard',
     ];
-    // Deictic anchors (added as sentence starters)
-    const deicticStarters = [
-        'At this point, ',
-        'Right now, ',
-        'Here, ',
-        'Now, ',
-    ];
+    // V12.2: Removed deictic starters ("At this point,", "Right now,") — they inject temporal claims not in original
 
     const bridges = vibe === 'academic' ? academicBridges : casualBridges;
-    // V12.1: Higher bridge probability for academic (needs "we" pronouns to pass detector)
-    const bridgeProb = vibe === 'academic' ? 0.70 : 0.55;
+    // V12.2: Drastically lowered bridge probability — bridges should be rare, not every 3rd sentence
+    const bridgeProb = vibe === 'academic' ? 0.30 : 0.20;
     const result = sentences.map((s, idx) => {
-        // V12.1 FIX: Removed "not last sentence" guard — it's OK to modify final sentence
-        // Bridge phrase injection on idx=2, 5, 8 etc.
-        if (idx > 0 && (idx + 1) % 3 === 0 && Math.random() < bridgeProb) {
+        // Bridge phrase injection — only on longer sentences, every 4th eligible
+        if (idx > 1 && (idx + 1) % 4 === 0 && Math.random() < bridgeProb) {
             const bridge = bridges[Math.floor(Math.random() * bridges.length)];
             const trimmed = s.trim();
             if (trimmed.endsWith('.')) {
@@ -714,57 +707,46 @@ export function applyDeicticInjection(text: string, vibe: 'academic' | 'casual' 
             }
             return trimmed + bridge;
         }
-        // Deictic starter injection for idx>=3
-        if (idx >= 3 && Math.random() < 0.35) {
-            const starter = deicticStarters[Math.floor(Math.random() * deicticStarters.length)];
-            const trimmed = s.trim();
-            return starter + trimmed.charAt(0).toLowerCase() + trimmed.slice(1);
-        }
         return s;
     });
 
-    // V12.1 FIX: Phrase-aware pronoun injection (prevents "healthcare you" broken grammar)
-    // Only replace when target noun follows a determiner, preposition, or verb — NOT another noun
+    // V12.2: Pronoun injection — only for genz vibe (casual/academic should preserve input tone)
     let joined = result.join(' ');
-    if (vibe !== 'academic') {
+    if (vibe === 'genz') {
         const safePrefix = /(?:(?:^|[.!?]\s+)|(?:(?:the|these|those|for|to|by|from|with|among|between|enable|enabling|help|helping|allow|allowing|empower|empowering) ))(?:users|individuals|people|professionals|stakeholders|participants|researchers|practitioners|consumers|audiences|learners|readers|developers)/gi;
         joined = joined.replace(safePrefix, (match) => {
-            if (Math.random() < 0.40) {
-                // Preserve the prefix part, replace only the noun
+            if (Math.random() < 0.35) {
                 const lastSpace = match.lastIndexOf(' ');
                 if (lastSpace > 0) {
                     return match.substring(0, lastSpace + 1) + 'you';
                 }
-                return 'You'; // Sentence start
+                return 'You';
             }
             return match;
         });
-        // Also inject "we" for collective impersonal phrases
         joined = joined.replace(/\b(one can|one could|it is possible to|it can be)\b/gi, (match) => {
-            if (Math.random() < 0.4) return 'we can';
+            if (Math.random() < 0.35) return 'we can';
             return match;
         });
     }
 
-    // V12.1: Pronoun floor guarantee — if NO first/second person pronouns exist,
-    // force-inject one bridge into the 2nd sentence to ensure minimum pronoun rate.
-    // This prevents random-chance zero-pronoun outputs that fail AI detection.
-    const pronounCheck = joined.match(/\b(you|your|you're|you'll|you'd|I|I'm|I've|I'll|we|we're|we've|our|us|myself|ourselves)\b/g);
-    if (!pronounCheck || pronounCheck.length === 0) {
-        // Find the 2nd sentence and inject a pronoun bridge
-        const sentenceSplit = joined.match(/[^.!?]+[.!?]+/g);
-        if (sentenceSplit && sentenceSplit.length >= 2) {
-            const targetIdx = 1; // 2nd sentence
-            const s = sentenceSplit[targetIdx].trim();
-            const fallbackBridge = vibe === 'academic'
-                ? ', as we can observe here'
-                : ', and you\'ll notice this quickly';
-            if (s.endsWith('.')) {
-                sentenceSplit[targetIdx] = ' ' + s.slice(0, -1) + fallbackBridge + '.';
-            } else {
-                sentenceSplit[targetIdx] = ' ' + s + fallbackBridge;
+    // V12.2: Pronoun floor guarantee DISABLED for casual/academic
+    // Old behavior force-injected "and you'll notice this quickly" into every output.
+    // This caused meaning drift. Only genz needs pronoun floor guarantee.
+    if (vibe === 'genz') {
+        const pronounCheck = joined.match(/\b(you|your|you're|you'll|you'd|I|I'm|I've|I'll|we|we're|we've|our|us|myself|ourselves)\b/g);
+        if (!pronounCheck || pronounCheck.length === 0) {
+            const sentenceSplit = joined.match(/[^.!?]+[.!?]+/g);
+            if (sentenceSplit && sentenceSplit.length >= 2) {
+                const s = sentenceSplit[1].trim();
+                const fallbackBridge = ', broadly speaking';
+                if (s.endsWith('.')) {
+                    sentenceSplit[1] = ' ' + s.slice(0, -1) + fallbackBridge + '.';
+                } else {
+                    sentenceSplit[1] = ' ' + s + fallbackBridge;
+                }
+                joined = sentenceSplit.join('');
             }
-            joined = sentenceSplit.join('');
         }
     }
 
@@ -890,36 +872,30 @@ export function applySemanticDrift(text: string, vibe: 'academic' | 'casual' | '
     const sentences = doc.sentences().out() as string[];
     if (sentences.length < 3) return text;
 
-    // V12.1 FIX: Vibe-aware drift bridges
+    // V12.2 FIX: Drift bridges must be SHORT and MEANING-NEUTRAL
+    // Old bridges like "or that's how it tends to play out" injected filler/opinions.
     const casualBridges = [
-        ' — though context matters here',
         ', at least in most cases',
-        ' (worth pausing on, honestly)',
-        ' — or that\'s how it tends to play out',
-        ', depending on how you look at it',
-        ' — and this is the part that trips people up',
-        ', which is more nuanced than it sounds',
-        ' — but that\'s a whole other thing',
+        ', generally speaking',
+        ', more or less',
+        ', to some degree',
     ];
     const academicBridges = [
-        ', though this warrants further analysis',
-        ', at least within the scope examined here',
-        ' — a distinction that merits attention',
-        ', which complicates the broader picture',
-        ', though the evidence remains mixed',
-        ' — a point often overlooked in the literature',
+        ', broadly speaking',
+        ', to varying degrees',
+        ', within this framework',
+        ', at least in principle',
     ];
     const driftBridges = vibe === 'academic' ? academicBridges : casualBridges;
 
-    let lastBridgeIdx = -3;
+    let lastBridgeIdx = -4;
 
     const result = sentences.map((s, idx) => {
-        // V12.1 FIX: Simplified targeting — fire on idx=2, then every 3rd after
-        // Old approach with targetGap=4-5 and idx%targetGap never fired on short paragraphs
-        if (idx < 1 || idx === sentences.length - 1) return s;
-        if (idx - lastBridgeIdx < 2) return s;
-        if ((idx + 1) % 3 !== 0) return s; // Fires on idx=2, 5, 8
-        if (Math.random() > 0.50) return s;
+        // V12.2: Fire much less often — every 5th sentence, 30% probability
+        if (idx < 2 || idx === sentences.length - 1) return s;
+        if (idx - lastBridgeIdx < 3) return s;
+        if ((idx + 1) % 5 !== 0) return s; // Fires on idx=4, 9, 14
+        if (Math.random() > 0.30) return s;
 
         const bridge = driftBridges[Math.floor(Math.random() * driftBridges.length)];
         const trimmed = s.trim();
@@ -1172,8 +1148,10 @@ export function runVerificationAgent(text: string): VerificationReport {
     const pronounRatePer100 = (pronouns / totalWordCount) * 100;
     // Score: >= 2.0 per 100w = excellent (100), 0 = very robotic (0)
     const pronounScore = Math.min(100, Math.round(Math.max(0, pronounRatePer100 / 2.5) * 100));
-    const pronounVerdict = pronounScore >= 20 ? 'PASS' : 'WARN';
-    if (pronounVerdict === 'WARN' && pronounScore < 10) failures.push('pronounRate');
+    // V12.2: Lowered pronoun threshold — formal/objective text naturally has fewer pronouns
+    // Old threshold was too aggressive and forced pronoun injection that caused meaning drift
+    const pronounVerdict = pronounScore >= 10 ? 'PASS' : 'WARN';
+    if (pronounVerdict === 'WARN' && pronounScore < 5) failures.push('pronounRate');
 
     // ── Metric 7: Nominalization Rate (V12 NEW) ──
     // Research: Biber (1988), Koppel & Schler (2004) — AI over-nominalizes.

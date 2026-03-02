@@ -8,6 +8,37 @@ import { auth } from "@/lib/firebase";
 import { useLocation } from "wouter";
 import { buildApiUrl } from '@/lib/queryClient';
 import { cleanInputText } from '@/lib/nlp';
+import { SEOHead } from '@/components/SEOHead';
+
+// ─── Structured Data (JSON-LD) for the Humanizer Tool ─────────────────────────
+const HUMANIZER_SCHEMA = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "BongBari AI Humanizer",
+  "applicationCategory": "WebApplication",
+  "operatingSystem": "Web Browser",
+  "url": "https://www.bongbari.com/tools/humanizer",
+  "description": "Free AI text humanizer tool. Converts ChatGPT, Gemini and other AI-generated text into natural, human-sounding writing that bypasses AI detectors like ZeroGPT and TurnItIn. Supports casual and academic styles.",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "INR"
+  },
+  "featureList": [
+    "AI text humanization",
+    "Bypass ZeroGPT detection",
+    "Bypass TurnItIn AI detection",
+    "Casual and Academic writing styles",
+    "Llama-3.3-70B powered rewriting",
+    "Cloud and on-device processing",
+    "Free unlimited usage"
+  ],
+  "publisher": {
+    "@type": "Organization",
+    "name": "Bong Bari",
+    "url": "https://www.bongbari.com"
+  }
+};
 
 // ─── Segmented Pill Control (replaces dropdown — no z-index clashes) ──────────
 function PillSelect({
@@ -291,7 +322,7 @@ export default function FreeToolsHumanizer() {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const lastVerificationRef = useRef<any>(null);
 
-  useEffect(() => { document.title = 'BongBari Humanizer | Free AI Text Converter'; }, []);
+  // SEO: title is now handled by <SEOHead> in JSX below
   useEffect(() => { localStorage.setItem('hum_mode', internalMode); }, [internalMode]);
 
   useEffect(() => {
@@ -533,6 +564,15 @@ export default function FreeToolsHumanizer() {
   }, [resultText]);
 
   return (
+    <>
+      <SEOHead
+        title="Free AI Text Humanizer — Bypass ZeroGPT & TurnItIn | Bong Bari"
+        description="Free AI text humanizer tool. Paste ChatGPT or Gemini text and convert it to 100% human-sounding writing. Defeats ZeroGPT, TurnItIn and GPTZero detectors. Casual & academic styles. Free, no sign-up."
+        url="https://www.bongbari.com/tools/humanizer"
+        image="https://www.bongbari.com/logo.png"
+        keywords="AI text humanizer, bypass ZeroGPT, bypass TurnItIn, AI to human text, free humanizer tool, ChatGPT humanizer, AI detection remover"
+        structuredData={HUMANIZER_SCHEMA}
+      />
     <div className="fixed inset-0 z-50 font-sans text-gray-100 flex flex-col bg-zinc-950 overflow-hidden">
       <style dangerouslySetInnerHTML={{
         __html: `
@@ -814,5 +854,6 @@ export default function FreeToolsHumanizer() {
         )}
       </AnimatePresence>
     </div>
+    </>
   );
 }

@@ -58,12 +58,20 @@
     <priority>0.6</priority>
   </url>
   
-  <!-- Free tools page -->
+  <!-- Free tools hub page — collection of free creator tools -->
   <url>
-    <loc>https://www.bongbari.com/free-tools</loc>
-    <lastmod>2025-10-13</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <loc>https://www.bongbari.com/tools</loc>
+    <lastmod>2026-03-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <!-- AI Humanizer tool — high-value SEO target, free tool  -->
+  <url>
+    <loc>https://www.bongbari.com/tools/humanizer</loc>
+    <lastmod>2026-03-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
   </url>
   
   <!-- Privacy policy - required for compliance -->

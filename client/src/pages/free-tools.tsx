@@ -1,12 +1,32 @@
 import { Button } from '@/components/ui/button';
 import { Link } from 'wouter';
 import { motion } from 'framer-motion';
+import { SEOHead } from '@/components/SEOHead';
+
+const FREE_TOOLS_SCHEMA = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "Free Tools by Bong Bari",
+  "description": "Free online tools for writers and creators. AI text humanizer, content tools and more — built by Bong Bari.",
+  "url": "https://www.bongbari.com/tools",
+  "publisher": {
+    "@type": "Organization",
+    "name": "Bong Bari",
+    "url": "https://www.bongbari.com"
+  }
+};
 
 const FreeTools = () => {
-  if (typeof document !== 'undefined') {
-    document.title = 'Free Tools | বং বাড়ি';
-  }
   return (
+    <>
+      <SEOHead
+        title="Free Online Tools for Writers & Creators | Bong Bari"
+        description="Free tools for writers, students and creators. AI text humanizer converts AI-generated content to sound 100% human. Built by Bong Bari. No sign-up required."
+        url="https://www.bongbari.com/tools"
+        image="https://www.bongbari.com/logo.png"
+        keywords="free writing tools, AI text humanizer, bypass AI detection, free online tools, content tools"
+        structuredData={FREE_TOOLS_SCHEMA}
+      />
     <div className="min-h-screen bg-[#050505] text-white relative">
       {/* Premium Background Effects */}
       <div className="fixed inset-0 pointer-events-none">
@@ -66,6 +86,7 @@ const FreeTools = () => {
         </div>
       </main>
     </div>
+    </>
   );
 };
 

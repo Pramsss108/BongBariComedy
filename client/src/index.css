@@ -918,6 +918,17 @@ button:hover {
   background: var(--brand-red);
 }
 
+/* Firefox Support — slim scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.10) transparent;
+}
+
+/* Bengali SVG brush-stroke underline animation */
+@keyframes bengali-brush {
+  to { stroke-dashoffset: 0; }
+}
+
 /* Global smooth scrolling */
 html {
   scroll-behavior: smooth;
@@ -989,24 +1000,19 @@ body:not(.scroll-idle) .rotating-gradient-border {
   transform: translateZ(0) scale(0.98);
 }
 
-/* Custom scrollbar with brand colors */
+/* Scrollbar (consolidated — thin ghost track) */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 3px;
 }
-
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(45deg, #FFCC00, #FF4444, #4444FF);
-  border-radius: 4px;
-  transition: all 0.3s ease;
+  background: rgba(255,255,255,0.10);
+  border-radius: 10px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(45deg, #FFD700, #FF6666, #6666FF);
-  box-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+  background: rgba(255,255,255,0.22);
 }
 
 /* Removed global transform transition - let components handle their own transitions */

@@ -236,7 +236,35 @@ const Home = () => {
 
             <motion.div className="text-center space-y-2 md:space-y-3 w-full max-w-2xl mx-auto" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}>
               <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight">
-                Authentic{' '}<span className="relative"><span className="text-[#F4C430] drop-shadow-[0_2px_12px_rgba(244,196,48,0.5)]">Bengali</span><span className="absolute -bottom-1 left-0 w-full h-[3px] bg-[#F4C430]/50 rounded-full" /></span>{' '}Comedy
+                Authentic{' '}
+                <span className="relative inline-block pb-1">
+                  <span className="text-[#F4C430] drop-shadow-[0_2px_12px_rgba(244,196,48,0.5)]">Bengali</span>
+                  {/* Animated SVG pen-stroke underline — draws itself on load */}
+                  <svg
+                    className="absolute -bottom-1 left-0 w-full overflow-visible pointer-events-none"
+                    height="10" viewBox="0 0 100 10" preserveAspectRatio="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M1,6 C15,2 35,9 52,5 C69,1 85,8 99,4"
+                      fill="none" stroke="#F4C430" strokeWidth="2.5"
+                      strokeLinecap="round" strokeLinejoin="round"
+                      strokeDasharray="130" strokeDashoffset="130"
+                      opacity="0.8"
+                      style={{ animation: 'bengali-brush 0.9s cubic-bezier(.4,0,.2,1) 0.5s forwards' }}
+                    />
+                    {/* Glow layer */}
+                    <path
+                      d="M1,6 C15,2 35,9 52,5 C69,1 85,8 99,4"
+                      fill="none" stroke="#F4C430" strokeWidth="5"
+                      strokeLinecap="round" strokeLinejoin="round"
+                      strokeDasharray="130" strokeDashoffset="130"
+                      opacity="0.15"
+                      style={{ filter: 'blur(2px)', animation: 'bengali-brush 0.9s cubic-bezier(.4,0,.2,1) 0.5s forwards' }}
+                    />
+                  </svg>
+                </span>
+                {' '}Comedy
               </h1>
               <p className="font-bengali text-sm sm:text-base md:text-lg text-gray-400 font-medium">ঘরোয়া পরিবেশের মজার গল্প</p>
               <div className="flex flex-row justify-center items-center gap-3 pt-1">
@@ -249,10 +277,7 @@ const Home = () => {
               </div>
             </motion.div>
 
-            <motion.div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-white/30" animate={{ y: [0, 8, 0] }} transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}>
-              <span className="text-[9px] font-semibold uppercase tracking-widest">scroll</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14" /><path d="m19 12-7 7-7-7" /></svg>
-            </motion.div>
+            {/* Scroll indicator removed — above-the-fold video + CTA is enough visual anchor */}
           </section>
 
           {/* ===== LATEST COMEDY ===== */}
@@ -389,33 +414,76 @@ const Home = () => {
         </main>
       </div>
 
-      {/* Footer */}
-      <footer className="bg-brand-blue text-white py-4 sm:py-6 mt-0" data-testid="footer">
-        <div className="container mx-auto px-4 sm:px-6 text-center">
-          <div className="flex justify-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-            <button
-              className="bg-red-500 hover:bg-red-600 active:bg-red-700 text-white px-4 sm:px-5 py-3 sm:py-2 rounded-full text-sm sm:text-base flex items-center gap-2 transition-all duration-400 hover:scale-150 hover:-translate-y-4 hover:rotate-6 hover:shadow-2xl active:scale-95 min-h-[44px] touch-manipulation shadow-md"
-              onClick={() => window.open('https://youtube.com/@bongbari', '_blank')}
-              data-testid="button-youtube-footer"
-            >
-              <Youtube className="h-4 w-4 sm:h-5 sm:w-5" />
-              <span className="hidden xs:inline">YouTube</span>
-            </button>
-            <button
-              className="bg-purple-500 hover:bg-purple-600 active:bg-purple-700 text-white px-4 sm:px-5 py-3 sm:py-2 rounded-full text-sm sm:text-base flex items-center gap-2 transition-all duration-400 hover:scale-150 hover:-translate-y-4 hover:-rotate-6 hover:shadow-2xl active:scale-95 min-h-[44px] touch-manipulation shadow-md"
-              onClick={() => window.open('https://instagram.com/thebongbari', '_blank')}
-              data-testid="button-instagram-footer"
-            >
-              <Instagram className="h-4 w-4 sm:h-5 sm:w-5" />
-              <span className="hidden xs:inline">Instagram</span>
-            </button>
-          </div>
-          <p className="text-base sm:text-lg font-medium" data-testid="footer-text">© Bong Bari 2025 Kolkata</p>
-          <p className="text-sm sm:text-base opacity-80 mt-1 sm:mt-2 bangla-text" data-testid="footer-text-bengali">© বং বাড়ি ২০২৫ কলকাতা</p>
-          <div className="mt-4 text-xs opacity-80" style={{ fontSize: '0.85rem' }}>
-            <a href="/privacy" className="mx-1 underline hover:text-yellow-200">Privacy Policy</a> |
-            <a href="/terms" className="mx-1 underline hover:text-yellow-200">Terms &amp; Conditions</a> |
-            <a href="mailto:team@bongbari.com" className="mx-1 underline hover:text-yellow-200">team@bongbari.com</a>
+      {/* ── PREMIUM GLASS FOOTER ── */}
+      <footer className="relative mt-0" data-testid="footer">
+        {/* Top glow edge */}
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#F4C430]/30 to-transparent" />
+        <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-[#F4C430]/6 to-transparent pointer-events-none" />
+
+        <div className="bg-black/60 backdrop-blur-2xl border-t border-white/[0.07]">
+          <div className="max-w-6xl mx-auto px-5 sm:px-8 pt-12 pb-28 sm:pb-10">
+
+            {/* ── 3-column grid ── */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-6 mb-10 text-center sm:text-left">
+
+              {/* Brand */}
+              <div className="flex flex-col items-center sm:items-start gap-3">
+                <div className="flex items-center gap-2.5">
+                  <img src="/logo.png" alt="Bong Bari logo" className="w-9 h-9 rounded-xl ring-1 ring-white/10" />
+                  <span className="text-white font-bold text-lg tracking-tight">বং বাড়ি</span>
+                </div>
+                <p className="text-gray-400 text-sm leading-relaxed max-w-[200px] font-bengali">
+                  ঘরোয়া পরিবেশের মজার গল্প
+                </p>
+                <p className="text-gray-600 text-[11px]">Authentic Bengali Comedy · Kolkata</p>
+              </div>
+
+              {/* Navigation */}
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-white/30 text-[9px] uppercase tracking-[0.15em] font-semibold mb-1">Explore</p>
+                {([['/', 'Home'], ['/about', 'About'], ['/blog', 'Blog'], ['/faq', 'FAQ'], ['/tools', 'Free Tools'], ['/work-with-us', 'Collaborate']] as [string, string][]).map(([href, label]) => (
+                  <a key={href} href={href} className="text-gray-400 hover:text-[#F4C430] text-sm transition-colors duration-200 leading-none py-0.5">{label}</a>
+                ))}
+              </div>
+
+              {/* Social + Contact */}
+              <div className="flex flex-col items-center sm:items-end gap-3">
+                <p className="text-white/30 text-[9px] uppercase tracking-[0.15em] font-semibold">Connect</p>
+                <button
+                  onClick={() => window.open('https://youtube.com/@bongbari', '_blank')}
+                  data-testid="button-youtube-footer"
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#E53935]/10 hover:bg-[#E53935]/25 border border-[#E53935]/25 hover:border-[#E53935]/50 text-[#E53935] text-sm font-medium transition-all duration-200 hover:scale-105 active:scale-95 w-[140px] justify-center"
+                >
+                  <Youtube className="w-4 h-4 fill-[#E53935] shrink-0" />
+                  YouTube
+                </button>
+                <button
+                  onClick={() => window.open('https://instagram.com/thebongbari', '_blank')}
+                  data-testid="button-instagram-footer"
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 hover:bg-purple-500/25 border border-purple-500/25 hover:border-purple-500/50 text-purple-400 text-sm font-medium transition-all duration-200 hover:scale-105 active:scale-95 w-[140px] justify-center"
+                >
+                  <Instagram className="w-4 h-4 shrink-0" />
+                  Instagram
+                </button>
+                <a href="mailto:team@bongbari.com" className="text-gray-600 hover:text-[#F4C430] text-xs transition-colors duration-200 mt-1">team@bongbari.com</a>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-5" />
+
+            {/* Bottom bar */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="text-center sm:text-left">
+                <p className="text-gray-500 text-xs font-medium" data-testid="footer-text">© Bong Bari 2025 Kolkata</p>
+                <p className="text-gray-700 text-[11px] bangla-text mt-0.5" data-testid="footer-text-bengali">© বং বাড়ি ২০২৫ কলকাতা</p>
+              </div>
+              <div className="flex items-center gap-4 text-[11px] text-gray-600">
+                <a href="/privacy" className="hover:text-[#F4C430] transition-colors duration-200">Privacy Policy</a>
+                <span className="text-white/10">|</span>
+                <a href="/terms" className="hover:text-[#F4C430] transition-colors duration-200">Terms &amp; Conditions</a>
+              </div>
+            </div>
           </div>
         </div>
       </footer>

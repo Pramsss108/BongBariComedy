@@ -85,7 +85,7 @@ const MobileNavBar = () => {
             </AnimatePresence>
 
             {/* FLOATING GLASS DOCK (Slim Blinkit Style - Wider & Thinner) */}
-            <div className="fixed bottom-4 left-0 right-0 z-[9999] sm:hidden flex justify-center pointer-events-none fade-in-up">
+            <div className="fixed bottom-4 left-0 right-0 z-[9999] sm:hidden flex justify-center pointer-events-none fade-in-up" style={{ willChange: 'transform', transform: 'translateZ(0)', contain: 'layout' }}>
                 <div className="w-[98%] max-w-[400px] pointer-events-auto">
                     <div className="
                     flex justify-between items-center px-1

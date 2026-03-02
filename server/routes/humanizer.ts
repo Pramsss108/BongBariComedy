@@ -170,13 +170,13 @@ export function registerHumanizerRoutes(app: Express, sessions: Map<string, any>
                 temperature = 0.75;
                 vibePrompt = "VIBE: Gen-Z. Conversational and natural. Occasional casual phrasing ('honestly,', 'not gonna lie'). No forced slang. Write like a real person texting a friend.";
             } else if (vibe === 'academic') {
-                // V13 PHRASE 10: Lowered from 0.55 to 0.45 — conservative model writes cleaner formal prose
-                temperature = 0.45;
+                // V13.1: Raised to 0.55 — 0.45 was too rigid for academic, produced detectable monotone
+                temperature = 0.55;
                 vibePrompt = "VIBE: Academic. Precise, collegiate vocabulary. Formal structure. Zero contractions. Zero slang.";
             } else {
-                // V13 PHRASE 10: Lowered from 0.80 to 0.60 — 0.80 was too creative, caused fake-casual fingerprint
-                // At 0.60 the model writes clean natural prose without forced gimmicks
-                temperature = 0.60;
+                // V13.1: Raised to 0.72 — 0.60 was too conservative, LLM just did synonym swaps
+                // instead of real restructuring. 0.72 forces more creative rephrasing without gibberish.
+                temperature = 0.72;
                 vibePrompt = "VIBE: Casual. Natural, relaxed tone. Use contractions (it's, don't, can't, that's, they're, won't). Write like a competent human explaining something clearly.";
             }
 
@@ -201,38 +201,40 @@ export function registerHumanizerRoutes(app: Express, sessions: Map<string, any>
                 ? `FORMATTING LOCK: The input contains bullet points or numbered lists. Your output MUST preserve the EXACT same format — if input uses "- item", output uses "- item". If input uses "1. item", output uses "1. item". Never convert bullets to prose sentences. Never drop the list markers.`
                 : `PARAGRAPH STRUCTURE: Write in clear paragraphs of 2-4 sentences. Never create 1-sentence paragraphs for dramatic effect. Never write a paragraph longer than 5 sentences.`;
 
-            // V13: Clean ghostwriter prompt — no gimmicks, no style theatre, no WRONG/RIGHT examples.
-            // The old prompt taught the LLM to add em-dashes, rhetorical questions, fragments —
-            // exactly what AI detectors flag. Now we just ask for clean natural prose.
-            const buildHolisticPrompt = () => `You are a skilled human ghostwriter. Rewrite the following text so it reads like a real person wrote it naturally. Do not add stylistic gimmicks.
+            // V13.1: DEEP RESTRUCTURE prompts — the old prompt caused surface paraphrasing
+            // ("very useful" → "really useful") which detectors catch instantly because the
+            // sentence structure, idea order, and paragraph breaks stay identical.
+            // NEW APPROACH: Force the LLM to restructure from scratch — different idea order,
+            // merged/split paragraphs, different sentence groupings, fresh angles.
+            const buildHolisticPrompt = () => `You are rewriting this text as if you read it once, closed the page, and are now writing the same information from memory in your own style.
 
 ${vibePrompt}
 ${flawPrompt}
 
-RULES:
-1. MEANING LOCK: Keep every fact and idea from the original. Do not add, invent, or remove content.
-2. NATURAL FLOW: Rewrite sentences in your own words. Vary sentence length organically — let the content dictate the rhythm, not a formula.
-3. PARAGRAPH STRUCTURE: Write in clear paragraphs of 2-4 sentences each. Do not create dramatic 1-sentence paragraphs.
-4. WORD COUNT: Stay within ±10% of the original word count (${minWords}–${maxWords} words).
-5. NO AI FINGERPRINTS: Never start a sentence with Furthermore, Moreover, Additionally, Therefore, or In conclusion. Never use: delve, tapestry, seamlessly, holistic, robust, utilize, leverage, paradigm, multifaceted, comprehensive.
-6. CONTRACTIONS: Use them naturally where they fit (it's, don't, can't, that's, they're, won't, isn't, doesn't).
+CRITICAL INSTRUCTIONS:
+1. RESTRUCTURE — do NOT follow the original paragraph-by-paragraph. Rearrange which ideas appear in which paragraph. Combine small points. Split large ones differently. Start with a different point than the original starts with.
+2. REPHRASE DEEPLY — do NOT do word-for-word synonym swaps. Completely rewrite each idea using different sentence structures. If the original says "X is Y because Z", you might write "Because of Z, Y is what makes X" or combine it into a larger thought.
+3. KEEP ALL FACTS — every piece of information in the original must appear in your version. Do not invent new facts. Do not drop any fact.
+4. WORD COUNT: ${minWords}–${maxWords} words.
+5. BANNED PATTERNS: Never start with "The [topic] is" — find a different opening. Never use Furthermore/Moreover/Additionally/Therefore/In conclusion. Never use delve/tapestry/seamlessly/holistic/robust/utilize/leverage/paradigm.
+6. VARY SENTENCE LENGTH: Mix short sentences (5-8 words) with longer ones (15-22 words). Never write 3+ sentences of similar length in a row.
 7. ${bulletRule}
-8. OUTPUT ONLY the rewritten text. No meta-commentary, no labels, no preamble.`;
+8. OUTPUT ONLY the rewritten text. No titles, no labels, no preamble, no commentary.`;
 
             // AST-BLOCK MODE: For dense AI prose paragraphs
-            // V13: Clean rewrite prompt — no gimmicks, no forced structure, no WRONG/RIGHT examples.
-            const buildASTPrompt = () => `You are a skilled human ghostwriter in AST mode. Rewrite each XML block naturally — the way a real person would write it. Preserve all facts and meaning.
+            // V13.1: Deep restructure within each block — still respects XML structure.
+            const buildASTPrompt = () => `You are rewriting each XML block as if you read the content once and are now writing it from memory. Each block should feel completely rewritten — not a word-swap of the original.
 
 ${vibePrompt}
 ${flawPrompt}
 
 RULES:
-1. MEANING LOCK: Keep every fact and idea from the original. Do not add, invent, or remove content.
-2. NATURAL REWRITE: Rewrite each block's sentences in your own words. Vary sentence structure and length naturally — do not force fragments, em-dashes, or rhetorical questions.
+1. DEEP REWRITE: For each block, completely restructure the sentences. Use different sentence openings, different clause order, different ways of expressing the same facts. Do NOT do surface-level synonym replacement.
+2. KEEP ALL FACTS in each block — every idea must survive. But express it your way.
 3. WORD COUNT: Total output must be ${minWords}–${maxWords} words.
 4. AST LOCK: Output MUST use the exact same <block id="X">...</block> tags. Never merge or drop blocks.
-5. NO AI FINGERPRINTS: No Furthermore/Moreover/Additionally/Therefore/In conclusion. No delve/tapestry/seamlessly/holistic/robust.
-6. CONTRACTIONS: Use naturally (it's, don't, can't, that's, they're, won't, isn't, doesn't).
+5. BANNED: No Furthermore/Moreover/Additionally/Therefore/In conclusion. No delve/tapestry/seamlessly/holistic/robust.
+6. VARY LENGTH: Mix short and long sentences within each block. Never write 3 sentences of similar length.
 7. OUTPUT: ONLY valid XML blocks. No commentary, no preamble.`;
 
             // ==========================================
@@ -401,16 +403,18 @@ RULES:
                     const healTopP  = healAttempt === 1 ? 0.85 : 0.80;
                     console.log(`[Humanizer V13 Auto-Heal] Attempt ${healAttempt}/2 — model: ${healModel} | temp: ${healTemp}`);
 
-                    const healingPrompt = `This text reads like it was written by AI. Simplify it. Rewrite it the way a real person would naturally write it — without any gimmicks.
+                    const healingPrompt = `An AI detector flagged this text as machine-written. Rewrite it completely — as if you're a different person explaining the same information from memory.
 
-GUIDELINES:
-- Use straightforward, clear sentences
-- Vary sentence length naturally based on what sounds right — do not force short punchy sentences
-- Remove any rhetorical devices, em-dash asides, or forced fragments
-- Keep every fact and idea from the original — do not add or remove content
-- Use contractions where they fit naturally
-- No AI discourse markers (no Furthermore, Moreover, Additionally, In conclusion)
-- Word count must stay within ±10% of the original
+CRITICAL:
+- REARRANGE the order of ideas — do not follow the original structure paragraph by paragraph
+- Use completely different sentence openings than the original
+- Merge some ideas together and split others apart
+- Mix sentence lengths: some short (5-8 words), some long (15-22 words)
+- Use contractions naturally (it's, don't, can't, they're, won't)
+- Keep ALL facts — do not add or remove information
+- No Furthermore/Moreover/Additionally/In conclusion
+- Start the text with a DIFFERENT point than the original starts with
+- Word count: stay within ±10%
 
 Text to rewrite:\n\n"${bestVariant}"`;
 

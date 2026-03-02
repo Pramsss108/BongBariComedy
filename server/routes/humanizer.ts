@@ -166,18 +166,15 @@ export function registerHumanizerRoutes(app: Express, sessions: Map<string, any>
 
             let vibePrompt = "";
             if (vibe === 'genz') {
-                // V13 PHRASE 10: Lowered from 0.95 — was forcing over-creative output that detectors caught
                 temperature = 0.75;
-                vibePrompt = "VIBE: Gen-Z. Conversational and natural. Occasional casual phrasing ('honestly,', 'not gonna lie'). No forced slang. Write like a real person texting a friend.";
+                vibePrompt = "Write like a real college student would. Casual but clear. Use contractions. No forced slang or memes.";
             } else if (vibe === 'academic') {
-                // V13.1: Raised to 0.55 — 0.45 was too rigid for academic, produced detectable monotone
                 temperature = 0.55;
-                vibePrompt = "VIBE: Academic. Precise, collegiate vocabulary. Formal structure. Zero contractions. Zero slang.";
+                vibePrompt = "Write in formal academic English. Precise vocabulary. No contractions. No slang.";
             } else {
-                // V13.1: Raised to 0.72 — 0.60 was too conservative, LLM just did synonym swaps
-                // instead of real restructuring. 0.72 forces more creative rephrasing without gibberish.
+                // V13.2: 0.72 — needs enough creativity to restructure, not just synonym-swap
                 temperature = 0.72;
-                vibePrompt = "VIBE: Casual. Natural, relaxed tone. Use contractions (it's, don't, can't, that's, they're, won't). Write like a competent human explaining something clearly.";
+                vibePrompt = "Write naturally, like a regular person explaining something. Use contractions where they fit.";
             }
 
             let flawPrompt = "";
@@ -201,41 +198,36 @@ export function registerHumanizerRoutes(app: Express, sessions: Map<string, any>
                 ? `FORMATTING LOCK: The input contains bullet points or numbered lists. Your output MUST preserve the EXACT same format — if input uses "- item", output uses "- item". If input uses "1. item", output uses "1. item". Never convert bullets to prose sentences. Never drop the list markers.`
                 : `PARAGRAPH STRUCTURE: Write in clear paragraphs of 2-4 sentences. Never create 1-sentence paragraphs for dramatic effect. Never write a paragraph longer than 5 sentences.`;
 
-            // V13.1: DEEP RESTRUCTURE prompts — the old prompt caused surface paraphrasing
-            // ("very useful" → "really useful") which detectors catch instantly because the
-            // sentence structure, idea order, and paragraph breaks stay identical.
-            // NEW APPROACH: Force the LLM to restructure from scratch — different idea order,
-            // merged/split paragraphs, different sentence groupings, fresh angles.
-            const buildHolisticPrompt = () => `You are rewriting this text as if you read it once, closed the page, and are now writing the same information from memory in your own style.
+            // V13.2: ROUND 1 prompt — no style labels, no "VIBE:", no forced casualness.
+            // The "AI pretending to be casual" pattern ("pretty chill", "super common") was the #1
+            // detection signal. Round 1 just rewrites factually with zero style injection.
+            const buildHolisticPrompt = () => `Rewrite this text from memory. You read it once. Now write the same information your way.
 
-${vibePrompt}
-${flawPrompt}
-
-CRITICAL INSTRUCTIONS:
-1. RESTRUCTURE — do NOT follow the original paragraph-by-paragraph. Rearrange which ideas appear in which paragraph. Combine small points. Split large ones differently. Start with a different point than the original starts with.
-2. REPHRASE DEEPLY — do NOT do word-for-word synonym swaps. Completely rewrite each idea using different sentence structures. If the original says "X is Y because Z", you might write "Because of Z, Y is what makes X" or combine it into a larger thought.
-3. KEEP ALL FACTS — every piece of information in the original must appear in your version. Do not invent new facts. Do not drop any fact.
-4. WORD COUNT: ${minWords}–${maxWords} words.
-5. BANNED PATTERNS: Never start with "The [topic] is" — find a different opening. Never use Furthermore/Moreover/Additionally/Therefore/In conclusion. Never use delve/tapestry/seamlessly/holistic/robust/utilize/leverage/paradigm.
-6. VARY SENTENCE LENGTH: Mix short sentences (5-8 words) with longer ones (15-22 words). Never write 3+ sentences of similar length in a row.
-7. ${bulletRule}
-8. OUTPUT ONLY the rewritten text. No titles, no labels, no preamble, no commentary.`;
-
-            // AST-BLOCK MODE: For dense AI prose paragraphs
-            // V13.1: Deep restructure within each block — still respects XML structure.
-            const buildASTPrompt = () => `You are rewriting each XML block as if you read the content once and are now writing it from memory. Each block should feel completely rewritten — not a word-swap of the original.
-
-${vibePrompt}
 ${flawPrompt}
 
 RULES:
-1. DEEP REWRITE: For each block, completely restructure the sentences. Use different sentence openings, different clause order, different ways of expressing the same facts. Do NOT do surface-level synonym replacement.
-2. KEEP ALL FACTS in each block — every idea must survive. But express it your way.
-3. WORD COUNT: Total output must be ${minWords}–${maxWords} words.
-4. AST LOCK: Output MUST use the exact same <block id="X">...</block> tags. Never merge or drop blocks.
-5. BANNED: No Furthermore/Moreover/Additionally/Therefore/In conclusion. No delve/tapestry/seamlessly/holistic/robust.
-6. VARY LENGTH: Mix short and long sentences within each block. Never write 3 sentences of similar length.
-7. OUTPUT: ONLY valid XML blocks. No commentary, no preamble.`;
+1. RESTRUCTURE: Do not follow the original paragraph order. Start with a different point. Group ideas differently.
+2. REPHRASE: Every sentence must use a different structure than the original. No synonym swaps.
+3. ALL FACTS must appear. Do not add or remove information.
+4. ${minWords}–${maxWords} words.
+5. NEVER start with "The [topic] is". NEVER use Furthermore/Moreover/Additionally/In conclusion.
+6. Mix sentence lengths: some under 8 words, some over 18 words.
+7. ${bulletRule}
+8. Output ONLY the rewritten text.`;
+
+            // AST-BLOCK MODE: For dense AI prose paragraphs
+            const buildASTPrompt = () => `Rewrite each XML block from memory. Each block must be completely restructured — not word-swapped.
+
+${flawPrompt}
+
+RULES:
+1. Completely restructure each block. Different sentence openings, different clause order.
+2. Keep all facts in each block.
+3. ${minWords}–${maxWords} words total.
+4. Use exact same <block id="X">...</block> tags. Never merge or drop blocks.
+5. No Furthermore/Moreover/Additionally/In conclusion.
+6. Mix short and long sentences.
+7. ONLY valid XML blocks. No commentary.`;
 
             // ==========================================
             // PHASE 4: AST Tokenization (Dense mode only)
@@ -322,36 +314,58 @@ RULES:
                 } // end else (AST-BLOCK MODE)
 
                 // V13 PHRASE 19: Save raw LLM output BEFORE NLP layers run.
-                // Used as fallback if NLP causes >15% word count drift (meaning distortion).
                 const prePipelineVariant = bestVariant;
                 const prePipelineWordCount = bestVariant.trim().split(/\s+/).length;
 
                 // ==========================================
-                // V13 NLP PIPELINE: Reduced from 15 layers to 5 essential layers.
-                // REASON: Over-processing stacked compound fingerprints detected by Originality.ai.
-                // Each disabled layer made output MORE detectable, not less.
-                // PROVEN: 100% AI score on V12.5 → target <40% on V13.
+                // V13.2: MANDATORY ROUND 2 — Cross-Architecture Rewrite
+                // ==========================================
+                // SCIENCE: Krishna et al. (2023) "Paraphrase to Escape Detectors"
+                // Single-model output has a consistent statistical fingerprint.
+                // Passing through a SECOND, architecturally different model breaks that fingerprint
+                // because the n-gram distributions, perplexity curves, and token probabilities
+                // of gemma2 (Google DeepMind) are fundamentally different from llama3 (Meta).
+                // This is NOT optional healing — it runs EVERY time. The cross-architecture
+                // confusion is what actually beats detectors, not prompt engineering.
+                console.log(`[Humanizer V13.2] Round 2: Cross-architecture rewrite via gemma2-9b-it...`);
+                const round2Prompt = `A student wrote this text but it sounds too polished. Make it sound more natural and human — like someone actually wrote it, not a machine.
+
+${vibePrompt}
+
+INSTRUCTIONS:
+- Rewrite every sentence in your own words. Do not copy phrases from the input.
+- Change sentence openings — if input starts with "X is Y", try "Y comes from X" or merge it with another idea.
+- Keep every fact. Do not add or remove information.
+- Use contractions naturally (it's, don't, they're, won't, can't, isn't).
+- ${minWords}–${maxWords} words.
+- No Furthermore/Moreover/Additionally/In conclusion.
+- Output ONLY the rewritten text.
+
+Text:\n\n${bestVariant}`;
+
+                const round2Output = await callGroq([
+                    { role: "system", content: "You are a human editor. Rewrite text so it sounds natural and personal — like a real person wrote it for a school assignment or blog post. No gimmicks, no forced style." },
+                    { role: "user", content: round2Prompt }
+                ], 0.65, 0.85, "gemma2-9b-it");
+
+                if (round2Output && round2Output.trim().length > 20) {
+                    bestVariant = round2Output.trim();
+                    console.log(`[Humanizer V13.2] Round 2 complete. ${bestVariant.split(/\s+/).length}w from gemma2.`);
+                } else {
+                    console.warn(`[Humanizer V13.2] Round 2 returned empty/short. Keeping Round 1 output.`);
+                }
+
+                // ==========================================
+                // V13.2 NLP PIPELINE: Stripped to absolute minimum — 2 layers only.
+                // REASON: NLP layers were ADDING detectable patterns, not removing them.
+                // ConjunctionPurge + HumanFlaws are the only two that provably help.
+                // VocabularyEngine and SemanticCloaking were creating their own fingerprints.
                 // ==========================================
 
                 // LAYER 1 (KEEP): Conjunction Purge — strips AI discourse markers (Furthermore, Moreover...)
                 bestVariant = applyConjunctionPurge(bestVariant);
 
-                // LAYER 2 (KEEP): Vocabulary Engine — replaces top AI cliché words only
-                bestVariant = applyVocabularyEngine(bestVariant, vibe as any);
-
-                // LAYER 3 (DISABLED — V13): IMF over-replaces tokens, corrupts grammar ("result in curd" bug)
-                // bestVariant = applyIMFApproximation(bestVariant);
-
-                // LAYER 4 (KEEP): Semantic Cloaking — subtle active/passive flip on ~30% of sentences
-                bestVariant = applySemanticCloaking(bestVariant);
-
-                // LAYER 5 (DISABLED — V13): Sentence Starter Diversifier — mechanical "Still," prepends are detector-flagged
-                // bestVariant = applySentenceStarterDiversifier(bestVariant, vibe as any);
-
-                // LAYER 6 (DISABLED — V13): Burstiness Engine — em-dash spam is a known AI-humanizer signature
-                // bestVariant = forceBurstiness(bestVariant);
-
-                // LAYER 7 (KEEP): Human Flaws — contractions + minor natural imperfections
+                // LAYER 2 (KEEP): Human Flaws — contractions + minor natural imperfections
                 bestVariant = applyHumanFlaws(bestVariant, flawLevel as any);
 
                 // V13 PHRASE 19: Post-pipeline word count drift guard.
@@ -363,75 +377,26 @@ RULES:
                     bestVariant = prePipelineVariant;
                 }
 
-                // LAYER 8 (DISABLED — V13): Paragraph Rhythm — artificial 1-sentence paragraphs spike burstiness unnaturally
-                // bestVariant = applyParagraphRhythm(bestVariant);
-
-                // LAYER 9 (DISABLED — V13): Zipf Normalization — creates odd word substitutions
-                // bestVariant = applyZipfNormalization(bestVariant);
-
-                // LAYER 10 (DISABLED — V13): Denominalization — flips nouns to verbs, causes grammatical artifacts
-                // bestVariant = applyDenominalization(bestVariant);
-
-                // LAYER 11 (DISABLED — V13): Clause Reordering — "because" fronting creates awkward sentence starts
-                // bestVariant = applyClauseReordering(bestVariant);
-
-                // LAYER 12 (DISABLED — V13): Deictic Injection — mechanical pronoun insertion
-                // bestVariant = applyDeicticInjection(bestVariant, vibe as any);
-
-                // LAYER 13 (DISABLED — V13): Semantic Drift — hedging filler adds no semantic value
-                // bestVariant = applySemanticDrift(bestVariant, vibe as any);
-
-                // LAYER 14 (DISABLED — V13): Human Pattern Injection — forced "(no surprise there)" fillers are detected
-                // bestVariant = applyHumanPatterns(bestVariant, vibe as any);
-
-                // LAYER 15 (KEEP): Verification Agent — internal 7-metric detector score
+                // LAYER 3 (KEEP): Verification Agent — internal detector score
                 report = runVerificationAgent(bestVariant);
-                console.log(`[Humanizer V13 Detector] Score: ${report.humanScore}/100 | Passed: ${report.passed} | Failures: [${report.failures.join(', ')}]`);
+                console.log(`[Humanizer V13.2 Detector] Score: ${report.humanScore}/100 | Passed: ${report.passed} | Failures: [${report.failures.join(', ')}]`);
 
-                // V13 PHRASE 18: Dual-model healing loop — up to 2 attempts, zero extra cost.
-                // SCIENCE: Different LLM architectures produce different statistical writing fingerprints.
-                // Attempt 1: llama-3.3-70b (Groq free) — lower temp, conservative simplification.
-                // Attempt 2: gemma2-9b-it (Groq free, Google DeepMind architecture) — completely different
-                //   n-gram distributions and perplexity curves than llama. Breaks llama's fingerprint.
-                // Result: If llama output is detected, gemma produces structurally different prose
-                //   that real detectors' training data won't pattern-match as easily.
-                let healAttempt = 0;
-                while (!report.passed && healAttempt < 2) {
-                    healAttempt++;
-                    const healModel = healAttempt === 1 ? "llama-3.3-70b-versatile" : "gemma2-9b-it";
-                    const healTemp  = healAttempt === 1 ? 0.55 : 0.50;
-                    const healTopP  = healAttempt === 1 ? 0.85 : 0.80;
-                    console.log(`[Humanizer V13 Auto-Heal] Attempt ${healAttempt}/2 — model: ${healModel} | temp: ${healTemp}`);
-
-                    const healingPrompt = `An AI detector flagged this text as machine-written. Rewrite it completely — as if you're a different person explaining the same information from memory.
-
-CRITICAL:
-- REARRANGE the order of ideas — do not follow the original structure paragraph by paragraph
-- Use completely different sentence openings than the original
-- Merge some ideas together and split others apart
-- Mix sentence lengths: some short (5-8 words), some long (15-22 words)
-- Use contractions naturally (it's, don't, can't, they're, won't)
-- Keep ALL facts — do not add or remove information
-- No Furthermore/Moreover/Additionally/In conclusion
-- Start the text with a DIFFERENT point than the original starts with
-- Word count: stay within ±10%
-
-Text to rewrite:\n\n"${bestVariant}"`;
-
+                // V13.2: Conditional healing — only if math score fails.
+                // Now uses a THIRD model call (back to llama but with very different instructions)
+                // to create even more cross-architecture noise.
+                if (!report.passed) {
+                    console.log(`[Humanizer V13.2 Auto-Heal] Math score failed. Running heal pass...`);
+                    const healPrompt = `This text was flagged as AI. Rewrite it one more time — make it sound like YOU wrote it personally. Be direct. Be human. ${minWords}–${maxWords} words. Keep all facts.\n\n"${bestVariant}"`;
                     const healedRaw = await callGroq([
-                        { role: "system", content: "You are a skilled human writer. Rewrite AI-generated text so it reads naturally — like a real person wrote it. Clean, clear, honest prose. No gimmicks." },
-                        { role: "user", content: healingPrompt }
-                    ], healTemp, healTopP, healModel);
-
-                    // Re-run the REDUCED 5-layer pipeline on healed text
-                    bestVariant = applyConjunctionPurge(healedRaw);
-                    bestVariant = applyVocabularyEngine(bestVariant, vibe as any);
-                    bestVariant = applySemanticCloaking(bestVariant);
-                    bestVariant = applyHumanFlaws(bestVariant, flawLevel as any);
-
-                    const healedReport = runVerificationAgent(bestVariant);
-                    console.log(`[Humanizer V13 Auto-Heal] Attempt ${healAttempt} → score: ${healedReport.humanScore}/100 | passed: ${healedReport.passed}`);
-                    report = healedReport;
+                        { role: "system", content: "You are a person, not an AI. Write like yourself. No flourishes, no trying to sound smart. Just clear honest writing." },
+                        { role: "user", content: healPrompt }
+                    ], 0.60, 0.80, "llama-3.3-70b-versatile");
+                    if (healedRaw && healedRaw.trim().length > 20) {
+                        bestVariant = applyConjunctionPurge(healedRaw.trim());
+                        bestVariant = applyHumanFlaws(bestVariant, flawLevel as any);
+                        report = runVerificationAgent(bestVariant);
+                        console.log(`[Humanizer V13.2 Auto-Heal] Post-heal score: ${report.humanScore}/100 | passed: ${report.passed}`);
+                    }
                 }
 
                 // ── HuggingFace Real ML Detector ──────────────────────────────────────────

@@ -109,6 +109,7 @@ export function forceBurstiness(text: string): string {
 
         // V12.1: Also split at ", which ", ", so ", ", but " for 20+ word sentences
         if (len > 20) {
+            let splitOccurred = false;
             const splitPatterns = [', which ', ', so ', ', but '];
             for (const pat of splitPatterns) {
                 const splitIdx = s.lastIndexOf(pat);
@@ -119,10 +120,11 @@ export function forceBurstiness(text: string): string {
                     output.push(part1);
                     output.push(part2);
                     i++;
+                    splitOccurred = true;
                     break;
                 }
             }
-            if (output.length > 0 && output[output.length - 1] !== s) {
+            if (splitOccurred) {
                 // Already split above
                 continue;
             }

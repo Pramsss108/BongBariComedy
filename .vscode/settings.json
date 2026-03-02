@@ -5,6 +5,22 @@
       "approve": true,
       "matchCommandLine": true
     },
-    "Set-Location": true
+    "Set-Location": true,
+    "/^cd \"d:\\\\barir Mashla\\\\website\\\\BongBariComedy\\\\BongBariComedy\" ; npx tsx scripts/test-nlp-pipeline\\.ts 2>&1 \\| Tee-Object -FilePath \"\\$env:TEMP\\\\nlp_latest\\.txt\" \\| Select-String \"SUMMARY\" -Context 0,5$/": {
+      "approve": true,
+      "matchCommandLine": true
+    },
+    "/^cd \"d:\\\\barir Mashla\\\\website\\\\BongBariComedy\\\\BongBariComedy\"; gc client\\\\src\\\\pages\\\\free-tools-humanizer\\.tsx \\| Select-Object -Skip 330 -First 50$/": {
+      "approve": true,
+      "matchCommandLine": true
+    },
+    "/^cd \"d:\\\\barir Mashla\\\\website\\\\BongBariComedy\\\\BongBariComedy\"; gc client\\\\src\\\\components\\\\MagicalCursorWithSound\\.tsx \\| Select-Object -Skip 30 -First 30$/": {
+      "approve": true,
+      "matchCommandLine": true
+    },
+    "/^cd \"d:\\\\barir Mashla\\\\website\\\\BongBariComedy\\\\BongBariComedy\"; gc client\\\\src\\\\components\\\\MagicalCursorWithSound\\.tsx \\| Select-Object -First 60$/": {
+      "approve": true,
+      "matchCommandLine": true
+    }
   }
 }

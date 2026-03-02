@@ -365,10 +365,25 @@ export default function FreeToolsHumanizer() {
       } catch (err: any) {
         console.error("Failed to fetch fresh token", err.message || err);
       }
-      const gRes = await fetch(buildApiUrl('/api/humanize/groq'), {
-        method: "POST", headers: { "Content-Type": "application/json", ...authHeader },
-        body: JSON.stringify({ prompt, vibe, flawLevel, intensity, override: isOverride })
-      });
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 90000); // 90s timeout (Render cold starts)
+      
+      let gRes;
+      try {
+        gRes = await fetch(buildApiUrl('/api/humanize/groq'), {
+          method: "POST", headers: { "Content-Type": "application/json", ...authHeader },
+          body: JSON.stringify({ prompt, vibe, flawLevel, intensity, override: isOverride }),
+          signal: controller.signal
+        });
+      } catch (networkError: any) {
+        if (networkError.name === 'AbortError') {
+          throw new Error("Server timeout. It might be waking up, please try again.");
+        }
+        throw new Error("Network error connecting to API.");
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       if (gRes.status === 409) {
         setLastPrompt(prompt);
@@ -474,7 +489,7 @@ export default function FreeToolsHumanizer() {
       }
       console.error(e);
       setIsProcessing(false);
-      setStatusMsg('Error. Check connection.');
+      setStatusMsg(e.message || 'Error. Check connection.');
     } finally {
       setIsProcessing(false);
     }
@@ -495,9 +510,9 @@ export default function FreeToolsHumanizer() {
         const count = computeCliche(finalOutput).count;
         setScore({ total: Math.round(b * 0.7 + Math.max(0, 100 - count * 12) * 0.3), burstiness: b, clicheCount: count, failures: [] });
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      setStatusMsg('Override Failed.');
+      setStatusMsg(e.message || 'Override Failed.');
     } finally {
       setIsProcessing(false);
     }

@@ -1,6 +1,7 @@
 import { useMagicalCursor } from '@/hooks/useMagicalCursor';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { getAudioContext, isAudioUnlocked } from '@/lib/audioUnlock';
 
 // Mobile detection utility
 const isMobile = () => {
@@ -9,17 +10,19 @@ const isMobile = () => {
 
 // Premium oscillator-based cursor sound
 function useCursorSound() {
-  const ctxRef = useRef<AudioContext | null>(null);
   const oscRef = useRef<OscillatorNode | null>(null);
   const gainRef = useRef<GainNode | null>(null);
   const playingRef = useRef(false);
 
   const play = (frequency = 1200, type: OscillatorType = 'sine', harmonic = 1.5) => {
-    if (playingRef.current) return;
-    const ctx = ctxRef.current || new (window.AudioContext || (window as any).webkitAudioContext)();
-    ctxRef.current = ctx;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+    if (playingRef.current || !isAudioUnlocked()) return;
+    
+    try {
+      const ctx = getAudioContext();
+      if (!ctx || ctx.state === 'suspended') return;
+      
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
     osc.type = type;
     osc.frequency.setValueAtTime(frequency, ctx.currentTime);
     gain.gain.setValueAtTime(0.08, ctx.currentTime); // Soft, premium volume
@@ -44,6 +47,7 @@ function useCursorSound() {
     gainRef.current = gain;
     playingRef.current = true;
     setTimeout(() => { playingRef.current = false; }, 180);
+    } catch(err) {}
   };
 
   const stop = () => {
@@ -61,10 +65,6 @@ function useCursorSound() {
 
   useEffect(() => () => {
     stop();
-    if (ctxRef.current) {
-      ctxRef.current.close();
-      ctxRef.current = null;
-    }
   }, []);
 
   return { play, stop };

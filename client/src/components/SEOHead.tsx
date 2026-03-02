@@ -1,29 +1,27 @@
 import { Helmet } from "react-helmet-async";
 
 // ─── BongBari SEO Head — Drop this in any page to get full SEO coverage ───────
-// Props mirror what Google / OG / Twitter actually care about.
-// Every field has a sensible default pointing to the homepage, so you can
-// override only what you need.
 
 interface SEOHeadProps {
-  /** Browser tab title (also used as og:title / twitter:title) */
   title: string;
-  /** Meta description — aim for 120-155 characters */
   description: string;
-  /** Canonical URL for this page */
   url: string;
-  /** OG image — full absolute URL, 1200×630 recommended */
   image?: string;
-  /** og:type — 'website' for landing pages, 'article' for blog posts */
   type?: string;
-  /** Extra JSON-LD structured data blocks */
   structuredData?: object | object[];
-  /** Override twitter:card — default 'summary_large_image' */
   twitterCard?: "summary" | "summary_large_image";
-  /** Keywords for meta keywords tag (helps some crawlers) */
   keywords?: string;
-  /** Set to true if this page should not be indexed (admin, login, etc.) */
   noIndex?: boolean;
+  /**
+   * Custom favicon base path (without size suffix / extension).
+   * e.g. "/humanizer-favicon" will resolve to:
+   *   /humanizer-favicon-16.png  (16×16)
+   *   /humanizer-favicon-32.png  (32×32)
+   *   /humanizer-favicon-180.png (apple-touch)
+   *   /humanizer-favicon.ico     (shortcut)
+   * Leave undefined to keep the default Bong Bari logo favicon.
+   */
+  faviconBase?: string;
 }
 
 const DEFAULTS = {
@@ -42,6 +40,7 @@ export function SEOHead({
   twitterCard = DEFAULTS.twitterCard,
   keywords,
   noIndex = false,
+  faviconBase,
 }: SEOHeadProps) {
   const schemas = structuredData
     ? Array.isArray(structuredData)
@@ -57,6 +56,12 @@ export function SEOHead({
       {keywords && <meta name="keywords" content={keywords} />}
       <link rel="canonical" href={url} />
       {noIndex && <meta name="robots" content="noindex,nofollow" />}
+
+      {/* ── Favicon override (per-page) ── */}
+      {faviconBase && <link rel="icon" type="image/png" sizes="32x32" href={`${faviconBase}-32.png`} />}
+      {faviconBase && <link rel="icon" type="image/png" sizes="16x16" href={`${faviconBase}-16.png`} />}
+      {faviconBase && <link rel="apple-touch-icon" sizes="180x180" href={`${faviconBase}-180.png`} />}
+      {faviconBase && <link rel="shortcut icon" href={`${faviconBase}.ico`} />}
 
       {/* ── Open Graph (Facebook, WhatsApp, LinkedIn, Telegram) ── */}
       <meta property="og:type" content={type} />

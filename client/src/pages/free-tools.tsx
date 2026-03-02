@@ -24,6 +24,7 @@ const FreeTools = () => {
         description="Free tools for writers, students and creators. AI text humanizer converts AI-generated content to sound 100% human. Built by Bong Bari. No sign-up required."
         url="https://www.bongbari.com/tools"
         image="https://www.bongbari.com/logo.png"
+        faviconBase="/humanizer-favicon"
         keywords="free writing tools, AI text humanizer, bypass AI detection, free online tools, content tools"
         structuredData={FREE_TOOLS_SCHEMA}
       />

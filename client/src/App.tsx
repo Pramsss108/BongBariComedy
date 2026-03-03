@@ -44,6 +44,7 @@ const CommunityFeed = lazy(() => import("@/pages/community-feed"));
 const PrivacyPolicy = lazy(() => import("@/pages/PrivacyPolicy"));
 const TermsPage = lazy(() => import("@/pages/TermsPage"));
 const FAQ = lazy(() => import("@/pages/FAQ"));
+const VoiceHub = lazy(() => import("@/pages/VoiceHub"));
 
 // Loading fallback component
 function LoadingFallback() {
@@ -134,7 +135,7 @@ function Router() {
 
   return (
     <>
-      <Navigation />
+      {location !== '/voice-hub' && <Navigation />}
       <div className="min-h-screen bg-brand-yellow relative m-0 p-0">
         <GreetingConsent open={showGreeting} onDecision={handleDecision} />
         {/* Custom belan cursor - hidden for logged-in users (normal cursor instead) */}
@@ -221,6 +222,11 @@ function Router() {
               <FAQ />
             </Suspense>
           </Route>
+          <Route path="/voice-hub">
+            <Suspense fallback={<LoadingFallback />}>
+              <VoiceHub />
+            </Suspense>
+          </Route>
           <Route>
             <Suspense fallback={<LoadingFallback />}>
               <NotFound />
@@ -235,7 +241,7 @@ function Router() {
         {/* <FloatingFAQButton /> */}
 
         {/* Mobile Navigation Dock - Hidden on full-screen tool pages */}
-        {location !== '/tools/humanizer' && <MobileNavBar />}
+        {location !== '/tools/humanizer' && location !== '/voice-hub' && <MobileNavBar />}
 
         {/* Production Debug overlay - Available via Console/Hidden Trigger */}
         <DebugOverlay />

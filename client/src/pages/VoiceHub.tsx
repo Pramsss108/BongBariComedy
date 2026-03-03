@@ -354,57 +354,131 @@ const StudioTab = () => {
 };
 
 const VoiceFactoryTab = () => {
+    const [refAudio, setRefAudio] = useState<File | null>(null);
+    const [targetText, setTargetText] = useState('');
+    const [isGenerating, setIsGenerating] = useState(false);
+    
     return (
-        <div className="space-y-6 flex flex-col h-[75vh]">
-            <div className="flex flex-col gap-2 shrink-0">
-                <h2 className="text-3xl font-bold tracking-tight text-white">Voice <span className="text-brand-yellow">Factory</span></h2>
-                <p className="text-white/60">Powered by F5-TTS Open Source Model. Zero-shot cloning from just 5 seconds of audio. Completely free.</p>
+        <div className="space-y-6">
+            <div className="flex flex-col gap-1">
+                <h2 className="text-3xl font-bold tracking-tight text-white uppercase mt-4">VOICE <span className="text-[#F59E0B]">FACTORY</span></h2>                                
+                <p className="text-white/30 text-[10px] uppercase tracking-widest font-mono mt-2">NATIVE ZERO-SHOT CLONING ENGINE (F5-TTS)</p>                                                    
             </div>
 
-            <GlassCard className="border-[#F59E0B]/20 flex-1 overflow-hidden p-0 relative rounded-xl group bg-white/5">
-                <div className="absolute top-0 left-0 right-0 z-10 px-4 py-3 bg-gradient-to-b from-black/90 to-transparent flex justify-between items-center pointer-events-none">
-                    <span className="text-[10px] uppercase font-tech tracking-widest text-[#F59E0B] drop-shadow-md">Official Web Portal</span>
-                    <span className="flex items-center gap-2 bg-black/50 px-2 py-1 rounded-full backdrop-blur-md border border-white/5">
-                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                        <span className="text-[10px] text-green-400 font-mono">F5TTS.ORG CONNECTED</span>
-                    </span>
+            <div className="bg-[#050505] border border-white/10 rounded-2xl p-6 relative overflow-hidden flex flex-col gap-6">                                                                        
+                <div className="absolute top-4 right-6 text-[8px] font-mono text-white/10 uppercase hidden md:block">STITCH_v1.518</div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* REFERENCE AUDIO */}
+                    <div className="space-y-2 relative">
+                        <label className="text-[11px] font-bold text-white/80 tracking-widest uppercase">REFERENCE AUDIO (5-10s)</label>                                                               
+                        <div className="mt-2 w-full h-[140px] bg-[#0A0A0A] border border-dashed border-white/20 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#F59E0B]/50 transition-all group">
+                            <Mic className="w-8 h-8 text-white/20 group-hover:text-[#F59E0B] transition-colors mb-2" />
+                            <span className="text-xs font-bold text-white/40 group-hover:text-white transition-colors">CLICK OR DRAG FILE</span>
+                            <span className="text-[9px] text-white/20 font-mono mt-1">.WAV or .MP3</span>
+                        </div>
+                    </div>
+
+                    {/* TARGET SCRIPT */}
+                    <div className="space-y-2 relative">
+                        <label className="text-[11px] font-bold text-white/80 tracking-widest uppercase">TARGET SCRIPT</label>                                                               
+                        <textarea
+                            value={targetText}
+                            onChange={(e) => setTargetText(e.target.value)}
+                            placeholder="What do you want the cloned voice to say?"
+                            className="mt-2 w-full h-[140px] bg-[#0A0A0A] border border-white/5 rounded-xl p-4 text-white/90 placeholder:text-white/20 focus:outline-none focus:border-[#F59E0B]/30 transition-colors resize-none text-sm leading-relaxed"                                                                                                   
+                        />
+                    </div>
                 </div>
-                {/* Embed F5-TTS free UI */}
-                <iframe 
-                    src="https://f5tts.org/?__theme=dark" 
-                    className="w-full h-full border-0 rounded-xl"
-                    title="F5-TTS Voice Cloning"
-                    allow="microphone"
-                />
-            </GlassCard>
+
+                {/* GENERATE */}
+                <button
+                    disabled={isGenerating || !targetText}
+                    className={`
+                        w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold transition-all duration-300 min-h-[56px] text-black mt-2 text-sm tracking-wide
+                        ${(isGenerating || !targetText) ? 'bg-[#F59E0B]/50 cursor-not-allowed' : 'bg-[#F59E0B] hover:bg-[#F59E0B]/90 hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] active:scale-[0.98]'}
+                    `}
+                >
+                    {isGenerating ? (
+                        <>
+                            <Loader2 className="w-5 h-5 animate-spin" />        
+                            PROCESSING NEURAL CLONE...
+                        </>
+                    ) : (
+                        <>
+                            <Zap className="w-4 h-4 fill-current" />
+                            GENERATE CLONE
+                        </>
+                    )}
+                </button>
+            </div>
         </div>
     );
 };
 
 const SpeechToSpeechTab = () => {
+    const [sourceAudio, setSourceAudio] = useState<File | null>(null);
+    const [isConverting, setIsConverting] = useState(false);
+
     return (
-        <div className="space-y-6 flex flex-col h-[75vh]">
-            <div className="flex flex-col gap-2 shrink-0">
-                <h2 className="text-3xl font-bold tracking-tight text-white">Speech-to-<span className="text-brand-yellow">Speech</span></h2>
-                <p className="text-white/60">Powered by Llasa-8B on Hugging Face Spaces. Convert audio naturally.</p>
+        <div className="space-y-6">
+            <div className="flex flex-col gap-1">
+                <h2 className="text-3xl font-bold tracking-tight text-white uppercase mt-4">SPEECH-TO-<span className="text-[#F59E0B]">SPEECH</span></h2>                                
+                <p className="text-white/30 text-[10px] uppercase tracking-widest font-mono mt-2">NATIVE AUDIO CONVERSION ENGINE (LLASA-8B)</p>                                                    
             </div>
 
-            <GlassCard className="border-[#F59E0B]/20 flex-1 overflow-hidden p-0 relative rounded-xl bg-white/5">
-                 <div className="absolute top-0 left-0 right-0 z-10 px-4 py-3 bg-gradient-to-b from-black/90 to-transparent flex justify-between items-center pointer-events-none">
-                    <span className="text-[10px] uppercase font-tech tracking-widest text-[#F59E0B] drop-shadow-md">Hugging Face Space Embed</span>
-                    <span className="flex items-center gap-2 bg-black/50 px-2 py-1 rounded-full backdrop-blur-md border border-white/5">
-                        <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
-                        <span className="text-[10px] text-yellow-400 font-mono">MAY REQUIRE RESTART</span>
-                    </span>
+            <div className="bg-[#050505] border border-white/10 rounded-2xl p-6 relative overflow-hidden flex flex-col gap-6">                                                                        
+                <div className="absolute top-4 right-6 text-[8px] font-mono text-white/10 uppercase hidden md:block">STITCH_v1.518</div>
+                
+                <div className="space-y-2 relative">
+                    <label className="text-[11px] font-bold text-white/80 tracking-widest uppercase">SOURCE AUDIO</label>                                                               
+                    <div className="mt-2 w-full h-[180px] bg-[#0A0A0A] border border-dashed border-white/20 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#F59E0B]/50 transition-all group">
+                        <Waves className="w-10 h-10 text-white/20 group-hover:text-[#F59E0B] transition-colors mb-3" />
+                        <span className="text-sm font-bold text-white/40 group-hover:text-white transition-colors">DROP AUDIO TO CONVERT</span>
+                        <span className="text-[10px] text-white/20 font-mono mt-2 uppercase tracking-widest">Supports .WAV / .MP3</span>
+                    </div>
                 </div>
-                {/* Embed Llasa-8B */}
-                <iframe 
-                    src="https://zouyunzouyunzouyun-llasa-8b-tts.hf.space/?__theme=dark" 
-                    className="w-full h-full border-0 rounded-xl"
-                    title="Llasa-8B Voice Cloning"
-                    allow="microphone"
-                />
-            </GlassCard>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
+                    <div className="flex flex-col gap-2">
+                        <label className="text-[10px] font-bold text-white/40 uppercase tracking-[2px]">TARGET PROFILE</label>                                                            
+                        <select className="bg-[#0A0A0A] border border-white/5 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#F59E0B]/30 appearance-none font-bold text-sm min-h-[48px] outline-none cursor-pointer">
+                            <option value="profile-1">Llasa Base [Neutral]</option>
+                            <option value="profile-2">Llasa Expressive</option>
+                        </select>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <label className="text-[10px] font-bold text-white/40 uppercase tracking-[2px]">ENGINE STATUS</label>                                                           
+                        <div className="flex bg-[#0A0A0A] rounded-xl border border-white/5 h-[48px] items-center px-4">                                                                 
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />                                                                                             
+                                <span className="text-xs font-bold text-white uppercase tracking-wider">ONLINE (FREE)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* GENERATE */}
+                <button
+                    disabled={isConverting}
+                    className={`
+                        w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold transition-all duration-300 min-h-[56px] text-black mt-2 text-sm tracking-wide
+                        ${isConverting ? 'bg-[#F59E0B]/50 cursor-not-allowed' : 'bg-[#F59E0B] hover:bg-[#F59E0B]/90 hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] active:scale-[0.98]'}
+                    `}
+                >
+                    {isConverting ? (
+                        <>
+                            <Loader2 className="w-5 h-5 animate-spin" />        
+                            CONVERTING AUDIO...
+                        </>
+                    ) : (
+                        <>
+                            <Zap className="w-4 h-4 fill-current" />
+                            CONVERT SPEECH
+                        </>
+                    )}
+                </button>
+            </div>
         </div>
     );
 };

@@ -55,40 +55,11 @@ const GlowButton = ({
 // The public MMS-TTS Gradio Space that supports 1000+ languages including Bengali
 const GRADIO_SPACE_URL = "https://dpc-mmstts.hf.space";
 
-const handlePuterTTS = async (text: string, voice: string, language: 'ENG' | 'BNG' = 'ENG', speed: number = 1.0) => {
+const handlePuterTTS = async (text: string, _voice: string, language: 'ENG' | 'BNG' = 'ENG', _speed: number = 1.0) => {
     console.log(`[Voice Engine] Generating TTS: "${text}" | Language: ${language}`);
-
-    // 1. If English, Use Puter.js (Lightning Fast, runs in browser)
-    if (language === 'ENG') {
-        try {
-            // @ts-ignore
-            if (window.puter && window.puter.ai) {
-                console.log("[Puter.js] Sending to Puter AI...");
-                // @ts-ignore
-                let audio = await window.puter.ai.txt2speech(text);
-                // Ensure it's a blob before creating URL
-                if (!(audio instanceof Blob)) {
-                    audio = new Blob([audio], { type: 'audio/mp3' });
-                }
-                const audioUrl = URL.createObjectURL(audio);
-                console.log("[Puter.js] Audio ready!", audioUrl);
-                return audioUrl;
-            } else {
-                console.warn("[Puter.js] SDK not fully loaded, falling back to Gradio space...");
-            }
-        } catch (error: any) {
-            console.error("[Puter Error]", error);
-            // Catch Cloudflare/Bot verification errors from puter and gracefully fallback
-            if (error.message?.includes('fetch') || error.toString().includes('Cloudflare') || error.message?.includes('Failed to fetch')) {
-                console.log("[Fallback] Puter.js bot check triggered or blocked. Routing to Gradio fallback.");
-            } else {
-                console.log("[Fallback] Trying Gradio space for English...");
-            }
-        }
-    }
-
-    // 2. Bengali (or English fallback) — uses public Gradio Space running Meta MMS-TTS
-    // This is a REAL, FREE, working model (facebook/mms-tts) hosted on HuggingFace Spaces
+    
+    // We are routing ALL traffic (English and Bengali) through the reliable Hugging Face MMS Space
+    // This bypasses Puter.js entirely which was returning unplayable HTMLAudioElements in the custom player.
     try {
         const langCode = language === 'BNG' ? 'Bengali (ben)' : 'English (eng)';
         console.log(`[Gradio Space] Calling ${GRADIO_SPACE_URL} with lang: ${langCode}`);
@@ -107,22 +78,24 @@ const handlePuterTTS = async (text: string, voice: string, language: 'ENG' | 'BN
         const result = await response.json();
         console.log("[Gradio Space] Response:", result);
 
-        // Gradio returns a file path — download the actual audio
+        // Gradio returns a file path — download the actual audio string
         if (result.data && result.data[0] && result.data[0].name) {
             const audioFileUrl = `${GRADIO_SPACE_URL}/file=${result.data[0].name}`;
             console.log("[Gradio Space] Downloading audio from:", audioFileUrl);
             const audioResponse = await fetch(audioFileUrl);
             if (!audioResponse.ok) throw new Error("Failed to download audio file");
+            
             const blob = await audioResponse.blob();
             const audioUrl = URL.createObjectURL(blob);
-            console.log(`[Gradio Space] Audio ready! Size: ${blob.size} bytes`);
+            
+            console.log(`[Gradio Space] Audio ready! Size: ${blob.size} bytes. URL: ${audioUrl}`);
             return audioUrl;
         }
 
         throw new Error("Unexpected response format from Gradio space");
     } catch (error) {
-        console.error("[Bengali TTS Error]", error);
-        return null;
+        console.error("[TTS Engine Error]", error);
+        throw error; // Re-throw to show in UI
     }
 };
 

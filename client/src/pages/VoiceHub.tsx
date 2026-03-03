@@ -129,6 +129,29 @@ const StudioTab = () => {
     const [audioUrl, setAudioUrl] = useState<string | null>(null);
     const audioRef = React.useRef<HTMLAudioElement | null>(null);
 
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [progress, setProgress] = useState(0);
+    const [duration, setDuration] = useState(0);
+
+    const togglePlay = () => {
+        if (!audioRef.current) return;
+        if (isPlaying) {
+            audioRef.current.pause();
+        } else {
+            audioRef.current.play().catch(e => console.error("Playback failed:", e));
+        }
+    };
+
+    const handleTimeUpdate = () => {
+        if (audioRef.current) {
+            const current = audioRef.current.currentTime;
+            const dur = audioRef.current.duration;
+            if (dur > 0) {
+                setProgress((current / dur) * 100);
+            }
+        }
+    };
+
     const handleGenerate = async () => {
         if (!text.trim()) return;
 
@@ -257,35 +280,72 @@ const StudioTab = () => {
             <AnimatePresence>
                 {showPlayer && audioUrl && (
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="group"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 relative overflow-hidden"
                     >
-                        <GlassCard className="border-brand-yellow/30 shadow-[0_0_40px_rgba(255,123,0,0.1)] overflow-hidden">
-                            <div className="flex items-center gap-4">
-                                <audio ref={audioRef} src={audioUrl} hidden />
-                                <button
-                                    onClick={() => audioRef.current?.play()}
-                                    className="w-12 h-12 rounded-full bg-brand-yellow flex items-center justify-center text-black active:scale-90 transition-transform shadow-[0_0_15px_rgba(255,123,0,0.3)]"
-                                >
-                                    <Play className="w-6 h-6 fill-black" />
-                                </button>
-                                <div className="flex-1 space-y-2">
-                                    <div className="flex justify-between items-end">
-                                        <span className="text-[10px] font-mono text-brand-yellow/80">SYNTH_RESULT.WAV</span>
-                                        <span className="text-[10px] font-mono text-white/20 uppercase tracking-widest">Real-Time Synthesis</span>
+                        <div className="absolute top-0 right-0 p-2 opacity-10 pointer-events-none">
+                            <Zap className="w-24 h-24" />
+                        </div>
+                        <audio 
+                            ref={audioRef} 
+                            src={audioUrl} 
+                            onPlay={() => setIsPlaying(true)}
+                            onPause={() => setIsPlaying(false)}
+                            onEnded={() => { setIsPlaying(false); setProgress(0); }}
+                            onTimeUpdate={handleTimeUpdate}
+                            onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+                            hidden 
+                        />
+                        
+                        <div className="flex items-center gap-4 relative z-10 w-full">
+                            <button
+                                onClick={togglePlay}    
+                                className="w-14 h-14 flex-shrink-0 rounded-full bg-[#F59E0B] flex items-center justify-center text-black hover:bg-[#F59E0B]/90 active:scale-95 transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)] shrink-0"                                                                   
+                            >
+                                {isPlaying ? (
+                                    <div className="flex gap-1.5 items-center justify-center ml-0.5">
+                                        <div className="w-1.5 h-5 bg-black rounded-sm"></div>
+                                        <div className="w-1.5 h-5 bg-black rounded-sm"></div>
                                     </div>
-                                    <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                                        <motion.div
-                                            initial={{ width: 0 }}
-                                            animate={{ width: "100%" }}
-                                            className="h-full bg-gradient-to-r from-brand-yellow to-orange-500"
-                                        />
+                                ) : (
+                                    <Play className="w-6 h-6 fill-black ml-1" />
+                                )}
+                            </button>
+                            
+                            <div className="flex-1 w-full flex flex-col justify-center">
+                                <div className="flex justify-between items-end mb-2 px-1">                                                                                                                    
+                                    <div className="flex flex-col">
+                                        <span className="text-[12px] font-bold text-[#F59E0B] uppercase tracking-wider">SYNTH_RESULT.WAV</span>                                                                            
+                                        <span className="text-[9px] font-medium text-white/40 uppercase tracking-widest hidden md:block">Neural Output Stream</span>
+                                    </div>
+                                    <div className="flex gap-3 items-center">
+                                        <a href={audioUrl} download="bongbari_ai_voice.wav" className="text-[10px] bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-1.5 rounded-md font-bold text-white transition-all uppercase flex items-center gap-2">
+                                            <span>Download</span>
+                                        </a>
                                     </div>
                                 </div>
-                                <Volume2 className="w-5 h-5 text-white/60" />
+                                
+                                <div 
+                                    className="h-2.5 w-full bg-[#1A1A1A] rounded-full overflow-hidden relative cursor-pointer group shadow-inner"
+                                    onClick={(e) => {
+                                        if (audioRef.current && duration > 0) {
+                                            const bounds = e.currentTarget.getBoundingClientRect();
+                                            const percent = (e.clientX - bounds.left) / bounds.width;
+                                            audioRef.current.currentTime = percent * duration;
+                                            setProgress(percent * 100);
+                                        }
+                                    }}
+                                >                                                                                              
+                                    <div
+                                        style={{ width: `${progress}%` }}
+                                        className="absolute top-0 left-0 h-full bg-gradient-to-r from-orange-600 to-[#F59E0B] rounded-full transition-all duration-75 relative"                                                                                         
+                                    >
+                                        <div className="absolute right-0 top-0 bottom-0 w-2 bg-white/50 blur-[2px] rounded-full"></div>
+                                    </div>
+                                </div>
                             </div>
-                        </GlassCard>
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -311,7 +371,7 @@ const VoiceFactoryTab = () => {
                 </div>
                 {/* Embed F5-TTS free UI */}
                 <iframe 
-                    src="https://f5tts.org" 
+                    src="https://f5tts.org/?__theme=dark" 
                     className="w-full h-full border-0 rounded-xl"
                     title="F5-TTS Voice Cloning"
                     allow="microphone"
@@ -339,7 +399,7 @@ const SpeechToSpeechTab = () => {
                 </div>
                 {/* Embed Llasa-8B */}
                 <iframe 
-                    src="https://zouyunzouyunzouyun-llasa-8b-tts.hf.space" 
+                    src="https://zouyunzouyunzouyun-llasa-8b-tts.hf.space/?__theme=dark" 
                     className="w-full h-full border-0 rounded-xl"
                     title="Llasa-8B Voice Cloning"
                     allow="microphone"

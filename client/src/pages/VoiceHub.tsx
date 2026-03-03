@@ -358,6 +358,29 @@ const VoiceFactoryTab = () => {
     const [targetText, setTargetText] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
     
+    // File inputs
+    const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setRefAudio(e.target.files[0]);
+        }
+    };
+
+    const triggerUpload = () => {
+        if (fileInputRef.current) {
+            fileInputRef.current.click();
+        }
+    };
+
+    const handleGenerateMock = () => {
+        setIsGenerating(true);
+        setTimeout(() => {
+            setIsGenerating(false);
+            alert("Neural backend connection requires backend proxy. For native scaling, deploy your HuggingFace token to Upstash. Connect with developers to activate F5-TTS natively.");
+        }, 1500);
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-1">
@@ -372,10 +395,33 @@ const VoiceFactoryTab = () => {
                     {/* REFERENCE AUDIO */}
                     <div className="space-y-2 relative">
                         <label className="text-[11px] font-bold text-white/80 tracking-widest uppercase">REFERENCE AUDIO (5-10s)</label>                                                               
-                        <div className="mt-2 w-full h-[140px] bg-[#0A0A0A] border border-dashed border-white/20 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#F59E0B]/50 transition-all group">
-                            <Mic className="w-8 h-8 text-white/20 group-hover:text-[#F59E0B] transition-colors mb-2" />
-                            <span className="text-xs font-bold text-white/40 group-hover:text-white transition-colors">CLICK OR DRAG FILE</span>
-                            <span className="text-[9px] text-white/20 font-mono mt-1">.WAV or .MP3</span>
+                        <input 
+                            type="file" 
+                            accept="audio/*"
+                            capture="user"
+                            ref={fileInputRef} 
+                            style={{ display: 'none' }} 
+                            onChange={handleFileChange}
+                        />
+                        <div 
+                            onClick={triggerUpload}
+                            className={`mt-2 w-full h-[140px] bg-[#0A0A0A] border ${refAudio ? 'border-solid border-[#F59E0B] shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'border-dashed border-white/20'} rounded-xl flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#F59E0B]/50 transition-all group`}
+                        >
+                            {refAudio ? (
+                                <>
+                                    <div className="w-12 h-12 rounded-full bg-[#F59E0B] flex items-center justify-center text-black mb-2 animate-[pulse_2s_ease-in-out_infinite]">
+                                        <Mic className="w-6 h-6 fill-current" />
+                                    </div>
+                                    <span className="text-xs font-bold text-white truncate px-4 max-w-full">{refAudio.name}</span>
+                                    <span className="text-[9px] text-[#F59E0B] font-mono mt-1">LOADED / READY</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Mic className="w-8 h-8 text-white/20 group-hover:text-[#F59E0B] transition-colors mb-2" />
+                                    <span className="text-xs font-bold text-white/40 group-hover:text-white transition-colors">TAP TO RECORD OR UPLOAD</span>
+                                    <span className="text-[9px] text-white/20 font-mono mt-1">.WAV or .MP3</span>
+                                </>
+                            )}
                         </div>
                     </div>
 
@@ -393,10 +439,11 @@ const VoiceFactoryTab = () => {
 
                 {/* GENERATE */}
                 <button
-                    disabled={isGenerating || !targetText}
+                    onClick={handleGenerateMock}
+                    disabled={isGenerating || !targetText || !refAudio}
                     className={`
                         w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold transition-all duration-300 min-h-[56px] text-black mt-2 text-sm tracking-wide
-                        ${(isGenerating || !targetText) ? 'bg-[#F59E0B]/50 cursor-not-allowed' : 'bg-[#F59E0B] hover:bg-[#F59E0B]/90 hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] active:scale-[0.98]'}
+                        ${(isGenerating || !targetText || !refAudio) ? 'bg-[#F59E0B]/50 cursor-not-allowed' : 'bg-[#F59E0B] hover:bg-[#F59E0B]/90 hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] active:scale-[0.98]'}
                     `}
                 >
                     {isGenerating ? (
@@ -419,6 +466,30 @@ const VoiceFactoryTab = () => {
 const SpeechToSpeechTab = () => {
     const [sourceAudio, setSourceAudio] = useState<File | null>(null);
     const [isConverting, setIsConverting] = useState(false);
+    
+    // File inputs
+    const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setSourceAudio(e.target.files[0]);
+        }
+    };
+
+    const triggerUpload = () => {
+        if (fileInputRef.current) {
+            fileInputRef.current.click();
+        }
+    };
+
+    const handleGenerateMock = () => {
+        setIsConverting(true);
+        setTimeout(() => {
+            setIsConverting(false);
+            alert("Neural backend connection requires backend proxy. Connect with developers to activate Llasa-8B translation natively.");
+        }, 1500);
+    };
+
 
     return (
         <div className="space-y-6">
@@ -432,10 +503,35 @@ const SpeechToSpeechTab = () => {
                 
                 <div className="space-y-2 relative">
                     <label className="text-[11px] font-bold text-white/80 tracking-widest uppercase">SOURCE AUDIO</label>                                                               
-                    <div className="mt-2 w-full h-[180px] bg-[#0A0A0A] border border-dashed border-white/20 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#F59E0B]/50 transition-all group">
-                        <Waves className="w-10 h-10 text-white/20 group-hover:text-[#F59E0B] transition-colors mb-3" />
-                        <span className="text-sm font-bold text-white/40 group-hover:text-white transition-colors">DROP AUDIO TO CONVERT</span>
-                        <span className="text-[10px] text-white/20 font-mono mt-2 uppercase tracking-widest">Supports .WAV / .MP3</span>
+                    
+                    <input 
+                        type="file" 
+                        accept="audio/*"
+                        capture="user"
+                        ref={fileInputRef} 
+                        style={{ display: 'none' }} 
+                        onChange={handleFileChange}
+                    />
+
+                    <div 
+                        onClick={triggerUpload}
+                        className={`mt-2 w-full h-[180px] bg-[#0A0A0A] border ${sourceAudio ? 'border-solid border-[#F59E0B] shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'border-dashed border-white/20'} rounded-xl flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#F59E0B]/50 transition-all group`}
+                    >
+                        {sourceAudio ? (
+                            <>
+                                <div className="w-16 h-16 rounded-full bg-[#F59E0B] flex items-center justify-center text-black mb-3 animate-[pulse_2s_ease-in-out_infinite]">
+                                    <Waves className="w-8 h-8 fill-current" />
+                                </div>
+                                <span className="text-sm font-bold text-white truncate px-6 max-w-full">{sourceAudio.name}</span>
+                                <span className="text-[10px] text-[#F59E0B] font-mono mt-2 uppercase tracking-widest">AUDIO SIGNATURE CAPTURED</span>
+                            </>
+                        ) : (
+                            <>
+                                <Waves className="w-10 h-10 text-white/20 group-hover:text-[#F59E0B] transition-colors mb-3" />
+                                <span className="text-sm font-bold text-white/40 group-hover:text-white transition-colors">TAP TO RECORD OR UPLOAD</span>
+                                <span className="text-[10px] text-white/20 font-mono mt-2 uppercase tracking-widest">Supports .WAV / .MP3</span>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -460,10 +556,11 @@ const SpeechToSpeechTab = () => {
 
                 {/* GENERATE */}
                 <button
-                    disabled={isConverting}
+                    disabled={isConverting || !sourceAudio}
+                    onClick={handleGenerateMock}
                     className={`
                         w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold transition-all duration-300 min-h-[56px] text-black mt-2 text-sm tracking-wide
-                        ${isConverting ? 'bg-[#F59E0B]/50 cursor-not-allowed' : 'bg-[#F59E0B] hover:bg-[#F59E0B]/90 hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] active:scale-[0.98]'}
+                        ${(isConverting || !sourceAudio) ? 'bg-[#F59E0B]/50 cursor-not-allowed' : 'bg-[#F59E0B] hover:bg-[#F59E0B]/90 hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] active:scale-[0.98]'}
                     `}
                 >
                     {isConverting ? (

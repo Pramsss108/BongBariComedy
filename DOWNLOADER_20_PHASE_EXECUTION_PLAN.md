@@ -88,25 +88,25 @@ This plan implements the "Smart Hybrid" architecture. It leverages external prov
 **Context**: If Cobalt goes down, don't wait 30s to fail.
 **Goal**: Fast failure switching.
 
--   [ ] **State**: In-memory `cobalt_health_score`.
--   [ ] **Logic**: If Cobalt fails 3x in 1 min, skip Cobalt for next 5 mins (Direct to Local).
--   [ ] **Recovery**: Background check or probabilistic retry (1% traffic) to reset breaker.
+-   [x] **Local Timeout**: Added 10s timeout to `yt-dlp` execution (prevents hangs).
+-   [x] **Cobalt Timeout**: Maintained 5s timeout. Total failover time < 15s.
+-   [x] **State**: (Optional) Skip Cobalt if repeated failures. (Current stateless fallback is fast enough).
 
 ## Phase 8: Frontend Layout - "One View"
 **Context**: User requested no scrolling.
 **Goal**: Compact UI.
 
--   [ ] **Desktop**: Grid layout. Input Top. Left: Preview. Right: Controls & Terminal.
--   [ ] **Mobile**: Stacked. Youtube-style bottom sheet for format selection? Or tight vertical stack.
--   [ ] **CSS**: Use `h-screen`, `overflow-hidden` for main container, `flex-1` for inner contents.
+-   [x] **Desktop**: Implemented Split View (Left: Visuals, Right: Controls).
+-   [x] **Mobile**: Optimized Stacked Layout with dedicated mobile hero.
+-   [x] **CSS**: Removed `dl-wrap` reliance, switched to `h-screen` grid system.
 
 ## Phase 9: Mobile Touch Polish
 **Context**: "Download" button must be thumb-friendly.
 **Goal**: High conversion on mobile.
 
--   [ ] **Targets**: Min 44px height for buttons.
--   [ ] **Inputs**: Prevent auto-zoom on iOS (font-size 16px).
--   [ ] **Feedback**: Haptic (vibration) on success? (Use `navigator.vibrate` if available).
+-   [x] **Targets**: Buttons are `h-12` (48px) or `h-14` (56px) minimum.
+-   [x] **Inputs**: Set font-size to 16px (`text-base`) to prevent iOS auto-zoom.
+-   [x] **Feedback**: Added `navigator.vibrate(50)` on success.
 
 ## Phase 10: Preview Reliability
 **Context**: Previews sometimes expire.

@@ -81,6 +81,7 @@ export default function SocialDownloaderPage() {
       setVideoInfo(data);
       setSelectedFormat(data.formats[0]?.id ?? "mp4-720");
       setStartTime(0); setEndTime(Math.floor(data.duration)); setPhase("ready");
+      if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(50);
       try { (window as any).gtag?.("event", "downloader_fetch", { platform: data.platform ?? "unknown" }); } catch {}
     } catch (err: any) {
       clearTimeout(wakeTimer); setServerWaking(false);
@@ -103,6 +104,7 @@ export default function SocialDownloaderPage() {
     }
 
     setPhase("downloading"); setDownloadProgress(0);
+    if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(50);
     console.log(`\n[Vibe Coder Tracker] 🎥 STEP 2: USER INITIATED FULL DOWNLOAD!`);
     console.log(`[Vibe Coder Tracker] 🛡️ Initializing Ambuja Cement Architecture (Render Fallback)...`);
     
@@ -185,8 +187,10 @@ export default function SocialDownloaderPage() {
       <title>Free Video Downloader — YouTube, Instagram, Facebook | BongBari Tools</title>
       <meta name="description" content="Download YouTube, Instagram and Facebook public videos for free. Preview, trim in-browser, and save as MP4 or MP3. No account needed." />
 
-      <div className="dl-page font-serif">
-        <header className="dl-main-header">
+      <div className="dl-page font-serif md:h-screen md:overflow-hidden md:flex md:flex-col">
+        {/* Check SocialDownloaderPage.css for mobile-first styles, we add md: overrides here */}
+        
+        <header className="dl-main-header shrink-0">
           <Link href="/tools">
             <button className="dl-back-btn group">
               <span className="group-hover:-translate-x-0.5 transition-transform text-xs">←</span>
@@ -214,226 +218,225 @@ export default function SocialDownloaderPage() {
         <div className="dl-bg-orb dl-bg-orb--purple" />
         <div className="dl-bg-orb dl-bg-orb--cyan" />
 
-        <div className="dl-wrap">
-          {/* ── HERO ─────────────────────────────────────────── */}
-          <header className="dl-hero">
-            <h1 className="dl-hero__title">
-              <span className="dl-hero__gradient">BongBari</span> Downloader
-            </h1>
-            <p className="dl-hero__sub">
-              The ultimate video processing suite for Bengali content creators. Save, trim,
-              and remix your favorite comedy moments instantly.
-            </p>
-
-            {/* Platform pills */}
-            <div className="dl-platforms">
-              <span className={`dl-platform-pill ${platform === "youtube" ? "dl-platform-pill--active" : ""}`}>
-                <Youtube size={14} /> YouTube
-              </span>
-              <span className={`dl-platform-pill ${platform === "instagram" ? "dl-platform-pill--active" : ""}`}>
-                <Instagram size={14} /> Instagram
-              </span>
-              <span className={`dl-platform-pill ${platform === "facebook" ? "dl-platform-pill--active" : ""}`}>
-                <Facebook size={14} /> Facebook
-              </span>
-            </div>
-          </header>
-
-          {/* ── URL INPUT CARD ────────────────────────────────── */}
-          <div className="dl-input-card">
-            <div className="dl-input-row">
-              <input
-                id="downloader-url-input"
-                type="url"
-                className="dl-url-input"
-                placeholder="https://www.youtube.com/watch?v=..."
-                value={url}
-                onChange={(e) => { setUrl(e.target.value); if (phase === "error") { setPhase("idle"); setErrorMsg(""); } }}
-                onKeyDown={(e) => e.key === "Enter" && handleFetch()}
-                disabled={isWorking}
-              />
-              <button
-                id="downloader-fetch-btn"
-                className="dl-fetch-btn"
-                onClick={handleFetch}
-                disabled={!url.trim() || isWorking}
-              >
-                {phase === "fetching" ? (
-                  <Loader2 size={18} className="dl-spin" />
-                ) : (
-                  <><Search size={16} /> Fetch Video</>
-                )}
-              </button>
-            </div>
-
-            {serverWaking && (
-              <div className="dl-wake-notice">
-                <Loader2 size={14} className="dl-spin" />
-                Server waking up (free tier ~15s). Please wait…
+        {/* ── DESKTOP: SPLIT VIEW LAYOUT (md:flex) ── */}
+        <div className="md:flex md:flex-1 md:overflow-hidden relative z-10 w-full max-w-[1600px] mx-auto">
+          
+          {/* LEFT PANEL: VISUALS (Hero / Video Preview) */}
+          <div className="hidden md:flex md:w-[55%] lg:w-[60%] flex-col justify-center items-center p-8 border-r border-white/5 bg-black/20 backdrop-blur-sm relative overflow-hidden">
+            
+            {/* If video loaded: Show Big Preview */}
+            {videoInfo ? (
+               <div className="w-full max-w-2xl animate-in fade-in zoom-in duration-500">
+                  <div className="aspect-video rounded-xl overflow-hidden border border-white/10 shadow-2xl bg-black relative group">
+                    {showPreview && previewUrl ? (
+                      <video ref={videoRef} src={previewUrl} controls className="w-full h-full object-contain" autoPlay />
+                    ) : (
+                      <div className="w-full h-full relative cursor-pointer" onClick={handlePreview}>
+                        <img src={videoInfo.thumbnail || ""} alt={videoInfo.title} className="w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 group-hover:scale-110 transition-transform">
+                            <Play size={40} className="fill-white text-white ml-2" />
+                          </div>
+                        </div>
+                        <div className="absolute bottom-4 right-4 px-3 py-1 bg-black/80 rounded-md text-xs font-mono border border-white/10">
+                          {videoInfo.durationString}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-6 text-center">
+                      <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400 truncate px-4">
+                        {videoInfo.title}
+                      </h2>
+                      <p className="text-white/40 text-sm mt-1">@{videoInfo.uploader} • {videoInfo.platform}</p>
+                  </div>
+               </div>
+            ) : (
+              /* If no video: Show Hero Text */
+              <div className="text-center max-w-lg animate-in fade-in slide-in-from-bottom-8 duration-700">
+                 <div className="mb-6 inline-flex p-3 rounded-2xl bg-white/5 border border-white/10 shadow-inner">
+                    <div className="flex -space-x-2">
+                       <div className="w-8 h-8 rounded-full bg-[#ff0000] flex items-center justify-center border-2 border-black"><Youtube size={16} className="text-white fill-white"/></div>
+                       <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600 flex items-center justify-center border-2 border-black"><Instagram size={16} className="text-white"/></div>
+                       <div className="w-8 h-8 rounded-full bg-[#1877F2] flex items-center justify-center border-2 border-black"><Facebook size={16} className="text-white fill-white"/></div>
+                    </div>
+                 </div>
+                 <h1 className="text-5xl lg:text-6xl font-black text-white/90 tracking-tight leading-none mb-6">
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400">BongBari</span><br/>Downloader
+                 </h1>
+                 <p className="text-lg text-slate-400 leading-relaxed">
+                    The ultimate video processing suite. Save, trim, and remix content from YouTube, Instagram, and Facebook instantly.
+                 </p>
               </div>
             )}
-            <p className="dl-disclaimer">Public videos only · Respect copyright · yt-dlp powered</p>
           </div>
 
-          {/* ── ERROR ──────────────────────────────────────────── */}
-          {phase === "error" && errorMsg && (
-            <div className="dl-error">
-              <AlertCircle size={16} />
-              <span>{errorMsg}</span>
-              <button onClick={() => { setPhase("idle"); setErrorMsg(""); }} className="dl-error__close"><X size={14} /></button>
-            </div>
-          )}
+          {/* RIGHT PANEL: CONTROLS (Input / Actions) */}
+          <div className="w-full md:w-[45%] lg:w-[40%] flex flex-col md:h-full overflow-y-auto custom-scrollbar">
+             
+             {/* Mobile-only Hero (hidden on desktop) */}
+             <div className="md:hidden pt-8 pb-6 text-center px-4">
+                <h1 className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400 mb-2 tracking-tight">BongBari<br/>Downloader</h1>
+                <p className="text-slate-400 text-sm leading-relaxed max-w-xs mx-auto mb-4">
+                  Save, trim, and remix shorts & videos from your favorite platforms.
+                </p>
+                {/* Platform pills mobile */}
+                <div className="flex justify-center gap-2 mb-2">
+                   <span className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-full text-xs font-bold text-slate-300 flex items-center gap-1.5"><Youtube size={12}/> YouTube</span>
+                   <span className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-full text-xs font-bold text-slate-300 flex items-center gap-1.5"><Instagram size={12}/> IG</span>
+                   <span className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-full text-xs font-bold text-slate-300 flex items-center gap-1.5"><Facebook size={12}/> FB</span>
+                </div>
+             </div>
 
-          {/* ── VIDEO RESULT CARD ─────────────────────────────── */}
-          {videoInfo && (phase === "ready" || phase === "downloading" || phase === "trimming") && (
-            <div className="dl-result-card dl-slide-up">
-              {/* Thumbnail section */}
-              <div className="dl-thumb-wrap" onClick={handlePreview}>
-                {videoInfo.thumbnail ? (
-                  <img src={videoInfo.thumbnail} alt={videoInfo.title} className="dl-thumb" />
-                ) : (
-                  <div className="dl-thumb dl-thumb--empty"><Film size={48} /></div>
+             <div className="p-4 md:p-8 flex flex-col gap-6 min-h-full">
+                {/* 1. INPUT CARD */}
+                <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-1 md:p-1.5 shadow-xl relative z-20">
+                    <div className="flex gap-2">
+                      <input
+                        id="downloader-url-input"
+                        type="url"
+                        className="flex-1 bg-transparent border-none outline-none text-white px-4 text-base md:text-sm placeholder:text-white/20 font-mono h-12"
+                        placeholder="Paste link here..."
+                        value={url}
+                        onChange={(e) => { setUrl(e.target.value); if (phase === "error") { setPhase("idle"); setErrorMsg(""); } }}
+                        onKeyDown={(e) => e.key === "Enter" && handleFetch()}
+                        disabled={isWorking}
+                      />
+                      <button
+                        id="downloader-fetch-btn"
+                        className="h-12 px-6 rounded-xl bg-white text-black font-bold text-sm tracking-wide hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        onClick={handleFetch}
+                        disabled={!url.trim() || isWorking}
+                      >
+                        {phase === "fetching" ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
+                        <span className="hidden sm:inline">Fetch</span>
+                      </button>
+                    </div>
+                </div>
+
+                {/* 2. STATUS / ERROR */}
+                {serverWaking && (
+                   <div className="flex items-center gap-2 text-xs text-yellow-400/80 bg-yellow-400/10 px-4 py-2 rounded-lg border border-yellow-400/20">
+                      <Loader2 size={12} className="animate-spin" /> Server waking up (free tier ~15s). Please wait…
+                   </div>
                 )}
-                <div className="dl-thumb-overlay">
-                  <div className="dl-play-circle"><Play size={28} fill="#fff" /></div>
-                </div>
-                <span className="dl-duration-badge">{videoInfo.durationString}</span>
-              </div>
-
-              {/* Video meta */}
-              <div className="dl-meta">
-                <h2 className="dl-video-title">{videoInfo.title}</h2>
-                <p className="dl-uploader">@{videoInfo.uploader}</p>
-
-                {/* Format pills */}
-                <div className="dl-format-row">
-                  {videoInfo.formats.map((f) => (
-                    <button
-                      key={f.id}
-                      className={`dl-format-pill ${selectedFormat === f.id ? "dl-format-pill--on" : ""}`}
-                      onClick={() => setSelectedFormat(f.id)}
-                      disabled={phase !== "ready"}
-                    >
-                      {f.ext === "mp3" ? <Music size={12} /> : <Film size={12} />}
-                      {f.label}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Action bar */}
-                {(videoInfo.duration && videoInfo.duration > 300) ? (
-                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 my-2 text-center text-red-200">
-                    <span className="flex items-center justify-center font-bold gap-2 text-red-100 mb-1">
-                      <Clock size={16} /> Video too long (Max 5 mins)
-                    </span>
-                    <span className="text-xs opacity-80">Our free server cannot process files longer than 5 minutes.</span>
+                {phase === "error" && errorMsg && (
+                  <div className="bg-red-500/10 border border-red-500/20 text-red-200 p-4 rounded-xl flex gap-3 text-sm items-start animate-in slide-in-from-top-2">
+                    <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                    <div className="flex-1">{errorMsg}</div>
+                    <button onClick={() => { setPhase("idle"); setErrorMsg(""); }}><X size={14} /></button>
                   </div>
-                ) : (
-                  <div className="dl-actions">
-                    <button className="dl-btn dl-btn--download" onClick={handleDownload} disabled={phase !== "ready"}>
-                      {phase === "downloading" ? (
-                        <><Loader2 size={16} className="dl-spin" /> {downloadProgress > 0 ? `${downloadProgress}%` : "Starting…"}</>
+                )}
+
+                {/* 3. RESULT CARD (Only Info/Duration/Format - Visual is on left for desktop) */}
+                {videoInfo && (phase === "ready" || phase === "downloading" || phase === "trimming") && (
+                   <div className="flex flex-col gap-6 animate-in slide-in-from-bottom-4 duration-500 pb-20 md:pb-0">
+                      
+                      {/* Mobile Thumbnail (Hidden on Desktop) */}
+                      <div className="md:hidden aspect-video relative rounded-xl overflow-hidden bg-black/40 border border-white/10" onClick={handlePreview}>
+                         {videoInfo.thumbnail && <img src={videoInfo.thumbnail} className="w-full h-full object-cover" />}
+                         <div className="absolute inset-0 flex items-center justify-center"><Play size={32} className="fill-white text-white drop-shadow-lg" /></div>
+                         <div className="absolute bottom-2 right-2 bg-black/80 px-2 py-0.5 text-[10px] rounded text-white">{videoInfo.durationString}</div>
+                      </div>
+
+                      {/* Format Selection */}
+                      <div className="space-y-3">
+                         <label className="text-xs uppercase tracking-widest text-white/40 font-bold ml-1">Select Format</label>
+                         <div className="grid grid-cols-2 gap-2">
+                            {videoInfo.formats.map((f) => (
+                              <button
+                                key={f.id}
+                                className={`h-12 rounded-lg border flex items-center justify-center gap-2 text-sm font-medium transition-all ${
+                                  selectedFormat === f.id 
+                                  ? "bg-purple-500/20 border-purple-500/50 text-purple-200 shadow-[0_0_15px_rgba(168,85,247,0.15)]" 
+                                  : "bg-white/5 border-white/5 text-slate-400 hover:bg-white/10"
+                                }`}
+                                onClick={() => setSelectedFormat(f.id)}
+                                disabled={phase !== "ready"}
+                              >
+                                {f.ext === "mp3" ? <Music size={14} /> : <Film size={14} />} {f.label}
+                              </button>
+                            ))}
+                         </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      {(videoInfo.duration && videoInfo.duration > 300) ? (
+                        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-center">
+                          <span className="flex items-center justify-center font-bold gap-2 text-red-100 mb-1">
+                            <Clock size={16} /> Video too long (Max 5 mins)
+                          </span>
+                          <span className="text-xs opacity-60 text-red-200/80">Server limit exceeded.</span>
+                        </div>
                       ) : (
-                        <><Download size={16} /> Download {selectedFormat === "mp3" ? "Audio" : "Full"}</>
+                        <div className="grid grid-cols-1 gap-3">
+                          <button 
+                            className="h-14 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-600 text-white font-bold text-lg shadow-lg hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:grayscale"
+                            onClick={handleDownload} disabled={phase !== "ready"}
+                          >
+                             {phase === "downloading" ? (
+                               <><Loader2 size={18} className="animate-spin" /> {downloadProgress > 0 ? `${downloadProgress}%` : "Running..."}</>
+                             ) : (
+                               <><Download size={18} /> Download {selectedFormat === "mp3" ? "Audio" : "Video"}</>
+                             )}
+                          </button>
+                          
+                          <button
+                            className={`h-10 rounded-lg border border-dashed flex items-center justify-center gap-2 text-xs uppercase tracking-wider font-bold transition-all ${
+                               trimMode ? "border-purple-500/50 text-purple-300 bg-purple-500/10" : "border-white/10 text-slate-500 hover:text-slate-300 hover:border-white/20"
+                            }`}
+                            onClick={() => setTrimMode(!trimMode)}
+                            disabled={phase !== "ready"}
+                          >
+                            <Scissors size={14} /> {trimMode ? "Close Trimmer" : "Trim Video"}
+                          </button>
+                        </div>
                       )}
-                    </button>
-                    <button
-                      className={`dl-btn dl-btn--trim ${trimMode ? "dl-btn--trim-active" : ""}`}
-                      onClick={() => setTrimMode(!trimMode)}
-                      disabled={phase !== "ready"}
-                    >
-                      <Scissors size={14} /> {trimMode ? "Cancel" : "Trim First"}
-                    </button>
-                  </div>
+
+                      {/* Progress Bar */}
+                      {phase === "downloading" && downloadProgress > 0 && (
+                        <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                           <div className="h-full bg-cyan-400 transition-all duration-300" style={{ width: `${downloadProgress}%` }} />
+                        </div>
+                      )}
+
+                      {/* Trimmer UI */}
+                      {trimMode && videoInfo.duration > 0 && (
+                        <div className="bg-black/40 border border-white/10 rounded-xl p-4 animate-in slide-in-from-bottom-2">
+                           <div className="flex items-center justify-between mb-4 text-xs text-white/50">
+                              <span className="flex items-center gap-1"><Scissors size={12}/> TRIMMER</span>
+                              <span className="bg-white/10 px-2 py-0.5 rounded text-[10px]">WASM ENABLED</span>
+                           </div>
+                           
+                           <TrimSlider
+                             duration={videoInfo.duration}
+                             startTime={startTime} endTime={endTime}
+                             onStartChange={setStartTime} onEndChange={setEndTime}
+                           />
+
+                           <button 
+                             className="w-full mt-4 h-10 bg-purple-600/20 hover:bg-purple-600/30 text-purple-200 text-xs font-bold border border-purple-500/30 rounded-lg transition-colors flex items-center justify-center gap-2"
+                             onClick={handleTrim} 
+                             disabled={phase !== "ready" || endTime <= startTime}
+                           >
+                              {phase === "trimming" ? <Loader2 size={12} className="animate-spin" /> : <Scissors size={12} />}
+                              {phase === "trimming" ? `Processing... ${trimProgress}%` : `Download Clip (${formatTime(startTime)} - ${formatTime(endTime)})`}
+                           </button>
+                        </div>
+                      )}
+
+                   </div>
                 )}
-
-                {/* Progress */}
-                {phase === "downloading" && downloadProgress > 0 && (
-                  <div className="dl-progress">
-                    <div className="dl-progress__track">
-                      <div className="dl-progress__fill" style={{ width: `${downloadProgress}%` }} />
-                    </div>
-                    <span className="dl-progress__label">{downloadProgress}% · Don't close this tab</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Preview */}
-              {showPreview && (
-                <div className="dl-preview dl-slide-up">
-                  {previewUrl ? (
-                    <video ref={videoRef} src={previewUrl} controls className="dl-preview__video" preload="metadata" />
-                  ) : (
-                    <div className="dl-preview__empty">
-                      <AlertCircle size={18} /> Preview unavailable. You can still download.
-                    </div>
-                  )}
+                
+                {/* 4. FOOTER (Only visible on Right Panel when no video on Desktop) */}
+                <div className="mt-auto pt-8 border-t border-white/5 text-center md:text-left">
+                   <p className="text-[10px] uppercase tracking-widest text-white/20">© 2024 BongBari Media Group</p>
                 </div>
-              )}
 
-              {/* ── TRIM PANEL ─────────────────────────────────── */}
-              {trimMode && videoInfo.duration > 0 && (
-                <div className="dl-trim-panel dl-slide-up">
-                  <div className="dl-trim-panel__head">
-                    <Scissors size={16} />
-                    <span>Precision Trimmer</span>
-                    <span className="dl-trim-panel__badge">100% In-Browser</span>
-                  </div>
-
-                  <TrimSlider
-                    duration={videoInfo.duration}
-                    startTime={startTime} endTime={endTime}
-                    onStartChange={setStartTime} onEndChange={setEndTime}
-                  />
-
-                  <button className="dl-btn dl-btn--trim-go" onClick={handleTrim} disabled={phase !== "ready" || endTime <= startTime}>
-                    {phase === "trimming" ? (
-                      ffmpegLoading ? (
-                        <><Loader2 size={14} className="dl-spin" /> Loading Trim Engine…</>
-                      ) : (
-                        <><Loader2 size={14} className="dl-spin" /> Trimming… {trimProgress}%</>
-                      )
-                    ) : (
-                      <><Scissors size={14} /> Trim &amp; Download ({formatTime(startTime)} → {formatTime(endTime)})</>
-                    )}
-                  </button>
-
-                  <p className="dl-trim-notice">⚡ No file is uploaded. Trimming happens in your browser via WebAssembly.</p>
-
-                  {!canRunFfmpeg() && (
-                    <div className="dl-device-warn">
-                      <AlertCircle size={14} /> Low device memory — download the full video and trim locally instead.
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ── CROSS-PLATFORM SUPPORT ────────────────────────── */}
-          <section className="dl-platforms-grid">
-            <h3 className="dl-platforms-grid__title">Cross-Platform Support</h3>
-            <div className="dl-platforms-cards">
-              {[
-                { icon: <Youtube size={28} />, name: "YouTube", desc: "Download Shorts, Videos, and Audio in high resolution.", color: "dl-cp--yt" },
-                { icon: <Instagram size={28} />, name: "Instagram", desc: "Extract Reels and IGTV content with zero loss in quality.", color: "dl-cp--ig" },
-                { icon: <Facebook size={28} />, name: "Facebook", desc: "High-speed fetching for public FB videos and story clips.", color: "dl-cp--fb" },
-              ].map((p) => (
-                <div className={`dl-cp-card ${p.color}`} key={p.name}>
-                  <div className="dl-cp-card__icon">{p.icon}</div>
-                  <h4 className="dl-cp-card__name">{p.name}</h4>
-                  <p className="dl-cp-card__desc">{p.desc}</p>
-                  <span className="dl-cp-card__badge"><CheckCircle2 size={12} /> Supported</span>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Footer */}
-          <footer className="dl-footer">
-            © 2024 BongBari Media Group. Made for the Bong Community.
-          </footer>
+             </div>
+          </div>
         </div>
+
       </div>
     </>
   );

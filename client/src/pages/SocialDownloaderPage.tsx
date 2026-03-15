@@ -42,7 +42,7 @@ function detectPlatform(url: string): "youtube" | "instagram" | "facebook" | nul
 
 // ── Main Page ────────────────────────────────────────────────────
 export default function SocialDownloaderPage() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, sessionId } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
@@ -120,8 +120,8 @@ export default function SocialDownloaderPage() {
       try { (window as any).gtag?.("event", "downloader_download", { format: selectedFormat }); } catch {}
 
       // Fallback to our own proven Render yt-dlp backend
-      // Protected by auth
-      const backendUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=${selectedFormat}`);
+      // Protected by auth - Phase 15: Attach sessionId to query param for browser nav
+      const backendUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=${selectedFormat}&sessionId=${sessionId}`);
       window.location.href = backendUrl;
       
       setPhase("ready");
@@ -141,13 +141,13 @@ export default function SocialDownloaderPage() {
         return; 
       }
       // Use direct stream proxy (mode=preview, force 480p) for reliable playback
-      const streamUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=mp4-480&mode=preview`);
+      const streamUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=mp4-480&mode=preview&sessionId=${sessionId}`);
       setPreviewUrl(streamUrl);
       if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(50);
     } else {
        if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(50);
     }
-  }, [showPreview, previewUrl, url, isAuthenticated]);
+  }, [showPreview, previewUrl, url, isAuthenticated, sessionId]);
 
   // ── Trim ───────────────────────────────────────────────────────
   const handleTrim = useCallback(async () => {
@@ -167,7 +167,11 @@ export default function SocialDownloaderPage() {
     setPhase("trimming"); setTrimProgress(0); setFfmpegLoading(true);
     try {
       try { (window as any).gtag?.("event", "downloader_trim", { duration_seconds: endTime - startTime }); } catch {}
-      const dlRes = await fetch(apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=mp4-720`));
+      // Phase 15: Use sessionId here too just in case we switch fetch logic later (though fetch handles headers usually)
+      // Actually fetch does NOT handle headers automatically unless we use apiRequest or add them manually.
+      // But here we use 'fetch' directly. So we MUST add headers OR use query param.
+      // Query param is easiest since we just enabled it on server.
+      const dlRes = await fetch(apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=mp4-720&sessionId=${sessionId}`));
       if (!dlRes.ok) throw new Error("Could not download video for trimming.");
       const videoBlob = await dlRes.blob();
       setFfmpegLoading(false);
@@ -186,7 +190,7 @@ export default function SocialDownloaderPage() {
       setFfmpegLoading(false);
       setErrorMsg(err.message ?? "Trimming failed."); setPhase("error");
     }
-  }, [videoInfo, url, startTime, endTime, selectedFormat]);
+  }, [videoInfo, url, startTime, endTime, selectedFormat, sessionId]);
 
   const isWorking = phase === "fetching" || phase === "downloading" || phase === "trimming";
 
@@ -236,7 +240,7 @@ export default function SocialDownloaderPage() {
             {/* If video loaded: Show Big Preview */}
             {videoInfo ? (
                <div className="w-full max-w-2xl animate-in fade-in zoom-in duration-500">
-                  <div className="aspect-video rounded-xl overflow-hidden border border-white/10 shadow-2xl bg-black relative group">
+                  <div className="aspect-video rounded-xl overflow-hidden border border-white/10 shadow-2xl bg-black relative group flex flex-col items-center justify-center">
                     {showPreview && previewUrl ? (
                       <video ref={videoRef} src={previewUrl} controls className="w-full h-full object-contain" autoPlay />
                     ) : (
@@ -253,6 +257,45 @@ export default function SocialDownloaderPage() {
                       </div>
                     )}
                   </div>
+
+                   {/* PHASE 15: INTEGRATED TRIMMER (One View) */}
+                   {trimMode && videoInfo.duration > 0 && (
+                      <div className="w-full mt-4 bg-black/40 border border-white/10 rounded-xl p-4 animate-in slide-in-from-top-2">
+                         <div className="flex items-center justify-between mb-4 text-xs text-white/50">
+                            <span className="flex items-center gap-1 text-purple-300"><Scissors size={12}/> STUDIO MODE</span>
+                            <span className="bg-white/10 px-2 py-0.5 rounded text-[10px] font-mono">WASM: ON</span>
+                         </div>
+                         <TrimSlider
+                           duration={videoInfo.duration}
+                           startTime={startTime} endTime={endTime}
+                           onStartChange={(t) => {
+                             setStartTime(t);
+                             if (videoRef.current) { videoRef.current.currentTime = t; videoRef.current.pause(); }
+                           }}
+                           onEndChange={(t) => {
+                             setEndTime(t);
+                             if (videoRef.current) { videoRef.current.currentTime = t; videoRef.current.pause(); }
+                           }}
+                         />
+                         <div className="flex gap-2 mt-4">
+                            <button
+                               className="flex-1 h-10 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg shadow-purple-900/20"
+                               onClick={handleTrim} 
+                               disabled={phase !== "ready" || endTime <= startTime}
+                            >
+                                {phase === "trimming" ? <Loader2 size={12} className="animate-spin" /> : <Scissors size={12} />}
+                                {phase === "trimming" ? `Processing... ${trimProgress}%` : `Download Clip (${formatTime(startTime)} - ${formatTime(endTime)})`}
+                            </button>
+                            <button 
+                                className="px-4 h-10 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-xs font-bold rounded-lg transition-colors"
+                                onClick={() => setTrimMode(false)}
+                            >
+                                Close
+                            </button>
+                         </div>
+                      </div>
+                   )}
+
                   <div className="mt-6 text-center">
                       <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400 truncate px-4">
                         {videoInfo.title}
@@ -422,38 +465,6 @@ export default function SocialDownloaderPage() {
                       {phase === "downloading" && downloadProgress > 0 && (
                         <div className="h-1 bg-white/10 rounded-full overflow-hidden">
                            <div className="h-full bg-cyan-400 transition-all duration-300" style={{ width: `${downloadProgress}%` }} />
-                        </div>
-                      )}
-
-                      {/* Trimmer UI */}
-                      {trimMode && videoInfo.duration > 0 && (
-                        <div className="bg-black/40 border border-white/10 rounded-xl p-4 animate-in slide-in-from-bottom-2">
-                           <div className="flex items-center justify-between mb-4 text-xs text-white/50">
-                              <span className="flex items-center gap-1"><Scissors size={12}/> TRIMMER</span>
-                              <span className="bg-white/10 px-2 py-0.5 rounded text-[10px]">WASM ENABLED</span>
-                           </div>
-                           
-                           <TrimSlider
-                             duration={videoInfo.duration}
-                             startTime={startTime} endTime={endTime}
-                             onStartChange={(t) => {
-                               setStartTime(t);
-                               if (videoRef.current) { videoRef.current.currentTime = t; videoRef.current.pause(); }
-                             }}
-                             onEndChange={(t) => {
-                               setEndTime(t);
-                               if (videoRef.current) { videoRef.current.currentTime = t; videoRef.current.pause(); }
-                             }}
-                           />
-
-                           <button
-                             className="w-full mt-4 h-10 bg-purple-600/20 hover:bg-purple-600/30 text-purple-200 text-xs font-bold border border-purple-500/30 rounded-lg transition-colors flex items-center justify-center gap-2"
-                             onClick={handleTrim} 
-                             disabled={phase !== "ready" || endTime <= startTime}
-                           >
-                              {phase === "trimming" ? <Loader2 size={12} className="animate-spin" /> : <Scissors size={12} />}
-                              {phase === "trimming" ? `Processing... ${trimProgress}%` : `Download Clip (${formatTime(startTime)} - ${formatTime(endTime)})`}
-                           </button>
                         </div>
                       )}
 

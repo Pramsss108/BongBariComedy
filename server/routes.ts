@@ -31,7 +31,14 @@ export const sessions = new Map<string, {
  * Middleware: Verify if the user is authenticated via session ID.
  */
 export const isAuthenticated = (req: any, res: any, next: any) => {
-  const sessionId = req.headers.authorization?.replace('Bearer ', '');
+  let sessionId = req.headers.authorization?.replace('Bearer ', '');
+  
+  // Phase 15: Allow sessionId in query param for direct download/stream links
+  // (Browser navigations cannot set custom headers)
+  if (!sessionId && req.query.sessionId) {
+    sessionId = req.query.sessionId;
+  }
+
   const session = sessionId ? sessions.get(sessionId) : null;
 
   if (!session) return res.status(401).json({ message: "Unauthorized" });

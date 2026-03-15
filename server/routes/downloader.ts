@@ -230,9 +230,15 @@ async function handleStream(req: Request, res: Response): Promise<void> {
   }
 
   const format = (req.query.format as string) ?? "mp4-720";
+  const mode = (req.query.mode as string) ?? "download"; // 'download' | 'preview'
 
   // Map our clean format IDs to yt-dlp format strings
   const formatMap: Record<string, { ytFormat: string; ext: string; isAudio: boolean }> = {
+    "mp4-480": {
+      ytFormat: "best[height<=480][ext=mp4]/best[height<=480]/best[ext=mp4]/best",
+      ext: "mp4",
+      isAudio: false,
+    },
     "mp4-720": {
       ytFormat: "best[height<=720][ext=mp4]/best[height<=720]/best[ext=mp4]/best",
       ext: "mp4",
@@ -261,7 +267,12 @@ async function handleStream(req: Request, res: Response): Promise<void> {
   const filename = `${safeTitle}.${chosen.ext}`;
 
   // Set download headers BEFORE streaming starts
-  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  if (mode === "preview") {
+     res.setHeader("Content-Disposition", "inline");
+  } else {
+     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  }
+  
   res.setHeader("Content-Type", chosen.isAudio ? "audio/mpeg" : "video/mp4");
   res.setHeader("X-Accel-Buffering", "no"); // Disable nginx buffering on Render
 

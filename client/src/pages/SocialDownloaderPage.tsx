@@ -124,7 +124,7 @@ export default function SocialDownloaderPage() {
   }, [videoInfo, url, selectedFormat, isAuthenticated, setLocation]);
 
   // ── Preview ────────────────────────────────────────────────────
-  const handlePreview = useCallback(async () => {
+  const handlePreview = useCallback(() => {
     setShowPreview(!showPreview);
     if (!showPreview && !previewUrl) {
       if (!isAuthenticated) {
@@ -132,11 +132,12 @@ export default function SocialDownloaderPage() {
         setLocation("/login");
         return; 
       }
-      try {
-        const res = await fetch(apiUrl(`/api/downloader/proxy-stream?url=${encodeURIComponent(url)}`));
-        const data = await res.json();
-        if (data.streamUrl) setPreviewUrl(data.streamUrl);
-      } catch {}
+      // Use direct stream proxy (mode=preview, force 480p) for reliable playback
+      const streamUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=mp4-480&mode=preview`);
+      setPreviewUrl(streamUrl);
+      if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(50);
+    } else {
+       if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(50);
     }
   }, [showPreview, previewUrl, url, isAuthenticated]);
 

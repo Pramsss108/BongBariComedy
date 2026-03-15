@@ -109,11 +109,12 @@ This plan implements the "Smart Hybrid" architecture. It leverages external prov
 -   [x] **Feedback**: Added `navigator.vibrate(50)` on success.
 
 ## Phase 10: Preview Reliability
-**Context**: Previews sometimes expire.
+**Context**: Previews sometimes expire or get blocked by CORS.
 **Goal**: Robust playback.
 
--   [ ] **Proxy**: If source URL (googlevideo.com) has strict CORS/IP checks, proxy the preview chunks through `/api/downloader/proxy-preview` (Lightweight pipe).
--   [ ] **Fallback**: Use thumbnail if preview fails multiple times.
+-   [x] **Proxy Mode**: Implemented `/api/downloader/stream?mode=preview` (Content-Disposition: inline).
+-   [x] **Format**: Forced `mp4-480` for previews to save bandwidth.
+-   [x] **Player**: Updated frontend to use direct server pipe instead of fragile external URLs.
 
 ## Phase 11: Trimming UX (Smooth Cursor)
 **Context**: Trimming must feel native.

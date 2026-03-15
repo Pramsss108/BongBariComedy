@@ -302,6 +302,12 @@ async function handleStream(req: Request, res: Response): Promise<void> {
   res.on("finish", releaseOnce);
   res.on("error", releaseOnce);
 
+  // CORS for WASM/Trimming fetch
+  // Since we use query param auth now, we can allow origin
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+
   // Map our clean format IDs to yt-dlp format strings
   const formatMap: Record<string, { ytFormat: string; ext: string; isAudio: boolean }> = {
     "mp4-480": {

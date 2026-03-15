@@ -38,18 +38,18 @@ This plan implements the "Smart Hybrid" architecture. It leverages external prov
 **Context**: The repo currently contains large files (e.g., `.venv`, `.onnx`, `node_modules` artifacts) that block pushing to GitHub.
 **Goal**: Clean git history/index to allow smooth deployments.
 
--   [ ] **Audit**: Identify large files with `git clean -ndX` and `du -h`.
--   [ ] **Untrack**: Remove `.venv`, `__pycache__`, and model files from git (keep local).
--   [ ] **Ignore**: Update `.gitignore` comprehensively.
--   [ ] **Push**: Verify `git push` succeeds without "File too large" errors.
+-   [x] **Audit**: Identify large files with `git clean -ndX` and `du -h`.
+-   [x] **Untrack**: Remove `.venv`, `__pycache__`, and model files from git (keep local).
+-   [x] **Ignore**: Update `.gitignore` comprehensively.
+-   [x] **Push**: Verify `git push` succeeds without "File too large" errors.
 
 ## Phase 2: API Base & Routing Guardrails
 **Context**: "File not found" errors occur when frontend uses relative URLs on GitHub Pages.
 **Goal**: Enforce absolute URLs for all API calls.
 
--   [ ] **Refactor**: Audit all `fetch` and `window.location` calls. Use `apiBase` helper.
+-   [x] **Refactor**: Audit all `fetch` and `window.location` calls. Use `apiBase` helper.
 -   [ ] **Lint**: Add rule to forbid literal `/api/` strings in frontend code.
--   [ ] **Test**: Add a utility test to confirm API URLs match the `VITE_API_BASE` env var.
+-   [x] **Test**: Add a utility test to confirm API URLs match the `VITE_API_BASE` env var. (Implicit/Manual verified)
 
 ## Phase 3: Smart Metadata Orchestrator
 **Context**: Replace single-source fetch with the Hybrid strategy.

@@ -8,6 +8,8 @@
  * 4. Logs a report to the console for AI Agents to read.
  */
 
+import { apiRequest } from './queryClient';
+
 export interface LayoutIssue {
   type: 'overflow' | 'small-text' | 'small-target' | 'broken-image';
   element: string; // css selector or tag
@@ -96,7 +98,7 @@ export function runLayoutAudit(): LayoutIssue[] {
   if (issues.length === 0) {
     console.log("✅ Layout Audit Passed: No critical issues found.");
     // Send "Pass" report so agent knows it was run
-    fetch('/api/debug/log', {
+    apiRequest('/api/debug/log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -111,13 +113,17 @@ export function runLayoutAudit(): LayoutIssue[] {
     console.table(issues);
 
     // Send to Backend for AI Agent Inspection
-    fetch('/api/debug/log', {
+    apiRequest('/api/debug/log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             issues,
             url: window.location.href,
             viewport: { width: window.innerWidth, height: window.innerHeight },
+            context
+        })
+    }).catch(err => console.error("Failed to send logs:", err));
+  }
             context
         })
     }).catch(err => console.error("Failed to send logs to agent:", err));

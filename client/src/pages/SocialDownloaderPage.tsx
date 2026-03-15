@@ -18,14 +18,10 @@ import { TrimSlider } from "@/components/TrimSlider";
 import {
   canRunFfmpeg, trimMedia, formatTime, loadFfmpeg,
 } from "@/lib/ffmpeg-trim-engine";
+import { buildApiUrl } from "@/lib/queryClient";
 import "./SocialDownloaderPage.css";
 
-// ── API Base ─────────────────────────────────────────────────────
-const API_BASE =
-  (import.meta as any).env?.VITE_API_BASE ||
-  (window.location.hostname === "localhost" ? "http://localhost:5000" : "https://bongbaricomedy.onrender.com");
-
-function apiUrl(p: string) { return `${API_BASE}${p}`; }
+const apiUrl = buildApiUrl;
 
 // ── Types ────────────────────────────────────────────────────────
 interface VideoFormat { id: string; label: string; ext: string; height?: number; }

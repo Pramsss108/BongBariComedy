@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { apiRequest } from "@/lib/queryClient";
 
 /**
  * Ghost Grid - Visual Debugger
@@ -51,7 +52,7 @@ export function DebugOverlay() {
         const canvas = await (window as any).html2canvas(document.body, options);
         const image = canvas.toDataURL("image/png");
 
-        await fetch('/api/debug/screenshot', {
+        await apiRequest('/api/debug/screenshot', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 

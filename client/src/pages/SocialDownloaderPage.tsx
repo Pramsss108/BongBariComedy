@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Download, Play, Scissors, Youtube, Instagram, Facebook,
   Loader2, AlertCircle, Music, Film, CheckCircle2, Search, X, Clock,
+  Lock, CloudOff, Hourglass, // Added for Phase 13 Error Handling
 } from "lucide-react";
 import { TrimSlider } from "@/components/TrimSlider";
 import {
@@ -48,6 +49,7 @@ export default function SocialDownloaderPage() {
   const [url, setUrl] = useState("");
   const [phase, setPhase] = useState<Phase>("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [errorCode, setErrorCode] = useState(""); // Phase 13: Technical error mapping (e.g. COBALT_DOWN, RATE_LIMIT)
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
   const [selectedFormat, setSelectedFormat] = useState("mp4-720");
   const [showPreview, setShowPreview] = useState(false);
@@ -68,14 +70,18 @@ export default function SocialDownloaderPage() {
     if (!url.trim()) return;
     console.log(`\n[Vibe Coder Tracker] 🔎 STEP 1: Fetching video metadata...`);
     console.log(`[Vibe Coder Tracker] 📝 Note: Metadata (titles/thumbnails) is tiny (2KB). Safe to use Render!`);
-    setPhase("fetching"); setErrorMsg(""); setVideoInfo(null);
+    setPhase("fetching"); setErrorMsg(""); setErrorCode(""); setVideoInfo(null);
     setShowPreview(false); setPreviewUrl(""); setTrimMode(false);
     const wakeTimer = setTimeout(() => setServerWaking(true), 4000);
     try {
       const res = await fetch(apiUrl(`/api/downloader/info?url=${encodeURIComponent(url.trim())}`));
       clearTimeout(wakeTimer); setServerWaking(false);
       const data = await res.json();
-      if (!res.ok || data.error) throw new Error(data.error || "Could not fetch video info.");
+      if (!res.ok || data.error) {
+         const error = new Error(data.error || "Could not fetch video info.") as any;
+         error.code = data.code;
+         throw error;
+      }
       
       console.log(`[Vibe Coder Tracker] ✅ Metadata fetch success! Phase 1 complete.`);
       setVideoInfo(data);
@@ -85,7 +91,9 @@ export default function SocialDownloaderPage() {
       try { (window as any).gtag?.("event", "downloader_fetch", { platform: data.platform ?? "unknown" }); } catch {}
     } catch (err: any) {
       clearTimeout(wakeTimer); setServerWaking(false);
-      setErrorMsg(err.message ?? "Failed to fetch video info."); setPhase("error");
+      setErrorMsg(err.message ?? "Failed to fetch video info."); 
+      setErrorCode(err.code || "UNKNOWN"); 
+      setPhase("error");
     }
   }, [url]);
 
@@ -299,7 +307,7 @@ export default function SocialDownloaderPage() {
                         className="flex-1 bg-transparent border-none outline-none text-white px-4 text-base md:text-sm placeholder:text-white/20 font-mono h-12"
                         placeholder="Paste link here..."
                         value={url}
-                        onChange={(e) => { setUrl(e.target.value); if (phase === "error") { setPhase("idle"); setErrorMsg(""); } }}
+                        onChange={(e) => { setUrl(e.target.value); if (phase === "error") { setPhase("idle"); setErrorMsg(""); setErrorCode(""); } }}
                         onKeyDown={(e) => e.key === "Enter" && handleFetch()}
                         disabled={isWorking}
                       />
@@ -315,17 +323,33 @@ export default function SocialDownloaderPage() {
                     </div>
                 </div>
 
-                {/* 2. STATUS / ERROR */}
+                {/* 2. STATUS / ERROR (Phase 13: Enhanced Error Handling) */}
                 {serverWaking && (
                    <div className="flex items-center gap-2 text-xs text-yellow-400/80 bg-yellow-400/10 px-4 py-2 rounded-lg border border-yellow-400/20">
                       <Loader2 size={12} className="animate-spin" /> Server waking up (free tier ~15s). Please wait…
                    </div>
                 )}
                 {phase === "error" && errorMsg && (
-                  <div className="bg-red-500/10 border border-red-500/20 text-red-200 p-4 rounded-xl flex gap-3 text-sm items-start animate-in slide-in-from-top-2">
-                    <AlertCircle size={16} className="mt-0.5 shrink-0" />
-                    <div className="flex-1">{errorMsg}</div>
-                    <button onClick={() => { setPhase("idle"); setErrorMsg(""); }}><X size={14} /></button>
+                  <div className={`p-4 rounded-xl flex gap-3 text-sm items-start animate-in slide-in-from-top-2 border ${
+                      errorCode === "RATE_LIMIT" ? "bg-yellow-500/10 border-yellow-500/20 text-yellow-200" :
+                      errorCode === "COBALT_DOWN" ? "bg-orange-500/10 border-orange-500/20 text-orange-200" :
+                      "bg-red-500/10 border-red-500/20 text-red-200"
+                  }`}>
+                    {errorCode === "PRIVATE_VIDEO" || errorCode === "AGE_RESTRICTED" ? <Lock size={16} className="mt-0.5 shrink-0" /> :
+                     errorCode === "COBALT_DOWN" ? <CloudOff size={16} className="mt-0.5 shrink-0" /> :
+                     errorCode === "RATE_LIMIT" ? <Hourglass size={16} className="mt-0.5 shrink-0" /> :
+                     <AlertCircle size={16} className="mt-0.5 shrink-0" />}
+                    
+                    <div className="flex-1">
+                      <div className="font-bold text-xs uppercase tracking-wider opacity-90 mb-1">
+                          {errorCode === "PRIVATE_VIDEO" ? "Access Denied" :
+                           errorCode === "AGE_RESTRICTED" ? "Login Required" :
+                           errorCode === "COBALT_DOWN" ? "Service Overload" :
+                           errorCode === "RATE_LIMIT" ? "Please Wait" : "Error"}
+                      </div>
+                      {errorMsg}
+                    </div>
+                    <button onClick={() => { setPhase("idle"); setErrorMsg(""); setErrorCode(""); }}><X size={14} /></button>
                   </div>
                 )}
 

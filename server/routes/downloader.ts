@@ -96,10 +96,61 @@ const streamLimiter = rateLimit({
 });
 
 // ---------------------------------------------------------------------------
+// GLOBAL RESOURCE GOVERNOR (Phase 14)
+// Protect Render's 512MB RAM by limiting active ffmpeg/yt-dlp spawns
+// ---------------------------------------------------------------------------
+let ACTIVE_DOWNLOADS = 0;
+const MAX_CONCURRENT_DOWNLOADS = 3; // Strict limit for free tier to prevent OOM kills
+
+function tryAcquireSlot(): boolean {
+  if (ACTIVE_DOWNLOADS >= MAX_CONCURRENT_DOWNLOADS) return false;
+  ACTIVE_DOWNLOADS++;
+  console.log(`[ResourceGovernor] Slot acquired. Active: ${ACTIVE_DOWNLOADS}/${MAX_CONCURRENT_DOWNLOADS}`);
+  return true;
+}
+
+function releaseSlot(): void {
+  ACTIVE_DOWNLOADS = Math.max(0, ACTIVE_DOWNLOADS - 1);
+  console.log(`[ResourceGovernor] Slot released. Active: ${ACTIVE_DOWNLOADS}/${MAX_CONCURRENT_DOWNLOADS}`);
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 function formatNotAvailable(res: Response, msg: string, code = 422): void {
   res.status(code).json({ error: msg });
+}
+
+function mapDownloaderError(err: any): { code: string; message: string; status: number } {
+  const msg = (err.message || "").toLowerCase();
+  const stderr = (err.stderr || "").toLowerCase();
+  const full = msg + stderr;
+
+  if (full.includes("private video") || full.includes("this video is private")) {
+    return { code: "PRIVATE_VIDEO", message: "This video is private and cannot be downloaded.", status: 403 };
+  }
+  if (full.includes("sign in") || full.includes("confirm your age") || full.includes("age-restricted")) {
+    return { code: "AGE_RESTRICTED", message: "This video is age-restricted and requires login.", status: 403 };
+  }
+  if (full.includes("geo-blocked") || full.includes("not available in your country")) {
+    return { code: "GEO_BLOCK", message: "This video is not available in the server's region.", status: 403 };
+  }
+  if (full.includes("too many requests") || full.includes("429")) {
+    return { code: "RATE_LIMIT", message: "You are downloading too fast. Please wait a moment.", status: 429 };
+  }
+  if (full.includes("duration") && full.includes("300")) {
+      return { code: "DURATION_LIMIT", message: "Video is too long (Max 5 mins).", status: 422 };
+  }
+  
+  // If "Both engines failed", try to pick the most relevant reason
+  if (full.includes("both engines failed")) {
+      if (full.includes("cobalt") && (full.includes("api error") || full.includes("down"))) {
+         return { code: "COBALT_DOWN", message: "Our external download engine is temporarily unavailable. Please try again later.", status: 503 };
+      }
+  }
+
+  // Generic fallback
+  return { code: "DOWNLOAD_FAILED", message: "Could not process this video. It may be deleted or protected.", status: 422 };
 }
 
 // ---------------------------------------------------------------------------
@@ -204,17 +255,15 @@ async function handleInfo(req: Request, res: Response): Promise<void> {
     });
   } catch (err: any) {
     console.error("\n================ YT-DLP CRASH DIAGNOSTIC ================");
-    console.error("[downloader/info] Error Name:", err?.name);
-    console.error("[downloader/info] Error Message:", err?.message);
+    console.error(`[downloader/info] Error Name: ${err?.name}`);
+    console.error(`[downloader/info] Error Message: ${err?.message}`);
     if (err?.stderr) {
-        console.error("[downloader/info] STDERR:", err.stderr);
+        console.error(`[downloader/info] STDERR: ${err.stderr}`);
     }
     console.error("=========================================================\n");
     
-    formatNotAvailable(
-      res,
-      "Could not fetch video info. This video may be private, age-restricted, or geo-blocked.",
-    );
+    const { message, code, status } = mapDownloaderError(err);
+    res.status(status).json({ error: message, code });
   }
 }
 
@@ -231,6 +280,27 @@ async function handleStream(req: Request, res: Response): Promise<void> {
 
   const format = (req.query.format as string) ?? "mp4-720";
   const mode = (req.query.mode as string) ?? "download"; // 'download' | 'preview'
+
+  // Phase 14: Global Concurrency Guard
+  // Only limit full downloads (previews are lighter/shorter generally or handled via proxy).
+  // Actually previews use the same pipe so we should guard them too or allow higher limit?
+  // Let's guard them all for safety on 512MB RAM.
+  if (!tryAcquireSlot()) {
+      res.status(503).json({ error: "High traffic volume. Please try again in 30 seconds." });
+      return;
+  }
+  
+  // Ensure we release the slot when done
+  let released = false;
+  const releaseOnce = () => {
+      if (!released) {
+          released = true;
+          releaseSlot();
+      }
+  };
+  res.on("close", releaseOnce);
+  res.on("finish", releaseOnce);
+  res.on("error", releaseOnce);
 
   // Map our clean format IDs to yt-dlp format strings
   const formatMap: Record<string, { ytFormat: string; ext: string; isAudio: boolean }> = {

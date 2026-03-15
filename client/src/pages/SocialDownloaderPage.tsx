@@ -234,7 +234,7 @@ export default function SocialDownloaderPage() {
             
             {/* If video loaded: Show Big Preview */}
             {videoInfo ? (
-               <div className={`w-full animate-in fade-in zoom-in duration-500 ${isVertical ? "max-w-sm mx-auto flex flex-col items-center" : "max-w-2xl"}`}>
+               <div className={`w-full animate-in fade-in zoom-in duration-500 ${isVertical ? "max-w-[320px] mx-auto flex flex-col items-center" : "max-w-2xl"}`}>
                   
                   {/* Title Moved to Top */}
                   <div className="mb-4 text-center w-full">
@@ -244,7 +244,7 @@ export default function SocialDownloaderPage() {
                       <p className="text-white/40 text-sm mt-1">@{videoInfo.uploader} • {videoInfo.platform}</p>
                   </div>
 
-                  <div className={`${isVertical ? "aspect-[9/16] h-[60vh] w-[35vh]" : "aspect-video w-full"} ${trimMode ? "rounded-t-xl" : "rounded-xl"} overflow-hidden border border-white/10 shadow-2xl bg-black relative group flex flex-col items-center justify-center transition-all duration-300`}>
+                  <div className={`${isVertical ? "aspect-[9/16] w-full max-h-[60vh] max-w-[350px] mx-auto" : "aspect-video w-full"} ${trimMode ? "rounded-t-xl" : "rounded-xl"} overflow-hidden border border-white/10 shadow-2xl bg-black relative group flex flex-col items-center justify-center transition-all duration-300`}>
                     {showPreview && previewUrl ? (
                       <video ref={videoRef} src={previewUrl} controls className="w-full h-full object-contain" autoPlay />
                     ) : (
@@ -264,7 +264,7 @@ export default function SocialDownloaderPage() {
 
                    {/* PHASE 15: INTEGRATED TRIMMER (One View) */}
                    {trimMode && videoInfo.duration > 0 && (
-                        <div className={`mt-0 bg-black/80 border-x border-b border-white/10 rounded-b-xl p-4 animate-in slide-in-from-top-2 shadow-2xl relative z-10 ${isVertical ? "w-[35vh]" : "w-full"}`}>
+                        <div className={`mt-0 bg-black/80 border-x border-b border-white/10 rounded-b-xl p-4 animate-in slide-in-from-top-2 shadow-2xl relative z-10 w-full ${isVertical ? "max-w-[350px] mx-auto" : ""}`}>
                          <div className="flex items-center justify-between mb-4 text-xs text-white/50">
                             <span className="flex items-center gap-1 text-purple-300"><Scissors size={12}/> STUDIO MODE</span>
                             <span className="bg-white/10 px-2 py-0.5 rounded text-[10px] font-mono">WASM: ON</span>

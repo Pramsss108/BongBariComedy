@@ -384,13 +384,13 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
 // PHRASE 17: PHRASE 17 — registerDownloaderRoutes()
 // All wired up; called from server/routes.ts
 // ---------------------------------------------------------------------------
-export function registerDownloaderRoutes(app: Express): void {
-  // Info endpoint — lenient rate limit (10/min)
+export function registerDownloaderRoutes(app: Express, isAuthenticated: any): void {
+  // Info endpoint — lenient rate limit (10/min) — PUBLIC
   app.get("/api/downloader/info", infoLimiter, handleInfo);
 
-  // Stream/download endpoint — strict rate limit (5/min)
-  app.get("/api/downloader/stream", streamLimiter, handleStream);
+  // Stream/download endpoint — strict rate limit (5/min) — PROTECTED
+  app.get("/api/downloader/stream", isAuthenticated, streamLimiter, handleStream);
 
-  // Proxy stream URL for preview
-  app.get("/api/downloader/proxy-stream", infoLimiter, handleProxyStream);
+  // Proxy stream URL for preview — PROTECTED
+  app.get("/api/downloader/proxy-stream", isAuthenticated, infoLimiter, handleProxyStream);
 }

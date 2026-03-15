@@ -72,9 +72,9 @@ This plan implements the "Smart Hybrid" architecture. It leverages external prov
 **Context**: Protect bandwidth from bots.
 **Goal**: Gate heavy features.
 
--   [ ] **Middleware**: Apply `isAuthenticated` to `/api/downloader/stream` and `/api/downloader/trim`.
--   [ ] **Public Route**: Keep `/api/downloader/info` public (protected by rate limit only).
--   [ ] **UI State**: Disable "Download" buttons if not logged in; show "Login to Download" CTA.
+-   [x] **Middleware**: Apply `isAuthenticated` to `/api/downloader/stream` and `/api/downloader/trim` (trim logic client-side but fetches full stream).
+-   [x] **Public Route**: Keep `/api/downloader/info` public (protected by rate limit only).
+-   [x] **UI State**: Disable "Download" buttons if not logged in; show "Login to Download" CTA. (Done via toast + redirect).
 
 ## Phase 6: The 5-Minute Hard Cap
 **Context**: Prevent 1-hour mixes killing the server.

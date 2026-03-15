@@ -129,7 +129,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerHumanizerRoutes(app, sessions, getDeviceIdFromReq);
   registerCmsRoutes(app);
   registerSystemRoutes(app);
-  registerDownloaderRoutes(app); // Phrase 2/3/5/14/16: Social Media Downloader
+  registerDownloaderRoutes(app, isAuthenticated); // Phrase 2/3/5/14/16: Social Media Downloader (now with Auth)
 
   // --- Administrative Diagnostics ---
   app.get('/api/admin/device-logs', isAuthenticated, (req, res) => {

@@ -98,7 +98,7 @@ export default function SocialDownloaderPage() {
         description: "Please login to download videos. This protects our free service from bots.",
         variant: "destructive",
       });
-      setLocation("/auth");
+      setLocation("/login");
       return;
     }
 
@@ -125,13 +125,18 @@ export default function SocialDownloaderPage() {
   const handlePreview = useCallback(async () => {
     setShowPreview(!showPreview);
     if (!showPreview && !previewUrl) {
+      if (!isAuthenticated) {
+        toast({ title: "Login Required", description: "Login to preview videos.", variant: "destructive" });
+        setLocation("/login");
+        return; 
+      }
       try {
         const res = await fetch(apiUrl(`/api/downloader/proxy-stream?url=${encodeURIComponent(url)}`));
         const data = await res.json();
         if (data.streamUrl) setPreviewUrl(data.streamUrl);
       } catch {}
     }
-  }, [showPreview, previewUrl, url]);
+  }, [showPreview, previewUrl, url, isAuthenticated]);
 
   // ── Trim ───────────────────────────────────────────────────────
   const handleTrim = useCallback(async () => {
@@ -143,7 +148,7 @@ export default function SocialDownloaderPage() {
         description: "Please login to trim and download videos. This protects our free service from bots.",
         variant: "destructive",
       });
-      setLocation("/auth");
+      setLocation("/login");
       return;
     }
 

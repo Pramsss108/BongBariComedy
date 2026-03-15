@@ -124,10 +124,6 @@ export function runLayoutAudit(): LayoutIssue[] {
         })
     }).catch(err => console.error("Failed to send logs:", err));
   }
-            context
-        })
-    }).catch(err => console.error("Failed to send logs to agent:", err));
-  }
 
   return issues;
 }

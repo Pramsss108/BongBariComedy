@@ -412,14 +412,17 @@ export default function SocialDownloaderPage() {
                            <TrimSlider
                              duration={videoInfo.duration}
                              startTime={startTime} endTime={endTime}
-                    onStartChange={(t) => {
-                      setStartTime(t);
-                      if (videoRef.current) { videoRef.current.currentTime = t; videoRef.current.pause(); }
-                    }}
-                    onEndChange={(t) => {
-                      setEndTime(t);
-                      if (videoRef.current) { videoRef.current.currentTime = t; videoRef.current.pause(); }
-                    }}
+                             onStartChange={(t) => {
+                               setStartTime(t);
+                               if (videoRef.current) { videoRef.current.currentTime = t; videoRef.current.pause(); }
+                             }}
+                             onEndChange={(t) => {
+                               setEndTime(t);
+                               if (videoRef.current) { videoRef.current.currentTime = t; videoRef.current.pause(); }
+                             }}
+                           />
+
+                           <button
                              className="w-full mt-4 h-10 bg-purple-600/20 hover:bg-purple-600/30 text-purple-200 text-xs font-bold border border-purple-500/30 rounded-lg transition-colors flex items-center justify-center gap-2"
                              onClick={handleTrim} 
                              disabled={phase !== "ready" || endTime <= startTime}

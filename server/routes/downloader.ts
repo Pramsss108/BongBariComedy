@@ -11,6 +11,7 @@ import rateLimit from "express-rate-limit";
 import path from "path";
 import os from "os";
 import { execFile, spawn } from "child_process";
+import axios from "axios";
 
 const ytBin = os.platform() === "win32" ? "yt-dlp.exe" : "yt-dlp";
 const YT_DLP_PATH = path.resolve(process.cwd(), "node_modules", "youtube-dl-exec", "bin", ytBin);
@@ -102,6 +103,71 @@ function formatNotAvailable(res: Response, msg: string, code = 422): void {
 }
 
 // ---------------------------------------------------------------------------
+// HYBRID METADATA ENGINE (Cobalt -> Local Fallback)
+// ---------------------------------------------------------------------------
+
+async function fetchMetadataCobalt(url: string): Promise<any> {
+    try {
+        console.log(`[Cobalt] Fetching metadata for ${url}`);
+        const response = await axios.post("https://api.cobalt.tools/api/json", {
+            url: url,
+            filenameStyle: "classic"
+        }, {
+             headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            },
+            timeout: 5000 
+        });
+        const data = response.data;
+        
+        if (data.status === "error") throw new Error(data.text || "Cobalt API Error");
+        if (data.status === "picker") return { title: "Video (Multiple Formats)", duration: 0, fromCobalt: true };
+        
+        // Success (stream)
+        return {
+            title: data.filename || "Video",
+            duration: 0, // Cobalt often misses this
+            thumbnail: null,
+            fromCobalt: true
+        };
+    } catch (e: any) {
+        console.warn(`[Cobalt] Metadata fetch failed: ${e.message}`);
+        throw e;
+    }
+}
+
+async function fetchSmartMetadata(url: string): Promise<any> {
+    // Strategy: Try Local yt-dlp first for quality (thumbnails etc), 
+    // fallback to Cobalt if blocked/failed.
+    // NOTE: Plan V2 says "Cobalt Primary" but for *Metadata*, local yt-dlp is superior 
+    // because Cobalt missing thumbnails breaks the UI preview.
+    // We will use Local Primary for INFO, but Cobalt Primary for DOWNLOAD (in handleStream logic).
+    
+    try {
+        // 1. Try Local yt-dlp (High Fidelity)
+        const info = await executeYtDlp(url, [
+            "--dump-single-json",
+            "--no-warnings",
+            "--no-call-home",
+            "--prefer-free-formats",
+            "--youtube-skip-dash-manifest",
+             "--format", "bestvideo[height<=1080]+bestaudio/best[height<=1080]/best"
+        ]);
+        return info;
+    } catch (localErr) {
+        console.warn(`[SmartMetadata] Local fetch failed, trying Cobalt...`, localErr);
+        // 2. Fallback to Cobalt (Low Fidelity / Savior)
+        try {
+            return await fetchMetadataCobalt(url);
+        } catch (cobaltErr) {
+            throw new Error(`Both engines failed. Local: ${localErr}. Cobalt: ${cobaltErr}`);
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
 // PHRASE 2: GET /api/downloader/info
 // Returns video metadata: title, thumbnail, duration, available formats
 // ---------------------------------------------------------------------------
@@ -113,15 +179,7 @@ async function handleInfo(req: Request, res: Response): Promise<void> {
   }
 
   try {
-    const info = await executeYtDlp(validated.url, [
-      "--dump-single-json",
-      "--no-warnings",
-      "--no-call-home",
-      "--no-check-certificate",
-      "--prefer-free-formats",
-      "--youtube-skip-dash-manifest",
-      "--format", "bestvideo[height<=1080]+bestaudio/best[height<=1080]/best"
-    ]);
+    const info = await fetchSmartMetadata(validated.url);
 
     // Build a clean, safe response — never send raw yt-dlp output to client
     const formats: { id: string; label: string; ext: string; height?: number }[] = [];

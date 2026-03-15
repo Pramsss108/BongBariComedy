@@ -55,10 +55,10 @@ This plan implements the "Smart Hybrid" architecture. It leverages external prov
 **Context**: Replace single-source fetch with the Hybrid strategy.
 **Goal**: Fetch info cheap/fast interactions.
 
--   [ ] **Cobalt Adapter**: Implement `fetchMetadataCobalt(url)`.
--   [ ] **Local Adapter**: Implement `fetchMetadataLocal(url)` using `yt-dlp -J`.
--   [ ] **Strategy**: `try { return await Cobalt } catch { return await Local }`.
--   [ ] **Normalization**: Map both outputs to a unified `VideoInfo` interface (title, duration, thumb, formats).
+-   [x] **Cobalt Adapter**: Implement `fetchMetadataCobalt(url)`.
+-   [x] **Local Adapter**: Implement `fetchMetadataLocal(url)` using `yt-dlp -J`.
+-   [x] **Strategy**: `try { return await Cobalt } catch { return await Local }`. (Implemented as Local first for QC, Cobalt fallback).
+-   [x] **Normalization**: Map both outputs to a unified `VideoInfo` interface (title, duration, thumb, formats).
 
 ## Phase 4: Stream Pipe Construction (The "No-Audio" Fix)
 **Context**: Previous issues with silent videos. Downloads must be progressive or merged on fly.

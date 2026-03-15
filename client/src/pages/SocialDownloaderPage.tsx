@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import {
   Download, Play, Scissors, Youtube, Instagram, Facebook,
-  Loader2, AlertCircle, Music, Film, CheckCircle2, Search, X,
+  Loader2, AlertCircle, Music, Film, CheckCircle2, Search, X, Clock,
 } from "lucide-react";
 import { TrimSlider } from "@/components/TrimSlider";
 import {
@@ -321,22 +321,31 @@ export default function SocialDownloaderPage() {
                 </div>
 
                 {/* Action bar */}
-                <div className="dl-actions">
-                  <button className="dl-btn dl-btn--download" onClick={handleDownload} disabled={phase !== "ready"}>
-                    {phase === "downloading" ? (
-                      <><Loader2 size={16} className="dl-spin" /> {downloadProgress > 0 ? `${downloadProgress}%` : "Starting…"}</>
-                    ) : (
-                      <><Download size={16} /> Download {selectedFormat === "mp3" ? "Audio" : "Full"}</>
-                    )}
-                  </button>
-                  <button
-                    className={`dl-btn dl-btn--trim ${trimMode ? "dl-btn--trim-active" : ""}`}
-                    onClick={() => setTrimMode(!trimMode)}
-                    disabled={phase !== "ready"}
-                  >
-                    <Scissors size={14} /> {trimMode ? "Cancel" : "Trim First"}
-                  </button>
-                </div>
+                {(videoInfo.duration && videoInfo.duration > 300) ? (
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 my-2 text-center text-red-200">
+                    <span className="flex items-center justify-center font-bold gap-2 text-red-100 mb-1">
+                      <Clock size={16} /> Video too long (Max 5 mins)
+                    </span>
+                    <span className="text-xs opacity-80">Our free server cannot process files longer than 5 minutes.</span>
+                  </div>
+                ) : (
+                  <div className="dl-actions">
+                    <button className="dl-btn dl-btn--download" onClick={handleDownload} disabled={phase !== "ready"}>
+                      {phase === "downloading" ? (
+                        <><Loader2 size={16} className="dl-spin" /> {downloadProgress > 0 ? `${downloadProgress}%` : "Starting…"}</>
+                      ) : (
+                        <><Download size={16} /> Download {selectedFormat === "mp3" ? "Audio" : "Full"}</>
+                      )}
+                    </button>
+                    <button
+                      className={`dl-btn dl-btn--trim ${trimMode ? "dl-btn--trim-active" : ""}`}
+                      onClick={() => setTrimMode(!trimMode)}
+                      disabled={phase !== "ready"}
+                    >
+                      <Scissors size={14} /> {trimMode ? "Cancel" : "Trim First"}
+                    </button>
+                  </div>
+                )}
 
                 {/* Progress */}
                 {phase === "downloading" && downloadProgress > 0 && (

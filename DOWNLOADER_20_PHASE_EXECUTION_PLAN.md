@@ -80,9 +80,9 @@ This plan implements the "Smart Hybrid" architecture. It leverages external prov
 **Context**: Prevent 1-hour mixes killing the server.
 **Goal**: Strict duration limits.
 
--   [ ] **Check**: inside `fetchMetadata`, if `duration > 300`, return specific error `DURATION_EXCEEDED`.
--   [ ] **UI**: Show warning badge "Max 5 mins".
--   [ ] **Trim**: Allow processing *if* user trims a long video down to < 5 mins (Optional advanced feature, simple version: reject source > 5 mins).
+-   [x] **Check**: Backend adds `--match-filter "duration <= 300"` to stream args.
+-   [x] **UI**: Show "Video too long (Max 5 mins)" warning if duration > 300s.
+-   [x] **Trim**: Disabled for long videos (since stream is blocked).
 
 ## Phase 7: Circuit Breaker Pattern
 **Context**: If Cobalt goes down, don't wait 30s to fail.

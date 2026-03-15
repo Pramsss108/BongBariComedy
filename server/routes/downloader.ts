@@ -20,8 +20,8 @@ const YT_DLP_PATH = path.resolve(process.cwd(), "node_modules", "youtube-dl-exec
 // Replaces youtube-dl-exec which breaks on Windows paths with spaces
 function executeYtDlp(url: string, args: string[]): Promise<any> {
   return new Promise((resolve, reject) => {
-    // 20MB buffer for huge json manifests
-    execFile(YT_DLP_PATH, [...args, url], { maxBuffer: 1024 * 1024 * 20 }, (error, stdout, stderr) => {
+    // 20MB buffer for huge json manifests + 10s timeout for fast failover
+    execFile(YT_DLP_PATH, [...args, url], { maxBuffer: 1024 * 1024 * 20, timeout: 10000 }, (error, stdout, stderr) => {
       if (error) {
         return reject(error);
       }
@@ -280,6 +280,8 @@ async function handleStream(req: Request, res: Response): Promise<void> {
       "--force-ipv4",
       // Buffer optimization
       "--console-title",
+      // Phase 6: Hard Cap - Prevent 1-hour mixes killing the server
+      "--match-filter", "duration <= 300",
     ];
 
     if (chosen.isAudio) {

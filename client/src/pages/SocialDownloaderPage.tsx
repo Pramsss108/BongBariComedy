@@ -234,8 +234,17 @@ export default function SocialDownloaderPage() {
             
             {/* If video loaded: Show Big Preview */}
             {videoInfo ? (
-               <div className="w-full max-w-2xl animate-in fade-in zoom-in duration-500">
-                  <div className="aspect-video rounded-xl overflow-hidden border border-white/10 shadow-2xl bg-black relative group flex flex-col items-center justify-center">
+               <div className={`w-full animate-in fade-in zoom-in duration-500 ${isVertical ? "max-w-sm mx-auto flex flex-col items-center" : "max-w-2xl"}`}>
+                  
+                  {/* Title Moved to Top */}
+                  <div className="mb-4 text-center w-full">
+                      <h2 className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400 truncate px-4">
+                          {videoInfo.title}
+                      </h2>
+                      <p className="text-white/40 text-sm mt-1">@{videoInfo.uploader} • {videoInfo.platform}</p>
+                  </div>
+
+                  <div className={`${isVertical ? "aspect-[9/16] h-[60vh] w-[35vh]" : "aspect-video w-full"} ${trimMode ? "rounded-t-xl" : "rounded-xl"} overflow-hidden border border-white/10 shadow-2xl bg-black relative group flex flex-col items-center justify-center transition-all duration-300`}>
                     {showPreview && previewUrl ? (
                       <video ref={videoRef} src={previewUrl} controls className="w-full h-full object-contain" autoPlay />
                     ) : (
@@ -255,7 +264,7 @@ export default function SocialDownloaderPage() {
 
                    {/* PHASE 15: INTEGRATED TRIMMER (One View) */}
                    {trimMode && videoInfo.duration > 0 && (
-                      <div className="w-full mt-4 bg-black/40 border border-white/10 rounded-xl p-4 animate-in slide-in-from-top-2">
+                        <div className={`mt-0 bg-black/80 border-x border-b border-white/10 rounded-b-xl p-4 animate-in slide-in-from-top-2 shadow-2xl relative z-10 ${isVertical ? "w-[35vh]" : "w-full"}`}>
                          <div className="flex items-center justify-between mb-4 text-xs text-white/50">
                             <span className="flex items-center gap-1 text-purple-300"><Scissors size={12}/> STUDIO MODE</span>
                             <span className="bg-white/10 px-2 py-0.5 rounded text-[10px] font-mono">WASM: ON</span>
@@ -291,12 +300,6 @@ export default function SocialDownloaderPage() {
                       </div>
                    )}
 
-                  <div className="mt-6 text-center">
-                      <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400 truncate px-4">
-                        {videoInfo.title}
-                      </h2>
-                      <p className="text-white/40 text-sm mt-1">@{videoInfo.uploader} • {videoInfo.platform}</p>
-                  </div>
                </div>
             ) : (
               /* If no video: Show Hero Text */
@@ -396,7 +399,7 @@ export default function SocialDownloaderPage() {
                    <div className="flex flex-col gap-6 animate-in slide-in-from-bottom-4 duration-500 pb-20 md:pb-0">
                       
                       {/* Mobile Thumbnail (Hidden on Desktop) */}
-                      <div className="md:hidden aspect-video relative rounded-xl overflow-hidden bg-black/40 border border-white/10" onClick={handlePreview}>
+                        <div className={`md:hidden ${isVertical ? "aspect-[9/16] w-2/3 mx-auto h-[50vh]" : "aspect-video"} relative rounded-xl overflow-hidden bg-black/40 border border-white/10`} onClick={handlePreview}>
                          {videoInfo.thumbnail && <img src={videoInfo.thumbnail} className="w-full h-full object-cover" />}
                          <div className="absolute inset-0 flex items-center justify-center"><Play size={32} className="fill-white text-white drop-shadow-lg" /></div>
                          <div className="absolute bottom-2 right-2 bg-black/80 px-2 py-0.5 text-[10px] rounded text-white">{videoInfo.durationString}</div>

@@ -45,7 +45,7 @@ const FreeTools = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 gap-8">
             {/* Bong Kahini Card */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative group rounded-2xl p-[1px] bg-gradient-to-br from-indigo-500/50 via-purple-500/30 to-pink-500/50 shadow-2xl hover:shadow-indigo-500/20 transition-all duration-500">
               <div className="rounded-2xl h-full w-full bg-black/80 backdrop-blur-xl p-8 flex flex-col border border-white/5 group-hover:bg-black/60 transition-colors">
@@ -89,6 +89,22 @@ const FreeTools = () => {
                 <p className="text-sm text-gray-400 leading-relaxed flex-1">Futuristic neural engine for text-to-speech & voice cloning. Supports English and Bengali emotional synthesis.</p>
                 <Link href="/voice-hub" className="mt-8 block">
                   <Button className="w-full bg-amber-600/20 border border-amber-500/30 text-amber-300 hover:bg-amber-600 hover:text-black hover:font-bold transition-all shadow-lg rounded-xl h-12">Launch Hub</Button>
+                </Link>
+              </div>
+            </motion.div>
+
+            {/* Social Media Downloader Card */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="relative group rounded-2xl p-[1px] bg-gradient-to-br from-cyan-500/50 via-purple-500/30 to-violet-500/50 shadow-2xl hover:shadow-cyan-500/20 transition-all duration-500">
+              <div className="rounded-2xl h-full w-full bg-black/80 backdrop-blur-xl p-8 flex flex-col border border-white/5 group-hover:bg-black/60 transition-colors">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold font-sans tracking-tight text-white group-hover:text-cyan-400 transition-colors">Video Downloader</h2>
+                  <div className="flex gap-1.5">
+                    <span className="text-[9px] uppercase tracking-wider bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 px-2 py-1 rounded-md font-medium">Free</span>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-400 leading-relaxed flex-1">Download & trim YouTube, Instagram & Facebook videos for free. In-browser trimming, MP4/MP3 export, zero signup.</p>
+                <Link href="/tools/downloader" className="mt-8 block">
+                  <Button className="w-full bg-cyan-600/20 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-600 hover:text-black hover:font-bold transition-all shadow-lg rounded-xl h-12">Open Downloader</Button>
                 </Link>
               </div>
             </motion.div>

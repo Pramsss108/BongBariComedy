@@ -21,6 +21,10 @@
     "/^cd \"d:\\\\barir Mashla\\\\website\\\\BongBariComedy\\\\BongBariComedy\"; gc client\\\\src\\\\components\\\\MagicalCursorWithSound\\.tsx \\| Select-Object -First 60$/": {
       "approve": true,
       "matchCommandLine": true
+    },
+    "/^& \"d:\\\\barir Mashla\\\\website\\\\BongBariComedy\\\\BongBariComedy\\\\\\.venv-onnx\\\\Scripts\\\\Activate\\.ps1\"; pip list$/": {
+      "approve": true,
+      "matchCommandLine": true
     }
   }
 }

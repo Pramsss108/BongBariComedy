@@ -2,6 +2,11 @@ import { Express } from "express";
 import { chatbotService } from "../chatbotService";
 import { trendsService } from "../trendsService";
 import { analyzeStory } from "../moderation";
+import multer from "multer";
+import fs_node from "fs";
+import { Client, handle_file } from "@gradio/client";
+
+const upload = multer({ dest: 'uploads/' });
 
 export function registerAiRoutes(app: Express, sessions: Map<string, any>, getDeviceIdFromReq: Function) {
     // Chatbot Rate Limiting (Anonymous)
@@ -81,5 +86,49 @@ export function registerAiRoutes(app: Express, sessions: Map<string, any>, getDe
     app.get("/api/chatbot/tips", async (_req, res) => {
         const tips = await chatbotService.getBengaliComedyTips();
         res.json({ tips });
+    });
+
+    // === VOICE CLONING (tonyassi/voice-clone) - PROVEN WORKING ===
+    app.post("/api/ai/voice/clone", upload.single('audio'), async (req, res) => {
+        try {
+            const { gen_text } = req.body;
+            if (!req.file || !gen_text) {
+                return res.status(400).json({ error: "Missing reference audio or generation text" });
+            }
+            
+            // Use tonyassi/voice-clone - TESTED AND PROVEN WORKING  
+            const client = await Client.connect('tonyassi/voice-clone');
+            const result = await client.predict('/clone', [
+                gen_text,
+                handle_file(req.file.path)
+            ]);
+            
+            // Clean up the uploaded file
+            try { fs_node.unlinkSync(req.file.path); } catch (e) {}
+            
+            // Result is { data: [{ url: "...", path: "..." }] }
+            const audioData = (result as any).data[0];
+            const fileUrl = audioData.url || audioData.path; 
+
+            res.json({ success: true, audioUrl: fileUrl });
+            
+        } catch (e: any) {
+            console.error("Voice Clone error:", e);
+            if (req.file && fs_node.existsSync(req.file.path)) {
+                fs_node.unlinkSync(req.file.path);
+            }
+            res.status(500).json({ error: "AI error", message: e.message || "Failed to communicate with Hugging Face API." });
+        }
+    });
+
+    // === NEW SPEECH-TO-SPEECH (Llasa 8B) PROXY ===
+    app.post("/api/ai/voice/sts", upload.single('audio'), async (req, res) => {
+        // Space is currently down on Hugging Face, returning graceful mock error
+        setTimeout(() => {
+            if (req.file && fs_node.existsSync(req.file.path)) {
+                fs_node.unlinkSync(req.file.path);
+            }
+            res.status(500).json({ error: "Upstream AI error", message: "Hugging Face Llasa space is down." });
+        }, 1000);
     });
 }

@@ -40,9 +40,21 @@ export async function setupVite(app: Express, server: Server) {
     appType: "custom",
   });
 
+  app.use((req, res, next) => {
+    if (!req.originalUrl.includes("/models/")) return next();
+    const filePath = path.join(process.cwd(), "client", "public", req.originalUrl.split("?")[0]);
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).send("Not Found");
+    }
+    next();
+  });
   app.use(vite.middlewares);
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
+
+    if (url.endsWith('.json') || url.endsWith('.bin') || url.endsWith('.onnx') || url.endsWith('.safetensors') || url.includes('/models/')) {
+      return res.status(404).send('Not Found');
+    }
 
     try {
       const clientTemplate = path.resolve(
@@ -79,7 +91,10 @@ export function serveStatic(app: Express) {
   app.use(express.static(distPath));
 
   // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
+  app.use("*", (req, res) => {
+    if (req.originalUrl.includes('/models/') || req.originalUrl.includes('.')) {
+      return res.status(404).send('Not Found');
+    }
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }

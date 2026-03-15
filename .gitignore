@@ -1,17 +1,65 @@
-# SQLite dev database files
-*.sqlite
-*.sqlite-journal
-*.db
-*.db-journal
-node_modules
-dist
-.DS_Store
-server/public
-vite.config.ts.*
-*.tar.gz
-.local
+# Dependencies
+node_modules/
+worker/node_modules/
+.pnp
+.pnp.js
+
+# Production / Build
+dist/
+build/
+worker/.wrangler/
+
+# Python / Venv (Heavy - DO NOT COMMIT)
+.venv/
+.venv-onnx/
+__pycache__/
+*.pyc
+
+# ML Models & Heavy Binaries
+*.onnx
+*.pt
+*.pth
+*.bin
+sym_shape_infer_temp.onnx
+
+# Media & Large Assets
+*.mp4
+*.webm
+*.mp3
+*.wav
+*.m4a
+yt_test.mp4
+downloaded_video.mp4
+test_audio.wav
+uploads/
+
+# Environment Variables
 .env
-*.env
-server/.env
-# Local Netlify folder
-.netlify
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.dev.vars
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+debug_ui.txt
+repair_log.txt
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+*.data
+*.wasm

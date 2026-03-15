@@ -73,6 +73,14 @@
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
   </url>
+
+  <!-- Social Media Downloader — YouTube/Instagram/Facebook video downloader -->
+  <url>
+    <loc>https://www.bongbari.com/tools/downloader</loc>
+    <lastmod>2026-03-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.92</priority>
+  </url>
   
   <!-- Privacy policy - required for compliance -->
   <url>

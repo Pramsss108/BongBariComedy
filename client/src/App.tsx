@@ -33,6 +33,7 @@ const Contact = lazy(() => import("@/pages/contact"));
 const Blog = lazy(() => import("@/pages/blog"));
 const FreeTools = lazy(() => import("./pages/free-tools"));
 const FreeToolsHumanizer = lazy(() => import("./pages/free-tools-humanizer"));
+const SocialDownloaderPage = lazy(() => import("./pages/SocialDownloaderPage"));
 const Admin = lazy(() => import("@/pages/admin"));
 const Login = lazy(() => import("@/pages/login"));
 const BlogPost = lazy(() => import("@/pages/blog-post"));
@@ -45,6 +46,23 @@ const PrivacyPolicy = lazy(() => import("@/pages/PrivacyPolicy"));
 const TermsPage = lazy(() => import("@/pages/TermsPage"));
 const FAQ = lazy(() => import("@/pages/FAQ"));
 const VoiceHub = lazy(() => import("@/pages/VoiceHub"));
+
+// Firebase Protected Route Wrapper
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      setLocation("/login");
+    }
+  }, [isLoading, isAuthenticated, setLocation]);
+
+  if (isLoading) return <LoadingFallback />;
+  if (!isAuthenticated) return null; // Will redirect
+
+  return <>{children}</>;
+}
 
 // Loading fallback component
 function LoadingFallback() {
@@ -135,7 +153,7 @@ function Router() {
 
   return (
     <>
-      {location !== '/voice-hub' && <Navigation />}
+      {location !== '/voice-hub' && location !== '/tools/downloader' && <Navigation />}
       <div className="min-h-screen bg-brand-yellow relative m-0 p-0">
         <GreetingConsent open={showGreeting} onDecision={handleDecision} />
         {/* Custom belan cursor - hidden for logged-in users (normal cursor instead) */}
@@ -170,6 +188,11 @@ function Router() {
           <Route path="/tools/humanizer">
             <Suspense fallback={<LoadingFallback />}>
               <FreeToolsHumanizer />
+            </Suspense>
+          </Route>
+          <Route path="/tools/downloader">
+            <Suspense fallback={<LoadingFallback />}>
+              <SocialDownloaderPage />
             </Suspense>
           </Route>
           <Route path="/community/feed">
@@ -224,7 +247,9 @@ function Router() {
           </Route>
           <Route path="/voice-hub">
             <Suspense fallback={<LoadingFallback />}>
-              <VoiceHub />
+              <ProtectedRoute>
+                <VoiceHub />
+              </ProtectedRoute>
             </Suspense>
           </Route>
           <Route>
@@ -241,7 +266,7 @@ function Router() {
         {/* <FloatingFAQButton /> */}
 
         {/* Mobile Navigation Dock - Hidden on full-screen tool pages */}
-        {location !== '/tools/humanizer' && location !== '/voice-hub' && <MobileNavBar />}
+        {location !== '/tools/humanizer' && location !== '/voice-hub' && location !== '/tools/downloader' && <MobileNavBar />}
 
         {/* Production Debug overlay - Available via Console/Hidden Trigger */}
         <DebugOverlay />

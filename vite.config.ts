@@ -9,6 +9,27 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [
+    {
+      name: "prevent-model-spa-fallback",
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          // If a .json or .wasm or .onnx file is requested and doesn't exist, hard 404.
+          if (req.url && (req.url.endsWith(".json") || req.url.endsWith(".onnx") || req.url.endsWith(".wasm") || req.url.includes("/models/"))) {
+            const relativeUrl = req.url.split("?")[0].replace(/^\/+/, "");
+            const p = path.resolve(__dirname, "client/public", relativeUrl);
+            
+            if (!fs.existsSync(p)) {
+              console.log(`[Vite] 404 Model/JSON File Missing (Sending 404 Text): ${req.url} -> ${p}`);
+              res.statusCode = 404;
+              res.setHeader("Content-Type", "text/plain");
+              res.end("File not found");
+              return;
+            }
+          }
+          next();
+        });
+      }
+    },
     react(),
     // Dev-only: emulate Netlify Functions for promo marquee so no Netlify CLI is required
   ...(process.env.NETLIFY === "1"

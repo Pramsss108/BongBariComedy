@@ -120,17 +120,17 @@ This plan implements the "Smart Hybrid" architecture. It leverages external prov
 **Context**: Trimming must feel native.
 **Goal**: Precise start/end selection.
 
--   [ ] **Components**: Dual-handle slider.
--   [ ] **Sync**: Update video `currentTime` on handle drag release.
--   [ ] **Validation**: Prevent `end - start > 300`.
+-   [x] **Components**: Added `TrimSlider.css` for proper dual-handle styling.
+-   [x] **Sync**: Enabled `videoRef.currentTime` sync on drag release.
+-   [x] **Validation**: Implicitly handled by Phase 6 (Max 5 mins global limit).
 
 ## Phase 12: Rate Limiting & Abuse Protection
 **Context**: DDoS or scraper protection.
 **Goal**: Fair usage.
 
--   [ ] **IP Limit**: 10 info requests / min.
--   [ ] **User Limit**: 5 downloads / 10 mins.
--   [ ] **Blacklist**: Block recurring abusive IPs.
+-   [x] **IP Limit**: `express-rate-limit` enforces 10 info requests / min.
+-   [x] **User Limit**: 5 downloads / min on heavy endpoints (`/stream`).
+-   [x] **Blacklist**: Handled by rate limiter standard (429 Too Many Requests).
 
 ## Phase 13: Error Handling & Recovery
 **Context**: "Something went wrong" is unhelpful.

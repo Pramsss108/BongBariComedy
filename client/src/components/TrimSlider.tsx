@@ -6,6 +6,7 @@
 
 import React, { useCallback } from "react";
 import { formatTime } from "@/lib/ffmpeg-trim-engine";
+import "./TrimSlider.css";
 
 interface TrimSliderProps {
   duration: number;       // total duration in seconds

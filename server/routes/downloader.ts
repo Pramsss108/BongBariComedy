@@ -270,14 +270,37 @@ async function handleStream(req: Request, res: Response): Promise<void> {
 
   try {
     const ytdlArgs: string[] = [
-      "--format", chosen.ytFormat,
+      // Force progressive mp4 (avc1+aac) to avoid "separate audio/video" streams which require muxing
+      // We prefer single-file output to avoid ffmpeg overhead in the pipe unless necessary
+      // For MP3, yt-dlp handles the conversion if ffmpeg is present.
       "--no-warnings",
       "--no-call-home",
       "--no-check-certificate",
+      // Force IPv4 as scraping often fails on IPv6 in datacenter blocks
+      "--force-ipv4",
+      // Buffer optimization
+      "--console-title",
     ];
 
     if (chosen.isAudio) {
-      ytdlArgs.push("--extract-audio", "--audio-format", "mp3", "--audio-quality", "0");
+      // Audio Extraction Mode
+      ytdlArgs.push(
+        "--extract-audio", 
+        "--audio-format", "mp3", 
+        "--audio-quality", "0",
+        "--format", "bestaudio/best"
+      );
+    } else {
+        // Video Stream Mode
+        // CRITICAL: We request 'best[ext=mp4]' first to get a progressive single file.
+        // If that fails, we fallback to widely compatible avc1 mp4.
+        // We AVOID 'bestvideo+bestaudio' because that requires FFmpeg merge in a way that often breaks pipe
+        // unless carefully managed. For simplicity/speed/success rate, we prefer pre-merged formats.
+        if (chosen.ext === "mp4") {
+             ytdlArgs.push("--format", "best[ext=mp4]/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best");
+        } else {
+             ytdlArgs.push("--format", chosen.ytFormat);
+        }
     }
 
     const subprocess = spawnYtDlpStream(validated.url, ytdlArgs);

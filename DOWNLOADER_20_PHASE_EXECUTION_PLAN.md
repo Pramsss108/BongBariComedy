@@ -64,9 +64,9 @@ This plan implements the "Smart Hybrid" architecture. It leverages external prov
 **Context**: Previous issues with silent videos. Downloads must be progressive or merged on fly.
 **Goal**: Reliable video+audio streaming.
 
--   [ ] **Format Logic**: For YouTube, select `best[ext=mp4]`. If separate streams, use `ffmpeg` pipe for on-the-fly muxing (Note: Render CPU heavy, prefer progressive if available).
--   [ ] **Pipe Handler**: Implement `ChildProcess` → `res.write()` pipe.
--   [ ] **Headers**: Set correct `Content-Disposition`, `Content-Length` (if known), and `Content-Type`.
+-   [x] **Format Logic**: For YouTube, select `best[ext=mp4]`. If separate streams, use `ffmpeg` pipe for on-the-fly muxing (Note: Render CPU heavy, prefer progressive if available).
+-   [x] **Pipe Handler**: Implement `ChildProcess` → `res.write()` pipe.
+-   [x] **Headers**: Set correct `Content-Disposition`, `Content-Length` (if known), and `Content-Type`.
 
 ## Phase 5: Auth & Role Enforcement
 **Context**: Protect bandwidth from bots.

@@ -1,5 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import admin from 'firebase-admin';
+import './middleware/firebaseAuth'; // Ensure Firebase Admin is initialized
 import {
   securityHeaders,
   sanitizeBody,
@@ -30,23 +32,49 @@ export const sessions = new Map<string, {
 /**
  * Middleware: Verify if the user is authenticated via session ID.
  */
-export const isAuthenticated = (req: any, res: any, next: any) => {
+export const isAuthenticated = async (req: any, res: any, next: any) => {
   let sessionId = req.headers.authorization?.replace('Bearer ', '');
   
   // Phase 15: Allow sessionId in query param for direct download/stream links
   // (Browser navigations cannot set custom headers)
   if (!sessionId && req.query.sessionId) {
-    sessionId = req.query.sessionId;
+    sessionId = String(req.query.sessionId);
   }
 
-  const session = sessionId ? sessions.get(sessionId) : null;
+  let session: any = sessionId ? sessions.get(sessionId) : null;
+
+  // If simple session check fails, try verifying as Firebase ID Token
+  if (!session && sessionId) {
+    try {
+      // Only proceed if Firebase Admin is initialized
+      if (admin.apps.length > 0) {
+        const decodedToken = await admin.auth().verifyIdToken(sessionId);
+        // Create a transient session object for this request
+        session = {
+          username: decodedToken.email || decodedToken.uid,
+          createdAt: new Date(decodedToken.auth_time * 1000), // auth_time in seconds
+          googleUser: {
+            email: decodedToken.email,
+            name: decodedToken.name || 'Firebase User',
+            picture: decodedToken.picture
+          }
+        };
+      }
+    } catch (err) {
+      // Token verification failed - invalid or expired
+      //console.debug('Firebase token verification failed:', err.message);
+    }
+  }
 
   if (!session) return res.status(401).json({ message: "Unauthorized" });
 
-  const isExpired = Date.now() - session.createdAt.getTime() > 24 * 60 * 60 * 1000;
-  if (isExpired) {
-    sessions.delete(sessionId);
-    return res.status(401).json({ message: "Session expired" });
+  // Only check local session expiration (Firebase verifyIdToken handles its own expiration)
+  if (sessions.has(sessionId)) {
+    const isExpired = Date.now() - session.createdAt.getTime() > 24 * 60 * 60 * 1000;
+    if (isExpired) {
+      sessions.delete(sessionId);
+      return res.status(401).json({ message: "Session expired" });
+    }
   }
 
   req.user = session;

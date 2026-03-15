@@ -16,9 +16,13 @@ import {
   Lock, CloudOff, Hourglass, // Added for Phase 13 Error Handling
 } from "lucide-react";
 import { TrimSlider } from "@/components/TrimSlider";
-import {
-  canRunFfmpeg, trimMedia, formatTime, loadFfmpeg,
-} from "@/lib/ffmpeg-trim-engine";
+
+export function formatTime(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
 import { buildApiUrl } from "@/lib/queryClient";
 import "./SocialDownloaderPage.css";
 
@@ -52,6 +56,7 @@ export default function SocialDownloaderPage() {
   const [errorCode, setErrorCode] = useState(""); // Phase 13: Technical error mapping (e.g. COBALT_DOWN, RATE_LIMIT)
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
   const [selectedFormat, setSelectedFormat] = useState("mp4-720");
+  const [formatTab, setFormatTab] = useState<"video" | "audio">("video");
   const [showPreview, setShowPreview] = useState(false);
   const [previewUrl, setPreviewUrl] = useState("");
   const [trimMode, setTrimMode] = useState(false);
@@ -64,7 +69,7 @@ export default function SocialDownloaderPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const platform = detectPlatform(url);
-
+  const isVertical = url.toLowerCase().includes("/shorts/") || url.toLowerCase().includes("/reel/") || url.toLowerCase().includes("/reels/");
   // ── Fetch info ─────────────────────────────────────────────────
   const handleFetch = useCallback(async () => {
     if (!url.trim()) return;
@@ -149,48 +154,38 @@ export default function SocialDownloaderPage() {
     }
   }, [showPreview, previewUrl, url, isAuthenticated, sessionId]);
 
-  // ── Trim ───────────────────────────────────────────────────────
+  // ── Trim (Powered by super fast yt-dlp section download backend) ────
   const handleTrim = useCallback(async () => {
     if (!videoInfo) return;
 
     if (!isAuthenticated) {
       toast({
         title: "Login Required",
-        description: "Please login to trim and download videos. This protects our free service from bots.",
+        description: "Please login to trim and download videos.",
         variant: "destructive",
       });
       setLocation("/login");
       return;
     }
 
-    if (!canRunFfmpeg()) { setErrorMsg("Your device doesn't have enough memory for browser trimming."); return; }
-    setPhase("trimming"); setTrimProgress(0); setFfmpegLoading(true);
+    setPhase("trimming"); setTrimProgress(100); 
     try {
       try { (window as any).gtag?.("event", "downloader_trim", { duration_seconds: endTime - startTime }); } catch {}
-      // Phase 15: Use sessionId here too just in case we switch fetch logic later (though fetch handles headers usually)
-      // Actually fetch does NOT handle headers automatically unless we use apiRequest or add them manually.
-      // But here we use 'fetch' directly. So we MUST add headers OR use query param.
-      // Query param is easiest since we just enabled it on server.
-      const dlRes = await fetch(apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=mp4-720&sessionId=${sessionId}`));
-      if (!dlRes.ok) throw new Error("Could not download video for trimming.");
-      const videoBlob = await dlRes.blob();
-      setFfmpegLoading(false);
-      const trimmed = await trimMedia({
-        videoBlob, startSec: startTime, endSec: endTime,
-        outputExt: selectedFormat === "mp3" ? "mp3" : "mp4",
-        onProgress: (ratio) => setTrimProgress(Math.round(ratio * 100)),
-      });
-      const ext = selectedFormat === "mp3" ? "mp3" : "mp4";
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(trimmed);
-      a.download = `bongbari_trimmed_${formatTime(startTime)}-${formatTime(endTime)}.${ext}`;
-      document.body.appendChild(a); a.click(); a.remove();
-      setPhase("ready");
+      
+      const encodedTitle = videoInfo?.title ? encodeURIComponent(videoInfo.title.replace(/[^a-z0-9]/gi, '_').substring(0, 50)) : "bongbari_download";
+      
+      const backendTrimUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=${selectedFormat}&title=${encodedTitle}&start=${startTime}&end=${endTime}&sessionId=${sessionId}`);
+      
+      // Navigate to trigger standard browser file save dialog
+      window.location.href = backendTrimUrl;
+      
+      // It finishes instantly since it's just opening a link
+      setTimeout(() => setPhase("ready"), 1000);
+      
     } catch (err: any) {
-      setFfmpegLoading(false);
       setErrorMsg(err.message ?? "Trimming failed."); setPhase("error");
     }
-  }, [videoInfo, url, startTime, endTime, selectedFormat, sessionId]);
+  }, [videoInfo, url, startTime, endTime, selectedFormat, sessionId, isAuthenticated, setLocation]);
 
   const isWorking = phase === "fetching" || phase === "downloading" || phase === "trimming";
 
@@ -409,23 +404,42 @@ export default function SocialDownloaderPage() {
 
                       {/* Format Selection */}
                       <div className="space-y-3">
-                         <label className="text-xs uppercase tracking-widest text-white/40 font-bold ml-1">Select Format</label>
-                         <div className="grid grid-cols-2 gap-2">
-                            {videoInfo.formats.map((f) => (
-                              <button
-                                key={f.id}
-                                className={`h-12 rounded-lg border flex items-center justify-center gap-2 text-sm font-medium transition-all ${
-                                  selectedFormat === f.id 
-                                  ? "bg-purple-500/20 border-purple-500/50 text-purple-200 shadow-[0_0_15px_rgba(168,85,247,0.15)]" 
-                                  : "bg-white/5 border-white/5 text-slate-400 hover:bg-white/10"
-                                }`}
-                                onClick={() => setSelectedFormat(f.id)}
-                                disabled={phase !== "ready"}
+                          <div className="flex items-center justify-between ml-1 mb-2">
+                            <label className="text-xs uppercase tracking-widest text-white/40 font-bold">Select Format</label>
+                            <div className="flex bg-black/40 rounded-lg p-1 border border-white/5">
+                              <button 
+                                className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${formatTab === "video" ? "bg-purple-500/30 text-purple-300" : "text-slate-500 hover:text-slate-300"}`}
+                                onClick={() => setFormatTab("video")}
                               >
-                                {f.ext === "mp3" ? <Music size={14} /> : <Film size={14} />} {f.label}
+                                Video
                               </button>
-                            ))}
-                         </div>
+                              <button 
+                                className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${formatTab === "audio" ? "bg-cyan-500/30 text-cyan-300" : "text-slate-500 hover:text-slate-300"}`}
+                                onClick={() => setFormatTab("audio")}
+                              >
+                                Audio
+                              </button>
+                            </div>
+                          </div>
+                          
+                           <div className="grid grid-cols-2 gap-2">
+                              {videoInfo.formats
+                                .filter(f => formatTab === "audio" ? ["mp3", "m4a", "wav"].includes(f.ext) : !["mp3", "m4a", "wav"].includes(f.ext))
+                                .map((f) => (
+                                <button
+                                  key={f.id}
+                                  className={`h-12 rounded-lg border flex items-center justify-center gap-2 text-sm font-medium transition-all ${
+                                    selectedFormat === f.id
+                                    ? "bg-purple-500/20 border-purple-500/50 text-purple-200 shadow-[0_0_15px_rgba(168,85,247,0.15)]"
+                                    : "bg-white/5 border-white/5 text-slate-400 hover:bg-white/10"
+                                  }`}
+                                  onClick={() => setSelectedFormat(f.id)}
+                                  disabled={phase !== "ready"}
+                                >
+                                    {formatTab === "audio" ? <Music size={14} /> : <Film size={14} />} {f.label}
+                                  </button>
+                                ))}
+                           </div>
                       </div>
 
                       {/* Action Buttons */}

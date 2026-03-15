@@ -44,8 +44,6 @@
     "snapshot:main": "node scripts/snapshot-main.mjs"
   },
   "dependencies": {
-    "@ffmpeg/ffmpeg": "^0.12.15",
-    "@ffmpeg/util": "^0.12.2",
     "@google-cloud/storage": "^7.17.0",
     "@gradio/client": "^2.1.0",
     "@hookform/resolvers": "^3.10.0",
@@ -99,6 +97,7 @@
     "express": "^4.21.2",
     "express-rate-limit": "^8.3.1",
     "express-session": "^1.18.1",
+    "ffmpeg-static": "^5.3.0",
     "firebase": "^12.10.0",
     "firebase-admin": "^13.7.0",
     "framer-motion": "^11.18.2",

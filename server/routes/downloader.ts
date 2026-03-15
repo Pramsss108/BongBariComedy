@@ -11,7 +11,11 @@ import rateLimit from "express-rate-limit";
 import path from "path";
 import os from "os";
 import { execFile, spawn } from "child_process";
+import fs from "fs";
+import crypto from "crypto";
 import axios from "axios";
+// @ts-ignore
+import ffmpegPath from "ffmpeg-static";
 
 const ytBin = os.platform() === "win32" ? "yt-dlp.exe" : "yt-dlp";
 const YT_DLP_PATH = path.resolve(process.cwd(), "node_modules", "youtube-dl-exec", "bin", ytBin);
@@ -233,16 +237,50 @@ async function handleInfo(req: Request, res: Response): Promise<void> {
     const info = await fetchSmartMetadata(validated.url);
 
     // Build a clean, safe response — never send raw yt-dlp output to client
-    const formats: { id: string; label: string; ext: string; height?: number }[] = [];
+    const formats: { id: string; label: string; ext: string; height?: number; isAudio?: boolean }[] = [];
 
-    // Always offer 720p mp4
-    formats.push({ id: "mp4-720", label: "MP4 720p", ext: "mp4", height: 720 });
-    // 1080p only if the source can serve it
-    if (info.height && info.height >= 1080) {
-      formats.push({ id: "mp4-1080", label: "MP4 1080p", ext: "mp4", height: 1080 });
+    // V12 Dominator: Intelligent Format Extraction
+    // If we have actual formats from yt-dlp, use them to build the ladder.
+    // Otherwise fallback to safe defaults.
+    if (Array.isArray(info.formats) && info.formats.length > 0) {
+        // Collect distinct resolutions available directly
+        const heights = new Set<number>();
+        info.formats.forEach((f: any) => {
+            if (f.height) heights.add(f.height);
+        });
+        
+        // Sort heights descending (8K -> 144p)
+        const sortedHeights = Array.from(heights).sort((a, b) => b - a);
+        
+        sortedHeights.forEach(h => {
+            // Only show standard resolutions to avoid clutter (e.g. 721p)
+            // But sometimes non-standard is all we have. Let's be generous but labeled nicely.
+            if (h >= 240) { // filter out tiny thumbnails designated as video
+                formats.push({ 
+                    id: `mp4-${h}`, 
+                    label: `MP4 ${h}p${h >= 1080 ? ' HD' : ''}`, 
+                    ext: 'mp4', 
+                    height: h,
+                    isAudio: false
+                });
+            }
+        });
+
+        // Always ensure 720p is present if not found (as valid fallback alias)
+        if (!formats.find(f => f.id === 'mp4-720')) {
+             formats.push({ id: "mp4-720", label: "MP4 720p", ext: "mp4", height: 720, isAudio: false });
+        }
+    } else {
+        // Fallback for Cobalt or non-video sources
+        formats.push({ id: "mp4-720", label: "MP4 720p", ext: "mp4", height: 720, isAudio: false });
+        if (info.height && info.height >= 1080) {
+           formats.push({ id: "mp4-1080", label: "MP4 1080p", ext: "mp4", height: 1080, isAudio: false });
+        }
     }
-    // MP3 always available
-    formats.push({ id: "mp3", label: "MP3 Audio", ext: "mp3" });
+
+    // Audio Formats (Always Available via conversion)
+    formats.push({ id: "mp3", label: "MP3 Audio (High)", ext: "mp3", isAudio: true });
+    formats.push({ id: "m4a", label: "M4A Audio (AAC)", ext: "m4a", isAudio: true });
 
     res.json({
       title: info.title ?? "Untitled Video",
@@ -280,6 +318,8 @@ async function handleStream(req: Request, res: Response): Promise<void> {
 
   const format = (req.query.format as string) ?? "mp4-720";
   const mode = (req.query.mode as string) ?? "download"; // 'download' | 'preview'
+  const startSec = req.query.start ? parseFloat(req.query.start as string) : null;
+  const endSec = req.query.end ? parseFloat(req.query.end as string) : null;
 
   // Phase 14: Global Concurrency Guard
   // Only limit full downloads (previews are lighter/shorter generally or handled via proxy).
@@ -308,39 +348,37 @@ async function handleStream(req: Request, res: Response): Promise<void> {
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
 
-  // Map our clean format IDs to yt-dlp format strings
-  const formatMap: Record<string, { ytFormat: string; ext: string; isAudio: boolean }> = {
-    "mp4-480": {
-      ytFormat: "best[height<=480][ext=mp4]/best[height<=480]/best[ext=mp4]/best",
-      ext: "mp4",
-      isAudio: false,
-    },
-    "mp4-720": {
-      ytFormat: "best[height<=720][ext=mp4]/best[height<=720]/best[ext=mp4]/best",
-      ext: "mp4",
-      isAudio: false,
-    },
-    "mp4-1080": {
-      ytFormat: "best[height<=1080][ext=mp4]/best[height<=1080]/best[ext=mp4]/best",
-      ext: "mp4",
-      isAudio: false,
-    },
-    mp3: {
-      ytFormat: "bestaudio/best",
-      ext: "mp3",
-      isAudio: true,
-    },
-  };
+  // V12 Dominator: Dynamic Format Mapping
+  // Supports patterns like "mp4-{HEIGHT}" or "audio-{EXT}"
+  let chosen: { ytFormat: string; ext: string; isAudio: boolean } | null = null;
+  const formatCode = (req.query.format as string) ?? "mp4-720";
 
-  const chosen = formatMap[format];
-  if (!chosen) {
-    res.status(400).json({ error: "Invalid format. Choose mp4-720, mp4-1080, or mp3." });
-    return;
+  if (formatCode === "mp3") {
+      chosen = { ytFormat: "bestaudio/best", ext: "mp3", isAudio: true };
+  } else if (formatCode === "m4a") {
+      chosen = { ytFormat: "bestaudio[ext=m4a]/bestaudio", ext: "m4a", isAudio: true };
+  } else if (formatCode.startsWith("mp4-")) {
+      const height = parseInt(formatCode.replace("mp4-", ""));
+      if (!isNaN(height)) {
+          // Fix: Must use pre-merged format (e.g., best[ext=mp4]) because pipelining to stdout cannot remux separate audio+video streams on-the-fly.
+          chosen = {
+              ytFormat: `best[height<=${height}][ext=mp4]/best[height<=${height}]/best`,
+              ext: "mp4",
+              isAudio: false
+          };
+      }
   }
 
-  // Build a safe filename from the URL
-  const safeTitle = `bongbari_download_${Date.now()}`;
-  const filename = `${safeTitle}.${chosen.ext}`;
+  // Fallback for legacy calls
+  if (!chosen) {
+      if (formatCode === "mp4-720") chosen = { ytFormat: "best[height<=720][ext=mp4]/best", ext: "mp4", isAudio: false };
+      else if (formatCode === "mp4-1080") chosen = { ytFormat: "best[height<=1080][ext=mp4]/best", ext: "mp4", isAudio: false };
+      else chosen = { ytFormat: "best[height<=720][ext=mp4]/best", ext: "mp4", isAudio: false }; // Default safety
+  }
+
+  // Build a safe filename from the URL or query param
+  let filenameBase = req.query.title ? String(req.query.title) : `bongbari_download_${Date.now()}`;
+  const filename = `${filenameBase}.${chosen.ext}`;
 
   // Set download headers BEFORE streaming starts
   if (mode === "preview") {
@@ -352,14 +390,14 @@ async function handleStream(req: Request, res: Response): Promise<void> {
   res.setHeader("Content-Type", chosen.isAudio ? "audio/mpeg" : "video/mp4");
   res.setHeader("X-Accel-Buffering", "no"); // Disable nginx buffering on Render
 
-  // 5 minute timeout
-  req.socket.setTimeout(300_000);
+  // Prevent Render's 100s idle timeout by forcing headers out immediately
+  res.flushHeaders();
+
+  // 10 minute timeout (increased for 4K remuxing)
+  req.socket.setTimeout(600_000);
 
   try {
     const ytdlArgs: string[] = [
-      // Force progressive mp4 (avc1+aac) to avoid "separate audio/video" streams which require muxing
-      // We prefer single-file output to avoid ffmpeg overhead in the pipe unless necessary
-      // For MP3, yt-dlp handles the conversion if ffmpeg is present.
       "--no-warnings",
       "--no-call-home",
       "--no-check-certificate",
@@ -367,58 +405,117 @@ async function handleStream(req: Request, res: Response): Promise<void> {
       "--force-ipv4",
       // Buffer optimization
       "--console-title",
-      // Phase 6: Hard Cap - Prevent 1-hour mixes killing the server
-      "--match-filter", "duration <= 300",
+      // Limit concurrent users for server stability
+      "--match-filter", "duration <= 600",
     ];
+
+    if (ffmpegPath) {
+        ytdlArgs.push("--ffmpeg-location", ffmpegPath);
+    }
 
     if (chosen.isAudio) {
       // Audio Extraction Mode
       ytdlArgs.push(
         "--extract-audio", 
-        "--audio-format", "mp3", 
+        "--audio-format", chosen.ext,
         "--audio-quality", "0",
         "--format", "bestaudio/best"
       );
     } else {
         // Video Stream Mode
-        // CRITICAL: We request 'best[ext=mp4]' first to get a progressive single file.
-        // If that fails, we fallback to widely compatible avc1 mp4.
-        // We AVOID 'bestvideo+bestaudio' because that requires FFmpeg merge in a way that often breaks pipe
-        // unless carefully managed. For simplicity/speed/success rate, we prefer pre-merged formats.
-        if (chosen.ext === "mp4") {
-             ytdlArgs.push("--format", "best[ext=mp4]/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best");
-        } else {
-             ytdlArgs.push("--format", chosen.ytFormat);
-        }
+        // Use the dynamically constructed format string
+        ytdlArgs.push("--format", chosen.ytFormat);
+        // Ensure merged output is mp4 if not already
+        ytdlArgs.push("--merge-output-format", "mp4");
     }
 
-    const subprocess = spawnYtDlpStream(validated.url, ytdlArgs);
+    // V13: Server-side Trimming using yt-dlp native sections
+    if (startSec !== null && endSec !== null && endSec > startSec) {
+        // TEMP FILE APPROACH FOR TRIMMING
+        // ffmpeg cannot output mp4 reliably to stdout without corruption/mpegts fallback.
+        const tmpDir = os.tmpdir();
+        const trimFile = path.join(tmpDir, `trim_${crypto.randomBytes(8).toString('hex')}.mp4`);
+        
+        ytdlArgs.push("--download-sections", `*${startSec}-${endSec}`);
+        ytdlArgs.push("-o", trimFile);
 
-    subprocess.stdout?.pipe(res);
+        const subprocess = spawn(YT_DLP_PATH, [...ytdlArgs, validated.url], {
+          stdio: ["ignore", "pipe", "pipe"],
+        });
 
-    subprocess.stderr?.on("data", (chunk: Buffer) => {
-      // Log but never surface to client
-      console.error("[downloader/stream] yt-dlp stderr:", chunk.toString().slice(0, 200));
-    });
+        subprocess.stderr?.on("data", (chunk: Buffer) => {
+            console.error("[downloader/stream] trim stderr:", chunk.toString().slice(0, 200));
+        });
 
-    subprocess.on("error", (err: any) => {
-      console.error("[downloader/stream] spawn error:", err?.message);
-      if (!res.headersSent) {
-        res.status(500).json({ error: "Download failed. Please try again." });
-      }
-    });
+        subprocess.on("error", (err: any) => {
+            console.error("[downloader/stream] spawn error:", err?.message);
+            if (!res.headersSent) res.status(500).json({ error: "Download failed." });
+        });
 
-    subprocess.on("close", (code: number) => {
-      if (code !== 0 && !res.writableEnded) {
-        console.error("[downloader/stream] yt-dlp exited with code:", code);
-        res.end();
-      }
-    });
+        subprocess.on("close", (code: number) => {
+            if (code === 0 && fs.existsSync(trimFile)) {
+                try {
+                  const stat = fs.statSync(trimFile);
+                  res.setHeader("Content-Length", stat.size);
+                } catch(e) { }
+                
+                const readStream = fs.createReadStream(trimFile);
+                readStream.pipe(res);
+                
+                readStream.on("end", () => {
+                   try { fs.unlinkSync(trimFile); } catch(e){}
+                });
+                readStream.on("error", () => {
+                   try { fs.unlinkSync(trimFile); } catch(e){} 
+                });
+            } else {
+                console.error(`[downloader/stream] yt-dlp exited with code: ${code}`);
+                if (!res.headersSent) {
+                    res.status(500).json({ error: "Trimming failed. Please try again." });
+                } else {
+                    res.end();
+                }
+                try { fs.unlinkSync(trimFile); } catch(e) {}
+            }
+        });
 
-    req.on("close", () => {
-      // Client disconnected — kill the subprocess to free resources on Render
-      subprocess.kill?.("SIGTERM");
-    });
+        req.on("close", () => {
+            subprocess.kill?.("SIGTERM");
+            setTimeout(() => {
+                try { fs.unlinkSync(trimFile); } catch(e){}
+            }, 5000);
+        });
+
+    } else {
+        // DIRECT STREAM APPROACH FOR FULL VIDEOS
+        const subprocess = spawnYtDlpStream(validated.url, ytdlArgs);
+
+        subprocess.stdout?.pipe(res);
+
+        subprocess.stderr?.on("data", (chunk: Buffer) => {
+          // Log but never surface to client
+          console.error("[downloader/stream] yt-dlp stderr:", chunk.toString().slice(0, 200));
+        });
+
+        subprocess.on("error", (err: any) => {
+          console.error("[downloader/stream] spawn error:", err?.message);
+          if (!res.headersSent) {
+            res.status(500).json({ error: "Download failed. Please try again." });
+          }
+        });
+
+        subprocess.on("close", (code: number) => {
+          if (code !== 0 && !res.writableEnded) {
+            console.error("[downloader/stream] yt-dlp exited with code:", code);
+            res.end();
+          }
+        });
+
+        req.on("close", () => {
+          // Client disconnected — kill the subprocess to free resources on Render
+          subprocess.kill?.("SIGTERM");
+        });
+    }
   } catch (err: any) {
     console.error("[downloader/stream] error:", err?.message);
     if (!res.headersSent) {

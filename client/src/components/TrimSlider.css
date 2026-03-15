@@ -1,100 +1,123 @@
-/* TrimSlider.css */
-.trim-slider-root {
-    position: relative;
-    width: 100%;
-    padding: 20px 0 30px;
-    font-family: 'Space Grotesk', sans-serif;
-  }
-  
-  .trim-track {
-    position: relative;
-    width: 100%;
-    height: 6px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 3px;
-  }
-  
-  .trim-selected {
-    position: absolute;
-    top: 0;
-    height: 100%;
-    background: linear-gradient(90deg, #7c3aed, #06b6d4);
-    border-radius: 3px;
-    opacity: 0.8;
-  }
-  
-  .trim-range {
-    position: absolute;
-    pointer-events: none;
-    -webkit-appearance: none;
-    z-index: 2;
-    height: 10px;
-    width: 100%;
-    opacity: 0;
-    margin: 0;
-    top: -2px; /* Center vertically over track */
-  }
-  
-  /* Thumb Styling Webkit */
-  .trim-range::-webkit-slider-thumb {
-    pointer-events: all;
-    width: 20px;
-    height: 20px;
-    -webkit-appearance: none;
-    background: #fff;
-    border-radius: 50%;
-    box-shadow: 0 0 10px rgba(0,0,0,0.5);
-    cursor: grab;
-    margin-top: -7px; /* Adjust to center */
-  }
-  
-  /* Thumb Styling Firefox */
-  .trim-range::-moz-range-thumb {
-    pointer-events: all;
-    width: 20px;
-    height: 20px;
-    border: none;
-    background: #fff;
-    border-radius: 50%;
-    box-shadow: 0 0 10px rgba(0,0,0,0.5);
-    cursor: grab;
-  }
-  
-  /* Specific Z-Index for handles to ensure overlap works reasonably */
-  .trim-range-start { z-index: 3; }
-  .trim-range-end { z-index: 4; }
-  
-  /* Labels */
-  .trim-labels {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 15px;
-    font-size: 0.75rem;
-    color: #94a3b8;
-  }
-  
-  .trim-label-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .trim-label-time {
-    font-weight: 700;
-    color: #fff;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem;
-  }
-  
-  .trim-duration-badge {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
-    padding: 4px 10px;
-    border-radius: 9999px;
-    font-size: 0.7rem;
-    color: #06b6d4;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
+.trim-slider-container {
+  padding: 0;
+  margin: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  width: 100%;
+}
+
+.premium-timeline {
+  position: relative;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.timeline-track {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  transform: translateY(-50%);
+}
+
+.timeline-to-be-downloaded {
+  position: absolute;
+  top: 50%;
+  height: 4px;
+  transform: translateY(-50%);
+  background: linear-gradient(90deg, #a855f7, #22d3ee);
+  border-radius: 999px;
+}
+
+/* Playhead */
+.timeline-playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #ef4444;
+  z-index: 20;
+  pointer-events: none;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+}
+
+.timeline-playhead::after {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  background: #ef4444;
+  border-radius: 50%;
+}
+
+.timeline-handle {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 36px;
+  background: white;
+  border-radius: 6px;
+  z-index: 30;
+  cursor: ew-resize;
+  box-shadow: 0 0 15px rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s;
+}
+
+.timeline-handle-left {
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.8);
+}
+
+.timeline-handle-right {
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.8);
+}
+
+.timeline-handle:hover {
+  transform: translate(-50%, -50%) scale(1.1);
+  z-index: 40;
+}
+
+.timeline-handle:active {
+  transform: translate(-50%, -50%) scale(0.95);
+  cursor: grabbing;
+}
+
+.handle-grip {
+  width: 2px;
+  height: 12px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 2px;
+}
+
+.handle-time-tooltip {
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.9);
+  color: white;
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-family: monospace;
+  opacity: 0;
+  pointer-events: none;
+  border: 1px solid rgba(255,255,255,0.2);
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+
+.timeline-handle:hover .handle-time-tooltip,
+.timeline-handle:active .handle-time-tooltip {
+  opacity: 1;
+}
+

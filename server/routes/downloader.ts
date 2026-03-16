@@ -109,13 +109,13 @@ const MAX_CONCURRENT_DOWNLOADS = 3; // Strict limit for free tier to prevent OOM
 function tryAcquireSlot(): boolean {
   if (ACTIVE_DOWNLOADS >= MAX_CONCURRENT_DOWNLOADS) return false;
   ACTIVE_DOWNLOADS++;
-  console.log(`[ResourceGovernor] Slot acquired. Active: ${ACTIVE_DOWNLOADS}/${MAX_CONCURRENT_DOWNLOADS}`);
+  console.log(`🛡️ [ResourceGovernor] Slot acquired. Active Streams: [ ${ACTIVE_DOWNLOADS} / ${MAX_CONCURRENT_DOWNLOADS} ]`);
   return true;
 }
 
 function releaseSlot(): void {
   ACTIVE_DOWNLOADS = Math.max(0, ACTIVE_DOWNLOADS - 1);
-  console.log(`[ResourceGovernor] Slot released. Active: ${ACTIVE_DOWNLOADS}/${MAX_CONCURRENT_DOWNLOADS}`);
+  console.log(`🛡️ [ResourceGovernor] Slot released. Active Streams: [ ${ACTIVE_DOWNLOADS} / ${MAX_CONCURRENT_DOWNLOADS} ]`);
 }
 
 // ---------------------------------------------------------------------------
@@ -310,16 +310,27 @@ async function handleInfo(req: Request, res: Response): Promise<void> {
 // Pipes the video/audio directly to the client — never buffers to disk/RAM
 // ---------------------------------------------------------------------------
 async function handleStream(req: Request, res: Response): Promise<void> {
-  const validated = validateVideoUrl(req.query.url as string);
+  const startSec = req.query.start ? parseFloat(req.query.start as string) : null;
+  const endSec = req.query.end ? parseFloat(req.query.end as string) : null;
+  const rawUrl = req.query.url as string;
+  const rawFormat = req.query.format as string || "mp4-720";
+
+  console.log(`\n======================================================`);
+  console.log(`🔵 [VIBE CODER] 🔥 NEW INCOMING STREAM CONNECTION 🔥`);
+  console.log(`🔗 TARGET URL   : ${rawUrl}`);
+  console.log(`🎛️ REQUESTED FMT: ${rawFormat}`);
+  console.log(`✂️ TRIMMING     : ${startSec !== null ? `YES (From ${startSec}s to ${endSec}s)` : 'NO (Full Video)'}`);
+  console.log(`======================================================\n`);
+
+  const validated = validateVideoUrl(rawUrl);
   if (!validated.ok) {
+    console.error(`❌ [VIBE CODER] URL rejected: ${validated.error}`);
     res.status(400).json({ error: validated.error });
     return;
   }
 
   const format = (req.query.format as string) ?? "mp4-720";
   const mode = (req.query.mode as string) ?? "download"; // 'download' | 'preview'
-  const startSec = req.query.start ? parseFloat(req.query.start as string) : null;
-  const endSec = req.query.end ? parseFloat(req.query.end as string) : null;
 
   // Phase 14: Global Concurrency Guard
   // Only limit full downloads (previews are lighter/shorter generally or handled via proxy).
@@ -375,7 +386,10 @@ async function handleStream(req: Request, res: Response): Promise<void> {
       else if (formatCode === "mp4-1080") chosen = { ytFormat: "best[height<=1080][ext=mp4]/best", ext: "mp4", isAudio: false };
       else chosen = { ytFormat: "best[height<=720][ext=mp4]/best", ext: "mp4", isAudio: false }; // Default safety
   }
-
+  console.log(`🎯 [VIBE CODER] SERVER DECISION -> EXECUTING MEDIA SELECTION:`);
+  console.log(`   🔸 Output Extension: .${chosen.ext.toUpperCase()}`);
+  console.log(`   🔸 Is Audio Only?  : ${chosen.isAudio ? '✅ YES 🔊' : '❌ NO 🎥'}`);
+  console.log(`   🔸 YT-DLP Selector : [ ${chosen.ytFormat} ]\n`);
   // Build a safe filename from the URL or query param
   let filenameBase = req.query.title ? String(req.query.title) : `bongbari_download_${Date.now()}`;
   const filename = `${filenameBase}.${chosen.ext}`;
@@ -522,33 +536,44 @@ async function handleStream(req: Request, res: Response): Promise<void> {
     } else {
         console.log(`\n\n🟢 [VIBE CODER ALERT] 👉 FULL VIDEO STREAM INITIATED!`);
         console.log(`🎬 TARGET VIDEO: ${validated.url}`);
-        console.log(`🚀 NO CUTS REQUESTED. FIRING DIRECT YT-DLP STREAM ALGORITHM!\n`);
+        console.log(`🚀 NO CUTS REQUESTED. FIRING DIRECT YT-DLP STREAM ALGORITHM!`);
+        console.log(`🛠️ ARGS: [ ${ytdlArgs.join(' ')} ]\n`);
         
         // DIRECT STREAM APPROACH FOR FULL VIDEOS
         const subprocess = spawnYtDlpStream(validated.url, ytdlArgs);
+
+        subprocess.stdout?.on('data', () => {
+            // Uncomment to log every byte (too noisy)
+            // console.log(`📦 [STREAM] Pumping bytes... `);
+        });
 
         subprocess.stdout?.pipe(res);
 
         subprocess.stderr?.on("data", (chunk: Buffer) => {
           // Log but never surface to client
-          console.error("[downloader/stream] yt-dlp stderr:", chunk.toString().slice(0, 200));
+          const msg = chunk.toString();
+          console.log(`⚙️ [YT-DLP FULL STREAM] -> ${msg.trim()}`);
         });
 
         subprocess.on("error", (err: any) => {
-          console.error("[downloader/stream] spawn error:", err?.message);
+          console.error("🚨 [CRASH ALERT] spawn error:", err?.message);
           if (!res.headersSent) {
             res.status(500).json({ error: "Download failed. Please try again." });
           }
         });
 
         subprocess.on("close", (code: number) => {
+          console.log(`\n🏁 [STREAM FINISHED] YT-DLP EXITED WITH CODE: ${code}`);
           if (code !== 0 && !res.writableEnded) {
-            console.error("[downloader/stream] yt-dlp exited with code:", code);
+            console.error("❌ [FAILURE] yt-dlp exited abnormally with code:", code);
             res.end();
+          } else {
+            console.log(`🎉 [SUCCESS] FULL STREAM DELIVERED SUCCESSFULLY!`);
           }
         });
 
         req.on("close", () => {
+          console.log(`🔌 [DISCONNECT] BROWSER HUNG UP STREAM! KILLING FULL STREAM SUBPROCESS...`);
           // Client disconnected — kill the subprocess to free resources on Render
           subprocess.kill?.("SIGTERM");
         });

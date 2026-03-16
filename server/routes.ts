@@ -105,6 +105,20 @@ export const validateCSRF = (req: any, res: any, next: any) => {
  * Register all application routes.
  */
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Debug endpoint for PO token explicitly
+  app.get('/api/test-token', async (req, res) => {
+    try {
+      const { getPoToken } = await import('./routes/poTokenService.js');
+      const token = await getPoToken();
+      
+      const { default: youtubeDl } = await import('youtube-dl-exec');
+      const version = await youtubeDl('--version');
+      
+      res.json({ ok: true, version, data: token });
+    } catch(e: any) {
+      res.status(500).json({ ok: false, error: e.message || e.toString() });
+    }
+  });
   // --- Debug Routes (For AI Agents) ---
   const debugRouter = registerDebugRoutes();
   app.use("/api/debug", debugRouter);

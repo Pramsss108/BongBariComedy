@@ -42,6 +42,8 @@ export async function getPoToken(): Promise<{ visitorData: string; poToken: stri
       // Bypass npx to avoid issues on windows vs linux and reduce overhead
       // Point directly to the module's bin script
       const binPath = path.resolve(process.cwd(), 'node_modules', 'youtube-po-token-generator', 'bin', 'cli.mjs');
+      console.log(`[PoToken] Executing: ${process.execPath} ${binPath}`);
+      
       const { stdout } = await execFileAsync(
         process.execPath, 
         [binPath], 

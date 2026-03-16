@@ -45,6 +45,99 @@ function detectPlatform(url: string): "youtube" | "instagram" | "facebook" | nul
   return null;
 }
 
+// ─── Native File Save API Helper ──────────────────────────────────────────
+async function performSecureDownload(
+  downloadUrl: string,
+  fallbackName: string,
+  onProgress: (p: number) => void
+): Promise<void> {
+  console.log(`[Vibe Coder Tracker] 🚀 Fetching file securely via Stream API...`);
+  
+  const response = await fetch(downloadUrl);
+  if (!response.ok) {
+    const errText = await response.text();
+    let errMsg = `Server returned ${response.status}: ${response.statusText}`;
+    try {
+      const j = JSON.parse(errText);
+      if (j.error) errMsg = j.error;
+    } catch (e) {}
+    throw new Error(errMsg);
+  }
+
+  // Parse Headers
+  const contentLengthHeader = response.headers.get('Content-Length');
+  const contentDisposition = response.headers.get('Content-Disposition');
+  const contentType = response.headers.get('Content-Type') || 'video/mp4';
+  
+  let filename = fallbackName;
+  if (contentDisposition && contentDisposition.includes('filename=')) {
+    const matches = /filename="([^"]+)"/.exec(contentDisposition);
+    if (matches && matches[1]) filename = matches[1];
+  }
+
+  const totalBytes = contentLengthHeader ? parseInt(contentLengthHeader, 10) : 0;
+  
+  let blob: Blob;
+
+  // Stream reader for progress
+  if (response.body && totalBytes > 0) {
+    const reader = response.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let received = 0;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) {
+        chunks.push(value);
+        received += value.length;
+        onProgress(Math.round((received / totalBytes) * 100));
+      }
+    }
+    blob = new Blob(chunks, { type: contentType });
+  } else {
+    // Indeterminate full download
+    onProgress(50);
+    blob = await response.blob();
+    onProgress(100);
+  }
+
+  console.log(`[Vibe Coder Tracker] ✅ Stream loaded (Size: ${(blob.size/1024/1024).toFixed(2)} MB). Prompting Save As...`);
+
+  // Try File System Access API (Native Windows "Save As")
+  if ('showSaveFilePicker' in window) {
+    try {
+      const ext = filename.split('.').pop() || (contentType.includes('audio') ? 'mp3' : 'mp4');
+      const description = contentType.includes('audio') ? 'Audio File' : 'Video File';
+      
+      const handle = await (window as any).showSaveFilePicker({
+        suggestedName: filename,
+        types: [{
+          description: description,
+          accept: { [contentType]: [`.${ext}`] },
+        }],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return; // Success!
+    } catch (err: any) {
+      if (err.name === 'AbortError') return; // User cancelled the popup
+      console.warn('[Vibe Coder] Native picker failed, using fallback <a> link.', err);
+    }
+  }
+
+  // Fallback: Silent download via blob URL
+  const urlObj = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = urlObj;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(urlObj), 10000);
+}
+
 // ── Main Page ────────────────────────────────────────────────────
 export default function SocialDownloaderPage() {
   const { user, isAuthenticated, sessionId } = useAuth();
@@ -138,13 +231,16 @@ export default function SocialDownloaderPage() {
     try {
       try { (window as any).gtag?.("event", "downloader_download", { format: selectedFormat }); } catch {}
 
-      // Fallback to our own proven Render yt-dlp backend
       // Protected by auth - Phase 15: Attach sessionId to query param for browser nav
-      const backendUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=${selectedFormat}&sessionId=${sessionId}`);
-      window.location.href = backendUrl;
+      const safeTitle = videoInfo?.title ? videoInfo.title.replace(/[^a-z0-9]/gi, '_').substring(0, 50) : "bongbari_download";
+      const encodedTitle = encodeURIComponent(safeTitle);
+      const backendUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=${selectedFormat}&title=${encodedTitle}&sessionId=${sessionId}`);
       
+      // Use our secure fetch API to force Progress Bar & Save As dialog
+      await performSecureDownload(backendUrl, safeTitle, setDownloadProgress);
+
       setPhase("ready");
-    } catch(e: any) { 
+    } catch(e: any) {
       setErrorMsg(e.message || "Download failed."); 
       setPhase("error");
     }
@@ -271,22 +367,21 @@ export default function SocialDownloaderPage() {
       return;
     }
 
-    setPhase("trimming"); setTrimProgress(100); 
+    setPhase("trimming"); setTrimProgress(0); 
     try {
       try { (window as any).gtag?.("event", "downloader_trim", { duration_seconds: endTime - startTime }); } catch {}
       
-const safeTitle = videoInfo?.title ? videoInfo.title.replace(/[^a-z0-9]/gi, '_').substring(0, 50) : "bongbari_download";
-        const trimName = `${safeTitle}_clip_${startTime.toFixed(2)}s_to_${endTime.toFixed(2)}s`;
-        const encodedTitle = encodeURIComponent(trimName);
-      
+      const safeTitle = videoInfo?.title ? videoInfo.title.replace(/[^a-z0-9]/gi, '_').substring(0, 50) : "bongbari_download";
+      const trimName = `${safeTitle}_clip_${startTime.toFixed(2)}s_to_${endTime.toFixed(2)}s`;
+      const encodedTitle = encodeURIComponent(trimName);
+
       const backendTrimUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=${selectedFormat}&title=${encodedTitle}&start=${startTime}&end=${endTime}&sessionId=${sessionId}`);
-      
-      // Navigate to trigger standard browser file save dialog
-      window.location.href = backendTrimUrl;
-      
-      // It finishes instantly since it's just opening a link
-      setTimeout(() => setPhase("ready"), 1000);
-      
+
+      // Perform secure streaming fetch + Native 'Save As' Dialog Tracker
+      await performSecureDownload(backendTrimUrl, `${trimName}.mp4`, setTrimProgress);
+
+      setPhase("ready");
+
     } catch (err: any) {
       setErrorMsg(err.message ?? "Trimming failed."); setPhase("error");
     }

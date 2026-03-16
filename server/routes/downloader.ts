@@ -358,6 +358,7 @@ async function handleStream(req: Request, res: Response): Promise<void> {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+  res.setHeader("Access-Control-Expose-Headers", "Content-Length, Content-Disposition, Content-Type");
 
   // V12 Dominator: Dynamic Format Mapping
   // Supports patterns like "mp4-{HEIGHT}" or "audio-{EXT}"

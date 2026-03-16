@@ -6,21 +6,22 @@
  * purple→cyan gradient hero, inline fetch button, large preview card.
  */
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Download, Play, Scissors, Youtube, Instagram, Facebook,
+  Download, Play, Pause, ArrowLeft, Scissors, Youtube, Instagram, Facebook,
   Loader2, AlertCircle, Music, Film, CheckCircle2, Search, X, Clock,
-  Lock, CloudOff, Hourglass, // Added for Phase 13 Error Handling
+  Lock, CloudOff, Hourglass,
 } from "lucide-react";
 import { TrimSlider } from "@/components/TrimSlider";
 
 export function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
-  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  const ms = Math.floor((seconds % 1) * 10); // get deciseconds (1 digit)
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}.${ms}`;
 }
 
 import { buildApiUrl } from "@/lib/queryClient";
@@ -62,12 +63,25 @@ export default function SocialDownloaderPage() {
   const [trimMode, setTrimMode] = useState(false);
   const [startTime, setStartTime] = useState(0);
   const [endTime, setEndTime] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isCaching, setIsCaching] = useState(false); // CapCut: Block 1 Cache state
+  const [cacheProgress, setCacheProgress] = useState(0); // CapCut: Block 1 Cache progress
   const [trimProgress, setTrimProgress] = useState(0);
   const [ffmpegLoading, setFfmpegLoading] = useState(false);
   const [serverWaking, setServerWaking] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
+  const [isDesktop, setIsDesktop] = useState(typeof window !== "undefined" ? window.innerWidth >= 768 : true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleResize = () => setIsDesktop(window.innerWidth >= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const platform = detectPlatform(url);
   const isVertical = url.toLowerCase().includes("/shorts/") || url.toLowerCase().includes("/reel/") || url.toLowerCase().includes("/reels/");
   // ── Fetch info ─────────────────────────────────────────────────
@@ -136,23 +150,112 @@ export default function SocialDownloaderPage() {
     }
   }, [videoInfo, url, selectedFormat, isAuthenticated, setLocation]);
 
+  // ── CapCut Block 1: Blob Caching ───────────────────────────────
+  
+  // Phase 19: Cache Cleanup Protocol
+  useEffect(() => {
+    // When the component unmounts, or when we are fetching a NEW video (which clears previewUrl), 
+    // we must destroy the old Blob from RAM to prevent leaks.
+    return () => {
+      if (previewUrl && previewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  const loadVideoToCache = useCallback(async (enterTrimMode = false) => {
+    // If entering Trim Mode, we strictly need a local Blob cache to ensure 0ms seek latency.
+    if (enterTrimMode) {
+      if (previewUrl && previewUrl.startsWith("blob:")) {
+        setShowPreview(true);
+        if (!trimMode) setTrimMode(true);
+        return;
+      }
+    } else {
+      // Normal Play Preview (doesn't need Blob, can play directly from stream)
+      if (previewUrl) {
+        setShowPreview(true);
+        return;
+      }
+    }
+
+    if (!isAuthenticated) {
+      toast({ title: "Login Required", description: "Login to preview videos.", variant: "destructive" });
+      setLocation("/login");
+      return;
+    }
+
+    const streamUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=mp4-480&mode=preview&sessionId=${sessionId||""}`);
+
+    // FAST PREVIEW: If just watching, don't download whole file to RAM!
+    if (!enterTrimMode) {
+      setPreviewUrl(streamUrl);
+      setShowPreview(true);
+      return;
+    }
+
+    // ENTERING TRIMMER: We need Blob for instant 0ms latency scrubbing
+    setIsCaching(true);
+    setCacheProgress(0);
+    // Hide standard stream preview while downloading the Blob to show the large loader
+    if (enterTrimMode && previewUrl && !previewUrl.startsWith("blob:")) {
+        setShowPreview(false);
+    }
+    try {
+      
+      const response = await fetch(streamUrl);
+      if (!response.ok) throw new Error("Network response was not ok");
+      
+      // Attempt to read total length if backend provides it
+      const contentLength = response.headers.get("content-length");
+      const total = contentLength ? parseInt(contentLength, 10) : 0;
+      
+      let loaded = 0;
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("No readable stream");
+
+      const chunks: Uint8Array[] = [];
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        if (value) {
+          chunks.push(value);
+          loaded += value.length;
+          if (total) {
+            setCacheProgress(Math.round((loaded / total) * 100));
+          } else {
+            // Fake progress if we don't know total length (cap at 95 until done)
+            setCacheProgress((prev) => Math.min(prev + 5, 95));
+          }
+        }
+      }
+      
+      const blob = new Blob(chunks, { type: "video/mp4" });
+      const blobUrl = URL.createObjectURL(blob);
+      setPreviewUrl(blobUrl);
+      setShowPreview(true);
+      if (enterTrimMode && !trimMode) setTrimMode(true);
+
+      if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(50);
+    } catch (err) {
+      console.error("Cache failed:", err);
+      toast({ title: "Preview Failed", description: "Failed to download video to browser cache.", variant: "destructive" });
+    } finally {
+      setIsCaching(false);
+      setCacheProgress(100);
+    }
+  }, [url, isAuthenticated, sessionId, previewUrl, trimMode, toast, setLocation]);
+
   // ── Preview ────────────────────────────────────────────────────
   const handlePreview = useCallback(() => {
-    setShowPreview(!showPreview);
-    if (!showPreview && !previewUrl) {
-      if (!isAuthenticated) {
-        toast({ title: "Login Required", description: "Login to preview videos.", variant: "destructive" });
-        setLocation("/login");
-        return; 
-      }
-      // Use direct stream proxy (mode=preview, force 480p) for reliable playback
-      const streamUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=mp4-480&mode=preview&sessionId=${sessionId}`);
-      setPreviewUrl(streamUrl);
-      if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(50);
+    if (!showPreview) {
+       loadVideoToCache(false);
     } else {
-       if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(50);
+       setShowPreview(false);
     }
-  }, [showPreview, previewUrl, url, isAuthenticated, sessionId]);
+  }, [showPreview, loadVideoToCache]);
 
   // ── Trim (Powered by super fast yt-dlp section download backend) ────
   const handleTrim = useCallback(async () => {
@@ -172,7 +275,9 @@ export default function SocialDownloaderPage() {
     try {
       try { (window as any).gtag?.("event", "downloader_trim", { duration_seconds: endTime - startTime }); } catch {}
       
-      const encodedTitle = videoInfo?.title ? encodeURIComponent(videoInfo.title.replace(/[^a-z0-9]/gi, '_').substring(0, 50)) : "bongbari_download";
+const safeTitle = videoInfo?.title ? videoInfo.title.replace(/[^a-z0-9]/gi, '_').substring(0, 50) : "bongbari_download";
+        const trimName = `${safeTitle}_clip_${startTime.toFixed(2)}s_to_${endTime.toFixed(2)}s`;
+        const encodedTitle = encodeURIComponent(trimName);
       
       const backendTrimUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=${selectedFormat}&title=${encodedTitle}&start=${startTime}&end=${endTime}&sessionId=${sessionId}`);
       
@@ -238,67 +343,62 @@ export default function SocialDownloaderPage() {
                   
                   {/* Title Moved to Top */}
                   <div className="mb-4 text-center w-full">
-                      <h2 className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400 truncate px-4">
+                      <h2 className="text-lg md:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400 truncate px-4">
                           {videoInfo.title}
                       </h2>
-                      <p className="text-white/40 text-sm mt-1">@{videoInfo.uploader} • {videoInfo.platform}</p>
+                      <p className="text-white/40 text-xs mt-1">@{videoInfo.uploader} • {videoInfo.platform}</p>
                   </div>
 
-                  <div className={`${isVertical ? "aspect-[9/16] w-full max-h-[60vh] max-w-[350px] mx-auto" : "aspect-video w-full"} ${trimMode ? "rounded-t-xl" : "rounded-xl"} overflow-hidden border border-white/10 shadow-2xl bg-black relative group flex flex-col items-center justify-center transition-all duration-300`}>
-                    {showPreview && previewUrl ? (
-                      <video ref={videoRef} src={previewUrl} controls className="w-full h-full object-contain" autoPlay />
+                  <div className={`${isVertical ? "aspect-[9/16] w-full max-h-[70vh] max-w-[400px] mx-auto" : "aspect-video w-full max-w-4xl"} ${trimMode ? "rounded-t-xl" : "rounded-xl"} overflow-hidden border border-white/10 shadow-2xl bg-black relative group flex flex-col items-center justify-center transition-all duration-300`}>
+                    {isDesktop && showPreview && previewUrl ? (
+                      <video 
+                        ref={trimMode ? undefined : videoRef} 
+                        src={previewUrl} 
+                        controls={!trimMode} 
+                        className="w-full h-full object-contain" 
+                        autoPlay={!trimMode}
+                        muted={trimMode}
+                        onPlay={() => !trimMode && setIsPlaying(true)} 
+                        onPause={() => !trimMode && setIsPlaying(false)} 
+                        onTimeUpdate={(e) => {
+                          if (trimMode) return;
+                          const t = e.currentTarget.currentTime;
+                          setCurrentTime(t);
+                          if (trimMode) {
+                            if (t < startTime) e.currentTarget.currentTime = startTime;
+                            if (t > endTime) {
+                                e.currentTarget.currentTime = startTime;
+                                e.currentTarget.play().catch(() => {});
+                            }
+                          }
+                        }} 
+                      />
                     ) : (
-                      <div className="w-full h-full relative cursor-pointer" onClick={handlePreview}>
-                        <img src={videoInfo.thumbnail || ""} alt={videoInfo.title} className="w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity" />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 group-hover:scale-110 transition-transform">
-                            <Play size={40} className="fill-white text-white ml-2" />
-                          </div>
-                        </div>
-                        <div className="absolute bottom-4 right-4 px-3 py-1 bg-black/80 rounded-md text-xs font-mono border border-white/10">
+                      <div className="w-full h-full relative cursor-pointer" onClick={() => loadVideoToCache(false)}>
+                          <img src={videoInfo.thumbnail || ""} alt={videoInfo.title} className="w-full h-full object-cover opacity-50 group-hover:opacity-30 transition-opacity" />
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+                              <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 group-hover:scale-110 transition-transform shadow-2xl">
+                                {isCaching ? <Loader2 size={40} className="text-white animate-spin" /> : <Play size={40} className="fill-white text-white ml-2" />}
+                              </div>
+                              <div className="flex flex-col items-center gap-2">
+                                <span className="text-white/90 font-bold tracking-widest text-xs uppercase bg-black/60 px-5 py-2 rounded-full border border-white/10 backdrop-blur-md shadow-xl group-hover:bg-purple-600/50 transition-colors">
+                                  {isCaching ? `Loading Studio... ${cacheProgress}%` : "Play Video"}
+                                </span>
+                                {isCaching && (
+                                  <div className="w-32 h-1.5 bg-black/50 rounded-full overflow-hidden border border-white/10 shadow-inner">
+                                    <div className="h-full bg-gradient-to-r from-purple-500 to-cyan-400 transition-all duration-300" style={{ width: `${cacheProgress}%` }} />
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="absolute bottom-4 right-4 px-3 py-1 bg-black/80 rounded-md text-xs font-mono border border-white/10 shadow-lg">
                           {videoInfo.durationString}
                         </div>
                       </div>
                     )}
                   </div>
 
-                   {/* PHASE 15: INTEGRATED TRIMMER (One View) */}
-                   {trimMode && videoInfo.duration > 0 && (
-                        <div className={`mt-0 bg-black/80 border-x border-b border-white/10 rounded-b-xl p-4 animate-in slide-in-from-top-2 shadow-2xl relative z-10 w-full ${isVertical ? "max-w-[350px] mx-auto" : ""}`}>
-                         <div className="flex items-center justify-between mb-4 text-xs text-white/50">
-                            <span className="flex items-center gap-1 text-purple-300"><Scissors size={12}/> STUDIO MODE</span>
-                            <span className="bg-white/10 px-2 py-0.5 rounded text-[10px] font-mono">WASM: ON</span>
-                         </div>
-                         <TrimSlider
-                           duration={videoInfo.duration}
-                           startTime={startTime} endTime={endTime}
-                           onStartChange={(t) => {
-                             setStartTime(t);
-                             if (videoRef.current) { videoRef.current.currentTime = t; videoRef.current.pause(); }
-                           }}
-                           onEndChange={(t) => {
-                             setEndTime(t);
-                             if (videoRef.current) { videoRef.current.currentTime = t; videoRef.current.pause(); }
-                           }}
-                         />
-                         <div className="flex gap-2 mt-4">
-                            <button
-                               className="flex-1 h-10 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg shadow-purple-900/20"
-                               onClick={handleTrim} 
-                               disabled={phase !== "ready" || endTime <= startTime}
-                            >
-                                {phase === "trimming" ? <Loader2 size={12} className="animate-spin" /> : <Scissors size={12} />}
-                                {phase === "trimming" ? `Processing... ${trimProgress}%` : `Download Clip (${formatTime(startTime)} - ${formatTime(endTime)})`}
-                            </button>
-                            <button 
-                                className="px-4 h-10 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-xs font-bold rounded-lg transition-colors"
-                                onClick={() => setTrimMode(false)}
-                            >
-                                Close
-                            </button>
-                         </div>
-                      </div>
-                   )}
+
 
                </div>
             ) : (
@@ -367,7 +467,7 @@ export default function SocialDownloaderPage() {
                 {/* 2. STATUS / ERROR (Phase 13: Enhanced Error Handling) */}
                 {serverWaking && (
                    <div className="flex items-center gap-2 text-xs text-yellow-400/80 bg-yellow-400/10 px-4 py-2 rounded-lg border border-yellow-400/20">
-                      <Loader2 size={12} className="animate-spin" /> Server waking up (free tier ~15s). Please wait…
+                      <Loader2 size={12} className="animate-spin" /> Preparing connection... please wait!
                    </div>
                 )}
                 {phase === "error" && errorMsg && (
@@ -399,11 +499,31 @@ export default function SocialDownloaderPage() {
                    <div className="flex flex-col gap-6 animate-in slide-in-from-bottom-4 duration-500 pb-20 md:pb-0">
                       
                       {/* Mobile Thumbnail (Hidden on Desktop) */}
-                        <div className={`md:hidden ${isVertical ? "aspect-[9/16] w-2/3 mx-auto h-[50vh]" : "aspect-video"} relative rounded-xl overflow-hidden bg-black/40 border border-white/10`} onClick={handlePreview}>
-                         {videoInfo.thumbnail && <img src={videoInfo.thumbnail} className="w-full h-full object-cover" />}
-                         <div className="absolute inset-0 flex items-center justify-center"><Play size={32} className="fill-white text-white drop-shadow-lg" /></div>
-                         <div className="absolute bottom-2 right-2 bg-black/80 px-2 py-0.5 text-[10px] rounded text-white">{videoInfo.durationString}</div>
-                      </div>
+                        <div className={`md:hidden ${isVertical ? "aspect-[9/16] w-2/3 mx-auto max-h-[50vh]" : "aspect-video"} relative rounded-xl overflow-hidden bg-black/40 border border-white/10 group`} onClick={() => loadVideoToCache(false)}>
+                            {!isDesktop && showPreview && previewUrl ? (
+                              <video src={previewUrl} controls className="w-full h-full object-contain" autoPlay muted={trimMode} />
+                            ) : (
+                              <>
+                                {videoInfo.thumbnail && <img src={videoInfo.thumbnail} className="w-full h-full object-cover opacity-60" />}
+                                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                                  <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-xl">
+                                      {isCaching ? <Loader2 size={24} className="text-white animate-spin" /> : <Play size={24} className="fill-white text-white ml-1" />}
+                                  </div>
+                                  <div className="flex flex-col items-center gap-1.5">
+                                    <span className="text-[9px] font-bold uppercase tracking-widest bg-black/60 px-3 py-1 rounded-full border border-white/10 text-white/90">
+                                      {isCaching ? `Loading... ${cacheProgress}%` : "Tap to Play"}
+                                    </span>
+                                    {isCaching && (
+                                      <div className="w-20 h-1 bg-black/50 rounded-full overflow-hidden border border-white/10">
+                                        <div className="h-full bg-gradient-to-r from-purple-500 to-cyan-400 transition-all duration-300" style={{ width: `${cacheProgress}%` }} />
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="absolute bottom-2 right-2 bg-black/80 px-2 py-0.5 text-[10px] rounded text-white shadow-lg">{videoInfo.durationString}</div>
+                              </>
+                            )}
+                        </div>
 
                       {/* Format Selection */}
                       <div className="space-y-3">
@@ -470,10 +590,20 @@ export default function SocialDownloaderPage() {
                             className={`h-10 rounded-lg border border-dashed flex items-center justify-center gap-2 text-xs uppercase tracking-wider font-bold transition-all ${
                                trimMode ? "border-purple-500/50 text-purple-300 bg-purple-500/10" : "border-white/10 text-slate-500 hover:text-slate-300 hover:border-white/20"
                             }`}
-                            onClick={() => setTrimMode(!trimMode)}
-                            disabled={phase !== "ready"}
+                              onClick={() => {
+                                if (!trimMode) {
+                                  loadVideoToCache(true);
+                                } else {
+                                  setTrimMode(false);
+                                }
+                              }}
+                            disabled={phase !== "ready" || isCaching}
                           >
-                            <Scissors size={14} /> {trimMode ? "Close Trimmer" : "Trim Video"}
+                            {isCaching ? (
+                              <><Loader2 size={14} className="animate-spin text-purple-400" /> <span className="text-purple-400">Loading Studio... {cacheProgress}%</span></>
+                            ) : (
+                              <><Scissors size={14} /> {trimMode ? "Close Trimmer" : "Trim Video"}</>
+                            )}
                           </button>
                         </div>
                       )}
@@ -496,6 +626,112 @@ export default function SocialDownloaderPage() {
              </div>
           </div>
         </div>
+
+        {/* FULLSCREEN STUDIO MODE OVERLAY */}
+        {trimMode && videoInfo && (
+           <div className="fixed inset-0 z-[100] bg-black flex flex-col font-serif animate-in fade-in zoom-in-95 duration-300">
+              {/* App Bar */}
+              <div className="h-16 flex items-center justify-between px-6 border-b border-white/10 shrink-0 bg-black/50 backdrop-blur-md">
+                 <button onClick={() => setTrimMode(false)} className="text-white/60 hover:text-white flex items-center gap-2 text-xs font-bold bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg transition-colors">
+                    <ArrowLeft size={16} /> Back to Dashboard
+                 </button>
+                 <div className="font-tech text-purple-400 font-bold tracking-widest text-xs flex items-center gap-2">
+                    <Scissors size={14} /> BONGBARI STUDIO
+                 </div>
+              </div>
+              
+              {/* Video Area */}
+              <div className="flex-1 relative flex items-center justify-center min-h-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-900 via-black to-black cursor-pointer" onClick={() => {
+                 if (videoRef.current) {
+                   if (videoRef.current.paused) videoRef.current.play();
+                   else videoRef.current.pause();
+                 }
+              }}>
+                 <video
+                   ref={videoRef}
+                   src={previewUrl || videoInfo.thumbnail!}
+                   className="max-w-full max-h-full object-contain shadow-2xl"
+                   autoPlay
+                   playsInline
+                   onPlay={() => setIsPlaying(true)}
+                   onPause={() => setIsPlaying(false)}
+                   onTimeUpdate={(e) => {
+                       const t = e.currentTarget.currentTime;
+                       setCurrentTime(t);
+                       // enforce bounds strictly
+                       if (t < startTime) e.currentTarget.currentTime = startTime;
+                       if (t >= endTime) {
+                         e.currentTarget.currentTime = startTime;
+                         e.currentTarget.play().catch(() => {});
+                       }
+                   }}
+                 />
+                 {isPlaying && (
+                   <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/20">
+                      <div className="w-20 h-20 rounded-full bg-black/60 backdrop-blur border border-white/10 flex items-center justify-center drop-shadow-2xl">
+                          <Pause size={32} className="text-white" />
+                      </div>
+                   </div>
+                 )}
+                 {!isPlaying && (
+                   <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-all">
+                      <div className="w-24 h-24 rounded-full bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center drop-shadow-2xl group-hover:scale-110 transition-transform">
+                          <Play size={40} className="fill-white text-white ml-2" />
+                      </div>
+                   </div>
+                 )}
+              </div>
+
+              {/* Trimmer Area */}
+              <div className="shrink-0 bg-[#0a0a0a] border-t border-white/10 p-6 md:p-8 flex flex-col items-center gap-6">
+                 <div className="w-full max-w-5xl mx-auto flex items-center gap-4">
+                      <button
+                        className="w-12 h-12 shrink-0 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all shadow-lg hover:shadow-cyan-900/20"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (videoRef.current) {
+                            if (videoRef.current.paused) videoRef.current.play();
+                            else videoRef.current.pause();
+                          }
+                        }}
+                      >
+                        {videoRef.current?.paused ? <Play size={20} className="ml-1 fill-white" /> : <Pause size={20} className="fill-white" />}
+                      </button>
+                      <div className="flex-1 px-4">
+                          <TrimSlider
+                              duration={videoInfo.duration}
+                              startTime={startTime} 
+                              endTime={endTime}
+                              currentTime={currentTime}
+                              onStartChange={(t) => {
+                                setStartTime(t);
+                                if (videoRef.current) { videoRef.current.currentTime = t; videoRef.current.pause(); }
+                              }}
+                              onEndChange={(t) => {
+                                setEndTime(t);
+                                if (videoRef.current) { videoRef.current.currentTime = t; videoRef.current.pause(); }
+                              }}
+                              onScrub={(t) => {
+                                setCurrentTime(t);
+                                if (videoRef.current) {
+                                  videoRef.current.currentTime = t;
+                                }
+                              }}
+                          />
+                      </div>
+                 </div>
+                 
+                 <button
+                    className="h-14 px-8 md:px-12 bg-gradient-to-r from-purple-600 to-cyan-600 text-white font-bold text-lg rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50"
+                    onClick={handleTrim}
+                    disabled={phase !== "ready" || endTime <= startTime}
+                 >
+                    {phase === "trimming" ? <Loader2 size={18} className="animate-spin" /> : <Scissors size={18} />}
+                    {phase === "trimming" ? `Processing... ${trimProgress}%` : `Download Clip (${formatTime(startTime)} - ${formatTime(endTime)})`}
+                 </button>
+              </div>
+           </div>
+        )}
 
       </div>
     </>

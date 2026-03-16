@@ -413,6 +413,9 @@ async function handleStream(req: Request, res: Response): Promise<void> {
         ytdlArgs.push("--ffmpeg-location", ffmpegPath);
     }
 
+        // V13: Server-side Trimming using yt-dlp native sections
+    const isTrimming = startSec !== null && endSec !== null && endSec > startSec;
+    
     if (chosen.isAudio) {
       // Audio Extraction Mode
       ytdlArgs.push(
@@ -423,53 +426,82 @@ async function handleStream(req: Request, res: Response): Promise<void> {
       );
     } else {
         // Video Stream Mode
-        // Use the dynamically constructed format string
-        ytdlArgs.push("--format", chosen.ytFormat);
+        // If we are TRIMMING, we write to a temp file first, so we don't have the stdout limitation!
+        // We can safely use separate video+audio for the highest possible quality without it defaulting to 360p (format 18).
+        if (isTrimming) {
+            console.log(`[VIBE CODER] 🎬 Trimming mode detected! Escalating quality constraints to highest possible...`);
+            const heightMatch = chosen.ytFormat.match(/height<=(\d+)/);
+            const heightLimit = heightMatch ? heightMatch[1] : "720";
+            // Get best video + best audio that matches the height, fallback to whatever is best
+            ytdlArgs.push("--format", `bestvideo[height<=${heightLimit}][ext=mp4]+bestaudio[ext=m4a]/best[height<=${heightLimit}]/best`);
+        } else {
+            // Direct streaming requires pre-merged format (e.g. format 18)
+            ytdlArgs.push("--format", chosen.ytFormat);
+        }
+        
         // Ensure merged output is mp4 if not already
         ytdlArgs.push("--merge-output-format", "mp4");
     }
 
-    // V13: Server-side Trimming using yt-dlp native sections
-    if (startSec !== null && endSec !== null && endSec > startSec) {
+    if (isTrimming) {
+        console.log(`\n\n🟢 [VIBE CODER ALERT] 👉 TRIMMING REQUEST INITIATED!`);
+        console.log(`🎬 TARGET VIDEO: ${validated.url}`);
+        console.log(`✂️ CUT TIMESTAMPS: Start -> ${startSec}s | End -> ${endSec}s`);
+        
         // TEMP FILE APPROACH FOR TRIMMING
         // ffmpeg cannot output mp4 reliably to stdout without corruption/mpegts fallback.
         const tmpDir = os.tmpdir();
         const trimFile = path.join(tmpDir, `trim_${crypto.randomBytes(8).toString('hex')}.mp4`);
         
+        console.log(`📁 TEMP FILE ALLOCATED AT: ${trimFile}`);
+        
         ytdlArgs.push("--download-sections", `*${startSec}-${endSec}`);
+        ytdlArgs.push("--force-keyframes-at-cuts"); // Guarantee perfect cut accuracy
         ytdlArgs.push("-o", trimFile);
+
+        console.log(`🚀 FIRING YT-DLP ENGINE WITH ARGS:`);
+        console.log(`🛠️ [ ${ytdlArgs.join(' ')} ]\n`);
 
         const subprocess = spawn(YT_DLP_PATH, [...ytdlArgs, validated.url], {
           stdio: ["ignore", "pipe", "pipe"],
         });
 
         subprocess.stderr?.on("data", (chunk: Buffer) => {
-            console.error("[downloader/stream] trim stderr:", chunk.toString().slice(0, 200));
+            const msg = chunk.toString();
+            console.log(`⚙️ [YT-DLP WORKING] -> ${msg.trim()}`);
         });
 
         subprocess.on("error", (err: any) => {
-            console.error("[downloader/stream] spawn error:", err?.message);
+            console.error(`🚨 [CRASH ALERT] spawn error:`, err?.message);
             if (!res.headersSent) res.status(500).json({ error: "Download failed." });
         });
 
         subprocess.on("close", (code: number) => {
+            console.log(`\n🏁 [PROCESS FINISHED] YT-DLP EXITED WITH CODE: ${code}`);
+            
             if (code === 0 && fs.existsSync(trimFile)) {
                 try {
                   const stat = fs.statSync(trimFile);
+                  console.log(`✅ [SUCCESS] TRIMMED FILE GENERATED! SIZE: ${(stat.size / 1024 / 1024).toFixed(2)} MB`);
                   res.setHeader("Content-Length", stat.size);
-                } catch(e) { }
+                } catch(e) { 
+                  console.error(`🚨 [ERROR] Failed to stat file:`, e);
+                }
                 
+                console.log(`🚚 [STREAMING] PIPING BITES TO BROWSER NOW...`);
                 const readStream = fs.createReadStream(trimFile);
                 readStream.pipe(res);
                 
                 readStream.on("end", () => {
-                   try { fs.unlinkSync(trimFile); } catch(e){}
+                   console.log(`🎉 [DONE] PIPING COMPLETED! BURNING TEMP FILE...`);
+                   try { fs.unlinkSync(trimFile); console.log(`🔥 FILE DELETED!`); } catch(e){}
                 });
                 readStream.on("error", () => {
+                   console.log(`💥 [CRASH] PIPE STREAM FAILED! BURNING TEMP FILE...`);
                    try { fs.unlinkSync(trimFile); } catch(e){} 
                 });
             } else {
-                console.error(`[downloader/stream] yt-dlp exited with code: ${code}`);
+                console.error(`❌ [FAILURE] yt-dlp FAILED TO CUT OR FILE MISSING!`);
                 if (!res.headersSent) {
                     res.status(500).json({ error: "Trimming failed. Please try again." });
                 } else {
@@ -480,6 +512,7 @@ async function handleStream(req: Request, res: Response): Promise<void> {
         });
 
         req.on("close", () => {
+            console.log(`🔌 [DISCONNECT] BROWSER HUNG UP! KILLING SUBPROCESS...`);
             subprocess.kill?.("SIGTERM");
             setTimeout(() => {
                 try { fs.unlinkSync(trimFile); } catch(e){}
@@ -487,6 +520,10 @@ async function handleStream(req: Request, res: Response): Promise<void> {
         });
 
     } else {
+        console.log(`\n\n🟢 [VIBE CODER ALERT] 👉 FULL VIDEO STREAM INITIATED!`);
+        console.log(`🎬 TARGET VIDEO: ${validated.url}`);
+        console.log(`🚀 NO CUTS REQUESTED. FIRING DIRECT YT-DLP STREAM ALGORITHM!\n`);
+        
         // DIRECT STREAM APPROACH FOR FULL VIDEOS
         const subprocess = spawnYtDlpStream(validated.url, ytdlArgs);
 

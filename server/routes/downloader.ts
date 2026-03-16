@@ -1,3 +1,4 @@
+import ytdl from "@distube/ytdl-core";
 /**
  * BongBari Social Media Downloader — Backend Routes
  * Phrases 2, 3, 5, 14, 16, 17 of the masterplan.

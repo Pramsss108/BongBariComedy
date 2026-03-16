@@ -160,10 +160,10 @@ export default function SocialDownloaderPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isCaching, setIsCaching] = useState(false); // CapCut: Block 1 Cache state
   const [cacheProgress, setCacheProgress] = useState(0); // CapCut: Block 1 Cache progress
-  const [trimProgress, setTrimProgress] = useState(0);
+  const [trimProgress, setTrimProgress] = useState<number | string>(0);
   const [ffmpegLoading, setFfmpegLoading] = useState(false);
   const [serverWaking, setServerWaking] = useState(false);
-  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [downloadProgress, setDownloadProgress] = useState<number | string>(0);
   const [isDesktop, setIsDesktop] = useState(typeof window !== "undefined" ? window.innerWidth >= 768 : true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -675,7 +675,7 @@ export default function SocialDownloaderPage() {
                             onClick={handleDownload} disabled={phase !== "ready"}
                           >
                              {phase === "downloading" ? (
-                               <><Loader2 size={18} className="animate-spin" /> {downloadProgress > 0 ? `${downloadProgress}%` : "Running..."}</>
+                                 <><Loader2 size={18} className="animate-spin" /> {typeof downloadProgress === 'number' && downloadProgress > 0 ? `${downloadProgress}%` : downloadProgress}</>
                              ) : (
                                <><Download size={18} /> Download {selectedFormat === "mp3" ? "Audio" : "Video"}</>
                              )}
@@ -704,8 +704,8 @@ export default function SocialDownloaderPage() {
                       )}
 
                       {/* Progress Bar */}
-                      {phase === "downloading" && downloadProgress > 0 && (
-                        <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                      {phase === "downloading" && typeof downloadProgress === 'number' && downloadProgress > 0 && (
+                          <div className="absolute top-0 left-0 w-full h-1 bg-white/5 overflow-hidden rounded-t-lg">
                            <div className="h-full bg-cyan-400 transition-all duration-300" style={{ width: `${downloadProgress}%` }} />
                         </div>
                       )}
@@ -822,7 +822,7 @@ export default function SocialDownloaderPage() {
                     disabled={phase !== "ready" || endTime <= startTime}
                  >
                     {phase === "trimming" ? <Loader2 size={18} className="animate-spin" /> : <Scissors size={18} />}
-                    {phase === "trimming" ? `Processing... ${trimProgress}%` : `Download Clip (${formatTime(startTime)} - ${formatTime(endTime)})`}
+                    {phase === "trimming" ? (typeof trimProgress === 'number' && trimProgress > 0 ? `Processing... ${trimProgress}%` : trimProgress) : `Download Clip (${formatTime(startTime)} - ${formatTime(endTime)})`}
                  </button>
               </div>
            </div>

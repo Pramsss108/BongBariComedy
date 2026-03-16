@@ -252,8 +252,8 @@ export function TrimSlider({
                   src={videoUrl}
                   muted
                   playsInline
-                  crossOrigin="anonymous"
-                  className="w-32 h-[72px] object-cover rounded border-b border-white/10"
+                  preload="auto"
+                  className="w-24 h-[60px] object-cover rounded border border-white/10 shadow-sm"
                 />
               )}
               <span className="text-white/90 text-[10px] font-mono mt-1 px-2 py-0.5 whitespace-nowrap">

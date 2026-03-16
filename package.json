@@ -25,7 +25,7 @@
     "start": "node dist/index.js",
     "verify-env": "node scripts/verify-env.mjs DATABASE_URL GEMINI_API_KEY JWT_SECRET",
     "health": "node scripts/health-check.mjs http://localhost:5000/health",
-    "render:build": "npm install --include=dev && npm run build",
+    "render:build": "npm install --include=dev && node scripts/update-yt.cjs && npm run build",
     "check": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

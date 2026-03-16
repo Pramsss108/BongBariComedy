@@ -819,7 +819,7 @@ export default function SocialDownloaderPage() {
               </div>
 
               {/* Trimmer Area */}
-              <div className="shrink-0 bg-[#0a0a0a] border-t border-white/10 p-6 md:p-8 flex flex-col items-center gap-6">
+              <div className="shrink-0 bg-[#0a0a0a] border-t border-white/10 p-3 md:p-4 flex flex-col items-center gap-4">
                  <div className="w-full max-w-5xl mx-auto flex items-center gap-4">
                       <button
                         className="w-12 h-12 shrink-0 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all shadow-lg hover:shadow-cyan-900/20"
@@ -859,7 +859,7 @@ export default function SocialDownloaderPage() {
                  </div>
                  
                  <button
-                    className="h-14 px-8 md:px-12 bg-gradient-to-r from-purple-600 to-cyan-600 text-white font-bold text-lg rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50"
+                    className="h-12 px-6 md:px-10 bg-gradient-to-r from-purple-600 to-cyan-600 text-white font-bold text-base rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
                     onClick={handleTrim}
                     disabled={phase !== "ready" || endTime <= startTime}
                  >

@@ -189,15 +189,15 @@ export function TrimSlider({
   };
 
   return (
-    <div className="w-full select-none py-6">
-      <div className="flex justify-between text-xs text-white/50 font-mono mb-2 px-1">
+    <div className="w-full select-none py-2">
+      <div className="flex justify-between text-[10px] text-white/40 font-mono mb-2 px-1">
         <span>{formatSliderTime(startTime)}</span>
         <span>{formatSliderTime(endTime)}</span>
       </div>
 
       <div
         ref={containerRef}
-        className="premium-timeline h-14 w-full cursor-pointer relative rounded-lg overflow-visible mt-5"
+        className="premium-timeline h-8 w-full cursor-pointer relative rounded-lg overflow-visible mt-4"
         onPointerDown={handleTrackPointerDown}
         onMouseDown={handleTrackPointerDown}
         onPointerMove={handleTrackPointerMove}
@@ -272,7 +272,7 @@ export function TrimSlider({
 
         {/* Left Handle */}
         <div
-          className="absolute top-[-6px] bottom-[-6px] w-[14px] bg-[#fbff00] rounded-l-md flex items-center justify-center cursor-ew-resize z-20 shadow-md transition-transform hover:scale-105 active:scale-95 touch-none"
+          className="absolute top-[-4px] bottom-[-4px] w-[12px] bg-[#fbff00] rounded-l-md flex items-center justify-center cursor-ew-resize z-20 shadow-md transition-transform hover:scale-105 active:scale-95 touch-none"
           style={{ left: `${startPercent}%`, transform: 'translateX(-100%)' }}
           onPointerDown={(e) => handlePointerDown("start", e)}
           onMouseDown={(e) => handlePointerDown("start", e)}
@@ -286,7 +286,7 @@ export function TrimSlider({
 
         {/* Right Handle */}
         <div
-          className="absolute top-[-6px] bottom-[-6px] w-[14px] bg-[#fbff00] rounded-r-md flex items-center justify-center cursor-ew-resize z-20 shadow-md transition-transform hover:scale-105 active:scale-95 touch-none"
+          className="absolute top-[-4px] bottom-[-4px] w-[12px] bg-[#fbff00] rounded-r-md flex items-center justify-center cursor-ew-resize z-20 shadow-md transition-transform hover:scale-105 active:scale-95 touch-none"
           style={{ left: `${endPercent}%` }}
           onPointerDown={(e) => handlePointerDown("end", e)}
           onMouseDown={(e) => handlePointerDown("end", e)}

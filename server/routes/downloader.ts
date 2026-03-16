@@ -133,7 +133,12 @@ function mapDownloaderError(err: any): { code: string; message: string; status: 
   if (full.includes("private video") || full.includes("this video is private")) {
     return { code: "PRIVATE_VIDEO", message: "This video is private and cannot be downloaded.", status: 403 };
   }
-  if (full.includes("sign in") || full.includes("confirm your age") || full.includes("age-restricted")) {
+  // Bot check specific
+  if (full.includes("sign in to confirm you're not a bot")) {
+    return { code: "BOT_BLOCKED", message: "Download engine blocked by YouTube. Please try again shortly.", status: 503 };
+  }
+  // Actual age restriction
+  if (full.includes("confirm your age") || full.includes("age-restricted") || full.includes("sign in")) {
     return { code: "AGE_RESTRICTED", message: "This video is age-restricted and requires login.", status: 403 };
   }
   if (full.includes("geo-blocked") || full.includes("not available in your country")) {
@@ -164,9 +169,8 @@ function mapDownloaderError(err: any): { code: string; message: string; status: 
 async function fetchMetadataCobalt(url: string): Promise<any> {
     try {
         console.log(`[Cobalt] Fetching metadata for ${url}`);
-        const response = await axios.post("https://api.cobalt.tools/api/json", {
-            url: url,
-            filenameStyle: "classic"
+        const response = await axios.post("https://api.qwkuns.me/", {
+            url: url
         }, {
              headers: {
                 'Accept': 'application/json',
@@ -208,6 +212,7 @@ async function fetchSmartMetadata(url: string): Promise<any> {
             "--no-call-home",
             "--prefer-free-formats",
             "--youtube-skip-dash-manifest",
+            "--extractor-args", "youtube:player_client=ios,tv,android,web",
              "--format", "bestvideo[height<=1080]+bestaudio/best[height<=1080]/best"
         ]);
         return info;
@@ -416,6 +421,7 @@ async function handleStream(req: Request, res: Response): Promise<void> {
       "--no-warnings",
       "--no-call-home",
       "--no-check-certificate",
+      "--extractor-args", "youtube:player_client=ios,tv,android,web",
       // Force IPv4 as scraping often fails on IPv6 in datacenter blocks
       "--force-ipv4",
       // Buffer optimization
@@ -604,6 +610,7 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
       "--get-url",
       "--no-warnings",
       "--no-check-certificate",
+      "--extractor-args", "youtube:player_client=ios,tv,android,web",
       "--format", "best[height<=480][ext=mp4]/best[height<=480]/best"
     ];
     

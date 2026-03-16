@@ -40,6 +40,21 @@ export function TrimSlider({
   // YouTube-style Timeline Hover Tracker state
   const [hoverPct, setHoverPct] = useState<number | null>(null);
 
+  // Sync true playhead to DOM natively for 60fps and 0-render
+  useEffect(() => {
+    let rafId: number;
+    const updatePlayhead = () => {
+      if (videoRef?.current && playheadRef.current && duration > 0) {
+        const ct = videoRef.current.currentTime;
+        const pct = Math.max(0, Math.min(100, (ct / duration) * 100));
+        playheadRef.current.style.left = `${pct}%`;
+      }
+      rafId = requestAnimationFrame(updatePlayhead);
+    };
+    rafId = requestAnimationFrame(updatePlayhead);
+    return () => cancelAnimationFrame(rafId);
+  }, [videoRef, duration]);
+
   // Sync hover thumbnail video realtime
   useEffect(() => {
     if (hoverVideoRef.current && hoverPct !== null && duration > 0) {
@@ -234,10 +249,7 @@ export function TrimSlider({
         {/* Playhead */}
         <div
            ref={playheadRef}
-           className="absolute top-[-4px] bottom-[-4px] w-[2px] bg-white z-30 pointer-events-none drop-shadow-md rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)]"
-           style={{ left: `${currentPercent}%`, marginLeft: '-1px' }}
-        >
-        </div>
+             className="absolute top-0 bottom-0 w-[2px] bg-white z-30 pointer-events-none drop-shadow-md rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)]"
 
         {/* YouTube Style Hover Playhead / Timestamp Overlay */}
         {hoverPct !== null && !dragging && (

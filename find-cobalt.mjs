@@ -1,0 +1,1 @@
+﻿async function test() { const req = await fetch("https://raw.githubusercontent.com/wukko/cobalt-instances/refs/heads/main/instances.json"); const list = await req.json(); console.log("Total instances:", list.length); } test();

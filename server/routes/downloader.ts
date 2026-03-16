@@ -13,6 +13,7 @@ import path from "path";
 import os from "os";
 import { execFile, spawn } from "child_process";
 import fs from "fs";
+import { getPoToken } from './poTokenService.js';
 import crypto from "crypto";
 import axios from "axios";
 // @ts-ignore
@@ -207,13 +208,25 @@ async function fetchSmartMetadata(url: string): Promise<any> {
     
     try {
         // 1. Try Local yt-dlp (High Fidelity)
+        const isYT = url.includes("youtube.com") || url.includes("youtu.be");
+        let extraArgs: string[] = ["--extractor-args", "youtube:player_client=android,ios"];
+        
+        if (isYT) {
+            try {
+                const { visitorData, poToken } = await getPoToken();
+                extraArgs = ["--extractor-args", `youtube:player_client=android,ios;po_token=web+${poToken};visitor_data=${visitorData}`];
+            } catch (poErr) {
+                console.warn("[PoToken] Failed to fetch po_token for metadata, falling back to standard extraction", poErr);
+            }
+        }
+
         const info = await executeYtDlp(url, [
             "--dump-single-json",
             "--no-warnings",
             "--no-call-home",
             "--prefer-free-formats",
             "--youtube-skip-dash-manifest",
-              "--extractor-args", "youtube:player_client=android,ios",
+            ...extraArgs,
              "--format", "bestvideo[height<=1080]+bestaudio/best[height<=1080]/best"
         ]);
         return info;
@@ -418,12 +431,24 @@ async function handleStream(req: Request, res: Response): Promise<void> {
   req.socket.setTimeout(600_000);
 
   try {
-    const ytdlArgs: string[] = [
-      "--no-warnings",
-      "--no-call-home",
-      "--no-check-certificate",
-      "--extractor-args", "youtube:player_client=android,ios",
-      // Force IPv4 as scraping often fails on IPv6 in datacenter blocks
+      const isYT = validated.url.includes("youtube.com") || validated.url.includes("youtu.be");
+      let extraArgs: string[] = ["--extractor-args", "youtube:player_client=android,ios"];
+      
+      if (isYT) {
+          try {
+              const { visitorData, poToken } = await getPoToken();
+              extraArgs = ["--extractor-args", `youtube:player_client=android,ios;po_token=web+${poToken};visitor_data=${visitorData}`];
+              console.log("[PoToken] Using po_token in stream download.");
+          } catch (poErr) {
+              console.warn("[PoToken] Failed to fetch po_token for stream, falling back...", poErr);
+          }
+      }
+
+      const ytdlArgs: string[] = [
+        "--no-warnings",
+        "--no-call-home",
+        "--no-check-certificate",
+        ...extraArgs,
       "--force-ipv4",
       // Buffer optimization
       "--console-title",

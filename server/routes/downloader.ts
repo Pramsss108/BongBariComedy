@@ -212,7 +212,7 @@ async function fetchSmartMetadata(url: string): Promise<any> {
             "--no-call-home",
             "--prefer-free-formats",
             "--youtube-skip-dash-manifest",
-            "--extractor-args", "youtube:player_client=ios,tv,android,web",
+              "--extractor-args", "youtube:player_client=android,ios",
              "--format", "bestvideo[height<=1080]+bestaudio/best[height<=1080]/best"
         ]);
         return info;
@@ -421,7 +421,7 @@ async function handleStream(req: Request, res: Response): Promise<void> {
       "--no-warnings",
       "--no-call-home",
       "--no-check-certificate",
-      "--extractor-args", "youtube:player_client=ios,tv,android,web",
+      "--extractor-args", "youtube:player_client=android,ios",
       // Force IPv4 as scraping often fails on IPv6 in datacenter blocks
       "--force-ipv4",
       // Buffer optimization
@@ -610,7 +610,7 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
       "--get-url",
       "--no-warnings",
       "--no-check-certificate",
-      "--extractor-args", "youtube:player_client=ios,tv,android,web",
+      "--extractor-args", "youtube:player_client=android,ios",
       "--format", "best[height<=480][ext=mp4]/best[height<=480]/best"
     ];
     

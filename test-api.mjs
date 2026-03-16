@@ -1,1 +1,0 @@
-﻿async function test() { try { const r = await fetch("https://www.y2mate.com/mates/en68/analyze/ajax", {method: "POST", headers: {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8", "User-Agent":"Mozilla/5.0"}, body: "url=https://www.youtube.com/watch?v=dQw4w9WgXcQ&q_auto=1&ajax=1"}); console.log(await r.text()); } catch (e) {console.log(e)} } test();

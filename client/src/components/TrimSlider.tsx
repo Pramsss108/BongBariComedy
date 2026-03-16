@@ -249,7 +249,9 @@ export function TrimSlider({
         {/* Playhead */}
         <div
            ref={playheadRef}
-             className="absolute top-0 bottom-0 w-[2px] bg-white z-30 pointer-events-none drop-shadow-md rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)]"
+           className="absolute top-0 bottom-0 w-[2px] bg-white z-30 pointer-events-none drop-shadow-md rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)]"
+           style={{ left: `${currentPercent}%`, marginLeft: '-1px' }}
+        />
 
         {/* YouTube Style Hover Playhead / Timestamp Overlay */}
         {hoverPct !== null && !dragging && (

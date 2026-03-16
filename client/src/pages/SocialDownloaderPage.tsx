@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Download, Play, Pause, ArrowLeft, Scissors, Youtube, Instagram, Facebook,
   Loader2, AlertCircle, Music, Film, CheckCircle2, Search, X, Clock,
-  Lock, CloudOff, Hourglass,
+  Lock, CloudOff, Hourglass, HelpCircle,
 } from "lucide-react";
 import { TrimSlider } from "@/components/TrimSlider";
 
@@ -167,6 +167,7 @@ export default function SocialDownloaderPage() {
   const [serverWaking, setServerWaking] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState<number | string>(0);
   const [isDesktop, setIsDesktop] = useState(typeof window !== "undefined" ? window.innerWidth >= 768 : true);
+  const [showShortcuts, setShowShortcuts] = useState(false); // Phase 13: Floating Shortcuts UI
   const videoRef = useRef<HTMLVideoElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -205,6 +206,21 @@ export default function SocialDownloaderPage() {
         e.preventDefault();
         // Jog 0.1s forward
         video.currentTime = Math.min(endTime, video.currentTime + 0.1);
+      } else if (e.key.toLowerCase() === "i" || e.key === "[") {
+        e.preventDefault();
+        setStartTime(video.currentTime);
+      } else if (e.key.toLowerCase() === "o" || e.key === "]") {
+        e.preventDefault();
+        setEndTime(video.currentTime);
+      } else if (e.key.toLowerCase() === "m") {
+        e.preventDefault();
+        // Smart Mark: If closer to start, move start. If closer to end, move end.
+        const midPoint = (startTime + endTime) / 2;
+        if (video.currentTime < midPoint) {
+            setStartTime(video.currentTime);
+        } else {
+            setEndTime(video.currentTime);
+        }
       }
     };
 
@@ -772,17 +788,72 @@ export default function SocialDownloaderPage() {
         {/* Floating Download History Bot */}
         <DownloadHistory />
 
+          <div className="absolute top-4 right-4 z-50">
+            <button
+              onClick={() => setShowShortcuts(!showShortcuts)}
+              className="w-10 h-10 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-all backdrop-blur shadow-lg group relative"
+            >
+              <HelpCircle size={20} className="group-hover:scale-110 transition-transform" />
+            </button>
+            
+            {showShortcuts && (
+              <div className="absolute top-14 right-0 w-[320px] bg-black/80 backdrop-blur-2xl border border-white/10 rounded-2xl p-5 shadow-2xl animate-in fade-in slide-in-from-top-4">
+                <div className="flex justify-between items-start mb-4">
+                   <h3 className="font-tech text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400 font-bold tracking-widest text-sm">BONGBARI STUDIO</h3>
+                   <button onClick={() => setShowShortcuts(false)} className="text-white/40 hover:text-white"><X size={16}/></button>
+                </div>
+                <p className="text-xs text-white/70 mb-5 leading-relaxed font-sans">
+                  Experience desktop-grade non-linear editing directly in your browser. Frame-accurate precision, solid-state rendering, zero watermarks.
+                </p>
+                <div className="space-y-3 font-mono text-xs">
+                   <div className="flex justify-between items-center"><span className="text-white/50">Play / Pause</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">Space</span></div>
+                   <div className="flex justify-between items-center"><span className="text-white/50">Mark Start (In)</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">I</span></div>
+                   <div className="flex justify-between items-center"><span className="text-white/50">Mark End (Out)</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">O</span></div>
+                   <div className="flex justify-between items-center"><span className="text-white/50">Smart Mark</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">M</span></div>
+                   <div className="flex justify-between items-center"><span className="text-white/50">Step Frame</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">← / →</span></div>
+                </div>
+              </div>
+            )}
+          </div>
+
         {/* FULLSCREEN STUDIO MODE OVERLAY */}
         {trimMode && videoInfo && (
            <div className="fixed inset-0 z-[100] bg-black flex flex-col font-serif animate-in fade-in zoom-in-95 duration-300">
               {/* App Bar */}
-              <div className="h-16 flex items-center justify-between px-6 border-b border-white/10 shrink-0 bg-black/50 backdrop-blur-md">
+              <div className="h-16 flex items-center justify-between px-6 border-b border-white/10 shrink-0 bg-black/50 backdrop-blur-md relative z-50">
                  <button onClick={() => setTrimMode(false)} className="text-white/60 hover:text-white flex items-center gap-2 text-xs font-bold bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg transition-colors">
                     <ArrowLeft size={16} /> Back to Dashboard
                  </button>
-                 <div className="font-tech text-purple-400 font-bold tracking-widest text-xs flex items-center gap-2">
+
+                 <div className="font-tech text-purple-400 font-bold tracking-widest text-xs flex items-center gap-2 absolute left-1/2 -translate-x-1/2">
                     <Scissors size={14} /> BONGBARI STUDIO
                  </div>
+
+                 <button
+                    onClick={() => setShowShortcuts(!showShortcuts)}
+                    className="w-9 h-9 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-all shadow-lg group"
+                 >
+                    <HelpCircle size={18} className="group-hover:scale-110 transition-transform" />
+                 </button>
+
+                 {showShortcuts && (
+                  <div className="absolute top-16 right-6 w-[320px] bg-black/80 backdrop-blur-2xl border border-white/10 rounded-2xl p-5 shadow-2xl animate-in fade-in slide-in-from-top-4">
+                    <div className="flex justify-between items-start mb-4">
+                      <h3 className="font-tech text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400 font-bold tracking-widest text-sm">BONGBARI PREMIUM</h3>
+                      <button onClick={() => setShowShortcuts(false)} className="text-white/40 hover:text-white"><X size={16}/></button>
+                    </div>
+                    <p className="text-xs text-white/70 mb-5 leading-relaxed font-sans">
+                      Desktop-grade non-linear editing in your browser. Frame-accurate precision, local-memory rendering, zero watermarks.
+                    </p>
+                    <div className="space-y-3 font-mono text-xs">
+                      <div className="flex justify-between items-center"><span className="text-white/50">Play / Pause</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">Space</span></div>
+                      <div className="flex justify-between items-center"><span className="text-white/50">Mark Start (In)</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">I</span></div>
+                      <div className="flex justify-between items-center"><span className="text-white/50">Mark End (Out)</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">O</span></div>
+                      <div className="flex justify-between items-center"><span className="text-white/50">Smart Mark</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">M</span></div>
+                      <div className="flex justify-between items-center"><span className="text-white/50">Step Frame</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">← / →</span></div>
+                    </div>
+                  </div>
+                )}
               </div>
               
               {/* Video Area */}
@@ -840,7 +911,7 @@ export default function SocialDownloaderPage() {
                           <TrimSlider                                videoRef={videoRef}                              duration={videoInfo.duration}
                               startTime={startTime} 
                               endTime={endTime}
-                              videoUrl={previewUrl}
+                              videoUrl={previewUrl || videoInfo.thumbnail || ""}
                               onStartChange={(t) => {
                                 setStartTime(t);
                                 if (videoRef.current) { videoRef.current.currentTime = t; videoRef.current.pause(); }

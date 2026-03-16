@@ -174,11 +174,11 @@ export function TrimSlider({
       ticks.push(
         <div
           key={t}
-          className={`absolute bottom-0 w-px ${isMajor ? 'h-3 bg-white/40' : 'h-1.5 bg-white/20'}`}
+          className={`absolute bottom-0 w-px ${isMajor ? 'h-[10px] bg-white/50' : 'h-[5px] bg-white/20'}`}
           style={{ left: `${leftPct}%` }}
         >
           {isMajor && (
-            <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] text-white/40 font-mono">
+            <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] text-white/50 font-mono tracking-tight">
               {formatSliderTime(t)}
             </span>
           )}
@@ -189,15 +189,10 @@ export function TrimSlider({
   };
 
   return (
-    <div className="w-full select-none py-2">
-      <div className="flex justify-between text-[10px] text-white/40 font-mono mb-2 px-1">
-        <span>{formatSliderTime(startTime)}</span>
-        <span>{formatSliderTime(endTime)}</span>
-      </div>
-
+    <div className="w-full select-none pb-2 pt-6">
       <div
         ref={containerRef}
-        className="premium-timeline h-8 w-full cursor-pointer relative rounded-lg overflow-visible mt-4"
+        className="premium-timeline h-8 w-full cursor-pointer relative rounded-lg overflow-visible mt-2"
         onPointerDown={handleTrackPointerDown}
         onMouseDown={handleTrackPointerDown}
         onPointerMove={handleTrackPointerMove}

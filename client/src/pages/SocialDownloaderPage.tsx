@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { TrimSlider } from "@/components/TrimSlider";
 
+import { DownloadHistory, saveToHistory } from "@/components/DownloadHistory";
+
 export function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
@@ -156,7 +158,7 @@ export default function SocialDownloaderPage() {
   const [trimMode, setTrimMode] = useState(false);
   const [startTime, setStartTime] = useState(0);
   const [endTime, setEndTime] = useState(0);
-  const [currentTime, setCurrentTime] = useState(0);
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [isCaching, setIsCaching] = useState(false); // CapCut: Block 1 Cache state
   const [cacheProgress, setCacheProgress] = useState(0); // CapCut: Block 1 Cache progress
@@ -174,6 +176,41 @@ export default function SocialDownloaderPage() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // CapCut Pro Controls: Keyboard Shortcuts globally bound to Trimming Context
+  useEffect(() => {
+    if (!trimMode || !videoRef.current) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept if user is typing in an input
+      if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
+
+      const video = videoRef.current;
+      if (!video) return;
+
+      if (e.code === "Space") {
+        e.preventDefault();
+        if (video.paused) {
+          video.play().catch(console.error);
+          setIsPlaying(true);
+        } else {
+          video.pause();
+          setIsPlaying(false);
+        }
+      } else if (e.code === "ArrowLeft") {
+        e.preventDefault();
+        // Jog 0.1s back
+        video.currentTime = Math.max(startTime, video.currentTime - 0.1);
+      } else if (e.code === "ArrowRight") {
+        e.preventDefault();
+        // Jog 0.1s forward
+        video.currentTime = Math.min(endTime, video.currentTime + 0.1);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [trimMode, startTime, endTime]);
 
   const platform = detectPlatform(url);
   const isVertical = url.toLowerCase().includes("/shorts/") || url.toLowerCase().includes("/reel/") || url.toLowerCase().includes("/reels/");
@@ -235,9 +272,16 @@ export default function SocialDownloaderPage() {
       const safeTitle = videoInfo?.title ? videoInfo.title.replace(/[^a-z0-9]/gi, '_').substring(0, 50) : "bongbari_download";
       const encodedTitle = encodeURIComponent(safeTitle);
       const backendUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=${selectedFormat}&title=${encodedTitle}&sessionId=${sessionId}`);
-      
+
       // Use our secure fetch API to force Progress Bar & Save As dialog
       await performSecureDownload(backendUrl, safeTitle, setDownloadProgress);
+
+      saveToHistory({
+        title: videoInfo.title,
+        thumbnail: videoInfo.thumbnail || "",
+        url: url,
+        type: "video"
+      });
 
       setPhase("ready");
     } catch(e: any) {
@@ -258,7 +302,25 @@ export default function SocialDownloaderPage() {
       }
     };
   }, [previewUrl]);
-
+  // Phase 6/7: Advanced GPU Loop for Video Looping Constraints (0-latency boundary checks)
+  useEffect(() => {
+    if (!trimMode || !videoRef.current || !isPlaying) return;
+    let rafId: number;
+    const enforceLoopBounds = () => {
+      const vid = videoRef.current;
+      if (vid) {
+        if (vid.currentTime >= endTime) {
+           vid.currentTime = startTime;
+           if (vid.paused) vid.play().catch(() => {});
+        } else if (vid.currentTime < startTime - 0.2) {
+           vid.currentTime = startTime;
+        }
+      }
+      rafId = requestAnimationFrame(enforceLoopBounds);
+    };
+    rafId = requestAnimationFrame(enforceLoopBounds);
+    return () => cancelAnimationFrame(rafId);
+  }, [trimMode, startTime, endTime, isPlaying]);
   const loadVideoToCache = useCallback(async (enterTrimMode = false) => {
     // If entering Trim Mode, we strictly need a local Blob cache to ensure 0ms seek latency.
     if (enterTrimMode) {
@@ -357,17 +419,7 @@ export default function SocialDownloaderPage() {
   const handleTrim = useCallback(async () => {
     if (!videoInfo) return;
 
-    if (!isAuthenticated) {
-      toast({
-        title: "Login Required",
-        description: "Please login to trim and download videos.",
-        variant: "destructive",
-      });
-      setLocation("/login");
-      return;
-    }
-
-    setPhase("trimming"); setTrimProgress(0); 
+    setPhase("trimming"); setTrimProgress(0);
     try {
       try { (window as any).gtag?.("event", "downloader_trim", { duration_seconds: endTime - startTime }); } catch {}
       
@@ -379,6 +431,13 @@ export default function SocialDownloaderPage() {
 
       // Perform secure streaming fetch + Native 'Save As' Dialog Tracker
       await performSecureDownload(backendTrimUrl, `${trimName}.mp4`, setTrimProgress);
+
+      saveToHistory({
+        title: videoInfo.title,
+        thumbnail: videoInfo.thumbnail || "",
+        url: url,
+        type: "trim"
+      });
 
       setPhase("ready");
 
@@ -455,18 +514,7 @@ export default function SocialDownloaderPage() {
                         muted={trimMode}
                         onPlay={() => !trimMode && setIsPlaying(true)} 
                         onPause={() => !trimMode && setIsPlaying(false)} 
-                        onTimeUpdate={(e) => {
-                          if (trimMode) return;
-                          const t = e.currentTarget.currentTime;
-                          setCurrentTime(t);
-                          if (trimMode) {
-                            if (t < startTime) e.currentTarget.currentTime = startTime;
-                            if (t > endTime) {
-                                e.currentTarget.currentTime = startTime;
-                                e.currentTarget.play().catch(() => {});
-                            }
-                          }
-                        }} 
+
                       />
                     ) : (
                       <div className="w-full h-full relative cursor-pointer" onClick={() => loadVideoToCache(false)}>
@@ -715,12 +763,14 @@ export default function SocialDownloaderPage() {
                 
                 {/* 4. FOOTER (Only visible on Right Panel when no video on Desktop) */}
                 <div className="mt-auto pt-8 border-t border-white/5 text-center md:text-left">
-                   <p className="text-[10px] uppercase tracking-widest text-white/20">© 2024 BongBari Media Group</p>
+                  <p className="text-[10px] uppercase tracking-widest text-white/20">© 2024 BongBari Media Group</p>
                 </div>
-
              </div>
           </div>
         </div>
+
+        {/* Floating Download History Bot */}
+        <DownloadHistory />
 
         {/* FULLSCREEN STUDIO MODE OVERLAY */}
         {trimMode && videoInfo && (
@@ -750,16 +800,7 @@ export default function SocialDownloaderPage() {
                    playsInline
                    onPlay={() => setIsPlaying(true)}
                    onPause={() => setIsPlaying(false)}
-                   onTimeUpdate={(e) => {
-                       const t = e.currentTarget.currentTime;
-                       setCurrentTime(t);
-                       // enforce bounds strictly
-                       if (t < startTime) e.currentTarget.currentTime = startTime;
-                       if (t >= endTime) {
-                         e.currentTarget.currentTime = startTime;
-                         e.currentTarget.play().catch(() => {});
-                       }
-                   }}
+
                  />
                  {isPlaying && (
                    <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/20">
@@ -785,19 +826,21 @@ export default function SocialDownloaderPage() {
                         onClick={(e) => {
                           e.stopPropagation();
                           if (videoRef.current) {
-                            if (videoRef.current.paused) videoRef.current.play();
-                            else videoRef.current.pause();
-                          }
-                        }}
-                      >
-                        {videoRef.current?.paused ? <Play size={20} className="ml-1 fill-white" /> : <Pause size={20} className="fill-white" />}
+                              if (videoRef.current.paused) {
+                                videoRef.current.play().catch(console.error);
+                              } else {
+                                videoRef.current.pause();
+                              }
+                            }
+                          }}
+                        >
+                          {!isPlaying ? <Play size={20} className="ml-1 fill-white" /> : <Pause size={20} className="fill-white" />}
                       </button>
                       <div className="flex-1 px-4">
-                          <TrimSlider
-                              duration={videoInfo.duration}
+                          <TrimSlider                                videoRef={videoRef}                              duration={videoInfo.duration}
                               startTime={startTime} 
                               endTime={endTime}
-                              currentTime={currentTime}
+                              videoUrl={previewUrl}
                               onStartChange={(t) => {
                                 setStartTime(t);
                                 if (videoRef.current) { videoRef.current.currentTime = t; videoRef.current.pause(); }
@@ -807,7 +850,6 @@ export default function SocialDownloaderPage() {
                                 if (videoRef.current) { videoRef.current.currentTime = t; videoRef.current.pause(); }
                               }}
                               onScrub={(t) => {
-                                setCurrentTime(t);
                                 if (videoRef.current) {
                                   videoRef.current.currentTime = t;
                                 }

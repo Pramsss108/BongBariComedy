@@ -118,6 +118,34 @@ const worker = new Worker("downloads", async (job) => {
 
 ---
 
+## 🛡️ The System Defenses (The Mentor AI Adjustments)
+*Building a queue is one thing. Protecting it from being weaponized against us is another. Here is where we accept some brutal infrastructure truths and debate others.*
+
+### 1. Defending The Static Server (No Open Buffets)
+* **The Vulnerability:** Exposing `dl.bongbari.com/[jobId].mp4` makes our Hetzner node an open file server. Bots can guess URLs, scrape our files, and hotlink our bandwidth.
+* **The Vibe Coder Fix:** We avoid complex NGINX Lua scripts early on by relying on **High-Entropy Obfuscation + Redis Mapping**. The file is never saved as `jobId.mp4`. The worker generates a crypto-random 32-character string (`a9xK3lPz9q...mp4`). The Redis Job metadata securely maps the frontend `jobId` to this secret `filePath`. Still vulnerable to link-sharing, but immune to scraping and guessing. Pro tier gets actual temporary signed URLs.
+
+### 2. Disk Pressure Limits (The Proactive Shield)
+* **The Vulnerability:** A 10-minute cron job deletion is *reactive*. If 20 users queue massive 4K podcast downloads in a 3-minute window, the 80GB Hetzner SSD fills up *before* the cron job runs, crashing the entire node.
+* **The Fix:** The Worker must have a **Pre-flight Hard Guard**. 
+  ```typescript
+  if (currentDiskUsage > 85%) {
+      worker.pause(); // Stop accepting BullMQ jobs temporarily
+      triggerEmergencyEviction(); // Nuke oldest 20% of files instantly
+  }
+  ```
+
+### 3. The Trimming Trade-off (Debating the AI)
+* **The Critique:** `yt-dlp --download-sections` relies on keyframes and is slightly inaccurate. The AI suggested re-encoding the trimmed segment using `ffmpeg -c:v libx264` for frame-perfect precision.
+* **The Vibe Coder Debate:** **REJECTED** for the Free Tier. Re-encoding high-resolution h264/h265 video on a shared VPS will bottleneck the CPU instantly, tanking our concurrency from 3 to 1. For a comedy meme trimmer, a 0.5-second keyframe inaccuracy is an acceptable user trade-off for 10x faster delivery. 
+* **The Compromise:** We use the fast `-c copy` (stream copy) for Free users. Frame-perfect CPU-heavy re-encoding is strictly locked behind the Pro Paywall. 
+
+### 4. API & Bandwidth Shields
+* **The Vulnerability:** A single troll with a Python script can enqueue 5,000 `yt-dlp` jobs and melt our Redis queue and Express server.
+* **The Fix:** Strict Rate Limiting middleware on Render for `/api/download` (e.g., 5 jobs per IP per hour). Simple, effective, and forces heavy users to upgrade to Pro. 
+
+---
+
 ## 🏗️ The Infrastructure Reality Check
 We have moving parts across different servers. Here is why things are placed where they are:
 

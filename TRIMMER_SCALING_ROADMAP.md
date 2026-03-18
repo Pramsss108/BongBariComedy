@@ -79,6 +79,45 @@ The MVP proved our architecture (split workloads: fast proxy for preview, heavy 
 
 ---
 
+## ⚙️ Phase 2 Blueprint: The Distributed Queue Architecture
+*The transition from "the guy who makes things work" to "the guy who builds systems that don't break." We are moving from a fragile Request-Response system to a hardened Job-Based Infrastructure.*
+
+### 1. The Distributed Flow (Render + Upstash + Hetzner)
+We cannot process jobs on Render (too weak) and we cannot serve files from Render if they are downloaded on Hetzner. 
+* **User clicks Download:** Hits Render API (`POST /api/download`).
+* **Render (The Brain):** Instantly creates a job in **Upstash Redis** (`bullmq`) and returns a `jobId` to the frontend.
+* **Hetzner (The Worker):** Runs a background Node.js process listening to the Redis queue. It picks up the job.
+* **Hetzner Processing:** Executes `yt-dlp -f "bv*+ba/best"`. `ffmpeg` merges true 1080p/4K audio and video to the physical SSD.
+* **Hetzner Delivery:** A lightweight NGINX server on Hetzner serves the final file directly via a static URL (`https://dl.bongbari.com/<jobId>.mp4`). 
+
+### 2. Worker Logic & Concurrency (The Hetzner Node)
+To prevent server melt-down, we strictly control concurrency and retries in the BullMQ worker:
+```typescript
+const worker = new Worker("downloads", async (job) => {
+    // 1. Extract params (URL, Start/End for Trimming, Format)
+    // 2. yt-dlp arguments MUST use bv*+ba/best to force ffmpeg merging
+    // 3. Add trimming arguments (--download-sections "*start-end")
+    // 4. Save to /downloads/jobId.mp4
+    
+    return { fileUrl: `https://dl.bongbari.com/${job.id}.mp4` };
+}, {
+    connection,
+    concurrency: 3, // CRITICAL: Only 3 heavy ffmpeg processes at once
+});
+```
+
+### 3. Resiliency (No Dead Queues)
+* **Auto-Retries:** YouTube randomly drops connections. Jobs must be created with `attempts: 3` and exponential backoff (`delay: 5000`).
+* **Storage Eviction (Disk Saver):** The Hetzner node will run a strict cron job: `*/10 * * * * find /downloads -type f -mmin +10 -delete`. Files vanish after 10 minutes. If a user loses their link, they trim it again.
+
+### 4. The Frontend Polling UX
+* Render provides instant `jobId`.
+* Frontend sets a `setInterval` firing `GET /api/job/:id` every 2 seconds.
+* **UI State:** Shows "Processing..." or reads stdout progress (`job.progress`).
+* When state = `completed`, the green download button illuminates pointing to the Hetzner static file link.
+
+---
+
 ## 🏗️ The Infrastructure Reality Check
 We have moving parts across different servers. Here is why things are placed where they are:
 

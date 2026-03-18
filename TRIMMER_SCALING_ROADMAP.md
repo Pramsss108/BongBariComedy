@@ -20,19 +20,33 @@ The MVP proved our architecture (split workloads: fast proxy for preview, heavy 
   * Hetzner is now acting as *both* a high-bandwidth preview streamer and a heavy-compute downloader.
   * Repeated automated requests from one Hetzner IP will eventually get flagged by YouTube just like Cobalt and Render did.
   * Preview streams can cause massive bandwidth spikes. If 50 users buffer streams, our VPS bandwidth explodes.
-* **Phase 2 (Critical Upgrade): IP Rotation Layer**
-  * We cannot rely on one hardcoded string. We must implement a multiple node abstraction:
-  ```typescript
-  const previewNodes = [
-    "http://hetzner1:9000",
-    "http://hetzner2:9000" // We must prepare for horizontal scaling
-  ];
-  ```
-  * We have two options: **Option A** (2-3 cheap Hetzner nodes strictly rotating requests - best for us) or **Option B** (Residential Proxies - expensive, but most reliable).
-* **Phase 3: Smart Traffic Split**
-  * We must separate preview traffic from download traffic. Previews go to distributed low-cost nodes, downloads go to a controlled BullMQ queue on a dedicated heavy-compute node.
-* **Phase 4: Anti-Detection Throttling**
-  * We need to add delay/randomization (`sleep(random(500ms - 1500ms))`) to make requests look human. YouTube is a war zone and we must defend against platform resistance.
+
+#### 🛡️ The Final Infrastructure Playbook: The Hybrid Smart-Split
+
+**The "Free P2P Client Proxy" Debate (Settled):**
+Browsers run in sandboxes. YouTube blocks CORS. You cannot use a user's connection as a free proxy. We must build controlled infrastructure, not messy backend hacks.
+
+**The Golden Insight (YouTube Metadata vs Google CDN):**
+* **The Vulnerability:** YouTube blocks IP addresses *scraping for metadata* (the initial yt-dlp call).
+* **The Exploit:** Google's Video CDN (`googlevideo.com`) rarely blocks the actual *streaming* IP once the direct URL is successfully generated.
+* **The Strategy:** Stealth for Metadata (KBs). Brute force for Streams (GBs).
+
+**Phase A (The Final Stack): Hybrid Smart-Split Setup**
+* **The Reality:** We don't need a massive Residential pool, and we don't need 10 VPS nodes. We need precision routing.
+* **Architecture:** 
+  `User` -> `API (Render)` -> `yt-dlp (via Webshare Residential Proxy)` -> `Gets CDN URL` -> `VPS Node (Hetzner)` -> `Streams purely via CDN URL`
+
+* **Load Separation (The Setup):**
+  * **Metadata Proxy:** Webshare ($5/mo). ONLY used for the initial `yt-dlp --proxy` extraction. Since it only pulls text/JSON, the bandwidth is measured in KBs.
+  * **VPS 1 & 2:** Hetzner (~€4/mo). Dedicated purely to piping the raw `googlevideo.com` stream back to the UI.
+  * **VPS 3:** Hetzner (~€4/mo). Dedicated to the heavy Download/ffmpeg BullMQ worker queue.
+
+**Why This Is The Holy Grail:**
+1. **Cost:** It prevents the instant death spiral of routing video through Residential proxies ($800+ for 5GB). 
+2. **Stealth:** yt-dlp metadata extraction uses clean residential IPs.
+3. **Speed:** The actual video piping is done on Hetzner's unmetered datacenter lines.
+
+**Execution Warning:** Do NOT overbuild this setup right now. Do not buy BrightData, do not use random proxy lists. Boot up the Swarm, bolt on Webshare for extraction. That is it.
 
 ### 2. The Scrubber Hack: DOM State vs. User Intent
 * **The Reality:** Relying on `!vid.paused` is smart but fragile. Mobile browsers handle media state weirdly. Network buffering can arbitrarily trigger pause states, breaking the scrubber logic mid-drag.

@@ -75,4 +75,47 @@ The MVP proved our architecture (split workloads: fast proxy for preview, heavy 
 - [ ] Custom lightweight node for raw fetching (removing Cobalt dependency).
 - [ ] Smart Prefetching/HLS chunking for extreme low-end mobile architectures. 
 
-*Let's build a product, not just a prototype.*
+---
+
+## 🏗️ The Infrastructure Reality Check
+We have moving parts across different servers. Here is why things are placed where they are:
+
+* **Why Render (The Brain)?** 
+  Render hosts our Node.js/Express app and connects to Neon (Postgres). It is the "control center." It validates users, checks the database, serves UI, and handles routing. **But Render CPUs are weak.** 
+* **Why Hetzner/VPS (The Muscle)?**
+  `yt-dlp` and `ffmpeg` are incredibly CPU and bandwidth-heavy. If we run them on Render, the whole website crashes when 3 people download 4K videos. The VPS is our "muscle." The Render Brain sends a message to the Hetzner Muscle saying, *"Hey, download this, cut it, and give me the file."* 
+* **Why Cobalt Proxies (The Speed)?**
+  We bypass *both* Render and Hetzner for the UI previews. The proxy instantly streams 480p to the user's browser, saving us immense bandwidth and server costs.
+
+---
+
+## 💰 The Monetization Masterplan (How We Make Money)
+Fast technology is cool, but a *business* is cooler. Here is the powerful playbook for turning the Trimmer into cash:
+
+### 1. The Ad Strategy (Google AdSense)
+Once we scale organic traffic via SEO (our JSON-LD is already set up), we apply for Google AdSense.
+* **Placement 1 (The Header):** Simple banner above the Trimmer player. 
+* **Placement 2 (The Sweet Spot - Interstitial):** When users hit "Download", there is a natural 5-15 second wait time while `yt-dlp` cuts their video. *This is a captive audience.* We serve a high-paying interstitial ad right here while the queue loads. "Your video is processing... [AD]".
+
+### 2. The Freemium / Recurring Plan System (Stripe / Razorpay)
+Once the tool becomes a daily habit for meme creators and video editors, we lock the power features:
+* **Free Tier:** 720p maximum, watermark added (viral loop marketing), limit of 3 downloads per day, must wait in the "queue".
+* **Pro Tier (₹299/mo or $5/mo):** 1080p/4K unlocked, ZERO wait times (priority queue routed to a premium Hetzner node), no watermarks, batch link processing. Use Stripe for Intl and Razorpay for India. 
+
+### 3. Cost Minimization (Protecting Margins)
+* **Aggressive Caching:** We put Cloudflare in front of the final downloads. If 500 people trim and download the *exact same viral meme segment*, the VPS only processes it *once*. The other 499 people are served instantly by Cloudflare cache. Cost = $0.
+* **Storage Eviction:** Downloaded files on our server auto-delete after 10 minutes. We are a pipeline, not a hard drive.
+
+---
+
+## 🚀 Traffic & Distribution (Organic vs. Inorganic)
+
+### Organic (The Free Pipeline)
+* **SEO:** Target keywords like *"trim youtube video online fast"*, *"download specific meme timestamp"*. 
+* **Content:** Create YouTube Shorts/Reels where someone says, *"Stop downloading 2-hour podcast videos just to get a 10-second clip"* and show them using BongBari.
+
+### Inorganic (The "Feed the Machine" Pipeline)
+* **Meta Pixel (Already Installed):** We run highly targeted Facebook/Insta ads towards "Meme Creators", "Reaction Channels", and "Video Editors". 
+* Since our preview is instant (thanks to Cobalt), the bounce rate on ads will be incredibly low. They click the ad $\rightarrow$ they are trimming right away $\rightarrow$ they get hooked $\rightarrow$ they convert into Pro users.
+
+*Let's build a product, not just a prototype. We aren't just writing code, we are building a printing press.*

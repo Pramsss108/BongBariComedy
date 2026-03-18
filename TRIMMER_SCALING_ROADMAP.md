@@ -118,31 +118,36 @@ const worker = new Worker("downloads", async (job) => {
 
 ---
 
-## 🛡️ The System Defenses (The Mentor AI Adjustments)
-*Building a queue is one thing. Protecting it from being weaponized against us is another. Here is where we accept some brutal infrastructure truths and debate others.*
+## 🛡️ The Advanced Defenses (The Final Mentor AI Corrections)
+*Building a queue is one thing. Protecting it from edge cases, deadlocks, and shared-IP networks is the final hurdle.*
 
-### 1. Defending The Static Server (No Open Buffets)
-* **The Vulnerability:** Exposing `dl.bongbari.com/[jobId].mp4` makes our Hetzner node an open file server. Bots can guess URLs, scrape our files, and hotlink our bandwidth.
-* **The Vibe Coder Fix:** We avoid complex NGINX Lua scripts early on by relying on **High-Entropy Obfuscation + Redis Mapping**. The file is never saved as `jobId.mp4`. The worker generates a crypto-random 32-character string (`a9xK3lPz9q...mp4`). The Redis Job metadata securely maps the frontend `jobId` to this secret `filePath`. Still vulnerable to link-sharing, but immune to scraping and guessing. Pro tier gets actual temporary signed URLs.
+### 1. Defending The Static Server Expiry 
+* **The Vulnerability:** A random 32-char string (`a9xK3lPz9q.mp4`) stops scrapers, but without a hard expiration, a shared link still acts as an unlimited bandwidth leak. 
+* **The Vibe Coder Fix:** We pair Obfuscation with **Backend Expiry Logic**. The file is fetched via our Server proxy (`GET /api/download/:jobId`). The server checks `if (now > job.expiresAt) return 403;` before redirecting to the `.mp4`. 
 
-### 2. Disk Pressure Limits (The Proactive Shield)
-* **The Vulnerability:** A 10-minute cron job deletion is *reactive*. If 20 users queue massive 4K podcast downloads in a 3-minute window, the 80GB Hetzner SSD fills up *before* the cron job runs, crashing the entire node.
-* **The Fix:** The Worker must have a **Pre-flight Hard Guard**. 
+### 2. Disk Pressure Guard & Recovery 
+* **The Vulnerability:** Earlier we added `worker.pause()` on 85% disk usage. But we forgot to resume it. One spike meant a permanently frozen product.
+* **The Fix:** A self-healing worker loop.
   ```typescript
   if (currentDiskUsage > 85%) {
-      worker.pause(); // Stop accepting BullMQ jobs temporarily
-      triggerEmergencyEviction(); // Nuke oldest 20% of files instantly
+      worker.pause(); 
+      triggerEmergencyEviction(); 
+  } else if (currentDiskUsage < 70% && worker.isPaused()) {
+      worker.resume(); // System auto-recovers
   }
   ```
 
-### 3. The Trimming Trade-off (Debating the AI)
-* **The Critique:** `yt-dlp --download-sections` relies on keyframes and is slightly inaccurate. The AI suggested re-encoding the trimmed segment using `ffmpeg -c:v libx264` for frame-perfect precision.
-* **The Vibe Coder Debate:** **REJECTED** for the Free Tier. Re-encoding high-resolution h264/h265 video on a shared VPS will bottleneck the CPU instantly, tanking our concurrency from 3 to 1. For a comedy meme trimmer, a 0.5-second keyframe inaccuracy is an acceptable user trade-off for 10x faster delivery. 
-* **The Compromise:** We use the fast `-c copy` (stream copy) for Free users. Frame-perfect CPU-heavy re-encoding is strictly locked behind the Pro Paywall. 
+### 3. Queue Starvation (Protecting The Money)
+* **The Vulnerability:** 50 free users enqueue 1-hour podcast trims. A newly upgraded Pro user submits a job and gets stuck behind them. Business = dead.
+* **The Fix:** BullMQ priority injection: `queue.add("job", data, { priority: isPro ? 1 : 5 })`. Lower number = executes next whenever a slot opens.
 
-### 4. API & Bandwidth Shields
-* **The Vulnerability:** A single troll with a Python script can enqueue 5,000 `yt-dlp` jobs and melt our Redis queue and Express server.
-* **The Fix:** Strict Rate Limiting middleware on Render for `/api/download` (e.g., 5 jobs per IP per hour). Simple, effective, and forces heavy users to upgrade to Pro. 
+### 4. Smart Rate Limits (No IP Collateral Damage)
+* **The Critique:** Restricting purely by IP (e.g., 5 jobs/IP/hr) is a western mindset. In India, mobile networks (Jio) and college dorms use aggressive NATs. One IP could represent 200 users.
+* **The Fix:** We use **Session ID + IP Thresholds** as a soft limit. If a user breaches the limit, they aren't fully blocked. They are simply penalized with `priority: 10` (Queue Delay). *“High traffic detected. Job delayed by 2 minutes. Upgrade to Pro to skip the line.”*
+
+### 5. Frontend Honesty & Wait-Time Metrics
+* **UX Honesty:** Since files auto-evict in 10 minutes, the frontend UI *must* show a ticking countdown: `Link expires in 09:59`. If they leave and come back, it's their fault, not a "bug".
+* **The Critical Metric:** We must log `queue_wait_time = job.startedAt - job.createdAt`. If our `yt-dlp` trims in 10 seconds, but the queue wait time is 3 minutes, the user perceives the product as "slow." This metric tells us when to boot up a second Hetzner VPS.
 
 ---
 

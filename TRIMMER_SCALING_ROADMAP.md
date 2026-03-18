@@ -101,8 +101,8 @@ try {
 
 ### 🔥 PHASE 0 (Start Here — Today)
 *Goal: Make the core hybrid pipeline work first.*
-- [ ] Setup ASocks proxy integration for `yt-dlp`.
-- [ ] Add proxy + direct fallback (proxy → no proxy retry) in `server/routes/downloader.ts`.
+- [x] Setup ASocks proxy integration for `yt-dlp`.
+- [x] Add proxy + direct fallback (proxy → no proxy retry) in `server/routes/downloader.ts`.
 - [ ] Verify CDN URL extraction success.
 - [ ] Verify smooth video streaming.
 

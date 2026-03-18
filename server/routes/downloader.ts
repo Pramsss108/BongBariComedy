@@ -183,88 +183,59 @@ function mapDownloaderError(err: any): { code: string; message: string; status: 
 }
 
 // ---------------------------------------------------------------------------
-// HYBRID METADATA ENGINE (Cobalt -> Local Fallback)
+// HYBRID METADATA ENGINE (ASocks Proxy -> Local Fallback)
+// Phase 0: Stealth Metadata Extraction via PAYG SOCKS5 Proxy
 // ---------------------------------------------------------------------------
 
-async function fetchMetadataCobalt(url: string): Promise<any> {
+async function executeYtDlpExtract(url: string, extraArgs: string[] = []): Promise<any> {
+    const ytArgs = [
+        "--dump-json",
+        "--no-warnings",
+        "--no-call-home",
+        "--geo-bypass", 
+        ...extraArgs
+    ];
+    
+    // Fallback to strict env if undefined
+    const proxy = process.env.ASOCKS_PROXY || "http://q0b2vvoyfp-res-country-IN-hold-session-session-69badf0c52b0a:MsuSXbhmwtpdr81t@93.190.141.57:443";
+    
     try {
-        console.log(`[Cobalt] Fetching metadata for ${url}`);
-        const response = await axios.post("https://api.qwkuns.me/", {
-            url: url
-        }, {
-             headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            },
-            timeout: 5000 
-        });
-        const data = response.data;
-        
-        if (data.status === "error") throw new Error(data.text || "Cobalt API Error");
-        if (data.status === "picker") return { title: "Video (Multiple Formats)", duration: 0, fromCobalt: true };
-        
-        // Success (stream)
-        return {
-            title: data.filename || "Video",
-            duration: 0, // Cobalt often misses this
-            thumbnail: null,
-            fromCobalt: true
-        };
-    } catch (e: any) {
-        console.warn(`[Cobalt] Metadata fetch failed: ${e.message}`);
-        throw e;
+        const proxyArgs = [...ytArgs, "--proxy", proxy];
+        console.log(`[Phase 0] Executing yt-dlp via ASocks Proxy...`);
+        return await executeYtDlp(url, proxyArgs);
+    } catch (proxyErr: any) {
+        console.warn(`[Phase 0] ASocks proxy failed! Falling back to DIRECT yt-dlp...`, proxyErr.message || proxyErr);
+        console.log(`[Phase 0] Executing yt-dlp directly without proxy (Hetzner Node)...`);
+        return await executeYtDlp(url, ytArgs);
     }
 }
 
 async function fetchSmartMetadata(url: string): Promise<any> {
     if (metaCache.has(url)) {
         const cached = metaCache.get(url)!;
-        // Extend slightly to not invalidate rapidly if heavily hit
         if (cached.expires > Date.now()) {
             console.log(`[Cache ⚡] Instant Metadata HIT for ${url}`);
             return cached.data;
         }
     }
 
-    console.log(`[Phase 2] Requesting fast metadata proxy from Hetzner for: ${url}`);
+    console.log(`[Phase 0] Requesting metadata using Hybrid Engine for: ${url}`);
     const fetchStart = performance.now();
     try {
-        const fetch = (await import("node-fetch")).default;
-        const response = await fetch(getNextPreviewNode(), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ url: url })
-        });
-        
-        const fetchEnd = performance.now();
-        console.log(`[Trace ⏱️] Hetzner Engine Responded in ${Math.round(fetchEnd - fetchStart)}ms`);
+        const data = await executeYtDlpExtract(url);
+        console.log(`[Trace ⏱️] Hybrid Engine Responded in ${Math.round(performance.now() - fetchStart)}ms`);
 
-        if (response.ok) {
-            const data = await response.json() as any;
-            if (data.title || data.duration) {
-                const result = {
-                    title: data.title || "Video",
-                    duration: data.duration || 0,
-                    thumbnail: data.thumbnail || null,
-                    formats: [], // Empty formats array to trigger fast static fallback
-                };
-                metaCache.set(url, { data: result, expires: Date.now() + CACHE_TTL_MS });
-                return result;
-            }
-        }
-        throw new Error("Hetzner returned ok but missing metadata fields.");
+        const result = {
+            title: data.title || "Video",
+            duration: data.duration || 0,
+            thumbnail: data.thumbnail || null,
+            formats: data.formats || [], 
+        };
+        metaCache.set(url, { data: result, expires: Date.now() + CACHE_TTL_MS });
+        return result;
     } catch (engineErr: any) {
-        console.warn(`[Phase 2] Engine fetch failed after ${Math.round(performance.now() - fetchStart)}ms, falling back to Cobalt...`, engineErr?.message || engineErr);
-        const cobaltStart = performance.now();
-        try {
-            const cobaltData = await fetchMetadataCobalt(url);
-            console.log(`[Trace ⏱️] Cobalt Metadata Responded in ${Math.round(performance.now() - cobaltStart)}ms`);
-            metaCache.set(url, { data: cobaltData, expires: Date.now() + CACHE_TTL_MS });
-            return cobaltData;
-        } catch (cobaltErr) {
-            throw new Error(`Both engines failed. Engine: ${engineErr}. Cobalt: ${cobaltErr}`);
-        }
+        console.error(`[Phase 0] Total Metadata Failure:`, engineErr?.message || engineErr);
+        throw new Error(`Total engine failure: ${engineErr.message}`);
     }
 }
 
@@ -362,9 +333,12 @@ async function handleStream(req: Request, res: Response): Promise<void> {
   const endSec = req.query.end ? parseFloat(req.query.end as string) : null;
   const rawUrl = req.query.url as string;
   const rawFormat = req.query.format as string || "mp4-720";
+  const userIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+  const userSessionId = req.query.sessionId || (req as any).session?.userId || 'anonymous';
 
   console.log(`\n======================================================`);
   console.log(`🔵 [VIBE CODER] 🔥 NEW INCOMING STREAM CONNECTION 🔥`);
+  console.log(`🛡️ [AUDIT LOG]   IP: ${userIp} | Session: ${userSessionId}`);
   console.log(`🔗 TARGET URL   : ${rawUrl}`);
   console.log(`🎛️ REQUESTED FMT: ${rawFormat}`);
   console.log(`✂️ TRIMMING     : ${startSec !== null ? `YES (From ${startSec}s to ${endSec}s)` : 'NO (Full Video)'}`);
@@ -523,20 +497,22 @@ async function handleStream(req: Request, res: Response): Promise<void> {
         ytdlArgs.push("--merge-output-format", "mp4");
     }
 
-    if (isTrimming) {
-        console.log(`\n\n🟢 [VIBE CODER ALERT] 👉 TRIMMING REQUEST INITIATED!`);
+    if (isTrimming || chosen.isAudio) {
+        console.log(`\n\n🟢 [VIBE CODER ALERT] 👉 ${isTrimming ? 'TRIMMING' : 'AUDIO EXTRACTION'} REQUEST INITIATED!`);
         console.log(`🎬 TARGET VIDEO: ${validated.url}`);
-        console.log(`✂️ CUT TIMESTAMPS: Start -> ${startSec}s | End -> ${endSec}s`);
+        if (isTrimming) console.log(`✂️ CUT TIMESTAMPS: Start -> ${startSec}s | End -> ${endSec}s`);
         
-        // TEMP FILE APPROACH FOR TRIMMING
-        // ffmpeg cannot output mp4 reliably to stdout without corruption/mpegts fallback.
+        // TEMP FILE APPROACH FOR AUDIO/TRIMMING
+        // ffmpeg cannot reliably stream mp4 or convert mp3 directly to stdout on-the-fly.
         const tmpDir = os.tmpdir();
-        const trimFile = path.join(tmpDir, `trim_${crypto.randomBytes(8).toString('hex')}.mp4`);
+        const trimFile = path.join(tmpDir, `task_${crypto.randomBytes(8).toString('hex')}.${chosen.ext}`);
         
         console.log(`📁 TEMP FILE ALLOCATED AT: ${trimFile}`);
         
-        ytdlArgs.push("--download-sections", `*${startSec}-${endSec}`);
-        ytdlArgs.push("--force-keyframes-at-cuts"); // Guarantee perfect cut accuracy
+        if (isTrimming) {
+            ytdlArgs.push("--download-sections", `*${startSec}-${endSec}`);
+            ytdlArgs.push("--force-keyframes-at-cuts"); // Guarantee perfect cut accuracy
+        }
         ytdlArgs.push("-o", trimFile);
 
         console.log(`🚀 FIRING YT-DLP ENGINE WITH ARGS:`);
@@ -600,53 +576,25 @@ async function handleStream(req: Request, res: Response): Promise<void> {
         });
 
     } else {
-          console.log(`\n\n🟢 [VIBE CODER ALERT] 👉 FULL VIDEO STREAM INITIATED!`);
-          console.log(`[Phase 3] FULL VIDEO OR PREVIEW -> Fetching raw CDN URL from proxy for bypass!`);
-
-          try {
-             // For metadata endpoint we just pass URL
-             const reqBody = { url: validated.url };
-             const fetch = (await import("node-fetch")).default;
-             // Note: Hetzner proxy returns the stream URL directly when POSTing to /
-             const response = await fetch(getNextPreviewNode(), {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(reqBody)
-             });
-             if (response.ok) {
-                 const data = await response.json() as any;
-                 if (data && data.url) {
-                     console.log(`✅ [SUCCESS] Redirecting client directly to Hetzner CDN!`);
-                     res.redirect(302, data.url);
-                     return;
-                 }
-             }
-          } catch(proxyErr) {
-             console.log(`[Phase 3] Hetzner proxy failed. Falling back to Cobalt public instance...`);
-          }
-
-          // Fallback to qwkuns API (Cobalt) if Hetzner fails
-          try {
-              const fetch = (await import("node-fetch")).default;
-              const cobaltResponse = await fetch("https://api.qwkuns.me/", {
-                  method: "POST",
-                  headers: {
-                      'Accept': 'application/json',
-                      'Content-Type': 'application/json',
-                      'User-Agent': 'BongBari-Server'
-                  },
-                  body: JSON.stringify({ url: validated.url })
-              });
-              if (cobaltResponse.ok) {
-                  const cobaltData = await cobaltResponse.json() as any;
-                  if (cobaltData && cobaltData.url) {
-                     console.log(`✅ [SUCCESS] Redirecting client directly to Cobalt CDN!`);
-                     res.redirect(302, cobaltData.url);
-                     return;
+          console.log(`\n\n🟢 [VIBE CODER ALERT] 👉 FULL STREAM INITIATED!`);
+          
+          if (!chosen.isAudio) {
+              console.log(`[Phase 0] Redirecting to direct CDN URL if possible...`);
+              try {
+                  // Try to get raw CDN URL directly via proxy bypass to save Hetzner bandwidth
+                  const data = await executeYtDlpExtract(validated.url, ["--format", chosen.ytFormat]);
+                  const rawCdnUrl = data.url || (data.requested_downloads && data.requested_downloads[0].url);
+                  
+                  if (rawCdnUrl) {
+                      console.log(`✅ [SUCCESS] Fast-pathing Full Video -> Redirecting client directly to Google CDN!`);
+                      res.redirect(302, rawCdnUrl);
+                      return;
                   }
+              } catch(cdnErr: any) {
+                  console.warn(`[Phase 0] Direct CDN extraction failed (${cdnErr.message}). Streaming via local pipe...`);
               }
-          } catch(cobaltErr) {
-              console.log(`[Phase 3] Cobalt proxy failed.`);
+          } else {
+              console.log(`[Phase 0] Audio-only format requested (.${chosen.ext}). Bypassing CDN redirect to use ffmpeg pipe...`);
           }
 
           // FINAL FALLBACK: PIPE YT-DLP DIRECTLY
@@ -699,91 +647,122 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
   const requestedFormat = (req.query.format as string) || "mp4-480";
   // Extract quality '480' from 'mp4-480'
   const qualityMatch = requestedFormat.match(/\d{3,4}/);
-  const qStr = qualityMatch ? qualityMatch[0] : "480";
+  const qStr = qualityMatch ? parseInt(qualityMatch[0]) : 480;
 
   if (!validated.ok) {
     res.status(400).json({ error: validated.error });
     return;
   }
 
-    const { url } = validated;
-    
-    // 1. FAST PATH: Check RAM Cache
-    if (streamCache.has(url)) {
-        const cached = streamCache.get(url)!;
-        if (cached.expires > Date.now()) {
-            console.log(`[Cache ⚡] Instant PREVIEW HIT for ${url} at ${qStr}p`);
-            res.json({ streamUrl: cached.url });
-            return;
-        }
-    }
+  const { url } = validated;
+  const isStreamMode = req.query.mode === 'stream';
 
-console.log(`[Phase 2] Requesting fast PREVIEW proxy from Hetzner for: ${url}`);
-      const fetchStart = performance.now();
+  // Secure Proxy Pipe: Prevents strict-IP 403 errors by routing bytes through our backend
+  const proxyDirectStream = async (targetUrl: string) => {
       try {
-          const fetch = (await import("node-fetch")).default;
-          // Prioritize Hetzner because Cobalt proxies are currently being IP blocked by YouTube
-          const response = await fetch(getNextPreviewNode(), {
-              method: "POST",
-              headers: {
-                  'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ url: url, vQuality: qStr })
-          });
-
-        const fetchEnd = performance.now();
-        console.log(`[Trace ⏱️] Hetzner PREVIEW Engine Responded in ${Math.round(fetchEnd - fetchStart)}ms`);
-
-      if (response.ok) {
-         const data = await response.json() as { url: string };
-         const streamUrl = data?.url;
-          
-          if (streamUrl) {
-              streamCache.set(url, { url: streamUrl, expires: Date.now() + CACHE_TTL_MS });
-              res.json({ streamUrl });
-              return;
+          const headers: Record<string, string> = {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64 AppleWebKit/537.36) Chrome/120.0.0.0 Safari/537.36"
+          };
+          if (req.headers.range) {
+              headers["Range"] = req.headers.range;
           }
-      }
-      throw new Error("Hetzner returned ok but missing stream URL.");
-      
-    } catch (err: any) {
-      console.warn(`[Phase 2] Hetzner Preview Engine failed after ${Math.round(performance.now() - fetchStart)}ms, falling back to local...`, err?.message || err);
-      try {
-        const ytArgs = [
-          "--get-url",
-          "--no-warnings",
-          "--no-check-certificate",
-          "--extractor-args", "youtube:player_client=android,ios",
-          "--format", `best[height<=${qStr}][ext=mp4]/best[height<=${qStr}]/best`
-        ];
-
-        const directUrlOutput = await new Promise<string>((resolve, reject) => {
-          execFile(YT_DLP_PATH, [...ytArgs, url], { maxBuffer: 1024 * 1024 * 5 }, (error, stdout) => {
-            if (error) return reject(error);
-            resolve(stdout.trim());
+          const proxyRes = await axios.get(targetUrl, {
+              headers,
+              responseType: 'stream',
+              validateStatus: () => true
           });
-        });
+          
+          if (proxyRes.status === 403 || proxyRes.status >= 500) {
+               return false;
+          }
 
-        const urls = directUrlOutput.split("\n").map((u: string) => u.trim()).filter(Boolean);
-        const streamUrl = urls[0];
-        if (!streamUrl) throw new Error("No stream URL found locally");
-
-        streamCache.set(url, { url: streamUrl, expires: Date.now() + CACHE_TTL_MS });
-        res.json({ streamUrl });
-      } catch (localErr: any) {
-        console.error("[downloader/proxy-stream] error:", localErr?.message);
-        formatNotAvailable(
-          res,
-          "Preview unavailable for this video. You can still download it directly.",
-        );
+          res.status(proxyRes.status);
+          const fHeaders = ['content-type', 'content-length', 'accept-ranges', 'content-range'];
+          for (const key of fHeaders) {
+              if (proxyRes.headers[key]) res.setHeader(key, proxyRes.headers[key] as string);
+          }
+          proxyRes.data.pipe(res);
+          return true;
+      } catch(e) {
+          return false;
       }
-    }
+  };
+
+  let bestStreamUrl: string | null = null;
+
+  // 1. FAST PATH: Check RAM Cache for existing direct URL
+  if (streamCache.has(url)) {
+      const cached = streamCache.get(url)!;
+      if (cached.expires > Date.now()) {
+          bestStreamUrl = cached.url;
+      }
   }
 
-  // ---------------------------------------------------------------------------
-  // PHRASE 17: PHRASE 17 � registerDownloaderRoutes()
-  // All wired up; called from server/routes.ts
-  // ---------------------------------------------------------------------------
+  // 2. ULTRA SMART PATH (Phase 0 Fast Cache Sharing):
+  if (!bestStreamUrl && metaCache.has(url)) {
+      const cached = metaCache.get(url)!;
+      if (cached.expires > Date.now() && cached.data.formats && Array.isArray(cached.data.formats)) {
+          const rawFormats = cached.data.formats;
+          for (const f of rawFormats) {
+              if (f.ext === 'mp4' && f.acodec !== 'none' && f.vcodec !== 'none' && f.height && f.height <= qStr) {
+                  if (f.url) { bestStreamUrl = f.url; break; }
+              }
+          }
+          if (!bestStreamUrl) {
+              for (const f of rawFormats) {
+                   if (f.height && f.height <= qStr && f.url) { bestStreamUrl = f.url; break; }
+              }
+          }
+      }
+  }
+
+  // 3. Fallback: If cache completely misses, fetch it via proxy
+  if (!bestStreamUrl) {
+      console.log(`[Phase 0] Requesting fast PREVIEW proxy extraction for: ${url}`);
+      try {
+          // Force fastest pre-muxed extraction
+          const data = await executeYtDlpExtract(url, ["--format", `best[height<=${qStr}][ext=mp4]/best[height<=${qStr}]/best`]);
+          bestStreamUrl = data.url || (data.requested_downloads && data.requested_downloads[0]?.url);
+      } catch(e) {
+          console.error("[downloader/proxy-stream] extraction error:", e);
+      }
+  }
+
+  // 4. Send response appropriately (pipe vs json)
+  if (bestStreamUrl) {
+      streamCache.set(url, { url: bestStreamUrl, expires: Date.now() + CACHE_TTL_MS });
+
+      if (isStreamMode) {
+          const success = await proxyDirectStream(bestStreamUrl);
+          if (success) return;
+          console.log(`[Phase 0] Direct proxy pipe failed (likely 403). Falling back to yt-dlp local pipe...`);
+      } else {
+          // Backward compatibility for old UI flow
+          res.json({ streamUrl: bestStreamUrl });
+          return;
+      }
+  }
+
+  // 5. NATIVE PIPE FALLBACK (if CDN direct stream 403s or URL missing entirely)
+  if (isStreamMode) {
+      try {
+          const ytdlArgs = ["-f", `best[height<=${qStr}][ext=mp4]/best`, "-o", "-", "--no-warnings", "--force-ipv4"];
+          if (process.env.ASOCKS_PROXY) ytdlArgs.push("--proxy", process.env.ASOCKS_PROXY);
+          const subprocess = spawn(YT_DLP_PATH, [...ytdlArgs, url], { stdio: ["ignore", "pipe", "pipe"] });
+          
+          res.setHeader("Content-Type", "video/mp4");
+          subprocess.stdout?.pipe(res);
+          req.on("close", () => subprocess.kill?.("SIGTERM"));
+          return;
+      } catch (err: any) {
+          console.error("Native pipe error:", err);
+          res.status(500).end();
+          return;
+      }
+  }
+
+  formatNotAvailable(res, "Preview streaming unavailable right now.");
+}
   export function registerDownloaderRoutes(app: Express, isAuthenticated: any): void {
   // Info endpoint — lenient rate limit (10/min) — PUBLIC
   app.get("/api/downloader/info", infoLimiter, handleInfo);
@@ -792,7 +771,7 @@ console.log(`[Phase 2] Requesting fast PREVIEW proxy from Hetzner for: ${url}`);
   app.get("/api/downloader/stream", isAuthenticated, streamLimiter, handleStream);
 
   // Proxy stream URL for preview — PROTECTED
-  app.get("/api/downloader/proxy-stream", isAuthenticated, infoLimiter, handleProxyStream);
+  app.get("/api/downloader/proxy-stream", infoLimiter, handleProxyStream);
 }
 
 

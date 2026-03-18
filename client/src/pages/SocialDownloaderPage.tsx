@@ -163,6 +163,7 @@ export default function SocialDownloaderPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isCaching, setIsCaching] = useState(false); // CapCut: Block 1 Cache state
   const [cacheProgress, setCacheProgress] = useState(0); // CapCut: Block 1 Cache progress
+  const [isScrubbing, setIsScrubbing] = useState(false); // Phase 1: Intent-based UI state
   const [trimProgress, setTrimProgress] = useState<number | string>(0);
   const [ffmpegLoading, setFfmpegLoading] = useState(false);
   const [extractProgress, setExtractProgress] = useState<{ step: number, msg: string } | null>(null);
@@ -363,8 +364,8 @@ export default function SocialDownloaderPage() {
     let rafId: number;
     const enforceLoopBounds = () => {
       const vid = videoRef.current;
-      // Use !vid.paused to ensure we don't snap the playhead if the user is scrubbing while paused
-      if (vid && !vid.paused) {
+      // Use !isScrubbing to ensure we don't snap the playhead if the user is dragging the trim handles
+      if (vid && !isScrubbing) {
         // Only enforce the END boundary so users can preview the lead-up to the cut by playing from before the start point
         if (vid.currentTime >= endTime) {
            vid.currentTime = startTime;
@@ -374,7 +375,7 @@ export default function SocialDownloaderPage() {
     };
     rafId = requestAnimationFrame(enforceLoopBounds);
     return () => cancelAnimationFrame(rafId);
-  }, [trimMode, startTime, endTime, isPlaying]);
+  }, [trimMode, startTime, endTime, isPlaying, isScrubbing]);
   const loadVideoToCache = useCallback(async (enterTrimMode = false) => {
     // If entering Trim Mode, we strictly need a local Blob cache to ensure 0ms seek latency.
     if (enterTrimMode) {
@@ -966,6 +967,7 @@ export default function SocialDownloaderPage() {
                                   videoRef.current.currentTime = t;
                                 }
                               }}
+                              onScrubbingChange={setIsScrubbing}
                           />
                       </div>
                  </div>

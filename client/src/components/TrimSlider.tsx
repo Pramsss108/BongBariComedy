@@ -19,6 +19,7 @@ interface TrimSliderProps {
   onStartChange: (t: number) => void;
   onEndChange: (t: number) => void;
   onScrub?: (t: number) => void;
+  onScrubbingChange?: (isScrubbing: boolean) => void;
 }
 
 export function TrimSlider({
@@ -31,6 +32,7 @@ export function TrimSlider({
   onStartChange,
   onEndChange,
   onScrub,
+  onScrubbingChange,
 }: TrimSliderProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const playheadRef = useRef<HTMLDivElement>(null);
@@ -104,6 +106,7 @@ export function TrimSlider({
 
     const handlePointerUp = () => {
       setDragging(null);
+      if (onScrubbingChange) onScrubbingChange(false);
     };
 
     document.addEventListener("pointermove", handlePointerMove, { passive: false });
@@ -142,6 +145,7 @@ export function TrimSlider({
   const handlePointerDown = (type: "start" | "end", e: React.MouseEvent | React.TouchEvent | React.PointerEvent) => {                                               
     e.stopPropagation();
     setDragging(type);
+    if (onScrubbingChange) onScrubbingChange(true);
   };
 
   // Click track to seek instantly

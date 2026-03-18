@@ -37,12 +37,15 @@ The MVP proved our architecture (split workloads: fast proxy for preview, heavy 
 * **The Fix (Phase 2): Signed Short-Lived Tokens (AWS Style)**
   Instead of naked Session IDs, the backend will generate a 5-minute signed JWT specifically for stream delivery: `/api/downloader/proxy-stream?token=SIGNED_HASH`. Once it expires, the link is dead. Security goes up, convenience stays exactly the same.
 
-### 4. The Final Boss: The Download Bottleneck
-* **The Weakness:** Our initial thought was "process `yt-dlp` one at a time." This is safe, but dumb for scaling. If 20 users hit Download, 19 users waiting sequentially in line creates atrocious UX.
-* **The True Fix (Phase 2): Controlled Concurrency & Resiliency**
-  We must integrate a proper worker queue (BullMQ/Redis): 
-  - **Concurrency:** `max_concurrent_jobs = 3 to 5` based on server CPU profiling.
-  - **Resiliency:** `yt-dlp` fails a lot. The queue needs auto-retries, timeouts, and logic to kill stuck jobs. Otherwise, the queue becomes a graveyard.
+### 4. The Final Boss: The Download Bottleneck & The "Fake 1080p" Bug
+* **The Reality (Why High Quality Fails):** Users are noticing that selecting 1080p yields the exact same file size/quality as 720p or lower. **This is because of a massive architectural limitation in how we stream data.** 
+  Currently, we pipe `yt-dlp` directly to the Express `res` (response output). When piping to stdout, `yt-dlp` *cannot* use ffmpeg to merge separate audio and video tracks (which YouTube does for everything above 720p). Therefore, we are forced to ask `yt-dlp` for a "pre-muxed" format (`best[ext=mp4]`). YouTube's highest pre-muxed format is almost always artificially capped at 720p (and sometimes 360p). Selecting 1080p just falls back to this 720p file.
+* **The Weakness:** Not only are we artificially capped at 720p, but our initial thought to "process `yt-dlp` one at a time" is dumb for scaling. If 20 users hit Download, 19 users waiting sequentially in line creates atrocious UX.
+* **The True Fix (Phase 2): Disk Processing & Asynchronous Queues**
+  We must stop piping directly to the browser. We need to:
+  1. Let `yt-dlp` download the video + audio to the Hetzner disk first so ffmpeg can merge true 1080p/4K.
+  2. Implement a proper worker queue (BullMQ/Redis) so users have a waiting screen ("Processing...").
+  3. Serve the file via a CDN static link once it's finished merging on disk.
 
 ### 5. HLS vs. HTTP Range (The Hard Truth)
 * **The Reality Check:** We initially said, "We will stick to HTTP Range Requests." That is playing it too safe. Range requests do not equal smooth scrubbing, *especially* on Indian mobile networks (our core demographic). If we get popular, users will feel lag spikes and buffer jumps.

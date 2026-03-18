@@ -97,20 +97,27 @@ try {
 
 ---
 
-## 🚀 The Execution Roadmap
+## 🚀 The Execution Roadmap (Startup Phase Logic)
 
-### Phase 1 (Immediate Hardening)
-- [ ] Implement `isScrubbing` UI state to replace `vid.paused`.
-- [ ] Add the Proxy Array Fallback in `server/routes/downloader.ts`.
+### 🔥 PHASE 0 (Start Here — Today)
+*Goal: Make the core hybrid pipeline work first.*
+- [ ] Setup ASocks proxy integration for `yt-dlp`.
+- [ ] Add proxy + direct fallback (proxy → no proxy retry) in `server/routes/downloader.ts`.
+- [ ] Verify CDN URL extraction success.
+- [ ] Verify smooth video streaming.
+
+### 🔥 PHASE 1 (UI & Polish)
+- [ ] Implement `isScrubbing` UI state to replace `vid.paused` in the UI layer.
 - [ ] Add basic failure/time logging to the backend proxy handler.
 
-### Phase 2 (Power & Security - Requires DB/Redis Changes)
-- [ ] Implement short-lived signed tokens (`HMAC`) for media fetch endpoints instead of exposing `sessionId`.
-- [ ] Build the Background Job Queue (Upstash Redis + Worker) to handle yt-dlp downloads so the Main API never blocks.
+### 🔥 PHASE 2 (Scale - ONLY After User Validation)
+- [ ] Implement the Background Job Queue (Upstash Redis + Worker) to handle yt-dlp downloads.
+- [ ] Implement true ffmpeg merging on disk for true 1080p outputs.
 - [ ] Build Progress Polling UI (so users see "Processing... 45%" instead of just a spinning button).
+- [ ] Implement short-lived signed tokens (`HMAC`) for media fetch endpoints instead of exposing `sessionId`.
 
-### Phase 3 (Scale Weapons)
-- [ ] Custom lightweight node for raw fetching (removing Cobalt dependency).
+### Phase 3 (Advanced Scale Weapons)
+- [ ] Custom lightweight node for raw fetching (removing Cobalt dependency entirely).
 - [ ] Smart Prefetching/HLS chunking for extreme low-end mobile architectures. 
 
 ---
@@ -138,7 +145,7 @@ const worker = new Worker("downloads", async (job) => {
     return { fileUrl: `https://dl.bongbari.com/${job.id}.mp4` };
 }, {
     connection,
-    concurrency: 3, // CRITICAL: Only 3 heavy ffmpeg processes at once
+    concurrency: 1, // CRITICAL: Start with 1 to prevent VPS meltdown. Increase later.
 });
 ```
 

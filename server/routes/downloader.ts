@@ -706,23 +706,21 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
         }
     }
 
-    console.log(`[Phase 2] Requesting fast PREVIEW proxy from Cobalt at ${qStr}p for: ${url}`);
-    const fetchStart = performance.now();
-    try {
-        const fetch = (await import("node-fetch")).default;
-        // Prioritize Cobalt because we can force 480p and lower latency streaming for preview
-        const response = await fetch("https://api.qwkuns.me/", {
-            method: "POST",
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'User-Agent': 'BongBari-Server'
-            },
-            body: JSON.stringify({ url: url, vQuality: qStr, isAudioOnly: requestedFormat.includes("mp3") || requestedFormat.includes("m4a") })
-        });
-      
-      const fetchEnd = performance.now();
-      console.log(`[Trace ⏱️] Cobalt PREVIEW Engine Responded in ${Math.round(fetchEnd - fetchStart)}ms`);
+console.log(`[Phase 2] Requesting fast PREVIEW proxy from Hetzner for: ${url}`);
+      const fetchStart = performance.now();
+      try {
+          const fetch = (await import("node-fetch")).default;
+          // Prioritize Hetzner because Cobalt proxies are currently being IP blocked by YouTube
+          const response = await fetch("http://78.47.104.43:9000/", {
+              method: "POST",
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ url: url, vQuality: qStr })
+          });
+
+        const fetchEnd = performance.now();
+        console.log(`[Trace ⏱️] Hetzner PREVIEW Engine Responded in ${Math.round(fetchEnd - fetchStart)}ms`);
 
       if (response.ok) {
          const data = await response.json() as { url: string };
@@ -734,10 +732,10 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
               return;
           }
       }
-      throw new Error("Cobalt returned ok but missing stream URL.");
+      throw new Error("Hetzner returned ok but missing stream URL.");
       
     } catch (err: any) {
-      console.warn(`[Phase 2] Cobalt Preview Engine failed after ${Math.round(performance.now() - fetchStart)}ms, falling back to local...`, err?.message || err);
+      console.warn(`[Phase 2] Hetzner Preview Engine failed after ${Math.round(performance.now() - fetchStart)}ms, falling back to local...`, err?.message || err);
       try {
         const ytArgs = [
           "--get-url",

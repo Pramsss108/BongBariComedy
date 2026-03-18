@@ -16,6 +16,7 @@ import fs from "fs";
 import { getPoToken } from './poTokenService.js';
 import crypto from "crypto";
 import axios from "axios";
+import { HttpsProxyAgent } from "https-proxy-agent";
 // @ts-ignore
 import ffmpegPath from "ffmpeg-static";
 
@@ -666,20 +667,25 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
           if (req.headers.range) {
               headers["Range"] = req.headers.range;
           }
-          const proxyRes = await axios.get(targetUrl, {
-              headers,
-              responseType: 'stream',
-              validateStatus: () => true
-          });
-          
-          if (proxyRes.status === 403 || proxyRes.status >= 500) {
-               return false;
-          }
+            
+            const axiosConfig: any = {
+                headers,
+                responseType: 'stream',
+                validateStatus: () => true
+            };
 
-          res.status(proxyRes.status);
-          const fHeaders = ['content-type', 'content-length', 'accept-ranges', 'content-range'];
-          for (const key of fHeaders) {
-              if (proxyRes.headers[key]) res.setHeader(key, proxyRes.headers[key] as string);
+            if (process.env.ASOCKS_PROXY) {
+
+            }
+
+            const proxyRes = await axios.get(targetUrl, axiosConfig);
+              if (proxyRes.status === 403 || proxyRes.status >= 500) {
+                   return false;
+              }
+    
+              res.status(proxyRes.status);
+              const fHeaders = ['content-type', 'content-length', 'accept-ranges', 'content-range'];
+              for (const key of fHeaders) {              if (proxyRes.headers[key]) res.setHeader(key, proxyRes.headers[key] as string);
           }
           proxyRes.data.pipe(res);
           return true;

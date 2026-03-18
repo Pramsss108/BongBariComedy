@@ -13,13 +13,26 @@ The MVP proved our architecture (split workloads: fast proxy for preview, heavy 
 
 ## 🛑 The Brutal Truths & Our Execution Plan
 
-### 1. The 3rd-Party Proxy Dependency (High Risk)
-* **The Reality:** We depend 100% on `api.qwkuns.me`. If it rate-limits us or shuts down, the Studio dies. 
-* **The Vulnerability in the First Fix:** A simple naive fallback loop (`proxies = [a, b, c]; loop try`) is not enough. Some proxies won't just die—they will throttle silently, or partially fail (video loads but seek breaks). A naive fallback will cause erratic, jittery UX.
-* **The True Fix (Phase 1): Health Scoring System**
-  We must track and pick the *best* proxy, not just the first working one. 
-  `score = success_rate + proxy_latency + time_since_last_success`
-* **Long Term:** Spin up our own lightweight reverse-proxy node to guarantee SLA.
+### 1. The 3rd-Party Proxy Dependency & The "Single IP Fragility" (High Risk)
+* **The Past Reality:** We depended 100% on `api.qwkuns.me`, but it died from YouTube datacenter IP bans.
+* **The Current Fix (Phase 1.5):** We successfully bypassed Cobalt and routed previews locally through our own Hetzner VPS (`http://78.47.104.43:9000`). This is a **valid immediate fix** because Hetzner currently has a clean IP.
+* **The Brutal Truth:** We solved "proxy instability" but created "single IP fragility" and mixed responsibilities.
+  * Hetzner is now acting as *both* a high-bandwidth preview streamer and a heavy-compute downloader.
+  * Repeated automated requests from one Hetzner IP will eventually get flagged by YouTube just like Cobalt and Render did.
+  * Preview streams can cause massive bandwidth spikes. If 50 users buffer streams, our VPS bandwidth explodes.
+* **Phase 2 (Critical Upgrade): IP Rotation Layer**
+  * We cannot rely on one hardcoded string. We must implement a multiple node abstraction:
+  ```typescript
+  const previewNodes = [
+    "http://hetzner1:9000",
+    "http://hetzner2:9000" // We must prepare for horizontal scaling
+  ];
+  ```
+  * We have two options: **Option A** (2-3 cheap Hetzner nodes strictly rotating requests - best for us) or **Option B** (Residential Proxies - expensive, but most reliable).
+* **Phase 3: Smart Traffic Split**
+  * We must separate preview traffic from download traffic. Previews go to distributed low-cost nodes, downloads go to a controlled BullMQ queue on a dedicated heavy-compute node.
+* **Phase 4: Anti-Detection Throttling**
+  * We need to add delay/randomization (`sleep(random(500ms - 1500ms))`) to make requests look human. YouTube is a war zone and we must defend against platform resistance.
 
 ### 2. The Scrubber Hack: DOM State vs. User Intent
 * **The Reality:** Relying on `!vid.paused` is smart but fragile. Mobile browsers handle media state weirdly. Network buffering can arbitrarily trigger pause states, breaking the scrubber logic mid-drag.

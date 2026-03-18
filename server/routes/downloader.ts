@@ -18,6 +18,18 @@ import crypto from "crypto";
 import axios from "axios";
 // @ts-ignore
 import ffmpegPath from "ffmpeg-static";
+
+const previewNodes = [
+  "http://78.47.104.43:9000/",
+  // "http://hetzner2:9000/" // Phase 2: Add more nodes here for IP rotation
+];
+let currentNodeIndex = 0;
+function getNextPreviewNode() {
+  const node = previewNodes[currentNodeIndex];
+  currentNodeIndex = (currentNodeIndex + 1) % previewNodes.length;
+  return node;
+}
+
 import { performance } from "perf_hooks";
 
 // --- MEMORY CACHES FOR INSTANT PERFORMANCE ---
@@ -219,7 +231,7 @@ async function fetchSmartMetadata(url: string): Promise<any> {
     const fetchStart = performance.now();
     try {
         const fetch = (await import("node-fetch")).default;
-        const response = await fetch("http://78.47.104.43:9000/", {
+        const response = await fetch(getNextPreviewNode(), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ url: url })
@@ -596,7 +608,7 @@ async function handleStream(req: Request, res: Response): Promise<void> {
              const reqBody = { url: validated.url };
              const fetch = (await import("node-fetch")).default;
              // Note: Hetzner proxy returns the stream URL directly when POSTing to /
-             const response = await fetch("http://78.47.104.43:9000/", {
+             const response = await fetch(getNextPreviewNode(), {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(reqBody)
@@ -711,7 +723,7 @@ console.log(`[Phase 2] Requesting fast PREVIEW proxy from Hetzner for: ${url}`);
       try {
           const fetch = (await import("node-fetch")).default;
           // Prioritize Hetzner because Cobalt proxies are currently being IP blocked by YouTube
-          const response = await fetch("http://78.47.104.43:9000/", {
+          const response = await fetch(getNextPreviewNode(), {
               method: "POST",
               headers: {
                   'Content-Type': 'application/json'

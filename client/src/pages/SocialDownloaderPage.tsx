@@ -333,7 +333,8 @@ export default function SocialDownloaderPage() {
       // Protected by auth - Phase 15: Attach sessionId to query param for browser nav
       const safeTitle = videoInfo?.title ? videoInfo.title.replace(/[^a-z0-9]/gi, '_').substring(0, 50) : "bongbari_download";
       const encodedTitle = encodeURIComponent(safeTitle);
-      const backendUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=${selectedFormat}&title=${encodedTitle}&sessionId=${sessionId}`);
+      const mToken = await getMediaToken(url);
+      const backendUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=${selectedFormat}&title=${encodedTitle}&token=${mToken}`);
 
         // PHASE 3: Native Browser Download + Raw CDN (0% Server Load)
         // By bypassing 'fetch' and Blob creation, we avoid CORS from Google's CDNs
@@ -418,7 +419,7 @@ export default function SocialDownloaderPage() {
       // Fetch direct stream URL via Node proxy to completely hide user IP and avoid Google 403 Forbidden errors
       setIsCaching(true);
       const mToken = await getMediaToken(url);
-      const autoProxyUrl = apiUrl(`/api/downloader/proxy-stream?url=${encodeURIComponent(url)}&format=mp4-480&mode=stream&token=${mToken}`);
+      const autoProxyUrl = apiUrl(`/api/downloader/proxy-stream?url=${encodeURIComponent(url)}&format=mp4-480&mode=stream&token=${mToken}&sessionId=${String(sessionId || "")}`);
       
       // Brief check to validate session/auth before opening video player
       const res = await fetch(autoProxyUrl, { method: 'HEAD' });
@@ -459,7 +460,7 @@ export default function SocialDownloaderPage() {
       const encodedTitle = encodeURIComponent(trimName);
 
       const mToken = await getMediaToken(url);
-      const backendTrimUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=${selectedFormat}&title=${encodedTitle}&start=${startTime}&end=${endTime}&token=${mToken}`);
+      const backendTrimUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=${selectedFormat}&title=${encodedTitle}&start=${startTime}&end=${endTime}&token=${mToken}&sessionId=${String(sessionId || "")}`);
 
       // Perform secure streaming fetch + Native 'Save As' Dialog Tracker
       await performSecureDownload(backendTrimUrl, `${trimName}.mp4`, setTrimProgress);

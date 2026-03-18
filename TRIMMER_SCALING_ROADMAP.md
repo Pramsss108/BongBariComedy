@@ -34,19 +34,30 @@ Browsers run in sandboxes. YouTube blocks CORS. You cannot use a user's connecti
 **Phase A (The Final Stack): Hybrid Smart-Split Setup**
 * **The Reality:** We don't need a massive Residential pool, and we don't need 10 VPS nodes. We need precision routing.
 * **Architecture:** 
-  `User` -> `API (Render)` -> `yt-dlp (via Webshare Residential Proxy)` -> `Gets CDN URL` -> `VPS Node (Hetzner)` -> `Streams purely via CDN URL`
+  `User` -> `API (Render)` -> `yt-dlp (via ASocks Residential Proxy)` -> `Gets CDN URL` -> `VPS Node (Hetzner)` -> `Streams purely via CDN URL`
 
 * **Load Separation (The Setup):**
-  * **Metadata Proxy:** Webshare ($5/mo). ONLY used for the initial `yt-dlp --proxy` extraction. Since it only pulls text/JSON, the bandwidth is measured in KBs.
+  * **Metadata Proxy:** ASocks PAYG ($3/GB). We ONLY use this for the initial `yt-dlp --proxy` extraction. Since it only pulls text/JSON (~100KB), $3 covers 10,000+ requests. 
+  * *Why ASocks vs Webshare?* ASocks is true Pay-As-You-Go with zero monthly commitments and offers real residential IP rotation. Webshare Datacenter free-tier will inevitably get flagged by BotGuard.
   * **VPS 1 & 2:** Hetzner (~€4/mo). Dedicated purely to piping the raw `googlevideo.com` stream back to the UI.
   * **VPS 3:** Hetzner (~€4/mo). Dedicated to the heavy Download/ffmpeg BullMQ worker queue.
 
 **Why This Is The Holy Grail:**
-1. **Cost:** It prevents the instant death spiral of routing video through Residential proxies ($800+ for 5GB). 
+1. **Cost:** It prevents the instant death spiral of routing video through Residential proxies ($800+ for 5GB). Instead, our costs are literally <$1/month for stealth metadata.
 2. **Stealth:** yt-dlp metadata extraction uses clean residential IPs.
 3. **Speed:** The actual video piping is done on Hetzner's unmetered datacenter lines.
 
-**Execution Warning:** Do NOT overbuild this setup right now. Do not buy BrightData, do not use random proxy lists. Boot up the Swarm, bolt on Webshare for extraction. That is it.
+**Execution Warning:** Do NOT depend strictly on the proxy. The code MUST have a direct-fetch fallback in case the SOCKS5 proxy drops.
+```typescript
+// The Code Reality (SOCKS5 + Direct Fallback)
+try {
+  // 1. Try Stealth (ASocks)
+  const cmd = `yt-dlp --proxy "socks5://user:pass@proxy" --dump-json URL`;
+} catch (e) {
+  // 2. Fallback to Direct (Hetzner Native)
+  const cmd = `yt-dlp --dump-json URL`;
+}
+```
 
 ### 2. The Scrubber Hack: DOM State vs. User Intent
 * **The Reality:** Relying on `!vid.paused` is smart but fragile. Mobile browsers handle media state weirdly. Network buffering can arbitrarily trigger pause states, breaking the scrubber logic mid-drag.

@@ -14,13 +14,11 @@ The MVP proved our architecture (split workloads: fast proxy for preview, heavy 
 ## 🛑 The Brutal Truths & Our Execution Plan
 
 ### 1. The 3rd-Party Proxy Dependency (High Risk)
-* **The Reality:** We depend 100% on `api.qwkuns.me`. If it rate-limits us or shuts down, the Studio dies instantly. 
-* **The Fix (Phase 1): Proxy Rotation & Fallback**
-  We will introduce a proxy rotation array. 
-  ```ts
-  const proxies = ["https://api.qwkuns.me", "https://co.wuk.sh", "https://cobalt.api.etc"];
-  // Loop, try, cache the fastest working proxy for the next 10 minutes.
-  ```
+* **The Reality:** We depend 100% on `api.qwkuns.me`. If it rate-limits us or shuts down, the Studio dies. 
+* **The Vulnerability in the First Fix:** A simple naive fallback loop (`proxies = [a, b, c]; loop try`) is not enough. Some proxies won't just die—they will throttle silently, or partially fail (video loads but seek breaks). A naive fallback will cause erratic, jittery UX.
+* **The True Fix (Phase 1): Health Scoring System**
+  We must track and pick the *best* proxy, not just the first working one. 
+  `score = success_rate + proxy_latency + time_since_last_success`
 * **Long Term:** Spin up our own lightweight reverse-proxy node to guarantee SLA.
 
 ### 2. The Scrubber Hack: DOM State vs. User Intent
@@ -40,22 +38,23 @@ The MVP proved our architecture (split workloads: fast proxy for preview, heavy 
   Instead of naked Session IDs, the backend will generate a 5-minute signed JWT specifically for stream delivery: `/api/downloader/proxy-stream?token=SIGNED_HASH`. Once it expires, the link is dead. Security goes up, convenience stays exactly the same.
 
 ### 4. The Final Boss: The Download Bottleneck
-* **The Reality:** Right now, hitting "Download" initiates a synchronous Express process running `yt-dlp` and `ffmpeg`. If 20 users hit this at the same time, the server CPU will flatline, queues will build, and connections will timeout.
-* **The Fix (Phase 2): Asynchronous Task Queues**
-  We must integrate a worker queue (using our Upstash Redis or completely shifting downlaods to an async poller). 
-  - User hits "Download" -> Receives a `jobId`.
-  - Frontend polls `GET /api/jobs/:id`.
-  - Backend safely processes `yt-dlp` one at a time, protecting the main API thread.
+* **The Weakness:** Our initial thought was "process `yt-dlp` one at a time." This is safe, but dumb for scaling. If 20 users hit Download, 19 users waiting sequentially in line creates atrocious UX.
+* **The True Fix (Phase 2): Controlled Concurrency & Resiliency**
+  We must integrate a proper worker queue (BullMQ/Redis): 
+  - **Concurrency:** `max_concurrent_jobs = 3 to 5` based on server CPU profiling.
+  - **Resiliency:** `yt-dlp` fails a lot. The queue needs auto-retries, timeouts, and logic to kill stuck jobs. Otherwise, the queue becomes a graveyard.
 
-### 5. HLS vs. HTTP Range (The Stream Debate)
-* **The Reality:** HLS (chunked `.m3u8` playlists) is the gold standard for "God-level UX" and scrubbing without latency jumps.
-* **The Debate:** Pre-generating HLS segments on our backend entirely negates the speed of skipping our backend for proxies. 
-* **The Compromise:** As long as our proxy supports strict HTTP Range Requests (206 Partial Content), modern browsers natively fetch "chunks" of MP4s efficiently. We will stick to HTTP Range Requests for Phase 1/2, and explore edge-CDN HLS caching only if scrubbing metrics show high latency on poor network conditions.
+### 5. HLS vs. HTTP Range (The Hard Truth)
+* **The Reality Check:** We initially said, "We will stick to HTTP Range Requests." That is playing it too safe. Range requests do not equal smooth scrubbing, *especially* on Indian mobile networks (our core demographic). If we get popular, users will feel lag spikes and buffer jumps.
+* **The True Mindset:**
+  - *Phase 1:* HTTP Range (To get out of the door)
+  - *Phase 2:* Measure Telemetry
+  - *Phase 3:* **HLS (chunked `.m3u8`) is inevitable.** We must plan to pre-generate seekable chunks for power-users, otherwise we will hit a massive UX ceiling. 
 
 ### 6. Zero Observability 
 * **The Reality:** We don't actually know how fast it is. We are "guessing" it's fast based on our own PCs.
 * **The Fix (Phase 1): Basic Telemetry**
-  Log `Time To First Frame (TTFF)`, `download_success_rate`, and proxy failure fallbacks so we have a dashboard of the Trimmer's health.
+  Log `Time To First Frame (TTFF)`, `download_success_rate`, `scrub_latency`, and proxy failure fallbacks. Without this, we are flying blind.
 
 ---
 
@@ -98,12 +97,12 @@ Once we scale organic traffic via SEO (our JSON-LD is already set up), we apply 
 * **Placement 2 (The Sweet Spot - Interstitial):** When users hit "Download", there is a natural 5-15 second wait time while `yt-dlp` cuts their video. *This is a captive audience.* We serve a high-paying interstitial ad right here while the queue loads. "Your video is processing... [AD]".
 
 ### 2. The Freemium / Recurring Plan System (Stripe / Razorpay)
-Once the tool becomes a daily habit for meme creators and video editors, we lock the power features:
+* **The Reality Check:** A slightly delusional mindset early on is thinking we can throw up a paywall immediately. Nobody pays until the tool becomes a habit, they trust it, and it works flawlessly. Premature monetization kills growth. We will optimize for Stability -> Speed -> Repeat Usage -> *Then* Monetize.
 * **Free Tier:** 720p maximum, watermark added (viral loop marketing), limit of 3 downloads per day, must wait in the "queue".
-* **Pro Tier (₹299/mo or $5/mo):** 1080p/4K unlocked, ZERO wait times (priority queue routed to a premium Hetzner node), no watermarks, batch link processing. Use Stripe for Intl and Razorpay for India. 
+* **Pro Tier (₹299/mo or $5/mo):** 1080p/4K unlocked, ZERO wait times (priority queue routed to a premium Hetzner node), no watermarks, batch link processing. Use Stripe for Intl and Razorpay for India. *Only after we establish massive organic traction.*
 
 ### 3. Cost Minimization (Protecting Margins)
-* **Aggressive Caching:** We put Cloudflare in front of the final downloads. If 500 people trim and download the *exact same viral meme segment*, the VPS only processes it *once*. The other 499 people are served instantly by Cloudflare cache. Cost = $0.
+* **The Cloudflare Caching Reality:** We initially assumed: "If 500 people trim a viral meme, we process it once and Cloudflare caches it." ** Reality:** Users trim slightly different timestamps. Even a 1-second difference is a cache miss. Caching definitely helps for identical formats, but it *will not* save us at scale. We cannot rely strictly on Cloudflare for cost control.
 * **Storage Eviction:** Downloaded files on our server auto-delete after 10 minutes. We are a pipeline, not a hard drive.
 
 ---

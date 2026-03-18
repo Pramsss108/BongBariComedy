@@ -31,21 +31,19 @@ Browsers run in sandboxes. YouTube blocks CORS. You cannot use a user's connecti
 * **The Exploit:** Google's Video CDN (`googlevideo.com`) rarely blocks the actual *streaming* IP once the direct URL is successfully generated.
 * **The Strategy:** Stealth for Metadata (KBs). Brute force for Streams (GBs).
 
-**Phase A (The Final Stack): Hybrid Smart-Split Setup**
-* **The Reality:** We don't need a massive Residential pool, and we don't need 10 VPS nodes. We need precision routing.
+**Phase A (The Startup Reality Stack): 1 VPS + ASocks PAYG**
+* **The Reality:** We don't need a massive Residential pool, and we definitely don't need a 3-VPS swarm for a product in the testing phase. We need a low-cost, easy-to-debug, monolithic node paired with a cheap precision proxy.
 * **Architecture:** 
-  `User` -> `API (Render)` -> `yt-dlp (via ASocks Residential Proxy)` -> `Gets CDN URL` -> `VPS Node (Hetzner)` -> `Streams purely via CDN URL`
+  `User` -> `Your ONE VPS (Hetzner)` -> `yt-dlp (via ASocks Residential Proxy)` -> `Gets CDN URL` -> `Your SAME VPS streams video`
 
-* **Load Separation (The Setup):**
-  * **Metadata Proxy:** ASocks PAYG ($3/GB). We ONLY use this for the initial `yt-dlp --proxy` extraction. Since it only pulls text/JSON (~100KB), $3 covers 10,000+ requests. 
-  * *Why ASocks vs Webshare?* ASocks is true Pay-As-You-Go with zero monthly commitments and offers real residential IP rotation. Webshare Datacenter free-tier will inevitably get flagged by BotGuard.
-  * **VPS 1 & 2:** Hetzner (~€4/mo). Dedicated purely to piping the raw `googlevideo.com` stream back to the UI.
-  * **VPS 3:** Hetzner (~€4/mo). Dedicated to the heavy Download/ffmpeg BullMQ worker queue.
+* **The Setup (Maximum Cost Efficiency):**
+  * **1️⃣ ONE VPS (Hetzner, ~€4-€6/mo):** Handles EVERYTHING. The API, the Preview streaming, and the Downloads. Do not split this up until CPU consistently hits >80% or users complain about queue delays.
+  * **2️⃣ ONE PROXY (ASocks PAYG, ~₹0-₹200/mo):** We ONLY use this for the initial `yt-dlp --proxy` extraction (fetching CDN URL). Since it only pulls metadata JSON (~100KB), 1GB ($3) literally covers 10,000 to 20,000 requests. 
 
-**Why This Is The Holy Grail:**
-1. **Cost:** It prevents the instant death spiral of routing video through Residential proxies ($800+ for 5GB). Instead, our costs are literally <$1/month for stealth metadata.
-2. **Stealth:** yt-dlp metadata extraction uses clean residential IPs.
-3. **Speed:** The actual video piping is done on Hetzner's unmetered datacenter lines.
+**Why This Is The Startup Holy Grail:**
+1. **Cheap:** Fixed cost of 1 VPS. Proxy is almost free because it strictly fetches text, not video bytes.
+2. **Simple:** No complex multi-VPS routing, no infrastructure headaches, easy to debug.
+3. **Safe:** No over-engineering and zero wasted money before we validate with real users.
 
 **Execution Warning:** Do NOT depend strictly on the proxy. The code MUST have a direct-fetch fallback in case the SOCKS5 proxy drops.
 ```typescript
@@ -189,15 +187,16 @@ const worker = new Worker("downloads", async (job) => {
 
 ---
 
-## 🏗️ The Infrastructure Reality Check
-We have moving parts across different servers. Here is why things are placed where they are:
+## 🏗️ The Infrastructure Reality Check (Startup Phase)
+Instead of complicated setups across different servers, we are keeping it unified until traffic forces us to split.
 
-* **Why Render (The Brain)?** 
-  Render hosts our Node.js/Express app and connects to Neon (Postgres). It is the "control center." It validates users, checks the database, serves UI, and handles routing. **But Render CPUs are weak.** 
-* **Why Hetzner/VPS (The Muscle)?**
-  `yt-dlp` and `ffmpeg` are incredibly CPU and bandwidth-heavy. If we run them on Render, the whole website crashes when 3 people download 4K videos. The VPS is our "muscle." The Render Brain sends a message to the Hetzner Muscle saying, *"Hey, download this, cut it, and give me the file."* 
-* **Why Cobalt Proxies (The Speed)?**
-  We bypass *both* Render and Hetzner for the UI previews. The proxy instantly streams 480p to the user's browser, saving us immense bandwidth and server costs.
+* **The Single Hetzner VPS (Brain + Muscle):** 
+  To reduce latency and moving parts, the Single VPS acts as the API, handles the user queuing logic, executes `yt-dlp` (via ASocks SOCKS5), runs `ffmpeg` to merge streams, and pipes the preview video data directly back to the user. 
+* **The "When To Upgrade" Signal:**
+  We only transition into a Multi-VPS Worker/Master architecture when:
+  1. CPU consistently lives > 80-100%.
+  2. Users complain that queues are too slow.
+  3. Video piping lag ruins the UI preview.
 
 ---
 

@@ -15,6 +15,7 @@ import { execFile, spawn } from "child_process";
 import fs from "fs";
 import { getPoToken } from './poTokenService.js';
 import crypto from "crypto";
+import jwt from "jsonwebtoken";
 import axios from "axios";
 import { HttpsProxyAgent } from "https-proxy-agent";
 // @ts-ignore
@@ -335,7 +336,7 @@ async function handleStream(req: Request, res: Response): Promise<void> {
   const rawUrl = req.query.url as string;
   const rawFormat = req.query.format as string || "mp4-720";
   const userIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
-  const userSessionId = req.query.sessionId || (req as any).session?.userId || 'anonymous';
+  const userSessionId = 'masked-via-token'; // Phase 2: Token verification handles security now
 
   console.log(`\n======================================================`);
   console.log(`🔵 [VIBE CODER] 🔥 NEW INCOMING STREAM CONNECTION 🔥`);
@@ -770,14 +771,37 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
   formatNotAvailable(res, "Preview streaming unavailable right now.");
 }
   export function registerDownloaderRoutes(app: Express, isAuthenticated: any): void {
+  // Generate short-lived secure token for media URLs
+  app.get("/api/downloader/token", isAuthenticated, (req, res) => {
+    const url = req.query.url as string;
+    if (!url) return res.status(400).json({ error: "URL is required" });
+    const token = jwt.sign({ url, user: (req as any).session?.userId || 'guest' }, process.env.JWT_SECRET || "fallback_secret", { expiresIn: "5m" });
+    res.json({ token });
+  });
+
+  // Middleware to verify short-lived token
+  const verifyMediaToken = (req: Request, res: Response, next: any) => {
+    const token = req.query.token as string;
+    if (!token) return res.status(401).json({ error: "Missing media token" });
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback_secret") as any;
+      if (decoded.url && decoded.url !== req.query.url) {
+        return res.status(403).json({ error: "Token URL mismatch" });
+      }
+      next();
+    } catch (e) {
+      return res.status(401).json({ error: "Invalid or expired media token" });
+    }
+  };
+
   // Info endpoint — lenient rate limit (10/min) — PUBLIC
   app.get("/api/downloader/info", infoLimiter, handleInfo);
 
   // Stream/download endpoint — strict rate limit (5/min) — PROTECTED
-  app.get("/api/downloader/stream", isAuthenticated, streamLimiter, handleStream);
+  app.get("/api/downloader/stream", streamLimiter, verifyMediaToken, handleStream);
 
   // Proxy stream URL for preview — PROTECTED
-  app.get("/api/downloader/proxy-stream", infoLimiter, handleProxyStream);
+  app.get("/api/downloader/proxy-stream", infoLimiter, verifyMediaToken, handleProxyStream);
 }
 
 

@@ -86,7 +86,7 @@ export function DownloadHistory() {
   if (history.length === 0) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end" ref={clickOutsideRef}>
+    <div className="fixed bottom-6 right-6 z-[110] flex flex-col items-end" ref={clickOutsideRef}>
       {/* Floating Pop-up Card */}
       {isOpen && (
         <Card className="mb-4 w-[360px] max-w-[calc(100vw-3rem)] border border-white/10 bg-[#0a0a0a]/95 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] animate-in slide-in-from-bottom-5 rounded-2xl overflow-hidden ring-1 ring-white/5">

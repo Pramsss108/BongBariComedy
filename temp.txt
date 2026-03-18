@@ -1,0 +1,29 @@
+        }
+        throw new Error("Hetzner returned ok but missing metadata fields.");
+    } catch (engineErr) {
+        console.warn(`[Phase 2] Engine fetch failed, falling back to Cobalt...`, engineErr);
+        try {
+            return await fetchMetadataCobalt(url);
+        } catch (cobaltErr) {
+            throw new Error(`Both engines failed. Engine: ${engineErr}. Cobalt: ${cobaltErr}`);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// PHRASE 2: GET /api/downloader/info
+// Returns video metadata: title, thumbnail, duration, available formats
+// ---------------------------------------------------------------------------
+async function handleInfo(req: Request, res: Response): Promise<void> {
+  const validated = validateVideoUrl(req.query.url as string);
+  if (!validated.ok) {
+    formatNotAvailable(res, validated.error, 400);
+    return;
+  }
+
+  try {
+    const info = await fetchSmartMetadata(validated.url);
+
+    // Build a clean, safe response — never send raw yt-dlp output to client
+    const formats: { id: string; label: string; ext: string; height?: number; isAudio?: boolean }[] = [];
+
+    // V12 Dominator: Intelligent Format Extraction

@@ -158,6 +158,7 @@ export default function SocialDownloaderPage() {
   const [trimMode, setTrimMode] = useState(false);
   const [startTime, setStartTime] = useState(0);
   const [endTime, setEndTime] = useState(0);
+  const [actualDuration, setActualDuration] = useState(0);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isCaching, setIsCaching] = useState(false); // CapCut: Block 1 Cache state
@@ -192,6 +193,9 @@ export default function SocialDownloaderPage() {
       if (e.code === "Space") {
         e.preventDefault();
         if (video.paused) {
+          if (video.currentTime < startTime || video.currentTime >= endTime) {
+             video.currentTime = startTime;
+          }
           video.play().catch(console.error);
           setIsPlaying(true);
         } else {
@@ -251,7 +255,10 @@ export default function SocialDownloaderPage() {
       console.log(`[Vibe Coder Tracker] ✅ Metadata fetch success! Phase 1 complete.`);
       setVideoInfo(data);
       setSelectedFormat(data.formats[0]?.id ?? "mp4-720");
-      setStartTime(0); setEndTime(Math.floor(data.duration)); setPhase("ready");
+      setStartTime(0); 
+      setEndTime(Math.floor(data.duration)); 
+      setActualDuration(Math.floor(data.duration));
+      setPhase("ready");
       if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(50);
       try { (window as any).gtag?.("event", "downloader_fetch", { platform: data.platform ?? "unknown" }); } catch {}
     } catch (err: any) {
@@ -289,8 +296,18 @@ export default function SocialDownloaderPage() {
       const encodedTitle = encodeURIComponent(safeTitle);
       const backendUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=${selectedFormat}&title=${encodedTitle}&sessionId=${sessionId}`);
 
-      // Use our secure fetch API to force Progress Bar & Save As dialog
-      await performSecureDownload(backendUrl, safeTitle, setDownloadProgress);
+        // PHASE 3: Native Browser Download + Raw CDN (0% Server Load)
+        // By bypassing 'fetch' and Blob creation, we avoid CORS from Google's CDNs
+        // AND we save giant amounts of RAM since the browser download manager handles saving directly to disk.
+        const a = document.createElement('a');
+        a.href = backendUrl;
+        a.target = "_blank";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        setDownloadProgress(100);
+        setTimeout(() => setPhase("ready"), 1500);
 
       saveToHistory({
         title: videoInfo.title,
@@ -324,11 +341,10 @@ export default function SocialDownloaderPage() {
     let rafId: number;
     const enforceLoopBounds = () => {
       const vid = videoRef.current;
-      if (vid) {
+      // Use !vid.paused to ensure we don't snap the playhead if the user is scrubbing while paused
+      if (vid && !vid.paused) {
+        // Only enforce the END boundary so users can preview the lead-up to the cut by playing from before the start point
         if (vid.currentTime >= endTime) {
-           vid.currentTime = startTime;
-           if (vid.paused) vid.play().catch(() => {});
-        } else if (vid.currentTime < startTime - 0.2) {
            vid.currentTime = startTime;
         }
       }
@@ -359,63 +375,25 @@ export default function SocialDownloaderPage() {
       return;
     }
 
-    const streamUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=mp4-480&mode=preview&sessionId=${sessionId||""}`);
-
-    // FAST PREVIEW: If just watching, don't download whole file to RAM!
-    if (!enterTrimMode) {
-      setPreviewUrl(streamUrl);
-      setShowPreview(true);
-      return;
-    }
-
-    // ENTERING TRIMMER: We need Blob for instant 0ms latency scrubbing
-    setIsCaching(true);
-    setCacheProgress(0);
-    // Hide standard stream preview while downloading the Blob to show the large loader
-    if (enterTrimMode && previewUrl && !previewUrl.startsWith("blob:")) {
-        setShowPreview(false);
-    }
     try {
-      
-      const response = await fetch(streamUrl);
-      if (!response.ok) throw new Error("Network response was not ok");
-      
-      // Attempt to read total length if backend provides it
-      const contentLength = response.headers.get("content-length");
-      const total = contentLength ? parseInt(contentLength, 10) : 0;
-      
-      let loaded = 0;
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error("No readable stream");
-
-      const chunks: Uint8Array[] = [];
-      
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        
-        if (value) {
-          chunks.push(value);
-          loaded += value.length;
-          if (total) {
-            setCacheProgress(Math.round((loaded / total) * 100));
-          } else {
-            // Fake progress if we don't know total length (cap at 95 until done)
-            setCacheProgress((prev) => Math.min(prev + 5, 95));
-          }
-        }
+      // Phaser 5: Fetch direct stream URL to avoid 302 redirect lag on every chunk
+      setIsCaching(true);
+      const res = await fetch(apiUrl(`/api/downloader/proxy-stream?url=${encodeURIComponent(url)}&format=mp4-480&sessionId=${sessionId||""}`));
+      if (!res.ok) {
+         if (res.status === 401) throw new Error("Unauthorized. Please log in again.");
+         throw new Error("Failed to load preview stream.");
       }
+      const data = await res.json();
       
-      const blob = new Blob(chunks, { type: "video/mp4" });
-      const blobUrl = URL.createObjectURL(blob);
-      setPreviewUrl(blobUrl);
-      setShowPreview(true);
-      if (enterTrimMode && !trimMode) setTrimMode(true);
-
-      if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(50);
-    } catch (err) {
-      console.error("Cache failed:", err);
-      toast({ title: "Preview Failed", description: "Failed to download video to browser cache.", variant: "destructive" });
+      if (data.streamUrl) {
+        setPreviewUrl(data.streamUrl);
+        setShowPreview(true);
+        if (enterTrimMode && !trimMode) setTrimMode(true);
+      } else {
+         toast({ title: "Preview Error", description: "Could not fetch preview", variant: "destructive" });
+      }
+    } catch (err: any) {
+        toast({ title: "Preview Error", description: err.message, variant: "destructive" });
     } finally {
       setIsCaching(false);
       setCacheProgress(100);
@@ -521,14 +499,21 @@ export default function SocialDownloaderPage() {
 
                   <div className={`${isVertical ? "aspect-[9/16] w-full max-h-[70vh] max-w-[400px] mx-auto" : "aspect-video w-full max-w-4xl"} ${trimMode ? "rounded-t-xl" : "rounded-xl"} overflow-hidden border border-white/10 shadow-2xl bg-black relative group flex flex-col items-center justify-center transition-all duration-300`}>
                     {isDesktop && showPreview && previewUrl ? (
-                      <video 
-                        ref={trimMode ? undefined : videoRef} 
-                        src={previewUrl} 
-                        controls={!trimMode} 
-                        className="w-full h-full object-contain" 
+                      <video
+                        ref={trimMode ? undefined : videoRef}
+                        src={previewUrl}
+                        controls={!trimMode}
+                        className="w-full h-full object-contain"
                         autoPlay={!trimMode}
                         muted={trimMode}
-                        onPlay={() => !trimMode && setIsPlaying(true)} 
+                        onLoadedMetadata={(e) => {
+                            const d = e.currentTarget.duration;
+                            if (d && !isNaN(d) && d !== Infinity && actualDuration === 0) {
+                                setActualDuration(d);
+                                if (endTime === 0) setEndTime(d);
+                            }
+                        }}
+                        onPlay={() => !trimMode && setIsPlaying(true)}
                         onPause={() => !trimMode && setIsPlaying(false)} 
 
                       />
@@ -571,7 +556,7 @@ export default function SocialDownloaderPage() {
                     </div>
                  </div>
                  <h1 className="text-5xl lg:text-6xl font-black text-white/90 tracking-tight leading-none mb-6">
-                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400">BongBari</span><br/>Downloader
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400">Universal</span><br/>Downloader
                  </h1>
                  <p className="text-lg text-slate-400 leading-relaxed">
                     The ultimate video processing suite. Save, trim, and remix content from YouTube, Instagram, and Facebook instantly.
@@ -585,9 +570,9 @@ export default function SocialDownloaderPage() {
              
              {/* Mobile-only Hero (hidden on desktop) */}
              <div className="md:hidden pt-8 pb-6 text-center px-4">
-                <h1 className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400 mb-2 tracking-tight">BongBari<br/>Downloader</h1>
+                <h1 className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400 mb-2 tracking-tight">Universal<br/>Downloader</h1>
                 <p className="text-slate-400 text-sm leading-relaxed max-w-xs mx-auto mb-4">
-                  Save, trim, and remix shorts & videos from your favorite platforms.
+                  Save, trim, and download any video from YouTube, Instagram, Facebook, and more platforms.
                 </p>
                 {/* Platform pills mobile */}
                 <div className="flex justify-center gap-2 mb-2">
@@ -660,7 +645,15 @@ export default function SocialDownloaderPage() {
                       {/* Mobile Thumbnail (Hidden on Desktop) */}
                         <div className={`md:hidden ${isVertical ? "aspect-[9/16] w-2/3 mx-auto max-h-[50vh]" : "aspect-video"} relative rounded-xl overflow-hidden bg-black/40 border border-white/10 group`} onClick={() => loadVideoToCache(false)}>
                             {!isDesktop && showPreview && previewUrl ? (
-                              <video src={previewUrl} controls className="w-full h-full object-contain" autoPlay muted={trimMode} />
+                              <video src={previewUrl} controls className="w-full h-full object-contain" autoPlay muted={trimMode} 
+                                onLoadedMetadata={(e) => {
+                                  const d = e.currentTarget.duration;
+                                  if (d && !isNaN(d) && d !== Infinity && actualDuration === 0) {
+                                      setActualDuration(d);
+                                      if (endTime === 0) setEndTime(d);
+                                  }
+                                }}
+                              />
                             ) : (
                               <>
                                 {videoInfo.thumbnail && <img src={videoInfo.thumbnail} className="w-full h-full object-cover opacity-60" />}
@@ -821,9 +814,16 @@ export default function SocialDownloaderPage() {
            <div className="fixed inset-0 z-[100] bg-black flex flex-col font-serif animate-in fade-in zoom-in-95 duration-300">
               {/* App Bar */}
               <div className="h-16 flex items-center justify-between px-6 border-b border-white/10 shrink-0 bg-black/50 backdrop-blur-md relative z-50">
-                 <button onClick={() => setTrimMode(false)} className="text-white/60 hover:text-white flex items-center gap-2 text-xs font-bold bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg transition-colors">
-                    <ArrowLeft size={16} /> Back to Dashboard
-                 </button>
+                 <div className="flex items-center gap-2">
+                     <Link href="/tools">
+                         <button className="text-white/60 hover:text-white flex items-center gap-2 text-xs font-bold bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg transition-colors">
+                            <ArrowLeft size={16} /> Tools
+                         </button>
+                     </Link>
+                     <button onClick={() => setTrimMode(false)} className="text-white/60 hover:text-white flex items-center gap-2 text-xs font-bold bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg transition-colors hidden sm:flex">
+                        Dashboard
+                     </button>
+                   </div>
 
                  <div className="font-tech text-purple-400 font-bold tracking-widest text-xs flex items-center gap-2 absolute left-1/2 -translate-x-1/2">
                     <Scissors size={14} /> BONGBARI STUDIO
@@ -869,6 +869,13 @@ export default function SocialDownloaderPage() {
                    className="max-w-full max-h-full object-contain shadow-2xl"
                    autoPlay
                    playsInline
+                   onLoadedMetadata={(e) => {
+                       const d = e.currentTarget.duration;
+                       if (actualDuration === 0 && d && !isNaN(d) && d !== Infinity) {
+                           setActualDuration(d);
+                           if (endTime === 0) setEndTime(d);
+                       }
+                   }}
                    onPlay={() => setIsPlaying(true)}
                    onPause={() => setIsPlaying(false)}
 
@@ -898,6 +905,9 @@ export default function SocialDownloaderPage() {
                           e.stopPropagation();
                           if (videoRef.current) {
                               if (videoRef.current.paused) {
+                                if (videoRef.current.currentTime < startTime || videoRef.current.currentTime >= endTime) {
+                                   videoRef.current.currentTime = startTime;
+                                }
                                 videoRef.current.play().catch(console.error);
                               } else {
                                 videoRef.current.pause();
@@ -908,7 +918,7 @@ export default function SocialDownloaderPage() {
                           {!isPlaying ? <Play size={20} className="ml-1 fill-white" /> : <Pause size={20} className="fill-white" />}
                       </button>
                       <div className="flex-1 px-4">
-                          <TrimSlider                                videoRef={videoRef}                              duration={videoInfo.duration}
+                          <TrimSlider                                videoRef={videoRef}                              duration={actualDuration || videoInfo.duration || 0}
                               startTime={startTime} 
                               endTime={endTime}
                               videoUrl={previewUrl || videoInfo.thumbnail || ""}
@@ -922,6 +932,7 @@ export default function SocialDownloaderPage() {
                               }}
                               onScrub={(t) => {
                                 if (videoRef.current) {
+                                  videoRef.current.pause();
                                   videoRef.current.currentTime = t;
                                 }
                               }}
@@ -929,14 +940,30 @@ export default function SocialDownloaderPage() {
                       </div>
                  </div>
                  
-                 <button
-                    className="h-12 px-6 md:px-10 bg-gradient-to-r from-purple-600 to-cyan-600 text-white font-bold text-base rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
-                    onClick={handleTrim}
-                    disabled={phase !== "ready" || endTime <= startTime}
-                 >
-                    {phase === "trimming" ? <Loader2 size={18} className="animate-spin" /> : <Scissors size={18} />}
-                    {phase === "trimming" ? (typeof trimProgress === 'number' && trimProgress > 0 ? `Processing... ${trimProgress}%` : trimProgress) : `Download Clip (${formatTime(startTime)} - ${formatTime(endTime)})`}
-                 </button>
+                      <div className="flex items-center gap-3">
+                         <div className="flex flex-col">
+                            <span className="text-[10px] text-white/50 mb-1 ml-1 uppercase tracking-wider font-bold">Output Format</span>
+                            <select 
+                               className="h-12 px-4 rounded-xl border border-white/10 bg-white/5 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/50 appearance-none drop-shadow-md cursor-pointer"
+                               value={selectedFormat}
+                               onChange={(e) => setSelectedFormat(e.target.value)}
+                            >
+                               {videoInfo?.formats.map((f: any) => (
+                                  <option key={f.id} value={f.id} className="bg-slate-900 text-white">
+                                     {f.label} {['mp3', 'm4a', 'aac', 'wav'].includes(f.ext) ? '🎵' : '🎥'}
+                                  </option>
+                               ))}
+                            </select>
+                         </div>
+                         <button
+                            className="h-12 px-6 md:px-10 bg-gradient-to-r mt-5 from-purple-600 to-cyan-600 text-white font-bold text-base rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
+                            onClick={handleTrim}
+                            disabled={phase !== "ready" || endTime <= startTime || !videoRef.current}
+                         >
+                            {phase === "trimming" ? <Loader2 size={18} className="animate-spin" /> : <Scissors size={18} />}
+                            {phase === "trimming" ? (typeof trimProgress === 'number' && trimProgress > 0 ? `Processing... ${trimProgress}%` : trimProgress) : `Download Clip (${formatTime(startTime)} - ${formatTime(endTime)})`}
+                         </button>
+                      </div>
               </div>
            </div>
         )}

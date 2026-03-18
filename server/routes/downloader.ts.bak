@@ -18,12 +18,6 @@ import crypto from "crypto";
 import axios from "axios";
 // @ts-ignore
 import ffmpegPath from "ffmpeg-static";
-import { performance } from "perf_hooks";
-
-// --- MEMORY CACHES FOR INSTANT PERFORMANCE ---
-const metaCache = new Map<string, { data: any, expires: number }>();
-const streamCache = new Map<string, { url: string, expires: number }>();
-const CACHE_TTL_MS = 60 * 60 * 1000; // 1 Hour
 
 const ytBin = os.platform() === "win32" ? "yt-dlp.exe" : "yt-dlp";
 const YT_DLP_PATH = path.resolve(process.cwd(), "node_modules", "youtube-dl-exec", "bin", ytBin);
@@ -101,12 +95,12 @@ const infoLimiter = rateLimit({
 
 const streamLimiter = rateLimit({
   windowMs: 60 * 1000,
-    max: 60, // Increased to 60 to prevent 429 errors from HTML5 <video> range requests
-    skip: (req) => req.query.mode === 'preview', // Completely bypass rate limiter for previews!
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: { error: "Download limit reached. Please wait a minute." },
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Download limit reached (5/min). Please wait a minute." },
 });
+
 // ---------------------------------------------------------------------------
 // GLOBAL RESOURCE GOVERNOR (Phase 14)
 // Protect Render's 512MB RAM by limiting active ffmpeg/yt-dlp spawns
@@ -206,52 +200,43 @@ async function fetchMetadataCobalt(url: string): Promise<any> {
 }
 
 async function fetchSmartMetadata(url: string): Promise<any> {
-    if (metaCache.has(url)) {
-        const cached = metaCache.get(url)!;
-        // Extend slightly to not invalidate rapidly if heavily hit
-        if (cached.expires > Date.now()) {
-            console.log(`[Cache ⚡] Instant Metadata HIT for ${url}`);
-            return cached.data;
-        }
-    }
-
-    console.log(`[Phase 2] Requesting fast metadata proxy from Hetzner for: ${url}`);
-    const fetchStart = performance.now();
+    // Strategy: Try Local yt-dlp first for quality (thumbnails etc), 
+    // fallback to Cobalt if blocked/failed.
+    // NOTE: Plan V2 says "Cobalt Primary" but for *Metadata*, local yt-dlp is superior 
+    // because Cobalt missing thumbnails breaks the UI preview.
+    // We will use Local Primary for INFO, but Cobalt Primary for DOWNLOAD (in handleStream logic).
+    
     try {
-        const fetch = (await import("node-fetch")).default;
-        const response = await fetch("http://78.47.104.43:9000/", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ url: url })
-        });
+        // 1. Try Local yt-dlp (High Fidelity)
+        const isYT = url.includes("youtube.com") || url.includes("youtu.be");
+        let extraArgs: string[] = ["--extractor-args", "youtube:player_client=android,ios"];
         
-        const fetchEnd = performance.now();
-        console.log(`[Trace ⏱️] Hetzner Engine Responded in ${Math.round(fetchEnd - fetchStart)}ms`);
-
-        if (response.ok) {
-            const data = await response.json() as any;
-            if (data.title || data.duration) {
-                const result = {
-                    title: data.title || "Video",
-                    duration: data.duration || 0,
-                    thumbnail: data.thumbnail || null,
-                    formats: [], // Empty formats array to trigger fast static fallback
-                };
-                metaCache.set(url, { data: result, expires: Date.now() + CACHE_TTL_MS });
-                return result;
+        if (isYT) {
+            try {
+                const { visitorData, poToken } = await getPoToken();
+                extraArgs = ["--extractor-args", `youtube:player_client=android,ios;po_token=web+${poToken};visitor_data=${visitorData}`];
+            } catch (poErr) {
+                console.warn("[PoToken] Failed to fetch po_token for metadata, falling back to standard extraction", poErr);
             }
         }
-        throw new Error("Hetzner returned ok but missing metadata fields.");
-    } catch (engineErr: any) {
-        console.warn(`[Phase 2] Engine fetch failed after ${Math.round(performance.now() - fetchStart)}ms, falling back to Cobalt...`, engineErr?.message || engineErr);
-        const cobaltStart = performance.now();
+
+        const info = await executeYtDlp(url, [
+            "--dump-single-json",
+            "--no-warnings",
+            "--no-call-home",
+            "--prefer-free-formats",
+            "--youtube-skip-dash-manifest",
+            ...extraArgs,
+             "--format", "bestvideo[height<=1080]+bestaudio/best[height<=1080]/best"
+        ]);
+        return info;
+    } catch (localErr) {
+        console.warn(`[SmartMetadata] Local fetch failed, trying Cobalt...`, localErr);
+        // 2. Fallback to Cobalt (Low Fidelity / Savior)
         try {
-            const cobaltData = await fetchMetadataCobalt(url);
-            console.log(`[Trace ⏱️] Cobalt Metadata Responded in ${Math.round(performance.now() - cobaltStart)}ms`);
-            metaCache.set(url, { data: cobaltData, expires: Date.now() + CACHE_TTL_MS });
-            return cobaltData;
+            return await fetchMetadataCobalt(url);
         } catch (cobaltErr) {
-            throw new Error(`Both engines failed. Engine: ${engineErr}. Cobalt: ${cobaltErr}`);
+            throw new Error(`Both engines failed. Local: ${localErr}. Cobalt: ${cobaltErr}`);
         }
     }
 }
@@ -305,18 +290,16 @@ async function handleInfo(req: Request, res: Response): Promise<void> {
              formats.push({ id: "mp4-720", label: "MP4 720p", ext: "mp4", height: 720, isAudio: false });
         }
     } else {
-          // Fallback for fast proxy or non-video sources - assume all standard resolutions exist (Cobalt/Proxy resolves best available)
-          formats.push({ id: "mp4-360", label: "MP4 360p", ext: "mp4", height: 360, isAudio: false });
-          formats.push({ id: "mp4-480", label: "MP4 480p", ext: "mp4", height: 480, isAudio: false });
-          formats.push({ id: "mp4-720", label: "MP4 720p", ext: "mp4", height: 720, isAudio: false });
-          formats.push({ id: "mp4-1080", label: "MP4 1080p HD", ext: "mp4", height: 1080, isAudio: false });
-          formats.push({ id: "mp4-1440", label: "MP4 1440p (2K)", ext: "mp4", height: 1440, isAudio: false });
-          formats.push({ id: "mp4-2160", label: "MP4 2160p (4K)", ext: "mp4", height: 2160, isAudio: false });
-      }
+        // Fallback for Cobalt or non-video sources
+        formats.push({ id: "mp4-720", label: "MP4 720p", ext: "mp4", height: 720, isAudio: false });
+        if (info.height && info.height >= 1080) {
+           formats.push({ id: "mp4-1080", label: "MP4 1080p", ext: "mp4", height: 1080, isAudio: false });
+        }
+    }
 
-      // Audio Formats (Always Available via conversion)
-      formats.push({ id: "mp3", label: "MP3 Audio (High)", ext: "mp3", isAudio: true });
-      formats.push({ id: "m4a", label: "M4A Audio (AAC)", ext: "m4a", isAudio: true });
+    // Audio Formats (Always Available via conversion)
+    formats.push({ id: "mp3", label: "MP3 Audio (High)", ext: "mp3", isAudio: true });
+    formats.push({ id: "m4a", label: "M4A Audio (AAC)", ext: "m4a", isAudio: true });
 
     res.json({
       title: info.title ?? "Untitled Video",
@@ -369,26 +352,22 @@ async function handleStream(req: Request, res: Response): Promise<void> {
   const mode = (req.query.mode as string) ?? "download"; // 'download' | 'preview'
 
   // Phase 14: Global Concurrency Guard
-    // Since previews return instant 302 redirects to CDN, they do not stress the Render RAM.
-    const isStreamOrTrimSpawn = mode !== "preview";
-    let slotAcquired = false;
-
-    if (isStreamOrTrimSpawn) {
-        if (!tryAcquireSlot()) {
-            res.status(503).json({ error: "High traffic volume. Please try again in 30 seconds." });
-            return;
-        }
-        slotAcquired = true;
-    }
-
-    // Ensure we release the slot when done
-    let released = false;
-    const releaseOnce = () => {
-        if (slotAcquired && !released) {
-             releaseSlot();
-             released = true;
-        }
-    };
+  // Only limit full downloads (previews are lighter/shorter generally or handled via proxy).
+  // Actually previews use the same pipe so we should guard them too or allow higher limit?
+  // Let's guard them all for safety on 512MB RAM.
+  if (!tryAcquireSlot()) {
+      res.status(503).json({ error: "High traffic volume. Please try again in 30 seconds." });
+      return;
+  }
+  
+  // Ensure we release the slot when done
+  let released = false;
+  const releaseOnce = () => {
+      if (!released) {
+          released = true;
+          releaseSlot();
+      }
+  };
   res.on("close", releaseOnce);
   res.on("finish", releaseOnce);
   res.on("error", releaseOnce);
@@ -588,88 +567,51 @@ async function handleStream(req: Request, res: Response): Promise<void> {
         });
 
     } else {
-          console.log(`\n\n🟢 [VIBE CODER ALERT] 👉 FULL VIDEO STREAM INITIATED!`);
-          console.log(`[Phase 3] FULL VIDEO OR PREVIEW -> Fetching raw CDN URL from proxy for bypass!`);
+        console.log(`\n\n🟢 [VIBE CODER ALERT] 👉 FULL VIDEO STREAM INITIATED!`);
+        console.log(`🎬 TARGET VIDEO: ${validated.url}`);
+        console.log(`🚀 NO CUTS REQUESTED. FIRING DIRECT YT-DLP STREAM ALGORITHM!`);
+        console.log(`🛠️ ARGS: [ ${ytdlArgs.join(' ')} ]\n`);
+        
+        // DIRECT STREAM APPROACH FOR FULL VIDEOS
+        const subprocess = spawnYtDlpStream(validated.url, ytdlArgs);
 
-          try {
-             // For metadata endpoint we just pass URL
-             const reqBody = { url: validated.url };
-             const fetch = (await import("node-fetch")).default;
-             // Note: Hetzner proxy returns the stream URL directly when POSTing to /
-             const response = await fetch("http://78.47.104.43:9000/", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(reqBody)
-             });
-             if (response.ok) {
-                 const data = await response.json() as any;
-                 if (data && data.url) {
-                     console.log(`✅ [SUCCESS] Redirecting client directly to Hetzner CDN!`);
-                     res.redirect(302, data.url);
-                     return;
-                 }
-             }
-          } catch(proxyErr) {
-             console.log(`[Phase 3] Hetzner proxy failed. Falling back to Cobalt public instance...`);
+        subprocess.stdout?.on('data', () => {
+            // Uncomment to log every byte (too noisy)
+            // console.log(`📦 [STREAM] Pumping bytes... `);
+        });
+
+        subprocess.stdout?.pipe(res);
+
+        subprocess.stderr?.on("data", (chunk: Buffer) => {
+          // Log but never surface to client
+          const msg = chunk.toString();
+          console.log(`⚙️ [YT-DLP FULL STREAM] -> ${msg.trim()}`);
+        });
+
+        subprocess.on("error", (err: any) => {
+          console.error("🚨 [CRASH ALERT] spawn error:", err?.message);
+          if (!res.headersSent) {
+            res.status(500).json({ error: "Download failed. Please try again." });
           }
+        });
 
-          // Fallback to qwkuns API (Cobalt) if Hetzner fails
-          try {
-              const fetch = (await import("node-fetch")).default;
-              const cobaltResponse = await fetch("https://api.qwkuns.me/", {
-                  method: "POST",
-                  headers: {
-                      'Accept': 'application/json',
-                      'Content-Type': 'application/json',
-                      'User-Agent': 'BongBari-Server'
-                  },
-                  body: JSON.stringify({ url: validated.url })
-              });
-              if (cobaltResponse.ok) {
-                  const cobaltData = await cobaltResponse.json() as any;
-                  if (cobaltData && cobaltData.url) {
-                     console.log(`✅ [SUCCESS] Redirecting client directly to Cobalt CDN!`);
-                     res.redirect(302, cobaltData.url);
-                     return;
-                  }
-              }
-          } catch(cobaltErr) {
-              console.log(`[Phase 3] Cobalt proxy failed.`);
+        subprocess.on("close", (code: number) => {
+          console.log(`\n🏁 [STREAM FINISHED] YT-DLP EXITED WITH CODE: ${code}`);
+          if (code !== 0 && !res.writableEnded) {
+            console.error("❌ [FAILURE] yt-dlp exited abnormally with code:", code);
+            res.end();
+          } else {
+            console.log(`🎉 [SUCCESS] FULL STREAM DELIVERED SUCCESSFULLY!`);
           }
+        });
 
-          // FINAL FALLBACK: PIPE YT-DLP DIRECTLY
-          // If all proxies fail, we MUST pipe it locally so the video definitely plays!
-          console.log(`[Phase 3] Proxies exhausted/failed. Falling back to native yt-dlp local buffering stream...`);
-          ytdlArgs.push("-o", "-"); // pipe straight to stdout
-          const subprocess = spawn(YT_DLP_PATH, [...ytdlArgs, validated.url], {
-            stdio: ["ignore", "pipe", "pipe"],
-          });
-
-          subprocess.stderr?.on("data", (chunk: Buffer) => {
-            const msg = chunk.toString();
-            console.log(`⚙️ [YT-DLP] -> ${msg.trim()}`);
-          });
-
-          subprocess.on("error", (err: any) => {
-            console.error(`🚨 [CRASH] spawn error:`, err?.message);
-            if (!res.headersSent) res.status(500).json({ error: "Download failed." });
-          });
-
-          subprocess.on("close", (code: number) => {
-             console.log(`\n🏁 [PROCESS FINISHED] YT-DLP EXITED WITH CODE: ${code}`);
-             if (!res.writableEnded && !res.headersSent) {
-                 res.status(500).json({ error: "Stream ended prematurely" });
-             }
-          });
-
-          subprocess.stdout?.pipe(res);
-
-          req.on("close", () => {
-            console.log(`🔌 [DISCONNECT] BROWSER HUNG UP! KILLING SUBPROCESS...`);
-            subprocess.kill?.("SIGTERM");
-          });
-      }
-    } catch (err: any) {
+        req.on("close", () => {
+          console.log(`🔌 [DISCONNECT] BROWSER HUNG UP STREAM! KILLING FULL STREAM SUBPROCESS...`);
+          // Client disconnected — kill the subprocess to free resources on Render
+          subprocess.kill?.("SIGTERM");
+        });
+    }
+  } catch (err: any) {
     console.error("[downloader/stream] error:", err?.message);
     if (!res.headersSent) {
       res.status(500).json({ error: "Download failed. The video may no longer be available." });
@@ -680,101 +622,51 @@ async function handleStream(req: Request, res: Response): Promise<void> {
 // ---------------------------------------------------------------------------
 // PHRASE 5: GET /api/downloader/proxy-stream
 // Returns a short-lived direct URL for the browser <video> preview tag.
-// Uses Cobalt proxy with 480p setting for lightweight memory caching.
+// For YouTube, we proxy here to avoid referer/origin restrictions.
 // ---------------------------------------------------------------------------
 async function handleProxyStream(req: Request, res: Response): Promise<void> {
   const validated = validateVideoUrl(req.query.url as string);
-  const requestedFormat = (req.query.format as string) || "mp4-480";
-  // Extract quality '480' from 'mp4-480'
-  const qualityMatch = requestedFormat.match(/\d{3,4}/);
-  const qStr = qualityMatch ? qualityMatch[0] : "480";
-
   if (!validated.ok) {
     res.status(400).json({ error: validated.error });
     return;
   }
 
-    const { url } = validated;
+  try {
+    const ytArgs = [
+      "--get-url",
+      "--no-warnings",
+      "--no-check-certificate",
+      "--extractor-args", "youtube:player_client=android,ios",
+      "--format", "best[height<=480][ext=mp4]/best[height<=480]/best"
+    ];
     
-    // 1. FAST PATH: Check RAM Cache
-    if (streamCache.has(url)) {
-        const cached = streamCache.get(url)!;
-        if (cached.expires > Date.now()) {
-            console.log(`[Cache ⚡] Instant PREVIEW HIT for ${url} at ${qStr}p`);
-            res.json({ streamUrl: cached.url });
-            return;
-        }
-    }
+    const directUrlOutput = await new Promise<string>((resolve, reject) => {
+      execFile(YT_DLP_PATH, [...ytArgs, validated.url], { maxBuffer: 1024 * 1024 * 5 }, (error, stdout) => {
+        if (error) return reject(error);
+        resolve(stdout.trim());
+      });
+    });
 
-    console.log(`[Phase 2] Requesting fast PREVIEW proxy from Cobalt at ${qStr}p for: ${url}`);
-    const fetchStart = performance.now();
-    try {
-        const fetch = (await import("node-fetch")).default;
-        // Prioritize Cobalt because we can force 480p and lower latency streaming for preview
-        const response = await fetch("https://api.qwkuns.me/", {
-            method: "POST",
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'User-Agent': 'BongBari-Server'
-            },
-            body: JSON.stringify({ url: url, vQuality: qStr, isAudioOnly: requestedFormat.includes("mp3") || requestedFormat.includes("m4a") })
-        });
-      
-      const fetchEnd = performance.now();
-      console.log(`[Trace ⏱️] Cobalt PREVIEW Engine Responded in ${Math.round(fetchEnd - fetchStart)}ms`);
+    const urls = directUrlOutput.split("\n").map((u: string) => u.trim()).filter(Boolean);
+    const streamUrl = urls[0];
+    if (!streamUrl) throw new Error("No stream URL found");
 
-      if (response.ok) {
-         const data = await response.json() as { url: string };
-         const streamUrl = data?.url;
-          
-          if (streamUrl) {
-              streamCache.set(url, { url: streamUrl, expires: Date.now() + CACHE_TTL_MS });
-              res.json({ streamUrl });
-              return;
-          }
-      }
-      throw new Error("Cobalt returned ok but missing stream URL.");
-      
-    } catch (err: any) {
-      console.warn(`[Phase 2] Cobalt Preview Engine failed after ${Math.round(performance.now() - fetchStart)}ms, falling back to local...`, err?.message || err);
-      try {
-        const ytArgs = [
-          "--get-url",
-          "--no-warnings",
-          "--no-check-certificate",
-          "--extractor-args", "youtube:player_client=android,ios",
-          "--format", `best[height<=${qStr}][ext=mp4]/best[height<=${qStr}]/best`
-        ];
-
-        const directUrlOutput = await new Promise<string>((resolve, reject) => {
-          execFile(YT_DLP_PATH, [...ytArgs, url], { maxBuffer: 1024 * 1024 * 5 }, (error, stdout) => {
-            if (error) return reject(error);
-            resolve(stdout.trim());
-          });
-        });
-
-        const urls = directUrlOutput.split("\n").map((u: string) => u.trim()).filter(Boolean);
-        const streamUrl = urls[0];
-        if (!streamUrl) throw new Error("No stream URL found locally");
-
-        streamCache.set(url, { url: streamUrl, expires: Date.now() + CACHE_TTL_MS });
-        res.json({ streamUrl });
-      } catch (localErr: any) {
-        console.error("[downloader/proxy-stream] error:", localErr?.message);
-        formatNotAvailable(
-          res,
-          "Preview unavailable for this video. You can still download it directly.",
-        );
-      }
-    }
+    // Return the URL to the frontend — browser <video> will play it directly
+    res.json({ streamUrl });
+  } catch (err: any) {
+    console.error("[downloader/proxy-stream] error:", err?.message);
+    formatNotAvailable(
+      res,
+      "Preview unavailable for this video. You can still download it directly.",
+    );
   }
+}
 
-  // ---------------------------------------------------------------------------
-  // PHRASE 17: PHRASE 17 � registerDownloaderRoutes()
-  // All wired up; called from server/routes.ts
-  // ---------------------------------------------------------------------------
-  export function registerDownloaderRoutes(app: Express, isAuthenticated: any): void {
+// ---------------------------------------------------------------------------
+// PHRASE 17: PHRASE 17 — registerDownloaderRoutes()
+// All wired up; called from server/routes.ts
+// ---------------------------------------------------------------------------
+export function registerDownloaderRoutes(app: Express, isAuthenticated: any): void {
   // Info endpoint — lenient rate limit (10/min) — PUBLIC
   app.get("/api/downloader/info", infoLimiter, handleInfo);
 
@@ -784,5 +676,3 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
   // Proxy stream URL for preview — PROTECTED
   app.get("/api/downloader/proxy-stream", isAuthenticated, infoLimiter, handleProxyStream);
 }
-
-

@@ -756,9 +756,9 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
       streamCache.set(url, { url: bestStreamUrl, expires: Date.now() + CACHE_TTL_MS });
 
       if (isStreamMode) {
-          const success = await proxyDirectStream(bestStreamUrl);
-          if (success) return;
-          console.log(`[Phase 0] Direct proxy pipe failed (likely 403). Falling back to yt-dlp local pipe...`);
+          // Send 302 redirect for the video preview directly to CDN! Avoids Render Bot Blocks and 404 errors!
+          res.redirect(302, bestStreamUrl);
+          return;
       } else {
           // Backward compatibility for old UI flow
           res.json({ streamUrl: bestStreamUrl });

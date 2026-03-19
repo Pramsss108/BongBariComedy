@@ -1,3 +1,29 @@
+# VIBE CODER NOTES: SECURITY, SCALE & PROGRESSION PROTOCOL (March 2026)
+
+**1. Security First, Speed Second, Zero Errors:**
+- All implementations must prioritize security (avoiding IP blocks, secure metadata fetching) followed by maximum speed.
+- Zero error tolerance: Ensure graceful fallbacks and proven methods. No hacky unproven solutions.
+
+**2. Progress Bar & Metadata Fetch:**
+- Maintain the "smooth progressive loading" (simulated percentage intervals up to 90/95%) rather than abrupt 4-step jumps.
+- The metadata fetch approach (which is fast, <2KB, and avoids full video load) is working perfectly and should be preserved.
+
+**3. Preview & Trim Cache Quality (Zero Lag Rule):**
+- Preview caches and trim streams **MUST always use the absolute lowest viable quality** (highly compressed MP4).
+- High quality is **only** for the final download, *never* for preview. This guarantees 0ms seek times without lag on the main site.
+- Do not engage the server's CPU to transcode the preview; heavily rely on lowest-tier pre-muxed CDN streams via the proxy (e.g., mp4-360 or mp4-480).
+
+**4. Download Formats (Exact & Low-to-High):**
+- Metadata extraction must read exactly what qualities are available for that specific video.
+- Download buttons should dynamically display exactly these qualities, ordered from **Lowest to Highest** (e.g., 360p -> 720p -> 1080p).
+- Must ensure options are pre-muxed (audio + video) where possible, to prevent excessive ffmpeg merging on our single VPS.
+
+**5. Scaling Constraints (1 VPS + Proxies):**
+- System is running on **1 VPS**. Avoid heavy ffmpeg processing (merging 4K Dash streams) unless absolutely requested.
+- Fully utilize the integrated proxies (ASOCKS) to prevent source blocks.
+- If a method requires complex custom coding that eats resources, look for proven stacks, lightweight libs, or CDN caching instead.
+
+---
 # Trimmer Studio V2: The Scaling & Hardening Roadmap 
 
 *This document serves as the brutal reality check for the BongBari Trimmer Studio. We successfully built a blazing fast MVP. Now, we need to transition it from a fragile prototype to a production-grade, load-bearing system.*

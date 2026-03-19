@@ -268,7 +268,7 @@ async function handleInfo(req: Request, res: Response): Promise<void> {
         });
         
         // Sort heights descending (8K -> 144p)
-        const sortedHeights = Array.from(heights).sort((a, b) => b - a);
+        const sortedHeights = Array.from(heights).sort((a, b) => a - b);
         
         sortedHeights.forEach(h => {
             // Only show standard resolutions to avoid clutter (e.g. 721p)

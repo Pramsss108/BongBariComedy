@@ -68,10 +68,14 @@ try {
   if (!isScrubbing) enforceBounds(); 
   ```
 
-### 3. The Auth "Hack" (Security Leak)
-* **The Reality:** Injecting `sessionId` into the standard URL query solves the 401, but the tokens can get logged in proxy histories and network logs, opening up replay attacks. 
-* **The Fix (Phase 2): Signed Short-Lived Tokens (AWS Style)**
-  Instead of naked Session IDs, the backend will generate a 5-minute signed JWT specifically for stream delivery: `/api/downloader/proxy-stream?token=SIGNED_HASH`. Once it expires, the link is dead. Security goes up, convenience stays exactly the same.
+### 3. The Auth "Hack" & The Speed-Security Conflict
+* **The Reality:** We initially hid `sessionId` in Phase 2 using a dynamic JWT (`/api/stream?token=xyz`). But dynamic tokens bypassed our caching engine (Phase 0), forcing the proxy to re-extract KBs of metadata on every single play/click! We accidentally killed speed to gain security.
+* **The Fix (Phase 2 Revamped): HMAC-Signed Cached Routes**
+  Instead of dynamic tokens that change (killing cache), the server will use a deterministic hash: `hmac(targetUrl + ServerSecret)`.
+  1. Frontend asks for metadata.
+  2. Backend returns metadata AND a strict `signature` string for that exact video.
+  3. Frontend requests stream: `/api/stream?url=TARGET&sig=SIGNATURE`.
+  4. **Why this wins for SaaS:** The URL stays identical (so our Phase 0 Blazing Fast Memory cache still hits at 0ms latency), but the route is completely secure because nobody can spoof the `sig` without our backend secret. We get 100% caching speed *and* 100% route obfuscation.
 
 ### 4. The Final Boss: The Download Bottleneck & The "Fake 1080p" Bug
 * **The Reality (Why High Quality Fails):** Users are noticing that selecting 1080p yields the exact same file size/quality as 720p or lower. **This is because of a massive architectural limitation in how we stream data.** 
@@ -110,11 +114,11 @@ try {
 - [ ] Implement `isScrubbing` UI state to replace `vid.paused` in the UI layer.
 - [ ] Add basic failure/time logging to the backend proxy handler.
 
-### 🔥 PHASE 2 (Scale - ONLY After User Validation)
-- [ ] Implement the Background Job Queue (Upstash Redis + Worker) to handle yt-dlp downloads.
+### 🔥 PHASE 2 (Scale & Monetizable Security)
+- [ ] Implement the Background Job Queue (Upstash Redis + Worker) to handle heavy `yt-dlp` final downloads.
 - [ ] Implement true ffmpeg merging on disk for true 1080p outputs.
 - [ ] Build Progress Polling UI (so users see "Processing... 45%" instead of just a spinning button).
-- [ ] Implement short-lived signed tokens (`HMAC`) for media fetch endpoints instead of exposing `sessionId`.
+- [ ] Implement deterministic `HMAC` signatures for media fetching. Secures the routes *without* breaking the fast Phase 0 RAM cache.
 
 ### Phase 3 (Advanced Scale Weapons)
 - [ ] Custom lightweight node for raw fetching (removing Cobalt dependency entirely).

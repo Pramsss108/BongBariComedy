@@ -661,6 +661,15 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
   // Secure Proxy Pipe: Prevents strict-IP 403 errors by routing bytes through our backend
   const proxyDirectStream = async (targetUrl: string) => {
       try {
+          if (req.method === 'HEAD') {
+              // Rapid fast-path for browser video pre-flight checks
+              res.status(200);
+              res.setHeader('Accept-Ranges', 'bytes');
+              res.setHeader('Content-Type', 'video/mp4');
+              res.end();
+              return true;
+          }
+
           const headers: Record<string, string> = {
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64 AppleWebKit/537.36) Chrome/120.0.0.0 Safari/537.36"
           };
@@ -751,6 +760,13 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
 
   // 5. NATIVE PIPE FALLBACK (if CDN direct stream 403s or URL missing entirely)
   if (isStreamMode) {
+      if (req.method === 'HEAD') {
+          res.status(200);
+          res.setHeader('Accept-Ranges', 'bytes');
+          res.setHeader('Content-Type', 'video/mp4');
+          res.end();
+          return;
+      }
       try {
           const ytdlArgs = ["-f", `best[height<=${qStr}][ext=mp4]/best`, "-o", "-", "--no-warnings", "--force-ipv4"];
           if (process.env.ASOCKS_PROXY) ytdlArgs.push("--proxy", process.env.ASOCKS_PROXY);

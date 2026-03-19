@@ -657,12 +657,17 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
               headers["Range"] = req.headers.range;
           }
 
+          let httpsAgent: any = undefined;
+          if (process.env.ASOCKS_PROXY) {
+              httpsAgent = new HttpsProxyAgent(process.env.ASOCKS_PROXY);
+          }
+
           if (req.method === 'HEAD') {
               // Rapid fast-path for browser video pre-flight checks, but MUST validate against 403s
               try {
-                  const headRes = await axios.head(targetUrl, { headers, validateStatus: () => true, timeout: 4000 });
+                  const headRes = await axios.head(targetUrl, { headers, httpsAgent, validateStatus: () => true, timeout: 4000 });
                   if (headRes.status === 403 || headRes.status >= 500) return false;
-                  
+
                   res.status(headRes.status);
                   res.setHeader('Accept-Ranges', 'bytes');
                   res.setHeader('Content-Type', headRes.headers['content-type'] || 'video/mp4');
@@ -675,12 +680,9 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
             const axiosConfig: any = {
                 headers,
                 responseType: 'stream',
-                validateStatus: () => true
+                validateStatus: () => true,
+                httpsAgent
             };
-
-            if (process.env.ASOCKS_PROXY) {
-
-            }
 
             const proxyRes = await axios.get(targetUrl, axiosConfig);
               if (proxyRes.status === 403 || proxyRes.status >= 500) {
@@ -766,10 +768,12 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
   // 5. NATIVE PIPE FALLBACK (if CDN direct stream 403s or URL missing entirely)
   if (isStreamMode) {
       if (req.method === 'HEAD') {
-          // If we reached here, the fast proxy pipe failed. We shouldn't lie about HEAD.
-          // Spawning yt-dlp just for a HEAD request is too slow, so we return an error 
-          // to force the frontend to handle the failure gracefully instead of showing a black box.
-          res.status(502).end();
+          // Fake a 200 OK for HEAD so the browser proceeds to GET
+          // Spawning yt-dlp just for a HEAD request is too slow and wasteful
+          res.status(200);
+          res.setHeader('Accept-Ranges', 'bytes');
+          res.setHeader('Content-Type', 'video/mp4');
+          res.end();
           return;
       }
       try {

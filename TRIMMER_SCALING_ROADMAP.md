@@ -57,6 +57,11 @@ Browsers run in sandboxes. YouTube blocks CORS. You cannot use a user's connecti
 * **The Exploit:** Google's Video CDN (`googlevideo.com`) rarely blocks the actual *streaming* IP once the direct URL is successfully generated.
 * **The Strategy:** Stealth for Metadata (KBs). Brute force for Streams (GBs).
 
+### 🚨 CRITICAL RULE: NEVER CHOKE THE PROXY WITH VIDEO BYTES
+A devastating bug occurred (March 2026) where the UI spun endlessly at 95% and videos showed a black screen.
+* **The Cause**: The backend routed massive `480p mp4 stream bytes` through the ASocks residential proxy intended for `yt-dlp` text scraping. The residential proxy instantly rate-limited/choked on the gigabytes of video data, returning `0 bytes` to the frontend `<video>` tag.
+* **The Absolute Law**: **Never use `HttpsProxyAgent` in Axios/Fetch requests that pipe media to the client.** The proxy is strictly for initial `yt-dlp` metadata evasion (< 100KB). Once the raw Google CDN URL is obtained, the Render/Hetzner server must use its raw, native gigabit connection to funnel the bytes back to the user.
+
 **Phase A (The Startup Reality Stack): 1 VPS + ASocks PAYG**
 * **The Reality:** We don't need a massive Residential pool, and we definitely don't need a 3-VPS swarm for a product in the testing phase. We need a low-cost, easy-to-debug, monolithic node paired with a cheap precision proxy.
 * **Architecture:** 

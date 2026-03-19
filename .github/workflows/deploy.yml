@@ -57,6 +57,8 @@ jobs:
       - name: Install dependencies
         if: steps.decide.outputs.skip == 'false'
         run: npm ci
+        env:
+          YOUTUBE_DL_SKIP_DOWNLOAD: "true"
 
       - name: TypeScript check (no emit)
         if: steps.decide.outputs.skip == 'false'

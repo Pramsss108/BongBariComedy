@@ -272,11 +272,18 @@ export default function SocialDownloaderPage() {
     }, 400);
 
     try {
-      const res = await fetch(apiUrl(`/api/downloader/info?url=${encodeURIComponent(url.trim())}`));
+      // 15 seconds timeout
+      abortRef.current = new AbortController();
+      const timeoutId = setTimeout(() => abortRef.current?.abort(), 15000);
+
+      const res = await fetch(apiUrl(`/api/downloader/info?url=${encodeURIComponent(url.trim())}`), {
+          signal: abortRef.current.signal
+      });
+      clearTimeout(timeoutId);
       clearInterval(progressInterval);
       setExtractProgress(null);
       
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok || data.error) {
          const error = new Error(data.error || "Could not fetch video info.") as any;
          error.code = data.code;
@@ -296,6 +303,13 @@ export default function SocialDownloaderPage() {
       clearInterval(progressInterval);
       setExtractProgress(null);
       setPhase("error");
+      if (err.name === 'AbortError') {
+          setErrorMsg("Extraction timed out. YouTube is heavily rotating blocking IPs. Please try again in a few seconds.");
+          setErrorCode("TIMEOUT");
+      } else {
+          setErrorMsg(err.message || 'Extraction failed');
+          setErrorCode(err.code || "UNKNOWN");
+      }
     }
   }, [url]);
 

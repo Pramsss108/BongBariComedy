@@ -43,10 +43,10 @@ const YT_DLP_PATH = path.resolve(process.cwd(), "node_modules", "youtube-dl-exec
 
 // Masterplan Phase 2/3: Bulletproof yt-dlp execution
 // Replaces youtube-dl-exec which breaks on Windows paths with spaces
-function executeYtDlp(url: string, args: string[]): Promise<any> {
+function executeYtDlp(url: string, args: string[], timeoutMs = 15000): Promise<any> {
   return new Promise((resolve, reject) => {
-      // 20MB buffer for huge json manifests + 25s timeout for fast failover (extended for po-token)
-      execFile(YT_DLP_PATH, [...args, url], { maxBuffer: 1024 * 1024 * 20, timeout: 25000 }, (error, stdout, stderr) => {
+      // 20MB buffer for huge json manifests + fast timeout for proxy failover
+      execFile(YT_DLP_PATH, [...args, url], { maxBuffer: 1024 * 1024 * 20, timeout: timeoutMs }, (error, stdout, stderr) => {
       if (error) {
         return reject(error);
       }
@@ -155,12 +155,15 @@ function mapDownloaderError(err: any): { code: string; message: string; status: 
     return { code: "PRIVATE_VIDEO", message: "This video is private and cannot be downloaded.", status: 403 };
   }
   // Bot check specific
-  if (full.includes("sign in to confirm you're not a bot")) {
+  if (full.includes("sign in to confirm you're not a bot") || full.includes("bot check") || full.includes("verify you're human")) {
     return { code: "BOT_BLOCKED", message: "Download engine blocked by YouTube. Please try again shortly.", status: 503 };
   }
-  // Actual age restriction
-  if (full.includes("confirm your age") || full.includes("age-restricted") || full.includes("sign in")) {
+  // Actual age restriction (don't catch plain 'sign in' as blindly to avoid false positives with new youtube bot checks)
+  if (full.includes("confirm your age") || full.includes("age-restricted") || full.includes("sign in to see this")) {
     return { code: "AGE_RESTRICTED", message: "This video is age-restricted and requires login.", status: 403 };
+  }
+  if (full.includes("sign in")) {
+    return { code: "BOT_BLOCKED", message: "YouTube forced a sign-in wall to block automatic extraction. Please try again later.", status: 503 };
   }
   if (full.includes("geo-blocked") || full.includes("not available in your country")) {
     return { code: "GEO_BLOCK", message: "This video is not available in the server's region.", status: 403 };
@@ -195,6 +198,7 @@ async function executeYtDlpExtract(url: string, extraArgs: string[] = []): Promi
         "--no-playlist",
         "--socket-timeout", "15",
         "--geo-bypass",
+        "--extractor-args", "youtube:player_client=android,ios",
         ...extraArgs
     ];
     // Fallback to strict env if undefined
@@ -203,11 +207,17 @@ async function executeYtDlpExtract(url: string, extraArgs: string[] = []): Promi
     try {
         const proxyArgs = [...ytArgs, "--proxy", proxy];
         console.log(`[Phase 0] Executing yt-dlp via ASocks Proxy...`);
-        return await executeYtDlp(url, proxyArgs);
+        const fetchStart = performance.now();
+        const res = await executeYtDlp(url, proxyArgs, 15000); // 15s max for proxy
+        console.log(`[Telemetry] ASocks proxy SUCCESS in ${Math.round(performance.now() - fetchStart)}ms`);
+        return res;
     } catch (proxyErr: any) {
         console.warn(`[Phase 0] ASocks proxy failed! Falling back to DIRECT yt-dlp...`, proxyErr.message || proxyErr);
         console.log(`[Phase 0] Executing yt-dlp directly without proxy (Hetzner Node)...`);
-        return await executeYtDlp(url, ytArgs);
+        const fallbackStart = performance.now();
+        const res = await executeYtDlp(url, ytArgs, 20000); // 20s for fallback
+        console.log(`[Telemetry] Direct fallback SUCCESS in ${Math.round(performance.now() - fallbackStart)}ms`);
+        return res;
     }
 }
 
@@ -674,6 +684,7 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
               } catch(e) { return false; }
           }
 
+            const requestStart = performance.now();
             const axiosConfig: any = {
                 headers,
                 responseType: 'stream',
@@ -682,6 +693,7 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
 
             const proxyRes = await axios.get(targetUrl, axiosConfig);
               if (proxyRes.status === 403 || proxyRes.status >= 500) {
+                   console.log(`[Telemetry] Proxy Direct Stream Failed with status: ${proxyRes.status}`);
                    return false;
               }
     
@@ -689,6 +701,8 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
               const fHeaders = ['content-type', 'content-length', 'accept-ranges', 'content-range'];
               for (const key of fHeaders) {              if (proxyRes.headers[key]) res.setHeader(key, proxyRes.headers[key] as string);
           }
+          const ttff = Math.round(performance.now() - requestStart);
+          console.log(`[Telemetry 🚀] Time To First Frame (TTFF): ${ttff}ms (Range: ${req.headers.range || 'Full'})`);
           proxyRes.data.pipe(res);
           return true;
       } catch(e) {
@@ -753,7 +767,11 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
       if (isStreamMode) {
           // Use high-speed proxy pipe to bypass client IP restrictions
           const success = await proxyDirectStream(bestStreamUrl);
-          if (success) return; // Served via proxy!
+          if (success) {
+              console.log(`[Telemetry] Proxy Stream Success. Bytes piped to client.`);
+              return; // Served via proxy!
+          }
+          console.warn(`[Telemetry] CDN Proxy Stream Failed or Returned 403. Falling back to underlying yt-dlp pipe!`);
           // If proxy fails, fall through to native yt-dlp spawn
       } else {
           // Backward compatibility for old UI flow
@@ -773,11 +791,10 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
           res.end();
           return;
       }
-      try {
+          try {
           const ytdlArgs = ["-f", `best[height<=${qStr}][ext=mp4]/best`, "-o", "-", "--no-warnings", "--force-ipv4"];
-          // We MUST use proxy for the preview stream, otherwise Render Datacenter IP receives 403 bot block and returns 0 bytes.
-          // Preview is only ~5MB (480p) so the residential proxy can securely process it without timing out.
-          if (process.env.ASOCKS_PROXY) ytdlArgs.push("--proxy", process.env.ASOCKS_PROXY);
+          // 🚨 CRITICAL RULE: NEVER USE PROXY FOR VIDEO STREAMING BYTES! 🚨
+          // The Native Pipe Fallback MUST use the native gigabit connection.
           const subprocess = spawn(YT_DLP_PATH, [...ytdlArgs, "--socket-timeout", "15", url], { stdio: ["ignore", "pipe", "pipe"] });
           
           res.setHeader("Content-Type", "video/mp4");

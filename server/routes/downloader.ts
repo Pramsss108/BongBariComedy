@@ -192,11 +192,11 @@ async function executeYtDlpExtract(url: string, extraArgs: string[] = []): Promi
     const ytArgs = [
         "--dump-json",
         "--no-warnings",
-        "--no-call-home",
-        "--geo-bypass", 
+        "--no-playlist",
+        "--socket-timeout", "15",
+        "--geo-bypass",
         ...extraArgs
     ];
-    
     // Fallback to strict env if undefined
     const proxy = process.env.ASOCKS_PROXY || "http://q0b2vvoyfp-res-country-IN-hold-session-session-69badf0c52b0a:MsuSXbhmwtpdr81t@93.190.141.57:443";
     
@@ -658,6 +658,10 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
           }
 
           let httpsAgent: any = undefined;
+          if (process.env.ASOCKS_PROXY) {
+              const { HttpsProxyAgent } = require('https-proxy-agent');
+              httpsAgent = new HttpsProxyAgent(process.env.ASOCKS_PROXY);
+          }
           
           if (req.method === 'HEAD') {
               // Rapid fast-path for browser video pre-flight checks, but MUST validate against 403s
@@ -775,9 +779,10 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
       }
       try {
           const ytdlArgs = ["-f", `best[height<=${qStr}][ext=mp4]/best`, "-o", "-", "--no-warnings", "--force-ipv4"];
-          // DONT use proxy for native pipe streaming because streaming 50MB via rotating residential proxy freezes/timeouts
-          // if (process.env.ASOCKS_PROXY) ytdlArgs.push("--proxy", process.env.ASOCKS_PROXY);
-          const subprocess = spawn(YT_DLP_PATH, [...ytdlArgs, url], { stdio: ["ignore", "pipe", "pipe"] });
+          // We MUST use proxy for the preview stream, otherwise Render Datacenter IP receives 403 bot block and returns 0 bytes.
+          // Preview is only ~5MB (480p) so the residential proxy can securely process it without timing out.
+          if (process.env.ASOCKS_PROXY) ytdlArgs.push("--proxy", process.env.ASOCKS_PROXY);
+          const subprocess = spawn(YT_DLP_PATH, [...ytdlArgs, "--socket-timeout", "15", url], { stdio: ["ignore", "pipe", "pipe"] });
           
           res.setHeader("Content-Type", "video/mp4");
           subprocess.stdout?.pipe(res);

@@ -657,16 +657,12 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
               headers["Range"] = req.headers.range;
           }
 
-          let httpsAgent: any = undefined;
-          if (process.env.ASOCKS_PROXY) {
-              const { HttpsProxyAgent } = require('https-proxy-agent');
-              httpsAgent = new HttpsProxyAgent(process.env.ASOCKS_PROXY);
-          }
+          // Phase A: Stealth for Metadata. Brute force (no proxy) for streams.
           
           if (req.method === 'HEAD') {
               // Rapid fast-path for browser video pre-flight checks, but MUST validate against 403s
               try {
-                  const headRes = await axios.head(targetUrl, { headers, httpsAgent, validateStatus: () => true, timeout: 4000 });
+                  const headRes = await axios.head(targetUrl, { headers, validateStatus: () => true, timeout: 4000 });
                   if (headRes.status === 403 || headRes.status >= 500) return false;
 
                   res.status(headRes.status);
@@ -682,8 +678,7 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
                 headers,
                 responseType: 'stream',
                 validateStatus: () => true,
-                httpsAgent
-            };
+                            };
 
             const proxyRes = await axios.get(targetUrl, axiosConfig);
               if (proxyRes.status === 403 || proxyRes.status >= 500) {
@@ -808,5 +803,6 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
   // Proxy stream URL for preview — PROTECTED
   app.get("/api/downloader/proxy-stream", infoLimiter, handleProxyStream);
 }
+
 
 

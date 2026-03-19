@@ -658,10 +658,7 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
           }
 
           let httpsAgent: any = undefined;
-          if (process.env.ASOCKS_PROXY) {
-              httpsAgent = new HttpsProxyAgent(process.env.ASOCKS_PROXY);
-          }
-
+          
           if (req.method === 'HEAD') {
               // Rapid fast-path for browser video pre-flight checks, but MUST validate against 403s
               try {
@@ -778,7 +775,8 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
       }
       try {
           const ytdlArgs = ["-f", `best[height<=${qStr}][ext=mp4]/best`, "-o", "-", "--no-warnings", "--force-ipv4"];
-          if (process.env.ASOCKS_PROXY) ytdlArgs.push("--proxy", process.env.ASOCKS_PROXY);
+          // DONT use proxy for native pipe streaming because streaming 50MB via rotating residential proxy freezes/timeouts
+          // if (process.env.ASOCKS_PROXY) ytdlArgs.push("--proxy", process.env.ASOCKS_PROXY);
           const subprocess = spawn(YT_DLP_PATH, [...ytdlArgs, url], { stdio: ["ignore", "pipe", "pipe"] });
           
           res.setHeader("Content-Type", "video/mp4");

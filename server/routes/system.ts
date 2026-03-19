@@ -8,7 +8,7 @@ export function registerSystemRoutes(app: Express) {
     });
 
     app.get('/api/version', (_req, res) => {
-        res.json({ version: '1.0.2-PROXY-FIX', status: 'healthy', env: process.env.NODE_ENV, uptime: process.uptime(), nodeVersion: process.version });
+        res.json({ version: '1.0.3-PREVIEW-PROXY-OFF', status: 'healthy', env: process.env.NODE_ENV, uptime: process.uptime(), nodeVersion: process.version });
     });
 
     app.get('/api/ready', (_req, res) => {

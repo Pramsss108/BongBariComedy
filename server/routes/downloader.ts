@@ -661,22 +661,28 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
   // Secure Proxy Pipe: Prevents strict-IP 403 errors by routing bytes through our backend
   const proxyDirectStream = async (targetUrl: string) => {
       try {
-          if (req.method === 'HEAD') {
-              // Rapid fast-path for browser video pre-flight checks
-              res.status(200);
-              res.setHeader('Accept-Ranges', 'bytes');
-              res.setHeader('Content-Type', 'video/mp4');
-              res.end();
-              return true;
-          }
-
           const headers: Record<string, string> = {
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64 AppleWebKit/537.36) Chrome/120.0.0.0 Safari/537.36"
           };
           if (req.headers.range) {
               headers["Range"] = req.headers.range;
           }
-            
+
+          if (req.method === 'HEAD') {
+              // Rapid fast-path for browser video pre-flight checks, but MUST validate against 403s
+              try {
+                  const headRes = await axios.head(targetUrl, { headers, validateStatus: () => true, timeout: 4000 });
+                  if (headRes.status === 403 || headRes.status >= 500) return false;
+                  
+                  res.status(headRes.status);
+                  res.setHeader('Accept-Ranges', 'bytes');
+                  res.setHeader('Content-Type', headRes.headers['content-type'] || 'video/mp4');
+                  if (headRes.headers['content-length']) res.setHeader('Content-Length', headRes.headers['content-length']);
+                  res.end();
+                  return true;
+              } catch(e) { return false; }
+          }
+
             const axiosConfig: any = {
                 headers,
                 responseType: 'stream',
@@ -718,14 +724,22 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
       const cached = metaCache.get(url)!;
       if (cached.expires > Date.now() && cached.data.formats && Array.isArray(cached.data.formats)) {
           const rawFormats = cached.data.formats;
-          for (const f of rawFormats) {
-              if (f.ext === 'mp4' && f.acodec !== 'none' && f.vcodec !== 'none' && f.height && f.height <= qStr) {
+          // Step 1: Exact strict match <= qStr
+          for (const f of rawFormats) {       
+              if (f.ext === 'mp4' && f.acodec !== 'none' && f.vcodec !== 'none' && f.height && f.height <= qStr) {   
                   if (f.url) { bestStreamUrl = f.url; break; }
               }
           }
+          // Step 2: Any mp4 with video
+          if (!bestStreamUrl) {
+              for (const f of rawFormats) {   
+                   if (f.height && f.height <= qStr && f.url) { bestStreamUrl = f.url; break; }
+              }
+          }
+          // Step 3: Absolute fallback - ANY pre-muxed mp4 regardless of resolution
           if (!bestStreamUrl) {
               for (const f of rawFormats) {
-                   if (f.height && f.height <= qStr && f.url) { bestStreamUrl = f.url; break; }
+                  if (f.ext === 'mp4' && f.acodec !== 'none' && f.vcodec !== 'none' && f.url) { bestStreamUrl = f.url; break; }
               }
           }
       }
@@ -761,10 +775,10 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
   // 5. NATIVE PIPE FALLBACK (if CDN direct stream 403s or URL missing entirely)
   if (isStreamMode) {
       if (req.method === 'HEAD') {
-          res.status(200);
-          res.setHeader('Accept-Ranges', 'bytes');
-          res.setHeader('Content-Type', 'video/mp4');
-          res.end();
+          // If we reached here, the fast proxy pipe failed. We shouldn't lie about HEAD.
+          // Spawning yt-dlp just for a HEAD request is too slow, so we return an error 
+          // to force the frontend to handle the failure gracefully instead of showing a black box.
+          res.status(502).end();
           return;
       }
       try {

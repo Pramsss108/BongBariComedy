@@ -166,7 +166,7 @@ export default function SocialDownloaderPage() {
   const [isScrubbing, setIsScrubbing] = useState(false); // Phase 1: Intent-based UI state
   const [trimProgress, setTrimProgress] = useState<number | string>(0);
   const [ffmpegLoading, setFfmpegLoading] = useState(false);
-  const [extractProgress, setExtractProgress] = useState<{ step: number, msg: string } | null>(null);
+  const [extractProgress, setExtractProgress] = useState<{ step: number, msg: string, pct: number } | null>(null);
   const [serverWaking, setServerWaking] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState<number | string>(0);
   const [isDesktop, setIsDesktop] = useState(typeof window !== "undefined" ? window.innerWidth >= 768 : true);
@@ -244,25 +244,31 @@ export default function SocialDownloaderPage() {
     setPhase("fetching"); setErrorMsg(""); setErrorCode(""); setVideoInfo(null);
     setShowPreview(false); setPreviewUrl(""); setTrimMode(false);
     
-    // Smooth deterministic live progress simulation to improve UX during ASocks proxy latency
+    // Smooth deterministic live progress simulation to improve UX during proxy latency
     let progressInterval: number;
-    let step = 0;
-    setExtractProgress({ step: 1, msg: "Initializing Proxy Engine..." });
-    
+    let progress = 0;
+    setExtractProgress({ step: 1, msg: "Analyzing media URL...", pct: 5 });
+
     const extractionSteps = [
-        "Initializing Proxy Engine...",
-        "Establishing SOCKS5 Tunnel...",
-        "Bypassing AS/BotGuard Flags...",
-        "Negotiating Request Headers...",
-        "Resolving Media Formats..."
+        { threshold: 0, msg: "Analyzing media URL..." },
+        { threshold: 20, msg: "Bypassing AS/BotGuard Flags..." },
+        { threshold: 45, msg: "Negotiating Request Headers..." },
+        { threshold: 75, msg: "Resolving Media Formats..." }
     ];
-    
+
     progressInterval = window.setInterval(() => {
-        step++;
-        if (step < extractionSteps.length) {
-            setExtractProgress({ step: step + 1, msg: extractionSteps[step] });
+        progress += Math.floor(Math.random() * 8) + 2; // jump 2-9% each step
+        if (progress > 95) progress = 95; // cap at 95% until actually done
+        
+        let currentMsg = extractionSteps[0].msg;
+        for (let i = extractionSteps.length - 1; i >= 0; i--) {
+            if (progress >= extractionSteps[i].threshold) {
+                currentMsg = extractionSteps[i].msg;
+                break;
+            }
         }
-    }, 1200);
+        setExtractProgress({ step: 1, msg: currentMsg, pct: progress });
+    }, 400);
 
     try {
       const res = await fetch(apiUrl(`/api/downloader/info?url=${encodeURIComponent(url.trim())}`));
@@ -401,14 +407,26 @@ export default function SocialDownloaderPage() {
     try {
       // Fetch direct stream URL via Node proxy to completely hide user IP and avoid Google 403 Forbidden errors
       setIsCaching(true);
+      setCacheProgress(20);
       const autoProxyUrl = apiUrl(`/api/downloader/proxy-stream?url=${encodeURIComponent(url)}&format=mp4-480&mode=stream&sessionId=${sessionId||""}`);
-      
+
+      // Smooth filler progress
+      let p = 20;
+      const tId = setInterval(() => {
+          p += Math.floor(Math.random() * 5) + 1;
+          if (p > 90) p = 90;
+          setCacheProgress(p);
+      }, 500);
+
       // Brief check to validate session/auth before opening video player
       const res = await fetch(autoProxyUrl, { method: 'HEAD' });
+      clearInterval(tId);
+      
       if (!res.ok) {
          if (res.status === 401) throw new Error("Unauthorized. Please log in again.");
-           // throw new Error("Failed to load preview stream.");
+         throw new Error("Cannot stream video. Protected or deleted by platform.");
       }
+      setCacheProgress(100);
       setPreviewUrl(autoProxyUrl);
       setShowPreview(true);
       if (enterTrimMode && !trimMode) setTrimMode(true);
@@ -638,10 +656,13 @@ export default function SocialDownloaderPage() {
                        <div className="w-full h-1.5 bg-black/40 rounded-full overflow-hidden shadow-inner">
                            <div 
                                className="h-full bg-gradient-to-r from-purple-500 to-cyan-400 transition-all duration-500" 
-                               style={{ width: `${(extractProgress.step / 5) * 100}%` }}
-                           />
-                       </div>
-                       <p className="text-[10px] text-cyan-400/60 mt-2 uppercase tracking-wide">Secure Connection • Step {extractProgress.step} of 5</p>
+                                 style={{ width: `${extractProgress.pct}%` }}
+                             />
+                         </div>
+                         <div className="flex justify-between items-center mt-2">
+                             <p className="text-[10px] text-cyan-400/60 uppercase tracking-wide">Secure Connection / Core Engine</p>
+                             <p className="text-[10px] text-cyan-400 font-mono font-bold animate-pulse">{extractProgress.pct}%</p>
+                         </div>
                    </div>
                 )}
 

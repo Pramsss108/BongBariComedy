@@ -15,7 +15,6 @@ import { execFile, spawn } from "child_process";
 import fs from "fs";
 import { getPoToken } from './poTokenService.js';
 import crypto from "crypto";
-import jwt from "jsonwebtoken";
 import axios from "axios";
 import { HttpsProxyAgent } from "https-proxy-agent";
 // @ts-ignore
@@ -336,7 +335,7 @@ async function handleStream(req: Request, res: Response): Promise<void> {
   const rawUrl = req.query.url as string;
   const rawFormat = req.query.format as string || "mp4-720";
   const userIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
-  const userSessionId = 'masked-via-token'; // Phase 2: Token verification handles security now
+  const userSessionId = req.query.sessionId || (req as any).session?.userId || 'anonymous';
 
   console.log(`\n======================================================`);
   console.log(`🔵 [VIBE CODER] 🔥 NEW INCOMING STREAM CONNECTION 🔥`);
@@ -687,17 +686,9 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
               res.status(proxyRes.status);
               const fHeaders = ['content-type', 'content-length', 'accept-ranges', 'content-range'];
               for (const key of fHeaders) {              if (proxyRes.headers[key]) res.setHeader(key, proxyRes.headers[key] as string);
-            }
-            
-            // Critical fix: Handle HEAD requests properly without leaking streams or blocking socket pool
-            if (req.method === 'HEAD') {
-               proxyRes.data.destroy();
-               res.end();
-               return true;
-            }
-
-            proxyRes.data.pipe(res);
-            return true;
+          }
+          proxyRes.data.pipe(res);
+          return true;
       } catch(e) {
           return false;
       }
@@ -766,12 +757,6 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
           const subprocess = spawn(YT_DLP_PATH, [...ytdlArgs, url], { stdio: ["ignore", "pipe", "pipe"] });
           
           res.setHeader("Content-Type", "video/mp4");
-          
-          if (req.method === 'HEAD') {
-              res.end();
-              return;
-          }
-
           subprocess.stdout?.pipe(res);
           req.on("close", () => subprocess.kill?.("SIGTERM"));
           return;
@@ -785,46 +770,14 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
   formatNotAvailable(res, "Preview streaming unavailable right now.");
 }
   export function registerDownloaderRoutes(app: Express, isAuthenticated: any): void {
-  // Generate short-lived secure token for media URLs
-  app.get("/api/downloader/token", isAuthenticated, (req, res) => {
-    const url = req.query.url as string;
-    if (!url) return res.status(400).json({ error: "URL is required" });
-    const token = jwt.sign({ url, user: (req as any).session?.userId || 'guest' }, process.env.JWT_SECRET || "fallback_secret", { expiresIn: "5m" });
-    res.json({ token });
-  });
-
-  // Middleware to verify short-lived token
-  const verifyMediaToken = (req: Request, res: Response, next: any) => {
-    const token = req.query.token as string;
-    if (!token) {
-      // BACKWARD COMPAT: Fallback to sessionId/auth header if token generation failed client-side
-      if (req.query.sessionId || req.headers.authorization) {
-        return isAuthenticated(req, res, next);
-      }
-      return res.status(401).json({ error: "Missing media token" });
-    }
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback_secret") as any;
-      // Allow soft URL mismatch to prevent query encoding bugs from failing the whole download
-      // but log it just in case
-      if (decoded.url && decoded.url !== req.query.url) {
-        console.warn(`[verifyMediaToken] URL Mismatch warning: decoded=${decoded.url} vs query=${req.query.url}`);
-        // We do not reject because some browsers alter query params on native download managers
-      }
-      next();
-    } catch (e) {
-      return res.status(401).json({ error: "Invalid or expired media token" });
-    }
-  };
-
   // Info endpoint — lenient rate limit (10/min) — PUBLIC
   app.get("/api/downloader/info", infoLimiter, handleInfo);
 
   // Stream/download endpoint — strict rate limit (5/min) — PROTECTED
-  app.get("/api/downloader/stream", streamLimiter, verifyMediaToken, handleStream);
+  app.get("/api/downloader/stream", isAuthenticated, streamLimiter, handleStream);
 
   // Proxy stream URL for preview — PROTECTED
-  app.get("/api/downloader/proxy-stream", infoLimiter, verifyMediaToken, handleProxyStream);
+  app.get("/api/downloader/proxy-stream", infoLimiter, handleProxyStream);
 }
 
 

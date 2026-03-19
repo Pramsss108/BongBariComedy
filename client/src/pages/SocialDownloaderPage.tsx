@@ -236,22 +236,6 @@ export default function SocialDownloaderPage() {
 
   const platform = detectPlatform(url);
   const isVertical = url.toLowerCase().includes("/shorts/") || url.toLowerCase().includes("/reel/") || url.toLowerCase().includes("/reels/");
-
-  // helper to get short-lived media token
-  const getMediaToken = async (targetUrl: string) => {
-    try {
-      const res = await fetch(apiUrl(`/api/downloader/token?url=${encodeURIComponent(targetUrl)}`), {
-        headers: {
-          'Authorization': `Bearer ${sessionId || ""}`
-        }
-      });
-      const data = await res.json();
-      return data.token || "";
-    } catch {
-      return "";
-    }
-  };
-
   // ── Fetch info ─────────────────────────────────────────────────
   const handleFetch = useCallback(async () => {
     if (!url.trim()) return;
@@ -333,8 +317,7 @@ export default function SocialDownloaderPage() {
       // Protected by auth - Phase 15: Attach sessionId to query param for browser nav
       const safeTitle = videoInfo?.title ? videoInfo.title.replace(/[^a-z0-9]/gi, '_').substring(0, 50) : "bongbari_download";
       const encodedTitle = encodeURIComponent(safeTitle);
-      const mToken = await getMediaToken(url);
-      const backendUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=${selectedFormat}&title=${encodedTitle}&token=${mToken}`);
+      const backendUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=${selectedFormat}&title=${encodedTitle}&sessionId=${sessionId}`);
 
         // PHASE 3: Native Browser Download + Raw CDN (0% Server Load)
         // By bypassing 'fetch' and Blob creation, we avoid CORS from Google's CDNs
@@ -418,8 +401,7 @@ export default function SocialDownloaderPage() {
     try {
       // Fetch direct stream URL via Node proxy to completely hide user IP and avoid Google 403 Forbidden errors
       setIsCaching(true);
-      const mToken = await getMediaToken(url);
-      const autoProxyUrl = apiUrl(`/api/downloader/proxy-stream?url=${encodeURIComponent(url)}&format=mp4-480&mode=stream&token=${mToken}&sessionId=${String(sessionId || "")}`);
+      const autoProxyUrl = apiUrl(`/api/downloader/proxy-stream?url=${encodeURIComponent(url)}&format=mp4-480&mode=stream&sessionId=${sessionId||""}`);
       
       // Brief check to validate session/auth before opening video player
       const res = await fetch(autoProxyUrl, { method: 'HEAD' });
@@ -459,8 +441,7 @@ export default function SocialDownloaderPage() {
       const trimName = `${safeTitle}_clip_${startTime.toFixed(2)}s_to_${endTime.toFixed(2)}s`;
       const encodedTitle = encodeURIComponent(trimName);
 
-      const mToken = await getMediaToken(url);
-      const backendTrimUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=${selectedFormat}&title=${encodedTitle}&start=${startTime}&end=${endTime}&token=${mToken}&sessionId=${String(sessionId || "")}`);
+      const backendTrimUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=${selectedFormat}&title=${encodedTitle}&start=${startTime}&end=${endTime}&sessionId=${sessionId}`);
 
       // Perform secure streaming fetch + Native 'Save As' Dialog Tracker
       await performSecureDownload(backendTrimUrl, `${trimName}.mp4`, setTrimProgress);

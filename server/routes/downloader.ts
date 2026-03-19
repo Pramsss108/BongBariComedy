@@ -724,26 +724,28 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
       const cached = metaCache.get(url)!;
       if (cached.expires > Date.now() && cached.data.formats && Array.isArray(cached.data.formats)) {
           const rawFormats = cached.data.formats;
-          // Step 1: Exact strict match <= qStr
-          for (const f of rawFormats) {       
-              if (f.ext === 'mp4' && f.acodec !== 'none' && f.vcodec !== 'none' && f.height && f.height <= qStr) {   
-                  if (f.url) { bestStreamUrl = f.url; break; }
-              }
-          }
-          // Step 2: Any mp4 with video
-          if (!bestStreamUrl) {
-              for (const f of rawFormats) {   
-                   if (f.height && f.height <= qStr && f.url) { bestStreamUrl = f.url; break; }
-              }
-          }
-          // Step 3: Absolute fallback - ANY pre-muxed mp4 regardless of resolution
-          if (!bestStreamUrl) {
-              for (const f of rawFormats) {
-                  if (f.ext === 'mp4' && f.acodec !== 'none' && f.vcodec !== 'none' && f.url) { bestStreamUrl = f.url; break; }
-              }
-          }
-      }
-  }
+            // Best pre-muxed mp4 formats (like format 18 or 22 from YouTube)
+            const premuxed = rawFormats.filter((f: any) =>
+                f.ext === 'mp4' && f.acodec && f.acodec !== 'none' && f.vcodec && f.vcodec !== 'none' && f.url && f.url.startsWith('http') && !f.url.includes('.m3u8')
+            );
+
+            if (premuxed.length > 0) {
+                bestStreamUrl = premuxed[0].url; // fallback to worst if no match
+                for (const f of premuxed) {
+                    const minDim = Math.min(f.height || 0, f.width || 0);
+                    if (minDim > 0 && minDim <= qStr) bestStreamUrl = f.url;
+                }
+            }
+
+            // Universal fallback: any playable video URL
+            if (!bestStreamUrl) {
+                const anyValidUrl = rawFormats.find((f: any) =>
+                    f.vcodec && f.vcodec !== 'none' && f.url && f.url.startsWith('http') && !f.url.includes('manifest') && !f.url.includes('.m3u8')
+                );
+                if (anyValidUrl) bestStreamUrl = anyValidUrl.url;
+            }
+        }
+    }
 
   // 3. Fallback: If cache completely misses, fetch it via proxy
   if (!bestStreamUrl) {

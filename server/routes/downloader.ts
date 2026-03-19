@@ -470,41 +470,60 @@ async function handleStream(req: Request, res: Response): Promise<void> {
 
         // V13: Server-side Trimming using yt-dlp native sections
     const isTrimming = startSec !== null && endSec !== null && endSec > startSec;
-    
+    let requiresTempFile = isTrimming || chosen.isAudio;
+    let fallbackPiped = false;
+
+    // 1. FAST-PATH DIRECT CDN REDIRECT (Full Videos Only, to prevent KB files)
+    if (!requiresTempFile) {
+        console.log(`[Phase 0] Testing direct CDN URL viability...`);
+        try {
+            const data = await executeYtDlpExtract(validated.url, ["--format", chosen.ytFormat]);
+            const rawCdnUrl = data.url || (data.requested_downloads && data.requested_downloads[0]?.url);
+            
+            // If it's a split track or manifest, we MUST use a temp file to merge!
+            const isManifest = rawCdnUrl && (rawCdnUrl.includes('.m3u8') || rawCdnUrl.includes('manifest'));
+            const needsMerge = data.requested_formats && data.requested_formats.length > 1;
+            const isSplitTrack = data.acodec === 'none' || data.vcodec === 'none';
+
+            if (rawCdnUrl && !isManifest && !needsMerge && !isSplitTrack) {
+                console.log(`✅ [SUCCESS] Fast-pathing Full Video -> Redirecting client directly to Google CDN!`);
+                res.redirect(302, rawCdnUrl);
+                return;
+            } else {
+                console.log(`[Phase 0] Requested quality requires ffmpeg merge (Split/DASH/M3U8). Escalating to Temp File...`);
+                requiresTempFile = true;
+                const heightMatch = chosen.ytFormat.match(/height<=(\d+)/);
+                const heightLimit = heightMatch ? heightMatch[1] : "720";
+                chosen.ytFormat = `bestvideo[height<=${heightLimit}][ext=mp4]+bestaudio[ext=m4a]/best[height<=${heightLimit}]/best`;
+            }
+        } catch(cdnErr: any) {
+            console.warn(`[Phase 0] Direct CDN extraction failed. Attempting Temp File approach...`);
+            requiresTempFile = true;
+        }
+    }
+
+    // 2. YT-DLP ENGINE ARGUMENTS
     if (chosen.isAudio) {
-      // Audio Extraction Mode
-      ytdlArgs.push(
-        "--extract-audio", 
-        "--audio-format", chosen.ext,
-        "--audio-quality", "0",
-        "--format", "bestaudio/best"
-      );
+      ytdlArgs.push("--extract-audio", "--audio-format", chosen.ext, "--audio-quality", "0", "--format", "bestaudio/best");
     } else {
-        // Video Stream Mode
-        // If we are TRIMMING, we write to a temp file first, so we don't have the stdout limitation!
-        // We can safely use separate video+audio for the highest possible quality without it defaulting to 360p (format 18).
-        if (isTrimming) {
-            console.log(`[VIBE CODER] 🎬 Trimming mode detected! Escalating quality constraints to highest possible...`);
+        if (requiresTempFile && !isTrimming) {
+            ytdlArgs.push("--format", chosen.ytFormat); // Uses the escalated format
+        } else if (isTrimming) {
             const heightMatch = chosen.ytFormat.match(/height<=(\d+)/);
             const heightLimit = heightMatch ? heightMatch[1] : "720";
-            // Get best video + best audio that matches the height, fallback to whatever is best
             ytdlArgs.push("--format", `bestvideo[height<=${heightLimit}][ext=mp4]+bestaudio[ext=m4a]/best[height<=${heightLimit}]/best`);
         } else {
-            // Direct streaming requires pre-merged format (e.g. format 18)
             ytdlArgs.push("--format", chosen.ytFormat);
         }
-        
-        // Ensure merged output is mp4 if not already
         ytdlArgs.push("--merge-output-format", "mp4");
     }
 
-    if (isTrimming || chosen.isAudio) {
-        console.log(`\n\n🟢 [VIBE CODER ALERT] 👉 ${isTrimming ? 'TRIMMING' : 'AUDIO EXTRACTION'} REQUEST INITIATED!`);
+    // 3. EXECUTION
+    if (requiresTempFile) {
+        console.log(`\n\n🟢 [VIBE CODER ALERT] 👉 TEMP FILE MERGE/TRIM INITIATED!`);
         console.log(`🎬 TARGET VIDEO: ${validated.url}`);
         if (isTrimming) console.log(`✂️ CUT TIMESTAMPS: Start -> ${startSec}s | End -> ${endSec}s`);
         
-        // TEMP FILE APPROACH FOR AUDIO/TRIMMING
-        // ffmpeg cannot reliably stream mp4 or convert mp3 directly to stdout on-the-fly.
         const tmpDir = os.tmpdir();
         const trimFile = path.join(tmpDir, `task_${crypto.randomBytes(8).toString('hex')}.${chosen.ext}`);
         
@@ -512,7 +531,7 @@ async function handleStream(req: Request, res: Response): Promise<void> {
         
         if (isTrimming) {
             ytdlArgs.push("--download-sections", `*${startSec}-${endSec}`);
-            ytdlArgs.push("--force-keyframes-at-cuts"); // Guarantee perfect cut accuracy
+            ytdlArgs.push("--force-keyframes-at-cuts");
         }
         ytdlArgs.push("-o", trimFile);
 
@@ -539,11 +558,9 @@ async function handleStream(req: Request, res: Response): Promise<void> {
             if (code === 0 && fs.existsSync(trimFile)) {
                 try {
                   const stat = fs.statSync(trimFile);
-                  console.log(`✅ [SUCCESS] TRIMMED FILE GENERATED! SIZE: ${(stat.size / 1024 / 1024).toFixed(2)} MB`);
+                  console.log(`✅ [SUCCESS] FILE GENERATED! SIZE: ${(stat.size / 1024 / 1024).toFixed(2)} MB`);
                   res.setHeader("Content-Length", stat.size);
-                } catch(e) { 
-                  console.error(`🚨 [ERROR] Failed to stat file:`, e);
-                }
+                } catch(e) {}
                 
                 console.log(`🚚 [STREAMING] PIPING BITES TO BROWSER NOW...`);
                 const readStream = fs.createReadStream(trimFile);
@@ -551,16 +568,16 @@ async function handleStream(req: Request, res: Response): Promise<void> {
                 
                 readStream.on("end", () => {
                    console.log(`🎉 [DONE] PIPING COMPLETED! BURNING TEMP FILE...`);
-                   try { fs.unlinkSync(trimFile); console.log(`🔥 FILE DELETED!`); } catch(e){}
+                   try { fs.unlinkSync(trimFile); } catch(e){}
                 });
                 readStream.on("error", () => {
                    console.log(`💥 [CRASH] PIPE STREAM FAILED! BURNING TEMP FILE...`);
                    try { fs.unlinkSync(trimFile); } catch(e){} 
                 });
             } else {
-                console.error(`❌ [FAILURE] yt-dlp FAILED TO CUT OR FILE MISSING!`);
+                console.error(`❌ [FAILURE] yt-dlp FAILED OR FILE MISSING!`);
                 if (!res.headersSent) {
-                    res.status(500).json({ error: "Trimming failed. Please try again." });
+                    res.status(500).json({ error: "Download or Trimming failed. Please try again." });
                 } else {
                     res.end();
                 }
@@ -571,37 +588,13 @@ async function handleStream(req: Request, res: Response): Promise<void> {
         req.on("close", () => {
             console.log(`🔌 [DISCONNECT] BROWSER HUNG UP! KILLING SUBPROCESS...`);
             subprocess.kill?.("SIGTERM");
-            setTimeout(() => {
-                try { fs.unlinkSync(trimFile); } catch(e){}
-            }, 5000);
+            setTimeout(() => { try { fs.unlinkSync(trimFile); } catch(e){} }, 5000);
         });
 
     } else {
-          console.log(`\n\n🟢 [VIBE CODER ALERT] 👉 FULL STREAM INITIATED!`);
-          
-          if (!chosen.isAudio) {
-              console.log(`[Phase 0] Redirecting to direct CDN URL if possible...`);
-              try {
-                  // Try to get raw CDN URL directly via proxy bypass to save Hetzner bandwidth
-                  const data = await executeYtDlpExtract(validated.url, ["--format", chosen.ytFormat]);
-                  const rawCdnUrl = data.url || (data.requested_downloads && data.requested_downloads[0].url);
-                  
-                  if (rawCdnUrl) {
-                      console.log(`✅ [SUCCESS] Fast-pathing Full Video -> Redirecting client directly to Google CDN!`);
-                      res.redirect(302, rawCdnUrl);
-                      return;
-                  }
-              } catch(cdnErr: any) {
-                  console.warn(`[Phase 0] Direct CDN extraction failed (${cdnErr.message}). Streaming via local pipe...`);
-              }
-          } else {
-              console.log(`[Phase 0] Audio-only format requested (.${chosen.ext}). Bypassing CDN redirect to use ffmpeg pipe...`);
-          }
-
-          // FINAL FALLBACK: PIPE YT-DLP DIRECTLY
-          // If all proxies fail, we MUST pipe it locally so the video definitely plays!
+          // Absolute fail-safe pipe if we bypassed both CDN and temp file (rare)
           console.log(`[Phase 3] Proxies exhausted/failed. Falling back to native yt-dlp local buffering stream...`);
-          ytdlArgs.push("-o", "-"); // pipe straight to stdout
+          ytdlArgs.push("-o", "-");
           const subprocess = spawn(YT_DLP_PATH, [...ytdlArgs, validated.url], {
             stdio: ["ignore", "pipe", "pipe"],
           });
@@ -612,15 +605,11 @@ async function handleStream(req: Request, res: Response): Promise<void> {
           });
 
           subprocess.on("error", (err: any) => {
-            console.error(`🚨 [CRASH] spawn error:`, err?.message);
             if (!res.headersSent) res.status(500).json({ error: "Download failed." });
           });
 
           subprocess.on("close", (code: number) => {
-             console.log(`\n🏁 [PROCESS FINISHED] YT-DLP EXITED WITH CODE: ${code}`);
-             if (!res.writableEnded && !res.headersSent) {
-                 res.status(500).json({ error: "Stream ended prematurely" });
-             }
+             if (!res.writableEnded && !res.headersSent) res.status(500).json({ error: "Stream ended prematurely" });
           });
 
           subprocess.stdout?.pipe(res);

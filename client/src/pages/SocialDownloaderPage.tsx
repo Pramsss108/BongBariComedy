@@ -452,33 +452,47 @@ export default function SocialDownloaderPage() {
     if (!videoInfo) return;
 
     setPhase("trimming"); setTrimProgress(0);
-    try {
-      try { (window as any).gtag?.("event", "downloader_trim", { duration_seconds: endTime - startTime }); } catch {}
-      
-      const safeTitle = videoInfo?.title ? videoInfo.title.replace(/[^a-z0-9]/gi, '_').substring(0, 50) : "bongbari_download";
-      const trimName = `${safeTitle}_clip_${startTime.toFixed(2)}s_to_${endTime.toFixed(2)}s`;
-      const encodedTitle = encodeURIComponent(trimName);
+      let simInterval: number | undefined = undefined;
+      try {
+        let simProgress = 0;
+        simInterval = window.setInterval(() => {
+            simProgress += Math.floor(Math.random() * 4) + 1;
+            if (simProgress > 95) simProgress = 95;
+            setTrimProgress(`Server Processing... ${simProgress}%`);
+        }, 1200);
 
-      const backendTrimUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=${selectedFormat}&title=${encodedTitle}&start=${startTime}&end=${endTime}&sessionId=${sessionId}`);
+        try { (window as any).gtag?.("event", "downloader_trim", { duration_seconds: endTime - startTime }); } catch {}
 
-      // Perform secure streaming fetch + Native 'Save As' Dialog Tracker
-      await performSecureDownload(backendTrimUrl, `${trimName}.mp4`, setTrimProgress);
+        const safeTitle = videoInfo?.title ? videoInfo.title.replace(/[^a-z0-9]/gi, '_').substring(0, 50) : "bongbari_download";
+        const trimName = `${safeTitle}_clip_${startTime.toFixed(2)}s_to_${endTime.toFixed(2)}s`;
+        const encodedTitle = encodeURIComponent(trimName);
 
-      saveToHistory({
-        title: videoInfo.title,
-        thumbnail: videoInfo.thumbnail || "",
-        url: url,
-        type: "trim"
-      });
+        const backendTrimUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=${selectedFormat}&title=${encodedTitle}&start=${startTime}&end=${endTime}&sessionId=${sessionId}`);
 
-      setPhase("ready");
+        // Perform secure streaming fetch + Native 'Save As' Dialog Tracker
+        await performSecureDownload(backendTrimUrl, `${trimName}.mp4`, (realPct) => {
+            window.clearInterval(simInterval);
+            setTrimProgress(`Downloading... ${realPct}%`);
+        });
 
-    } catch (err: any) {
-      setErrorMsg(err.message ?? "Trimming failed."); setPhase("error");
-    }
-  }, [videoInfo, url, startTime, endTime, selectedFormat, sessionId, isAuthenticated, setLocation]);
+        saveToHistory({
+          title: videoInfo.title,
+          thumbnail: videoInfo.thumbnail || "",
+          url: url,
+          type: "trim"
+        });
 
-  const isWorking = phase === "fetching" || phase === "downloading" || phase === "trimming";
+        setPhase("ready");
+
+      } catch (err: any) {
+        setErrorMsg(err.message ?? "Trimming failed."); setPhase("error");
+      } finally {
+        if (simInterval) window.clearInterval(simInterval);
+      }
+    }, [videoInfo, url, startTime, endTime, selectedFormat, sessionId, isAuthenticated, setLocation]);
+
+    const isWorking = phase === "fetching" || phase === "downloading" || phase === "trimming";
+
 
   // ── RENDER ─────────────────────────────────────────────────────
   return (

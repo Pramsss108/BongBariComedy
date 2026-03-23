@@ -242,54 +242,54 @@ async function fetchSmartMetadata(url: string): Promise<any> {
         }
     }
 
-    const isYT = url.includes("youtube.com") || url.includes("youtu.be");
-    if (isYT) {
+    console.log(`[Phase 0] Requesting metadata directly from Hetzner Node for: ${url}`);
+    const fetchStart = performance.now();
+    try {
+        const vpsNode = getNextPreviewNode(); 
+        const vpsRes = await axios.post(vpsNode, { url: url }, { timeout: 15000, headers: { 'Content-Type': 'application/json' } });
+        console.log(`[Trace ⏱️] Hetzner Node Responded in ${Math.round(performance.now() - fetchStart)}ms`);
+        const data = vpsRes.data;
+        
+        let title = "YouTube Video";
+        let thumbnail = null;
         const videoId = extractYouTubeId(url);
+        
         if (videoId) {
-            console.log(`[Phase 0] Bypassing yt-dlp entirely. Fetching metadata natively via YouTube oEmbed API for ID: ${videoId}`);
+            thumbnail = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
             try {
                 const oembedRes = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
                 if (oembedRes.ok) {
-                    const data = await oembedRes.json();
-                    const result = {
-                        title: data.title || "YouTube Video",
-                        thumbnail: data.thumbnail_url || `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
-                        duration: 0, // oEmbed doesn't provide duration, but we don't strictly need it for UI formats
-                        formats: [] // generic resolutions assigned in handleInfo
-                    };
-                    metaCache.set(url, { data: result, expires: Date.now() + CACHE_TTL_MS });
-                    return result;
+                    const oembedData = await oembedRes.json();
+                    title = oembedData.title || title;
+                    if (oembedData.thumbnail_url) thumbnail = oembedData.thumbnail_url;
                 }
-            } catch (err) {
-                console.warn("[Phase 0] OEmbed Native bypass failed, falling back to yt-dlp proxy engine...", err);
-            }
+            } catch(e) {}
         }
-    }
-
-    console.log(`[Phase 0] Requesting metadata using Hybrid Engine for: ${url}`);
-    const fetchStart = performance.now();
-    try {
-        const data = await executeYtDlpExtract(url);
-        console.log(`[Trace ⏱️] Hybrid Engine Responded in ${Math.round(performance.now() - fetchStart)}ms`);
-
+        
         const result = {
-            title: data.title || "Video",
+            title: title,
             duration: data.duration || 0,
-            thumbnail: data.thumbnail || null,
-            formats: data.formats || [], 
+            thumbnail: thumbnail,
+            formats: [] // generic resolutions will be added in handleInfo
         };
         metaCache.set(url, { data: result, expires: Date.now() + CACHE_TTL_MS });
+        
+        if (data.url) {
+            console.log(`[Cache ⚡] Caching exact Hetzner Stream URL proactively`);
+            streamCache.set(url, { url: data.url, expires: Date.now() + CACHE_TTL_MS });
+        }
+        
         return result;
     } catch (engineErr: any) {
-        console.error(`[Phase 0] Total Metadata Failure:`, engineErr?.message || engineErr);
-        throw new Error(`Total engine failure: ${engineErr.message}`);
+        console.error(`[Phase 0] Hetzner Metadata Failure:`, engineErr?.message || engineErr);
+        throw new Error(`Total engine failure: ${engineErr?.message || 'Unknown network crash'}`);
     }
 }
 
-// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------  
 // PHRASE 2: GET /api/downloader/info
-// Returns video metadata: title, thumbnail, duration, available formats
-// ---------------------------------------------------------------------------
+// Returns video metadata: title, thumbnail, duration, available formats        
+// ---------------------------------------------------------------------------  
 async function handleInfo(req: Request, res: Response): Promise<void> {
   const validated = validateVideoUrl(req.query.url as string);
   if (!validated.ok) {
@@ -495,55 +495,98 @@ async function handleStream(req: Request, res: Response): Promise<void> {
       // =========================================================================
       if (isYT) {
           try {
-              console.log(`[Phase 2] YouTube detected. Booting native PoToken Web Resolver...`);
-              const { visitorData, poToken } = await getPoToken();
-              console.log(`[Phase 2] Validating BotGuard with Crypto Token...`);
-              
-              const info = await ytdl.getInfo(validated.url, {
-                  requestOptions: {
-                      headers: {
-                          'Cookie': `po_token=web+${poToken}; visitor_data=${visitorData}`
-                      }
-                  }
+              console.log(`[Phase 2] YouTube detected. Booting Hetzner VPS Resolver...`);
+              const vpsNode = getNextPreviewNode();
+              const isTrimmingReq = startSec !== null && endSec !== null && endSec > startSec;
+
+              const payload = JSON.stringify({
+                  url: validated.url,
+                  isAudioOnly: chosen.isAudio
               });
 
-              // Map frontend 'mp4-720' format requests to actual YouTube ITAGs
-              let selectedFormat;
-              if (chosen.isAudio) {
-                  selectedFormat = ytdl.chooseFormat(info.formats, { quality: 'highestaudio' });
-              } else {
-                  // For preview or standard downloads, we MUST choose a pre-merged format (video+audio) 
-                  // because we are just redirecting the browser directly to the CDN!
-                  const targetHeight = parseInt(formatCode.replace("mp4-", "")) || 720;
-                  
-                  // Filter to only formats that have BOTH audio and video
-                  const mergedFormats = info.formats.filter((f: any) => f.hasVideo && f.hasAudio);
-                  
-                  // Find the closest height that doesn't exceed our target
-                  selectedFormat = mergedFormats.sort((a: any, b: any) => (b.height || 0) - (a.height || 0))
-                                               .find((f: any) => (f.height || 0) <= targetHeight);
-                  
-                  // Fallback to highest available merged format if the specific height isn't found
-                  if (!selectedFormat) {
-                      selectedFormat = ytdl.chooseFormat(mergedFormats, { quality: 'highest' });
-                  }
+              // Calling Hetzner VPS Node
+              const vpsRes = await fetch(vpsNode, {
+                  method: "POST",
+                  headers: {
+                      "Content-Type": "application/json",
+                      "Accept": "application/json"
+                  },
+                  body: payload
+              });
+
+              if (!vpsRes.ok) {
+                  throw new Error("VPS resolve failed with status: " + vpsRes.status);
               }
 
-              if (selectedFormat && selectedFormat.url) {
-                  console.log(`✅ [SUCCESS] Bypassed Render Extractor completely! Redirecting client directly to Google CDN!`);
-                  res.redirect(302, selectedFormat.url);
-                  return;
-              } else {
-                  throw new Error("No compatible merged stream found for this quality.");
+              const json = await vpsRes.json();
+              if (!json.url) {
+                  throw new Error("Proxy returned invalid response (missing url).");
               }
-          } catch (ytNativeErr: any) {
-               console.error(`[Phase 2] ytdl-core native bypass failed!`, ytNativeErr.message);
-               // We will explicitly NOT fallback to yt-dlp because we already know it hangs indefinitely on Render.
-               res.status(422).json({ error: "YouTube stream extraction failed due to BotGuard IP bans. Please try a different URL." });
+
+              const sourceStreamUrl = json.url;
+
+              if (isTrimmingReq || chosen.ext === "mp3") {
+                   console.log(`[Phase 2] Trimming or strict payload detected. Acquired CDN URL from Hetzner for FFmpeg processing.`);
+                   
+                   const ffmpegArgs = [];
+                   if (isTrimmingReq) {
+                       ffmpegArgs.push("-ss", startSec.toString());
+                   }
+                   ffmpegArgs.push("-i", sourceStreamUrl);
+
+                   if (isTrimmingReq) {
+                       ffmpegArgs.push("-to", endSec.toString());
+                   }
+
+                   if (chosen.ext === "mp3") {
+                       ffmpegArgs.push("-vn", "-c:a", "libmp3lame", "-q:a", "2");
+                   } else if (chosen.isAudio) {
+                       ffmpegArgs.push("-vn", "-c:a", "copy");
+                   } else {
+                       ffmpegArgs.push("-c:v", "copy", "-c:a", "copy");
+                   }
+
+                   ffmpegArgs.push("-f", chosen.ext === "mp3" ? "mp3" : "mp4");
+                   ffmpegArgs.push("pipe:1");
+
+                   console.log(`⚙️ EXEC: ffmpeg ${ffmpegArgs.join(" ")}`);
+
+                   // Set headers to prevent Express from buffering or changing the format
+                   res.setHeader("Content-Disposition", `attachment; filename="bongbari_${Date.now()}.${chosen.ext}"`);
+                   res.setHeader("Content-Type", chosen.ext === "mp3" ? "audio/mpeg" : "video/mp4");
+
+                   const subprocess = spawn(ffmpegPath || "ffmpeg", ffmpegArgs, {
+                       stdio: ["ignore", "pipe", "pipe"],
+                   });
+
+                   subprocess.stderr?.on("data", (chunk: Buffer) => {
+                       const msg = chunk.toString();
+                       Object.assign({}, {msg}); // suppress unused
+                   });
+
+                   subprocess.on("error", (err: any) => {
+                       console.error(`[CRASH ALERT] spawn error:`, err?.message);
+                       if (!res.headersSent) res.status(500).json({ error: "Processing failed." });
+                   });
+
+                   subprocess.stdout?.pipe(res);
+
+                   req.on("close", () => {
+                       subprocess.kill?.("SIGTERM");
+                   });
+                   return; // End flow because piping handles response
+
+              } else {
+                  console.log(`✅ [SUCCESS] Bypassed Render Extractor completely! Redirecting client directly to Hetzner-resolved Google CDN!`);
+                  res.redirect(302, sourceStreamUrl);
+                  return;
+              }
+          } catch (vpsErr: any) {
+               console.error(`[Phase 2] VPS Node bypass failed!`, vpsErr.message);
+               res.status(422).json({ error: "YouTube stream extraction failed due to Hetzner node timeout. Please try a different URL." });
                return;
           }
       }
-
       let extraArgs: string[] = ["--extractor-args", "youtube:player_client=android,ios"];
       const ytdlArgs: string[] = [
         "--no-warnings",

@@ -243,7 +243,7 @@ export function TrimSlider({
 
         {/* Selected Area Border */}
         <div
-           className="absolute top-0 h-full border-y-[3px] border-[#fbff00] pointer-events-none z-10"
+           className="absolute top-0 h-full border-y-[3px] border-cyan-400 pointer-events-none z-10 shadow-[0_0_15px_rgba(6,182,212,0.5)] bg-cyan-400/10 backdrop-blur-[2px]"
            style={{
              left: `${startPercent}%`,
              width: `${endPercent - startPercent}%`
@@ -285,28 +285,28 @@ export function TrimSlider({
 
         {/* Left Handle */}
         <div
-          className="absolute top-[-4px] bottom-[-4px] w-[12px] bg-[#fbff00] rounded-l-md flex items-center justify-center cursor-ew-resize z-20 shadow-md transition-transform hover:scale-105 active:scale-95 touch-none"
+          className="absolute top-[-6px] bottom-[-6px] w-[14px] bg-gradient-to-b from-purple-500 to-cyan-500 rounded-l-lg flex items-center justify-center cursor-ew-resize z-20 shadow-[0_0_15px_rgba(168,85,247,0.6)] transition-transform hover:scale-110 active:scale-95 touch-none ring-1 ring-white/20"
           style={{ left: `${startPercent}%`, transform: 'translateX(-100%)' }}
           onPointerDown={(e) => handlePointerDown("start", e)}
           onMouseDown={(e) => handlePointerDown("start", e)}
           onTouchStart={(e) => handlePointerDown("start", e)}
         >
-          <div className="w-1 h-3 border-l border-r border-[#8B8D00] opacity-50" />
-          <div className="absolute -top-6 bg-black/80 text-white text-[10px] font-mono px-1 rounded pointer-events-none whitespace-nowrap">
+          <div className="w-[3px] h-4 border-l border-r border-white/50" />
+          <div className="absolute -top-7 bg-black/90 backdrop-blur-md border border-white/10 text-cyan-300 text-[10px] font-bold font-mono px-2 py-0.5 rounded shadow-lg pointer-events-none whitespace-nowrap">
             {formatSliderTime(startTime)}
           </div>
         </div>
 
         {/* Right Handle */}
         <div
-          className="absolute top-[-4px] bottom-[-4px] w-[12px] bg-[#fbff00] rounded-r-md flex items-center justify-center cursor-ew-resize z-20 shadow-md transition-transform hover:scale-105 active:scale-95 touch-none"
+          className="absolute top-[-6px] bottom-[-6px] w-[14px] bg-gradient-to-b from-cyan-500 to-purple-500 rounded-r-lg flex items-center justify-center cursor-ew-resize z-20 shadow-[0_0_15px_rgba(6,182,212,0.6)] transition-transform hover:scale-110 active:scale-95 touch-none ring-1 ring-white/20"
           style={{ left: `${endPercent}%` }}
           onPointerDown={(e) => handlePointerDown("end", e)}
           onMouseDown={(e) => handlePointerDown("end", e)}
           onTouchStart={(e) => handlePointerDown("end", e)}
         >
-           <div className="w-1 h-3 border-l border-r border-[#8B8D00] opacity-50" />
-           <div className="absolute -top-6 bg-black/80 text-white text-[10px] font-mono px-1 rounded pointer-events-none whitespace-nowrap">
+           <div className="w-[3px] h-4 border-l border-r border-white/50" />
+           <div className="absolute -top-7 bg-black/90 backdrop-blur-md border border-white/10 text-cyan-300 text-[10px] font-bold font-mono px-2 py-0.5 rounded shadow-lg pointer-events-none whitespace-nowrap">
             {formatSliderTime(endTime)}
           </div>
         </div>

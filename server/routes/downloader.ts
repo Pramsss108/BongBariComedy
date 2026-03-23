@@ -540,7 +540,7 @@ async function handleStream(req: Request, res: Response): Promise<void> {
         console.log(`📁 TEMP FILE ALLOCATED AT: ${trimFile}`);
         
         if (isTrimming) {
-            ytdlArgs.push("--download-sections", `*${startSec}-${endSec}`);
+            ytdlArgs.push("--download-sections", `*${Number(startSec).toFixed(3)}-${Number(endSec).toFixed(3)}`);
             ytdlArgs.push("--force-keyframes-at-cuts");
         }
         ytdlArgs.push("-o", trimFile);
@@ -569,7 +569,9 @@ async function handleStream(req: Request, res: Response): Promise<void> {
                 try {
                   const stat = fs.statSync(trimFile);
                   console.log(`✅ [SUCCESS] FILE GENERATED! SIZE: ${(stat.size / 1024 / 1024).toFixed(2)} MB`);
-                  res.setHeader("Content-Length", stat.size);
+                  if (!res.headersSent) {
+                    res.setHeader("Content-Length", stat.size);
+                  }
                 } catch(e) {}
                 
                 console.log(`🚚 [STREAMING] PIPING BITES TO BROWSER NOW...`);

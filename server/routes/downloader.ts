@@ -209,7 +209,7 @@ async function executeYtDlpExtract(url: string, extraArgs: string[] = []): Promi
     
     // Inject logic: Scramble the session ID from the user's dashboard string so ASocks forces a fresh 100% clean residential IP for every fetch.
     if (proxyConfig.includes("session-")) {
-        proxyConfig = proxyConfig.replace(/session-[a-z0-9]+/i, `session-${randomSession}`);
+        proxyConfig = proxyConfig.replace(/session-[a-z0-9]+:/i, `session-${randomSession}:`);
     }
     
     try {

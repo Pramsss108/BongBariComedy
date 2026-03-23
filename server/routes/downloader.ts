@@ -839,26 +839,40 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
       
       const isYT = validated.url.includes("youtube.com") || validated.url.includes("youtu.be");
       if (isYT) {
+          // ── PROVEN METHOD: Route through Hetzner VPS (clean IP, not banned by BotGuard) ──
           try {
-              console.log(`[Phase 2] YouTube preview proxy cache miss. Resolving URL natively via ytdl-core...`);
-              const { visitorData, poToken } = await getPoToken();
-              const info = await ytdl.getInfo(validated.url, {
-                  requestOptions: {
-                      headers: {
-                          'Cookie': `po_token=web+${poToken}; visitor_data=${visitorData}`
-                      }
-                  }
+              const vpsNode = getNextPreviewNode();
+              console.log(`[Phase 2] YouTube preview: routing through VPS node ${vpsNode}`);
+              const vpsRes = await axios.post(vpsNode, { url: validated.url }, { 
+                  timeout: 10000, 
+                  headers: { 'Content-Type': 'application/json' } 
               });
-              const mergedFormats = info.formats.filter((f: any) => f.hasVideo && f.hasAudio);
-              let selectedFormat = mergedFormats.sort((a: any, b: any) => (b.height || 0) - (a.height || 0))
-                                           .find((f: any) => (f.height || 0) <= qStr);
-              if (!selectedFormat) selectedFormat = ytdl.chooseFormat(mergedFormats, { quality: 'highest' });
-              
-              if (selectedFormat && selectedFormat.url) {
-                  bestStreamUrl = selectedFormat.url;
+              if (vpsRes.data && vpsRes.data.url) {
+                  bestStreamUrl = vpsRes.data.url;
+                  console.log(`[Phase 2] ✅ VPS returned CDN URL instantly!`);
               }
-          } catch(ytErr: any) {
-              console.error("[downloader/proxy-stream] ytdl-core preview extraction error:", ytErr.message);
+          } catch(vpsErr: any) {
+              console.warn(`[Phase 2] VPS node failed: ${vpsErr.message}. Falling back to local ytdl-core...`);
+              // Fallback: try ytdl-core locally (may hang on banned IPs)
+              try {
+                  const { visitorData, poToken } = await getPoToken();
+                  const info = await ytdl.getInfo(validated.url, {
+                      requestOptions: {
+                          headers: {
+                              'Cookie': `po_token=web+${poToken}; visitor_data=${visitorData}`
+                          }
+                      }
+                  });
+                  const mergedFormats = info.formats.filter((f: any) => f.hasVideo && f.hasAudio);
+                  let selectedFormat = mergedFormats.sort((a: any, b: any) => (b.height || 0) - (a.height || 0))
+                                               .find((f: any) => (f.height || 0) <= qStr);
+                  if (!selectedFormat) selectedFormat = ytdl.chooseFormat(mergedFormats, { quality: 'highest' });
+                  if (selectedFormat && selectedFormat.url) {
+                      bestStreamUrl = selectedFormat.url;
+                  }
+              } catch(ytErr: any) {
+                  console.error("[downloader/proxy-stream] ytdl-core fallback also failed:", ytErr.message);
+              }
           }
       } else {
           try {

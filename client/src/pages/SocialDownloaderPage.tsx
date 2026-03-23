@@ -1,9 +1,9 @@
 ﻿/**
- * SocialDownloaderPage.tsx â€” Redesigned from Stitch MCP import
+ * SocialDownloaderPage.tsx Ã¢â‚¬â€ Redesigned from Stitch MCP import
  * (project/15186276301225783934, screen/3d6883fccc5242d2a2ad40fe0688a9a2)
  *
  * Mobile-first, no menu/nav collision, Space Grotesk typography,
- * purpleâ†’cyan gradient hero, inline fetch button, large preview card.
+ * purpleÃ¢â€ â€™cyan gradient hero, inline fetch button, large preview card.
  */
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -31,7 +31,7 @@ import "./SocialDownloaderPage.css";
 
 const apiUrl = buildApiUrl;
 
-// â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Ã¢â€â‚¬Ã¢â€â‚¬ Types Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 interface VideoFormat { id: string; label: string; ext: string; height?: number; }
 interface VideoInfo {
   title: string; thumbnail: string | null; duration: number;
@@ -55,13 +55,13 @@ function proxyImage(url: string | null | undefined): string | undefined {
   return url;
 }
 
-// â”€â”€â”€ Native File Save API Helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Native File Save API Helper Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 async function performSecureDownload(
   downloadUrl: string,
   fallbackName: string,
   onProgress: (p: number) => void
 ): Promise<void> {
-  console.log(`[Vibe Coder Tracker] ðŸš€ Fetching file securely via Stream API...`);
+  console.log(`[Vibe Coder Tracker] Ã°Å¸Å¡â‚¬ Fetching file securely via Stream API...`);
   
   const response = await fetch(downloadUrl);
   if (!response.ok) {
@@ -112,7 +112,7 @@ async function performSecureDownload(
     onProgress(100);
   }
 
-  console.log(`[Vibe Coder Tracker] âœ… Stream loaded (Size: ${(blob.size/1024/1024).toFixed(2)} MB). Prompting Save As...`);
+  console.log(`[Vibe Coder Tracker] Ã¢Å“â€¦ Stream loaded (Size: ${(blob.size/1024/1024).toFixed(2)} MB). Prompting Save As...`);
 
   // Try File System Access API (Native Windows "Save As")
   if ('showSaveFilePicker' in window) {
@@ -148,7 +148,7 @@ async function performSecureDownload(
   setTimeout(() => URL.revokeObjectURL(urlObj), 10000);
 }
 
-// â”€â”€ Main Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Ã¢â€â‚¬Ã¢â€â‚¬ Main Page Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 export default function SocialDownloaderPage() {
   const { user, isAuthenticated, sessionId } = useAuth();
   const [, setLocation] = useLocation();
@@ -246,11 +246,11 @@ export default function SocialDownloaderPage() {
 
   const platform = detectPlatform(url);
   const isVertical = url.toLowerCase().includes("/shorts/") || url.toLowerCase().includes("/reel/") || url.toLowerCase().includes("/reels/");
-  // â”€â”€ Fetch info â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Fetch info Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   const handleFetch = useCallback(async () => {
     if (!url.trim()) return;
-    console.log(`\n[Vibe Coder Tracker] ðŸ”Ž STEP 1: Fetching video metadata...`);
-    console.log(`[Vibe Coder Tracker] ðŸ“ Note: Metadata (titles/thumbnails) is tiny (2KB). Safe to use Render!`);
+    console.log(`\n[Vibe Coder Tracker] Ã°Å¸â€Å½ STEP 1: Fetching video metadata...`);
+    console.log(`[Vibe Coder Tracker] Ã°Å¸â€œÂ Note: Metadata (titles/thumbnails) is tiny (2KB). Safe to use Render!`);
     setPhase("fetching"); setErrorMsg(""); setErrorCode(""); setVideoInfo(null);
     setShowPreview(false); setPreviewUrl(""); setTrimMode(false);
     
@@ -299,7 +299,7 @@ export default function SocialDownloaderPage() {
          throw error;
       }
       
-      console.log(`[Vibe Coder Tracker] âœ… Metadata fetch success! Phase 1 complete.`);
+      console.log(`[Vibe Coder Tracker] Ã¢Å“â€¦ Metadata fetch success! Phase 1 complete.`);
       setVideoInfo(data);
       setSelectedFormat(data.formats[0]?.id ?? "mp4-720");
       setStartTime(0); 
@@ -322,14 +322,14 @@ export default function SocialDownloaderPage() {
     }
   }, [url]);
 
-  // â”€â”€ Download â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Download Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   const handleDownload = useCallback(async () => {
     if (!videoInfo) return;
 
     setPhase("downloading"); setDownloadProgress(0);
     if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(50);
-    console.log(`\n[Vibe Coder Tracker] ðŸŽ¥ STEP 2: USER INITIATED FULL DOWNLOAD!`);
-    console.log(`[Vibe Coder Tracker] ðŸ›¡ï¸ Initializing Ambuja Cement Architecture (Render Fallback)...`);
+    console.log(`\n[Vibe Coder Tracker] Ã°Å¸Å½Â¥ STEP 2: USER INITIATED FULL DOWNLOAD!`);
+    console.log(`[Vibe Coder Tracker] Ã°Å¸â€ºÂ¡Ã¯Â¸Â Initializing Ambuja Cement Architecture (Render Fallback)...`);
     
     try {
       try { (window as any).gtag?.("event", "downloader_download", { format: selectedFormat }); } catch {}
@@ -366,7 +366,7 @@ export default function SocialDownloaderPage() {
     }
   }, [videoInfo, url, selectedFormat, isAuthenticated, setLocation]);
 
-  // â”€â”€ CapCut Block 1: Blob Caching â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬ CapCut Block 1: Blob Caching Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   
   // Phase 19: Cache Cleanup Protocol
   useEffect(() => {
@@ -412,41 +412,13 @@ export default function SocialDownloaderPage() {
       }
     }
 
-    // âœ… VIBE ARCHITECTURE V15: YouTube Preview = Native Embed (Zero Server Load)
-    // Google blocks server IPs from streaming. But YouTube's OWN player can stream its own videos.
-    // So for YouTube, we use the native iframe embed and skip Render entirely.
-    const isYT = url.includes("youtube.com") || url.includes("youtu.be");
-    if (isYT) {
-      const ytIdMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
-      const videoId = ytIdMatch ? ytIdMatch[1] : null;
-      if (videoId) {
-        setPreviewUrl(`youtube-embed:${videoId}`);
-        setShowPreview(true);
-        if (enterTrimMode && !trimMode) {
-          // For trim mode on YouTube, we still need to load the actual stream
-          toast({ title: "Trim Mode", description: "For trim-and-cut, use the Download button then trim locally. YouTube native previews support playback only.", variant: "default" });
-        }
-        return;
-      }
-    }
-
     try {
-      // VIBE FIX: Skip blocking HEAD check - mount video player immediately and let
-      // the browser <video> element handle loading/errors natively. This prevents the
-      // 30-90s hang on Render's ytdl-core resolver from blocking our UI.
+      // V16 PROVEN METHOD: All URLs go through proxy-stream, which routes
+      // YouTube through the Hetzner VPS (clean IP) for instant CDN resolution.
+      // No iframes, no HEAD checks â€” just mount the <video> element directly.
       setIsCaching(true);
+      setCacheProgress(30);
       const autoProxyUrl = apiUrl(`/api/downloader/proxy-stream?url=${encodeURIComponent(url)}&format=mp4-480&mode=stream&sessionId=${sessionId||""}`);
-
-      // Animate progress quickly to 95 to signal "loading..." then let video load handle the rest
-      let p = 20;
-      const tId = setInterval(() => {
-          p += Math.floor(Math.random() * 15) + 10; // fast animation
-          if (p > 95) { p = 95; clearInterval(tId); }
-          setCacheProgress(p);
-      }, 200);
-
-      // Set immediately - no blocking HEAD request
-      clearInterval(tId);
       setCacheProgress(100);
       setPreviewUrl(autoProxyUrl);
       setShowPreview(true);
@@ -459,7 +431,7 @@ export default function SocialDownloaderPage() {
     }
   }, [url, isAuthenticated, sessionId, previewUrl, trimMode, toast, setLocation]);
 
-  // â”€â”€ Preview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Preview Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   const handlePreview = useCallback(() => {
     if (!showPreview) {
        loadVideoToCache(false);
@@ -468,7 +440,7 @@ export default function SocialDownloaderPage() {
     }
   }, [showPreview, loadVideoToCache]);
 
-  // â”€â”€ Trim (Powered by super fast yt-dlp section download backend) â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Trim (Powered by super fast yt-dlp section download backend) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   const handleTrim = useCallback(async () => {
     if (!videoInfo) return;
 
@@ -515,10 +487,10 @@ export default function SocialDownloaderPage() {
     const isWorking = phase === "fetching" || phase === "downloading" || phase === "trimming";
 
 
-  // â”€â”€ RENDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬ RENDER Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   return (
     <>
-      <title>Free Video Downloader â€” YouTube, Instagram, Facebook | BongBari Tools</title>
+      <title>Free Video Downloader Ã¢â‚¬â€ YouTube, Instagram, Facebook | BongBari Tools</title>
       <meta name="description" content="Download YouTube, Instagram and Facebook public videos for free. Preview, trim in-browser, and save as MP4 or MP3. No account needed." />
 
       <div className="dl-page font-serif md:h-screen md:overflow-hidden md:flex md:flex-col">
@@ -527,7 +499,7 @@ export default function SocialDownloaderPage() {
         <header className="dl-main-header shrink-0">
           <Link href="/tools">
             <button className="dl-back-btn group">
-              <span className="group-hover:-translate-x-0.5 transition-transform text-xs">â†</span>
+              <span className="group-hover:-translate-x-0.5 transition-transform text-xs">Ã¢â€ Â</span>
               <span className="hidden md:inline font-tech text-[9px] uppercase tracking-wider">Tools</span>
             </button>
           </Link>
@@ -542,7 +514,7 @@ export default function SocialDownloaderPage() {
 
           <div className="dl-header-right">
             <div className="dl-mode-pill">
-              <span className="dl-mode-icon">ðŸš€</span>
+              <span className="dl-mode-icon">Ã°Å¸Å¡â‚¬</span>
               <span className="hidden sm:inline ml-1">Cloud</span>
             </div>
           </div>
@@ -552,7 +524,7 @@ export default function SocialDownloaderPage() {
         <div className="dl-bg-orb dl-bg-orb--purple" />
         <div className="dl-bg-orb dl-bg-orb--cyan" />
 
-        {/* â”€â”€ DESKTOP: SPLIT VIEW LAYOUT (md:flex) â”€â”€ */}
+        {/* Ã¢â€â‚¬Ã¢â€â‚¬ DESKTOP: SPLIT VIEW LAYOUT (md:flex) Ã¢â€â‚¬Ã¢â€â‚¬ */}
         <div className="md:flex md:flex-1 md:overflow-hidden relative z-10 w-full max-w-[1600px] mx-auto">
           
           {/* LEFT PANEL: VISUALS (Hero / Video Preview) */}
@@ -567,7 +539,7 @@ export default function SocialDownloaderPage() {
                       <h2 className="text-lg md:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400 truncate px-4">
                           {videoInfo.title}
                       </h2>
-                      <p className="text-white/40 text-xs mt-1">@{videoInfo.uploader} â€¢ {videoInfo.platform}</p>
+                      <p className="text-white/40 text-xs mt-1">@{videoInfo.uploader} Ã¢â‚¬Â¢ {videoInfo.platform}</p>
                   </div>
 
                   <div className={`${isVertical ? "aspect-[9/16] w-full max-h-[70vh] max-w-[400px] mx-auto" : "aspect-video w-full max-w-4xl"} ${trimMode ? "rounded-t-xl" : "rounded-xl"} overflow-hidden border border-white/10 shadow-2xl bg-black relative group flex flex-col items-center justify-center transition-all duration-300`}>
@@ -837,7 +809,7 @@ export default function SocialDownloaderPage() {
                 
                 {/* 4. FOOTER (Only visible on Right Panel when no video on Desktop) */}
                 <div className="mt-auto pt-8 border-t border-white/5 text-center md:text-left">
-                  <p className="text-[10px] uppercase tracking-widest text-white/20">Â© 2024 BongBari Media Group</p>
+                  <p className="text-[10px] uppercase tracking-widest text-white/20">Ã‚Â© 2024 BongBari Media Group</p>
                 </div>
              </div>
           </div>
@@ -926,7 +898,7 @@ export default function SocialDownloaderPage() {
                    <div className="flex justify-between items-center"><span className="text-white/50">Mark Start (In)</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">I</span></div>
                    <div className="flex justify-between items-center"><span className="text-white/50">Mark End (Out)</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">O</span></div>
                    <div className="flex justify-between items-center"><span className="text-white/50">Smart Mark</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">M</span></div>
-                   <div className="flex justify-between items-center"><span className="text-white/50">Step Frame</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">â† / â†’</span></div>
+                   <div className="flex justify-between items-center"><span className="text-white/50">Step Frame</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">Ã¢â€ Â / Ã¢â€ â€™</span></div>
                 </div>
               </div>
             )}
@@ -973,7 +945,7 @@ export default function SocialDownloaderPage() {
                       <div className="flex justify-between items-center"><span className="text-white/50">Mark Start (In)</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">I</span></div>
                       <div className="flex justify-between items-center"><span className="text-white/50">Mark End (Out)</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">O</span></div>
                       <div className="flex justify-between items-center"><span className="text-white/50">Smart Mark</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">M</span></div>
-                      <div className="flex justify-between items-center"><span className="text-white/50">Step Frame</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">â† / â†’</span></div>
+                      <div className="flex justify-between items-center"><span className="text-white/50">Step Frame</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">Ã¢â€ Â / Ã¢â€ â€™</span></div>
                     </div>
                   </div>
                 )}
@@ -1098,7 +1070,7 @@ export default function SocialDownloaderPage() {
                             >
                                {videoInfo?.formats.map((f: any) => (
                                   <option key={f.id} value={f.id} className="bg-slate-900 text-white">
-                                     {f.label} {['mp3', 'm4a', 'aac', 'wav'].includes(f.ext) ? 'ðŸŽµ' : 'ðŸŽ¥'}
+                                     {f.label} {['mp3', 'm4a', 'aac', 'wav'].includes(f.ext) ? 'Ã°Å¸Å½Âµ' : 'Ã°Å¸Å½Â¥'}
                                   </option>
                                ))}
                             </select>
@@ -1120,4 +1092,5 @@ export default function SocialDownloaderPage() {
     </>
   );
 }
+
 

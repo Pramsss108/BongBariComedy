@@ -243,20 +243,25 @@ async function fetchSmartMetadata(url: string): Promise<any> {
     }
 
     const isYT = url.includes("youtube.com") || url.includes("youtu.be");
-    if (isYT && process.env.YOUTUBE_API_KEY) {
+    if (isYT) {
         const videoId = extractYouTubeId(url);
         if (videoId) {
-            console.log(`[Phase 0] Bypassing yt-dlp. Fetching metadata natively via YouTube Data API v3 for ID: ${videoId}`);
-            const details = await youtubeService.fetchVideoDetails(videoId);
-            if (details) {
-                 const result = {
-                     title: details.title,
-                     thumbnail: details.thumbnail,
-                     duration: details.duration,
-                     formats: [] // generic resolutions assigned in handleInfo
-                 };
-                 metaCache.set(url, { data: result, expires: Date.now() + CACHE_TTL_MS });
-                 return result;
+            console.log(`[Phase 0] Bypassing yt-dlp entirely. Fetching metadata natively via YouTube oEmbed API for ID: ${videoId}`);
+            try {
+                const oembedRes = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
+                if (oembedRes.ok) {
+                    const data = await oembedRes.json();
+                    const result = {
+                        title: data.title || "YouTube Video",
+                        thumbnail: data.thumbnail_url || `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+                        duration: 0, // oEmbed doesn't provide duration, but we don't strictly need it for UI formats
+                        formats: [] // generic resolutions assigned in handleInfo
+                    };
+                    metaCache.set(url, { data: result, expires: Date.now() + CACHE_TTL_MS });
+                    return result;
+                }
+            } catch (err) {
+                console.warn("[Phase 0] OEmbed Native bypass failed, falling back to yt-dlp proxy engine...", err);
             }
         }
     }

@@ -211,6 +211,7 @@ async function executeYtDlpExtract(url: string, extraArgs: string[] = []): Promi
         "--no-playlist",
         "--socket-timeout", "15",
         "--geo-bypass",
+        "--force-ipv4",
         ...dynamicArgs,
         ...extraArgs
     ];

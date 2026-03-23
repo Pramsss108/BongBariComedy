@@ -1,9 +1,9 @@
-/**
- * SocialDownloaderPage.tsx — Redesigned from Stitch MCP import
+﻿/**
+ * SocialDownloaderPage.tsx â€” Redesigned from Stitch MCP import
  * (project/15186276301225783934, screen/3d6883fccc5242d2a2ad40fe0688a9a2)
  *
  * Mobile-first, no menu/nav collision, Space Grotesk typography,
- * purple→cyan gradient hero, inline fetch button, large preview card.
+ * purpleâ†’cyan gradient hero, inline fetch button, large preview card.
  */
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -31,7 +31,7 @@ import "./SocialDownloaderPage.css";
 
 const apiUrl = buildApiUrl;
 
-// ── Types ────────────────────────────────────────────────────────
+// â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface VideoFormat { id: string; label: string; ext: string; height?: number; }
 interface VideoInfo {
   title: string; thumbnail: string | null; duration: number;
@@ -55,13 +55,13 @@ function proxyImage(url: string | null | undefined): string | undefined {
   return url;
 }
 
-// ─── Native File Save API Helper ──────────────────────────────────────────
+// â”€â”€â”€ Native File Save API Helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function performSecureDownload(
   downloadUrl: string,
   fallbackName: string,
   onProgress: (p: number) => void
 ): Promise<void> {
-  console.log(`[Vibe Coder Tracker] 🚀 Fetching file securely via Stream API...`);
+  console.log(`[Vibe Coder Tracker] ðŸš€ Fetching file securely via Stream API...`);
   
   const response = await fetch(downloadUrl);
   if (!response.ok) {
@@ -112,7 +112,7 @@ async function performSecureDownload(
     onProgress(100);
   }
 
-  console.log(`[Vibe Coder Tracker] ✅ Stream loaded (Size: ${(blob.size/1024/1024).toFixed(2)} MB). Prompting Save As...`);
+  console.log(`[Vibe Coder Tracker] âœ… Stream loaded (Size: ${(blob.size/1024/1024).toFixed(2)} MB). Prompting Save As...`);
 
   // Try File System Access API (Native Windows "Save As")
   if ('showSaveFilePicker' in window) {
@@ -148,7 +148,7 @@ async function performSecureDownload(
   setTimeout(() => URL.revokeObjectURL(urlObj), 10000);
 }
 
-// ── Main Page ────────────────────────────────────────────────────
+// â”€â”€ Main Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function SocialDownloaderPage() {
   const { user, isAuthenticated, sessionId } = useAuth();
   const [, setLocation] = useLocation();
@@ -246,11 +246,11 @@ export default function SocialDownloaderPage() {
 
   const platform = detectPlatform(url);
   const isVertical = url.toLowerCase().includes("/shorts/") || url.toLowerCase().includes("/reel/") || url.toLowerCase().includes("/reels/");
-  // ── Fetch info ─────────────────────────────────────────────────
+  // â”€â”€ Fetch info â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleFetch = useCallback(async () => {
     if (!url.trim()) return;
-    console.log(`\n[Vibe Coder Tracker] 🔎 STEP 1: Fetching video metadata...`);
-    console.log(`[Vibe Coder Tracker] 📝 Note: Metadata (titles/thumbnails) is tiny (2KB). Safe to use Render!`);
+    console.log(`\n[Vibe Coder Tracker] ðŸ”Ž STEP 1: Fetching video metadata...`);
+    console.log(`[Vibe Coder Tracker] ðŸ“ Note: Metadata (titles/thumbnails) is tiny (2KB). Safe to use Render!`);
     setPhase("fetching"); setErrorMsg(""); setErrorCode(""); setVideoInfo(null);
     setShowPreview(false); setPreviewUrl(""); setTrimMode(false);
     
@@ -299,7 +299,7 @@ export default function SocialDownloaderPage() {
          throw error;
       }
       
-      console.log(`[Vibe Coder Tracker] ✅ Metadata fetch success! Phase 1 complete.`);
+      console.log(`[Vibe Coder Tracker] âœ… Metadata fetch success! Phase 1 complete.`);
       setVideoInfo(data);
       setSelectedFormat(data.formats[0]?.id ?? "mp4-720");
       setStartTime(0); 
@@ -322,14 +322,14 @@ export default function SocialDownloaderPage() {
     }
   }, [url]);
 
-  // ── Download ───────────────────────────────────────────────────
+  // â”€â”€ Download â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleDownload = useCallback(async () => {
     if (!videoInfo) return;
 
     setPhase("downloading"); setDownloadProgress(0);
     if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(50);
-    console.log(`\n[Vibe Coder Tracker] 🎥 STEP 2: USER INITIATED FULL DOWNLOAD!`);
-    console.log(`[Vibe Coder Tracker] 🛡️ Initializing Ambuja Cement Architecture (Render Fallback)...`);
+    console.log(`\n[Vibe Coder Tracker] ðŸŽ¥ STEP 2: USER INITIATED FULL DOWNLOAD!`);
+    console.log(`[Vibe Coder Tracker] ðŸ›¡ï¸ Initializing Ambuja Cement Architecture (Render Fallback)...`);
     
     try {
       try { (window as any).gtag?.("event", "downloader_download", { format: selectedFormat }); } catch {}
@@ -366,7 +366,7 @@ export default function SocialDownloaderPage() {
     }
   }, [videoInfo, url, selectedFormat, isAuthenticated, setLocation]);
 
-  // ── CapCut Block 1: Blob Caching ───────────────────────────────
+  // â”€â”€ CapCut Block 1: Blob Caching â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   
   // Phase 19: Cache Cleanup Protocol
   useEffect(() => {
@@ -412,7 +412,7 @@ export default function SocialDownloaderPage() {
       }
     }
 
-    // ✅ VIBE ARCHITECTURE V15: YouTube Preview = Native Embed (Zero Server Load)
+    // âœ… VIBE ARCHITECTURE V15: YouTube Preview = Native Embed (Zero Server Load)
     // Google blocks server IPs from streaming. But YouTube's OWN player can stream its own videos.
     // So for YouTube, we use the native iframe embed and skip Render entirely.
     const isYT = url.includes("youtube.com") || url.includes("youtu.be");
@@ -459,7 +459,7 @@ export default function SocialDownloaderPage() {
     }
   }, [url, isAuthenticated, sessionId, previewUrl, trimMode, toast, setLocation]);
 
-  // ── Preview ────────────────────────────────────────────────────
+  // â”€â”€ Preview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handlePreview = useCallback(() => {
     if (!showPreview) {
        loadVideoToCache(false);
@@ -468,7 +468,7 @@ export default function SocialDownloaderPage() {
     }
   }, [showPreview, loadVideoToCache]);
 
-  // ── Trim (Powered by super fast yt-dlp section download backend) ────
+  // â”€â”€ Trim (Powered by super fast yt-dlp section download backend) â”€â”€â”€â”€
   const handleTrim = useCallback(async () => {
     if (!videoInfo) return;
 
@@ -515,10 +515,10 @@ export default function SocialDownloaderPage() {
     const isWorking = phase === "fetching" || phase === "downloading" || phase === "trimming";
 
 
-  // ── RENDER ─────────────────────────────────────────────────────
+  // â”€â”€ RENDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   return (
     <>
-      <title>Free Video Downloader — YouTube, Instagram, Facebook | BongBari Tools</title>
+      <title>Free Video Downloader â€” YouTube, Instagram, Facebook | BongBari Tools</title>
       <meta name="description" content="Download YouTube, Instagram and Facebook public videos for free. Preview, trim in-browser, and save as MP4 or MP3. No account needed." />
 
       <div className="dl-page font-serif md:h-screen md:overflow-hidden md:flex md:flex-col">
@@ -527,7 +527,7 @@ export default function SocialDownloaderPage() {
         <header className="dl-main-header shrink-0">
           <Link href="/tools">
             <button className="dl-back-btn group">
-              <span className="group-hover:-translate-x-0.5 transition-transform text-xs">←</span>
+              <span className="group-hover:-translate-x-0.5 transition-transform text-xs">â†</span>
               <span className="hidden md:inline font-tech text-[9px] uppercase tracking-wider">Tools</span>
             </button>
           </Link>
@@ -542,7 +542,7 @@ export default function SocialDownloaderPage() {
 
           <div className="dl-header-right">
             <div className="dl-mode-pill">
-              <span className="dl-mode-icon">🚀</span>
+              <span className="dl-mode-icon">ðŸš€</span>
               <span className="hidden sm:inline ml-1">Cloud</span>
             </div>
           </div>
@@ -552,7 +552,7 @@ export default function SocialDownloaderPage() {
         <div className="dl-bg-orb dl-bg-orb--purple" />
         <div className="dl-bg-orb dl-bg-orb--cyan" />
 
-        {/* ── DESKTOP: SPLIT VIEW LAYOUT (md:flex) ── */}
+        {/* â”€â”€ DESKTOP: SPLIT VIEW LAYOUT (md:flex) â”€â”€ */}
         <div className="md:flex md:flex-1 md:overflow-hidden relative z-10 w-full max-w-[1600px] mx-auto">
           
           {/* LEFT PANEL: VISUALS (Hero / Video Preview) */}
@@ -567,29 +567,37 @@ export default function SocialDownloaderPage() {
                       <h2 className="text-lg md:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400 truncate px-4">
                           {videoInfo.title}
                       </h2>
-                      <p className="text-white/40 text-xs mt-1">@{videoInfo.uploader} • {videoInfo.platform}</p>
+                      <p className="text-white/40 text-xs mt-1">@{videoInfo.uploader} â€¢ {videoInfo.platform}</p>
                   </div>
 
                   <div className={`${isVertical ? "aspect-[9/16] w-full max-h-[70vh] max-w-[400px] mx-auto" : "aspect-video w-full max-w-4xl"} ${trimMode ? "rounded-t-xl" : "rounded-xl"} overflow-hidden border border-white/10 shadow-2xl bg-black relative group flex flex-col items-center justify-center transition-all duration-300`}>
                     {isDesktop && showPreview && previewUrl ? (
-                      <video
-                        ref={trimMode ? undefined : videoRef}
-                        src={previewUrl}
-                        controls={!trimMode}
-                        className="w-full h-full object-contain"
-                        autoPlay={!trimMode}
-                        muted={trimMode}
-                        onLoadedMetadata={(e) => {
-                            const d = e.currentTarget.duration;
-                            if (d && !isNaN(d) && d !== Infinity && actualDuration === 0) {
-                                setActualDuration(d);
-                                if (endTime === 0) setEndTime(d);
-                            }
-                        }}
-                        onPlay={() => !trimMode && setIsPlaying(true)}
-                        onPause={() => !trimMode && setIsPlaying(false)} 
-
-                      />
+                      previewUrl.startsWith("youtube-embed:") ? (
+                        <iframe
+                          src={`https://www.youtube.com/embed/${previewUrl.replace("youtube-embed:", "")}?autoplay=1&mute=0&rel=0`}
+                          className="w-full h-full"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      ) : (
+                        <video
+                          ref={trimMode ? undefined : videoRef}
+                          src={previewUrl}
+                          controls={!trimMode}
+                          className="w-full h-full object-contain"
+                          autoPlay={!trimMode}
+                          muted={trimMode}
+                          onLoadedMetadata={(e) => {
+                              const d = e.currentTarget.duration;
+                              if (d && !isNaN(d) && d !== Infinity && actualDuration === 0) {
+                                  setActualDuration(d);
+                                  if (endTime === 0) setEndTime(d);
+                              }
+                          }}
+                          onPlay={() => !trimMode && setIsPlaying(true)}
+                          onPause={() => !trimMode && setIsPlaying(false)}
+                        />
+                      )
                     ) : (
                       <div className="w-full h-full relative cursor-pointer" onClick={() => loadVideoToCache(false)}>
                           <img src={proxyImage(videoInfo.thumbnail) || ""} alt={videoInfo.title} className="w-full h-full object-cover opacity-50 group-hover:opacity-30 transition-opacity" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
@@ -829,7 +837,7 @@ export default function SocialDownloaderPage() {
                 
                 {/* 4. FOOTER (Only visible on Right Panel when no video on Desktop) */}
                 <div className="mt-auto pt-8 border-t border-white/5 text-center md:text-left">
-                  <p className="text-[10px] uppercase tracking-widest text-white/20">© 2024 BongBari Media Group</p>
+                  <p className="text-[10px] uppercase tracking-widest text-white/20">Â© 2024 BongBari Media Group</p>
                 </div>
              </div>
           </div>
@@ -918,7 +926,7 @@ export default function SocialDownloaderPage() {
                    <div className="flex justify-between items-center"><span className="text-white/50">Mark Start (In)</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">I</span></div>
                    <div className="flex justify-between items-center"><span className="text-white/50">Mark End (Out)</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">O</span></div>
                    <div className="flex justify-between items-center"><span className="text-white/50">Smart Mark</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">M</span></div>
-                   <div className="flex justify-between items-center"><span className="text-white/50">Step Frame</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">← / →</span></div>
+                   <div className="flex justify-between items-center"><span className="text-white/50">Step Frame</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">â† / â†’</span></div>
                 </div>
               </div>
             )}
@@ -965,7 +973,7 @@ export default function SocialDownloaderPage() {
                       <div className="flex justify-between items-center"><span className="text-white/50">Mark Start (In)</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">I</span></div>
                       <div className="flex justify-between items-center"><span className="text-white/50">Mark End (Out)</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">O</span></div>
                       <div className="flex justify-between items-center"><span className="text-white/50">Smart Mark</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">M</span></div>
-                      <div className="flex justify-between items-center"><span className="text-white/50">Step Frame</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">← / →</span></div>
+                      <div className="flex justify-between items-center"><span className="text-white/50">Step Frame</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">â† / â†’</span></div>
                     </div>
                   </div>
                 )}
@@ -978,24 +986,33 @@ export default function SocialDownloaderPage() {
                    else videoRef.current.pause();
                  }
               }}>
-                 <video
-                   ref={videoRef}
-                   src={previewUrl || proxyImage(videoInfo.thumbnail!)}
-                   className="max-w-full max-h-full object-contain shadow-2xl"
-                   autoPlay
-                   playsInline
-                   muted={isMuted}
-                   onLoadedMetadata={(e) => {
-                       const d = e.currentTarget.duration;
-                       if (actualDuration === 0 && d && !isNaN(d) && d !== Infinity) {
-                           setActualDuration(d);
-                           if (endTime === 0) setEndTime(d);
-                       }
-                   }}
-                   onPlay={() => setIsPlaying(true)}
-                   onPause={() => setIsPlaying(false)}
+                 {previewUrl && previewUrl.startsWith("youtube-embed:") ? (
+                    <iframe
+                      src={`https://www.youtube.com/embed/${previewUrl.replace("youtube-embed:", "")}?autoplay=1&mute=${isMuted ? 1 : 0}&rel=0`}
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  ) : (
+                  <video
+                    ref={videoRef}
+                    src={previewUrl || proxyImage(videoInfo.thumbnail!)}
+                    className="max-w-full max-h-full object-contain shadow-2xl"
+                    autoPlay
+                    playsInline
+                    muted={isMuted}
+                    onLoadedMetadata={(e) => {
+                        const d = e.currentTarget.duration;
+                        if (actualDuration === 0 && d && !isNaN(d) && d !== Infinity) {
+                            setActualDuration(d);
+                            if (endTime === 0) setEndTime(d);
+                        }
+                    }}
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
 
-                 />
+                  />
+                  )}
                  {isPlaying && (
                    <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/20">
                       <div className="w-20 h-20 rounded-full bg-black/60 backdrop-blur border border-white/10 flex items-center justify-center drop-shadow-2xl">
@@ -1051,7 +1068,7 @@ export default function SocialDownloaderPage() {
                           <TrimSlider                                videoRef={videoRef}                              duration={actualDuration || videoInfo.duration || 0}
                               startTime={startTime} 
                               endTime={endTime}
-                              videoUrl={previewUrl || videoInfo.thumbnail || ""}
+                              videoUrl={previewUrl && !previewUrl.startsWith("youtube-embed:") ? previewUrl : (videoInfo.thumbnail || "")}
                               onStartChange={(t) => {
                                 setStartTime(t);
                                 if (videoRef.current) { videoRef.current.currentTime = t; videoRef.current.pause(); }
@@ -1081,7 +1098,7 @@ export default function SocialDownloaderPage() {
                             >
                                {videoInfo?.formats.map((f: any) => (
                                   <option key={f.id} value={f.id} className="bg-slate-900 text-white">
-                                     {f.label} {['mp3', 'm4a', 'aac', 'wav'].includes(f.ext) ? '🎵' : '🎥'}
+                                     {f.label} {['mp3', 'm4a', 'aac', 'wav'].includes(f.ext) ? 'ðŸŽµ' : 'ðŸŽ¥'}
                                   </option>
                                ))}
                             </select>

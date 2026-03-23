@@ -1,10 +1,4 @@
-import { execFile } from 'child_process';
-import { promisify } from 'util';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const execFileAsync = promisify(execFile);
-
+import { generate } from 'youtube-po-token-generator';
 // Simple token cache
 let cachedToken: {
   visitorData: string;
@@ -37,42 +31,25 @@ export async function getPoToken(): Promise<{ visitorData: string; poToken: stri
   isFetching = true;
   fetchPromise = (async () => {
     try {
-      console.log('[PoToken] Generating precise Proof-of-Origin token via isolated child process...');
+      console.log('[PoToken] Generating Proof-of-Origin token NATIVELY in memory (bypassing OOM killer)...');
       
-      // Bypass npx to avoid issues on windows vs linux and reduce overhead
-      // Point directly to the module's bin script
-      const binPath = path.resolve(process.cwd(), 'node_modules', 'youtube-po-token-generator', 'bin', 'cli.mjs');
-      console.log(`[PoToken] Executing: ${process.execPath} ${binPath}`);
+      const parsed = await generate();
       
-      const { stdout } = await execFileAsync(
-        process.execPath, 
-        [binPath], 
-        {
-          env: { ...process.env }, // inherit process.env (HTTP_PROXY etc)
-          timeout: 25000,
-          maxBuffer: 1024 * 1024
-        }
-      );
-
-      const parsed = JSON.parse(stdout.trim());
-      
-      if (!parsed.visitorData || !parsed.poToken) {
-        throw new Error('Invalid JSON structure returned by youtube-po-token-generator');
+      if (!parsed || !parsed.visitorData || !parsed.poToken) {
+        throw new Error('Invalid structure returned by youtube-po-token-generator instance.');
       }
-
-      console.log('[PoToken] Successfully generated PO Token. Caching for 6 hours.');
 
       cachedToken = {
         visitorData: parsed.visitorData,
         poToken: parsed.poToken,
-        expiresAt: now + TOKEN_LIFETIME_MS
+        expiresAt: Date.now() + TOKEN_LIFETIME_MS
       };
 
+      console.log(`[PoToken] 🟢 Native RAM-optimized Token Generation Success!`);
       return { visitorData: parsed.visitorData, poToken: parsed.poToken };
-    } catch (err: any) {
-      console.error('[PoToken] Error generating token:', err.message || err);
-      // Fallback: throw so the main logic can decide to proceed without token or fail.
-      throw new Error('Failed to generate Proof of Origin token.');
+    } catch (err) {
+      console.error('[PoToken] ❌ Token generation failed natively:', err);
+      throw err;
     } finally {
       isFetching = false;
       fetchPromise = null;

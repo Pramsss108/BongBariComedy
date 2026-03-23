@@ -413,27 +413,22 @@ export default function SocialDownloaderPage() {
     }
 
     try {
-      // Fetch direct stream URL via Node proxy to completely hide user IP and avoid Google 403 Forbidden errors
+      // VIBE FIX: Skip blocking HEAD check - mount video player immediately and let
+      // the browser <video> element handle loading/errors natively. This prevents the
+      // 30-90s hang on Render's ytdl-core resolver from blocking our UI.
       setIsCaching(true);
-      setCacheProgress(20);
       const autoProxyUrl = apiUrl(`/api/downloader/proxy-stream?url=${encodeURIComponent(url)}&format=mp4-480&mode=stream&sessionId=${sessionId||""}`);
 
-      // Smooth filler progress
+      // Animate progress quickly to 95 to signal "loading..." then let video load handle the rest
       let p = 20;
       const tId = setInterval(() => {
-          p += Math.floor(Math.random() * 5) + 1;
-          if (p > 90) p = 90;
+          p += Math.floor(Math.random() * 15) + 10; // fast animation
+          if (p > 95) { p = 95; clearInterval(tId); }
           setCacheProgress(p);
-      }, 500);
+      }, 200);
 
-      // Brief check to validate session/auth before opening video player
-      const res = await fetch(autoProxyUrl, { method: 'HEAD' });
+      // Set immediately - no blocking HEAD request
       clearInterval(tId);
-      
-      if (!res.ok) {
-         if (res.status === 401) throw new Error("Unauthorized. Please log in again.");
-         throw new Error("Cannot stream video. Protected or deleted by platform.");
-      }
       setCacheProgress(100);
       setPreviewUrl(autoProxyUrl);
       setShowPreview(true);

@@ -14,6 +14,7 @@ import os from "os";
 import { execFile, spawn } from "child_process";
 import fs from "fs";
 import { getPoToken } from './poTokenService.js';
+import { youtubeService } from '../youtubeService.js';
 import crypto from "crypto";
 import axios from "axios";
 import { HttpsProxyAgent } from "https-proxy-agent";
@@ -223,12 +224,40 @@ async function executeYtDlpExtract(url: string, extraArgs: string[] = []): Promi
     return res;
 }
 
+function extractYouTubeId(url: string): string | null {
+    const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+    if (!match) {
+        const shortsMatch = url.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/i);
+        return shortsMatch ? shortsMatch[1] : null;
+    }
+    return match ? match[1] : null;
+}
+
 async function fetchSmartMetadata(url: string): Promise<any> {
     if (metaCache.has(url)) {
         const cached = metaCache.get(url)!;
         if (cached.expires > Date.now()) {
             console.log(`[Cache ⚡] Instant Metadata HIT for ${url}`);
             return cached.data;
+        }
+    }
+
+    const isYT = url.includes("youtube.com") || url.includes("youtu.be");
+    if (isYT && process.env.YOUTUBE_API_KEY) {
+        const videoId = extractYouTubeId(url);
+        if (videoId) {
+            console.log(`[Phase 0] Bypassing yt-dlp. Fetching metadata natively via YouTube Data API v3 for ID: ${videoId}`);
+            const details = await youtubeService.fetchVideoDetails(videoId);
+            if (details) {
+                 const result = {
+                     title: details.title,
+                     thumbnail: details.thumbnail,
+                     duration: details.duration,
+                     formats: [] // generic resolutions assigned in handleInfo
+                 };
+                 metaCache.set(url, { data: result, expires: Date.now() + CACHE_TTL_MS });
+                 return result;
+            }
         }
     }
 

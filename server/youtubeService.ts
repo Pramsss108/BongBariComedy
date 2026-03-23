@@ -130,6 +130,38 @@ class YouTubeService {
       .slice(0, take);
   }
 
+  async fetchVideoDetails(videoId: string): Promise<any> {
+    const apiKey = process.env.YOUTUBE_API_KEY;
+    if (!apiKey) return null;
+    try {
+      const stats = await this.fetchJSON(`https://www.googleapis.com/youtube/v3/videos?part=statistics,contentDetails,snippet&id=${videoId}&key=${apiKey}`);
+      const it = stats.items?.[0];
+      if (!it) return null;
+      
+      let durationSeconds = 0;
+      const durationStr = it.contentDetails?.duration || "";
+      const match = durationStr.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+      if (match) {
+          const h = parseInt(match[1] || "0");
+          const m = parseInt(match[2] || "0");
+          const s = parseInt(match[3] || "0");
+          durationSeconds = (h * 3600) + (m * 60) + s;
+      }
+
+      return {
+        videoId: it.id,
+        title: it.snippet?.title || "YouTube Video",
+        thumbnail: it.snippet?.thumbnails?.maxres?.url || it.snippet?.thumbnails?.high?.url || it.snippet?.thumbnails?.medium?.url || `https://img.youtube.com/vi/${it.id}/hqdefault.jpg`,
+        publishedAt: it.snippet?.publishedAt,
+        viewCount: parseInt(it.statistics?.viewCount || '0', 10),
+        duration: durationSeconds
+      };
+    } catch (e) {
+      console.error("[YouTubeService] Core API fetch failed for Video ID", videoId);
+      return null;
+    }
+  }
+
   private async estimatePopularFromRecent(latestAll: VideoInfo[]): Promise<VideoInfo[]> {
     const candidates = latestAll.slice(0, 12);
     const withViews = await this.withLimitedConcurrency(candidates.map(v => async () => {

@@ -182,8 +182,8 @@ function mapDownloaderError(err: any): { code: string; message: string; status: 
       }
   }
 
-  // Generic fallback
-  return { code: "DOWNLOAD_FAILED", message: "Could not process this video. It may be deleted or protected.", status: 422 };
+  // Generic fallback: Expose raw stderr for live debugging
+  return { code: "DOWNLOAD_FAILED", message: `Could not process this video. Trace: ${full.substring(0, 150)}`, status: 422 };
 }
 
 // ---------------------------------------------------------------------------

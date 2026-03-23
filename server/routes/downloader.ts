@@ -201,11 +201,19 @@ async function executeYtDlpExtract(url: string, extraArgs: string[] = []): Promi
         "--extractor-args", "youtube:player_client=android,ios",
         ...extraArgs
     ];
+    // Generate a secure random 8-character string for ASocks dynamic IP rotation per request
+    const randomSession = crypto.randomBytes(4).toString("hex");
+    
     // Fallback to strict env if undefined
-    const proxy = process.env.ASOCKS_PROXY || "http://q0b2vvoyfp-res-country-IN-hold-session-session-69badf0c52b0a:MsuSXbhmwtpdr81t@93.190.141.57:443";
+    let proxyConfig = process.env.ASOCKS_PROXY || "http://q0b2vvoyfp-res-country-IN-hold-session-session-69badf0c52b0a:MsuSXbhmwtpdr81t@93.190.141.57:443";
+    
+    // Inject logic: Scramble the session ID from the user's dashboard string so ASocks forces a fresh 100% clean residential IP for every fetch.
+    if (proxyConfig.includes("session-")) {
+        proxyConfig = proxyConfig.replace(/session-[a-z0-9]+/i, `session-${randomSession}`);
+    }
     
     try {
-        const proxyArgs = [...ytArgs, "--proxy", proxy];
+        const proxyArgs = [...ytArgs, "--proxy", proxyConfig];
         console.log(`[Phase 0] Executing yt-dlp via ASocks Proxy...`);
         const fetchStart = performance.now();
         const res = await executeYtDlp(url, proxyArgs, 15000); // 15s max for proxy

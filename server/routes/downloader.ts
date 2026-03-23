@@ -849,6 +849,26 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
   formatNotAvailable(res, "Preview streaming unavailable right now.");
 }
   export function registerDownloaderRoutes(app: Express, isAuthenticated: any): void {
+// ============================================================================
+// DIAGNOSTIC ENDPOINT: Test ytdl-core BotGuard Bypass on Render
+// ============================================================================
+app.get("/api/downloader/test-ytdl", async (req, res) => {
+    try {
+        // Assuming getPoToken and ytdl are imported or defined elsewhere
+        const { visitorData, poToken } = await getPoToken();
+        const info = await ytdl.getInfo(req.query.url as string, {
+            requestOptions: {
+                headers: {
+                    'Cookie': `po_token=web+${poToken}; visitor_data=${visitorData}`
+                }
+            }
+        });
+        res.json({ success: true, title: info.videoDetails.title, formatsCount: info.formats.length });
+    } catch (e: any) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
   // Info endpoint — lenient rate limit (10/min) — PUBLIC
   app.get("/api/downloader/info", infoLimiter, handleInfo);
 

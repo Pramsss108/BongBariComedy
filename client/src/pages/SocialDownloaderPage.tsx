@@ -96,7 +96,7 @@ async function performSecureDownload(
         onProgress(Math.round((received / totalBytes) * 100));
       }
     }
-    blob = new Blob(chunks, { type: contentType });
+    blob = new Blob(chunks as any[], { type: contentType });
   } else {
     // Indeterminate full download
     onProgress(50);
@@ -274,7 +274,7 @@ export default function SocialDownloaderPage() {
     try {
       // 15 seconds timeout
       abortRef.current = new AbortController();
-      const timeoutId = setTimeout(() => abortRef.current?.abort(), 15000);
+      const timeoutId = setTimeout(() => abortRef.current?.abort(), 45000);
 
       const res = await fetch(apiUrl(`/api/downloader/info?url=${encodeURIComponent(url.trim())}`), {
           signal: abortRef.current.signal
@@ -316,16 +316,6 @@ export default function SocialDownloaderPage() {
   // ── Download ───────────────────────────────────────────────────
   const handleDownload = useCallback(async () => {
     if (!videoInfo) return;
-
-    if (!isAuthenticated) {
-      toast({
-        title: "Login Required",
-        description: "Please login to download videos. This protects our free service from bots.",
-        variant: "destructive",
-      });
-      setLocation("/login");
-      return;
-    }
 
     setPhase("downloading"); setDownloadProgress(0);
     if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(50);
@@ -411,12 +401,6 @@ export default function SocialDownloaderPage() {
         setShowPreview(true);
         return;
       }
-    }
-
-    if (!isAuthenticated) {
-      toast({ title: "Login Required", description: "Login to preview videos.", variant: "destructive" });
-      setLocation("/login");
-      return;
     }
 
     try {
@@ -586,7 +570,7 @@ export default function SocialDownloaderPage() {
                       />
                     ) : (
                       <div className="w-full h-full relative cursor-pointer" onClick={() => loadVideoToCache(false)}>
-                          <img src={videoInfo.thumbnail || ""} alt={videoInfo.title} className="w-full h-full object-cover opacity-50 group-hover:opacity-30 transition-opacity" />
+                          <img src={videoInfo.thumbnail || ""} alt={videoInfo.title} className="w-full h-full object-cover opacity-50 group-hover:opacity-30 transition-opacity" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
                               <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 group-hover:scale-110 transition-transform shadow-2xl">
                                 {isCaching ? <Loader2 size={40} className="text-white animate-spin" /> : <Play size={40} className="fill-white text-white ml-2" />}
@@ -737,7 +721,7 @@ export default function SocialDownloaderPage() {
                               />
                             ) : (
                               <>
-                                {videoInfo.thumbnail && <img src={videoInfo.thumbnail} className="w-full h-full object-cover opacity-60" />}
+                                {videoInfo.thumbnail && <img src={videoInfo.thumbnail} className="w-full h-full object-cover opacity-60" onError={(e) => { e.currentTarget.style.display = 'none'; }} />}
                                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
                                   <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-xl">
                                       {isCaching ? <Loader2 size={24} className="text-white animate-spin" /> : <Play size={24} className="fill-white text-white ml-1" />}
@@ -996,7 +980,7 @@ export default function SocialDownloaderPage() {
               </div>
 
               {/* Trimmer Area */}
-              <div className="shrink-0 bg-[#0a0a0a] border-t border-white/10 p-3 md:p-4 flex flex-col items-center gap-4">
+              <div className="shrink-0 bg-black/60 backdrop-blur-3xl border-t border-white/10 p-3 md:p-4 flex flex-col items-center gap-4 shadow-[0_-10px_40px_rgba(0,0,0,0.8)] z-[200]">
                  <div className="w-full max-w-5xl mx-auto flex items-center gap-4">
                       <button
                         className="w-12 h-12 shrink-0 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all shadow-lg hover:shadow-cyan-900/20"
@@ -1056,7 +1040,7 @@ export default function SocialDownloaderPage() {
                             </select>
                          </div>
                          <button
-                            className="h-12 px-6 md:px-10 bg-gradient-to-r mt-5 from-purple-600 to-cyan-600 text-white font-bold text-base rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
+                            className="h-12 px-6 md:px-10 bg-gradient-to-r mt-5 from-purple-600 to-cyan-600 text-white font-bold text-base rounded-xl shadow-[0_0_20px_rgba(168,85,247,0.4)] hover:shadow-[0_0_30px_rgba(6,182,212,0.6)] hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:grayscale"
                             onClick={handleTrim}
                             disabled={phase !== "ready" || endTime <= startTime || !videoRef.current}
                          >

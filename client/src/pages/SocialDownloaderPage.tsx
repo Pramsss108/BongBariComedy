@@ -412,6 +412,24 @@ export default function SocialDownloaderPage() {
       }
     }
 
+    // ✅ VIBE ARCHITECTURE V15: YouTube Preview = Native Embed (Zero Server Load)
+    // Google blocks server IPs from streaming. But YouTube's OWN player can stream its own videos.
+    // So for YouTube, we use the native iframe embed and skip Render entirely.
+    const isYT = url.includes("youtube.com") || url.includes("youtu.be");
+    if (isYT) {
+      const ytIdMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
+      const videoId = ytIdMatch ? ytIdMatch[1] : null;
+      if (videoId) {
+        setPreviewUrl(`youtube-embed:${videoId}`);
+        setShowPreview(true);
+        if (enterTrimMode && !trimMode) {
+          // For trim mode on YouTube, we still need to load the actual stream
+          toast({ title: "Trim Mode", description: "For trim-and-cut, use the Download button then trim locally. YouTube native previews support playback only.", variant: "default" });
+        }
+        return;
+      }
+    }
+
     try {
       // VIBE FIX: Skip blocking HEAD check - mount video player immediately and let
       // the browser <video> element handle loading/errors natively. This prevents the
@@ -714,15 +732,25 @@ export default function SocialDownloaderPage() {
                       {/* Mobile Thumbnail (Hidden on Desktop) */}
                         <div className={`md:hidden ${isVertical ? "aspect-[9/16] w-2/3 mx-auto max-h-[50vh]" : "aspect-video"} relative rounded-xl overflow-hidden bg-black/40 border border-white/10 group`} onClick={() => loadVideoToCache(false)}>
                             {!isDesktop && showPreview && previewUrl ? (
-                              <video src={previewUrl} controls className="w-full h-full object-contain" autoPlay muted={trimMode} 
-                                onLoadedMetadata={(e) => {
-                                  const d = e.currentTarget.duration;
-                                  if (d && !isNaN(d) && d !== Infinity && actualDuration === 0) {
-                                      setActualDuration(d);
-                                      if (endTime === 0) setEndTime(d);
-                                  }
-                                }}
-                              />
+                              previewUrl.startsWith("youtube-embed:") ? (
+                                <iframe
+                                  src={`https://www.youtube.com/embed/${previewUrl.replace("youtube-embed:", "")}?autoplay=1&mute=0`}
+                                  className="w-full h-full"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                />
+                              ) : (
+                                <video src={previewUrl} controls className="w-full h-full object-contain" autoPlay muted={trimMode}
+                                  ref={videoRef}
+                                  onLoadedMetadata={(e) => {
+                                    const d = e.currentTarget.duration;
+                                    if (d && !isNaN(d) && d !== Infinity && actualDuration === 0) {
+                                        setActualDuration(d);
+                                        if (endTime === 0) setEndTime(d);
+                                    }
+                                  }}
+                                />
+                              )
                             ) : (
                               <>
                                 {videoInfo.thumbnail && <img src={proxyImage(videoInfo.thumbnail)} className="w-full h-full object-cover opacity-60" onError={(e) => { e.currentTarget.style.display = 'none'; }} />}

@@ -486,18 +486,65 @@ async function handleStream(req: Request, res: Response): Promise<void> {
 
   try {
       const isYT = validated.url.includes("youtube.com") || validated.url.includes("youtu.be");
-      let extraArgs: string[] = ["--extractor-args", "youtube:player_client=android,ios"];
       
+      // =========================================================================
+      // V14 SERVERLESS YOUTUBE STREAMING BYPASS
+      // Since Render IPs are totally tarpitted by BotGuard scraping, we MUST
+      // resolve the exact CDN link using native node crypto, then 302 redirect
+      // the client so their own residential IP downloads from Google directly.
+      // =========================================================================
       if (isYT) {
           try {
+              console.log(`[Phase 2] YouTube detected. Booting native PoToken Web Resolver...`);
               const { visitorData, poToken } = await getPoToken();
-              extraArgs = ["--extractor-args", `youtube:player_client=android,ios;po_token=web+${poToken};visitor_data=${visitorData}`];
-              console.log("[PoToken] Using po_token in stream download.");
-          } catch (poErr) {
-              console.warn("[PoToken] Failed to fetch po_token for stream, falling back...", poErr);
+              console.log(`[Phase 2] Validating BotGuard with Crypto Token...`);
+              
+              const info = await ytdl.getInfo(validated.url, {
+                  requestOptions: {
+                      headers: {
+                          'Cookie': `po_token=web+${poToken}; visitor_data=${visitorData}`
+                      }
+                  }
+              });
+
+              // Map frontend 'mp4-720' format requests to actual YouTube ITAGs
+              let selectedFormat;
+              if (chosen.isAudio) {
+                  selectedFormat = ytdl.chooseFormat(info.formats, { quality: 'highestaudio' });
+              } else {
+                  // For preview or standard downloads, we MUST choose a pre-merged format (video+audio) 
+                  // because we are just redirecting the browser directly to the CDN!
+                  const targetHeight = parseInt(formatCode.replace("mp4-", "")) || 720;
+                  
+                  // Filter to only formats that have BOTH audio and video
+                  const mergedFormats = info.formats.filter((f: any) => f.hasVideo && f.hasAudio);
+                  
+                  // Find the closest height that doesn't exceed our target
+                  selectedFormat = mergedFormats.sort((a: any, b: any) => (b.height || 0) - (a.height || 0))
+                                               .find((f: any) => (f.height || 0) <= targetHeight);
+                  
+                  // Fallback to highest available merged format if the specific height isn't found
+                  if (!selectedFormat) {
+                      selectedFormat = ytdl.chooseFormat(mergedFormats, { quality: 'highest' });
+                  }
+              }
+
+              if (selectedFormat && selectedFormat.url) {
+                  console.log(`✅ [SUCCESS] Bypassed Render Extractor completely! Redirecting client directly to Google CDN!`);
+                  res.redirect(302, selectedFormat.url);
+                  return;
+              } else {
+                  throw new Error("No compatible merged stream found for this quality.");
+              }
+          } catch (ytNativeErr: any) {
+               console.error(`[Phase 2] ytdl-core native bypass failed!`, ytNativeErr.message);
+               // We will explicitly NOT fallback to yt-dlp because we already know it hangs indefinitely on Render.
+               res.status(422).json({ error: "YouTube stream extraction failed due to BotGuard IP bans. Please try a different URL." });
+               return;
           }
       }
 
+      let extraArgs: string[] = ["--extractor-args", "youtube:player_client=android,ios"];
       const ytdlArgs: string[] = [
         "--no-warnings",
         "--no-call-home",
@@ -789,12 +836,38 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
   // 3. Fallback: If cache completely misses, fetch it via proxy
   if (!bestStreamUrl) {
       console.log(`[Phase 0] Requesting fast PREVIEW proxy extraction for: ${url}`);
-      try {
-          // Force fastest pre-muxed extraction
-          const data = await executeYtDlpExtract(url, ["--format", `best[height<=${qStr}][ext=mp4]/best[height<=${qStr}]/best`]);
-          bestStreamUrl = data.url || (data.requested_downloads && data.requested_downloads[0]?.url);
-      } catch(e) {
-          console.error("[downloader/proxy-stream] extraction error:", e);
+      
+      const isYT = validated.url.includes("youtube.com") || validated.url.includes("youtu.be");
+      if (isYT) {
+          try {
+              console.log(`[Phase 2] YouTube preview proxy cache miss. Resolving URL natively via ytdl-core...`);
+              const { visitorData, poToken } = await getPoToken();
+              const info = await ytdl.getInfo(validated.url, {
+                  requestOptions: {
+                      headers: {
+                          'Cookie': `po_token=web+${poToken}; visitor_data=${visitorData}`
+                      }
+                  }
+              });
+              const mergedFormats = info.formats.filter((f: any) => f.hasVideo && f.hasAudio);
+              let selectedFormat = mergedFormats.sort((a: any, b: any) => (b.height || 0) - (a.height || 0))
+                                           .find((f: any) => (f.height || 0) <= qStr);
+              if (!selectedFormat) selectedFormat = ytdl.chooseFormat(mergedFormats, { quality: 'highest' });
+              
+              if (selectedFormat && selectedFormat.url) {
+                  bestStreamUrl = selectedFormat.url;
+              }
+          } catch(ytErr: any) {
+              console.error("[downloader/proxy-stream] ytdl-core preview extraction error:", ytErr.message);
+          }
+      } else {
+          try {
+              // Force fastest pre-muxed extraction for non-YT platforms
+              const data = await executeYtDlpExtract(url, ["--format", `best[height<=${qStr}][ext=mp4]/best[height<=${qStr}]/best`]);
+              bestStreamUrl = data.url || (data.requested_downloads && data.requested_downloads[0]?.url);
+          } catch(e) {
+              console.error("[downloader/proxy-stream] extraction error:", e);
+          }
       }
   }
 

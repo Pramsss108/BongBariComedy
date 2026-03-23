@@ -192,41 +192,34 @@ function mapDownloaderError(err: any): { code: string; message: string; status: 
 // ---------------------------------------------------------------------------
 
 async function executeYtDlpExtract(url: string, extraArgs: string[] = []): Promise<any> {
+    const isYT = url.includes("youtube.com") || url.includes("youtu.be");
+    let dynamicArgs: string[] = ["--extractor-args", "youtube:player_client=android,ios"];
+    
+    if (isYT) {
+        try {
+            const { visitorData, poToken } = await getPoToken();
+            dynamicArgs = ["--extractor-args", `youtube:player_client=android,ios;po_token=web+${poToken};visitor_data=${visitorData}`];
+            console.log("[PoToken] Extracted Web Token for Metadata Fetch.");
+        } catch (poErr) {
+            console.warn("[PoToken] Failed to fetch po_token, falling back to default.", poErr);
+        }
+    }
+
     const ytArgs = [
         "--dump-json",
         "--no-warnings",
         "--no-playlist",
         "--socket-timeout", "15",
         "--geo-bypass",
-        "--extractor-args", "youtube:player_client=android,ios",
+        ...dynamicArgs,
         ...extraArgs
     ];
-    // Generate a secure random 8-character string for ASocks dynamic IP rotation per request
-    const randomSession = crypto.randomBytes(4).toString("hex");
     
-    // Fallback to strict env if undefined
-    let proxyConfig = process.env.ASOCKS_PROXY || "http://q0b2vvoyfp-res-country-IN-hold-session-session-69badf0c52b0a:MsuSXbhmwtpdr81t@93.190.141.57:443";
-    
-    // Inject logic: Scramble the session ID from the user's dashboard string so ASocks forces a fresh 100% clean residential IP for every fetch.
-    if (proxyConfig.includes("session-")) {
-        proxyConfig = proxyConfig.replace(/session-[a-z0-9]+:/i, `session-${randomSession}:`);
-    }
-    
-    try {
-        const proxyArgs = [...ytArgs, "--proxy", proxyConfig];
-        console.log(`[Phase 0] Executing yt-dlp via ASocks Proxy...`);
-        const fetchStart = performance.now();
-        const res = await executeYtDlp(url, proxyArgs, 15000); // 15s max for proxy
-        console.log(`[Telemetry] ASocks proxy SUCCESS in ${Math.round(performance.now() - fetchStart)}ms`);
-        return res;
-    } catch (proxyErr: any) {
-        console.warn(`[Phase 0] ASocks proxy failed! Falling back to DIRECT yt-dlp...`, proxyErr.message || proxyErr);
-        console.log(`[Phase 0] Executing yt-dlp directly without proxy (Hetzner Node)...`);
-        const fallbackStart = performance.now();
-        const res = await executeYtDlp(url, ytArgs, 20000); // 20s for fallback
-        console.log(`[Telemetry] Direct fallback SUCCESS in ${Math.round(performance.now() - fallbackStart)}ms`);
-        return res;
-    }
+    console.log(`[Phase 0] Executing yt-dlp metadata fetch directly via Render IP (PoToken bypass)...`);
+    const fallbackStart = performance.now();
+    const res = await executeYtDlp(url, ytArgs, 20000); // 20s timeout
+    console.log(`[Telemetry] Direct metadata SUCCESS in ${Math.round(performance.now() - fallbackStart)}ms`);
+    return res;
 }
 
 async function fetchSmartMetadata(url: string): Promise<any> {

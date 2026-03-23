@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Download, Play, Pause, ArrowLeft, Scissors, Youtube, Instagram, Facebook,
   Loader2, AlertCircle, Music, Film, CheckCircle2, Search, X, Clock,
-  Lock, CloudOff, Hourglass, HelpCircle,
+  Lock, CloudOff, Hourglass, HelpCircle, Volume2, VolumeX,
 } from "lucide-react";
 import { TrimSlider } from "@/components/TrimSlider";
 
@@ -45,6 +45,14 @@ function detectPlatform(url: string): "youtube" | "instagram" | "facebook" | nul
   if (/instagram\.com/i.test(url)) return "instagram";
   if (/facebook\.com|fb\.watch/i.test(url)) return "facebook";
   return null;
+}
+
+function proxyImage(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  if (url.includes("cdninstagram.com") || url.includes("fbcdn.net")) {
+    return `https://corsproxy.io/?url=${encodeURIComponent(url)}`;
+  }
+  return url;
 }
 
 // ─── Native File Save API Helper ──────────────────────────────────────────
@@ -162,6 +170,7 @@ export default function SocialDownloaderPage() {
   const [actualDuration, setActualDuration] = useState(0);
 
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false); // Default to unmuted, handle autoplay rejection cleanly
   const [isCaching, setIsCaching] = useState(false); // CapCut: Block 1 Cache state
   const [cacheProgress, setCacheProgress] = useState(0); // CapCut: Block 1 Cache progress
   const [isScrubbing, setIsScrubbing] = useState(false); // Phase 1: Intent-based UI state
@@ -570,7 +579,7 @@ export default function SocialDownloaderPage() {
                       />
                     ) : (
                       <div className="w-full h-full relative cursor-pointer" onClick={() => loadVideoToCache(false)}>
-                          <img src={videoInfo.thumbnail || ""} alt={videoInfo.title} className="w-full h-full object-cover opacity-50 group-hover:opacity-30 transition-opacity" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                          <img src={proxyImage(videoInfo.thumbnail) || ""} alt={videoInfo.title} className="w-full h-full object-cover opacity-50 group-hover:opacity-30 transition-opacity" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
                               <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 group-hover:scale-110 transition-transform shadow-2xl">
                                 {isCaching ? <Loader2 size={40} className="text-white animate-spin" /> : <Play size={40} className="fill-white text-white ml-2" />}
@@ -721,7 +730,7 @@ export default function SocialDownloaderPage() {
                               />
                             ) : (
                               <>
-                                {videoInfo.thumbnail && <img src={videoInfo.thumbnail} className="w-full h-full object-cover opacity-60" onError={(e) => { e.currentTarget.style.display = 'none'; }} />}
+                                {videoInfo.thumbnail && <img src={proxyImage(videoInfo.thumbnail)} className="w-full h-full object-cover opacity-60" onError={(e) => { e.currentTarget.style.display = 'none'; }} />}
                                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
                                   <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-xl">
                                       {isCaching ? <Loader2 size={24} className="text-white animate-spin" /> : <Play size={24} className="fill-white text-white ml-1" />}
@@ -948,10 +957,11 @@ export default function SocialDownloaderPage() {
               }}>
                  <video
                    ref={videoRef}
-                   src={previewUrl || videoInfo.thumbnail!}
+                   src={previewUrl || proxyImage(videoInfo.thumbnail!)}
                    className="max-w-full max-h-full object-contain shadow-2xl"
                    autoPlay
                    playsInline
+                   muted={isMuted}
                    onLoadedMetadata={(e) => {
                        const d = e.currentTarget.duration;
                        if (actualDuration === 0 && d && !isNaN(d) && d !== Infinity) {
@@ -971,12 +981,26 @@ export default function SocialDownloaderPage() {
                    </div>
                  )}
                  {!isPlaying && (
-                   <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-all">
-                      <div className="w-24 h-24 rounded-full bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center drop-shadow-2xl group-hover:scale-110 transition-transform">
+                   <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-all pointer-events-none">
+                      <div className="w-24 h-24 rounded-full bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center drop-shadow-2xl group-hover:scale-110 transition-transform pointer-events-auto">
                           <Play size={40} className="fill-white text-white ml-2" />
                       </div>
                    </div>
                  )}
+                 
+                 {/* Volume Overlay Control */}
+                 <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if (videoRef.current) {
+                            videoRef.current.muted = !isMuted;
+                            setIsMuted(!isMuted);
+                        }
+                    }}
+                    className="absolute top-4 left-4 z-[250] w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 transition-all shadow-lg"
+                 >
+                     {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                 </button>
               </div>
 
               {/* Trimmer Area */}

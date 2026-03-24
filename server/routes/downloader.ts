@@ -315,6 +315,10 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
         console.log(`[Layer 2] Activating GHOST BYPASS for Meta properties (IG/FB)...`);
         
         // These are public community instances that already have thousands of bot-bypass IG cookies loaded.
+        // Small anti-bot delay before hitting public mirrors (50-150ms)
+        const mirrorJitter = Math.floor(Math.random() * 100) + 50;
+        await new Promise(resolve => setTimeout(resolve, mirrorJitter));
+
         const ghostMirrors = [
             "https://co.wuk.sh/api/json", // Community Cobalt
             "https://api.cobalt.tools/api/json" // Original
@@ -327,11 +331,11 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
                     headers: {
                         'Accept': 'application/json',
                         'Content-Type': 'application/json',
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+                        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
                         'Origin': new URL(mirror).origin,
                         'Referer': new URL(mirror).origin
                     },
-                    timeout: 10000
+                    timeout: 3000 // STEP 2: Strict 3 second timeout so we fallback to Layer 3 immediately
                 });
 
                 const res = await proxyAxios.post(mirror, {

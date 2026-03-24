@@ -685,7 +685,7 @@ export default function SocialDownloaderPage() {
                     >
                       <option className="bg-[#0f0f11] text-white" value="auto">Smart Auto-Fallback (Production Default)</option>
                       <option className="bg-[#0f0f11] text-white" value="layer1">Force Layer 1 (Cobalt API + Humanized Anti-Burst)</option>
-                      <option className="bg-[#0f0f11] text-white" value="layer2">Force Layer 2 (Ghost Mirror)</option>
+                      <option className="bg-[#0f0f11] text-white" value="layer2">Force Layer 2 (Ghost Mirror + Mobile UA + Fast Fail)</option>
                       <option className="bg-[#0f0f11] text-white" value="layer3">Force Layer 3 (ASocks + VPS Proxy)</option>
                     </select>
                   </div>

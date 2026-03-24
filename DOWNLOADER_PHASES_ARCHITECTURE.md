@@ -14,12 +14,13 @@
 
 ---
 
-## � LAYER 2: The "Ghost" Proxy Bypass (Specifically for IG/FB)
-**Status:** ✅ COMPLETED & DEPLOYED (via Public Mirror APIs)
+## 🔵 LAYER 2: The "Ghost" Proxy Bypass (Specifically for IG/FB)
+**Status:** ✅ COMPLETED & DEPLOYED (via Public Mirror APIs with Fast Fail)
 **Target:** Instagram Reels, Facebook Public Videos
 * **The Problem:** Instagram blocks `yt-dlp` from extracting data if no login cookie is found. It gives an "Empty Media File" error.
-* **The Smart Fix:** Instead of relying on proxy + yt-dlp which forces a cookie wall, we intercept Meta platforms immediately and route them through community-driven Cobalt mirrors (`co.wuk.sh`, `api.cobalt.tools`) via a headless NodeJS fetch script spoofing a browser user-agent.
-* **The Advantage:** These mirrors already process millions of requests and maintain highly-rotated, active bot-bypassing Instagram cookies dynamically. We bounce the URL there, grab the raw CDN, and completely bypass Render/Proxy IP restrictions.
+* **The Smart Fix:** When an IG/FB link is detected, we immediately route through community-driven Cobalt mirrors (`co.wuk.sh`, `api.cobalt.tools`). We spoof a **mobile iOS user-agent** and enforce a strict **3-second timeout** with a localized anti-bot delay (50-150ms).
+* **The Advantage:** These mirrors already maintain highly-rotated, active bot-bypassing Instagram cookies dynamically.
+* **The Failsafe:** If the mirror fails or times out after 3 seconds, we do NOT stop. We instantly fallback recursively to **Layer 3** (VPS + ASocks proxy / yt-dlp) to grab the media.
 
 ---
 

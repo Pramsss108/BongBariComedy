@@ -226,6 +226,37 @@ async function fetchSmartMetadata(url: string): Promise<any> {
 
     console.log(`[Phase 0] Requesting metadata using Hybrid Engine for: ${url}`);
     const fetchStart = performance.now();
+
+    // 1. FAST PATH: Hetzner Node Bypass (Cobalt)
+    // Instantly resolves direct URL without timing out
+    try {
+        const vpsNode = getNextPreviewNode();
+        console.log(`[Phase 0] Attempting fast Hetzner Cobalt resolve for metadata via ${vpsNode}`);
+        const vpsRes = await axios.post(vpsNode, { url: url }, { timeout: 15000, headers: { 'Content-Type': 'application/json' } });
+        if (vpsRes.data && vpsRes.data.status === 'stream' && vpsRes.data.url) {
+            console.log(`[Trace ⏱️] Hetzner node responded in ${Math.round(performance.now() - fetchStart)}ms`);
+            const result = {
+                title: vpsRes.data.title || "Video",
+                duration: vpsRes.data.duration || 0,
+                thumbnail: vpsRes.data.thumbnail || null,
+                formats: [
+                    {
+                        ext: "mp4",
+                        acodec: "aac",
+                        vcodec: "h264",
+                        url: vpsRes.data.url,
+                        height: 720
+                    }
+                ]
+            };
+            metaCache.set(url, { data: result, expires: Date.now() + CACHE_TTL_MS });
+            return result;
+        }
+    } catch (err: any) {
+        console.log(`[Phase 0] Hetzner Node bypass failed: ${err.message}. Falling back to yt-dlp proxy layer...`);
+    }
+
+    // 2. FALLBACK PATH: yt-dlp extract via Proxy / Render
     try {
         const data = await executeYtDlpExtract(url);
         console.log(`[Trace ⏱️] Hybrid Engine Responded in ${Math.round(performance.now() - fetchStart)}ms`);
@@ -234,7 +265,7 @@ async function fetchSmartMetadata(url: string): Promise<any> {
             title: data.title || "Video",
             duration: data.duration || 0,
             thumbnail: data.thumbnail || null,
-            formats: data.formats || [], 
+            formats: data.formats || [],
         };
         metaCache.set(url, { data: result, expires: Date.now() + CACHE_TTL_MS });
         return result;
@@ -243,7 +274,6 @@ async function fetchSmartMetadata(url: string): Promise<any> {
         throw new Error(`Total engine failure: ${engineErr.message}`);
     }
 }
-
 // ---------------------------------------------------------------------------
 // PHRASE 2: GET /api/downloader/info
 // Returns video metadata: title, thumbnail, duration, available formats

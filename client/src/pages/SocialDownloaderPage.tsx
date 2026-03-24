@@ -686,7 +686,7 @@ export default function SocialDownloaderPage() {
                       <option className="bg-[#0f0f11] text-white" value="auto">Smart Auto-Fallback (Production Default)</option>
                       <option className="bg-[#0f0f11] text-white" value="layer1">Force Layer 1 (Hetzner)</option>
                       <option className="bg-[#0f0f11] text-white" value="layer2">Force Layer 2 (Ghost Mirror)</option>
-                      <option className="bg-[#0f0f11] text-white" value="layer3">Force Layer 3 (ASocks Proxy)</option>
+                      <option className="bg-[#0f0f11] text-white" value="layer3">Force Layer 3 (ASocks + VPS Proxy)</option>
                     </select>
                   </div>
 
@@ -909,35 +909,7 @@ export default function SocialDownloaderPage() {
           </div>
         )}
 
-          <div className="absolute top-4 right-4 z-50">
-            <button
-              onClick={() => setShowShortcuts(!showShortcuts)}
-              className="w-10 h-10 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-all backdrop-blur shadow-lg group relative"
-            >
-              <HelpCircle size={20} className="group-hover:scale-110 transition-transform" />
-            </button>
-            
-            {showShortcuts && (
-              <div className="absolute top-14 right-0 w-[320px] bg-black/80 backdrop-blur-2xl border border-white/10 rounded-2xl p-5 shadow-2xl animate-in fade-in slide-in-from-top-4">
-                <div className="flex justify-between items-start mb-4">
-                   <h3 className="font-tech text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400 font-bold tracking-widest text-sm">BONGBARI STUDIO</h3>
-                   <button onClick={() => setShowShortcuts(false)} className="text-white/40 hover:text-white"><X size={16}/></button>
-                </div>
-                <p className="text-xs text-white/70 mb-5 leading-relaxed font-sans">
-                  Experience desktop-grade non-linear editing directly in your browser. Frame-accurate precision, solid-state rendering, zero watermarks.
-                </p>
-                <div className="space-y-3 font-mono text-xs">
-                   <div className="flex justify-between items-center"><span className="text-white/50">Play / Pause</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">Space</span></div>
-                   <div className="flex justify-between items-center"><span className="text-white/50">Mark Start (In)</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">I</span></div>
-                   <div className="flex justify-between items-center"><span className="text-white/50">Mark End (Out)</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">O</span></div>
-                   <div className="flex justify-between items-center"><span className="text-white/50">Smart Mark</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">M</span></div>
-                   <div className="flex justify-between items-center"><span className="text-white/50">Step Frame</span><span className="bg-white/10 px-2 py-1 rounded text-white font-bold">← / →</span></div>
-                </div>
-              </div>
-            )}
-          </div>
-
-        {/* FULLSCREEN STUDIO MODE OVERLAY */}
+          {/* FULLSCREEN STUDIO MODE OVERLAY */}
         {trimMode && videoInfo && (
            <div className="fixed inset-0 z-[100] bg-black flex flex-col font-serif animate-in fade-in zoom-in-95 duration-300">
               {/* App Bar */}

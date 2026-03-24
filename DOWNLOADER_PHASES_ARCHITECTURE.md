@@ -46,3 +46,100 @@
 1. **Never touch Layer 1 (`fetchSmartMetadata` VPS bypass).** It works. 
 2. We will now build **Layer 2 (The Ghost bypass)** to handle Instagram and Facebook natively before it ever reaches yt-dlp.
 3. We will then wrap the final `yt-dlp` block in **Layer 3 (ASocks rotator with TV headers)**.
+---
+
+## 🗄️ ADVANCED RESEARCH ARCHIVE: IPv6 ROTATION (DO NOT IMPLEMENT YET)
+*The following is an alternative documented Vibe Coder strategy for establishing a flawless 4th Layer.*
+
+🔥 **Real working model (Cobalt way)**
+**Step 1:** Self-host Cobalt on your Hetzner VPS
+✔ Already done (as per your setup)
+
+**Step 2:** Use layered extraction
+Flow:
+1. Try Cobalt (IPv4)
+2. If fail → Cobalt via Proxy
+3. If fail → (future) IPv6
+
+**Step 3:** Keep request behavior human-like
+* no burst
+* slight delay
+* limited retries
+
+🧾 **FINAL VERDICT**
+**Phase 4:**
+✔ Correct concept
+✔ Keep as last layer
+✔ Not needed now
+
+**Cobalt:**
+✔ Public API = bad (blocked)
+✔ Self-host = best move
+✔ But not 100% unblock forever
+
+🧠 **ONE LINE TRUTH**
+👉 You fixed the biggest problem already by self-hosting
+👉 Remaining game = IP reputation + smart fallback
+
+---
+
+### 🟢 SETUP PLAYBOOK: IPv6 POOL ROTATION (ARCHIVED FOR FUTURE)
+✅ **GOAL**
+Every request → new IPv6 IP. No reuse → no pattern → harder to block.
+
+**STEP 1 — Confirm IPv6 block**
+Run: `ip -6 addr`
+You should see: `inet6 xxxx:xxxx:xxxx:xxxx::/64`
+👉 This /64 = your pool
+
+**STEP 2 — Install required tools**
+```bash
+apt update
+apt install ndppd -y
+```
+
+**STEP 3 — Configure ndppd**
+Edit: `nano /etc/ndppd.conf`
+```text
+route-ttl 30000
+proxy eth0 {
+   router yes
+   timeout 500
+   ttl 30000
+   rule xxxx:xxxx:xxxx:xxxx::/64 {
+      static
+   }
+}
+```
+Restart: `systemctl restart ndppd`
+
+**STEP 4 — Enable forwarding**
+`sysctl -w net.ipv6.conf.all.forwarding=1`
+Make permanent in `/etc/sysctl.conf`:
+`net.ipv6.conf.all.forwarding=1`
+
+**STEP 5 — RANDOM IPv6 GENERATOR**
+`nano ipv6.sh`
+```bash
+#!/bin/bash
+PREFIX="xxxx:xxxx:xxxx:xxxx"
+RAND=$(cat /dev/urandom | tr -dc 'a-f0-9' | fold -w 16 | head -n 1)
+IP="$PREFIX:$RAND"
+echo $IP
+```
+Make executable: `chmod +x ipv6.sh`
+
+**STEP 6 — USE NEW IP PER REQUEST**
+Every request:
+```bash
+IP=$(./ipv6.sh)
+ip -6 addr add $IP/64 dev eth0
+curl --interface $IP "https://youtube.com/..."
+ip -6 addr del $IP/64 dev eth0
+```
+
+🔁 **FINAL LOGIC (IMPORTANT)**
+For every single scrape: Generate new IPv6 -> Attach to interface -> Send request -> Remove IP.
+* Result: Every request = new identity, no reuse.
+* STRICT RULES: NEVER reuse IP, ALWAYS delete after request, Keep request speed controlled.
+* RESULT: Practically unlimited IPs, Zero proxy cost, Strong anti-block layer.

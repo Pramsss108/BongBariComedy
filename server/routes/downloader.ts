@@ -634,11 +634,11 @@ async function handleStream(req: Request, res: Response): Promise<void> {
                           headers: {
                               'Accept': 'application/json',
                               'Content-Type': 'application/json',
-                              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+                              'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
                               'Origin': new URL(mirror).origin,
                               'Referer': new URL(mirror).origin
                           },
-                          timeout: 10000
+                          timeout: 3000 // Fast fail for stream layer 2
                       });
       
                       const res = await proxyAxios.post(mirror, {
@@ -826,10 +826,15 @@ async function handleStream(req: Request, res: Response): Promise<void> {
           }
       }
       let extraArgs: string[] = ["--extractor-args", "youtube:player_client=android,ios"];
+      
+      const sessionProxy = generateRotatedProxy();
+      console.log(`[Phase 3] Booting Temp File Downloader using ASocks Proxy: ${sessionProxy.replace(/:[^:@]+@/, ':***@')}`);
+
       const ytdlArgs: string[] = [
         "--no-warnings",
         "--no-call-home",
         "--no-check-certificate",
+        "--proxy", sessionProxy,
         ...extraArgs,
       "--force-ipv4",
       // Buffer optimization
@@ -868,7 +873,7 @@ async function handleStream(req: Request, res: Response): Promise<void> {
                 requiresTempFile = true;
                 const heightMatch = chosen.ytFormat.match(/height<=(\d+)/);
                 const heightLimit = heightMatch ? heightMatch[1] : "720";
-                chosen.ytFormat = `bestvideo[height<=${heightLimit}][ext=mp4]+bestaudio[ext=m4a]/best[height<=${heightLimit}]/best`;
+                chosen.ytFormat = `bestvideo[height<=${heightLimit}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=${heightLimit}][ext=mp4]+bestaudio/best[height<=${heightLimit}]/best`;
             }
         } catch(cdnErr: any) {
             console.warn(`[Phase 0] Direct CDN extraction failed. Attempting Temp File approach...`);
@@ -885,7 +890,7 @@ async function handleStream(req: Request, res: Response): Promise<void> {
         } else if (isTrimming) {
             const heightMatch = chosen.ytFormat.match(/height<=(\d+)/);
             const heightLimit = heightMatch ? heightMatch[1] : "720";
-            ytdlArgs.push("--format", `bestvideo[height<=${heightLimit}][ext=mp4]+bestaudio[ext=m4a]/best[height<=${heightLimit}]/best`);
+            ytdlArgs.push("--format", `bestvideo[height<=${heightLimit}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=${heightLimit}][ext=mp4]+bestaudio/best[height<=${heightLimit}]/best`);
         } else {
             ytdlArgs.push("--format", chosen.ytFormat);
         }

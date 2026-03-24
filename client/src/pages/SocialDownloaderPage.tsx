@@ -656,7 +656,7 @@ export default function SocialDownloaderPage() {
                       <input
                         id="downloader-url-input"
                         type="url"
-                        className="flex-1 bg-transparent border-none outline-none text-white px-4 text-base md:text-sm placeholder:text-white/20 font-mono h-12"
+                        className="flex-1 bg-transparent [color-scheme:dark] border-none outline-none text-white focus:bg-transparent [&:-webkit-autofill]:bg-transparent [&:-webkit-autofill]:text-white px-4 text-base md:text-sm placeholder:text-white/20 font-mono h-12"
                         placeholder="Paste link here..."
                         value={url}
                         onChange={(e) => { setUrl(e.target.value); if (phase === "error") { setPhase("idle"); setErrorMsg(""); setErrorCode(""); } }}
@@ -681,29 +681,18 @@ export default function SocialDownloaderPage() {
                     <select
                       value={forceEngine}
                       onChange={(e) => setForceEngine(e.target.value)}
-                      className="bg-background border border-border text-foreground py-1 px-2 rounded outline-none cursor-pointer"
+                      className="bg-[#0f0f11] border border-white/10 text-white/90 py-1 px-2 rounded outline-none cursor-pointer hover:bg-black transition-colors"
                     >
-                      <option value="auto">Smart Auto-Fallback (Production Default)</option>
-                      <option value="layer1">Force Layer 1 (Hetzner)</option>
-                      <option value="layer2">Force Layer 2 (Ghost Mirror)</option>
-                      <option value="layer3">Force Layer 3 (ASocks Proxy)</option>
+                      <option className="bg-[#0f0f11] text-white" value="auto">Smart Auto-Fallback (Production Default)</option>
+                      <option className="bg-[#0f0f11] text-white" value="layer1">Force Layer 1 (Hetzner)</option>
+                      <option className="bg-[#0f0f11] text-white" value="layer2">Force Layer 2 (Ghost Mirror)</option>
+                      <option className="bg-[#0f0f11] text-white" value="layer3">Force Layer 3 (ASocks Proxy)</option>
                     </select>
                   </div>
 
-                  {/* Developer Engine Override */}
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2 opacity-50 hover:opacity-100 transition-opacity">
-                    <span>⚙️ Developer Engine Override:</span>
-                    <select
-                      value={forceEngine}
-                      onChange={(e) => setForceEngine(e.target.value)}
-                      className="bg-background border border-border text-foreground py-1 px-2 rounded outline-none cursor-pointer"
-                    >
-                      <option value="auto">Smart Auto-Fallback (Production Default)</option>
-                      <option value="layer1">Force Layer 1 (Hetzner)</option>
-                      <option value="layer2">Force Layer 2 (Ghost Mirror)</option>
-                      <option value="layer3">Force Layer 3 (ASocks Proxy)</option>
-                    </select>
-                  </div>
+                  
+
+                  
 
                 {/* 2. STATUS / ERROR (Phase 13: Enhanced Error Handling) */}
                 {phase === "fetching" && extractProgress && (

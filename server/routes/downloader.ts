@@ -270,7 +270,7 @@ async function fetchSmartMetadata(url: string): Promise<any> {
             title: title,
             duration: data.duration || 0,
             thumbnail: thumbnail,
-            formats: [] // generic resolutions will be added in handleInfo
+            formats: data.formats || []
         };
         metaCache.set(url, { data: result, expires: Date.now() + CACHE_TTL_MS });
         

@@ -1,0 +1,1 @@
+const fs = require('fs'); let code = fs.readFileSync('client/src/pages/SocialDownloaderPage.tsx', 'utf8'); code = code.replace(/\{f\.label\} \{.*?\}/, '{f.label} {[\'mp3\', \'m4a\', \'aac\', \'wav\'].includes(f.ext) ? \'\\u{1F3B5}\' : \'\\u{1F3AC}\'}'); fs.writeFileSync('client/src/pages/SocialDownloaderPage.tsx', code); console.log('Fixed!');

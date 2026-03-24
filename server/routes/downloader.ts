@@ -1099,7 +1099,7 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
       } else {
           try {
               // Force fastest pre-muxed extraction for non-YT platforms
-              const data = await executeYtDlpExtract(url, ["--format", `best[height<=${qStr}][ext=mp4]/best[height<=${qStr}]/best`]);
+              const data = await executeYtDlpExtract(url, ["--format", "b"]);
               bestStreamUrl = data.url || (data.requested_downloads && data.requested_downloads[0]?.url);
           } catch(e) {
               console.error("[downloader/proxy-stream] extraction error:", e);

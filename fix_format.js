@@ -1,0 +1,1 @@
+const fs=require("fs"); let c=fs.readFileSync("server/routes/downloader.ts","utf8"); c=c.replace("const data = await executeYtDlpExtract(url, [\"--format\", \\`best[height<=\\$\\{qStr\\}][ext=mp4]/best[height<=\\$\\{qStr\\}]/best\\`]);", "const data = await executeYtDlpExtract(url, [\"--format\", \"b\"]);"); fs.writeFileSync("server/routes/downloader.ts",c); console.log("done");

@@ -268,7 +268,64 @@ async function fetchSmartMetadata(url: string): Promise<any> {
             return result;
         }
     } catch (err: any) {
-        console.log(`[Phase 0] Hetzner Node bypass failed: ${err.message}. Falling back to yt-dlp proxy layer...`);
+        console.log(`[Phase 0] Hetzner Node bypass failed: ${err.message}. Moving to next layer...`);
+    }
+
+    // 1.5. LAYER 2 GHOST BYPASS (Specific for Instagram / Facebook)
+    // Instagram requires deep cookies which we don't have. We route them through pure API mirrors.
+    if (url.includes("instagram.com") || url.includes("facebook.com") || url.includes("fb.watch")) {
+        console.log(`[Layer 2] Activating GHOST BYPASS for Meta properties (IG/FB)...`);
+        
+        // These are public community instances that already have thousands of bot-bypass IG cookies loaded.
+        const ghostMirrors = [
+            "https://co.wuk.sh/api/json", // Community Cobalt
+            "https://api.cobalt.tools/api/json" // Original
+        ];
+
+        for (const mirror of ghostMirrors) {
+            try {
+                console.log(`[Layer 2] Attempting Ghost Extraction via: ${mirror}`);
+                const proxyAxios = axios.create({
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+                        'Origin': new URL(mirror).origin,
+                        'Referer': new URL(mirror).origin
+                    },
+                    timeout: 10000
+                });
+
+                const res = await proxyAxios.post(mirror, {
+                    url: url,
+                    isAudioOnly: false,
+                    vQuality: "720"
+                });
+
+                if (res.data && res.data.url) {
+                    console.log(`[Layer 2] 🌟 Ghost Bypass SUCCESS via ${mirror}! Got Meta payload.`);
+                    const result = {
+                        title: "Instagram/Facebook Media",
+                        duration: 0,
+                        thumbnail: null,
+                        formats: [
+                            {
+                                ext: "mp4",
+                                acodec: "aac",
+                                vcodec: "h264",
+                                url: res.data.url,
+                                height: 720
+                            }
+                        ]
+                    };
+                    metaCache.set(url, { data: result, expires: Date.now() + CACHE_TTL_MS });
+                    return result;
+                }
+            } catch (mirrorErr: any) {
+                console.log(`[Layer 2] Mirror ${mirror} missed: ${mirrorErr.message}`);
+            }
+        }
+        console.log(`[Layer 2] Ghost Layer fully bypassed. Falling back to yt-dlp...`);
     }
 
     // 2. FALLBACK PATH: yt-dlp extract via Proxy / Render
@@ -504,7 +561,118 @@ async function handleStream(req: Request, res: Response): Promise<void> {
 
   try {
       const isYT = validated.url.includes("youtube.com") || validated.url.includes("youtu.be");
+      const isMeta = validated.url.includes("instagram.com") || validated.url.includes("facebook.com") || validated.url.includes("fb.watch");
       
+      // =========================================================================
+      // LAYER 2 GHOST BYPASS (META/INSTAGRAM)
+      // =========================================================================
+      if (isMeta) {
+          console.log(`[Layer 2] Meta detected on stream route. Booting Ghost Layer Resolver...`);
+          try {
+              const ghostMirrors = [
+                  "https://co.wuk.sh/api/json", // Community Cobalt
+                  "https://api.cobalt.tools/api/json" // Original
+              ];
+      
+              let sourceStreamUrl = null;
+              
+              for (const mirror of ghostMirrors) {
+                  try {
+                      const proxyAxios = axios.create({
+                          headers: {
+                              'Accept': 'application/json',
+                              'Content-Type': 'application/json',
+                              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+                              'Origin': new URL(mirror).origin,
+                              'Referer': new URL(mirror).origin
+                          },
+                          timeout: 10000
+                      });
+      
+                      const res = await proxyAxios.post(mirror, {
+                          url: validated.url,
+                          isAudioOnly: chosen.isAudio,
+                          vQuality: "720"
+                      });
+      
+                      if (res.data && res.data.url) {
+                          sourceStreamUrl = res.data.url;
+                          console.log(`[Layer 2] Ghost Layer returned Meta direct CDN URL: ${sourceStreamUrl.substring(0, 50)}...`);
+                          break;
+                      }
+                  } catch (mirrorErr: any) {
+                      console.log(`[Layer 2] Ghost Mirror ${mirror} failed stream resolve: ${mirrorErr.message}`);
+                  }
+              }
+
+              if (!sourceStreamUrl) {
+                  throw new Error("All ghost mirrors failed to return a stream URL for Meta.");
+              }
+
+              const isTrimmingReq = startSec !== null && endSec !== null && endSec > startSec;
+              
+              if (isTrimmingReq || chosen.ext === "mp3") {
+                   console.log(`[Layer 2] Trimming or audio-only Meta stream. Acquired CDN URL from Ghost Layer for FFmpeg processing.`);
+                   
+                   const ffmpegArgs = [];
+                   if (isTrimmingReq) {
+                       ffmpegArgs.push("-ss", startSec.toString());
+                   }
+                   ffmpegArgs.push("-i", sourceStreamUrl);
+
+                   if (isTrimmingReq) {
+                       ffmpegArgs.push("-to", endSec.toString());
+                   }
+
+                   if (chosen.ext === "mp3") {
+                       ffmpegArgs.push("-vn", "-c:a", "libmp3lame", "-q:a", "2");
+                   } else if (chosen.isAudio) {
+                       ffmpegArgs.push("-vn", "-c:a", "copy");
+                   } else {
+                       ffmpegArgs.push("-c:v", "copy", "-c:a", "copy");
+                   }
+
+                   ffmpegArgs.push("-f", chosen.ext === "mp3" ? "mp3" : "mp4");
+                   ffmpegArgs.push("pipe:1");
+
+                   console.log(`⚙️ EXEC: ffmpeg ${ffmpegArgs.join(" ")}`);
+
+                   res.setHeader("Content-Disposition", `attachment; filename="bongbari_meta_${Date.now()}.${chosen.ext}"`);
+                   res.setHeader("Content-Type", chosen.ext === "mp3" ? "audio/mpeg" : "video/mp4");
+
+                   const subprocess = spawn(ffmpegPath || "ffmpeg", ffmpegArgs, {
+                       stdio: ["ignore", "pipe", "pipe"],
+                   });
+
+                   subprocess.stderr?.on("data", (chunk: Buffer) => {
+                       const msg = chunk.toString();
+                       Object.assign({}, {msg});
+                   });
+
+                   subprocess.on("error", (err: any) => {
+                       console.error(`[CRASH ALERT] spawn error:`, err?.message);
+                       if (!res.headersSent) res.status(500).json({ error: "Processing failed." });
+                   });
+
+                   subprocess.stdout?.pipe(res);
+
+                   req.on("close", () => {
+                       subprocess.kill?.("SIGTERM");
+                   });
+                   return;
+
+              } else {
+                  console.log(`✅ [Layer 2 SUCCESS] Redirecting client directly to Meta CDN!`);
+                  res.redirect(302, sourceStreamUrl);
+                  return;
+              }
+          } catch (metaErr: any) {
+               console.error(`[Layer 2] Ghost Node bypass failed!`, metaErr.message);
+               // Proceed to Layer 3 fallback (yt-dlp) if Ghost Layer fails, mostly will fail but we try.
+               console.log(`[Layer 2] Falling back to Layer 3 (yt-dlp) for Meta URL...`);
+          }
+      }
+
       // =========================================================================
       // V14 SERVERLESS YOUTUBE STREAMING BYPASS
       // Since Render IPs are totally tarpitted by BotGuard scraping, we MUST

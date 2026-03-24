@@ -14,13 +14,12 @@
 
 ---
 
-## 🟡 LAYER 2: The "Ghost" Proxy Bypass (Specifically for IG/FB)
-**Status:** 🏗️ NEXT TO EXECUTE (Phase 2)
+## � LAYER 2: The "Ghost" Proxy Bypass (Specifically for IG/FB)
+**Status:** ✅ COMPLETED & DEPLOYED (via Public Mirror APIs)
 **Target:** Instagram Reels, Facebook Public Videos
 * **The Problem:** Instagram blocks `yt-dlp` from extracting data if no login cookie is found. It gives an "Empty Media File" error.
-* **The Smart Fix (Your TV/Mobile Header Idea!):** You are 100% right about the headers. Instead of using `yt-dlp` for this, we will write a custom native `fetch` module in Node.js.
-* **The Spoofing:** We will inject **iOS/Android App Headers** (e.g., `Instagram 219.0.0.12.117 Android` or Smart TV User-Agents). Mobile API endpoints have much lower bot-protection than web endpoints. 
-* **The Network:** We wrap this custom mobile-spoofed request inside your ASocks proxy. Instagram thinks a real human holding an iPhone in India is requesting the video.
+* **The Smart Fix:** Instead of relying on proxy + yt-dlp which forces a cookie wall, we intercept Meta platforms immediately and route them through community-driven Cobalt mirrors (`co.wuk.sh`, `api.cobalt.tools`) via a headless NodeJS fetch script spoofing a browser user-agent.
+* **The Advantage:** These mirrors already process millions of requests and maintain highly-rotated, active bot-bypassing Instagram cookies dynamically. We bounce the URL there, grab the raw CDN, and completely bypass Render/Proxy IP restrictions.
 
 ---
 

@@ -34,6 +34,7 @@ const apiUrl = buildApiUrl;
 // Ã¢â€â‚¬Ã¢â€â‚¬ Types Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 interface VideoFormat { id: string; label: string; ext: string; height?: number; }
 interface VideoInfo {
+  previewUrl?: string | null;
   title: string; thumbnail: string | null; duration: number;
   durationString: string; uploader: string; platform: string; formats: VideoFormat[];
 }
@@ -418,7 +419,10 @@ export default function SocialDownloaderPage() {
       // No iframes, no HEAD checks â€” just mount the <video> element directly.
       setIsCaching(true);
       setCacheProgress(30);
-      const autoProxyUrl = apiUrl(`/api/downloader/proxy-stream?url=${encodeURIComponent(url)}&format=mp4-480&mode=stream&sessionId=${sessionId||""}`);
+      // Phase 3: Use direct CDN URL if available (bypasses Render entirely!)
+      const autoProxyUrl = videoInfo?.previewUrl 
+        ? videoInfo.previewUrl 
+        : apiUrl(`/api/downloader/proxy-stream?url=${encodeURIComponent(url)}&format=mp4-480&mode=stream&sessionId=${sessionId||""}`);
       setCacheProgress(100);
       setPreviewUrl(autoProxyUrl);
       setShowPreview(true);
@@ -429,7 +433,7 @@ export default function SocialDownloaderPage() {
       setIsCaching(false);
       setCacheProgress(100);
     }
-  }, [url, isAuthenticated, sessionId, previewUrl, trimMode, toast, setLocation]);
+  }, [url, isAuthenticated, sessionId, previewUrl, trimMode, toast, setLocation, videoInfo]);
 
   // Ã¢â€â‚¬Ã¢â€â‚¬ Preview Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   const handlePreview = useCallback(() => {

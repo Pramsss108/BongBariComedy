@@ -193,44 +193,26 @@ function mapDownloaderError(err: any): { code: string; message: string; status: 
 // ---------------------------------------------------------------------------
 
 async function executeYtDlpExtract(url: string, extraArgs: string[] = []): Promise<any> {
-    const isYT = url.includes("youtube.com") || url.includes("youtu.be");
-    let dynamicArgs: string[] = ["--extractor-args", "youtube:player_client=android,ios"];
-    
-    if (isYT) {
-        try {
-            const { visitorData, poToken } = await getPoToken();
-            dynamicArgs = ["--extractor-args", `youtube:player_client=android,ios;po_token=web+${poToken};visitor_data=${visitorData}`];
-            console.log("[PoToken] Extracted Web Token for Metadata Fetch.");
-        } catch (poErr) {
-            console.warn("[PoToken] Failed to fetch po_token, falling back to default.", poErr);
-        }
-    }
-
     const ytArgs = [
         "--dump-json",
         "--no-warnings",
-        "--no-playlist",
-        "--socket-timeout", "15",
-        "--geo-bypass",
-        "--force-ipv4",
-        ...dynamicArgs,
+        "--no-call-home",
+        "--geo-bypass", 
         ...extraArgs
     ];
     
-    console.log(`[Phase 0] Executing yt-dlp metadata fetch directly via Render IP (PoToken bypass)...`);
-    const fallbackStart = performance.now();
-    const res = await executeYtDlp(url, ytArgs, 20000); // 20s timeout
-    console.log(`[Telemetry] Direct metadata SUCCESS in ${Math.round(performance.now() - fallbackStart)}ms`);
-    return res;
-}
-
-function extractYouTubeId(url: string): string | null {
-    const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
-    if (!match) {
-        const shortsMatch = url.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/i);
-        return shortsMatch ? shortsMatch[1] : null;
+    // Fallback to strict env if undefined
+    const proxy = process.env.ASOCKS_PROXY || "http://q0b2vvoyfp-res-country-IN-hold-session-session-69badf0c52b0a:MsuSXbhmwtpdr81t@93.190.141.57:443";
+    
+    try {
+        const proxyArgs = [...ytArgs, "--proxy", proxy];
+        console.log(`[Phase 0] Executing yt-dlp via ASocks Proxy...`);
+        return await executeYtDlp(url, proxyArgs);
+    } catch (proxyErr: any) {
+        console.warn(`[Phase 0] ASocks proxy failed! Falling back to DIRECT yt-dlp...`, proxyErr.message || proxyErr);
+        console.log(`[Phase 0] Executing yt-dlp directly without proxy (Hetzner Node)...`);
+        return await executeYtDlp(url, ytArgs);
     }
-    return match ? match[1] : null;
 }
 
 async function fetchSmartMetadata(url: string): Promise<any> {
@@ -242,54 +224,30 @@ async function fetchSmartMetadata(url: string): Promise<any> {
         }
     }
 
-    console.log(`[Phase 0] Requesting metadata directly from Hetzner Node for: ${url}`);
+    console.log(`[Phase 0] Requesting metadata using Hybrid Engine for: ${url}`);
     const fetchStart = performance.now();
     try {
-        const vpsNode = getNextPreviewNode(); 
-        const vpsRes = await axios.post(vpsNode, { url: url }, { timeout: 15000, headers: { 'Content-Type': 'application/json' } });
-        console.log(`[Trace ⏱️] Hetzner Node Responded in ${Math.round(performance.now() - fetchStart)}ms`);
-        const data = vpsRes.data;
-        
-        let title = "YouTube Video";
-        let thumbnail = null;
-        const videoId = extractYouTubeId(url);
-        
-        if (videoId) {
-            thumbnail = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-            try {
-                const oembedRes = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
-                if (oembedRes.ok) {
-                    const oembedData = await oembedRes.json();
-                    title = oembedData.title || title;
-                    if (oembedData.thumbnail_url) thumbnail = oembedData.thumbnail_url;
-                }
-            } catch(e) {}
-        }
-        
+        const data = await executeYtDlpExtract(url);
+        console.log(`[Trace ⏱️] Hybrid Engine Responded in ${Math.round(performance.now() - fetchStart)}ms`);
+
         const result = {
-            title: title,
+            title: data.title || "Video",
             duration: data.duration || 0,
-            thumbnail: thumbnail,
-            formats: data.formats || []
+            thumbnail: data.thumbnail || null,
+            formats: data.formats || [], 
         };
         metaCache.set(url, { data: result, expires: Date.now() + CACHE_TTL_MS });
-        
-        if (data.url) {
-            console.log(`[Cache ⚡] Caching exact Hetzner Stream URL proactively`);
-            streamCache.set(url, { url: data.url, expires: Date.now() + CACHE_TTL_MS });
-        }
-        
         return result;
     } catch (engineErr: any) {
-        console.error(`[Phase 0] Hetzner Metadata Failure:`, engineErr?.message || engineErr);
-        throw new Error(`Total engine failure: ${engineErr?.message || 'Unknown network crash'}`);
+        console.error(`[Phase 0] Total Metadata Failure:`, engineErr?.message || engineErr);
+        throw new Error(`Total engine failure: ${engineErr.message}`);
     }
 }
 
-// ---------------------------------------------------------------------------  
+// ---------------------------------------------------------------------------
 // PHRASE 2: GET /api/downloader/info
-// Returns video metadata: title, thumbnail, duration, available formats        
-// ---------------------------------------------------------------------------  
+// Returns video metadata: title, thumbnail, duration, available formats
+// ---------------------------------------------------------------------------
 async function handleInfo(req: Request, res: Response): Promise<void> {
   const validated = validateVideoUrl(req.query.url as string);
   if (!validated.ok) {
@@ -348,7 +306,22 @@ async function handleInfo(req: Request, res: Response): Promise<void> {
       formats.push({ id: "mp3", label: "MP3 Audio (High)", ext: "mp3", isAudio: true });
       formats.push({ id: "m4a", label: "M4A Audio (AAC)", ext: "m4a", isAudio: true });
 
+    // Phase 3: Extract Direct CDN Preview URL to bypass proxy node and save bandwidth
+    let directPreviewUrl = null;
+    if (Array.isArray(info.formats)) {
+        const premuxed = info.formats.filter((f: any) =>
+            f.ext === 'mp4' && f.acodec && f.acodec !== 'none' &&
+            f.vcodec && f.vcodec !== 'none' && f.url && f.url.startsWith('http') &&
+            !f.url.includes('.m3u8')
+        );
+        if (premuxed.length > 0) {
+            const bestPreview = [...premuxed].sort((a, b) => (a.height || 0) - (b.height || 0)).find(f => (f.height || 0) >= 360);
+            directPreviewUrl = bestPreview ? bestPreview.url : premuxed[0].url;
+        }
+    }
+
     res.json({
+      previewUrl: directPreviewUrl,
       title: info.title ?? "Untitled Video",
       thumbnail: info.thumbnail ?? null,
       duration: info.duration ?? 0,      // seconds
@@ -801,7 +774,7 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
               // Rapid fast-path for browser video pre-flight checks, but MUST validate against 403s
               try {
                   const headRes = await axios.head(targetUrl, { headers, validateStatus: () => true, timeout: 4000 });
-                  if (headRes.status === 403 || headRes.status >= 500) return false;
+                  if (headRes.status !== 200 && headRes.status !== 206) return false;
 
                   res.status(headRes.status);
                   res.setHeader('Accept-Ranges', 'bytes');
@@ -820,7 +793,7 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
                             };
 
             const proxyRes = await axios.get(targetUrl, axiosConfig);
-              if (proxyRes.status === 403 || proxyRes.status >= 500) {
+              if (proxyRes.status !== 200 && proxyRes.status !== 206) {
                    console.log(`[Telemetry] Proxy Direct Stream Failed with status: ${proxyRes.status}`);
                    return false;
               }
@@ -1006,7 +979,7 @@ app.get("/api/downloader/test-ytdl", async (req, res) => {
   app.get("/api/downloader/stream", isAuthenticated, streamLimiter, handleStream);
 
   // Proxy stream URL for preview — PROTECTED
-  app.get("/api/downloader/proxy-stream", infoLimiter, handleProxyStream);
+  app.use("/api/downloader/proxy-stream", handleProxyStream);
 }
 
 

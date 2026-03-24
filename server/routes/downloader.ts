@@ -319,9 +319,13 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
         const mirrorJitter = Math.floor(Math.random() * 100) + 50;
         await new Promise(resolve => setTimeout(resolve, mirrorJitter));
 
+        // V10 Cobalt API Mirrors (Public/Free)
+        // Note: api.cobalt.tools requires JWT now, and co.wuk.sh is offline.
+        // We use active community forks to bypass the JWT lock without looping.
         const ghostMirrors = [
-            "https://co.wuk.sh/api/json", // Community Cobalt
-            "https://api.cobalt.tools/api/json" // Original
+            "https://cobalt.tuxlu.nl/", 
+            "https://api.cobalt.my.id/",
+            "https://api.cobalt.tools/" // Fallback just in case they drop JWT requirement
         ];
 
         for (const mirror of ghostMirrors) {
@@ -622,8 +626,9 @@ async function handleStream(req: Request, res: Response): Promise<void> {
           console.log(`[Layer 2] Meta detected on stream route. Booting Ghost Layer Resolver...`);
           try {
               const ghostMirrors = [
-                  "https://co.wuk.sh/api/json", // Community Cobalt
-                  "https://api.cobalt.tools/api/json" // Original
+                  "https://cobalt.tuxlu.nl/", 
+                  "https://api.cobalt.my.id/",
+                  "https://api.cobalt.tools/"
               ];
       
               let sourceStreamUrl = null;

@@ -1,51 +1,49 @@
-# BongBari Downloader API - Final Architecture & Phases
-**Status:** Completed & Unlocked! BotGuard Successfully Bypassed.
+# 🏗️ BONG BARI DOWNLOADER: THE 4-LAYER UNBREAKABLE ARCHITECTURE
 
-Here is the exact step-by-step phased approach of how the new downloader works flawlessly without getting blocked, and how the frontend is mapping it out for a zero-latency user experience.
-
----
-
-## Phase 1: Zero-Latency Metadata (Information Gathering)
-**Location:** `client` -> `Express Backend (/api/downloader/info)` -> `Hetzner Engine`
-
-**What happens:**
-When a user pastes a link and clicks "Fetch", we don't immediately download massive video files. We send a quick ping to Hetzner via the BotGuard tunneling system to extract perfectly formatted JSON (Titles, Thumbnails, Available MP4 resolutions).
-* **Result:** Instant UI population. The React viewer lights up in < 2 seconds. No heavy bandwidth consumed yet.
-
-## Phase 2: BotGuard Evasion & SOCKS5 Tunneling (The "Aukat" Bypass)
-**Location:** `Hetzner Docker Service (Port 9000)`
-
-**What happens:**
-When the user decides to Preview or Download, our Node backend sends a request to Hetzner.
-Instead of using normal browser scraping (which BotGuard blocks with invisible Recaptcha tokens), Hetzner takes the link and:
-1. Puts on an `Android/TV Spoofing Mask` via `yt-dlp`. 
-2. Routes the IP address through Cloudflare WARP (`127.0.0.1:40000`).
-3. Safely convinces Google to hand over the raw backend `.mp4` video streaming link without signatures or encryptions (`https://rr3---sn-...googlevideo.com`).
-
-## Phase 3: The Native Stream Proxy (Fixing the Scrubber Lag)
-**Location:** `server/routes/downloader.ts` -> `/api/downloader/stream`
-
-**What happens:**
-If the frontend just tried to play Google's raw link directly, the browser would block it due to strict CORS rules. 
-Instead, our Express server opens a direct pipe to Google's servers. 
-* **The "Seeking" fix:** Express now listens for browser `Range` headers. When you drag the video playhead, Express proxies that exact byte range request over to Google and returns a `206 Partial Content` response. This makes the player scrubber buttery smooth!
-* **The "Mode" fix:** If the request specifies `&mode=preview`, the server serves the video as `inline` so the HTML5 video player can play it. If the user clicks Download, the server serves it as an `attachment` so the browser triggers a native "Save As" dialogue popup.
-
-## Phase 4: Blob Caching & Local FFmpeg (Trimmer Prep)
-**Location:** `client/src/pages/SocialDownloaderPage.tsx`
-
-**What happens:**
-When the user clicks "Trim Mode", the web browser actually starts downloading the proxied video completely into Local Memory (the RAM via `Blob`), showing you a large green progress bar. 
-Why? Because when playing around with milliseconds trying to cut a meme clip using FFmpeg.wasm inside the browser, network fetching causes lag. By saving it strictly to `Blob://`, you get true 0ms latency!
+**Status:** Layer 1 is 🟢 LOCKED AND TESTED. Moving to Layer 2.
+**Goal:** Universal downloading (YouTube, Instagram, Facebook) with zero blocks, zero bandwidth costs, and endless fallback pipelines.
 
 ---
 
-### What's Done? 
-✅ Ditched the broken Cobalt container entirely. 
-✅ Spun up a lightweight FastAPI + SOCKS5 Python tunnel on Hetzner.
-✅ Fixed the Express Payload JSON Mismatch (The `undefined '0'` bug).
-✅ **NEW just now:** Upgraded the Node.js Express proxy to pass `req.headers.range` and standard HTTP video bytes backward and forward so the HTML5 preview player stops lagging and supports native seeking/scrubbing!
-✅ Added dynamic `content-disposition` (Inline for UI players, Attachment for Hard-drive downloads).
+## 🟢 LAYER 1: The Golden Engine (Untouched & Locked)
+**Status:** ✅ COMPLETED & DEPLOYED
+**Target:** YouTube (Shorts & Long)
+* **How it works:** Requests route instantly to your private Hetzner VPS running the Cobalt engine (`78.47.104.43:9000`). 
+* **The Magic:** Bypasses Google's bot checks completely because it's a fresh, non-datacenter-flagged IP hitting Cobalt's built-in PO-Token solver.
+* **Cost:** $0 Bandwidth on Render. 
 
-### What's Left?
-Ensure the live GitHub deploy has the latest Express code to perfectly mirror this local test! The architecture is entirely complete.
+---
+
+## 🟡 LAYER 2: The "Ghost" Proxy Bypass (Specifically for IG/FB)
+**Status:** 🏗️ NEXT TO EXECUTE (Phase 2)
+**Target:** Instagram Reels, Facebook Public Videos
+* **The Problem:** Instagram blocks `yt-dlp` from extracting data if no login cookie is found. It gives an "Empty Media File" error.
+* **The Smart Fix (Your TV/Mobile Header Idea!):** You are 100% right about the headers. Instead of using `yt-dlp` for this, we will write a custom native `fetch` module in Node.js.
+* **The Spoofing:** We will inject **iOS/Android App Headers** (e.g., `Instagram 219.0.0.12.117 Android` or Smart TV User-Agents). Mobile API endpoints have much lower bot-protection than web endpoints. 
+* **The Network:** We wrap this custom mobile-spoofed request inside your ASocks proxy. Instagram thinks a real human holding an iPhone in India is requesting the video.
+
+---
+
+## 🔴 LAYER 3: The yt-dlp Rotator Engine (The Safety Net)
+**Status:** 🟡 DESIGNED, READY TO INTEGRATE
+**Target:** Absolute Fallback for all platforms if Layer 1 & 2 fail.
+* **The Hack:** ASocks uses a format like `hold-session-session-69badf0...`. 
+* We inject a **Random Crypto Generator** into the codebase. Every time Layer 3 runs, it scrambles the session ID: `hold-session-session-A7X9...` then `hold-session-session-M4B2...`.
+* **Result:** Every single extraction gets a brand-new IP from the ASocks global pool. 
+* **TV/iOS Headers injected to yt-dlp:** We will forcefully add `--extractor-args "youtube:player_client=ios,tv"` to the yt-dlp execution, dodging Captcha walls instantly.
+
+---
+
+## 🟣 LAYER 4: The Nuclear Option (Hetzner IPv6 Rotation)
+**Status:** 📘 PLANNED (To be built natively into the VPS if needed)
+**Target:** Unlimited Free Proxying without ASocks.
+* **The Concept:** Hetzner provides a massive `/64 IPv6 subnet` block (literally 18 quintillion IP addresses) for free. 
+* **The Engineering:** By writing a shell script on the Linux VPS using `ip -6 route` tables and `ndppd`, we can command the VPS to assign itself a randomly generated IPv6 address for *every single scrape*.
+* **Why it's Layer 4:** Setting up IPv6 rotation is deeply complex Linux networking and some platforms (like Instagram) still prefer IPv4 for native API calls. We keep this documented as our ultimate anti-ban trump card. If YouTube bans Hetzner's main IP, we unleash the `/64 IPv6 Swarm`.
+
+---
+
+## 🗺️ EXECUTION PLAN (Agent Instructions)
+1. **Never touch Layer 1 (`fetchSmartMetadata` VPS bypass).** It works. 
+2. We will now build **Layer 2 (The Ghost bypass)** to handle Instagram and Facebook natively before it ever reaches yt-dlp.
+3. We will then wrap the final `yt-dlp` block in **Layer 3 (ASocks rotator with TV headers)**.

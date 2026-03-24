@@ -243,36 +243,69 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
     const fetchStart = performance.now();
 
     // 1. FAST PATH: Hetzner Node Bypass (Cobalt)
-    // Instantly resolves direct URL without timing out
+    // Step 3 applied: Human-like behavior (no burst, slight delay, limited retries)
     if (!forceEngine || forceEngine === "layer1") {
-    try {
-        const vpsNode = getNextPreviewNode();
-        console.log(`[Phase 0] Attempting fast Hetzner Cobalt resolve for metadata via ${vpsNode}`);
-        const vpsRes = await axios.post(vpsNode, { url: url }, { timeout: 15000, headers: { 'Content-Type': 'application/json' } });
-        if (vpsRes.data && vpsRes.data.status === 'stream' && vpsRes.data.url) {
-            console.log(`[Trace ⏱️] Hetzner node responded in ${Math.round(performance.now() - fetchStart)}ms`);
-            const result = {
-                engine: "Layer 1 (Hetzner VPS)",
-                title: vpsRes.data.title || "Video",
-                duration: vpsRes.data.duration || 0,
-                thumbnail: vpsRes.data.thumbnail || null,
-                formats: [
-                    {
-                        ext: "mp4",
-                        acodec: "aac",
-                        vcodec: "h264",
-                        url: vpsRes.data.url,
-                        height: 720
-                    }
-                ]
-            };
-            metaCache.set(url, { data: result, expires: Date.now() + CACHE_TTL_MS });
-            return result;
+        const maxRetries = 2;
+        let attempt = 0;
+        
+        // Anti-burst: slight human-like initial delay
+        const initialJitter = Math.floor(Math.random() * 200) + 100;
+        await new Promise(resolve => setTimeout(resolve, initialJitter));
+
+        while (attempt < maxRetries) {
+            try {
+                if (attempt > 0) {
+                    const retryJitter = Math.floor(Math.random() * 500) + 500; // 500ms - 1000ms delay
+                    console.log(`[Cobalt Patch] Retrying Hetzner request (Attempt ${attempt + 1}). Jitter delay: ${retryJitter}ms`);
+                    await new Promise(resolve => setTimeout(resolve, retryJitter));
+                }
+
+                const vpsNode = getNextPreviewNode();
+                console.log(`[Phase 0] Attempting fast Hetzner Cobalt resolve for metadata via ${vpsNode}`);
+                const vpsRes = await axios.post(vpsNode, { 
+                    url: url,
+                    vCodec: "h264", 
+                    vQuality: "720", 
+                    aFormat: "mp3"
+                }, { 
+                    timeout: 15000, 
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                    } 
+                });
+
+                if (vpsRes.data && vpsRes.data.status === 'stream' && vpsRes.data.url) {
+                    console.log(`[Trace ⏱️] Hetzner node responded in ${Math.round(performance.now() - fetchStart)}ms`);
+                    const result = {
+                        engine: "Layer 1 (Hetzner VPS)",
+                        title: vpsRes.data.title || "Video",
+                        duration: vpsRes.data.duration || 0,
+                        thumbnail: vpsRes.data.thumbnail || null,
+                        formats: [
+                            {
+                                ext: "mp4",
+                                acodec: "aac",
+                                vcodec: "h264",
+                                url: vpsRes.data.url,
+                                height: 720
+                            }
+                        ]
+                    };
+                    metaCache.set(url, { data: result, expires: Date.now() + CACHE_TTL_MS });
+                    return result;
+                }
+                break; // If no error but also no proper stream status
+            } catch (err: any) {
+                attempt++;
+                console.log(`[Phase 0] Hetzner Node bypass attempt ${attempt} failed: ${err.message}.`);
+                if (attempt >= maxRetries) {
+                    console.log(`[Phase 0] Moving to next layer after ${maxRetries} Hetzner failures...`);
+                    if (forceEngine === "layer1") throw new Error("Layer 1 (Hetzner) forced, but failed all retries: " + err.message);
+                }
+            }
         }
-    } catch (err: any) {
-        console.log(`[Phase 0] Hetzner Node bypass failed: ${err.message}. Moving to next layer...`);
-        if (forceEngine === "layer1") throw new Error("Layer 1 (Hetzner) forced, but failed: " + err.message);
-    }
     }
 
     // 1.5. LAYER 2 GHOST BYPASS (Specific for Instagram / Facebook)

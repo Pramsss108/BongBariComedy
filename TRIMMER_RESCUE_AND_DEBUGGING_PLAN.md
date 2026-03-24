@@ -52,15 +52,7 @@ You raised a critical point: *Streaming raw high-quality video for just a previe
 
 ---
 
-### 🚨 Infrastructure & Cost Mandate (Zero Render CPU/Bandwidth)
-1. **VPS & Proxy Layering:** YouTube requests MUST route entirely through the Hetzner VPS and our Residential Proxies. The Render backend must *only* act as an orchestrator/API switcher.
-2. **"Don't Eat Pocket":** Render must never download raw video directly. We will gracefully harness the paid Hetzner + Proxies to offload bandwidth and CPU.
-3. **Anti-BotGuard Escapement:** By strictly enforcing Hetzner + Proxies, we guarantee highly reliable, monetizable output without YouTube 403/422 IP bans.
-
-### 🔴 Continuous Deployment & Validation Loop (The "Main Khela" Protocol)
-*Code often works locally but breaks on Production. To guarantee stability, we will use a lock-step verification matrix.*
-1. **Local Verification:** Execute the code. Verify via local Sentinel Debugger (`npm run dev:live`).
-2. **Agent Push:** If local passes strictly, I (the Agent) will push the phase to `main` using `npm run deploy:safe`.
-3. **Live User Validation:** You (the developer) will test directly on `www.bongbari.com`. 
-4. **Lock-Step Progression:** I will NOT move to the next Phase until you give the exact green light that it works flawlessly on the LIVE site.
-5. **No Code Monoliths:** We hyper-focus *ONLY* on low-res preview stability and timestamp trimming right now. Standard full downloads are completely deferred.
+### Strict Rules of Engagement
+1. **No Code Monoliths:** We execute and test one specific step at a time.
+2. **Local Verification:** No code is pushed to Production (`main`) until the Sentinel Debugger confirms a healthy 200 OK pipeline locally for at least one YouTube link.
+3. **Focus Isolation:** Standard full downloads are deferred; we are hyper-focusing *ONLY* on low-res preview stability and tim

@@ -1,0 +1,1 @@
+﻿const fs = require('fs'); let c = fs.readFileSync('server/routes/downloader.ts', 'utf8'); c = c.replace(/\/\/ LAYER 2[\s\S]*?\/\/ =========================================================================\r?\n\s*\/\/ LAYER 3/g, '// LAYER 3'); fs.writeFileSync('server/routes/downloader.ts', c);

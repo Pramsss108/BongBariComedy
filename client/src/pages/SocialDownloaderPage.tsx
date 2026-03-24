@@ -673,7 +673,37 @@ export default function SocialDownloaderPage() {
                         <span className="hidden sm:inline">Fetch</span>
                       </button>
                     </div>
-                </div>
+                  </div>
+
+                  {/* Developer Engine Override */}
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2 opacity-50 hover:opacity-100 transition-opacity">
+                    <span>⚙️ Developer Engine Override:</span>
+                    <select
+                      value={forceEngine}
+                      onChange={(e) => setForceEngine(e.target.value)}
+                      className="bg-background border border-border text-foreground py-1 px-2 rounded outline-none cursor-pointer"
+                    >
+                      <option value="auto">Smart Auto-Fallback (Production Default)</option>
+                      <option value="layer1">Force Layer 1 (Hetzner)</option>
+                      <option value="layer2">Force Layer 2 (Ghost Mirror)</option>
+                      <option value="layer3">Force Layer 3 (ASocks Proxy)</option>
+                    </select>
+                  </div>
+
+                  {/* Developer Engine Override */}
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2 opacity-50 hover:opacity-100 transition-opacity">
+                    <span>⚙️ Developer Engine Override:</span>
+                    <select
+                      value={forceEngine}
+                      onChange={(e) => setForceEngine(e.target.value)}
+                      className="bg-background border border-border text-foreground py-1 px-2 rounded outline-none cursor-pointer"
+                    >
+                      <option value="auto">Smart Auto-Fallback (Production Default)</option>
+                      <option value="layer1">Force Layer 1 (Hetzner)</option>
+                      <option value="layer2">Force Layer 2 (Ghost Mirror)</option>
+                      <option value="layer3">Force Layer 3 (ASocks Proxy)</option>
+                    </select>
+                  </div>
 
                 {/* 2. STATUS / ERROR (Phase 13: Enhanced Error Handling) */}
                 {phase === "fetching" && extractProgress && (

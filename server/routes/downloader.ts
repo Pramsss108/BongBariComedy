@@ -107,7 +107,7 @@ function validateVideoUrl(rawUrl: string): { ok: true; url: string } | { ok: fal
 // ---------------------------------------------------------------------------
 const infoLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 10,
+  max: 30, // Increased to 30 info req/min to prevent "failed first, then worked" user frustration
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many requests. Please wait a minute before fetching video info again." },
@@ -192,6 +192,19 @@ function mapDownloaderError(err: any): { code: string; message: string; status: 
 // Phase 0: Stealth Metadata Extraction via PAYG SOCKS5 Proxy
 // ---------------------------------------------------------------------------
 
+function generateRotatedProxy(): string {
+    // Phase 2: Dynamic residential proxy rotation (Bypass bans by rotating sessions)
+    const baseProxy = process.env.ASOCKS_PROXY || "http://q0b2vvoyfp-res-country-IN-hold-session-session-69badf0c52b0a:MsuSXbhmwtpdr81t@93.190.141.57:443";
+    
+    // Inject a unique random session ID into the Asocks proxy URL if it uses the session- hold format
+    // This forces ASocks to assign a completely fresh residential IP
+    if (baseProxy.includes("hold-session-session-")) {
+        const randomSession = crypto.randomBytes(6).toString('hex');
+        return baseProxy.replace(/hold-session-session-[a-z0-9]+/i, `hold-session-session-${randomSession}`);
+    }
+    return baseProxy;
+}
+
 async function executeYtDlpExtract(url: string, extraArgs: string[] = []): Promise<any> {
     const ytArgs = [
         "--dump-json",
@@ -201,17 +214,17 @@ async function executeYtDlpExtract(url: string, extraArgs: string[] = []): Promi
         ...extraArgs
     ];
     
-    // Fallback to strict env if undefined
-    const proxy = process.env.ASOCKS_PROXY || "http://q0b2vvoyfp-res-country-IN-hold-session-session-69badf0c52b0a:MsuSXbhmwtpdr81t@93.190.141.57:443";
+    const proxy = generateRotatedProxy();
     
     try {
         const proxyArgs = [...ytArgs, "--proxy", proxy];
-        console.log(`[Phase 0] Executing yt-dlp via ASocks Proxy...`);
-        return await executeYtDlp(url, proxyArgs);
+        console.log(`[Phase 2] Executing yt-dlp via Smart Rotating ASocks Proxy (New IP via Session)...`);
+        // Use a longer timeout for proxy extractions (25s) because residential networks have variable latency
+        return await executeYtDlp(url, proxyArgs, 25000);
     } catch (proxyErr: any) {
-        console.warn(`[Phase 0] ASocks proxy failed! Falling back to DIRECT yt-dlp...`, proxyErr.message || proxyErr);
-        console.log(`[Phase 0] Executing yt-dlp directly without proxy (Hetzner Node)...`);
-        return await executeYtDlp(url, ytArgs);
+        console.warn(`[Phase 2] ASocks proxy failed! Falling back to DIRECT yt-dlp...`, proxyErr.message || proxyErr);
+        console.log(`[Phase 2] Executing yt-dlp directly without proxy (Render Network fallback)...`);
+        return await executeYtDlp(url, ytArgs, 25000);
     }
 }
 

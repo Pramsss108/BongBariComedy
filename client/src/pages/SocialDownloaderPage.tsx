@@ -288,7 +288,7 @@ export default function SocialDownloaderPage() {
       abortRef.current = new AbortController();
       const timeoutId = setTimeout(() => abortRef.current?.abort(), 45000);
 
-      const res = await fetch(apiUrl(`/api/downloader/info?url=${encodeURIComponent(url.trim())}`), {
+      const res = await fetch(apiUrl(`/api/downloader/info?url=${encodeURIComponent(url.trim())}${forceEngine !== 'auto' ? `&forceEngine=${forceEngine}` : ''}`), {
           signal: abortRef.current.signal
       });
       clearTimeout(timeoutId);
@@ -684,7 +684,7 @@ export default function SocialDownloaderPage() {
                       className="bg-[#0f0f11] border border-white/10 text-white/90 py-1 px-2 rounded outline-none cursor-pointer hover:bg-black transition-colors"
                     >
                       <option className="bg-[#0f0f11] text-white" value="auto">Smart Auto-Fallback (Production Default)</option>
-                      <option className="bg-[#0f0f11] text-white" value="layer1">Force Layer 1 (Hetzner)</option>
+                      <option className="bg-[#0f0f11] text-white" value="layer1">Force Layer 1 (Cobalt API + Humanized Anti-Burst)</option>
                       <option className="bg-[#0f0f11] text-white" value="layer2">Force Layer 2 (Ghost Mirror)</option>
                       <option className="bg-[#0f0f11] text-white" value="layer3">Force Layer 3 (ASocks + VPS Proxy)</option>
                     </select>

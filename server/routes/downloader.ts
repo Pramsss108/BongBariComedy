@@ -1,7 +1,7 @@
 import ytdl from "@distube/ytdl-core";
 /**
  * BongBari Social Media Downloader — Backend Routes
- * Phrases 2, 3, 5, 14, 16, 17 of the masterplan.
+ * Phases , 3, 5, 14, 16, 17 of the masterplan.
  *
  * Stack: youtube-dl-exec (yt-dlp wrapper) + express-rate-limit
  * Cost: $0 — runs on existing Render free tier, streams directly to user (zero disk/storage)
@@ -67,7 +67,7 @@ function spawnYtDlpStream(url: string, args: string[]) {
 }
 
 // ---------------------------------------------------------------------------
-// PHRASE 14: URL allowlist — only permit YouTube, Instagram, and public Facebook
+// PHASE : URL allowlist — only permit YouTube, Instagram, and public Facebook
 // ---------------------------------------------------------------------------
 const ALLOWED_HOSTS = new Set([
   "youtube.com",
@@ -103,7 +103,7 @@ function validateVideoUrl(rawUrl: string): { ok: true; url: string } | { ok: fal
 }
 
 // ---------------------------------------------------------------------------
-// PHRASE 16: Rate limiting — 10 info requests + 5 downloads per minute per IP
+// PHASE : Rate limiting — 10 info requests + 5 downloads per minute per IP
 // ---------------------------------------------------------------------------
 const infoLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -393,7 +393,7 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
     }
 }
 // ---------------------------------------------------------------------------
-// PHRASE 2: GET /api/downloader/info
+// PHASE : GET /api/downloader/info
 // Returns video metadata: title, thumbnail, duration, available formats
 // ---------------------------------------------------------------------------
 async function handleInfo(req: Request, res: Response): Promise<void> {
@@ -495,7 +495,7 @@ async function handleInfo(req: Request, res: Response): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// PHRASE 3: GET /api/downloader/stream
+// PHASE : GET /api/downloader/stream
 // Pipes the video/audio directly to the client — never buffers to disk/RAM
 // ---------------------------------------------------------------------------
 async function handleStream(req: Request, res: Response): Promise<void> {
@@ -1000,7 +1000,7 @@ async function handleStream(req: Request, res: Response): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// PHRASE 5: GET /api/downloader/proxy-stream
+// PHASE : GET /api/downloader/proxy-stream
 // Returns a short-lived direct URL for the browser <video> preview tag.
 // Uses Cobalt proxy with 480p setting for lightweight memory caching.
 // ---------------------------------------------------------------------------

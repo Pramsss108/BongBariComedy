@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Download, Play, Pause, ArrowLeft, Scissors, Youtube, Instagram, Facebook,
   Loader2, AlertCircle, Music, Film, CheckCircle2, Search, X, Clock,
-  Lock, CloudOff, Hourglass, HelpCircle, Volume2, VolumeX,
+  Lock, CloudOff, Hourglass, HelpCircle, Volume2, VolumeX, ShieldCheck,
 } from "lucide-react";
 import { TrimSlider } from "@/components/TrimSlider";
 
@@ -34,6 +34,7 @@ const apiUrl = buildApiUrl;
 // Ã¢â€â‚¬Ã¢â€â‚¬ Types Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 interface VideoFormat { id: string; label: string; ext: string; height?: number; }
 interface VideoInfo {
+  engine?: string; // e.g. "Layer 1 (Hetzner VPS)", "Layer 2 (Ghost Mirror)"
   previewUrl?: string | null;
   title: string; thumbnail: string | null; duration: number;
   durationString: string; uploader: string; platform: string; formats: VideoFormat[];
@@ -156,6 +157,7 @@ export default function SocialDownloaderPage() {
   const { toast } = useToast();
 
   const [url, setUrl] = useState("");
+  const [forceEngine, setForceEngine] = useState<string>("auto");
   const [phase, setPhase] = useState<Phase>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [errorCode, setErrorCode] = useState(""); // Phase 13: Technical error mapping (e.g. COBALT_DOWN, RATE_LIMIT)
@@ -543,7 +545,15 @@ export default function SocialDownloaderPage() {
                       <h2 className="text-lg md:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400 truncate px-4">
                           {videoInfo.title}
                       </h2>
-                      <p className="text-white/40 text-xs mt-1">@{videoInfo.uploader} • {videoInfo.platform}</p>
+                      <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
+                          <p className="text-white/40 text-xs">@{videoInfo.uploader} • {videoInfo.platform}</p>
+                          {videoInfo.engine && (
+                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-purple-500/30 text-[10px] text-purple-300 shadow-[0_0_8px_rgba(168,85,247,0.2)]">
+                              <ShieldCheck className="w-3 h-3" />
+                              {videoInfo.engine}
+                            </span>
+                          )}
+                      </div>
                   </div>
 
                   <div className={`${isVertical ? "aspect-[9/16] w-full max-h-[70vh] max-w-[400px] mx-auto" : "aspect-video w-full max-w-4xl"} ${trimMode ? "rounded-t-xl" : "rounded-xl"} overflow-hidden border border-white/10 shadow-2xl bg-black relative group flex flex-col items-center justify-center transition-all duration-300`}>

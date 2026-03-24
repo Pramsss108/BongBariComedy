@@ -230,8 +230,8 @@ async function executeYtDlpExtract(url: string, extraArgs: string[] = []): Promi
     }
 }
 
-async function fetchSmartMetadata(url: string): Promise<any> {
-    if (metaCache.has(url)) {
+async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<any> {
+    if (!forceEngine && metaCache.has(url)) {
         const cached = metaCache.get(url)!;
         if (cached.expires > Date.now()) {
             console.log(`[Cache ⚡] Instant Metadata HIT for ${url}`);
@@ -244,6 +244,7 @@ async function fetchSmartMetadata(url: string): Promise<any> {
 
     // 1. FAST PATH: Hetzner Node Bypass (Cobalt)
     // Instantly resolves direct URL without timing out
+    if (!forceEngine || forceEngine === "layer1") {
     try {
         const vpsNode = getNextPreviewNode();
         console.log(`[Phase 0] Attempting fast Hetzner Cobalt resolve for metadata via ${vpsNode}`);
@@ -251,6 +252,7 @@ async function fetchSmartMetadata(url: string): Promise<any> {
         if (vpsRes.data && vpsRes.data.status === 'stream' && vpsRes.data.url) {
             console.log(`[Trace ⏱️] Hetzner node responded in ${Math.round(performance.now() - fetchStart)}ms`);
             const result = {
+                engine: "Layer 1 (Hetzner VPS)",
                 title: vpsRes.data.title || "Video",
                 duration: vpsRes.data.duration || 0,
                 thumbnail: vpsRes.data.thumbnail || null,
@@ -269,11 +271,14 @@ async function fetchSmartMetadata(url: string): Promise<any> {
         }
     } catch (err: any) {
         console.log(`[Phase 0] Hetzner Node bypass failed: ${err.message}. Moving to next layer...`);
+        if (forceEngine === "layer1") throw new Error("Layer 1 (Hetzner) forced, but failed: " + err.message);
+    }
     }
 
     // 1.5. LAYER 2 GHOST BYPASS (Specific for Instagram / Facebook)
     // Instagram requires deep cookies which we don't have. We route them through pure API mirrors.
-    if (url.includes("instagram.com") || url.includes("facebook.com") || url.includes("fb.watch")) {
+    if (!forceEngine || forceEngine === "layer2") {
+    if (forceEngine === "layer2" || url.includes("instagram.com") || url.includes("facebook.com") || url.includes("fb.watch")) {
         console.log(`[Layer 2] Activating GHOST BYPASS for Meta properties (IG/FB)...`);
         
         // These are public community instances that already have thousands of bot-bypass IG cookies loaded.
@@ -305,6 +310,7 @@ async function fetchSmartMetadata(url: string): Promise<any> {
                 if (res.data && res.data.url) {
                     console.log(`[Layer 2] 🌟 Ghost Bypass SUCCESS via ${mirror}! Got Meta payload.`);
                     const result = {
+                        engine: "Layer 2 (Ghost Mirror)",
                         title: "Instagram/Facebook Media",
                         duration: 0,
                         thumbnail: null,
@@ -326,14 +332,18 @@ async function fetchSmartMetadata(url: string): Promise<any> {
             }
         }
         console.log(`[Layer 2] Ghost Layer fully bypassed. Falling back to yt-dlp...`);
+        if (forceEngine === "layer2") throw new Error("Layer 2 (Ghost Mirror) forced, but all mirrors failed.");
+    }
     }
 
     // 2. FALLBACK PATH: yt-dlp extract via Proxy / Render
+    if (!forceEngine || forceEngine === "layer3") {
     try {
         const data = await executeYtDlpExtract(url);
         console.log(`[Trace ⏱️] Hybrid Engine Responded in ${Math.round(performance.now() - fetchStart)}ms`);
 
         const result = {
+            engine: "Layer 3 (ASocks + yt-dlp)",
             title: data.title || "Video",
             duration: data.duration || 0,
             thumbnail: data.thumbnail || null,
@@ -344,6 +354,9 @@ async function fetchSmartMetadata(url: string): Promise<any> {
     } catch (engineErr: any) {
         console.error(`[Phase 0] Total Metadata Failure:`, engineErr?.message || engineErr);
         throw new Error(`Total engine failure: ${engineErr.message}`);
+    }
+    } else {
+        throw new Error(`Forced engine '${forceEngine}' failed or was not matched.`);
     }
 }
 // ---------------------------------------------------------------------------
@@ -358,7 +371,8 @@ async function handleInfo(req: Request, res: Response): Promise<void> {
   }
 
   try {
-    const info = await fetchSmartMetadata(validated.url);
+    const forceEngine = (req.query.forceEngine as string) || undefined;
+    const info = await fetchSmartMetadata(validated.url, forceEngine);
 
     // Build a clean, safe response — never send raw yt-dlp output to client
     const formats: { id: string; label: string; ext: string; height?: number; isAudio?: boolean }[] = [];
@@ -423,6 +437,7 @@ async function handleInfo(req: Request, res: Response): Promise<void> {
     }
 
     res.json({
+      engine: info.engine || "Unknown Routing Layer",
       previewUrl: directPreviewUrl,
       title: info.title ?? "Untitled Video",
       thumbnail: info.thumbnail ?? null,

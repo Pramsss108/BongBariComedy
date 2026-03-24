@@ -209,8 +209,10 @@ async function executeYtDlpExtract(url: string, extraArgs: string[] = []): Promi
     const ytArgs = [
         "--dump-json",
         "--no-warnings",
-        "--no-call-home",
         "--geo-bypass", 
+        // 👻 SPOOF HEADERS: Pretend to be iOS App and Android TV to bypass YouTube/Google bot guards natively
+        "--extractor-args", "youtube:player_client=ios,tv",
+        "--user-agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1",
         ...extraArgs
     ];
     

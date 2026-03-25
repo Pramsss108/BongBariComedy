@@ -340,7 +340,7 @@ export default function SocialDownloaderPage() {
       // Protected by auth - Phase 15: Attach sessionId to query param for browser nav
       const safeTitle = videoInfo?.title ? videoInfo.title.replace(/[^a-z0-9]/gi, '_').substring(0, 50) : "bongbari_download";
       const encodedTitle = encodeURIComponent(safeTitle);
-      const backendUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=${selectedFormat}&title=${encodedTitle}&sessionId=${sessionId}`);
+      const backendUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=${selectedFormat}&title=${encodedTitle}&sessionId=${sessionId}${forceEngine !== 'auto' ? `&forceEngine=${forceEngine}` : ''}`);
 
         // PHASE 3: Native Browser Download + Raw CDN (0% Server Load)
         // By bypassing 'fetch' and Blob creation, we avoid CORS from Google's CDNs
@@ -424,7 +424,7 @@ export default function SocialDownloaderPage() {
       // Phase 3: Use direct CDN URL if available (bypasses Render entirely!)
       const autoProxyUrl = videoInfo?.previewUrl 
         ? videoInfo.previewUrl 
-        : apiUrl(`/api/downloader/proxy-stream?url=${encodeURIComponent(url)}&format=mp4-480&mode=stream&sessionId=${sessionId||""}`);
+        : apiUrl(`/api/downloader/proxy-stream?url=${encodeURIComponent(url)}&format=mp4-480&mode=stream&sessionId=${sessionId||""}${forceEngine !== "auto" ? `&forceEngine=${forceEngine}` : ""}`);
       setCacheProgress(100);
       setPreviewUrl(autoProxyUrl);
       setShowPreview(true);
@@ -466,7 +466,7 @@ export default function SocialDownloaderPage() {
         const trimName = `${safeTitle}_clip_${startTime.toFixed(2)}s_to_${endTime.toFixed(2)}s`;
         const encodedTitle = encodeURIComponent(trimName);
 
-        const backendTrimUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=${selectedFormat}&title=${encodedTitle}&start=${startTime}&end=${endTime}&sessionId=${sessionId}`);
+        const backendTrimUrl = apiUrl(`/api/downloader/stream?url=${encodeURIComponent(url)}&format=${selectedFormat}&title=${encodedTitle}&start=${startTime}&end=${endTime}&sessionId=${sessionId}${forceEngine !== 'auto' ? `&forceEngine=${forceEngine}` : ''}`);
 
         // Perform secure streaming fetch + Native 'Save As' Dialog Tracker
         await performSecureDownload(backendTrimUrl, `${trimName}.mp4`, (realPct) => {
@@ -684,9 +684,10 @@ export default function SocialDownloaderPage() {
                       className="bg-[#0f0f11] border border-white/10 text-white/90 py-1 px-2 rounded outline-none cursor-pointer hover:bg-black transition-colors"
                     >
                       <option className="bg-[#0f0f11] text-white" value="auto">Smart Auto-Fallback (Production Default)</option>
-                      <option className="bg-[#0f0f11] text-white" value="layer1">Force Layer 1 (Cobalt API + Humanized Anti-Burst)</option>
-                      <option className="bg-[#0f0f11] text-white" value="layer2">Force Layer 2 (Ghost Mirror + Mobile UA + Fast Fail)</option>
-                      <option className="bg-[#0f0f11] text-white" value="layer3">Force Layer 3 (ASocks + VPS Proxy)</option>
+                      <option className="bg-[#0f0f11] text-white" value="layer1">✅ Force Layer 1: Cobalt API (Working/Free/YT)</option>
+                      <option className="bg-[#0f0f11] text-white" value="layer2">🧪 Force Layer 2: CF Swarm Edge (Testing/Free/IG-FB)</option>
+                      <option className="bg-[#0f0f11] opacity-50 text-white" value="layer3">⏳ Force Layer 3: Hetzner IPv6 (Pending/Free)</option>
+                      <option className="bg-[#0f0f11] text-white" value="layer4">🔒 Force Layer 4: ASocks + Mobile (Locked/Paid)</option>
                     </select>
                   </div>
 

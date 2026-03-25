@@ -301,7 +301,7 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
     }
 
     // 2. FALLBACK PATH: yt-dlp extract via Proxy / Render
-    if (!forceEngine || forceEngine === "layer3" || forceEngine === "layer2") {
+    if (!forceEngine || forceEngine === "layer4" || forceEngine === "layer2") {
     try {
         const data = await executeYtDlpExtract(url);
         console.log(`[Trace ⏱️] Hybrid Engine Responded in ${Math.round(performance.now() - fetchStart)}ms`);
@@ -628,51 +628,28 @@ async function handleStream(req: Request, res: Response): Promise<void> {
       }
 
       // =========================================================================
-      // LAYER 2 GHOST BYPASS (META/INSTAGRAM)
-      // =========================================================================
+// LAYER 2 CLOUDFLARE EDGE SWARM (META/INSTAGRAM)
+      // =======================================================================
       if ((isMeta && !forceEngine) || forceEngine === "layer2") {
-          console.log(`[Layer 2] Meta detected on stream route. Booting Ghost Layer Resolver...`);
+          console.log(`[Layer 2] Meta detected on stream route. Booting Cloudflare Edge Swarm...`);
           try {
-              const ghostMirrors = [
-                  "https://cobalt.tuxlu.nl/", 
-                  "https://api.cobalt.my.id/",
-                  "https://api.cobalt.tools/"
-              ];
-      
+              const swarmUrl = "https://ancient-king-7fa9.guitarguitarabhijit.workers.dev/?url=" + encodeURIComponent(validated.url);
+              const swarmRes = await axios.get(swarmUrl, { timeout: 10000 });
+              
               let sourceStreamUrl = null;
               
-              for (const mirror of ghostMirrors) {
-                  try {
-                      const proxyAxios = axios.create({
-                          headers: {
-                              'Accept': 'application/json',
-                              'Content-Type': 'application/json',
-                              'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
-                              'Origin': new URL(mirror).origin,
-                              'Referer': new URL(mirror).origin
-                          },
-                          timeout: 3000 // Fast fail for stream layer 2
-                      });
-      
-                      const res = await proxyAxios.post(mirror, {
-                          url: validated.url,
-                  
-                  
-                  isAudioOnly: chosen.isAudio
-                      });
-      
-                      if (res.data && res.data.url) {
-                          sourceStreamUrl = res.data.url;
-                          console.log(`[Layer 2] Ghost Layer returned Meta direct CDN URL: ${sourceStreamUrl.substring(0, 50)}...`);
-                          break;
-                      }
-                  } catch (mirrorErr: any) {
-                      console.log(`[Layer 2] Ghost Mirror ${mirror} failed stream resolve: ${mirrorErr.message}`);
-                  }
-              }
-
-              if (!sourceStreamUrl) {
-                  throw new Error("All ghost mirrors failed to return a stream URL for Meta.");
+              const body = typeof swarmRes.data === 'string' ? swarmRes.data : JSON.stringify(swarmRes.data);
+              
+              // Extract video url from meta tags or json
+              let match = body.match(/"video_url":"([^"]+)"/);
+              if (!match) match = body.match(/<meta property="og:video" content="([^"]+)"/);
+              if (!match) match = body.match(/<meta property="og:video:url" content="([^"]+)"/);
+              
+              if (match && match[1]) {
+                   sourceStreamUrl = match[1].replace(/\\/g, '');
+                   console.log(`[Layer 2] Edge Swarm Success: ${sourceStreamUrl.substring(0, 50)}...`);
+              } else {
+                   throw new Error("No video_url found in Swarm payload");
               }
 
               const isTrimmingReq = startSec !== null && endSec !== null && endSec > startSec;
@@ -732,7 +709,10 @@ async function handleStream(req: Request, res: Response): Promise<void> {
                   return;
               }
           } catch (metaErr: any) {
-               console.error(`[Layer 2] Ghost Node bypass failed!`, metaErr.message);
+               console.error(`[Layer 2] Edge Swarm bypass failed!`, metaErr.message);
+               if (forceEngine === "layer2") {
+                   return res.status(500).json({ error: "Layer 2 Forced but Failed: " + metaErr.message });
+               }
                // Proceed to Layer 3 fallback (yt-dlp) if Ghost Layer fails, mostly will fail but we try.
                console.log(`[Layer 2] Falling back to Layer 3 (yt-dlp) for Meta URL...`);
           }
@@ -1139,7 +1119,7 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
       const isMeta = validated.url.includes("instagram.com") || validated.url.includes("facebook.com") || validated.url.includes("fb.watch");
 
       // ── PROVEN METHOD: Route through Hetzner VPS (clean IP, not banned by BotGuard) ──
-      // Always try Hetzner first unless explicitly forced to skip it (e.g., layer2 or layer3)
+      // Always try Hetzner first unless explicitly forced to skip it (e.g., layer2 or layer4)
       if ((!forceEngine) || forceEngine === "layer1") {
           try {
               const vpsNode = getNextPreviewNode();
@@ -1157,42 +1137,35 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
           }
       }
 
-      // LAYER 2 GHOST NODE FALLBACK (META ONLY)
-      if (!bestStreamUrl && isMeta && ((!forceEngine) || forceEngine === "layer2" || forceEngine === "layer1")) {
-           console.log(`[Layer 2] PREVIEW Route: Meta detected. Connecting Ghost Layer...`);
-           try {
-              const ghostMirrors = [
-                  "https://cobalt.tuxlu.nl/",
-                  "https://api.cobalt.my.id/",
-                  "https://api.cobalt.tools/"
-              ];
-              for (const mirror of ghostMirrors) {
-                  try {
-                      const proxyAxios = axios.create({
-                          headers: {
-                              'Accept': 'application/json',
-                              'Content-Type': 'application/json',
-                              'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
-                              'Origin': new URL(mirror).origin,
-                              'Referer': new URL(mirror).origin
-                          },
-                          timeout: 4000
-                      });
-                      const mRes = await proxyAxios.post(mirror, { url: validated.url });
-                      if (mRes.data && mRes.data.url) {
-                          bestStreamUrl = mRes.data.url;
-                          console.log(`[Layer 2] ✅ Ghost Mirror returned preview URL ${String(bestStreamUrl).substring(0,40)}...`);
-                          break;
-                      }
-                  } catch(e) {}
+      // LAYER 2 CLOUDFLARE EDGE SWARM FALLBACK (META ONLY)
+      if (!bestStreamUrl && isMeta && (!forceEngine || forceEngine === "layer2")) {
+          console.log(`[Layer 2] PREVIEW Route: Meta detected. Connecting Cloudflare Edge Swarm...`);
+          try {
+              const swarmUrl = "https://ancient-king-7fa9.guitarguitarabhijit.workers.dev/?url=" + encodeURIComponent(validated.url);
+              const swarmRes = await axios.get(swarmUrl, { timeout: 10000 });
+              
+              const body = typeof swarmRes.data === 'string' ? swarmRes.data : JSON.stringify(swarmRes.data);
+              
+              let match = body.match(/"video_url":"([^"]+)"/);
+              if (!match) match = body.match(/<meta property="og:video" content="([^"]+)"/);
+              if (!match) match = body.match(/<meta property="og:video:url" content="([^"]+)"/);
+              
+              if (match && match[1]) {
+                   const streamUrl = match[1].replace(/\\/g, '');
+                   bestStreamUrl = streamUrl;
+                   finalEngine = 'Layer 2 (Free Meta Edge Swarm)';
+                   
+                   console.log(`[Layer 2] Edge Swarm found preview stream.`);
               }
-           } catch(e) {}
+          } catch (swarmErr: any) {
+              console.log(`[Layer 2] Edge Swarm failed: ${swarmErr.message}`);
+          }
       }
 
-      // LAYER 3 (YT-DLP NATIVE)
-      if (!bestStreamUrl && ((!forceEngine) || forceEngine === "layer3" || forceEngine === "layer2" || forceEngine === "layer1")) {
+      // LAYER 4 (ASOCKS + YT-DLP)
+      if (!bestStreamUrl && (!forceEngine || forceEngine === "layer4" || forceEngine === "layer3")) {
           // If we exhaust fast APIs or explicit Layer 3 forced...
-          console.log(`[Layer 3] PREVIEW Route: Falling back to executeYtDlpExtract...`);
+          console.log(`[Layer 4] PREVIEW Route: Falling back to executeYtDlpExtract...`);
           try {
               if (isYT) {
                   const { visitorData, poToken } = await getPoToken();

@@ -5,8 +5,8 @@
 
 ---
 
-## 🟢 LAYER 1: The Golden Engine (Untouched & Locked)
-**Status:** ✅ COMPLETED & DEPLOYED
+## 🟢 LAYER 1: The Golden Engine (YouTube - Free)
+**Status:** ✅ COMPLETED & LITHIUM LOCKED (No hands)
 **Target:** YouTube (Shorts & Long)
 * **How it works:** Requests route instantly to your private Hetzner VPS running the Cobalt engine (`78.47.104.43:9000`). 
 * **The Magic:** Bypasses Google's bot checks completely because it's a fresh, non-datacenter-flagged IP hitting Cobalt's built-in PO-Token solver.
@@ -14,37 +14,29 @@
 
 ---
 
-## 🔵 LAYER 2: The "Ghost" Proxy Bypass (Specifically for IG/FB)
-**Status:** ✅ COMPLETED & DEPLOYED (via Public Mirror APIs with Fast Fail)
+## 🔵 LAYER 2: Cloudflare Edge Swarm (Instagram & Facebook - Free)
+**Status:** 🧪 ACTIVE WIP & TESTING 
 **Target:** Instagram Reels, Facebook Public Videos
-* **The Problem:** Instagram blocks `yt-dlp` from extracting data if no login cookie is found. It gives an "Empty Media File" error.
-* **The Smart Fix:** When an IG/FB link is detected, we immediately route through community-driven Cobalt mirrors (`co.wuk.sh`, `api.cobalt.tools`). We spoof a **mobile iOS user-agent** and enforce a strict **3-second timeout** with a localized anti-bot delay (50-150ms).
-* **The Advantage:** These mirrors already maintain highly-rotated, active bot-bypassing Instagram cookies dynamically.
-* **The Failsafe:** If the mirror fails or times out after 3 seconds, we do NOT stop. We instantly fallback recursively to **Layer 3** (VPS + ASocks proxy / yt-dlp) to grab the media.
+* **The Concept:** Because direct Render/Hetzner IPs get rate-limited for standard Meta pages, we bounce requests through a Cloudflare Worker network proxy (`https://ancient-king-7fa9.guitarguitarabhijit.workers.dev/`).
+* **The Execution:** We spoof Android / iOS application headers directly on the edge. This provides 100,000+ daily free rotated IPs on trusted Cloudflare nodes to pull Meta's raw payload without triggering CAPTCHAs.
+* **Cost:** $0 
 
 ---
 
-## 🔴 LAYER 3: The yt-dlp Rotator Engine (The Safety Net)
-**Status:** 🟡 DESIGNED, READY TO INTEGRATE
-**Target:** Absolute Fallback for all platforms if Layer 1 & 2 fail.
-* **The Hack:** ASocks uses a format like `hold-session-session-69badf0...`. 
-* We inject a **Random Crypto Generator** into the codebase. Every time Layer 3 runs, it scrambles the session ID: `hold-session-session-A7X9...` then `hold-session-session-M4B2...`.
-* **Result:** Every single extraction gets a brand-new IP from the ASocks global pool. 
-* **TV/iOS Headers injected to yt-dlp:** We will forcefully add `--extractor-args "youtube:player_client=ios,tv"` to the yt-dlp execution, dodging Captcha walls instantly.
-
-**🛠️ HISTORICAL FIX LOG (Why Layer 3 is Blazing Fast & Has Sound):**
-* **The Problem (Silent & Slow):** Instagram obfuscates its best pre-muxed (audio+video) track by labeling it as **Format ID `2`** with `unknown` audio and video codecs. Our old backend filters were strictly demanding known codecs (like `aac` and `h264`), causing it to reject the perfect pre-muxed file. The fallback logic then wasted huge amounts of time endlessly searching for split DASH tracks, serving silent videos.
-* **The Fix:** We stripped the strict `vCodec: "h264"` flags from API payloads and hardcoded a direct bypass for Instagram: `if (f.format_id === '2' || f.format_id === '0') return true;`. 
-* **Why it's fast now:** The server no longer aggressively loops through fallbacks or attempts to parse DASH files. It immediately grabs the perfect pre-muxed Instagram track and serves it straight to the UI with 0 millisecond delays and pristine audio.
-
----
-
-## 🟣 LAYER 4: The Nuclear Option (Hetzner IPv6 Rotation)
-**Status:** 📘 PLANNED (To be built natively into the VPS if needed)
+## 🟣 LAYER 3: Hetzner IPv6 Rotation (Pending - Free)
+**Status:** 📘 PLANNED / BACKUP
 **Target:** Unlimited Free Proxying without ASocks.
 * **The Concept:** Hetzner provides a massive `/64 IPv6 subnet` block (literally 18 quintillion IP addresses) for free. 
-* **The Engineering:** By writing a shell script on the Linux VPS using `ip -6 route` tables and `ndppd`, we can command the VPS to assign itself a randomly generated IPv6 address for *every single scrape*.
-* **Why it's Layer 4:** Setting up IPv6 rotation is deeply complex Linux networking and some platforms (like Instagram) still prefer IPv4 for native API calls. We keep this documented as our ultimate anti-ban trump card. If Yapt update && apt install ndppd iptables iptables-persistent -youTube bans Hetzner's main IP, we unleash the `/64 IPv6 Swarm`.
+* **The Engineering:** By writing a shell script on the Linux VPS, we can command the VPS to assign itself a randomly generated IPv6 address for *every single scrape*. Keeps Meta/YouTube utterly blind to the origin.
+
+---
+
+## 🔴 LAYER 4: ASocks + Mobile Spoofing (Ultimate Fallback - Paid)
+**Status:** ✅ COMPLETED & LOCKED (No hands)
+**Target:** Absolute Fallback for all platforms if Layer 1, 2 & 3 fail.
+* **The Hack:** ASocks uses a format like `hold-session-session-69badf0...`. We inject a **Random Crypto Generator** into the codebase. Every time Layer 4 runs, it scrambles the session ID. Every single extraction gets a brand-new IP from the ASocks global pool. 
+* **Results:** Blazing fast. Dodges all walls instantly. (Hardcoded Instagram ID 2/0 bypass implemented for flawless multiplexing).
+* **Cost:** Paid per GB. Used strictly as a last resort.
 
 ---
 

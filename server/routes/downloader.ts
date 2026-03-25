@@ -645,6 +645,17 @@ async function handleStream(req: Request, res: Response): Promise<void> {
               if (!match) match = body.match(/<meta property="og:video" content="([^"]+)"/);
               if (!match) match = body.match(/<meta property="og:video:url" content="([^"]+)"/);
               
+              console.log(`[Layer 2] Edge Swarm payload received. Checking for raw URLs...`);
+              if (!match) {
+                  // Maybe it returned JSON ?
+                  try {
+                      const j = JSON.parse(body);
+                      if (j && j.video_url) {
+                          match = [j.video_url, j.video_url];
+                      }
+                   } catch(e){}
+              }
+              
               if (match && match[1]) {
                    sourceStreamUrl = match[1].replace(/\\/g, '');
                    console.log(`[Layer 2] Edge Swarm Success: ${sourceStreamUrl.substring(0, 50)}...`);
@@ -1158,12 +1169,20 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
                    console.log(`[Layer 2] Edge Swarm found preview stream.`);
               }
           } catch (swarmErr: any) {
-              console.log(`[Layer 2] Edge Swarm failed: ${swarmErr.message}`);
+              console.error(`[Layer 2] Edge Swarm fully crashed:`, swarmErr.message);
+              if (forceEngine === "layer2") {
+                  return formatNotAvailable(res, `Layer 2 Swarm Extraction Failed: ${swarmErr.message}`, 500);
+              }
           }
       }
 
       // LAYER 4 (ASOCKS + YT-DLP)
       if (!bestStreamUrl && (!forceEngine || forceEngine === "layer4" || forceEngine === "layer3")) {
+          // Explicitly block deep fallback if user forced a lighter layer that failed
+          if (forceEngine && !["layer4", "layer3"].includes(forceEngine)) {
+              console.warn(`[VIBE CODER] Engine ${forceEngine} failed. Aborting deep cascade.`);
+              return formatNotAvailable(res, `Forced Engine ${forceEngine} failed to find video.`, 500);
+          }
           // If we exhaust fast APIs or explicit Layer 3 forced...
           console.log(`[Layer 4] PREVIEW Route: Falling back to executeYtDlpExtract...`);
           try {

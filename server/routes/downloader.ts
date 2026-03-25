@@ -317,7 +317,7 @@ function generateRotatedProxy(): string {
     return baseProxy;
 }
 
-async function executeYtDlpExtract(url: string, extraArgs: string[] = []): Promise<any> {
+async function executeYtDlpExtract(url: string, extraArgs: string[] = [], disableDirectFallback: boolean = false): Promise<any> {
     const ytArgs = [
         "--dump-json",
         "--no-warnings",
@@ -336,7 +336,11 @@ async function executeYtDlpExtract(url: string, extraArgs: string[] = []): Promi
         // Use a longer timeout for proxy extractions (25s) because residential networks have variable latency
         return await executeYtDlp(url, proxyArgs, 25000);
     } catch (proxyErr: any) {
-        console.warn(`[Phase 2] ASocks proxy failed! Falling back to DIRECT yt-dlp...`, proxyErr.message || proxyErr);
+        console.warn(`[Phase 2] ASocks proxy failed!`, proxyErr.message || proxyErr);
+        if (disableDirectFallback) {
+            console.log(`[Phase 6] Proxy rotation blocked or failed. Stopping direct fallback to prevent timeout.`);
+            throw proxyErr;
+        }
         console.log(`[Phase 2] Executing yt-dlp directly without proxy (Render Network fallback)...`);
         return await executeYtDlp(url, ytArgs, 25000);
     }
@@ -378,7 +382,7 @@ async function executePhase3_HetznerIPv6(url: string): Promise<any> {
 // ==========================================
 async function executePhase6_ASocks_Ultimate(url: string): Promise<any> {
     console.log('[Phase 6] Executing ASocks + Mobile (Upstream) for:', url);
-    const dataJSON = await executeYtDlpExtract(url);
+    const dataJSON = await executeYtDlpExtract(url, [], true); // Pass true to disable the 25s direct fallback attempt which causes frontend 45s timeout!
     const data = typeof dataJSON === 'string' ? JSON.parse(dataJSON) : dataJSON;
 
     let video_url = data.url || (data.requested_downloads && data.requested_downloads[0]?.url);

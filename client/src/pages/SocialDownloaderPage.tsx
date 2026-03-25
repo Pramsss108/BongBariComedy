@@ -284,9 +284,9 @@ export default function SocialDownloaderPage() {
     }, 400);
 
     try {
-      // 15 seconds timeout
+      // 60 seconds timeout to allow all proxy rotations/fallbacks
       abortRef.current = new AbortController();
-      const timeoutId = setTimeout(() => abortRef.current?.abort(), 45000);
+      const timeoutId = setTimeout(() => abortRef.current?.abort(), 60000);
 
       const res = await fetch(apiUrl(`/api/downloader/info?url=${encodeURIComponent(url.trim())}${forceEngine !== 'auto' ? `&forceEngine=${forceEngine}` : ''}`), {
           signal: abortRef.current.signal
@@ -316,7 +316,7 @@ export default function SocialDownloaderPage() {
       setExtractProgress(null);
       setPhase("error");
       if (err.name === 'AbortError') {
-          setErrorMsg("Extraction timed out. YouTube is heavily rotating blocking IPs. Please try again in a few seconds.");
+          setErrorMsg("Extraction timed out. Rotating IPs or platform blocking. Please try again to trigger a new IP.");
           setErrorCode("TIMEOUT");
       } else {
           setErrorMsg(err.message || 'Extraction failed');

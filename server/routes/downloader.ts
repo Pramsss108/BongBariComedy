@@ -644,6 +644,11 @@ async function handleStream(req: Request, res: Response): Promise<void> {
               let match = body.match(/"video_url":"([^"]+)"/);
               if (!match) match = body.match(/<meta property="og:video" content="([^"]+)"/);
               if (!match) match = body.match(/<meta property="og:video:url" content="([^"]+)"/);
+              if (!match) match = body.match(/"video_url":"([^"]+)"/);
+              if (!match) {
+                  const fbMatch = body.match(/"playable_url_quality_hd":"([^"]+)"/);
+                  if (fbMatch) match = fbMatch;
+              }
               
               console.log(`[Layer 2] Edge Swarm payload received. Checking for raw URLs...`);
               if (!match) {

@@ -410,6 +410,7 @@ async function executePhase5_ExpansionA(url: string): Promise<any> {
 // ==========================================
 async function executePhase4_YTDLCore(url: string): Promise<any> {
     console.log('[Phase 4] Executing YTDL-Core + BotGuard Bypass for:', url);
+    if (!url.includes('youtube.com') && !url.includes('youtu.be')) throw new Error("Not a YouTube domain");
     
     
     

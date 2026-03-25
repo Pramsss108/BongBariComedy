@@ -301,13 +301,13 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
     }
 
     // 2. FALLBACK PATH: yt-dlp extract via Proxy / Render
-    if (!forceEngine || forceEngine === "layer4" || forceEngine === "layer2") {
+    if (!forceEngine || forceEngine === "layer4" || forceEngine === "layer3") {
     try {
         const data = await executeYtDlpExtract(url);
         console.log(`[Trace ⏱️] Hybrid Engine Responded in ${Math.round(performance.now() - fetchStart)}ms`);
 
         const result = {
-            engine: "Layer 3 (ASocks + yt-dlp)",
+            engine: "Layer 4 (ASocks + yt-dlp)",
             title: data.title || "Video",
             duration: data.duration || 0,
             thumbnail: data.thumbnail || null,
@@ -1295,6 +1295,7 @@ app.get("/api/downloader/test-ytdl", async (req, res) => {
   // Proxy stream URL for preview — PROTECTED
   app.use("/api/downloader/proxy-stream", handleProxyStream);
 }
+
 
 
 

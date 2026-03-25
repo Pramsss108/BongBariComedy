@@ -685,11 +685,11 @@ export default function SocialDownloaderPage() {
                     >
                       <option className="bg-[#0f0f11] text-white" value="auto">Smart Auto-Fallback (Production Default)</option>
                       <option className="bg-[#0f0f11] text-white" value="layer1">✅ Force Layer 1: Cobalt API (Working/Free/YT)</option>
-                      <option className="bg-[#0f0f11] text-white" value="layer2">🧪 Force Layer 2: CF Swarm Edge (Testing/Free/IG-FB)</option>
-                      <option className="bg-[#0f0f11] opacity-50 text-white" value="layer3">⏳ Force Layer 3: Hetzner IPv6 (Pending/Free)</option>
-                      <option className="bg-[#0f0f11] text-white" value="layer4">🔒 Force Layer 4: ASocks + Mobile (Locked/Paid)</option>
-                      <option className="bg-[#0f0f11] opacity-50 text-white" value="layer5">🛠️ Force Layer 5: Future Expansion Slot A</option>
-                      <option className="bg-[#0f0f11] opacity-50 text-white" value="layer6">🛠️ Force Layer 6: Future Expansion Slot B</option>
+                      <option className="bg-[#0f0f11] text-white" value="layer2">🧪 Force Layer 2: CF Swarm Edge (Working/Free/IG-FB)</option>
+                      <option className="bg-[#0f0f11] text-white" value="layer3">✅ Force Layer 3: Hetzner IPv6 yt-dlp (Working/Free)</option>
+                      <option className="bg-[#0f0f11] text-white" value="layer4">✅ Force Layer 4: YTDL-Core Spoofer (Working/Free)</option>
+                      <option className="bg-[#0f0f11] opacity-50 text-white" value="layer5">🛠️ Force Layer 5: Future Expansion Slot</option>
+                      <option className="bg-[#0f0f11] text-[#ff4444] font-bold" value="layer6">🔒 Force Layer 6: ASocks Proxy (Ultimate Last Slot)</option>
                     </select>
                   </div>
 

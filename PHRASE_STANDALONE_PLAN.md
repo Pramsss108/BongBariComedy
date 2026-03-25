@@ -22,19 +22,11 @@
 - **Status:** **[COMPLETED & INTEGRATED]**
 - **Function:** Uses native Node `child_process` to trigger vanilla yt-dlp, specifically passing `--force-ipv6` to evade standard IPv4 rate-limits. Fully working autonomously.
 
-### ✅ Phase 4: Force Layer 4 - ASocks Rotating Residential Proxies (Paid, Upstream)
-- **Status:** **[COMPLETED & PERFECTED]**
-- **Function:** The ultimate anti-bot bypass. Harnesses raw `yt-dlp` powered directly through your rotating ASocks Residential proxy pool. Bypasses the most restrictive firewalls and 403s.
-
-### ✅ Phase 5: Force Layer 5 - Public Cobalt Array Fallback
+### ✅ Phase 4: Force Layer 4 - Direct YTDL-Core + BotGuard Bypass (Free/NATIVE)\n- **Status:** **[COMPLETED & INTEGRATED]**\n- **Function:** High-speed Node.js fallback utilizing standard Distube/ytdl-core injected with PO-Tokens (BotGuard Bypass) for instant audio/video muxing when external APIs fail.\n\n### ❌ Phase 5: (Public Cobalt array removed as requested)\n: Force Layer 5 - Public Cobalt Array Fallback
 - **Status:** **[COMPLETED IN CURRENT RUN]**
 - **Function:** Iterates through a highly curated array of public Cobalt instances (`cobalt.kim`, `api.cobalt.tools`, etc.) extracting payloads entirely free without hitting Hetzner or proxies. The ultimate cheap backend lifesaver.
 
-### ✅ Phase 6: Force Layer 6 - Direct YTDL-Core + BotGuard Bypass
-- **Status:** **[COMPLETED IN CURRENT RUN]**
-- **Function:** High-speed Node.js fallback utilizing standard Distube/ytdl-core injected with PO-Tokens (BotGuard Bypass) for instant audio/video muxing when external API arrays fail.
-
-### 🟡 Phase 7 & 8: Future Expansion Slots
+### ✅ Phase 6: Force Layer 6 - ASocks Rotating Residential Proxies (Paid, Ultimate Last Slot)\n- **Status:** **[COMPLETED & MOVED TO BOTTOM]**\n- **Function:** The ultimate anti-bot bypass. Harnesses raw \yt-dlp\ powered directly through your rotating ASocks Residential proxy pool. Triggered ONLY if all other 4 free layers fail, saving resources.\n\n### 🟡 Phase 7 & 8: Future Expansion Slots
 - **Status:** **[READY FOR EXPANSION]**
 - **Function:** Structural slots correctly established on the Backend and React Frontend. Ready for custom Scraping architectures, API Bridges, or Private Paid API injections whenever you require.
 

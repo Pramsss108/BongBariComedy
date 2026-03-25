@@ -376,8 +376,8 @@ async function executePhase3_HetznerIPv6(url: string): Promise<any> {
 // ==========================================
 // PHASE 4: ASocks + Mobile (Upstream) Standalone
 // ==========================================
-async function executePhase4_UpstreamASocks(url: string): Promise<any> {
-    console.log('[Phase 4] Executing ASocks + Mobile (Upstream) for:', url);
+async function executePhase6_ASocks_Ultimate(url: string): Promise<any> {
+    console.log('[Phase 6] Executing ASocks + Mobile (Upstream) for:', url);
     const dataJSON = await executeYtDlpExtract(url);
     const data = typeof dataJSON === 'string' ? JSON.parse(dataJSON) : dataJSON;
 
@@ -385,7 +385,7 @@ async function executePhase4_UpstreamASocks(url: string): Promise<any> {
     if (!video_url) throw new Error("Phase 4: No video URL matched in ASocks Upstream extraction");
 
     return {
-        engine: 'Force Layer 4: ASocks + Mobile (Locked/Paid)',
+        engine: 'Force Layer 6: ASocks + Mobile (Locked/Paid)',
         video_url: video_url,
         title: data.title || "Proxy Extracted Video",
         duration: data.duration || 0,
@@ -398,43 +398,14 @@ async function executePhase4_UpstreamASocks(url: string): Promise<any> {
 // PHASE 5: Public Cobalt Node Array (Free)
 // ==========================================
 async function executePhase5_ExpansionA(url: string): Promise<any> {
-    console.log('[Phase 5] Executing Public Cobalt Array for:', url);
-    const publicNodes = [
-        "https://cobalt.api.timeless-coder.com",
-        "https://api.cobalt.tools",
-        "https://cobalt.kim"
-    ];
-    
-    for (const node of publicNodes) {
-        try {
-            const response = await axios.post(node, {
-                url: url, aFormat: "best", vQuality: "1080", isAudioOnly: false, isTTfullAudio: true
-            }, {
-                headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-                timeout: 5000
-            });
-            if (response.data && response.data.status === 'stream' && response.data.url) {
-                return {
-                    engine: 'Force Layer 5: Public Cobalt Array (Free)',
-                    video_url: response.data.url,
-                    title: response.data.title || "Public Cobalt Video",
-                    duration: 0,
-                    thumbnail: null,
-                    formats: [{ ext: "mp4", height: 720, url: response.data.url, id: "mp4-720", label: "MP4 720p" }]
-                };
-            }
-        } catch (e: any) {
-            console.log(`[Phase 5] Node ${node} failed, trying next...`);
-        }
-    }
-    throw new Error('Phase 5: All Public Cobalt nodes failed.');
+    throw new Error('Phase 5 is empty (Public Cobalt removed as requested).');
 }
 
 // ==========================================
 // PHASE 6: Direct ytdl-core + BotGuard Bypass
 // ==========================================
-async function executePhase6_ExpansionB(url: string): Promise<any> {
-    console.log('[Phase 6] Executing YTDL-Core + BotGuard Bypass for:', url);
+async function executePhase4_YTDLCore(url: string): Promise<any> {
+    console.log('[Phase 4] Executing YTDL-Core + BotGuard Bypass for:', url);
     
     
     
@@ -454,7 +425,7 @@ async function executePhase6_ExpansionB(url: string): Promise<any> {
     if (!selectedFormat || !selectedFormat.url) throw new Error('Phase 6: No stream url found in ytdl-core');
 
     return {
-        engine: 'Force Layer 6: YTDL-Core Native (Backup)',
+        engine: 'Force Layer 4: YTDL-Core Native (Backup)',
         video_url: selectedFormat.url,
         title: info.videoDetails.title || "YTDL-Core Video",
         duration: parseInt(info.videoDetails.lengthSeconds) || 0,
@@ -499,7 +470,7 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
     }
 
     if (forceEngine === "layer4") {
-        const result = await executePhase4_UpstreamASocks(url);
+        const result = await executePhase6_ASocks(url);
         metaCache.set(url, { data: result, expires: Date.now() + 60000 });
         return result; // Crashes if fails, NO fallback
     }
@@ -511,59 +482,52 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
     }
 
     if (forceEngine === "layer6") {
-        const result = await executePhase6_ExpansionB(url);
+        const result = await executePhase4_YTDL(url);
         metaCache.set(url, { data: result, expires: Date.now() + 60000 });
         return result; 
     }
 
 
     // ==========================================
-    // SMART AUTO-FALLBACK CASCADE
-    // ==========================================
-    if (!forceEngine || forceEngine === "auto") {
-        try {
-            const res1 = await executePhase1_HetznerCobalt(url);
-            metaCache.set(url, { data: res1, expires: Date.now() + CACHE_TTL_MS });
-            return res1;
-        } catch (e1: any) {
-            console.log(`[Smart Fallback] Phase 1 failed (${e1.message}), cascading to Phase 2...`);
-            try {
-                const res2 = await executePhase2_CFSwarm(url);
-                metaCache.set(url, { data: res2, expires: Date.now() + 60000 });
-                return res2;
-            } catch (e2: any) {
-                console.log(`[Smart Fallback] Phase 2 failed (${e2.message}), cascading to Phase 3...`);
-                try {
-                    const res3 = await executePhase3_HetznerIPv6(url);
-                    metaCache.set(url, { data: res3, expires: Date.now() + 60000 });
-                    return res3;
-                } catch (e3: any) {
-                    console.log(`[Smart Fallback] Phase 3 failed (${e3.message}), cascading to Phase 4 (Upstream)...`);
-                    try {
-                        const res4 = await executePhase4_UpstreamASocks(url);
-                        metaCache.set(url, { data: res4, expires: Date.now() + 60000 });
-                        return res4;
-                    } catch (e4: any) {
-                        console.log(`[Smart Fallback] Phase 4 failed (${e4.message}), cascading to Phase 5...`);
-                        try {
-                            const res5 = await executePhase5_ExpansionA(url);
-                            metaCache.set(url, { data: res5, expires: Date.now() + 60000 });
-                            return res5;
-                        } catch (e5: any) {
-                            console.log(`[Smart Fallback] Phase 5 failed (${e5.message}), cascading to Phase 6...`);
-                            try {
-                                const res6 = await executePhase6_ExpansionB(url);
-                                metaCache.set(url, { data: res6, expires: Date.now() + 60000 });
-                                return res6;
-                            } catch (e6: any) {
-                                throw new Error(`Total engine failure after 6 layers: ${e6.message}`);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+      // SMART AUTO-FALLBACK CASCADE
+      // ==========================================
+      if (!forceEngine || forceEngine === "auto") {
+          try {
+              const res1 = await executePhase1_HetznerCobalt(url);
+              metaCache.set(url, { data: res1, expires: Date.now() + CACHE_TTL_MS });
+              return res1;
+          } catch (e1: any) {
+              console.log(`[Smart Fallback] Phase 1 failed (${e1.message}), cascading to Phase 2...`);
+              try {
+                  const res2 = await executePhase2_CFSwarm(url);
+                  metaCache.set(url, { data: res2, expires: Date.now() + 60000 });
+                  return res2;
+              } catch (e2: any) {
+                  console.log(`[Smart Fallback] Phase 2 failed (${e2.message}), cascading to Phase 3...`);
+                  try {
+                      const res3 = await executePhase3_HetznerIPv6(url);
+                      metaCache.set(url, { data: res3, expires: Date.now() + 60000 });
+                      return res3;
+                  } catch (e3: any) {
+                      console.log(`[Smart Fallback] Phase 3 failed (${e3.message}), cascading to Phase 4 (YTDL-Core Free)...`);
+                      try {
+                          const res4 = await executePhase4_YTDLCore(url);
+                          metaCache.set(url, { data: res4, expires: Date.now() + 60000 });
+                          return res4;
+                      } catch (e4: any) {
+                          console.log(`[Smart Fallback] Phase 4 failed (${e4.message}), skipping Phase 5, natively cascading to Phase 6 (ASocks Paid)...`);
+                          try {
+                              const res6 = await executePhase6_ASocks_Ultimate(url);
+                              metaCache.set(url, { data: res6, expires: Date.now() + 60000 });
+                              return res6;
+                          } catch (e6: any) {
+                              throw new Error(`Total engine failure after all layers (including Paid ASocks): ${e6.message}`);
+                          }
+                      }
+                  }
+              }
+          }
+      }
 
     throw new Error(`Forced engine '${forceEngine}' failed or is not fully implemented yet.`);
 }

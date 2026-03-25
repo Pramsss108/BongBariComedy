@@ -470,7 +470,7 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
     }
 
     if (forceEngine === "layer4") {
-        const result = await executePhase6_ASocks(url);
+        const result = await executePhase4_YTDLCore(url);
         metaCache.set(url, { data: result, expires: Date.now() + 60000 });
         return result; // Crashes if fails, NO fallback
     }
@@ -482,7 +482,7 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
     }
 
     if (forceEngine === "layer6") {
-        const result = await executePhase4_YTDL(url);
+        const result = await executePhase6_ASocks_Ultimate(url);
         metaCache.set(url, { data: result, expires: Date.now() + 60000 });
         return result; 
     }

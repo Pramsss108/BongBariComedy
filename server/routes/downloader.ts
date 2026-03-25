@@ -26,6 +26,122 @@ const previewNodes = [
   // "http://hetzner2:9000/" // Phase 2: Add more nodes here for IP rotation
 ];
 let currentNodeIndex = 0;
+
+// ==========================================
+// 8-PHASE ARCHITECTURE: STANDALONE ENGINES
+// ==========================================
+
+async function executePhase1_HetznerCobalt(url: string): Promise<any> {
+    console.log('[Phase 1] Executing Hetzner Cobalt for:', url);
+    const HETZNER_URL = process.env.HETZNER_COBALT_URL || 'http://hel1.r.y0n.de:9000';
+    
+    // Anti-burst: slight human-like initial delay
+    const initialJitter = Math.floor(Math.random() * 200) + 100;
+    await new Promise(resolve => setTimeout(resolve, initialJitter));
+    
+    const axios = require('axios');
+    const response = await axios.post(
+      HETZNER_URL,
+      {
+        url: url,
+        aFormat: "best",
+        vQuality: "1080",
+        isAudioOnly: false,
+        isTTfullAudio: true,
+        isAudioMuted: false,
+        dubLang: false,
+        disableMetadata: false,
+        twitterGif: false,
+        vimeoGif: false
+      },
+      {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        },
+        timeout: 15000
+      }
+    );
+
+    if (response.data && response.data.status === 'stream' && response.data.url) {
+      return {
+          engine: 'Force Layer 1: Cobalt API (Working/Free/YT)',
+          video_url: response.data.url,
+          title: response.data.title || "Hetzner Video",
+          duration: 0,
+          thumbnail: null,
+          formats: [
+              {
+                  ext: "mp4",
+                  height: 720,
+                  url: response.data.url,
+                  id: "mp4-720",
+                  label: "MP4 720p"
+              }
+          ]
+      };
+    }
+    
+    if (response.data && response.data.picker && response.data.picker[0]?.url) {
+        return {
+            engine: 'Force Layer 1: Cobalt API (Working/Free/YT)',
+            video_url: response.data.picker[0].url,
+            title: response.data.title || "Hetzner Picker Video",
+            duration: 0,
+            thumbnail: response.data.picker[0].thumb || null,
+            formats: [
+                {
+                    ext: "mp4",
+                    height: 720,
+                    url: response.data.picker[0].url,
+                    id: "mp4-720",
+                    label: "MP4 720p"
+                }
+            ]
+        };
+    }
+    
+    throw new Error('Phase 1: Invalid response format from Hetzner Cobalt.');
+}
+
+async function executePhase2_CFSwarm(url: string): Promise<any> {
+    console.log('[Phase 2] Executing CF Swarm Edge for:', url);
+    const isMeta = url.includes("instagram.com") || url.includes("facebook.com") || url.includes("fb.watch") || url.includes("instagr.am") || url.includes("instagr.com");
+    if (!isMeta) throw new Error("Layer 2 (Edge Swarm) only supports Meta/Instagram links.");
+    
+    const swarmUrl = "https://ancient-king-7fa9.guitarguitarabhijit.workers.dev/?url=" + encodeURIComponent(url);
+    const axios = require('axios');
+    const swarmRes = await axios.get(swarmUrl, { timeout: 15000 });
+    
+    const body = typeof swarmRes.data === 'string' ? swarmRes.data : JSON.stringify(swarmRes.data);
+    let match = body.match(/"video_url":"([^"]+)"/) ||
+                body.match(/<meta property="og:video" content="([^"]+)"/) ||
+                body.match(/"playable_url_quality_hd":"([^"]+)"/);
+
+    if (!match) {
+        throw new Error("Phase 2: No video stream found in Swarm payload.");
+    }
+    
+    const finalUrl = match[1].replace(/\\/g, '').replace(/&amp;/g, '&');
+    return {
+        engine: 'Force Layer 2: CF Swarm Edge (Testing/Free/IG-FB)',
+        video_url: finalUrl,
+        title: "Instagram/Meta Video",
+        duration: 0,
+        thumbnail: null,
+        formats: [
+            {
+                ext: "mp4",
+                height: 720,
+                url: finalUrl,
+                id: "mp4-720",
+                label: "MP4 720p"
+            }
+        ]
+    };
+}
+
 function getNextPreviewNode() {
   const node = previewNodes[currentNodeIndex];
   currentNodeIndex = (currentNodeIndex + 1) % previewNodes.length;
@@ -235,175 +351,66 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
         }
     }
 
-    console.log(`[Phase 0] Requesting metadata using Hybrid Engine for: ${url}`);
-    const fetchStart = performance.now();
+    console.log(`[Phase 0] Requesting metadata. Engine mode: ${forceEngine || 'Smart Auto-Fallback'} | URL: ${url}`);
 
-    // 1. FAST PATH: Hetzner Node Bypass (Cobalt)
-    // Step 3 applied: Human-like behavior (no burst, slight delay, limited retries)
-    if (!forceEngine || forceEngine === "layer1") {
-        const maxRetries = 2;
-        let attempt = 0;
-        
-        // Anti-burst: slight human-like initial delay
-        const initialJitter = Math.floor(Math.random() * 200) + 100;
-        await new Promise(resolve => setTimeout(resolve, initialJitter));
-
-        while (attempt < maxRetries) {
-            try {
-                if (attempt > 0) {
-                    const retryJitter = Math.floor(Math.random() * 500) + 500; // 500ms - 1000ms delay
-                    console.log(`[Cobalt Patch] Retrying Hetzner request (Attempt ${attempt + 1}). Jitter delay: ${retryJitter}ms`);
-                    await new Promise(resolve => setTimeout(resolve, retryJitter));
-                }
-
-                const vpsNode = getNextPreviewNode();
-                console.log(`[Phase 0] Attempting fast Hetzner Cobalt resolve for metadata via ${vpsNode}`);
-                const vpsRes = await axios.post(vpsNode, { 
-                    url: url }, { 
-                    timeout: 15000, 
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-                    } 
-                });
-
-                if (vpsRes.data && vpsRes.data.status === 'stream' && vpsRes.data.url) {
-                    console.log(`[Trace ⏱️] Hetzner node responded in ${Math.round(performance.now() - fetchStart)}ms`);
-                    const result = {
-                        engine: "Layer 1 (Hetzner VPS)",
-                        title: vpsRes.data.title || "Video",
-                        duration: vpsRes.data.duration || 0,
-                        thumbnail: vpsRes.data.thumbnail || null,
-                        formats: [
-                            {
-                                ext: "mp4",
-                                acodec: "aac",
-                                vcodec: "h264",
-                                url: vpsRes.data.url,
-                                height: 720
-                            }
-                        ]
-                    };
-                    metaCache.set(url, { data: result, expires: Date.now() + CACHE_TTL_MS });
-                    return result;
-                }
-                break; // If no error but also no proper stream status
-            } catch (err: any) {
-                attempt++;
-                console.log(`[Phase 0] Hetzner Node bypass attempt ${attempt} failed: ${err.message}.`);
-                if (attempt >= maxRetries) {
-                    console.log(`[Phase 0] Moving to next layer after ${maxRetries} Hetzner failures...`);
-                    if (forceEngine === "layer1") throw new Error("Layer 1 (Hetzner) forced, but failed all retries: " + err.message);
-                }
-            }
-        }
-    }
-
-        // 1.5. LAYER 2 OVERRIDE (Cloudflare Edge Swarm - Meta only)
-    if (forceEngine === "layer2") {
-        console.log(`[Layer 2 Metadata Bypass] Booting Cloudflare Edge Swarm for info...`);
-        try {
-            const isMeta = url.includes("instagram.com") || url.includes("facebook.com") || url.includes("fb.watch") || url.includes("instagr.am");
-            if (!isMeta) throw new Error("Layer 2 (Edge Swarm) only supports Meta/Instagram links.");
-            
-            const swarmUrl = "https://ancient-king-7fa9.guitarguitarabhijit.workers.dev/?url=" + encodeURIComponent(url);
-            const axios = require('axios');
-            const swarmRes = await axios.get(swarmUrl, { timeout: 15000 });
-            const body = typeof swarmRes.data === 'string' ? swarmRes.data : JSON.stringify(swarmRes.data);
-            
-            // Just check if we get a hit to construct dummy metadata
-            let match = body.match(/"video_url":"([^"]+)"/) || 
-                        body.match(/<meta property="og:video" content="([^"]+)"/) ||
-                        body.match(/"playable_url_quality_hd":"([^"]+)"/);
-            
-            if (!match) {
-                try {
-                    const j = JSON.parse(body);
-                    if (j && j.video_url) match = [j.video_url, j.video_url];
-                } catch(e) {}
-            }
-                        
-            if (!match) throw new Error("No video stream found in Swarm payload");
-            
-            const result = {
-                engine: "Layer 2 (Free Meta Edge Swarm)",
-                title: "Instagram/Meta Video",
-                duration: 0,
-                thumbnail: null,
-                formats: [
-                    { ext: "mp4", height: 720, url: match[1].replace(/\\/g, ''), id: "mp4-720", label: "MP4 720p" }
-                ],
-                previewUrl: match[1].replace(/\\/g, '')
-            };
-            metaCache.set(url, { data: result, expires: Date.now() + 60000 });
-            return result;
-        } catch (e) {
-            console.error(`[Layer 2] Swarm Fetch Info Failed:`, e.message);
-            throw new Error(`Layer 2 Swarm Extraction Failed: ${e.message}`);
-        }
-    }
-
-    // 1.5. LAYER 2 OVERRIDE (Cloudflare Edge Swarm - Meta only)
-    if (forceEngine === "layer2") {
-        console.log(`[Layer 2 Metadata Bypass] Booting Cloudflare Edge Swarm for info...`);
-        try {
-            const isMeta = url.includes("instagram.com") || url.includes("facebook.com") || url.includes("fb.watch") || url.includes("instagr.am");
-            if (!isMeta) throw new Error("Layer 2 (Edge Swarm) only supports Meta/Instagram links.");
-            
-            const swarmUrl = "https://ancient-king-7fa9.guitarguitarabhijit.workers.dev/?url=" + encodeURIComponent(url);
-            const axios = require('axios');
-            const swarmRes = await axios.get(swarmUrl, { timeout: 15000 });
-            const body = typeof swarmRes.data === 'string' ? swarmRes.data : JSON.stringify(swarmRes.data);
-            
-            // Just check if we get a hit to construct dummy metadata
-            let match = body.match(/"video_url":"([^"]+)"/) || 
-                        body.match(/<meta property="og:video" content="([^"]+)"/) ||
-                        body.match(/"playable_url_quality_hd":"([^"]+)"/);
-                        
-            if (!match) throw new Error("No video stream found in Swarm payload");
-            
-            const result = {
-                engine: "Layer 2 (Free Meta Edge Swarm)",
-                title: "Instagram/Meta Video",
-                duration: 0,
-                thumbnail: null,
-                formats: [
-                    { ext: "mp4", height: 720, url: match[1].replace(/\\/g, ''), id: "mp4-720", label: "MP4 720p" }
-                ],
-                previewUrl: match[1].replace(/\\/g, '')
-            };
-            metaCache.set(url, { data: result, expires: Date.now() + 60000 });
-            return result;
-        } catch (e) {
-            console.error(`[Layer 2] Swarm Fetch Info Failed:`, e.message);
-            throw new Error(`Layer 2 Swarm Extraction Failed: ${e.message}`);
-        }
-    }
-
-    // 2. FALLBACK PATH: yt-dlp extract via Proxy / Render
-    if (!forceEngine || forceEngine === "layer4" || forceEngine === "layer3") {
-    try {
-        const data = await executeYtDlpExtract(url);
-        console.log(`[Trace ⏱️] Hybrid Engine Responded in ${Math.round(performance.now() - fetchStart)}ms`);
-
-        const result = {
-            engine: "Layer 4 (ASocks + yt-dlp)",
-            title: data.title || "Video",
-            duration: data.duration || 0,
-            thumbnail: data.thumbnail || null,
-            formats: data.formats || [] };
+    // ==========================================
+    // STRICT FORCE MODE (NO FALLBACKS)
+    // ==========================================
+    
+    if (forceEngine === "layer1") {
+        const result = await executePhase1_HetznerCobalt(url);
         metaCache.set(url, { data: result, expires: Date.now() + CACHE_TTL_MS });
-        return result;
-    } catch (engineErr: any) {
-        console.error(`[Phase 0] Total Metadata Failure:`, engineErr?.message || engineErr);
-        throw new Error(`Total engine failure: ${engineErr.message}`);
+        return result; // Crates if fails, NO fallback
     }
-    } else {
-        throw new Error(`Forced engine '${forceEngine}' failed or was not matched.`);
+    
+    if (forceEngine === "layer2") {
+        const result = await executePhase2_CFSwarm(url);
+        metaCache.set(url, { data: result, expires: Date.now() + 60000 });
+        return result; // Creates if fails, NO fallback
     }
+
+    // ==========================================
+    // SMART AUTO-FALLBACK CASCADE
+    // ==========================================
+    if (!forceEngine || forceEngine === "auto") {
+        try {
+            const res1 = await executePhase1_HetznerCobalt(url);
+            metaCache.set(url, { data: res1, expires: Date.now() + CACHE_TTL_MS });
+            return res1;
+        } catch (e1: any) {
+            console.log(`[Smart Fallback] Phase 1 failed (${e1.message}), cascading to Phase 2...`);
+            try {
+                const res2 = await executePhase2_CFSwarm(url);
+                metaCache.set(url, { data: res2, expires: Date.now() + 60000 });
+                return res2;
+            } catch (e2: any) {
+                console.log(`[Smart Fallback] Phase 2 failed (${e2.message}), cascading to Phase 4 (Upstream)...`);
+                // Wait for the Upstream phase to be added later
+            }
+        }
+    }
+
+    // OLD FALLBACK (TEMPORARY until Phase 3/4 are integrated in next steps)
+    if (!forceEngine || forceEngine === "layer4" || forceEngine === "layer3") {
+        try {
+            const data = await executeYtDlpExtract(url);
+            const result = {
+                engine: "Force Layer 4: ASocks + yt-dlp",
+                title: data.title || "Video",
+                duration: data.duration || 0,
+                thumbnail: data.thumbnail || null,
+                formats: data.formats || [],
+                video_url: data.formats?.[0]?.url || ""
+            };
+            metaCache.set(url, { data: result, expires: Date.now() + CACHE_TTL_MS });
+            return result;
+        } catch (engineErr: any) {
+            throw new Error(`Total engine failure: ${engineErr.message}`);
+        }
+    }
+
+    throw new Error(`Forced engine '${forceEngine}' failed or is not fully implemented yet.`);
 }
-// ---------------------------------------------------------------------------
 // PHASE : GET /api/downloader/info
 // Returns video metadata: title, thumbnail, duration, available formats
 // ---------------------------------------------------------------------------
@@ -808,7 +815,8 @@ async function handleStream(req: Request, res: Response): Promise<void> {
           } catch (metaErr: any) {
                console.error(`[Layer 2] Edge Swarm bypass failed!`, metaErr.message);
                if (forceEngine === "layer2") {
-                   return res.status(500).json({ error: "Layer 2 Forced but Failed: " + metaErr.message });
+                   res.status(500).json({ error: "Layer 2 Forced but Failed: " + metaErr.message });
+                   return;
                }
                // Proceed to Layer 3 fallback (yt-dlp) if Ghost Layer fails, mostly will fail but we try.
                console.log(`[Layer 2] Falling back to Layer 3 (yt-dlp) for Meta URL...`);
@@ -1250,7 +1258,7 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
               if (match && match[1]) {
                    const streamUrl = match[1].replace(/\\/g, '');
                    bestStreamUrl = streamUrl;
-                   finalEngine = 'Layer 2 (Free Meta Edge Swarm)';
+                   let finalEngine = 'Layer 2 (Free Meta Edge Swarm)';
                    
                    console.log(`[Layer 2] Edge Swarm found preview stream.`);
               }

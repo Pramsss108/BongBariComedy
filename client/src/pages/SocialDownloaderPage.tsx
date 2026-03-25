@@ -684,12 +684,12 @@ export default function SocialDownloaderPage() {
                       className="bg-[#0f0f11] border border-white/10 text-white/90 py-1 px-2 rounded outline-none cursor-pointer hover:bg-black transition-colors"
                     >
                       <option className="bg-[#0f0f11] text-white" value="auto">Smart Auto-Fallback (Production Default)</option>
-                      <option className="bg-[#0f0f11] text-white" value="layer1">✅ Force Layer 1: Cobalt API (Working/Free/YT)</option>
-                      <option className="bg-[#0f0f11] text-white" value="layer2">🧪 Force Layer 2: CF Swarm Edge (Working/Free/IG-FB)</option>
-                      <option className="bg-[#0f0f11] text-white" value="layer3">✅ Force Layer 3: Hetzner IPv6 yt-dlp (Working/Free)</option>
-                      <option className="bg-[#0f0f11] text-white" value="layer4">✅ Force Layer 4: YTDL-Core Spoofer (Working/Free)</option>
-                      <option className="bg-[#0f0f11] opacity-50 text-white" value="layer5">🛠️ Force Layer 5: Future Expansion Slot</option>
-                      <option className="bg-[#0f0f11] text-[#ff4444] font-bold" value="layer6">🔒 Force Layer 6: ASocks Proxy (Ultimate Last Slot)</option>
+                      <option className="bg-[#0f0f11] text-green-400" value="layer1">FREE [WORKING]: Layer 1 - Cobalt API (YT/Fast)</option>
+                      <option className="bg-[#0f0f11] text-yellow-400" value="layer2">FREE [TESTING]: Layer 2 - CF Swarm (IG-FB)</option>
+                      <option className="bg-[#0f0f11] text-orange-400" value="layer3">FREE [BUILDING]: Layer 3 - Hetzner IPv6 (Under Dev)</option>
+                      <option className="bg-[#0f0f11] text-green-400" value="layer4">FREE [WORKING]: Layer 4 - YTDL-Core Spoofer (YT/Native Node)</option>
+                      <option className="bg-[#0f0f11] text-slate-500" value="layer5">🛠️ [EMPTY]: Layer 5 - Future Expansion</option>
+                      <option className="bg-[#0f0f11] text-red-500 font-bold" value="layer6">PAID [WORKING]: Layer 6 - ASocks (Ultimate FB/IG Fallback ~$0.003/min)</option>
                     </select>
                   </div>
 

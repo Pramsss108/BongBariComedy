@@ -342,6 +342,58 @@ async function executeYtDlpExtract(url: string, extraArgs: string[] = []): Promi
     }
 }
 
+
+// ==========================================
+// PHASE 3: Hetzner IPv6 Standalone
+// ==========================================
+async function executePhase3_HetznerIPv6(url: string): Promise<any> {
+    console.log('[Phase 3] Executing Hetzner IPv6 via direct yt-dlp for:', url);
+    const ytArgs = [
+        "--dump-json",
+        "--no-warnings",
+        "--geo-bypass",
+        "--force-ipv6",
+        "--extractor-args", "youtube:player_client=ios,tv",
+        "--user-agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1"
+    ];
+    // No proxy, use direct node execution with --force-ipv6
+    const dataJSON = await executeYtDlp(url, ytArgs, 25000);
+    const data = typeof dataJSON === 'string' ? JSON.parse(dataJSON) : dataJSON;
+
+    let video_url = data.url || (data.requested_downloads && data.requested_downloads[0]?.url);
+    if (!video_url) throw new Error("Phase 3: No video URL matched in Hetzner IPv6 extraction");
+
+    return {
+        engine: 'Force Layer 3: Hetzner IPv6 (Pending/Free)',
+        video_url: video_url,
+        title: data.title || "IPv6 Extracted Video",
+        duration: data.duration || 0,
+        thumbnail: data.thumbnail || null,
+        formats: data.formats || data.requested_formats || []
+    };
+}
+
+// ==========================================
+// PHASE 4: ASocks + Mobile (Upstream) Standalone
+// ==========================================
+async function executePhase4_UpstreamASocks(url: string): Promise<any> {
+    console.log('[Phase 4] Executing ASocks + Mobile (Upstream) for:', url);
+    const dataJSON = await executeYtDlpExtract(url);
+    const data = typeof dataJSON === 'string' ? JSON.parse(dataJSON) : dataJSON;
+
+    let video_url = data.url || (data.requested_downloads && data.requested_downloads[0]?.url);
+    if (!video_url) throw new Error("Phase 4: No video URL matched in ASocks Upstream extraction");
+
+    return {
+        engine: 'Force Layer 4: ASocks + Mobile (Locked/Paid)',
+        video_url: video_url,
+        title: data.title || "Proxy Extracted Video",
+        duration: data.duration || 0,
+        thumbnail: data.thumbnail || null,
+        formats: data.formats || data.requested_formats || []
+    };
+}
+
 async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<any> {
     if (!forceEngine && metaCache.has(url)) {
         const cached = metaCache.get(url)!;
@@ -354,19 +406,33 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
     console.log(`[Phase 0] Requesting metadata. Engine mode: ${forceEngine || 'Smart Auto-Fallback'} | URL: ${url}`);
 
     // ==========================================
+
+    // ==========================================
     // STRICT FORCE MODE (NO FALLBACKS)
     // ==========================================
-    
+
     if (forceEngine === "layer1") {
         const result = await executePhase1_HetznerCobalt(url);
         metaCache.set(url, { data: result, expires: Date.now() + CACHE_TTL_MS });
-        return result; // Crates if fails, NO fallback
+        return result; // Crashes if fails, NO fallback
     }
-    
+
     if (forceEngine === "layer2") {
         const result = await executePhase2_CFSwarm(url);
         metaCache.set(url, { data: result, expires: Date.now() + 60000 });
-        return result; // Creates if fails, NO fallback
+        return result; // Crashes if fails, NO fallback
+    }
+
+    if (forceEngine === "layer3") {
+        const result = await executePhase3_HetznerIPv6(url);
+        metaCache.set(url, { data: result, expires: Date.now() + 60000 });
+        return result; // Crashes if fails, NO fallback
+    }
+
+    if (forceEngine === "layer4") {
+        const result = await executePhase4_UpstreamASocks(url);
+        metaCache.set(url, { data: result, expires: Date.now() + 60000 });
+        return result; // Crashes if fails, NO fallback
     }
 
     // ==========================================
@@ -384,33 +450,29 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
                 metaCache.set(url, { data: res2, expires: Date.now() + 60000 });
                 return res2;
             } catch (e2: any) {
-                console.log(`[Smart Fallback] Phase 2 failed (${e2.message}), cascading to Phase 4 (Upstream)...`);
-                // Wait for the Upstream phase to be added later
+                console.log(`[Smart Fallback] Phase 2 failed (${e2.message}), cascading to Phase 3...`);
+                try {
+                    const res3 = await executePhase3_HetznerIPv6(url);
+                    metaCache.set(url, { data: res3, expires: Date.now() + 60000 });
+                    return res3;
+                } catch (e3: any) {
+                    console.log(`[Smart Fallback] Phase 3 failed (${e3.message}), cascading to Phase 4 (Upstream)...`);
+                    try {
+                        const res4 = await executePhase4_UpstreamASocks(url);
+                        metaCache.set(url, { data: res4, expires: Date.now() + 60000 });
+                        return res4;
+                    } catch (e4: any) {
+                         throw new Error(`Total engine failure: ${e4.message}`);
+                    }
+                }
             }
-        }
-    }
-
-    // OLD FALLBACK (TEMPORARY until Phase 3/4 are integrated in next steps)
-    if (!forceEngine || forceEngine === "layer4" || forceEngine === "layer3") {
-        try {
-            const data = await executeYtDlpExtract(url);
-            const result = {
-                engine: "Force Layer 4: ASocks + yt-dlp",
-                title: data.title || "Video",
-                duration: data.duration || 0,
-                thumbnail: data.thumbnail || null,
-                formats: data.formats || [],
-                video_url: data.formats?.[0]?.url || ""
-            };
-            metaCache.set(url, { data: result, expires: Date.now() + CACHE_TTL_MS });
-            return result;
-        } catch (engineErr: any) {
-            throw new Error(`Total engine failure: ${engineErr.message}`);
         }
     }
 
     throw new Error(`Forced engine '${forceEngine}' failed or is not fully implemented yet.`);
 }
+
+// ---------------------------------------------------------------------------
 // PHASE : GET /api/downloader/info
 // Returns video metadata: title, thumbnail, duration, available formats
 // ---------------------------------------------------------------------------

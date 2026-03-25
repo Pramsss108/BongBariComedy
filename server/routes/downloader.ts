@@ -33,13 +33,13 @@ let currentNodeIndex = 0;
 
 async function executePhase1_HetznerCobalt(url: string): Promise<any> {
     console.log('[Phase 1] Executing Hetzner Cobalt for:', url);
-    const HETZNER_URL = process.env.HETZNER_COBALT_URL || 'http://hel1.r.y0n.de:9000';
+    const HETZNER_URL = process.env.HETZNER_COBALT_URL || 'http://78.47.104.43:9000';
     
     // Anti-burst: slight human-like initial delay
     const initialJitter = Math.floor(Math.random() * 200) + 100;
     await new Promise(resolve => setTimeout(resolve, initialJitter));
     
-    const axios = require('axios');
+    
     const response = await axios.post(
       HETZNER_URL,
       {
@@ -111,7 +111,7 @@ async function executePhase2_CFSwarm(url: string): Promise<any> {
     if (!isMeta) throw new Error("Layer 2 (Edge Swarm) only supports Meta/Instagram links.");
     
     const swarmUrl = "https://ancient-king-7fa9.guitarguitarabhijit.workers.dev/?url=" + encodeURIComponent(url);
-    const axios = require('axios');
+    
     const swarmRes = await axios.get(swarmUrl, { timeout: 15000 });
     
     const body = typeof swarmRes.data === 'string' ? swarmRes.data : JSON.stringify(swarmRes.data);
@@ -404,7 +404,7 @@ async function executePhase5_ExpansionA(url: string): Promise<any> {
         "https://api.cobalt.tools",
         "https://cobalt.kim"
     ];
-    const axios = require('axios');
+    
     for (const node of publicNodes) {
         try {
             const response = await axios.post(node, {
@@ -435,8 +435,8 @@ async function executePhase5_ExpansionA(url: string): Promise<any> {
 // ==========================================
 async function executePhase6_ExpansionB(url: string): Promise<any> {
     console.log('[Phase 6] Executing YTDL-Core + BotGuard Bypass for:', url);
-    const ytdl = require('@distube/ytdl-core');
-    const { getPoToken } = require('../lib/youtube/poToken');
+    
+    
     
     const { visitorData, poToken } = await getPoToken();
     const info = await ytdl.getInfo(url, {

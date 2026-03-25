@@ -394,6 +394,22 @@ async function executePhase4_UpstreamASocks(url: string): Promise<any> {
     };
 }
 
+// ==========================================
+// PHASE 5: Expansion Slot A
+// ==========================================
+async function executePhase5_ExpansionA(url: string): Promise<any> {
+    console.log('[Phase 5] Executing Expansion Slot A for:', url);
+    throw new Error('Phase 5 is a placeholder and not fully implemented yet.');
+}
+
+// ==========================================
+// PHASE 6: Expansion Slot B
+// ==========================================
+async function executePhase6_ExpansionB(url: string): Promise<any> {
+    console.log('[Phase 6] Executing Expansion Slot B for:', url);
+    throw new Error('Phase 6 is a placeholder and not fully implemented yet.');
+}
+
 async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<any> {
     if (!forceEngine && metaCache.has(url)) {
         const cached = metaCache.get(url)!;
@@ -435,6 +451,19 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
         return result; // Crashes if fails, NO fallback
     }
 
+    if (forceEngine === "layer5") {
+        const result = await executePhase5_ExpansionA(url);
+        metaCache.set(url, { data: result, expires: Date.now() + 60000 });
+        return result; 
+    }
+
+    if (forceEngine === "layer6") {
+        const result = await executePhase6_ExpansionB(url);
+        metaCache.set(url, { data: result, expires: Date.now() + 60000 });
+        return result; 
+    }
+
+
     // ==========================================
     // SMART AUTO-FALLBACK CASCADE
     // ==========================================
@@ -462,7 +491,21 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
                         metaCache.set(url, { data: res4, expires: Date.now() + 60000 });
                         return res4;
                     } catch (e4: any) {
-                         throw new Error(`Total engine failure: ${e4.message}`);
+                        console.log(`[Smart Fallback] Phase 4 failed (${e4.message}), cascading to Phase 5...`);
+                        try {
+                            const res5 = await executePhase5_ExpansionA(url);
+                            metaCache.set(url, { data: res5, expires: Date.now() + 60000 });
+                            return res5;
+                        } catch (e5: any) {
+                            console.log(`[Smart Fallback] Phase 5 failed (${e5.message}), cascading to Phase 6...`);
+                            try {
+                                const res6 = await executePhase6_ExpansionB(url);
+                                metaCache.set(url, { data: res6, expires: Date.now() + 60000 });
+                                return res6;
+                            } catch (e6: any) {
+                                throw new Error(`Total engine failure after 6 layers: ${e6.message}`);
+                            }
+                        }
                     }
                 }
             }

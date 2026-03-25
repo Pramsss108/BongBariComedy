@@ -62,8 +62,7 @@ function executeYtDlp(url: string, args: string[], timeoutMs = 15000): Promise<a
 
 function spawnYtDlpStream(url: string, args: string[]) {
   return spawn(YT_DLP_PATH, [...args, "-o", "-", url], {
-    stdio: ["ignore", "pipe", "pipe"],
-  });
+    stdio: ["ignore", "pipe", "pipe"] });
 }
 
 // ---------------------------------------------------------------------------
@@ -96,8 +95,7 @@ function validateVideoUrl(rawUrl: string): { ok: true; url: string } | { ok: fal
   if (!ALLOWED_HOSTS.has(host)) {
     return {
       ok: false,
-      error: `Platform not supported. We support YouTube, Instagram, and public Facebook videos only.`,
-    };
+      error: `Platform not supported. We support YouTube, Instagram, and public Facebook videos only.` };
   }
   return { ok: true, url: rawUrl.trim() };
 }
@@ -110,8 +108,7 @@ const infoLimiter = rateLimit({
   max: 30, // Increased to 30 info req/min to prevent "failed first, then worked" user frustration
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: "Too many requests. Please wait a minute before fetching video info again." },
-});
+  message: { error: "Too many requests. Please wait a minute before fetching video info again." } });
 
 const streamLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -119,8 +116,7 @@ const streamLimiter = rateLimit({
     skip: (req) => req.query.mode === 'preview', // Completely bypass rate limiter for previews!
     standardHeaders: true,
     legacyHeaders: false,
-    message: { error: "Download limit reached. Please wait a minute." },
-});
+    message: { error: "Download limit reached. Please wait a minute." } });
 // ---------------------------------------------------------------------------
 // GLOBAL RESOURCE GOVERNOR (Phase 14)
 // Protect Render's 512MB RAM by limiting active ffmpeg/yt-dlp spawns
@@ -263,11 +259,7 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
                 const vpsNode = getNextPreviewNode();
                 console.log(`[Phase 0] Attempting fast Hetzner Cobalt resolve for metadata via ${vpsNode}`);
                 const vpsRes = await axios.post(vpsNode, { 
-                    url: url,
-                    vCodec: "h264", 
-                    vQuality: "720", 
-                    aFormat: "mp3"
-                }, { 
+                    url: url }, { 
                     timeout: 15000, 
                     headers: { 
                         'Content-Type': 'application/json',
@@ -309,7 +301,7 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
     }
 
     // 2. FALLBACK PATH: yt-dlp extract via Proxy / Render
-    if (!forceEngine || forceEngine === "layer3") {
+    if (!forceEngine || forceEngine === "layer3" || forceEngine === "layer2") {
     try {
         const data = await executeYtDlpExtract(url);
         console.log(`[Trace ⏱️] Hybrid Engine Responded in ${Math.round(performance.now() - fetchStart)}ms`);
@@ -319,8 +311,7 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
             title: data.title || "Video",
             duration: data.duration || 0,
             thumbnail: data.thumbnail || null,
-            formats: data.formats || [],
-        };
+            formats: data.formats || [] };
         metaCache.set(url, { data: result, expires: Date.now() + CACHE_TTL_MS });
         return result;
     } catch (engineErr: any) {
@@ -397,11 +388,12 @@ async function handleInfo(req: Request, res: Response): Promise<void> {
     // Phase 3: Extract Direct CDN Preview URL to bypass proxy node and save bandwidth
     let directPreviewUrl = null;
     if (Array.isArray(info.formats)) {
-        const premuxed = info.formats.filter((f: any) =>
-            f.ext === 'mp4' && f.acodec && f.acodec !== 'none' &&
+        const premuxed = info.formats.filter((f: any) => {
+            if (f.format_id === '2' || f.format_id === '0') return true;
+            return f.ext === 'mp4' && f.acodec && f.acodec !== 'none' &&
             f.vcodec && f.vcodec !== 'none' && f.url && f.url.startsWith('http') &&
             !f.url.includes('.m3u8')
-        );
+        });
         if (premuxed.length > 0) {
             const bestPreview = [...premuxed].sort((a, b) => (a.height || 0) - (b.height || 0)).find(f => (f.height || 0) >= 360);
             directPreviewUrl = bestPreview ? bestPreview.url : premuxed[0].url;
@@ -417,8 +409,7 @@ async function handleInfo(req: Request, res: Response): Promise<void> {
       durationString: info.duration_string ?? "—",
       uploader: info.uploader ?? info.channel ?? "Unknown",
       platform: info.extractor_key ?? "unknown",
-      formats,
-    });
+      formats });
   } catch (err: any) {
     console.error("\n================ YT-DLP CRASH DIAGNOSTIC ================");
     console.error(`[downloader/info] Error Name: ${err?.name}`);
@@ -547,13 +538,99 @@ async function handleStream(req: Request, res: Response): Promise<void> {
   req.socket.setTimeout(600_000);
 
   try {
+      const forceEngine = (req.query.forceEngine as string) || undefined;
       const isYT = validated.url.includes("youtube.com") || validated.url.includes("youtu.be");
       const isMeta = validated.url.includes("instagram.com") || validated.url.includes("facebook.com") || validated.url.includes("fb.watch");
       
       // =========================================================================
+      // V14.5 LAYER 1.5: FAST HETZNER COBALT FOR META (Experimental / Safe Fallback)
+      // =========================================================================
+      if (isMeta && (!forceEngine || forceEngine === "layer1")) {
+          try {
+              console.log(`[Layer 1.5] Meta detected. Attempting fast internal Hetzner Cobalt resolve (Phase 1) safely...`);
+              const vpsNode = getNextPreviewNode();
+              const payload = JSON.stringify({ url: validated.url,  isAudioOnly: chosen.isAudio });
+              
+              const vpsRes = await fetch(vpsNode, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", "Accept": "application/json" },
+                  body: payload,
+                  signal: AbortSignal.timeout(3500) // Fast 3.5s timeout. If it hangs, we instantly fallback!
+              });
+              
+              if (vpsRes.ok) {
+                  const json = await vpsRes.json();
+                  if (json.url) {
+                      const sourceStreamUrl = json.url;
+                      const isTrimmingReq = startSec !== null && endSec !== null && endSec > startSec;
+                      
+                      if (isTrimmingReq || chosen.ext === "mp3") {
+                           console.log(`[Layer 1.5] Trimming or audio-only Meta stream. Acquired CDN URL from Hetzner for FFmpeg processing.`);
+                           const ffmpegArgs = [];
+                           if (isTrimmingReq) {
+                               ffmpegArgs.push("-ss", startSec.toString());
+                           }
+                           ffmpegArgs.push("-i", sourceStreamUrl);
+                           if (isTrimmingReq) {
+                               ffmpegArgs.push("-to", endSec.toString());
+                           }
+
+                           if (chosen.ext === "mp3") {
+                               ffmpegArgs.push("-vn", "-c:a", "libmp3lame", "-q:a", "2");
+                           } else if (chosen.isAudio) {
+                               ffmpegArgs.push("-vn", "-c:a", "copy");
+                           } else {
+                               ffmpegArgs.push("-c:v", "copy", "-c:a", "copy");
+                           }
+
+                           ffmpegArgs.push("-f", chosen.ext === "mp3" ? "mp3" : "mp4");
+                           ffmpegArgs.push("pipe:1");
+
+                           console.log(`⚙️ EXEC: ffmpeg ${ffmpegArgs.join(" ")}`);
+                           
+                           res.setHeader("Content-Disposition", `attachment; filename="bongbari_meta_${Date.now()}.${chosen.ext}"`);
+                           res.setHeader("Content-Type", chosen.ext === "mp3" ? "audio/mpeg" : "video/mp4");
+                           
+                           const subprocess = spawn(ffmpegPath || "ffmpeg", ffmpegArgs, {
+                               stdio: ["ignore", "pipe", "pipe"] });
+
+                           subprocess.stderr?.on("data", (chunk: Buffer) => {
+                               const msg = chunk.toString();
+                               Object.assign({}, {msg});
+                           });
+
+                           subprocess.on("error", (err: any) => {
+                               console.error(`[CRASH ALERT] spawn error:`, err?.message);
+                               if (!res.headersSent) res.status(500).json({ error: "Processing failed." });
+                           });
+
+                           subprocess.stdout?.pipe(res);
+
+                           req.on("close", () => {
+                               subprocess.kill?.("SIGTERM");
+                           });
+                           return;
+                      } else {
+                          console.log(`[Layer 1.5 SUCCESS] Hetzner successfully extracted Meta link! Redirecting...`);
+                          res.redirect(302, json.url);
+                          return;
+                      }
+                  }
+              }
+              throw new Error("Hetzner returned ok but missing url in payload");
+          } catch(e: any) {
+              console.log(`[Layer 1.5] Hetzner Meta bypass failed (${e.message}), cleanly falling back to Layer 2 Ghost Nodes...`);
+              if (forceEngine === "layer1") { // If explicitly forced to Layer 1, don't fall back, just crash here as requested.
+                  if (!res.headersSent) res.status(422).json({ error: "Layer 1 forced, but Hetzner failed for Meta: " + e.message });
+                  return;
+              }
+          }
+      }
+
+      // =========================================================================
       // LAYER 2 GHOST BYPASS (META/INSTAGRAM)
       // =========================================================================
-      if (isMeta) {
+      if ((isMeta && !forceEngine) || forceEngine === "layer2") {
           console.log(`[Layer 2] Meta detected on stream route. Booting Ghost Layer Resolver...`);
           try {
               const ghostMirrors = [
@@ -579,8 +656,9 @@ async function handleStream(req: Request, res: Response): Promise<void> {
       
                       const res = await proxyAxios.post(mirror, {
                           url: validated.url,
-                          isAudioOnly: chosen.isAudio,
-                          vQuality: "720"
+                  
+                  
+                  isAudioOnly: chosen.isAudio
                       });
       
                       if (res.data && res.data.url) {
@@ -629,8 +707,7 @@ async function handleStream(req: Request, res: Response): Promise<void> {
                    res.setHeader("Content-Type", chosen.ext === "mp3" ? "audio/mpeg" : "video/mp4");
 
                    const subprocess = spawn(ffmpegPath || "ffmpeg", ffmpegArgs, {
-                       stdio: ["ignore", "pipe", "pipe"],
-                   });
+                       stdio: ["ignore", "pipe", "pipe"] });
 
                    subprocess.stderr?.on("data", (chunk: Buffer) => {
                        const msg = chunk.toString();
@@ -667,7 +744,7 @@ async function handleStream(req: Request, res: Response): Promise<void> {
       // resolve the exact CDN link using native node crypto, then 302 redirect
       // the client so their own residential IP downloads from Google directly.
       // =========================================================================
-      if (isYT) {
+      if ((isYT && !forceEngine) || forceEngine === "layer1") {
           try {
               console.log(`[Phase 2] YouTube detected. Booting Hetzner VPS Resolver...`);
               const vpsNode = getNextPreviewNode();
@@ -675,6 +752,8 @@ async function handleStream(req: Request, res: Response): Promise<void> {
 
               const payload = JSON.stringify({
                   url: validated.url,
+                  
+                  
                   isAudioOnly: chosen.isAudio
               });
 
@@ -730,8 +809,7 @@ async function handleStream(req: Request, res: Response): Promise<void> {
                    res.setHeader("Content-Type", chosen.ext === "mp3" ? "audio/mpeg" : "video/mp4");
 
                    const subprocess = spawn(ffmpegPath || "ffmpeg", ffmpegArgs, {
-                       stdio: ["ignore", "pipe", "pipe"],
-                   });
+                       stdio: ["ignore", "pipe", "pipe"] });
 
                    subprocess.stderr?.on("data", (chunk: Buffer) => {
                        const msg = chunk.toString();
@@ -789,7 +867,7 @@ async function handleStream(req: Request, res: Response): Promise<void> {
     let fallbackPiped = false;
 
     // 1. FAST-PATH DIRECT CDN REDIRECT (Full Videos Only, to prevent KB files)
-    if (!requiresTempFile) {
+    if (!requiresTempFile && !forceEngine) {
         console.log(`[Phase 0] Testing direct CDN URL viability...`);
         try {
             const data = await executeYtDlpExtract(validated.url, ["--format", chosen.ytFormat]);
@@ -798,7 +876,7 @@ async function handleStream(req: Request, res: Response): Promise<void> {
             // If it's a split track or manifest, we MUST use a temp file to merge!
             const isManifest = rawCdnUrl && (rawCdnUrl.includes('.m3u8') || rawCdnUrl.includes('manifest'));
             const needsMerge = data.requested_formats && data.requested_formats.length > 1;
-            const isSplitTrack = data.acodec === 'none' || data.vcodec === 'none';
+            const isSplitTrack = !data.acodec || data.acodec === 'none' || data.vcodec === 'none';
 
             if (rawCdnUrl && !isManifest && !needsMerge && !isSplitTrack) {
                 console.log(`✅ [SUCCESS] Fast-pathing Full Video -> Redirecting client directly to Google CDN!`);
@@ -854,8 +932,7 @@ async function handleStream(req: Request, res: Response): Promise<void> {
         console.log(`🛠️ [ ${ytdlArgs.join(' ')} ]\n`);
 
         const subprocess = spawn(YT_DLP_PATH, [...ytdlArgs, validated.url], {
-          stdio: ["ignore", "pipe", "pipe"],
-        });
+          stdio: ["ignore", "pipe", "pipe"] });
 
         subprocess.stderr?.on("data", (chunk: Buffer) => {
             const msg = chunk.toString();
@@ -913,8 +990,7 @@ async function handleStream(req: Request, res: Response): Promise<void> {
           console.log(`[Phase 3] Proxies exhausted/failed. Falling back to native yt-dlp local buffering stream...`);
           ytdlArgs.push("-o", "-");
           const subprocess = spawn(YT_DLP_PATH, [...ytdlArgs, validated.url], {
-            stdio: ["ignore", "pipe", "pipe"],
-          });
+            stdio: ["ignore", "pipe", "pipe"] });
 
           subprocess.stderr?.on("data", (chunk: Buffer) => {
             const msg = chunk.toString();
@@ -963,6 +1039,7 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
 
   const { url } = validated;
   const isStreamMode = req.query.mode === 'stream';
+  const forceEngine = (req.query.forceEngine as string) || undefined;
 
   // Secure Proxy Pipe: Prevents strict-IP 403 errors by routing bytes through our backend
   const proxyDirectStream = async (targetUrl: string) => {
@@ -995,8 +1072,7 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
             const axiosConfig: any = {
                 headers,
                 responseType: 'stream',
-                validateStatus: () => true,
-                            };
+                validateStatus: () => true };
 
             const proxyRes = await axios.get(targetUrl, axiosConfig);
               if (proxyRes.status !== 200 && proxyRes.status !== 206) {
@@ -1033,9 +1109,10 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
       if (cached.expires > Date.now() && cached.data.formats && Array.isArray(cached.data.formats)) {
           const rawFormats = cached.data.formats;
             // Best pre-muxed mp4 formats (like format 18 or 22 from YouTube)
-            const premuxed = rawFormats.filter((f: any) =>
-                f.ext === 'mp4' && f.acodec && f.acodec !== 'none' && f.vcodec && f.vcodec !== 'none' && f.url && f.url.startsWith('http') && !f.url.includes('.m3u8')
-            );
+            const premuxed = rawFormats.filter((f: any) => {
+                if (f.format_id === '2' || f.format_id === '0') return true;
+                return f.ext === 'mp4' && f.acodec && f.acodec !== 'none' && f.vcodec && f.vcodec !== 'none' && f.url && f.url.startsWith('http') && !f.url.includes('.m3u8');
+            });
 
             if (premuxed.length > 0) {
                 bestStreamUrl = premuxed[0].url; // fallback to worst if no match
@@ -1058,25 +1135,66 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
   // 3. Fallback: If cache completely misses, fetch it via proxy
   if (!bestStreamUrl) {
       console.log(`[Phase 0] Requesting fast PREVIEW proxy extraction for: ${url}`);
-      
       const isYT = validated.url.includes("youtube.com") || validated.url.includes("youtu.be");
-      if (isYT) {
-          // ── PROVEN METHOD: Route through Hetzner VPS (clean IP, not banned by BotGuard) ──
+      const isMeta = validated.url.includes("instagram.com") || validated.url.includes("facebook.com") || validated.url.includes("fb.watch");
+
+      // ── PROVEN METHOD: Route through Hetzner VPS (clean IP, not banned by BotGuard) ──
+      // Always try Hetzner first unless explicitly forced to skip it (e.g., layer2 or layer3)
+      if ((!forceEngine) || forceEngine === "layer1") {
           try {
               const vpsNode = getNextPreviewNode();
-              console.log(`[Phase 2] YouTube preview: routing through VPS node ${vpsNode}`);
-              const vpsRes = await axios.post(vpsNode, { url: validated.url }, { 
-                  timeout: 10000, 
-                  headers: { 'Content-Type': 'application/json' } 
+              console.log(`[Layer 1.5] PREVIEW Route: Requesting Hetzner VPS ${vpsNode}`);
+              const vpsRes = await axios.post(vpsNode, { url: validated.url }, {
+                  timeout: 10000,
+                  headers: { 'Content-Type': 'application/json' }
               });
               if (vpsRes.data && vpsRes.data.url) {
                   bestStreamUrl = vpsRes.data.url;
-                  console.log(`[Phase 2] ✅ VPS returned CDN URL instantly!`);
+                  console.log(`[Layer 1.5] ✅ Hetzner preview returned CDN URL instantly!`);
               }
           } catch(vpsErr: any) {
-              console.warn(`[Phase 2] VPS node failed: ${vpsErr.message}. Falling back to local ytdl-core...`);
-              // Fallback: try ytdl-core locally (may hang on banned IPs)
-              try {
+              console.warn(`[Layer 1.5] Hetzner preview failed: ${vpsErr.message}. Falling back...`);
+          }
+      }
+
+      // LAYER 2 GHOST NODE FALLBACK (META ONLY)
+      if (!bestStreamUrl && isMeta && ((!forceEngine) || forceEngine === "layer2" || forceEngine === "layer1")) {
+           console.log(`[Layer 2] PREVIEW Route: Meta detected. Connecting Ghost Layer...`);
+           try {
+              const ghostMirrors = [
+                  "https://cobalt.tuxlu.nl/",
+                  "https://api.cobalt.my.id/",
+                  "https://api.cobalt.tools/"
+              ];
+              for (const mirror of ghostMirrors) {
+                  try {
+                      const proxyAxios = axios.create({
+                          headers: {
+                              'Accept': 'application/json',
+                              'Content-Type': 'application/json',
+                              'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+                              'Origin': new URL(mirror).origin,
+                              'Referer': new URL(mirror).origin
+                          },
+                          timeout: 4000
+                      });
+                      const mRes = await proxyAxios.post(mirror, { url: validated.url });
+                      if (mRes.data && mRes.data.url) {
+                          bestStreamUrl = mRes.data.url;
+                          console.log(`[Layer 2] ✅ Ghost Mirror returned preview URL ${String(bestStreamUrl).substring(0,40)}...`);
+                          break;
+                      }
+                  } catch(e) {}
+              }
+           } catch(e) {}
+      }
+
+      // LAYER 3 (YT-DLP NATIVE)
+      if (!bestStreamUrl && ((!forceEngine) || forceEngine === "layer3" || forceEngine === "layer2" || forceEngine === "layer1")) {
+          // If we exhaust fast APIs or explicit Layer 3 forced...
+          console.log(`[Layer 3] PREVIEW Route: Falling back to executeYtDlpExtract...`);
+          try {
+              if (isYT) {
                   const { visitorData, poToken } = await getPoToken();
                   const info = await ytdl.getInfo(validated.url, {
                       requestOptions: {
@@ -1086,23 +1204,16 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
                       }
                   });
                   const mergedFormats = info.formats.filter((f: any) => f.hasVideo && f.hasAudio);
-                  let selectedFormat = mergedFormats.sort((a: any, b: any) => (b.height || 0) - (a.height || 0))
-                                               .find((f: any) => (f.height || 0) <= qStr);
+                  let selectedFormat = mergedFormats.sort((a: any, b: any) => (b.height || 0) - (a.height || 0)).find((f: any) => (f.height || 0) <= qStr);
                   if (!selectedFormat) selectedFormat = ytdl.chooseFormat(mergedFormats, { quality: 'highest' });
-                  if (selectedFormat && selectedFormat.url) {
-                      bestStreamUrl = selectedFormat.url;
-                  }
-              } catch(ytErr: any) {
-                  console.error("[downloader/proxy-stream] ytdl-core fallback also failed:", ytErr.message);
+                  if (selectedFormat && selectedFormat.url) bestStreamUrl = selectedFormat.url;
+              } else {
+                  // Meta / other extract via proxy
+                  const data = await executeYtDlpExtract(url, ["--format", "b"]);
+                  bestStreamUrl = data.url || (data.requested_downloads && data.requested_downloads[0]?.url);
               }
-          }
-      } else {
-          try {
-              // Force fastest pre-muxed extraction for non-YT platforms
-              const data = await executeYtDlpExtract(url, ["--format", "b"]);
-              bestStreamUrl = data.url || (data.requested_downloads && data.requested_downloads[0]?.url);
-          } catch(e) {
-              console.error("[downloader/proxy-stream] extraction error:", e);
+          } catch(e: any) {
+              console.error("[Layer 3] yt-dlp fallback also failed:", e.message);
           }
       }
   }

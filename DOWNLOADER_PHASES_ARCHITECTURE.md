@@ -32,6 +32,11 @@
 * **Result:** Every single extraction gets a brand-new IP from the ASocks global pool. 
 * **TV/iOS Headers injected to yt-dlp:** We will forcefully add `--extractor-args "youtube:player_client=ios,tv"` to the yt-dlp execution, dodging Captcha walls instantly.
 
+**🛠️ HISTORICAL FIX LOG (Why Layer 3 is Blazing Fast & Has Sound):**
+* **The Problem (Silent & Slow):** Instagram obfuscates its best pre-muxed (audio+video) track by labeling it as **Format ID `2`** with `unknown` audio and video codecs. Our old backend filters were strictly demanding known codecs (like `aac` and `h264`), causing it to reject the perfect pre-muxed file. The fallback logic then wasted huge amounts of time endlessly searching for split DASH tracks, serving silent videos.
+* **The Fix:** We stripped the strict `vCodec: "h264"` flags from API payloads and hardcoded a direct bypass for Instagram: `if (f.format_id === '2' || f.format_id === '0') return true;`. 
+* **Why it's fast now:** The server no longer aggressively loops through fallbacks or attempts to parse DASH files. It immediately grabs the perfect pre-muxed Instagram track and serves it straight to the UI with 0 millisecond delays and pristine audio.
+
 ---
 
 ## 🟣 LAYER 4: The Nuclear Option (Hetzner IPv6 Rotation)
@@ -39,7 +44,7 @@
 **Target:** Unlimited Free Proxying without ASocks.
 * **The Concept:** Hetzner provides a massive `/64 IPv6 subnet` block (literally 18 quintillion IP addresses) for free. 
 * **The Engineering:** By writing a shell script on the Linux VPS using `ip -6 route` tables and `ndppd`, we can command the VPS to assign itself a randomly generated IPv6 address for *every single scrape*.
-* **Why it's Layer 4:** Setting up IPv6 rotation is deeply complex Linux networking and some platforms (like Instagram) still prefer IPv4 for native API calls. We keep this documented as our ultimate anti-ban trump card. If YouTube bans Hetzner's main IP, we unleash the `/64 IPv6 Swarm`.
+* **Why it's Layer 4:** Setting up IPv6 rotation is deeply complex Linux networking and some platforms (like Instagram) still prefer IPv4 for native API calls. We keep this documented as our ultimate anti-ban trump card. If Yapt update && apt install ndppd iptables iptables-persistent -youTube bans Hetzner's main IP, we unleash the `/64 IPv6 Swarm`.
 
 ---
 
@@ -144,3 +149,27 @@ For every single scrape: Generate new IPv6 -> Attach to interface -> Send reques
 * Result: Every request = new identity, no reuse.
 * STRICT RULES: NEVER reuse IP, ALWAYS delete after request, Keep request speed controlled.
 * RESULT: Practically unlimited IPs, Zero proxy cost, Strong anti-block layer.
+
+---
+
+## 🕵️ INDUSTRY SECRETS: ZERO-COST SCALING (BEYOND ASOCKS)
+*Advanced concepts for reducing per-GB residential proxy costs to $0, reserved for extreme scale operations.*
+
+### A. Mobile API Spoofing (The "Front Door is Locked" Method)
+**Target:** Instagram / Facebook Strict Bot-Walls.
+* **The Concept:** Web scrapers hit the `instagram.com` web endpoints which have the tightest security (requiring expensive residential IPs). Big operations reverse-engineer the native Android/iOS app APIs.
+* **The Trick:** Requests are formulated to look exactly like the native mobile app logging in. Since mobile phones constantly jump between cell towers (naturally shifting IPs), Meta's API has historically slightly looser bounds for mobile headers.
+* **Status:** Requires heavy ongoing maintenance of reverse-engineered API keys, but eliminates the need for premium residential IPs.
+
+### B. The Serverless IP Swarm (Layer 5 Concept)
+**Target:** Unlimited proxying for $0 using Cloud Free Tiers.
+* **The Concept:** Instead of paying $3/GB, we deploy tiny worker scripts (`fetch` proxies) to the free tiers of **Cloudflare Workers** or **Vercel Edge Functions**.
+* **The Execution:** Every time we need to scrape a video, we hit a constantly rotating swarm of Cloudflare URLs. Cloudflare automatically routes it through a random global edge node.
+* **The Result:** A highly-trusted, constantly changing pool of IP addresses for absolutely $0. This effectively functions as a massive free datacenter proxy pool.
+
+### C. Hardware Mobile Proxy Farms (The Ultimate Endgame)
+**Target:** Unlimited Residential-Grade IPs for a flat $40/month.
+* **🚨 BONG BARI VERDICT: NO (For Now).** We are a 100% cloud/software-based operation. Building local physical machines defeats our serverless architecture. This is documented purely as theoretical industry knowledge.
+* **The Concept:** Paying per gigabyte is a trap for video streaming. Instead of renting residential IPs from ASocks, operators build private proxy nodes using physical 4G/5G modems.
+* **The Execution:** A cheap modem + unlimited data SIM card is connected to a Raspberry Pi. A script periodically turns "Airplane Mode" on and off.
+* **The Result:** Every time it reconnects to the cell tower, the ISP assigns a brand-new, highly trusted mobile IP. You get essentially unlimited bandwidth that is statistically impossible to block (because banning it would ban real users in that city) for merely the cost of a flat-rate cellular plan.

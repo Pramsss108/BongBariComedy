@@ -63,3 +63,4 @@ desktop.ini
 
 *.data
 *.wasm
+data/proxies.json

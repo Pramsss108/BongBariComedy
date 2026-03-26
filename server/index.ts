@@ -3,6 +3,8 @@ import './env';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import cron from "node-cron";
+import { ProxyScraper } from "./proxyScraperService";
 import { youtubeService } from "./youtubeService";
 import { trendsService } from "./trendsService";
 
@@ -152,6 +154,35 @@ app.get('/health', (_req, res) => {
         server.listen(port, "0.0.0.0", () => {
           server.removeListener('error', onError);
           log(`serving on port ${port}`);
+
+          // Initialize Red Team Proxy Hunter (Phase 1 & 2)
+          // Startup: immediate hunt, then every 3 hours continuously
+          // Daily 3AM: full re-validation sweep to purge dead proxies
+          log('Initializing Red Team Proxy Hunter Auto-Scheduler...');
+
+          // Set next hunt time on schedule so UI can show it
+          const setNextHunt = () => {
+            const next = new Date(Date.now() + 3 * 60 * 60 * 1000);
+            ProxyScraper.nextHuntAt = next;
+            ProxyScraper.huntDetails.nextHuntAt = next.toISOString();
+          };
+
+          // Immediate startup hunt
+          setNextHunt();
+          ProxyScraper.runHunt();
+
+          // Every 3 hours — continuous mining
+          cron.schedule('0 */3 * * *', () => {
+            log('Initiating Scheduled Red Team Proxy Hunt (3h cycle)...');
+            setNextHunt();
+            ProxyScraper.runHunt();
+          });
+
+          // Daily 3AM — re-validate entire pool, purge dead proxies
+          cron.schedule('0 3 * * *', () => {
+            log('Initiating Daily Re-Validation Sweep (3AM)...');
+            ProxyScraper.runRevalidation();
+          });
         });
       } catch (e: any) {
         onError(e);

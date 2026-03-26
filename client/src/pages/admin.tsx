@@ -422,7 +422,7 @@ const Admin = () => {
             </div>
             
             <Tabs defaultValue="requests" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="requests">Collaboration Requests</TabsTrigger>
                 <TabsTrigger value="blog">Blog Management</TabsTrigger>
                 <TabsTrigger value="chatbot">
@@ -432,6 +432,10 @@ const Admin = () => {
                 <TabsTrigger value="promotions">
                   <Megaphone className="w-4 h-4 mr-2" />
                   Promotions
+                </TabsTrigger>
+                <TabsTrigger value="proxies">
+                  <Bot className="w-4 h-4 mr-2" />
+                  Proxy Kitchen
                 </TabsTrigger>
               </TabsList>
               
@@ -545,8 +549,16 @@ const Admin = () => {
                 </h3>
                 <PromotionsManager />
               </TabsContent>
+
+                <TabsContent value="proxies" className="mt-8 space-y-6">
+                  <h3 className="text-2xl font-semibold text-brand-blue mb-6 flex items-center">
+                    <Bot className="w-6 h-6 mr-2" />
+                    Proxy Kitchen
+                  </h3>
+                  <DatabaseProxyUI />
+                </TabsContent>
             </Tabs>
-            
+
             <div className="text-center mt-12">
               <p className="text-sm text-gray-500">
                 Collaboration requests refresh automatically every 30 seconds
@@ -559,4 +571,341 @@ const Admin = () => {
   );
 };
 
+import { RefreshCw, Youtube, Instagram, Facebook, Shield, Wifi, WifiOff, Zap, Globe, Activity, Server, Eye, Clock, ChevronDown, ChevronUp, Copy, Check } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+
+const getPlatformIcon = (platform: string, success: boolean) => {
+    switch (platform) {
+        case 'yt': return <Youtube className={`w-4 h-4 ${success ? 'text-red-500' : 'text-gray-400'}`} />;
+        case 'fb': return <Facebook className={`w-4 h-4 ${success ? 'text-blue-500' : 'text-gray-400'}`} />;
+        case 'ig': return <Instagram className={`w-4 h-4 ${success ? 'text-pink-500' : 'text-gray-400'}`} />;
+        default: return null;
+    }
+};
+
+function DatabaseProxyUI() {
+    const { data, isLoading } = useQuery<any>({ 
+        queryKey: ["/api/admin/proxy-status"],
+        refetchInterval: 3000
+    });
+    const { toast } = useToast();
+    const queryClient = useQueryClient();
+    const [expandedProxy, setExpandedProxy] = useState<number | null>(null);
+    const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+    const [filterPlatform, setFilterPlatform] = useState<string>("all");
+
+    // Countdown to next scheduled hunt
+    const [countdown, setCountdown] = useState<string>('');
+    useEffect(() => {
+        const tick = () => {
+            const next = data?.huntDetails?.nextHuntAt;
+            if (!next) { setCountdown(''); return; }
+            const diff = new Date(next).getTime() - Date.now();
+            if (diff <= 0) { setCountdown('Imminent'); return; }
+            const h = Math.floor(diff / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            setCountdown(`${h}h ${m}m ${s}s`);
+        };
+        tick();
+        const id = setInterval(tick, 1000);
+        return () => clearInterval(id);
+    }, [data?.huntDetails?.nextHuntAt]);
+
+    const triggerHunt = async () => {
+        try {
+            await apiRequest('/api/admin/proxy-hunt', { method: 'POST', body: '{}', headers: { 'Content-Type': 'application/json' } });
+            toast({ title: "🔥 Hunt Initiated", description: "OSINT scrape running. Results appear live below." });
+        } catch (e: any) {
+            toast({ title: "Hunt Error", description: e.message, variant: "destructive" });
+        }
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/proxy-status"] });
+    };
+
+    const copyProxy = (url: string, idx: number) => {
+        navigator.clipboard.writeText(url);
+        setCopiedIdx(idx);
+        setTimeout(() => setCopiedIdx(null), 1500);
+    };
+
+    const proxies = data?.proxies || [];
+    const pc      = data?.platformCounts || {};
+    const filtered = filterPlatform === "all" ? proxies : proxies.filter((p: any) => p.platforms?.[filterPlatform]);
+
+    return (
+        <div className="space-y-5">
+
+            {/* === ROW 1: STAT CARDS === */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-4 text-white border border-gray-700 shadow-lg">
+                    <div className="flex items-center gap-2 mb-1">
+                        <Server className="w-4 h-4 text-emerald-400" />
+                        <span className="text-[10px] uppercase tracking-wider text-gray-400">Active Nodes</span>
+                    </div>
+                    <p className="text-3xl font-bold font-mono text-emerald-400">{data?.activeNodes || 0}</p>
+                    <p className="text-[10px] text-gray-500 mt-1">File-cached · survives restart</p>
+                </div>
+                <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-4 text-white border border-gray-700 shadow-lg">
+                    <div className="flex items-center gap-2 mb-1">
+                        <Youtube className="w-4 h-4 text-red-400" />
+                        <span className="text-[10px] uppercase tracking-wider text-gray-400">YouTube</span>
+                    </div>
+                    <p className="text-3xl font-bold font-mono text-red-400">{pc.yt ?? 0}</p>
+                    <p className="text-[10px] text-gray-500 mt-1">generate_204 verified</p>
+                </div>
+                <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-4 text-white border border-gray-700 shadow-lg">
+                    <div className="flex items-center gap-2 mb-1">
+                        <Facebook className="w-4 h-4 text-blue-400" />
+                        <span className="text-[10px] uppercase tracking-wider text-gray-400">Facebook</span>
+                    </div>
+                    <p className="text-3xl font-bold font-mono text-blue-400">{pc.fb ?? 0}</p>
+                    <p className="text-[10px] text-gray-500 mt-1">favicon verified</p>
+                </div>
+                <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-4 text-white border border-gray-700 shadow-lg">
+                    <div className="flex items-center gap-2 mb-1">
+                        <Instagram className="w-4 h-4 text-pink-400" />
+                        <span className="text-[10px] uppercase tracking-wider text-gray-400">Instagram</span>
+                    </div>
+                    <p className="text-3xl font-bold font-mono text-pink-400">{pc.ig ?? 0}</p>
+                    <p className="text-[10px] text-gray-500 mt-1">favicon verified</p>
+                </div>
+                <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-4 text-white border border-gray-700 shadow-lg">
+                    <div className="flex items-center gap-2 mb-1">
+                        <Shield className="w-4 h-4 text-yellow-400" />
+                        <span className="text-[10px] uppercase tracking-wider text-gray-400">All 3 Platforms</span>
+                    </div>
+                    <p className="text-3xl font-bold font-mono text-yellow-400">{pc.allThree ?? 0}</p>
+                    <p className="text-[10px] text-gray-500 mt-1">YT + FB + IG pass</p>
+                </div>
+            </div>
+
+            {/* === ROW 2: SCHEDULER STATUS + LIFETIME STATS === */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* Scheduler status */}
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 flex flex-col gap-2">
+                    <p className="text-xs font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5" /> Continuous Mining Schedule
+                    </p>
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">Status</span>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${data?.isHunting ? 'bg-red-100 text-red-700 animate-pulse' : data?.isRevalidating ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                            {data?.isHunting ? '🔴 Hunting' : data?.isRevalidating ? '🔵 Re-validating' : '🟢 Standby'}
+                        </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">Hunt cycle</span>
+                        <span className="text-xs font-mono text-gray-600">every 3 hours</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">Revalidation</span>
+                        <span className="text-xs font-mono text-gray-600">daily at 3:00 AM</span>
+                    </div>
+                    {countdown && !data?.isHunting && (
+                        <div className="flex items-center justify-between border-t border-gray-100 pt-2 mt-1">
+                            <span className="text-sm text-gray-700">Next hunt in</span>
+                            <span className="text-xs font-mono font-bold text-emerald-600">{countdown}</span>
+                        </div>
+                    )}
+                </div>
+                {/* Lifetime stats */}
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 flex flex-col gap-2">
+                    <p className="text-xs font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1">
+                        <Activity className="w-3.5 h-3.5" /> Lifetime Session Stats
+                    </p>
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">Hunts this session</span>
+                        <span className="text-xs font-mono font-bold text-gray-800">{data?.huntDetails?.huntCount ?? 0}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">Total ever verified</span>
+                        <span className="text-xs font-mono font-bold text-emerald-700">{data?.huntDetails?.totalEverFound ?? 0}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">Sources</span>
+                        <span className="text-xs font-mono text-gray-600">12 OSINT feeds</span>
+                    </div>
+                    {data?.huntDetails?.lastHuntAt && (
+                        <div className="flex items-center justify-between border-t border-gray-100 pt-2 mt-1">
+                            <span className="text-sm text-gray-700">Last hunt</span>
+                            <span className="text-xs font-mono text-gray-600">{new Date(data.huntDetails.lastHuntAt).toLocaleTimeString()}</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* === CONTROLS BAR === */}
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-gray-50 border border-gray-200 rounded-xl p-3">
+                <div className="flex gap-2">
+                    <Button onClick={triggerHunt} disabled={data?.isHunting} size="sm"
+                        className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-md font-semibold">
+                        <Zap className={`h-4 w-4 mr-1 ${data?.isHunting ? 'animate-pulse' : ''}`} /> 
+                        {data?.isHunting ? 'Hunting...' : 'Force OSINT Hunt'}
+                    </Button>
+                    <Button onClick={() => queryClient.invalidateQueries({ queryKey: ["/api/admin/proxy-status"] })} variant="outline" size="sm">
+                        <RefreshCw className="h-4 w-4 mr-1" /> Refresh
+                    </Button>
+                </div>
+                <div className="flex gap-1">
+                    {[
+                        { key: "all",     label: `All (${proxies.length})`,  icon: Globe     },
+                        { key: "yt",      label: `YT (${pc.yt ?? 0})`,       icon: Youtube   },
+                        { key: "fb",      label: `FB (${pc.fb ?? 0})`,       icon: Facebook  },
+                        { key: "ig",      label: `IG (${pc.ig ?? 0})`,       icon: Instagram },
+                    ].map(f => (
+                        <Button key={f.key} onClick={() => setFilterPlatform(f.key)} size="sm"
+                            variant={filterPlatform === f.key ? "default" : "ghost"} 
+                            className={`text-xs px-2 h-8 ${filterPlatform === f.key ? 'bg-gray-900 text-white hover:bg-gray-800' : ''}`}>
+                            <f.icon className="w-3 h-3 mr-1" /> {f.label}
+                        </Button>
+                    ))}
+                </div>
+            </div>
+
+            {/* === LIVE HUNT TELEMETRY === */}
+            {(data?.isHunting || data?.isRevalidating) && data?.huntDetails && (
+                <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 rounded-xl p-5 border border-emerald-500/30 shadow-lg shadow-emerald-500/5">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Activity className="w-5 h-5 text-emerald-400 animate-pulse" />
+                        <span className="text-emerald-400 font-bold text-sm uppercase tracking-wider">
+                            {data?.isRevalidating ? 'Re-validation Sweep' : `Live Hunt #${data.huntDetails.huntCount} Telemetry`}
+                        </span>
+                    </div>
+                    <div className="flex justify-between text-sm mb-2 font-mono">
+                        <span className="text-gray-300">{data.huntDetails.status}</span>
+                        <span className="text-gray-400">{data.huntDetails.progress} / {data.huntDetails.total} scanned</span>
+                    </div>
+                    <div className="w-full bg-gray-700 rounded-full h-3 mb-4 overflow-hidden">
+                        <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-400 transition-all duration-500 ease-out"
+                            style={{ width: `${data.huntDetails.total > 0 ? (data.huntDetails.progress / data.huntDetails.total) * 100 : 0}%` }} />
+                    </div>
+                    <div className="grid grid-cols-4 gap-3 text-center">
+                        <div>
+                            <p className="text-xl font-bold font-mono text-cyan-400">{data.huntDetails.mined?.toLocaleString()}</p>
+                            <p className="text-[10px] text-gray-500 uppercase">Mined</p>
+                        </div>
+                        <div>
+                            <p className="text-xl font-bold font-mono text-orange-400">{data.huntDetails.skipped ?? 0}</p>
+                            <p className="text-[10px] text-gray-500 uppercase">Deduped</p>
+                        </div>
+                        <div>
+                            <p className="text-xl font-bold font-mono text-yellow-400">{data.huntDetails.progress}</p>
+                            <p className="text-[10px] text-gray-500 uppercase">Scanned</p>
+                        </div>
+                        <div>
+                            <p className="text-xl font-bold font-mono text-emerald-400">{data.huntDetails.found}</p>
+                            <p className="text-[10px] text-gray-500 uppercase">This Hunt</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* === IDLE LAST-HUNT BANNER === */}
+            {!data?.isHunting && !data?.isRevalidating && data?.huntDetails?.found > 0 && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center gap-3">
+                    <Shield className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                    <span className="text-emerald-800 text-sm font-medium">
+                        Hunt #{data.huntDetails.huntCount} complete — +{data.huntDetails.found} new proxies verified · {data.huntDetails.skipped ?? 0} dupes skipped · {data.huntDetails.mined?.toLocaleString()} total mined · <span className="font-bold">{data?.activeNodes} live in pool</span>
+                    </span>
+                </div>
+            )}
+
+            {/* === PROXY TABLE === */}
+            {isLoading ? (
+                <div className="space-y-2">
+                    {[...Array(6)].map((_, i) => <div key={i} className="h-14 bg-gray-100 rounded-lg animate-pulse" />)}
+                </div>
+            ) : filtered.length > 0 ? (
+                <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                    <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-900 text-gray-400 text-xs uppercase tracking-wider font-medium">
+                        <div className="col-span-1">#</div>
+                        <div className="col-span-1"><Eye className="w-3 h-3" /></div>
+                        <div className="col-span-5">Proxy Address</div>
+                        <div className="col-span-1 text-center">YT</div>
+                        <div className="col-span-1 text-center">FB</div>
+                        <div className="col-span-1 text-center">IG</div>
+                        <div className="col-span-2 text-center">Actions</div>
+                    </div>
+                    <div className="divide-y divide-gray-100 max-h-[500px] overflow-y-auto">
+                        {filtered.map((proxy: any, i: number) => {
+                            const proto          = proxy.url?.startsWith('socks') ? 'SOCKS5' : 'HTTP';
+                            const isExpanded     = expandedProxy === i;
+                            const platformCount  = [proxy.platforms?.yt, proxy.platforms?.fb, proxy.platforms?.ig].filter(Boolean).length;
+                            return (
+                                <div key={i}>
+                                    <div className={`grid grid-cols-12 gap-2 px-4 py-3 items-center hover:bg-gray-50 transition-colors cursor-pointer ${isExpanded ? 'bg-gray-50' : ''}`}
+                                        onClick={() => setExpandedProxy(isExpanded ? null : i)}>
+                                        <div className="col-span-1 text-xs text-gray-400 font-mono">{i + 1}</div>
+                                        <div className="col-span-1">
+                                            <div className={`w-2.5 h-2.5 rounded-full ${platformCount >= 2 ? 'bg-emerald-500' : platformCount === 1 ? 'bg-yellow-500' : 'bg-red-500'}`} />
+                                        </div>
+                                        <div className="col-span-5 flex items-center gap-2 min-w-0">
+                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${proto === 'SOCKS5' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                                                {proto}
+                                            </span>
+                                            <span className="font-mono text-sm text-gray-800 truncate">{proxy.url?.replace(/^(socks5|http):\/\//, '')}</span>
+                                        </div>
+                                        <div className="col-span-1 text-center">{proxy.platforms?.yt ? <Wifi className="w-4 h-4 text-red-500 mx-auto" /> : <WifiOff className="w-4 h-4 text-gray-300 mx-auto" />}</div>
+                                        <div className="col-span-1 text-center">{proxy.platforms?.fb ? <Wifi className="w-4 h-4 text-blue-500 mx-auto" /> : <WifiOff className="w-4 h-4 text-gray-300 mx-auto" />}</div>
+                                        <div className="col-span-1 text-center">{proxy.platforms?.ig ? <Wifi className="w-4 h-4 text-pink-500 mx-auto" /> : <WifiOff className="w-4 h-4 text-gray-300 mx-auto" />}</div>
+                                        <div className="col-span-2 flex items-center justify-center gap-1">
+                                            <Button size="sm" variant="ghost" className="h-7 px-2" onClick={(e) => { e.stopPropagation(); copyProxy(proxy.url, i); }}>
+                                                {copiedIdx === i ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-gray-400" />}
+                                            </Button>
+                                            {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                                        </div>
+                                    </div>
+                                    {isExpanded && (
+                                        <div className="px-4 py-3 bg-gray-50 border-t border-gray-100">
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                                                <div>
+                                                    <span className="text-gray-500 text-xs">Full URL</span>
+                                                    <p className="font-mono text-xs break-all text-gray-700 select-all">{proxy.url}</p>
+                                                </div>
+                                                <div>
+                                                    <span className="text-gray-500 text-xs">Protocol</span>
+                                                    <p className="font-semibold text-xs">{proto}</p>
+                                                </div>
+                                                <div>
+                                                    <span className="text-gray-500 text-xs">Platforms</span>
+                                                    <div className="flex gap-2 mt-1">
+                                                        {getPlatformIcon('yt', proxy.platforms?.yt)}
+                                                        {getPlatformIcon('fb', proxy.platforms?.fb)}
+                                                        {getPlatformIcon('ig', proxy.platforms?.ig)}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <span className="text-gray-500 text-xs">Status</span>
+                                                    <p className="text-emerald-600 font-bold text-xs flex items-center gap-1">
+                                                        <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse" /> Verified Online
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <div className="px-4 py-2 bg-gray-50 border-t text-xs text-gray-500 flex justify-between">
+                        <span>{filtered.length} of {proxies.length} proxies shown · refreshes every 3s</span>
+                        <span className="font-mono">Storage: File Cache (survives restart)</span>
+                    </div>
+                </div>
+            ) : (
+                <div className="bg-gradient-to-br from-gray-50 to-white border-2 border-dashed border-gray-300 rounded-xl p-10 text-center">
+                    <Globe className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+                    <h4 className="text-lg font-semibold text-gray-600 mb-2">No Active Proxies</h4>
+                    <p className="text-gray-400 text-sm mb-5">Auto-hunt runs every 3h. Click below to force one now.</p>
+                    <Button onClick={triggerHunt} disabled={data?.isHunting} size="sm"
+                        className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-md">
+                        <Zap className="h-4 w-4 mr-1" /> Start Hunt Now
+                    </Button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+
 export default Admin;
+

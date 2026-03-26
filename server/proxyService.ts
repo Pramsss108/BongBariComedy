@@ -91,17 +91,37 @@ export class ProxyKitchen {
   }
 
   /**
-   * Removes a proxy from Upstash if it fails during ghost execution
+   * Phase 13: Soft-ban with 3-strike logic.
+   * First 2 failures increment failCount. Third strike = permanent removal.
    */
   static async banProxy(proxyUrl: string): Promise<void> {
     try {
-      if (redis) {
-        await redis.hdel(PROXY_REDIS_KEY, proxyUrl);
+      // Load current data to check fail count
+      const proxies = await this.getLiveProxies();
+      const existing = proxies.find(p => p.url === proxyUrl);
+      const currentFails = (existing?.platforms?.failCount || 0) + 1;
+
+      if (currentFails >= 3) {
+        // 3 strikes — permanently purge
+        if (redis) {
+          await redis.hdel(PROXY_REDIS_KEY, proxyUrl);
+        } else {
+          delete this.localFallbackMemory[proxyUrl];
+          saveLocalCache(this.localFallbackMemory);
+        }
+        console.log(`[ProxyKitchen] ☠️ Purged (3-strike): ${proxyUrl}`);
       } else {
-        delete this.localFallbackMemory[proxyUrl];
-        saveLocalCache(this.localFallbackMemory);
+        // Increment fail count but keep alive
+        const updated = { ...(existing?.platforms || { yt: false, fb: false, ig: false }), failCount: currentFails };
+        const data = JSON.stringify(updated);
+        if (redis) {
+          await redis.hset(PROXY_REDIS_KEY, { [proxyUrl]: data });
+        } else {
+          this.localFallbackMemory[proxyUrl] = data;
+          saveLocalCache(this.localFallbackMemory);
+        }
+        console.log(`[ProxyKitchen] ⚠️ Strike ${currentFails}/3: ${proxyUrl}`);
       }
-      console.log(`[ProxyKitchen] Purged: ${proxyUrl}`);    
     } catch (error) {
       console.error('[ProxyKitchen] Redis ban error:', error);
     }
@@ -150,5 +170,48 @@ export class ProxyKitchen {
     } catch (error) {
       console.error('[ProxyKitchen] Error closing anonymized proxy:', error);
     }
+  }
+
+  /**
+   * Phase 16 + Phase 11: Get the best raw proxy URL for yt-dlp --proxy.
+   * Prefers lowest-latency proxy (platinum/gold first).
+   * Skips proxies with 2+ fails (unreliable).
+   */
+  static async getBestProxyForDownload(platform: 'yt' | 'ig' | 'fb'): Promise<string | null> {
+    try {
+      const proxies = await this.getLiveProxies();
+      const valid = proxies
+        .filter(p => p.platforms[platform] && (p.platforms.failCount || 0) < 2)
+        .sort((a, b) => (a.platforms.latencyMs || 99999) - (b.platforms.latencyMs || 99999));
+      if (!valid.length) return null;
+      // Pick from top 5 fastest (small randomness to spread load)
+      const topN = valid.slice(0, Math.min(5, valid.length));
+      const picked = topN[Math.floor(Math.random() * topN.length)];
+      return picked.url;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Phase 16: Batch-import proxies from Beast Mode local harvest.
+   * Called by POST /api/admin/proxy-bulk-import when local ProxyForge syncs to server.
+   * Deduplicates against existing pool automatically.
+   */
+  static async bulkImport(entries: Array<{ url: string; platforms: ProxyPlatforms }>): Promise<{ added: number; skipped: number }> {
+    const existing = await this.getLiveProxies();
+    const existingSet = new Set(existing.map(p => p.url));
+    let added = 0;
+    let skipped = 0;
+    for (const entry of entries) {
+      if (existingSet.has(entry.url)) {
+        skipped++;
+        continue;
+      }
+      await this.addVerifiedProxy(entry.url, entry.platforms);
+      added++;
+    }
+    console.log(`[ProxyKitchen] BulkImport: +${added} new, ${skipped} dupes skipped`);
+    return { added, skipped };
   }
 }

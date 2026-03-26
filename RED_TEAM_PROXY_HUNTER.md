@@ -1,4 +1,747 @@
-# 🔴 ULTIMATE RED TEAM: OMNI-PROXY HUNTER ARCHITECTURE (v3.0)
+# 🔴 ULTIMATE RED TEAM: OMNI-PROXY HUNTER ARCHITECTURE (v4.1)
+
+---
+
+## 🚨 GOLDEN RULES — READ BEFORE ANYTHING ELSE
+
+```
+🔴 RULE 1 — NO PHASE JUMPING
+         Phases must be done in order: 11 → 12 → 13 → 14...
+         Each phase UNLOCKS the next. Never skip.
+         Reason: each phase adds data/infrastructure the next one depends on.
+
+🔴 RULE 2 — POWER COMPOUNDS
+         Each phase you complete makes the NEXT phase more powerful.
+         Phase 11 (latency) makes Phase 14 (tiered revalidation) smarter.
+         Phase 15 (Telegram) feeds Beast Mode (Phase 23) with fresh candidates.
+         Don't rush. Build the stack layer by layer.
+
+🔴 RULE 3 — COST BOUNDARY (see full table below)
+         Render + VPS combined must NEVER exceed 5$/month before first revenue.
+         Local machine = FREE and should be used for heavy lifting (Beast Mode).
+         Scale infra ONLY when the proxy API earns money first.
+
+🔴 RULE 4 — BIG POOL = BIG MONEY (The Mission)
+         Target: 10,000+ live verified proxies in pool.
+         Revenue model: sell access to the pool via API.
+         Path: 300 now → 1,500 (Phase 16) → 5,000 (Phase 19) → 25,000 (Beast Mode).
+
+🔴 RULE 5 — LOCAL = FULL POWER, SERVER = BUDGET POWER
+         Render/VPS runs light 24/7 patrol on a budget.
+         Your LOCAL machine runs Beast Mode for explosive one-shot harvests.
+         Combine both for maximum pool without maximum spend.
+```
+
+---
+
+## 🗺️ VIBE CODER PROGRESS TRACKER — COMPLETE MASTER ROADMAP
+
+> ✅ = DONE & LIVE right now &nbsp;|&nbsp; ⏳ = NEXT UP (say "do phase X") &nbsp;|&nbsp; 🔒 = PLANNED FUTURE
+
+---
+
+### 🟢 TIER 1 — CORE HUNT ENGINE (Server-side, Node.js)
+
+```
+✅ PHASE 1  — Basic proxy hunter built (proxyScraperService.ts created)
+✅ PHASE 2  — 26-Source OSINT engine (12 orig + 14 new mega-dumps + APIs) ← JUST UPGRADED
+✅ PHASE 3  — Platform verifier (YT + FB + IG checked per proxy in parallel)
+✅ PHASE 4  — Deduplication (skip already-known proxies before verifying)
+✅ PHASE 5  — File persistence (data/proxies.json — survives server restart)
+✅ PHASE 6  — 3-hour auto-hunt cron (node-cron, fires every 3h automatically)
+✅ PHASE 7  — 3AM daily re-validation cron (re-checks ALL stored proxies, purges dead)
+✅ PHASE 8  — Lifetime stats (huntCount, totalEverFound, lastHuntAt, nextHuntAt)
+✅ PHASE 9  — Cyber Sentinel admin UI (5 stat cards, countdown timer, telemetry)
+✅ PHASE 10 — Masterplan doc written (PROXY_EMPIRE_MASTERPLAN.md — private, gitignored)
+```
+
+---
+
+### � TIER 2 — QUALITY & INTELLIGENCE UPGRADES [ALL SHIPPED ✅]
+
+```
+✅ PHASE 11 — Latency badge  [SHIPPED]
+              WHAT: Measure response time (ms) during verification
+              HOW:  Date.now() before/after 3 platform checks → latencyMs stored per proxy
+              RESULT: Green (<500ms) / Yellow (<2s) / Red (>2s) in table + avg latency stat card
+              UPGRADE: getBestProxyForDownload() now prefers lowest-latency proxies (top 5)
+              FILES: server/proxyScraperService.ts + server/proxyService.ts + admin.tsx
+
+✅ PHASE 12 — Country flag (Geo-tag)  [SHIPPED]
+              WHAT: Offline GeoIP detection using geoip-lite (npm, no API key, no rate limit)
+              HOW:  Extract IP from proxy URL → geoip.lookup(ip) → 2-letter ISO code
+              RESULT: Flag emoji per proxy row (🇺🇸 🇩🇪 🇳🇱) + country in expanded detail
+              FILES: server/proxyScraperService.ts + admin.tsx
+              DEP:   geoip-lite + @types/geoip-lite installed
+
+✅ PHASE 13 — 3-Strike auto-prune  [SHIPPED]
+              WHAT: Track failCount per proxy, soft-ban increments, purge at 3 consecutive fails
+              HOW:  banProxy() first 2 calls increment failCount, 3rd call = permanent purge
+                    Revalidation also uses 3-strike (increments on fail, resets on success)
+                    UI shows ♥3 (healthy) / ♥2 / ♥1 (critical) hearts per proxy
+              RESULT: Pool self-heals, no instant wipe of temporarily flaky proxies
+              FILES: server/proxyService.ts (banProxy) + server/proxyScraperService.ts (revalidation)
+
+✅ PHASE 14 — Tiered revalidation timing  [SHIPPED]
+              WHAT: Quality tiers auto-computed during verification:
+                    Platinum: <500ms latency + all 3 platforms → recheck every 30 min
+                    Gold:     2+ platforms → recheck every 2h
+                    Silver:   1 platform + <2s latency → recheck every 6h
+                    Bronze:   slow / weak → recheck every 24h
+              HOW:  runRevalidation() now checks lastCheckedAt + tier interval
+                    Skips proxies not yet due → saves CPU
+                    Cron upgraded: 30-min cycle (tiered) + daily 3AM full sweep
+              RESULT: Platinum proxies always fresh, bronze don't waste CPU
+              FILES: server/proxyScraperService.ts + server/index.ts
+              UI:    5 new tier stat cards (Platinum/Gold/Silver/Bronze/Avg Latency)
+
+✅ PHASE 15 — Telegram live mining  [SHIPPED]
+              WHAT: Scrape 4 public Telegram channels via web preview (no API key!)
+              HOW:  fetch('https://t.me/s/CHANNEL') → HTML → IP:PORT regex → emit http:// + socks5://
+              CHANNELS: proxylist_free, Proxy_List_Premium, socks5_bot, freeproxylist_daily
+              RESULT: +500–2000 extra candidates per hunt cycle, completely FREE
+              FILE: server/proxyScraperService.ts (scrapeTelegram method + TELEGRAM_SOURCES array)
+
+✅ PHASE 16 — Connect pool → downloader (THE BIG ONE)  [SHIPPED]
+              WHAT: Wire verified proxy pool into YT-dlp and IG download routes
+                    getBestProxyForDownload('yt') picks lowest-latency platform-best proxy
+                    3-layer waterfall: FREE pool proxy → direct fallback → ASocks paid (LAST RESORT)
+                    Auto-bans pool proxy via 3-strike system if it fails
+                    getBestProxyForDownload() and bulkImport() live in proxyService.ts
+                    POST /api/admin/proxy-bulk-import added to system.ts for Beast Mode sync
+              RESULT: Downloads bypass bans using FREE mined proxies first, ASocks only as last resort
+              FILES: server/proxyService.ts + server/routes/downloader.ts + server/routes/system.ts
+              TIME: DONE ✅
+
+╔══════════════════════════════════════════════════════════════════╗
+║    PHASE 16 ARCHITECTURE v3.0 — ALL FREE FIRST, PAID LAST      ║
+╠══════════════════════════════════════════════════════════════════╣
+║                                                                  ║
+║  ┌─────────────────────────────────────────────────────────┐   ║
+║  │  RENDER (24/7)                                           │   ║
+║  │  ┌─────────────┐    cron 3h+3AM    ┌────────────────┐   │   ║
+║  │  │ proxy hunt  │ ──────────────→  │  live proxy    │   │   ║
+║  │  │ 30 sources  │                   │  pool (Redis)  │   │   ║
+║  │  └─────────────┘                   └───────┬────────┘   │   ║
+║  │                                             │            │   ║
+║  │  ═══════════════════════════════════════════════════════ │   ║
+║  │  SMART AUTO-FALLBACK (fetchSmartMetadata)               │   ║
+║  │  ALL FREE methods exhausted before ANY paid usage:      │   ║
+║  │                                                          │   ║
+║  │  1. 🟢 Layer 1: Hetzner Cobalt         (FREE · YT/IG)  │   ║
+║  │     ↓ fail                                               │   ║
+║  │  2. 🔵 Layer 2: CF Edge Swarm          (FREE · YT/IG)  │   ║
+║  │     ↓ fail                                               │   ║
+║  │  3. 🟣 Layer 3: Hetzner IPv6           (FREE · YT)     │   ║
+║  │     ↓ fail                                               │   ║
+║  │  4. 🟡 Layer 4: YTDL-Core + PO-Token   (FREE · YT)    │   ║
+║  │     ↓ fail                                               │   ║
+║  │  5. 🆓 Layer 7: Free Proxy Pool  ←─────┘               │   ║
+║  │     (mined OSINT proxies, $0, all platforms)             │   ║
+║  │     auto-ban on failure via 3-strike                     │   ║
+║  │     ↓ fail                                               │   ║
+║  │  6. 🔴 Layer 6: ASocks Paid  ($0.003/req)  ⚠️ LAST     │   ║
+║  │     ONLY reached after ALL free layers are dead          │   ║
+║  │  ═══════════════════════════════════════════════════════ │   ║
+║  │                                                          │   ║
+║  │  executeYtDlpExtract (used internally by Layer 6):      │   ║
+║  │  1. Free pool proxy (getBestProxyForDownload)           │   ║
+║  │  2. Direct (no proxy)                                    │   ║
+║  │  3. ASocks paid (absolute last resort)                   │   ║
+║  │  ═══════════════════════════════════════════════════════ │   ║
+║  └─────────────────────────────────────────────────────────┘   ║
+║                              ↑                                   ║
+║                    POST /api/admin/proxy-bulk-import             ║
+║                    (secret-guarded, max 50k/batch)               ║
+║                              ↑                                   ║
+║  ┌─────────────────────────────────────────────────────────┐   ║
+║  │  LOCAL BEAST MODE (Phase 23 — triggered manually)       │   ║
+║  │  ┌────────────────────────────────────────────────────┐ │   ║
+║  │  │  1. Run harvest script locally (no Hetzner risk)   │ │   ║
+║  │  │  2. Mine 5k-20k candidates from 30+ sources        │ │   ║
+║  │  │  3. Verify with p-limit(200) concurrent checks     │ │   ║
+║  │  │  4. POST to /api/admin/proxy-bulk-import           │ │   ║
+║  │  │  5. Server pool instantly grows by thousands       │ │   ║
+║  │  └────────────────────────────────────────────────────┘ │   ║
+║  └─────────────────────────────────────────────────────────┘   ║
+║                                                                  ║
+║  RESULT: ALL free paths (L1→L2→L3→L4→L7) exhaust before        ║
+║  ASocks (L6) ever touches a single paid request. Downloads      ║
+║  silently route through mined pool with zero user friction.      ║
+╚══════════════════════════════════════════════════════════════════╝
+```
+
+---
+
+### 🔵 TIER 3 — DARK WEB & DEEP OSINT (High value, needs VPS)
+
+```
+🔒 PHASE 17 — Tor bridge setup (Hetzner VPS only)
+              WHAT: Install Tor daemon on VPS (apt-get install tor)
+                    Opens silent SOCKS5 proxy at 127.0.0.1:9050
+              REQUIRES: Hetzner VPS (Render.com cannot install Tor)
+              COST: €3.29/month (Hetzner CAX11)
+
+🔒 PHASE 18 — Dark web (.onion) proxy ingestion
+              WHAT: Use Tor bridge (Phase 17) to fetch .onion pastebin directories
+                    Cybersec communities dump anonymous SOCKS5 lists here
+                    Standard web scrapers NEVER see these
+              RESULT: Highly anonymous proxies that never appear in GitHub lists
+              HOW:  socks-proxy-agent pointed at 127.0.0.1:9050 → fetch .onion URLs
+                    Run Master Regex (\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}:[0-9]{1,5}\b)
+              FILE: server/proxyScraperService.ts (add ONION_SOURCES)
+
+🔒 PHASE 19 — Active port discovery (Beast Mode source)
+              WHAT: Scan public IP ranges for open SOCKS5/HTTP proxy ports
+                    Port ranges: 80, 443, 1080, 3128, 8080, 8888, 9050, 9150
+                    Finds "dark" proxies that never appeared in any GitHub list
+              NOTE: Only scans public IP space (legal for research)
+              TOOL: masscan-style in Rust (next tier), or nmap in Node.js for now
+```
+
+---
+
+### 🔴 TIER 4 — RUST DESKTOP APP: PROXYFORGE
+
+```
+🔒 PHASE 20 — ProxyForge app scaffold
+              WHAT: Tauri v2 project (Rust backend + React frontend)
+                    Same React UI from admin.tsx embedded inside
+                    Real .exe installer (Windows), .dmg (Mac), .deb (Linux)
+                    5–10MB binary, 8–20MB RAM idle
+
+🔒 PHASE 21 — System tray integration
+              WHAT: App runs in background, right-click tray icon to control
+              TRAY MENU: Open Dashboard / Status / Pool count / Next hunt
+                         Beast Mode ON/OFF / Patrol Mode / Force Hunt / Quit
+              ICONS: 🟢 hunting / 🔵 idle / 🟡 syncing / 🔴 pool empty
+              NOTIFS: "Hunt Complete: +143 proxies" (Windows/Mac notifications)
+
+🔒 PHASE 22 — Patrol Mode (always-on, background safe)
+              WHAT: Every 2.5 hours, 20 concurrent connections, 5% CPU
+                    Same 12 OSINT sources as server
+                    Leave it on 24/7, barely noticeable
+
+🔒 PHASE 23 — Beast Mode (full CPU/GPU hammer)
+              WHAT: Manual toggle in tray → uses ALL CPU cores (Rayon parallel)
+                    500–2000 concurrent connections (Tokio async runtime)
+                    GPU acceleration for AI inference (ONNX Runtime + CUDA)
+                    25,000+ candidates per run → 500–2000 verified proxies/session
+                    Sources: 12 OSINT + Telegram + Dark web + port scanner
+              SAFETY: Auto-throttle if CPU temp > 80°C
+
+🔒 PHASE 24 — Auto-start with Windows
+              WHAT: App starts on boot, goes straight to tray (no window popup)
+                    Begins Patrol Mode 10s after startup silently
+```
+
+---
+
+### 🟣 TIER 5 — AI BRAIN LAYER
+
+```
+🔒 PHASE 25 — ONNX fast classifier (pre-filter)
+              WHAT: Train binary classifier on our proxies.json data
+                    Features: [country_tier, port_type, protocol, ASN_score, age_hours]
+                    Output: liveness probability 0.0–1.0
+                    Model size: ~500KB, inference < 1ms per proxy
+              RESULT: Filter out bottom 40% junk before verifying → 40% faster hunts
+              TOOL:   scikit-learn → exported to ONNX → run via onnxruntime-node
+              TRAIN:  python scripts/train_classifier.py (uses our own data)
+
+🔒 PHASE 26 — Ollama LLM deep scoring (optional premium)
+              WHAT: phi-3-mini (3.8B) or tinyllama (1.1B) running locally via Ollama
+                    Deep reasoning on proxy metadata: ASN, location, port fingerprint
+              WHEN:  Used only on final 100 "candidate-premium" proxies after ONNX filter
+              COST:  Free, runs on your machine, no API
+              INSTALL: ollama pull phi3:mini (one command)
+
+🔒 PHASE 27 — Self-improving model
+              WHAT: After 1 week of mining, re-train classifier on new labeled data
+                    Every verified proxy = positive example
+                    Every failed proxy = negative example
+              RESULT: Model gets smarter every week automatically
+```
+
+---
+
+### ⚫ TIER 6 — OFFLINE MODE + SYNC
+
+```
+🔒 PHASE 28 — SQLite local storage
+              WHAT: All proxies stored in local SQLite DB (rusqlite) in the desktop app
+                    Can hold 10 million proxy records in < 50MB
+                    Works 100% offline — no internet needed to mine and store
+
+🔒 PHASE 29 — Sync queue (offline → online merge)
+              WHAT: When offline: mine, validate, store locally (synced: false)
+                    When internet returns: push all pending to Render backend
+                    Endpoint: POST /api/admin/proxy-bulk-import
+                    Conflict: if proxy exists on server → skip (deduplicate)
+              RESULT: Mine all day offline, sync all at once when back online
+
+🔒 PHASE 30 — Offline validation (no internet)
+              WHAT: Structure check, port validity, offline GeoIP ASN lookup
+                    Geo scoring without connecting (DE/NL = tier 1 without verifying)
+                    Freshness scoring based on source age
+```
+
+---
+
+### 💰 TIER 7 — MONETIZATION & SaaS
+
+```
+🔒 PHASE 31 — Proxy API backend (proxyforge.onrender.com)
+              WHAT: Separate Render service (NOT bongbaricomedy — keep them independent)
+                    GET /v1/proxy?platform=yt&tier=gold → returns one verified proxy
+              PRICING: Free (10/day) / Starter $9/mo / Pro $29/mo / Business $99/mo
+              LIST ON: RapidAPI marketplace (free listing, millions of devs)
+
+🔒 PHASE 32 — Daily proxy list download page
+              WHAT: proxyforge.io website, free download (100 proxies/day)
+                    Premium: $5/month → 5000 proxies, hourly refresh, platform-filtered
+
+🔒 PHASE 33 — BongBari Premium tier
+              WHAT: BongBari Pro ($5/month) → unlimited downloads via platinum proxy pool
+                    Every existing BongBari user is a potential customer, zero acquisition cost
+
+🔒 PHASE 34 — B2B white-label API
+              WHAT: Sell entire proxy pool + API to agencies (SEO, social media, research)
+                    $500–$2,000/month per client → just 2 clients = $1,000–4,000/month
+
+🔒 PHASE 35 — Smart rotation API (per-user, per-session)
+              WHAT: Each API user gets different proxies (no overlap)
+                    Session-sticky (same proxy 15 min per session)
+                    Weighted health score rotation (fastest first)
+                    Geo-aware (user in US → prefer US proxy)
+                    Anti-abuse: rate limit per API key, per proxy per 10 min
+```
+
+---
+
+### 🛠️ TIER 8 — OTHER TOOLS BUILT ON THE POOL
+
+```
+🔒 PHASE 36 — SEO rank checker tool
+              WHAT: Check website Google rank from 50 countries via our geo proxy pool
+              SELL TO: SEO agencies ($10/month per domain monitored)
+
+🔒 PHASE 37 — Geo price intelligence API
+              WHAT: Check Amazon/Netflix/Spotify prices from any country
+                    Route via our country-specific proxies
+              SELL AS: API ($20/month)
+
+🔒 PHASE 38 — Social media scraper API
+              WHAT: IG follower count, YT subscribers, FB page stats — no rate limits
+              SELL TO: Marketing agencies, analytics tools
+
+🔒 PHASE 39 — BongBari geo-unlock feature
+              WHAT: "This video unavailable in your country" → auto-route via US/UK proxy
+                    Add as BongBari Pro feature
+```
+
+---
+
+### 📊 LEGEND
+
+```
+✅ = Built and live on bongbaricomedy.onrender.com RIGHT NOW
+⏳ = Ready to build — say "do phase X" to start
+🔒 = Planned — confirm before starting
+```
+
+**HOW TO USE THIS (NO JUMPING):**
+- Tier 1 + 2 complete. Current next phase: **Phase 17** (Tor bridge setup) → say "do phase 17"
+- After Phase 17 done → say "do phase 18", and so on in order
+- Want to know what's coming? Read the sections below.
+
+---
+
+## 🌐 MASTER SOURCE LIST — ALL 25+ PROXY SOURCES
+
+> Activated progressively. More phases = more sources = bigger pool.
+
+### ✅ LIVE NOW (26 sources — upgraded from 12)
+
+**TIER A — SOCKS5 GitHub Lists**
+```
+01. TheSpeedX/PROXY-List/master/socks5.txt
+02. monosans/proxy-list/main/proxies/socks5.txt
+03. hookzof/socks5_list/master/proxy.txt
+04. officialputuid/KangProxy/KangProxy/socks5/socks5.txt
+05. roosterkid/openproxylist/main/SOCKS5_RAW.txt
+```
+
+**TIER A — HTTP GitHub Lists**
+```
+06. TheSpeedX/PROXY-List/master/http.txt
+07. monosans/proxy-list/main/proxies/http.txt
+08. officialputuid/KangProxy/KangProxy/http/http.txt
+09. roosterkid/openproxylist/main/HTTPS_RAW.txt
+10. ALIILAPRO/Proxy/main/http.txt
+11. clarketm/proxy-list/master/proxy-list-raw.txt
+```
+
+**TIER B — MEGA-DUMP Aggregators (NEW — 50k+ candidates/day each)**
+```
+12. MuRongPIG/Proxy-Master/main/http.txt       → massive aggregation, hourly
+13. MuRongPIG/Proxy-Master/main/socks5.txt
+14. Zaeem20/FREE_PROXIES_LIST/master/http.txt  → frequent updates
+15. Zaeem20/FREE_PROXIES_LIST/master/socks5.txt
+16. vakhov/free-proxy-list/main/proxies/http.txt  → cleaned, deduped
+17. vakhov/free-proxy-list/main/proxies/socks5.txt
+18. caliphdev/Proxy-List/master/http.txt
+19. mmpx12/proxy-list/master/socks5.txt
+20. mmpx12/proxy-list/master/http.txt
+```
+
+**TIER C — Raw Web Endpoints (NEW — no GitHub rate limit)**
+```
+21. multiproxy.org/txt_all/proxy.txt
+22. rootjazz.com/proxies/proxies.txt
+23. proxyspace.pro/http.txt
+24. proxyspace.pro/socks5.txt
+```
+
+**TIER D — Structured APIs (NEW — clean JSON/text)**
+```
+25. api.proxyscrape.com/v2/ HTTP  (all countries, all anon levels)
+26. api.proxyscrape.com/v2/ SOCKS5 (all countries)
+```
+
+### 🔒 UNLOCK AT PHASE 15 — Telegram Web Scrape (no API key!)
+
+> KEY TRICK: Scrape the PUBLIC web preview `t.me/s/CHANNEL` (not Telegram API)
+> These pages show all recent messages in plain HTML — run IP:PORT regex on them.
+
+```
+T1. t.me/s/proxylist_free        → active, hourly posts, IP:PORT in message bubbles
+T2. t.me/s/Proxy_List_Premium    → SOCKS5 focus, premium channel but public
+T3. t.me/s/socks5_bot            → bot-posted, structured dumps
+T4. t.me/s/freeproxylist_daily   → daily batch dumps, consistent timing
+
+SCRAPE METHOD: fetch('https://t.me/s/CHANNEL') → extract text → run PROXY_REGEX
+NO API KEY, NO BOT TOKEN, NO LIMITS — pure HTTP fetch
+```
+
+### 🔒 UNLOCK AT PHASE 18 — Dark Web Sources (Hetzner VPS + Tor)
+```
+D1. .onion pastebin directories  → anonymous SOCKS5 dumps, never indexed by Google
+D2. Tor hidden proxy forums      → cybersec communities dump fresh lists here
+D3. Paste0r / DeepPaste .onion   → curated underground proxy lists
+D4. i2p network pastebins        → secondary network for extra anonymity
+
+METHOD: socks-proxy-agent → 127.0.0.1:9050 (Tor on Hetzner) → fetch .onion URL
+        Run PROXY_REGEX on response text → same validation pipeline
+```
+
+### 🔒 UNLOCK AT PHASE 19 — Active Port Scan (SAFE ARCHITECTURE)
+
+> ⚠️ DO NOT scan from Hetzner — instant ban. DO NOT scan from Render — also banned.
+> See PHASE 19 SAFE ARCHITECTURE section below.
+
+```
+P1. Offshore scanner node (FlokiNET/Shinjiru) runs Masscan
+    Ports: 8080 (HTTP), 1080 (SOCKS), 3128 (Squid), 80, 443, 8888
+    Finds: misconfigured corporate routers, open Squid servers
+    Yield: 100,000–500,000 raw candidates per full scan
+    These proxies NEVER appear on any GitHub list — 100% unique
+
+ALTERNATIVE (no VPS needed):
+    Shodan API query: port:"3128" product:"Squid http proxy"
+    Shodan API query: port:"1080" "SOCKS5"
+    Shodan API query: "X-Forwarded-For" port:8080
+    Cost: Shodan API membership = $49/year (worth it at Phase 19 scale)
+```
+
+---
+
+## 💰 COST BOUNDARY — HARD RULES (1 VPS ONLY)
+
+> **You have: 1× Hetzner CAX11 (already paid). That is your ONLY VPS. Do NOT buy more.**
+> **Hard rule: Render + 1 existing VPS must cover everything. Local GPU does the rest.**
+
+### Infra Assignment (FIXED — do not change)
+```
+┌───────────────────────────────┬──────────────────────┐
+│ Render (FREE or $7)          │ BongBari website + proxy    │
+│                               │ hunt API (24/7 patrol cron) │
+├───────────────────────────────┼──────────────────────┤
+│ Hetzner CAX11 (€3.29/month)  │ Tor daemon ONLY             │
+│                               │ (.onion scraping at Phase 18)│
+│                               │ ❌ NOT for port scanning     │
+│                               │ ❌ NOT for heavy validation  │
+├───────────────────────────────┼──────────────────────┤
+│ Your LOCAL GPU machine ($0)  │ Beast Mode harvests         │
+│                               │ All-core OSINT hunting      │
+│                               │ Port scanning (Phase 19)    │
+│                               │ ONNX/AI inference (Phase 25) │
+│                               │ ProxyForge tray app (Phase 20)│
+└───────────────────────────────┴──────────────────────┘
+TOTAL MAX SPEND: ~$10.50/month (€3.29 + $7 Render)
+```
+
+### Phase 19 Port Scan — DO NOT use Hetzner or Render
+```
+❌ HETZNER SCANNING = INSTANT SERVER TERMINATION
+   Hetzner's automated systems detect outbound port scans immediately.
+   They TERMINATE without warning. You lose the Tor VPS too.
+
+✅ SAFE OPTIONS FOR PORT SCANNING (Phase 19):
+
+OPTION A — Shodan API (recommended first)
+  Price: Free tier (limited) or $49/year for full API access
+  No VPS needed. Query their database instead of scanning yourself.
+  Shodan has already scanned the entire internet — just query it.
+
+OPTION B — Run Masscan on YOUR LOCAL GPU machine
+  Your residential IP is far less likely to get complaints than a VPS.
+  Run once per week during off-hours (3AM), not continuous.
+  ISP may warn once but rarely terminates residential for research scans.
+
+OPTION C — Offshore VPS (future, after revenue)
+  FlokiNET (Iceland) or BuyVM (Luxembourg) explicitly allow port scanning
+  Cost: ~$5–10/month. Only worth it if pool > 10,000 and API has customers.
+  DO NOT get until Phase 31 (monetization) is earning money.
+```
+
+---
+
+## 📊 PROXY YIELD ESTIMATES — HOW MANY LIVE PROXIES PER PHASE
+
+> "Live" = verified working for at least 1 platform (YT, FB, or IG) right now.
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│ PHASE RANGE       │ SOURCES           │ CANDIDATES/RUN │ LIVE IN POOL  │
+├──────────────────┼──────────────────┼────────────────┼───────────────┤
+│ Phase 1-10 (was) │ 12 GitHub lists   │ ~2,500         │ 50–300 live   │
+│ NOW (26 sources)  │ 26 src w/MegaDump │ ~15,000–30,000 │ 200–800 live  │
+│ Phase 11-14       │ 26 sources        │ ~20,000        │ 400–1,200 live │
+│                   │ + smart caching   │                │ (tiered fresh)│
+│ Phase 15 + Tgm    │ 26 + 4 Telegram   │ ~25,000+       │ 600–1,500 live │
+│ Phase 18 darkweb  │ 26 + Tor onion    │ ~35,000        │ 1,000–3,000   │
+│ Phase 19 Shodan   │ 26 + Shodan dorks │ ~60,000+       │ 2,000–5,000   │
+│ Phase 19 local    │ 26 + local scan   │ ~200,000+      │ 5,000–12,000  │
+│ Phase 23 Beast    │ ALL + local GPU   │ ~500,000/run   │ 10,000–25,000 │
+│ Phase 25 AI       │ ALL + ONNX filter │ ~500,000       │ 12,000–30,000+│
+└──────────────────┴──────────────────┴────────────────┴───────────────┘
+```
+
+**Why live count is much lower than candidates:**
+- ~80-90% of found proxies are dead when we test them (normal in the industry)
+- Of the 10-20% alive, only 30-50% pass YT/FB/IG platform checks
+- Our 3-strike prune (Phase 13) removes proxies that die over time
+- **Goal: Quality over quantity — 500 platinum proxies > 5,000 bronze proxies**
+
+---
+## 🔎 HOW REAL PRO HUNTERS DO IT — DARK INTELLIGENCE REPORT
+
+> Researched methods used by professional proxy sellers and dark-web traders.
+> These are what separates a 300-proxy hobby pool from a 50,000-proxy empire.
+
+### Method 1: The "Mega-Dump Aggregator Relay" (what we now do)
+```
+Pros run hundreds of GitHub scrapers, each pointing to different source repos.
+They don't verify manually — they use distributed async queues (worker_threads or
+RabbitMQ) to verify 50,000+ candidates in parallel. Our new 26-source setup does this.
+Key insight: rotate sources every 3h, because most GitHub lists update that often.
+```
+
+### Method 2: Telegram Automation (no API, web scrape only)
+```
+Pros scrape the PUBLIC web preview URL of Telegram channels:
+  https://t.me/s/CHANNEL_NAME
+This requires ZERO API key, ZERO bot token, ZERO login.
+It returns full HTML of last 20 messages in each channel.
+Run PROXY_REGEX on the HTML — instant harvest.
+Top channels post 200–2000 new proxies DAILY.
+Cost: $0. Requires: 2 lines of fetch + regex.
+```
+
+### Method 3: The Censys / Shodan OSINT Pull (The "Quiet Scanner")
+```
+Instead of actively scanning IPs (which gets you banned), use Shodan/Censys
+which have ALREADY scanned the entire internet and indexed the results.
+
+Top Shodan dorks for finding proxies:
+  port:"3128" product:"Squid http proxy"    → finds open corporate Squid servers
+  port:"1080" "SOCKS5"                       → open SOCKS5 servers
+  "X-Forwarded-For" port:8080               → transparent HTTP proxies
+  port:"8888" "Via:" http                   → anonymous corporate proxies
+  port:"3128" org:"Amazon"                  → misconfigured AWS servers
+
+These results are:
+  1. Fresh (Shodan indexes continuously)
+  2. Unique (not on any GitHub list)
+  3. High quality (usually faster than random scraped proxies)
+
+Censys is same idea but different index. Both offer free API tiers.
+Censys free: 25 queries/month. Shodan free: ~5 queries. Paid ~$49/year each.
+```
+
+### Method 4: Raw IP Range Walking (Beast Mode source)
+```
+Dark method: some pro hunters run Masscan on entire IP ranges of:
+  • Cloud providers (AWS, Azure, GCP — tons of misconfigured VMs)
+  • Eastern European ISPs (Russia, Ukraine, Romania — lax proxy configs)
+  • Chinese ISPs (massive residential proxies, often open)
+  • South American ranges (Brazil, Argentina — high volume, under-monitored)
+
+They DON'T validate on the scanner. The scanner just does TCP SYN:
+  "Is port 1080 open? Yes → push IP:PORT to queue. No → skip."
+Validation happens on their main server. This creates the separation.
+
+For us: Local machine (GPU) runs Masscan locally at Phase 19.
+NOT Hetzner. Hetzner will terminate instantly for scanning.
+```
+
+### Method 5: The .onion "Ghost Layer" (dark web, Phase 18)
+```
+There are .onion forums and pastebin services that only exist on Tor.
+Security researchers and hackers dump proxy lists there because:
+  • No DMCA, no takedowns
+  • Lists stay up for months/years
+  • No GitHub rate limits
+  • Many are SOCKS5 from real privacy communities — higher quality
+
+Our Hetzner VPS runs apt-get install tor, opens :9050.
+Our server sends requests through socks-proxy-agent to that port.
+We fetch .onion URLs without revealing our IP. Proxies flow back out.
+These lists NEVER appear on any search engine or public GitHub.
+```
+
+### Method 6: Combining Everything — The Funnel Architecture
+```
+TOP OF FUNNEL (candidates IN): 50,000–500,000 IPs per day
+  → 26 GitHub/API sources (running NOW)
+  → 4 Telegram web scrapes (Phase 15)
+  → Shodan OSINT queries (Phase 14)
+  → .onion dark web (Phase 18)
+  → Local Masscan (Phase 19)
+
+MIDDLE (fast pre-filter): cuts 80% immediately
+  → Structure check (valid IP format, port 1–65535)
+  → ASN score (AWS/Google/known datacenter IPs = lower priority)
+  → Port sanity check (common proxy ports only)
+  → ONNX classifier at Phase 25 (40% more junk removed in 1ms)
+
+BOTTOM (platform verify): tests the 20% survivors
+  → TCP connect test (is it alive?)
+  → YT / FB / IG generate_204 test
+  → Latency measurement
+  → Only survivors enter the live pool
+
+RESULT: Quality platinum proxies with latency badges, country flags, platform tags.
+```
+
+---
+
+## ⚡ NODE.JS WORKER_THREADS ARCHITECTURE — 100K CONCURRENT PLAN
+
+> When pool grows to 5000+ proxies and we validate 100k candidates per run,
+> the simple chunk-20 loop won't cut it. Here's the upgrade plan.
+
+### Current (Phase 1-16): Simple Async Chunk Loop
+```typescript
+// Current: chunks of 20, sequential
+for (const chunk of chunks(proxies, 20)) {
+  await Promise.all(chunk.map(verify));
+}
+// Problem: 100k proxies @ chunk-20 = 5000 iterations = slow serial bottleneck
+```
+
+### Phase 16 Upgrade: p-limit Async Queue (no worker_threads needed yet)
+```typescript
+import pLimit from 'p-limit';                    // npm install p-limit
+const limit = pLimit(200);                        // 200 concurrent verifications
+const results = await Promise.all(
+  proxies.map(p => limit(() => verifyProxy(p)))
+);
+// Result: 100k proxies @ 200 concurrent = ~8-12 minutes on Render
+// On local machine @ 2000 concurrent = ~45-60 seconds
+```
+
+### Phase 23+ Upgrade: Worker Threads (for Beast Mode local)
+```typescript
+// Main thread: splits candidate list into N chunks
+// Worker thread pool: each worker owns a chunk, verifies in isolation
+// Workers report results back via MessageChannel
+// No shared memory issues, no GC pressure on main thread
+
+// Architecture:
+//   Main thread (coordinator)
+//     ├─ Worker 1 (25k candidates, 500 concurrent)
+//     ├─ Worker 2 (25k candidates, 500 concurrent)
+//     ├─ Worker 3 (25k candidates, 500 concurrent)
+//     └─ Worker 4 (25k candidates, 500 concurrent)
+// Total: 100k candidates, 2000 concurrent, ~30-45 seconds on local GPU machine
+// Admin panel stays responsive because main thread is NOT blocked
+```
+
+### Why this matters for the admin panel:
+```
+Current risk: if we run 2000 concurrent verifications in main thread,
+the Node.js event loop blocks — admin panel stops responding, API times out.
+
+Worker threads fix: verification work happens in separate threads.
+Main thread only handles HTTP requests. Admin panel stays snappy at all times.
+
+Timeline: implement p-limit at Phase 16, worker_threads at Phase 23 (Beast Mode).
+```
+
+---
+## 🖥️ LOCAL MACHINE FULL POTENTIAL — BEAST MODE SPEC
+
+> When you run on YOUR machine (not Render), all limiters are OFF.
+
+### What changes on local vs. server:
+```
+                    RENDER SERVER        YOUR LOCAL MACHINE
+─────────────────────────────────────────────────────────────
+CPU cores           1 shared core        8-16 dedicated cores
+Concurrent conns    20 (safe limit)      2,000 (Beast Mode)
+RAM available       512MB                16-32GB
+Port scanning       ❌ BANNED             ✅ Full masscan speed
+Tor daemon          ❌ Cannot install     ✅ Run locally
+GPU (ONNX)          ❌ Not available      ✅ Your RTX/CUDA
+Cost per run        $0.001+              $0.00 (FREE)
+Candidates/hour     ~600                 ~50,000+
+```
+
+### Expected local Beast Mode harvest (one 30-min run):
+```
+SOURCES ACTIVE:    25 GitHub + 5 Telegram + port scan = ~500k candidates
+CONCURRENT CHECK:  2,000 parallel verification threads
+TIME:              ~20-40 minutes per full sweep
+
+EXPECTED YIELD:
+  → Candidates fetched:       250,000 – 500,000
+  → Alive (pass TCP check):   25,000  – 75,000  (~15%)
+  → Platform verified:        5,000   – 20,000  (YT/FB/IG pass)
+  → Platinum tier (<500ms):   500     – 2,000
+  → Deduped vs existing pool: adds ~1,000–5,000 NEW proxies per run
+
+AFTER ONE LOCAL BEAST MODE RUN:
+  Pool goes from ~300 (server normal) → 3,000–8,000 live verified proxies instantly.
+```
+
+### How to trigger local Beast Mode (once Phase 23 is built):
+```
+1. Open ProxyForge tray app
+2. Right-click tray icon → "Beast Mode"
+3. Confirm → machine goes full throttle for 20-40 min
+4. Notif: "Beast Mode Complete: +4,321 new proxies mined"
+5. Pool auto-syncs to Render backend
+6. Back to Patrol Mode (background, 5% CPU)
+```
+
+### Growing the pool safely:
+```
+WEEKDAYS:  Server patrol every 3h = slow steady grow
+WEEKENDS:  Trigger one local Beast Mode run = massive single harvest
+MONTHLY:   1 Beast Mode + 700 patrol hours = 5,000–20,000 live proxies in pool
+```
 
 ---
 
@@ -86,35 +829,69 @@ Safe limits:
 ## 🏗️ ARCHITECTURE DIAGRAM
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                     PROXY KITCHEN ENGINE                         │
-│                                                                  │
-│  CRON TRIGGERS            OSINT SOURCES (12)                     │
-│  ├─ Every 3h ──────────► TheSpeedX / monosans / hookzof         │
-│  │  runHunt()             prxchk / KangProxy / openproxylist     │
-│  │                        ALIILAPRO / clarketm / ProxyScrape     │
-│  └─ 3AM daily ─────────► ShiftyTR / monosans-http / TheSpeedX-http
-│     runRevalidation()                                            │
-│                                ↓                                 │
-│                        IP:PORT REGEX EXTRACTION                  │
-│                     \b(?:[0-9]{1,3}\.){3}[0-9]{1,3}:[0-9]{1,5}\b│
-│                                ↓                                 │
-│                    DEDUPLICATION CHECK                           │
-│                  (skip already-known proxies)                    │
-│                                ↓                                 │
-│                PARALLEL PLATFORM VERIFICATION                    │
-│                  CHUNK_SIZE=20 concurrent                        │
-│          ┌───────────────┬──────────────┬──────────────┐        │
-│          │  YouTube      │  Facebook    │  Instagram   │        │
-│          │ generate_204  │ connect.fb   │ favicon.ico  │        │
-│          └───────────────┴──────────────┴──────────────┘        │
-│                                ↓                                 │
-│                    FILE PERSISTENCE LAYER                        │
-│              data/proxies.json (survives restart)                │
-│                                ↓                                 │
-│              /api/admin/proxy-status   ←── React Admin UI        │
-│        (activeNodes, platformCounts, huntDetails, proxies[])     │
-└─────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                      PROXY KITCHEN ENGINE v2.0                       │
+│                    (Tier 1 + Tier 2 Complete)                        │
+│                                                                      │
+│  CRON TRIGGERS              SOURCES (30)                             │
+│  ├─ Every 3h ────────────► 26 OSINT (GitHub raw lists + APIs)       │
+│  │  runHunt()               TheSpeedX / monosans / hookzof / prxchk │
+│  │                          KangProxy / openproxylist / ALIILAPRO   │
+│  │                          clarketm / ProxyScrape / ShiftyTR + 16  │
+│  │                                                                   │
+│  │                         4 TELEGRAM (t.me/s/ public scrape)        │
+│  │                          proxy_httptelegram / ProxySocks5Proxy    │
+│  │                          DropShipSocks / free_proxy_lis           │
+│  │                                                                   │
+│  ├─ Every 30min ─────────► TIERED REVALIDATION                      │
+│  │  runRevalidation()       Platinum (<500ms, 3 platforms) → 30 min │
+│  │                          Gold (2+ platforms)            → 2 hrs   │
+│  │                          Silver (1 platform, <2s)       → 6 hrs   │
+│  │                          Bronze (slow/single)           → 24 hrs  │
+│  │                                                                   │
+│  └─ 3AM daily ───────────► FULL SWEEP (all proxies rechecked)       │
+│                                                                      │
+│                    IP:PORT REGEX EXTRACTION                           │
+│                 \b(?:[0-9]{1,3}\.){3}[0-9]{1,3}:[0-9]{1,5}\b        │
+│                                ↓                                     │
+│                    DEDUP + ENRICHMENT PIPELINE                       │
+│               ┌─────────────────────────────────────┐               │
+│               │  GeoIP (geoip-lite, offline)        │               │
+│               │  → Country code + flag emoji         │               │
+│               │                                      │               │
+│               │  Latency Timer (Date.now delta)      │               │
+│               │  → Green <500ms / Yellow <2s / Red   │               │
+│               │                                      │               │
+│               │  Tier Computation                    │               │
+│               │  → Platinum/Gold/Silver/Bronze        │               │
+│               └─────────────────────────────────────┘               │
+│                                ↓                                     │
+│                PARALLEL PLATFORM VERIFICATION                        │
+│                  CHUNK_SIZE=20 concurrent                             │
+│          ┌───────────────┬──────────────┬──────────────┐            │
+│          │  YouTube      │  Facebook    │  Instagram   │            │
+│          │ generate_204  │ connect.fb   │ favicon.ico  │            │
+│          └───────────────┴──────────────┴──────────────┘            │
+│                                ↓                                     │
+│                    3-STRIKE AUTO-PRUNE                               │
+│               Strike 1: ⚠️ Warning (failCount=1)                    │
+│               Strike 2: ⚠️ Warning (failCount=2)                    │
+│               Strike 3: ☠️ PERMANENT PURGE                          │
+│                                ↓                                     │
+│                    FILE PERSISTENCE LAYER                            │
+│              data/proxies.json (survives restart)                    │
+│                                ↓                                     │
+│           DOWNLOAD WATERFALL (3-layer fallback)                      │
+│           ┌──────────────────────────────────────┐                  │
+│           │ 1. FREE: Pool proxy (lowest latency) │                  │
+│           │ 2. FREE: Direct (no proxy)           │                  │
+│           │ 3. PAID: ASocks (last resort only)   │                  │
+│           └──────────────────────────────────────┘                  │
+│                                ↓                                     │
+│              /api/admin/proxy-status   ←── Cyber Sentinel UI         │
+│        (activeNodes, platformCounts, tierCounts, avgLatency,         │
+│         huntDetails, proxies[] with country/latency/tier/health)     │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -402,23 +1179,33 @@ Add a "health score" per proxy based on:
 
 ---
 
-## 🎯 IMPLEMENTATION PRIORITY ORDER
+## 🎯 IMPLEMENTATION PRIORITY ORDER (Vibe Coder Cheatsheet)
 
 ```
-Week 1 (Quick wins):
-  ✅ Done: 12 sources, 2500 sample, 3h cron, dedup, revalidation, beautiful UI
-  🔜 Next: Latency measurement during verification (6.2)
-  🔜 Next: Connect pool to downloader (6.4)
+✅ DONE — These are LIVE right now, zero action needed:
+   ✅ 12 OSINT sources (proxyScraperService.ts)
+   ✅ 2500 sample size, CHUNK_SIZE=20 (CPU safe)
+   ✅ Every 3-hour auto-hunt cron
+   ✅ 3AM daily re-validation cron
+   ✅ Deduplication (skip already-known proxies)
+   ✅ File persistence (data/proxies.json, survives restart)
+   ✅ Cyber Sentinel admin UI (5 stat cards, countdown, lifetime stats)
+   ✅ Live telemetry (Mined / Deduped / Scanned / This Hunt)
+   ✅ Platform filter (All / YT / FB / IG with counts)
+   ✅ Admin panel accessible at /admin → Proxy Kitchen tab
 
-Week 2 (Expansion):
-  🔜 Telegram scraping (6.1) — adds 1000+ proxies/day for free
-  🔜 Geo-filtering with geoip-lite (6.3)
-  🔜 Reliability scoring + 3-strike auto-prune (6.5)
+⏳ NEXT UP — Say "do phase 7" to start any of these:
+   ⏳ Phase 7: Latency badge (measure ms per proxy, green/yellow/red in table)
+   ⏳ Phase 8: Country flag (geoip-lite, flag emoji per proxy row)
+   ⏳ Phase 9: Telegram scraping (5 channels, +1000 proxies/day free)
+   ⏳ Phase 10: Wire pool → downloader (proxies actually bypass YT/IG bans)
+   ⏳ Phase 11: 3-strike auto-prune (dead proxies gone in 10 min)
 
-Week 3+ (Scale):
-  🔜 Redis upgrade when pool > 2000 entries (6.6)
-  🔜 Tor bridge on Hetzner VPS (6.7)
-  🔜 AI liveness filter (6.8)
+🔒 FUTURE — Big upgrades, confirm before building:
+   🔒 Phase 12: AI pre-filter (ONNX, 3× faster hints)
+   🔒 Phase 13: Rust desktop app (ProxyForge, Beast Mode, system tray)
+   🔒 Phase 14: Offline mode + SQLite sync
+   🔒 Phase 15: Proxy API SaaS ($9–$299/month, RapidAPI listing)
 ```
 
 ---

@@ -9,6 +9,9 @@ dist/
 build/
 worker/.wrangler/
 
+# Rust compiled output (large binaries, cross-platform)
+server/rust-verifier/target/
+
 # Python / Venv (Heavy - DO NOT COMMIT)
 .venv/
 .venv-onnx/
@@ -64,3 +67,8 @@ desktop.ini
 *.data
 *.wasm
 data/proxies.json
+
+# Red Team Private Docs (NEVER PUBLISH)
+PROXY_EMPIRE_MASTERPLAN.md
+proxy-empire/
+proxy_empire_app/

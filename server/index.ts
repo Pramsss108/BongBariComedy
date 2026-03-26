@@ -5,6 +5,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import cron from "node-cron";
 import { ProxyScraper } from "./proxyScraperService";
+import { startRustVerifier, stopRustVerifier } from "./rustVerifier";
 import { youtubeService } from "./youtubeService";
 import { trendsService } from "./trendsService";
 
@@ -160,16 +161,32 @@ app.get('/health', (_req, res) => {
           // Daily 3AM: full re-validation sweep to purge dead proxies
           log('Initializing Red Team Proxy Hunter Auto-Scheduler...');
 
+          // Phase 17: Boot Rust turbo-verifier sidecar (500+ concurrent tasks)
+          startRustVerifier();
+          process.on('exit',    () => stopRustVerifier());
+          process.on('SIGTERM', () => stopRustVerifier());
+          process.on('SIGINT',  () => stopRustVerifier());
+
           // Set next hunt time on schedule so UI can show it
           const setNextHunt = () => {
             const next = new Date(Date.now() + 3 * 60 * 60 * 1000);
             ProxyScraper.nextHuntAt = next;
             ProxyScraper.huntDetails.nextHuntAt = next.toISOString();
           };
+          const setNextReval = () => {
+            ProxyScraper.nextRevalAt = new Date(Date.now() + 30 * 60_000);
+          };
 
-          // Immediate startup hunt
+          // Immediate startup: initialize counters + geo-enrich existing + hunt
           setNextHunt();
-          ProxyScraper.runHunt();
+          setNextReval();
+          // Initialize counters from existing storage (survives restart)
+          // Batch geo-enrich any proxies with missing country/tier data
+          (async () => {
+            await ProxyScraper.initFromStorage();
+            await ProxyScraper.enrichExistingProxies();
+            ProxyScraper.runHunt();
+          })();
 
           // Every 3 hours — continuous mining
           cron.schedule('0 */3 * * *', () => {
@@ -178,9 +195,16 @@ app.get('/health', (_req, res) => {
             ProxyScraper.runHunt();
           });
 
-          // Daily 3AM — re-validate entire pool, purge dead proxies
+          // Daily 3AM — full re-validate entire pool, purge dead proxies
           cron.schedule('0 3 * * *', () => {
-            log('Initiating Daily Re-Validation Sweep (3AM)...');
+            log('Initiating Daily Re-Validation Sweep (3AM full pass)...');
+            ProxyScraper.runRevalidation();
+          });
+
+          // Phase 14: Every 30 min — tiered revalidation (only rechecks proxies that are "due")
+          cron.schedule('*/30 * * * *', () => {
+            log('Initiating Tiered Re-Validation Pass (30m cycle)...');
+            setNextReval();
             ProxyScraper.runRevalidation();
           });
         });

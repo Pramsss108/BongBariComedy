@@ -1,0 +1,22 @@
+[package]
+name = "proxy-verifier"
+version = "0.1.0"
+edition = "2021"
+description = "Red Team Proxy Verifier — 500+ concurrent tokio tasks, ~90s per 5000-proxy hunt"
+
+[[bin]]
+name = "proxy-verifier"
+path = "src/main.rs"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+axum = "0.8"
+reqwest = { version = "0.12", features = ["socks", "rustls-tls"], default-features = false }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tower-http = { version = "0.6", features = ["cors"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

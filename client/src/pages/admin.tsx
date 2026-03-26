@@ -22,6 +22,7 @@ import AdminChatbot from "./AdminChatbot";
 import { AdminLeadManager } from "./AdminLeadManager";
 // import { MemeManager } from "./MemeManager";
 import { PromotionsManager } from "./promotions/PromotionsManager";
+import { ProxyMissionControl } from "@/components/ProxyMissionControl";
 
 const Admin = () => {
   const [, setLocation] = useLocation();
@@ -30,6 +31,7 @@ const Admin = () => {
   const queryClient = useQueryClient();
   const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
   const [isCreateBlogOpen, setIsCreateBlogOpen] = useState(false);
+  const [isMissionControlOpen, setIsMissionControlOpen] = useState(false);
   const [memeLanguage, setMemeLanguage] = useState<string>('auto');
   const [memeCount, setMemeCount] = useState<number>(5);
 
@@ -551,10 +553,19 @@ const Admin = () => {
               </TabsContent>
 
                 <TabsContent value="proxies" className="mt-8 space-y-6">
-                  <h3 className="text-2xl font-semibold text-brand-blue mb-6 flex items-center">
-                    <Bot className="w-6 h-6 mr-2" />
-                    Proxy Kitchen
-                  </h3>
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-2xl font-semibold text-brand-blue flex items-center">
+                      <Bot className="w-6 h-6 mr-2" />
+                      Proxy Kitchen
+                    </h3>
+                    <Button
+                      onClick={() => setIsMissionControlOpen(true)}
+                      className="bg-gray-900 text-cyan-400 border border-cyan-500/40 hover:bg-gray-800 hover:border-cyan-400 font-mono text-xs tracking-widest uppercase gap-2"
+                    >
+                      <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                      Mission Control
+                    </Button>
+                  </div>
                   <DatabaseProxyUI />
                 </TabsContent>
             </Tabs>
@@ -567,11 +578,14 @@ const Admin = () => {
           </div>
         </div>
       </main>
+      {isMissionControlOpen && (
+        <ProxyMissionControl onClose={() => setIsMissionControlOpen(false)} />
+      )}
     </>
   );
 };
 
-import { RefreshCw, Youtube, Instagram, Facebook, Shield, Wifi, WifiOff, Zap, Globe, Activity, Server, Eye, Clock, ChevronDown, ChevronUp, Copy, Check } from "lucide-react";
+import { RefreshCw, Youtube, Instagram, Facebook, Shield, Wifi, WifiOff, Zap, Globe, Activity, Server, Eye, Clock, ChevronDown, ChevronUp, Copy, Check, Timer, Flag, Award } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 const getPlatformIcon = (platform: string, success: boolean) => {
@@ -580,6 +594,33 @@ const getPlatformIcon = (platform: string, success: boolean) => {
         case 'fb': return <Facebook className={`w-4 h-4 ${success ? 'text-blue-500' : 'text-gray-400'}`} />;
         case 'ig': return <Instagram className={`w-4 h-4 ${success ? 'text-pink-500' : 'text-gray-400'}`} />;
         default: return null;
+    }
+};
+
+// Phase 12: Country code → flag emoji (e.g. "US" → 🇺🇸)
+const countryFlag = (code?: string) => {
+    if (!code || code === 'XX' || code.length !== 2) return '🌐';
+    const upper = code.toUpperCase();
+    const cp1 = 0x1F1E6 + upper.charCodeAt(0) - 65;
+    const cp2 = 0x1F1E6 + upper.charCodeAt(1) - 65;
+    return String.fromCodePoint(cp1, cp2);
+};
+
+// Phase 11: Latency → color class
+const latencyColor = (ms?: number) => {
+    if (!ms) return 'text-gray-400';
+    if (ms < 500) return 'text-emerald-500';
+    if (ms < 2000) return 'text-yellow-500';
+    return 'text-red-500';
+};
+
+// Phase 14: Tier → badge styles
+const tierBadge = (tier?: string) => {
+    switch (tier) {
+        case 'platinum': return { bg: 'bg-cyan-100 text-cyan-800', label: '💎 Platinum' };
+        case 'gold':     return { bg: 'bg-yellow-100 text-yellow-800', label: '🥇 Gold' };
+        case 'silver':   return { bg: 'bg-gray-200 text-gray-700', label: '🥈 Silver' };
+        default:         return { bg: 'bg-orange-100 text-orange-700', label: '🥉 Bronze' };
     }
 };
 
@@ -605,12 +646,31 @@ function DatabaseProxyUI() {
             const h = Math.floor(diff / 3600000);
             const m = Math.floor((diff % 3600000) / 60000);
             const s = Math.floor((diff % 60000) / 1000);
-            setCountdown(`${h}h ${m}m ${s}s`);
+            setCountdown(h > 0 ? `${h}h ${m}m ${s}s` : `${m}m ${s}s`);
         };
         tick();
         const id = setInterval(tick, 1000);
         return () => clearInterval(id);
     }, [data?.huntDetails?.nextHuntAt]);
+
+    // Countdown to next 30-min revalidation pass
+    const [revalCountdown, setRevalCountdown] = useState<string>('');
+    useEffect(() => {
+        const REVAL_INTERVAL = 30 * 60 * 1000;
+        const tick = () => {
+            const last = data?.lastRevalidatedAt;
+            if (!last) { setRevalCountdown(''); return; }
+            const nextReval = new Date(last).getTime() + REVAL_INTERVAL;
+            const diff = nextReval - Date.now();
+            if (diff <= 0) { setRevalCountdown('Imminent'); return; }
+            const m = Math.floor(diff / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            setRevalCountdown(`${m}m ${s}s`);
+        };
+        tick();
+        const id = setInterval(tick, 1000);
+        return () => clearInterval(id);
+    }, [data?.lastRevalidatedAt]);
 
     const triggerHunt = async () => {
         try {
@@ -630,106 +690,111 @@ function DatabaseProxyUI() {
 
     const proxies = data?.proxies || [];
     const pc      = data?.platformCounts || {};
+    const tc      = data?.tierCounts || {};
     const filtered = filterPlatform === "all" ? proxies : proxies.filter((p: any) => p.platforms?.[filterPlatform]);
 
     return (
         <div className="space-y-5">
 
-            {/* === ROW 1: STAT CARDS === */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-4 text-white border border-gray-700 shadow-lg">
-                    <div className="flex items-center gap-2 mb-1">
-                        <Server className="w-4 h-4 text-emerald-400" />
-                        <span className="text-[10px] uppercase tracking-wider text-gray-400">Active Nodes</span>
+            {/* === COMPACT STAT STRIP === */}
+            <div className="grid grid-cols-5 md:grid-cols-10 gap-1.5">
+                <div className="bg-gray-900 rounded-lg p-2 text-white border border-gray-700">
+                    <div className="flex items-center gap-1">
+                        <Server className="w-3 h-3 text-emerald-400" />
+                        <span className="text-[8px] uppercase text-gray-500">Nodes</span>
                     </div>
-                    <p className="text-3xl font-bold font-mono text-emerald-400">{data?.activeNodes || 0}</p>
-                    <p className="text-[10px] text-gray-500 mt-1">File-cached · survives restart</p>
+                    <p className="text-lg font-bold font-mono text-emerald-400">{data?.activeNodes || 0}</p>
                 </div>
-                <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-4 text-white border border-gray-700 shadow-lg">
-                    <div className="flex items-center gap-2 mb-1">
-                        <Youtube className="w-4 h-4 text-red-400" />
-                        <span className="text-[10px] uppercase tracking-wider text-gray-400">YouTube</span>
+                <div className="bg-gray-900 rounded-lg p-2 text-white border border-gray-700">
+                    <div className="flex items-center gap-1">
+                        <Youtube className="w-3 h-3 text-red-400" />
+                        <span className="text-[8px] uppercase text-gray-500">YT</span>
                     </div>
-                    <p className="text-3xl font-bold font-mono text-red-400">{pc.yt ?? 0}</p>
-                    <p className="text-[10px] text-gray-500 mt-1">generate_204 verified</p>
+                    <p className="text-lg font-bold font-mono text-red-400">{pc.yt ?? 0}</p>
                 </div>
-                <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-4 text-white border border-gray-700 shadow-lg">
-                    <div className="flex items-center gap-2 mb-1">
-                        <Facebook className="w-4 h-4 text-blue-400" />
-                        <span className="text-[10px] uppercase tracking-wider text-gray-400">Facebook</span>
+                <div className="bg-gray-900 rounded-lg p-2 text-white border border-gray-700">
+                    <div className="flex items-center gap-1">
+                        <Facebook className="w-3 h-3 text-blue-400" />
+                        <span className="text-[8px] uppercase text-gray-500">FB</span>
                     </div>
-                    <p className="text-3xl font-bold font-mono text-blue-400">{pc.fb ?? 0}</p>
-                    <p className="text-[10px] text-gray-500 mt-1">favicon verified</p>
+                    <p className="text-lg font-bold font-mono text-blue-400">{pc.fb ?? 0}</p>
                 </div>
-                <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-4 text-white border border-gray-700 shadow-lg">
-                    <div className="flex items-center gap-2 mb-1">
-                        <Instagram className="w-4 h-4 text-pink-400" />
-                        <span className="text-[10px] uppercase tracking-wider text-gray-400">Instagram</span>
+                <div className="bg-gray-900 rounded-lg p-2 text-white border border-gray-700">
+                    <div className="flex items-center gap-1">
+                        <Instagram className="w-3 h-3 text-pink-400" />
+                        <span className="text-[8px] uppercase text-gray-500">IG</span>
                     </div>
-                    <p className="text-3xl font-bold font-mono text-pink-400">{pc.ig ?? 0}</p>
-                    <p className="text-[10px] text-gray-500 mt-1">favicon verified</p>
+                    <p className="text-lg font-bold font-mono text-pink-400">{pc.ig ?? 0}</p>
                 </div>
-                <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-4 text-white border border-gray-700 shadow-lg">
-                    <div className="flex items-center gap-2 mb-1">
-                        <Shield className="w-4 h-4 text-yellow-400" />
-                        <span className="text-[10px] uppercase tracking-wider text-gray-400">All 3 Platforms</span>
+                <div className="bg-gray-900 rounded-lg p-2 text-white border border-gray-700">
+                    <div className="flex items-center gap-1">
+                        <Shield className="w-3 h-3 text-yellow-400" />
+                        <span className="text-[8px] uppercase text-gray-500">All 3</span>
                     </div>
-                    <p className="text-3xl font-bold font-mono text-yellow-400">{pc.allThree ?? 0}</p>
-                    <p className="text-[10px] text-gray-500 mt-1">YT + FB + IG pass</p>
+                    <p className="text-lg font-bold font-mono text-yellow-400">{pc.allThree ?? 0}</p>
+                </div>
+                {/* Tier counts inline */}
+                <div className="bg-cyan-950 rounded-lg p-2 text-white border border-cyan-800/40">
+                    <div className="flex items-center gap-1">
+                        <Award className="w-3 h-3 text-cyan-300" />
+                        <span className="text-[8px] uppercase text-cyan-500">💎Plat</span>
+                    </div>
+                    <p className="text-lg font-bold font-mono text-cyan-300">{tc.platinum ?? 0}</p>
+                </div>
+                <div className="bg-yellow-950 rounded-lg p-2 text-white border border-yellow-800/40">
+                    <div className="flex items-center gap-1">
+                        <Award className="w-3 h-3 text-yellow-300" />
+                        <span className="text-[8px] uppercase text-yellow-500">🥇Gold</span>
+                    </div>
+                    <p className="text-lg font-bold font-mono text-yellow-300">{tc.gold ?? 0}</p>
+                </div>
+                <div className="bg-gray-800 rounded-lg p-2 text-white border border-gray-600/40">
+                    <div className="flex items-center gap-1">
+                        <Award className="w-3 h-3 text-gray-300" />
+                        <span className="text-[8px] uppercase text-gray-400">🥈Slvr</span>
+                    </div>
+                    <p className="text-lg font-bold font-mono text-gray-300">{tc.silver ?? 0}</p>
+                </div>
+                <div className="bg-orange-950 rounded-lg p-2 text-white border border-orange-800/40">
+                    <div className="flex items-center gap-1">
+                        <Award className="w-3 h-3 text-orange-300" />
+                        <span className="text-[8px] uppercase text-orange-500">🥉Brnz</span>
+                    </div>
+                    <p className="text-lg font-bold font-mono text-orange-300">{tc.bronze ?? 0}</p>
+                </div>
+                <div className="bg-gray-900 rounded-lg p-2 text-white border border-gray-700">
+                    <div className="flex items-center gap-1">
+                        <Timer className="w-3 h-3 text-emerald-400" />
+                        <span className="text-[8px] uppercase text-gray-500">Latency</span>
+                    </div>
+                    <p className={`text-lg font-bold font-mono ${latencyColor(data?.avgLatency)}`}>{data?.avgLatency ?? 0}<span className="text-[10px] text-gray-500">ms</span></p>
                 </div>
             </div>
 
-            {/* === ROW 2: SCHEDULER STATUS + LIFETIME STATS === */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {/* Scheduler status */}
-                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 flex flex-col gap-2">
-                    <p className="text-xs font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" /> Continuous Mining Schedule
-                    </p>
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-700">Status</span>
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${data?.isHunting ? 'bg-red-100 text-red-700 animate-pulse' : data?.isRevalidating ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                            {data?.isHunting ? '🔴 Hunting' : data?.isRevalidating ? '🔵 Re-validating' : '🟢 Standby'}
+            {/* === COMPACT SCHEDULER + STATS === */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-2.5 flex flex-wrap gap-x-4 gap-y-1 items-center text-xs">
+                    <span className="font-bold uppercase text-gray-500 flex items-center gap-1"><Clock className="w-3 h-3" /> Schedule</span>
+                    <span className={`font-bold px-1.5 py-0.5 rounded-full text-[10px] ${data?.isHunting ? 'bg-red-100 text-red-700 animate-pulse' : data?.isRevalidating ? 'bg-blue-100 text-blue-700 animate-pulse' : 'bg-emerald-100 text-emerald-700'}`}>
+                        {data?.isHunting ? '🔴 Hunting' : data?.isRevalidating ? '🔵 Revalid.' : '🟢 Standby'}
+                    </span>
+                    {countdown && (
+                        <span className={`font-mono font-bold ${data?.isHunting ? 'text-gray-400' : 'text-emerald-600'}`}>
+                            Hunt in: {data?.isHunting ? <span className="text-gray-400 italic">running now</span> : countdown}
                         </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-700">Hunt cycle</span>
-                        <span className="text-xs font-mono text-gray-600">every 3 hours</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-700">Revalidation</span>
-                        <span className="text-xs font-mono text-gray-600">daily at 3:00 AM</span>
-                    </div>
-                    {countdown && !data?.isHunting && (
-                        <div className="flex items-center justify-between border-t border-gray-100 pt-2 mt-1">
-                            <span className="text-sm text-gray-700">Next hunt in</span>
-                            <span className="text-xs font-mono font-bold text-emerald-600">{countdown}</span>
-                        </div>
                     )}
+                    {revalCountdown && !data?.isRevalidating && !data?.isHunting && (
+                        <span className="font-mono text-blue-500">Reval in: {revalCountdown}</span>
+                    )}
+                    {data?.isRevalidating && <span className="font-mono text-blue-500 animate-pulse">Revalidating pool…</span>}
                 </div>
-                {/* Lifetime stats */}
-                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 flex flex-col gap-2">
-                    <p className="text-xs font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1">
-                        <Activity className="w-3.5 h-3.5" /> Lifetime Session Stats
-                    </p>
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-700">Hunts this session</span>
-                        <span className="text-xs font-mono font-bold text-gray-800">{data?.huntDetails?.huntCount ?? 0}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-700">Total ever verified</span>
-                        <span className="text-xs font-mono font-bold text-emerald-700">{data?.huntDetails?.totalEverFound ?? 0}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-700">Sources</span>
-                        <span className="text-xs font-mono text-gray-600">12 OSINT feeds</span>
-                    </div>
-                    {data?.huntDetails?.lastHuntAt && (
-                        <div className="flex items-center justify-between border-t border-gray-100 pt-2 mt-1">
-                            <span className="text-sm text-gray-700">Last hunt</span>
-                            <span className="text-xs font-mono text-gray-600">{new Date(data.huntDetails.lastHuntAt).toLocaleTimeString()}</span>
-                        </div>
-                    )}
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-2.5 flex flex-wrap gap-x-4 gap-y-1 items-center text-xs">
+                    <span className="font-bold uppercase text-gray-500 flex items-center gap-1"><Activity className="w-3 h-3" /> Stats</span>
+                    <span className="text-gray-700">Hunts: <b>{data?.huntDetails?.huntCount ?? 0}</b></span>
+                    <span className="text-emerald-700">Verified: <b>{data?.huntDetails?.totalEverFound ?? 0}</b></span>
+                    <span className="text-gray-500" title="OSINT + Telegram proxy sources checked each hunt">📡 30 sources/hunt</span>
+                    {data?.huntDetails?.lastHuntAt && <span className="font-mono text-gray-500" title="Last hunt time">Last: {new Date(data.huntDetails.lastHuntAt).toLocaleTimeString()}</span>}
+                    {data?.lastRevalidatedAt && <span className="font-mono text-blue-400" title="Last revalidation sweep">Reval: {new Date(data.lastRevalidatedAt).toLocaleTimeString()}</span>}
                 </div>
             </div>
 
@@ -815,48 +880,64 @@ function DatabaseProxyUI() {
                     {[...Array(6)].map((_, i) => <div key={i} className="h-14 bg-gray-100 rounded-lg animate-pulse" />)}
                 </div>
             ) : filtered.length > 0 ? (
-                <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                    <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-900 text-gray-400 text-xs uppercase tracking-wider font-medium">
+                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+                    <div className="grid grid-cols-16 gap-0.5 px-2 py-1.5 bg-gray-900 text-gray-400 text-[9px] uppercase tracking-wider font-medium">
                         <div className="col-span-1">#</div>
-                        <div className="col-span-1"><Eye className="w-3 h-3" /></div>
-                        <div className="col-span-5">Proxy Address</div>
+                        <div className="col-span-1"><Eye className="w-2.5 h-2.5" /></div>
+                        <div className="col-span-1"><Flag className="w-2.5 h-2.5" /></div>
+                        <div className="col-span-4">Address</div>
+                        <div className="col-span-1 text-center">ms</div>
+                        <div className="col-span-2 text-center">Tier</div>
                         <div className="col-span-1 text-center">YT</div>
                         <div className="col-span-1 text-center">FB</div>
                         <div className="col-span-1 text-center">IG</div>
-                        <div className="col-span-2 text-center">Actions</div>
+                        <div className="col-span-1 text-center">♥</div>
+                        <div className="col-span-2 text-center"></div>
                     </div>
-                    <div className="divide-y divide-gray-100 max-h-[500px] overflow-y-auto">
+                    <div className="divide-y divide-gray-100 max-h-[400px] overflow-y-auto">
                         {filtered.map((proxy: any, i: number) => {
                             const proto          = proxy.url?.startsWith('socks') ? 'SOCKS5' : 'HTTP';
                             const isExpanded     = expandedProxy === i;
                             const platformCount  = [proxy.platforms?.yt, proxy.platforms?.fb, proxy.platforms?.ig].filter(Boolean).length;
+                            const tb = tierBadge(proxy.platforms?.tier);
+                            const fails = proxy.platforms?.failCount || 0;
                             return (
                                 <div key={i}>
-                                    <div className={`grid grid-cols-12 gap-2 px-4 py-3 items-center hover:bg-gray-50 transition-colors cursor-pointer ${isExpanded ? 'bg-gray-50' : ''}`}
+                                    <div className={`grid grid-cols-16 gap-0.5 px-2 py-1.5 items-center hover:bg-gray-50 transition-colors cursor-pointer text-xs ${isExpanded ? 'bg-gray-50' : ''}`}
                                         onClick={() => setExpandedProxy(isExpanded ? null : i)}>
-                                        <div className="col-span-1 text-xs text-gray-400 font-mono">{i + 1}</div>
+                                        <div className="col-span-1 text-[10px] text-gray-400 font-mono">{i + 1}</div>
                                         <div className="col-span-1">
-                                            <div className={`w-2.5 h-2.5 rounded-full ${platformCount >= 2 ? 'bg-emerald-500' : platformCount === 1 ? 'bg-yellow-500' : 'bg-red-500'}`} />
+                                            <div className={`w-2 h-2 rounded-full ${platformCount >= 2 ? 'bg-emerald-500' : platformCount === 1 ? 'bg-yellow-500' : 'bg-red-500'}`} />
                                         </div>
-                                        <div className="col-span-5 flex items-center gap-2 min-w-0">
-                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${proto === 'SOCKS5' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
-                                                {proto}
+                                        <div className="col-span-1 text-sm" title={proxy.platforms?.country || '?'}>{countryFlag(proxy.platforms?.country)}</div>
+                                        <div className="col-span-4 flex items-center gap-1 min-w-0">
+                                            <span className={`text-[8px] font-bold px-1 py-0.5 rounded flex-shrink-0 ${proto === 'SOCKS5' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                                                {proto === 'SOCKS5' ? 'S5' : 'H'}
                                             </span>
-                                            <span className="font-mono text-sm text-gray-800 truncate">{proxy.url?.replace(/^(socks5|http):\/\//, '')}</span>
+                                            <span className="font-mono text-[11px] text-gray-800 truncate">{proxy.url?.replace(/^(socks5|http):\/\//, '')}</span>
                                         </div>
-                                        <div className="col-span-1 text-center">{proxy.platforms?.yt ? <Wifi className="w-4 h-4 text-red-500 mx-auto" /> : <WifiOff className="w-4 h-4 text-gray-300 mx-auto" />}</div>
-                                        <div className="col-span-1 text-center">{proxy.platforms?.fb ? <Wifi className="w-4 h-4 text-blue-500 mx-auto" /> : <WifiOff className="w-4 h-4 text-gray-300 mx-auto" />}</div>
-                                        <div className="col-span-1 text-center">{proxy.platforms?.ig ? <Wifi className="w-4 h-4 text-pink-500 mx-auto" /> : <WifiOff className="w-4 h-4 text-gray-300 mx-auto" />}</div>
-                                        <div className="col-span-2 flex items-center justify-center gap-1">
-                                            <Button size="sm" variant="ghost" className="h-7 px-2" onClick={(e) => { e.stopPropagation(); copyProxy(proxy.url, i); }}>
-                                                {copiedIdx === i ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-gray-400" />}
+                                        <div className={`col-span-1 text-center text-[10px] font-mono ${latencyColor(proxy.platforms?.latencyMs)}`}>
+                                            {proxy.platforms?.latencyMs || '—'}
+                                        </div>
+                                        <div className="col-span-2 text-center">
+                                            <span className={`text-[8px] font-bold px-1 py-0.5 rounded-full ${tb.bg}`}>{tb.label}</span>
+                                        </div>
+                                        <div className="col-span-1 text-center">{proxy.platforms?.yt ? <Wifi className="w-3 h-3 text-red-500 mx-auto" /> : <WifiOff className="w-3 h-3 text-gray-300 mx-auto" />}</div>
+                                        <div className="col-span-1 text-center">{proxy.platforms?.fb ? <Wifi className="w-3 h-3 text-blue-500 mx-auto" /> : <WifiOff className="w-3 h-3 text-gray-300 mx-auto" />}</div>
+                                        <div className="col-span-1 text-center">{proxy.platforms?.ig ? <Wifi className="w-3 h-3 text-pink-500 mx-auto" /> : <WifiOff className="w-3 h-3 text-gray-300 mx-auto" />}</div>
+                                        <div className="col-span-1 text-center text-[10px]">
+                                            {fails === 0 ? <span className="text-emerald-500">♥3</span> : fails === 1 ? <span className="text-yellow-500">♥2</span> : <span className="text-red-500">♥1</span>}
+                                        </div>
+                                        <div className="col-span-2 flex items-center justify-center gap-0.5">
+                                            <Button size="sm" variant="ghost" className="h-5 px-1" onClick={(e) => { e.stopPropagation(); copyProxy(proxy.url, i); }}>
+                                                {copiedIdx === i ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3 text-gray-400" />}
                                             </Button>
-                                            {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                                            {isExpanded ? <ChevronUp className="w-3 h-3 text-gray-400" /> : <ChevronDown className="w-3 h-3 text-gray-400" />}
                                         </div>
                                     </div>
                                     {isExpanded && (
                                         <div className="px-4 py-3 bg-gray-50 border-t border-gray-100">
-                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                                            <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-sm">
                                                 <div>
                                                     <span className="text-gray-500 text-xs">Full URL</span>
                                                     <p className="font-mono text-xs break-all text-gray-700 select-all">{proxy.url}</p>
@@ -866,6 +947,18 @@ function DatabaseProxyUI() {
                                                     <p className="font-semibold text-xs">{proto}</p>
                                                 </div>
                                                 <div>
+                                                    <span className="text-gray-500 text-xs">Country</span>
+                                                    <p className="text-sm">{countryFlag(proxy.platforms?.country)} {proxy.platforms?.country || 'Unknown'}</p>
+                                                </div>
+                                                <div>
+                                                    <span className="text-gray-500 text-xs">Latency</span>
+                                                    <p className={`font-mono text-xs font-bold ${latencyColor(proxy.platforms?.latencyMs)}`}>{proxy.platforms?.latencyMs ? `${proxy.platforms.latencyMs}ms` : 'N/A'}</p>
+                                                </div>
+                                                <div>
+                                                    <span className="text-gray-500 text-xs">Tier / Health</span>
+                                                    <p><span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${tb.bg}`}>{tb.label}</span> <span className="text-xs text-gray-500">· {3 - fails}/3 lives</span></p>
+                                                </div>
+                                                <div>
                                                     <span className="text-gray-500 text-xs">Platforms</span>
                                                     <div className="flex gap-2 mt-1">
                                                         {getPlatformIcon('yt', proxy.platforms?.yt)}
@@ -873,13 +966,10 @@ function DatabaseProxyUI() {
                                                         {getPlatformIcon('ig', proxy.platforms?.ig)}
                                                     </div>
                                                 </div>
-                                                <div>
-                                                    <span className="text-gray-500 text-xs">Status</span>
-                                                    <p className="text-emerald-600 font-bold text-xs flex items-center gap-1">
-                                                        <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse" /> Verified Online
-                                                    </p>
-                                                </div>
                                             </div>
+                                            {proxy.platforms?.lastCheckedAt && (
+                                                <p className="text-[10px] text-gray-400 mt-2">Last verified: {new Date(proxy.platforms.lastCheckedAt).toLocaleString()}</p>
+                                            )}
                                         </div>
                                     )}
                                 </div>

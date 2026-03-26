@@ -325,7 +325,7 @@ export default function SocialDownloaderPage() {
           setErrorCode(err.code || "UNKNOWN");
       }
     }
-  }, [url]);
+  }, [url, forceEngine]);
 
   // Ã¢â€â‚¬Ã¢â€â‚¬ Download Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   const handleDownload = useCallback(async () => {
@@ -369,7 +369,7 @@ export default function SocialDownloaderPage() {
       setErrorMsg(e.message || "Download failed."); 
       setPhase("error");
     }
-  }, [videoInfo, url, selectedFormat, isAuthenticated, setLocation]);
+  }, [videoInfo, url, selectedFormat, forceEngine, isAuthenticated, setLocation]);
 
   // Ã¢â€â‚¬Ã¢â€â‚¬ CapCut Block 1: Blob Caching Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   
@@ -437,7 +437,7 @@ export default function SocialDownloaderPage() {
       setIsCaching(false);
       setCacheProgress(100);
     }
-  }, [url, isAuthenticated, sessionId, previewUrl, trimMode, toast, setLocation, videoInfo]);
+  }, [url, forceEngine, isAuthenticated, sessionId, previewUrl, trimMode, toast, setLocation, videoInfo]);
 
   // Ã¢â€â‚¬Ã¢â€â‚¬ Preview Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   const handlePreview = useCallback(() => {
@@ -490,7 +490,7 @@ export default function SocialDownloaderPage() {
       } finally {
         if (simInterval) window.clearInterval(simInterval);
       }
-    }, [videoInfo, url, startTime, endTime, selectedFormat, sessionId, isAuthenticated, setLocation]);
+    }, [videoInfo, url, startTime, endTime, selectedFormat, forceEngine, sessionId, isAuthenticated, setLocation]);
 
     const isWorking = phase === "fetching" || phase === "downloading" || phase === "trimming";
 
@@ -685,30 +685,36 @@ export default function SocialDownloaderPage() {
                         onChange={(e) => setForceEngine(e.target.value)}
                         className="bg-[#0f0f11] border border-white/10 text-white/90 py-1 px-2 rounded outline-none cursor-pointer hover:bg-black transition-colors"
                       >
-                        <option className="bg-[#0f0f11] text-white font-semibold" value="auto">🌟 Smart Auto-Fallback (Production Default)</option>
+                        <option className="bg-[#0f0f11] text-white font-semibold" value="auto">🌟 Smart Auto-Fallback (All Free → Paid Last)</option>
                         
+                        {/* ── FREE ENGINES (ordered by reliability per platform) ── */}
                         <option className="bg-[#0f0f11] text-yellow-500" value="layer1">
-                          🌐 Layer 1: Hetzner Cobalt {isMetaUrl ? "(Variable)" : isYouTubeUrl ? "(Fast)" : ""}
+                          🌐 L1: Cobalt API · FREE {isMetaUrl ? "· IG/FB ✓" : isYouTubeUrl ? "· YT ✓ Fast" : "· All"}
                         </option>
                         
-                        <option className={`bg-[#0f0f11] ${isMetaUrl ? "text-red-400 opacity-50" : "text-blue-400"}`} value="layer2" disabled={isMetaUrl}>
-                          🛡️ Layer 2: CF Swarm {isMetaUrl ? "(Blocked by Meta)" : isYouTubeUrl ? "(Testing...)" : ""}
+                        <option className="bg-[#0f0f11] text-emerald-400 font-bold" value="layer7">
+                          🆓 L7: Our Proxy Pool · FREE · $0 {isMetaUrl ? "· IG/FB ✓✓" : isYouTubeUrl ? "· YT ✓" : "· All"}
                         </option>
                         
-                        <option className={`bg-[#0f0f11] ${isMetaUrl ? "text-slate-600 line-through" : "text-orange-400"}`} value="layer3" disabled={isMetaUrl}>
-                          🚀 Layer 3: Native IPv6 {isMetaUrl ? "(YT Only)" : "(Building)"}
+                        <option className={`bg-[#0f0f11] ${isMetaUrl ? "text-slate-600" : "text-blue-400"}`} value="layer2" disabled={isMetaUrl}>
+                          🛡️ L2: CF Swarm · FREE {isMetaUrl ? "· ✗ Meta Blocked" : "· YT ✓"}
+                        </option>
+                        
+                        <option className={`bg-[#0f0f11] ${isMetaUrl ? "text-slate-600" : "text-orange-400"}`} value="layer3" disabled={isMetaUrl}>
+                          🚀 L3: IPv6 Direct · FREE {isMetaUrl ? "· ✗ YT Only" : "· YT ✓"}
                         </option>
 
-                        <option className={`bg-[#0f0f11] ${isMetaUrl ? "text-slate-600 line-through" : "text-green-400"}`} value="layer4" disabled={isMetaUrl}>
-                          🎭 Layer 4: YTDL-Core Spoofer {isMetaUrl ? "(YT Only)" : "(Working)"}
+                        <option className={`bg-[#0f0f11] ${isMetaUrl ? "text-slate-600" : "text-green-400"}`} value="layer4" disabled={isMetaUrl}>
+                          🎭 L4: YTDL-Core · FREE {isMetaUrl ? "· ✗ YT Only" : "· YT ✓"}
                         </option>
 
                         <option className="bg-[#0f0f11] text-slate-600" value="layer5" disabled>
-                          ⏭️ Layer 5: Future Expansion (Skipped)
+                          ⏭️ L5: Reserved (Skipped)
                         </option>
 
-                        <option className={`bg-[#0f0f11] ${isYouTubeUrl ? "text-slate-600 line-through" : "text-red-500 font-bold"}`} value="layer6" disabled={isYouTubeUrl}>
-                          💰 Layer 6: ASocks Residential {isYouTubeUrl ? "(Unnecessary)" : "(Working - $0.003)"}
+                        {/* ── PAID ENGINE (always last) ── */}
+                        <option className="bg-[#0f0f11] text-red-500 font-bold" value="layer6">
+                          💰 L6: ASocks Residential · $0.003/req {isMetaUrl ? "· IG/FB ✓✓" : "· All"}
                         </option>
                       </select>
                     </div>

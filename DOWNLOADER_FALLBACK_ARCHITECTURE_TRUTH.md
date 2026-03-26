@@ -24,8 +24,10 @@ Here is exactly how links travel through the multi-phase fallback engine based o
 3. **Phase 3 (Direct Hetzner IPv6 ytdl-core):** Direct extraction using native server hardware. Uses `ios,tv` client spoofing.
    *If IPv6 block or 429 fails, cascades to:* 👇
 4. **Phase 4 (YTDL-Core + BotGuard PO-Token):** Advanced Botguard bypass where the server natively solves a Proof-of-Origin token and passes it to Youtube.
-   *If all free nodes fail, cascades to:* 👇
-5. **Phase 6 (Paid ASocks Residential):** The absolute last resort. Injects a high-cost residential IP rotate session to force the payload through.
+   *If PO-Token fails, cascades to:* 👇
+5. **🆓 Layer 7 (Free Proxy Pool):** Uses our own mined residential/datacenter proxies from the Proxy Kitchen (30 OSINT+Telegram sources). Runs yt-dlp with the best free proxy. **$0 cost.** Bans the proxy on failure and cascades.
+   *If all free proxies fail, cascades to:* 👇
+6. **Phase 6 (Paid ASocks Residential):** 💰 The absolute last resort. Injects a high-cost residential IP rotate session ($0.003/req) to force the payload through.
 
 ### For INSTAGRAM / FACEBOOK Links (`instagram.com`, `facebook.com`)
 1. **Phase 1 (Hetzner Cobalt Proxy):** First attempt. Sometimes active if Cobalt upstream maintains Meta bypasses.
@@ -33,7 +35,9 @@ Here is exactly how links travel through the multi-phase fallback engine based o
 2. **Phase 2 (Cloudflare Swarm Edge):** Guaranteed to fail for Meta (due to Datacenter ASN blocks). Only remains here for architectural consistency. 
    *Instantly fails and cascades to:* 👇
    *(Phase 3 and Phase 4 are STRICTLY SKIPPED via codebase domain checks to prevent memory crashes!)*  👇
-3. **Phase 6 (Paid ASocks Residential):** 🎯 **Target Result.** Uses paid rotating Indian/US residential IPs with `hold-session`. This mimics a real mobile phone opening the app and successfully bypasses Meta's strict login walls to reliably extract the MP4 data.
+3. **🆓 Layer 7 (Free Proxy Pool):** Attempts Meta extraction via yt-dlp using our mined residential proxies. If we have residential proxies in the pool, this can bypass Meta's login walls for **$0**. Bans failed proxies automatically.
+   *If no residential proxies or all fail, cascades to:* 👇
+4. **Phase 6 (Paid ASocks Residential):** 🎯 **Target Result.** Uses paid rotating Indian/US residential IPs with `hold-session` ($0.003/req). This mimics a real mobile phone opening the app and successfully bypasses Meta's strict login walls to reliably extract the MP4 data.
 
 ---
 

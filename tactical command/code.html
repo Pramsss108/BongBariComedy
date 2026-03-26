@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TACTICAL COMMAND | PROXY CENTER</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #0a0a0f;
+            color: #e4e1e9;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+        .font-mono-data { font-family: 'JetBrains Mono', monospace; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(24px);
+            outline: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .label-text {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0.4;
+        }
+        .value-text {
+            opacity: 0.9;
+            font-weight: 700;
+        }
+        .status-dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+        }
+        /* Custom scrollbar for terminal and table */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "on-tertiary-fixed-variant": "#930013",
+                "on-surface-variant": "#bcc9cd",
+                "on-tertiary-fixed": "#410004",
+                "outline": "#869397",
+                "background": "#0a0a0f",
+                "primary-fixed": "#acedff",
+                "on-primary": "#003640",
+                "surface-dim": "#0a0a0f",
+                "on-secondary-container": "#00311f",
+                "tertiary": "#ffb3ad",
+                "surface-container-low": "#1b1b20",
+                "on-background": "#e4e1e9",
+                "inverse-on-surface": "#303036",
+                "tertiary-container": "#ff817a",
+                "surface": "#131318",
+                "surface-container": "#1f1f25",
+                "surface-bright": "#39383e",
+                "error-container": "#93000a",
+                "on-tertiary": "#68000a",
+                "tertiary-fixed-dim": "#ffb3ad",
+                "error": "#ffb4ab",
+                "on-tertiary-container": "#7e000f",
+                "primary": "#4cd7f6",
+                "outline-variant": "#3d494c",
+                "on-error": "#690005",
+                "on-error-container": "#ffdad6",
+                "tertiary-fixed": "#ffdad7",
+                "secondary-fixed-dim": "#4edea3",
+                "surface-container-lowest": "#0e0e13",
+                "primary-fixed-dim": "#4cd7f6",
+                "surface-container-highest": "#35343a",
+                "surface-container-high": "#2a292f",
+                "on-primary-fixed": "#001f26",
+                "inverse-primary": "#00687a",
+                "primary-container": "#06b6d4",
+                "surface-variant": "#35343a",
+                "secondary-container": "#00a572",
+                "secondary-fixed": "#6ffbbe",
+                "inverse-surface": "#e4e1e9",
+                "on-primary-fixed-variant": "#004e5c",
+                "on-secondary-fixed": "#002113",
+                "surface-tint": "#4cd7f6",
+                "secondary": "#4edea3",
+                "on-primary-container": "#00424f",
+                "on-surface": "#e4e1e9",
+                "on-secondary-fixed-variant": "#005236",
+                "on-secondary": "#003824"
+              },
+              fontFamily: {
+                "headline": ["Space Grotesk"],
+                "body": ["Inter"],
+                "label": ["Inter"]
+              },
+              borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+            },
+          },
+        }
+    </script>
+</head>
+<body class="dark selection:bg-primary/30">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-14 bg-slate-950/40 backdrop-blur-xl border-b border-white/5 shadow-[0_0_20px_rgba(76,215,246,0.05)]">
+<div class="flex items-center gap-8">
+<h1 class="text-xl font-bold tracking-tighter text-cyan-400 italic font-headline">TACTICAL COMMAND</h1>
+<nav class="hidden md:flex gap-6 font-['Space_Grotesk'] tracking-tight text-xs uppercase">
+<span class="text-cyan-400 border-b border-cyan-400 pb-1">NODES: 1,204</span>
+<span class="text-slate-500 font-medium hover:text-cyan-300 transition-colors duration-200 cursor-pointer">ACTIVE: 892</span>
+<span class="text-slate-500 font-medium hover:text-cyan-300 transition-colors duration-200 cursor-pointer">HUNTING: 12</span>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-cyan-400 cursor-pointer hover:text-cyan-300 transition-colors">notifications_active</span>
+<span class="material-symbols-outlined text-cyan-400 cursor-pointer hover:text-cyan-300 transition-colors">settings</span>
+<div class="w-8 h-8 rounded-full border border-cyan-400/30 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="close up headshot of a cyber security operator with neon blue lighting accents and serious expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDlm-1eZQq0IOt2jPi63Q5pADgCzsCvnOXDETutEUwKNplVjwEi64-P33eb8FlJszFq_In09DnyKQw1-ikVw-yXSW5bQdezx-gkJsqTWMe4C5-28qSSXJseaiz25F6PYmb1ucuhkLt5Oup99cqLJzjnX0AuJExtxXsIiIGIxgsERS3ziaKlEPLNYD4BkmKsq6NpOPOAL3N98gNrzvvbp7zy6joD5ajFWJAgoIDfV9L8hir7TSB1_8trmWF1uvnpa9Ierv0UPiwEM9k"/>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-14 bottom-0 flex flex-col items-center py-8 z-40 bg-slate-950/60 backdrop-blur-2xl border-r border-white/5 w-20">
+<div class="mb-8 text-center">
+<div class="label-text">OP-01</div>
+<div class="text-[7px] text-cyan-400 font-bold">SECTOR-7</div>
+</div>
+<div class="flex flex-col gap-6 w-full items-center">
+<div class="group flex flex-col items-center gap-1 w-full py-3 text-cyan-400 bg-cyan-400/10 border-r-2 border-cyan-400">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-['Space_Grotesk'] text-[9px] tracking-[0.05em] uppercase">COMMAND</span>
+</div>
+<div class="group flex flex-col items-center gap-1 w-full py-3 text-slate-600 hover:bg-white/5 hover:text-slate-200 transition-all duration-300 cursor-pointer">
+<span class="material-symbols-outlined">hub</span>
+<span class="font-['Space_Grotesk'] text-[9px] tracking-[0.05em] uppercase">NETWORK</span>
+</div>
+<div class="group flex flex-col items-center gap-1 w-full py-3 text-slate-600 hover:bg-white/5 hover:text-slate-200 transition-all duration-300 cursor-pointer">
+<span class="material-symbols-outlined">radar</span>
+<span class="font-['Space_Grotesk'] text-[9px] tracking-[0.05em] uppercase">HUNTING</span>
+</div>
+<div class="group flex flex-col items-center gap-1 w-full py-3 text-slate-600 hover:bg-white/5 hover:text-slate-200 transition-all duration-300 cursor-pointer">
+<span class="material-symbols-outlined">history</span>
+<span class="font-['Space_Grotesk'] text-[9px] tracking-[0.05em] uppercase">ARCHIVE</span>
+</div>
+<div class="group flex flex-col items-center gap-1 w-full py-3 text-slate-600 hover:bg-white/5 hover:text-slate-200 transition-all duration-300 cursor-pointer">
+<span class="material-symbols-outlined">terminal</span>
+<span class="font-['Space_Grotesk'] text-[9px] tracking-[0.05em] uppercase">SYSTEM</span>
+</div>
+</div>
+<div class="mt-auto flex flex-col gap-6 items-center w-full">
+<span class="material-symbols-outlined text-slate-600 hover:text-emerald-400 cursor-pointer">lock</span>
+<span class="material-symbols-outlined text-slate-600 hover:text-tertiary cursor-pointer">power_settings_new</span>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="pl-20 pt-14 pb-8 h-screen w-full flex flex-col overflow-hidden">
+<!-- Top Statistics Strip -->
+<section class="grid grid-cols-6 gap-0.5 p-4 shrink-0">
+<!-- Node Count -->
+<div class="glass-panel p-3 flex flex-col justify-center">
+<span class="label-text">272 LIVE</span>
+<div class="text-3xl font-mono-data text-primary leading-tight">1,204</div>
+<div class="flex items-center gap-2 mt-1">
+<div class="h-1 flex-1 bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[88%] shadow-[0_0_8px_rgba(76,215,246,0.5)]"></div>
+</div>
+</div>
+</div>
+<!-- Mini Cards -->
+<div class="glass-panel p-3">
+<div class="flex justify-between items-center mb-1">
+<span class="label-text">YT STREAM</span>
+<span class="font-mono-data text-[10px] text-secondary">215</span>
+</div>
+<div class="h-1 bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[65%]"></div>
+</div>
+</div>
+<div class="glass-panel p-3">
+<div class="flex justify-between items-center mb-1">
+<span class="label-text">FB NODES</span>
+<span class="font-mono-data text-[10px] text-secondary">226</span>
+</div>
+<div class="h-1 bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[72%]"></div>
+</div>
+</div>
+<div class="glass-panel p-3">
+<div class="flex justify-between items-center mb-1">
+<span class="label-text">IG ACTIVE</span>
+<span class="font-mono-data text-[10px] text-secondary">213</span>
+</div>
+<div class="h-1 bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[58%]"></div>
+</div>
+</div>
+<!-- Average Latency -->
+<div class="glass-panel p-3">
+<span class="label-text">AVG LATENCY</span>
+<div class="text-xl font-mono-data text-on-surface flex items-baseline gap-1 mt-1">
+                    58<span class="text-[10px] opacity-40 uppercase">ms</span>
+</div>
+</div>
+<!-- Hunt Status -->
+<div class="glass-panel p-3 relative overflow-hidden group">
+<div class="absolute inset-0 bg-tertiary/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="flex justify-between items-start">
+<span class="label-text text-tertiary opacity-80">HUNT STATUS</span>
+<div class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse shadow-[0_0_8px_#ffb3ad]"></div>
+</div>
+<div class="text-lg font-mono-data text-tertiary mt-1">360/5000</div>
+<div class="text-[8px] font-mono-data text-tertiary/40 uppercase tracking-tighter">HUNTING ACTIVE</div>
+</div>
+</section>
+<!-- Middle Section: Geo & Event Feed -->
+<section class="flex-1 min-h-0 grid grid-cols-12 gap-0.5 px-4 overflow-hidden">
+<!-- LEFT: Tier Breakdown & Geo Map -->
+<div class="col-span-8 flex flex-col gap-0.5 min-h-0">
+<div class="grid grid-cols-2 gap-0.5 flex-1 min-h-0">
+<!-- Tier Breakdown Donut Mockup -->
+<div class="glass-panel p-6 flex flex-col">
+<span class="label-text mb-4">NODE TIER DISTRIBUTION</span>
+<div class="flex-1 flex items-center justify-around">
+<div class="relative w-40 h-40">
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
+<circle cx="18" cy="18" fill="transparent" r="15.915" stroke="rgba(255,255,255,0.05)" stroke-width="3"></circle>
+<circle cx="18" cy="18" fill="transparent" r="15.915" stroke="#4cd7f6" stroke-dasharray="40 60" stroke-dashoffset="0" stroke-width="3"></circle>
+<circle cx="18" cy="18" fill="transparent" r="15.915" stroke="#FFD700" stroke-dasharray="25 75" stroke-dashoffset="-40" stroke-width="3"></circle>
+<circle cx="18" cy="18" fill="transparent" r="15.915" stroke="#A0A0A0" stroke-dasharray="20 80" stroke-dashoffset="-65" stroke-width="3"></circle>
+<circle cx="18" cy="18" fill="transparent" r="15.915" stroke="#FF8C00" stroke-dasharray="15 85" stroke-dashoffset="-85" stroke-width="3"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<div class="text-2xl font-mono-data text-on-surface">1.2K</div>
+<div class="label-text">TOTAL</div>
+</div>
+</div>
+<div class="flex flex-col gap-3">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<div class="flex flex-col">
+<span class="label-text">PLATINUM</span>
+<span class="font-mono-data text-sm opacity-90">480</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-[#FFD700]"></div>
+<div class="flex flex-col">
+<span class="label-text">GOLD</span>
+<span class="font-mono-data text-sm opacity-90">300</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-[#A0A0A0]"></div>
+<div class="flex flex-col">
+<span class="label-text">SILVER</span>
+<span class="font-mono-data text-sm opacity-90">240</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-[#FF8C00]"></div>
+<div class="flex flex-col">
+<span class="label-text">BRONZE</span>
+<span class="font-mono-data text-sm opacity-90">180</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Geo Distribution Map -->
+<div class="glass-panel p-6 flex flex-col relative overflow-hidden">
+<span class="label-text mb-4 z-10">GEO DISTRIBUTION INDEX</span>
+<div class="flex-1 relative rounded overflow-hidden">
+<img class="w-full h-full object-cover opacity-40 grayscale" data-alt="minimalist dark blue world map with neon cyan glowing dots indicating proxy node density across continents" data-location="Global" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCuzcLtCrlm7jtSwvI39V8uOYa_yy66xJapn4Ay4dfjtb0VBbyOCuqmsLiggOJX2eZ_-K6NGvNHSFH3iPS374xBL1-HiSXUsRwU2UVrLU-_4Cj6xt-WnyP064ZPZod3Nd5KvdC5KKW1wdHwh-3xzhXviff464MXUuE-IrobZw9Z8tYAe-wH2ffpMH_7pAjGaofFh4xrrKXxLepPsvFh-rFdV7T6_NOSsBoV89bqIarr9JCuHYU9WlpUZNts1wfkcfTblLFvq25PxKg"/>
+<!-- Density Dots -->
+<div class="absolute top-1/4 left-1/3 w-1 h-1 bg-primary rounded-full shadow-[0_0_8px_#4cd7f6]"></div>
+<div class="absolute top-1/2 left-1/2 w-1.5 h-1.5 bg-primary rounded-full shadow-[0_0_8px_#4cd7f6]"></div>
+<div class="absolute top-1/3 right-1/4 w-1 h-1 bg-primary rounded-full shadow-[0_0_8px_#4cd7f6]"></div>
+<div class="absolute bottom-1/4 right-1/3 w-0.5 h-0.5 bg-primary rounded-full shadow-[0_0_8px_#4cd7f6]"></div>
+</div>
+<div class="absolute bottom-4 right-4 flex gap-4">
+<div class="flex flex-col items-end">
+<span class="label-text">TOP REGION</span>
+<span class="font-mono-data text-xs text-primary">US-EAST-1</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- RIGHT: Event Feed & Action Buttons -->
+<div class="col-span-4 flex flex-col gap-0.5 min-h-0">
+<!-- Terminal Feed -->
+<div class="glass-panel flex-1 min-h-0 flex flex-col p-4">
+<div class="flex justify-between items-center mb-3">
+<span class="label-text">LIVE SYSTEM TELEMETRY</span>
+<div class="flex items-center gap-2">
+<span class="status-dot bg-secondary animate-pulse"></span>
+<span class="text-[8px] font-mono-data text-secondary">STREAMING</span>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto font-mono-data text-[10px] space-y-2 pr-2 scrollbar-hide">
+<div class="flex gap-2">
+<span class="text-white/20">14:22:01</span>
+<span class="text-secondary">[SUCCESS]</span>
+<span class="text-white/60">NODE-1042 VERIFIED @ 42ms</span>
+</div>
+<div class="flex gap-2">
+<span class="text-white/20">14:22:05</span>
+<span class="text-primary">[INIT]</span>
+<span class="text-white/60">HUNT CYCLE 089 STARTED</span>
+</div>
+<div class="flex gap-2">
+<span class="text-white/20">14:22:12</span>
+<span class="text-tertiary">[STRIKE]</span>
+<span class="text-white/60">IP 192.168.1.1 RATE LIMITED</span>
+</div>
+<div class="flex gap-2">
+<span class="text-white/20">14:22:15</span>
+<span class="text-secondary">[+1]</span>
+<span class="text-white/60">NEW PROXY INGESTED: US-NYC-01</span>
+</div>
+<div class="flex gap-2">
+<span class="text-white/20">14:22:20</span>
+<span class="text-red-500">[BANNED]</span>
+<span class="text-white/60">NODE-224 TERMINATED BY FB-WAW</span>
+</div>
+<div class="flex gap-2">
+<span class="text-white/20">14:22:25</span>
+<span class="text-secondary">[SUCCESS]</span>
+<span class="text-white/60">ROTATION COMPLETE - 12 NODES</span>
+</div>
+<div class="flex gap-2">
+<span class="text-white/20">14:22:29</span>
+<span class="text-white/40">[LOG]</span>
+<span class="text-white/60">LATENCY CHECK: ALL SYSTEMS NOMINAL</span>
+</div>
+</div>
+</div>
+<!-- Actions & Timer -->
+<div class="glass-panel p-4 grid grid-cols-2 gap-4">
+<button class="col-span-2 py-3 border border-tertiary/20 bg-tertiary/5 hover:bg-tertiary/10 transition-all text-tertiary font-headline font-bold text-xs tracking-widest flex items-center justify-center gap-2 group">
+<span class="material-symbols-outlined text-sm group-hover:scale-125 transition-transform">radar</span>
+                        INITIATE HUNT
+                    </button>
+<button class="py-2 border border-white/5 bg-white/5 hover:bg-white/10 transition-all text-white/70 font-headline text-[10px] tracking-widest flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">refresh</span>
+                        REFRESH
+                    </button>
+<div class="flex flex-col justify-center items-center border border-white/5 bg-slate-950/20">
+<span class="label-text">NEXT ROTATION</span>
+<span class="font-mono-data text-xs text-primary">02:34:12</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Bottom Section: Proxy Table -->
+<section class="flex-none h-1/3 px-4 pt-0.5">
+<div class="glass-panel h-full flex flex-col overflow-hidden">
+<div class="flex justify-between items-center px-4 py-3 border-b border-white/5">
+<span class="label-text">ACTIVE NODE REGISTRY</span>
+<div class="flex gap-4">
+<span class="label-text">10 OF 1,204 DISPLAYED</span>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto">
+<table class="w-full text-left border-collapse">
+<thead class="sticky top-0 bg-[#131318] z-10">
+<tr class="border-b border-white/5">
+<th class="py-2 px-4 label-text">IDX</th>
+<th class="py-2 px-4 label-text">GEO/IP</th>
+<th class="py-2 px-4 label-text">PROTO</th>
+<th class="py-2 px-4 label-text">LATENCY</th>
+<th class="py-2 px-4 label-text">TIER</th>
+<th class="py-2 px-4 label-text text-center">PLATFORMS</th>
+<th class="py-2 px-4 label-text text-center">HEALTH</th>
+<th class="py-2 px-4 label-text">TENURE</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5 font-mono-data text-[11px]">
+<!-- Row 1 -->
+<tr class="hover:bg-white/5 transition-colors group cursor-default">
+<td class="py-2 px-4 text-white/40">#001</td>
+<td class="py-2 px-4 flex items-center gap-2">
+<span class="opacity-80">🇺🇸 104.22.11.90</span>
+</td>
+<td class="py-2 px-4"><span class="px-1.5 py-0.5 border border-primary/20 text-primary text-[9px]">SOCKS5</span></td>
+<td class="py-2 px-4 text-secondary">32ms</td>
+<td class="py-2 px-4"><span class="text-primary">PLATINUM</span></td>
+<td class="py-2 px-4">
+<div class="flex justify-center gap-1.5">
+<div class="status-dot bg-secondary shadow-[0_0_4px_#4edea3]" title="YT"></div>
+<div class="status-dot bg-secondary shadow-[0_0_4px_#4edea3]" title="FB"></div>
+<div class="status-dot bg-secondary shadow-[0_0_4px_#4edea3]" title="IG"></div>
+</div>
+</td>
+<td class="py-2 px-4 text-center">
+<span class="material-symbols-outlined text-[12px] text-secondary">favorite</span>
+<span class="material-symbols-outlined text-[12px] text-secondary">favorite</span>
+<span class="material-symbols-outlined text-[12px] text-secondary">favorite</span>
+</td>
+<td class="py-2 px-4 text-white/40">12D 4H</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-white/5 transition-colors group cursor-default">
+<td class="py-2 px-4 text-white/40">#002</td>
+<td class="py-2 px-4 flex items-center gap-2">
+<span class="opacity-80">🇬🇧 88.102.3.45</span>
+</td>
+<td class="py-2 px-4"><span class="px-1.5 py-0.5 border border-white/10 text-white/60 text-[9px]">HTTP/S</span></td>
+<td class="py-2 px-4 text-white/80">112ms</td>
+<td class="py-2 px-4"><span class="text-[#FFD700]">GOLD</span></td>
+<td class="py-2 px-4">
+<div class="flex justify-center gap-1.5">
+<div class="status-dot bg-secondary" title="YT"></div>
+<div class="status-dot bg-white/10" title="FB"></div>
+<div class="status-dot bg-secondary" title="IG"></div>
+</div>
+</td>
+<td class="py-2 px-4 text-center">
+<span class="material-symbols-outlined text-[12px] text-secondary">favorite</span>
+<span class="material-symbols-outlined text-[12px] text-secondary">favorite</span>
+<span class="material-symbols-outlined text-[12px] text-white/10">favorite</span>
+</td>
+<td class="py-2 px-4 text-white/40">04D 2H</td>
+</tr>
+<!-- Row 3 (Stressed) -->
+<tr class="hover:bg-white/5 transition-colors group cursor-default">
+<td class="py-2 px-4 text-white/40">#003</td>
+<td class="py-2 px-4 flex items-center gap-2">
+<span class="opacity-80">🇩🇪 194.22.1.22</span>
+</td>
+<td class="py-2 px-4"><span class="px-1.5 py-0.5 border border-primary/20 text-primary text-[9px]">SOCKS5</span></td>
+<td class="py-2 px-4 text-tertiary">420ms</td>
+<td class="py-2 px-4"><span class="text-primary">PLATINUM</span></td>
+<td class="py-2 px-4">
+<div class="flex justify-center gap-1.5">
+<div class="status-dot bg-tertiary animate-pulse" title="YT"></div>
+<div class="status-dot bg-white/10" title="FB"></div>
+<div class="status-dot bg-white/10" title="IG"></div>
+</div>
+</td>
+<td class="py-2 px-4 text-center">
+<span class="material-symbols-outlined text-[12px] text-tertiary">favorite</span>
+<span class="material-symbols-outlined text-[12px] text-white/10">favorite</span>
+<span class="material-symbols-outlined text-[12px] text-white/10">favorite</span>
+</td>
+<td class="py-2 px-4 text-white/40">01D 0H</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-white/5 transition-colors group cursor-default">
+<td class="py-2 px-4 text-white/40">#004</td>
+<td class="py-2 px-4 flex items-center gap-2">
+<span class="opacity-80">🇫🇷 51.12.90.104</span>
+</td>
+<td class="py-2 px-4"><span class="px-1.5 py-0.5 border border-primary/20 text-primary text-[9px]">SOCKS5</span></td>
+<td class="py-2 px-4 text-secondary">55ms</td>
+<td class="py-2 px-4"><span class="text-[#A0A0A0]">SILVER</span></td>
+<td class="py-2 px-4">
+<div class="flex justify-center gap-1.5">
+<div class="status-dot bg-secondary" title="YT"></div>
+<div class="status-dot bg-secondary" title="FB"></div>
+<div class="status-dot bg-white/10" title="IG"></div>
+</div>
+</td>
+<td class="py-2 px-4 text-center">
+<span class="material-symbols-outlined text-[12px] text-secondary">favorite</span>
+<span class="material-symbols-outlined text-[12px] text-secondary">favorite</span>
+<span class="material-symbols-outlined text-[12px] text-secondary">favorite</span>
+</td>
+<td class="py-2 px-4 text-white/40">18D 11H</td>
+</tr>
+<!-- More rows for aesthetic -->
+<tr class="hover:bg-white/5 transition-colors group cursor-default border-t border-white/5">
+<td class="py-2 px-4 text-white/20">...</td>
+<td class="py-2 px-4 text-white/20 italic" colspan="7">TRUNCATED FOR VIEWPORT OPTIMIZATION</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="fixed bottom-0 w-full z-50 flex justify-between items-center px-4 h-8 bg-slate-950/80 backdrop-blur-md border-t border-white/5">
+<div class="font-mono text-[8px] tracking-widest text-slate-500 uppercase">
+            © 2024 OBSIDIAN LENS ARCHITECTURE
+        </div>
+<div class="flex gap-6 font-mono text-[8px] tracking-widest text-slate-500">
+<span class="text-emerald-400">ENCRYPTION_ACTIVE</span>
+<span>LATENCY: 22MS</span>
+<span class="opacity-40">UPLINK: STABLE</span>
+</div>
+</footer>
+</body></html>

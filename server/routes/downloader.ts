@@ -20,6 +20,7 @@ import axios from "axios";
 import { HttpsProxyAgent } from "https-proxy-agent";
 // @ts-ignore
 import ffmpegPath from "ffmpeg-static";
+import { ProxyKitchen } from '../proxyService.js';
 
 const previewNodes = [
   "http://78.47.104.43:9000/",
@@ -301,8 +302,8 @@ function mapDownloaderError(err: any): { code: string; message: string; status: 
 }
 
 // ---------------------------------------------------------------------------
-// HYBRID METADATA ENGINE (ASocks Proxy -> Local Fallback)
-// Phase 0: Stealth Metadata Extraction via PAYG SOCKS5 Proxy
+// HYBRID METADATA ENGINE (Free Pool → Direct → ASocks Paid LAST RESORT)
+// Phase 16: Stealth extraction. All free methods exhaust before paid.
 // ---------------------------------------------------------------------------
 
 function generateRotatedProxy(): string {
@@ -329,22 +330,39 @@ async function executeYtDlpExtract(url: string, extraArgs: string[] = [], disabl
         ...extraArgs
     ];
     
-    const proxy = generateRotatedProxy();
-    
-    try {
-        const proxyArgs = [...ytArgs, "--proxy", proxy];
-        console.log(`[Phase 2] Executing yt-dlp via Smart Rotating ASocks Proxy (New IP via Session)...`);
-        // Use a longer timeout for proxy extractions (25s) because residential networks have variable latency
-        return await executeYtDlp(url, proxyArgs, 25000);
-    } catch (proxyErr: any) {
-        console.warn(`[Phase 2] ASocks proxy failed!`, proxyErr.message || proxyErr);
-        if (disableDirectFallback) {
-            console.log(`[Phase 6] Proxy rotation blocked or failed. Stopping direct fallback to prevent timeout.`);
-            throw proxyErr;
+    // ── Attempt 1: Phase 16 — Free pool proxy (auto-mined, costs nothing) ──
+    const platform = url.includes('instagram.com') || url.includes('instagr.am') ? 'ig'
+                   : url.includes('facebook.com') || url.includes('fb.watch') ? 'fb'
+                   : 'yt';
+    const poolProxy = await ProxyKitchen.getBestProxyForDownload(platform);
+    if (poolProxy) {
+        try {
+            console.log(`[Phase 16] Attempting with free pool proxy (${platform}): ${poolProxy.substring(0, 30)}...`);
+            return await executeYtDlp(url, [...ytArgs, "--proxy", poolProxy], 20000);
+        } catch (poolErr: any) {
+            console.warn(`[Phase 16] Pool proxy failed, banning: ${poolErr.message}`);
+            await ProxyKitchen.banProxy(poolProxy);
         }
-        console.log(`[Phase 2] Executing yt-dlp directly without proxy (Render Network fallback)...`);
-        return await executeYtDlp(url, ytArgs, 25000);
+    } else {
+        console.log(`[Phase 16] Pool empty for ${platform} — skipping to direct.`);
     }
+
+    // ── Attempt 2: Direct (no proxy) — free, no cost ──────────────────────
+    if (!disableDirectFallback) {
+        try {
+            console.log(`[Phase 2] Attempting direct extraction (no proxy)...`);
+            return await executeYtDlp(url, ytArgs, 25000);
+        } catch (directErr: any) {
+            console.warn(`[Phase 2] Direct extraction failed: ${directErr.message}`);
+        }
+
+        // ── Attempt 3: Paid ASocks — LAST RESORT only (costs money) ───────────
+        const paidProxy = generateRotatedProxy();
+        console.log(`[Phase 2] LAST RESORT — falling back to paid ASocks proxy...`);
+        return await executeYtDlp(url, [...ytArgs, "--proxy", paidProxy], 25000);
+    }
+
+    throw new Error('All free methods failed and direct/paid fallback is disabled (timeout guard).');
 }
 
 
@@ -404,6 +422,87 @@ async function executePhase6_ASocks_Ultimate(url: string): Promise<any> {
 // ==========================================
 async function executePhase5_ExpansionA(url: string): Promise<any> {
     throw new Error('Phase 5 is empty (Public Cobalt removed as requested).');
+}
+
+// ==========================================
+// PHASE 7: Free Proxy Pool (Mined OSINT, $0 cost)
+// Uses ONLY the auto-mined proxy pool. NO paid fallback.
+// Supports ALL platforms: YouTube, Instagram, Facebook.
+// For IG/FB: proxied fetch via Hetzner Cobalt.
+// For YT: proxied yt-dlp extraction.
+// ==========================================
+async function executePhase7_FreeProxyPool(url: string): Promise<any> {
+    const isMeta = url.includes("instagram.com") || url.includes("facebook.com") || url.includes("fb.watch") || url.includes("instagr.am");
+    const platform = isMeta ? (url.includes("facebook.com") || url.includes("fb.watch") ? 'fb' : 'ig') : 'yt';
+    
+    console.log(`[Phase 7] Free Proxy Pool engine for ${platform.toUpperCase()}: ${url}`);
+    
+    // Get best mined proxy for this platform
+    const proxyUrl = await ProxyKitchen.getBestProxyForDownload(platform);
+    if (!proxyUrl) {
+        throw new Error(`Phase 7: No free mined proxies available for ${platform.toUpperCase()}. Pool empty — run a hunt first.`);
+    }
+    console.log(`[Phase 7] Using free proxy: ${proxyUrl.substring(0, 35)}...`);
+
+    if (isMeta) {
+        // ── META (IG/FB): Use Hetzner Cobalt with proxy tunnel ──
+        // Try extracting via Cobalt first (it handles IG/FB natively)
+        // If that fails, use yt-dlp with the free proxy
+        try {
+            // Attempt: yt-dlp with free proxy for IG/FB metadata
+            const ytArgs = [
+                "--dump-json", "--no-warnings", "--geo-bypass",
+                "--user-agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1",
+                "--proxy", proxyUrl
+            ];
+            const data = await executeYtDlp(url, ytArgs, 20000);
+            const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+            const video_url = parsed.url || (parsed.requested_downloads && parsed.requested_downloads[0]?.url);
+            if (!video_url) throw new Error("No video URL in yt-dlp output");
+            
+            await ProxyKitchen.addVerifiedProxy(proxyUrl, { yt: platform === 'yt', fb: platform === 'fb', ig: platform === 'ig', failCount: 0, lastCheckedAt: new Date().toISOString() });
+            
+            return {
+                engine: `Layer 7: Free Proxy Pool (${platform.toUpperCase()} · $0)`,
+                video_url,
+                title: parsed.title || "Proxy-Extracted Video",
+                duration: parsed.duration || 0,
+                thumbnail: parsed.thumbnail || null,
+                formats: parsed.formats || parsed.requested_formats || []
+            };
+        } catch (ytErr: any) {
+            console.warn(`[Phase 7] yt-dlp with proxy failed for Meta: ${ytErr.message}`);
+            await ProxyKitchen.banProxy(proxyUrl);
+            throw new Error(`Phase 7: Free proxy failed for ${platform.toUpperCase()}: ${ytErr.message}. Try another proxy or use Layer 1/2.`);
+        }
+    } else {
+        // ── YOUTUBE: Use yt-dlp with free proxy ──
+        try {
+            const ytArgs = [
+                "--dump-json", "--no-warnings", "--geo-bypass",
+                "--extractor-args", "youtube:player_client=ios,tv",
+                "--user-agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1",
+                "--proxy", proxyUrl
+            ];
+            const data = await executeYtDlp(url, ytArgs, 25000);
+            const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+            const video_url = parsed.url || (parsed.requested_downloads && parsed.requested_downloads[0]?.url);
+            if (!video_url) throw new Error("No video URL in yt-dlp output");
+            
+            return {
+                engine: 'Layer 7: Free Proxy Pool (YT · $0)',
+                video_url,
+                title: parsed.title || "Proxy-Extracted Video",
+                duration: parsed.duration || 0,
+                thumbnail: parsed.thumbnail || null,
+                formats: parsed.formats || parsed.requested_formats || []
+            };
+        } catch (ytErr: any) {
+            console.warn(`[Phase 7] Free proxy failed for YT: ${ytErr.message}`);
+            await ProxyKitchen.banProxy(proxyUrl);
+            throw new Error(`Phase 7: Free proxy failed for YouTube: ${ytErr.message}. Proxy may be banned by Google.`);
+        }
+    }
 }
 
 // ==========================================
@@ -493,6 +592,12 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
         return result; 
     }
 
+    if (forceEngine === "layer7") {
+        const result = await executePhase7_FreeProxyPool(url);
+        metaCache.set(url, { data: result, expires: Date.now() + 60000 });
+        return result; // Crashes if fails, NO fallback — this is force-test mode
+    }
+
 
     // ==========================================
       // SMART AUTO-FALLBACK CASCADE
@@ -521,13 +626,20 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
                           metaCache.set(url, { data: res4, expires: Date.now() + 60000 });
                           return res4;
                       } catch (e4: any) {
-                          console.log(`[Smart Fallback] Phase 4 failed (${e4.message}), skipping Phase 5, natively cascading to Phase 6 (ASocks Paid)...`);
+                          console.log(`[Smart Fallback] Phase 4 failed (${e4.message}), cascading to Layer 7 (Free Proxy Pool)...`);
                           try {
-                              const res6 = await executePhase6_ASocks_Ultimate(url);
-                              metaCache.set(url, { data: res6, expires: Date.now() + 60000 });
-                              return res6;
-                          } catch (e6: any) {
-                              throw new Error(`Total engine failure after all layers (including Paid ASocks): ${e6.message}`);
+                              const res7 = await executePhase7_FreeProxyPool(url);
+                              metaCache.set(url, { data: res7, expires: Date.now() + 60000 });
+                              return res7;
+                          } catch (e7: any) {
+                              console.log(`[Smart Fallback] Layer 7 Free Proxy failed (${e7.message}), LAST RESORT → Phase 6 (ASocks Paid $$$)...`);
+                              try {
+                                  const res6 = await executePhase6_ASocks_Ultimate(url);
+                                  metaCache.set(url, { data: res6, expires: Date.now() + 60000 });
+                                  return res6;
+                              } catch (e6: any) {
+                                  throw new Error(`Total engine failure after ALL layers (Free L1→L2→L3→L4→L7 + Paid L6): ${e6.message}`);
+                              }
                           }
                       }
                   }
@@ -757,6 +869,51 @@ async function handleStream(req: Request, res: Response): Promise<void> {
       const forceEngine = (req.query.forceEngine as string) || undefined;
       const isYT = validated.url.includes("youtube.com") || validated.url.includes("youtu.be");
       const isMeta = validated.url.includes("instagram.com") || validated.url.includes("facebook.com") || validated.url.includes("fb.watch");
+
+      // =========================================================================
+      // LAYER 7: FREE PROXY POOL STREAM (forced only)
+      // Resolve video_url via free mined proxy, then redirect client to CDN
+      // =========================================================================
+      if (forceEngine === "layer7") {
+          try {
+              console.log(`[Layer 7 Stream] Resolving stream URL via free proxy pool...`);
+              const meta = await executePhase7_FreeProxyPool(validated.url);
+              if (meta.video_url) {
+                  const isTrimmingReq = startSec !== null && endSec !== null && endSec > startSec;
+                  if (isTrimmingReq || chosen.ext === "mp3") {
+                      // Need ffmpeg processing — pipe through ffmpeg
+                      const ffmpegArgs: string[] = [];
+                      if (isTrimmingReq) ffmpegArgs.push("-ss", startSec!.toString());
+                      ffmpegArgs.push("-i", meta.video_url);
+                      if (isTrimmingReq) ffmpegArgs.push("-to", endSec!.toString());
+                      if (chosen.ext === "mp3") {
+                          ffmpegArgs.push("-vn", "-c:a", "libmp3lame", "-q:a", "2");
+                      } else if (chosen.isAudio) {
+                          ffmpegArgs.push("-vn", "-c:a", "copy");
+                      } else {
+                          ffmpegArgs.push("-c:v", "copy", "-c:a", "copy");
+                      }
+                      ffmpegArgs.push("-f", chosen.ext === "mp3" ? "mp3" : "mp4", "pipe:1");
+                      
+                      res.setHeader("Content-Disposition", `attachment; filename="bongbari_proxy_${Date.now()}.${chosen.ext}"`);
+                      const subprocess = spawn(ffmpegPath || "ffmpeg", ffmpegArgs, { stdio: ["ignore", "pipe", "pipe"] });
+                      subprocess.stdout?.pipe(res);
+                      subprocess.on("error", (err: any) => { if (!res.headersSent) res.status(500).json({ error: "Processing failed." }); });
+                      req.on("close", () => { subprocess.kill?.("SIGTERM"); });
+                      return;
+                  } else {
+                      console.log(`✅ [Layer 7 SUCCESS] Redirecting to CDN via free proxy!`);
+                      res.redirect(302, meta.video_url);
+                      return;
+                  }
+              }
+              throw new Error("Layer 7 resolved but no video_url");
+          } catch (l7Err: any) {
+              console.error(`[Layer 7 Stream] Failed:`, l7Err.message);
+              if (!res.headersSent) res.status(422).json({ error: "Layer 7 Free Proxy failed: " + l7Err.message });
+              return;
+          }
+      }
       
       // =========================================================================
       // V14.5 LAYER 1.5: FAST HETZNER COBALT FOR META (Experimental / Safe Fallback)

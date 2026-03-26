@@ -121,7 +121,7 @@ async function executePhase2_CFSwarm(url: string): Promise<any> {
                 body.match(/"playable_url_quality_hd":"([^"]+)"/);
 
     if (!match) {
-        throw new Error("Phase 2: No video stream found in Swarm payload.");
+        if (body.includes("login_page") || body.includes("login")) { throw new Error("Phase 2 [CF Blocked]: Meta forced a Login Wall on Cloudflare Datacenter IP."); } else { if (body.includes("login_page") || body.includes("login")) { throw new Error("Phase 2 [CF Blocked]: Meta forced a Login Wall on Cloudflare Datacenter IP."); } else { throw new Error("Phase 2: No video stream found in Swarm payload."); } }
     }
     
     const finalUrl = match[1].replace(/\\/g, '').replace(/&amp;/g, '&');

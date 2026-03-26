@@ -687,7 +687,7 @@ export default function SocialDownloaderPage() {
                       
                       <optgroup label="?? Meta (Instagram / Facebook)" className="text-pink-400 bg-black/90 italic font-semibold">
                         <option className="bg-[#0f0f11] text-yellow-500 not-italic" value="layer1_meta">? FREE [VARIABLE]: Layer 1 - Hetzner Cobalt</option>
-                        <option className="bg-[#0f0f11] text-slate-600 not-italic" value="layer2_meta" disabled>?? SKIPPED: Layer 2 - CF Swarm (Datacenter Blocked)</option>
+                        <option className="bg-[#0f0f11] text-blue-400 not-italic" value="layer2_meta">🛡️ RED TEAM: Layer 2 - CF Swarm</option>
                         <option className="bg-[#0f0f11] text-slate-600 not-italic" value="layer3_meta" disabled>?? SKIPPED: Layer 3 - Native IPv6 (YT Only)</option>
                         <option className="bg-[#0f0f11] text-slate-600 not-italic" value="layer4_meta" disabled>?? SKIPPED: Layer 4 - YTDL-Core Spoofer (YT Only)</option>
                         <option className="bg-[#0f0f11] text-slate-600 not-italic" value="layer5_meta" disabled>?? SKIPPED: Layer 5 - Future Expansion</option>

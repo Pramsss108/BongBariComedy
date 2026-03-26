@@ -108,7 +108,8 @@ async function executePhase1_HetznerCobalt(url: string): Promise<any> {
 async function executePhase2_CFSwarm(url: string): Promise<any> {
     console.log('[Phase 2] Executing CF Swarm Edge for:', url);
     const isMeta = url.includes("instagram.com") || url.includes("facebook.com") || url.includes("fb.watch") || url.includes("instagr.am") || url.includes("instagr.com");
-    if (!isMeta) throw new Error("Layer 2 (Edge Swarm) only supports Meta/Instagram links.");
+    // RED TEAM: Bypassed domain restriction to test YouTube BotGuard on CF Swarm
+    // if (!isMeta) throw new Error("Layer 2 (Edge Swarm) only supports Meta/Instagram links.");
     
     const swarmUrl = "https://ancient-king-7fa9.guitarguitarabhijit.workers.dev/?url=" + encodeURIComponent(url);
     
@@ -462,7 +463,7 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
         return result; // Crashes if fails, NO fallback
     }
 
-    if (forceEngine === "layer2") {
+    if (forceEngine === "layer2" || forceEngine === "layer2_meta" || forceEngine === "layer2_yt") {
         const result = await executePhase2_CFSwarm(url);
         metaCache.set(url, { data: result, expires: Date.now() + 60000 });
         return result; // Crashes if fails, NO fallback

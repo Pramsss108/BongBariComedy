@@ -26,3 +26,27 @@ When we hit Cloudflare Workers, we face specific corporate firewalls:
 3. **Test 2 (Meta):** Force Layer 2 on an Instagram Reel. Document the exact error (e.g., login required, connection refused).
 4. **Harden CF Worker:** If it fails, we will review the CF Worker's code (or spoofing logic) to inject heavy Android User-Agents and precise Accept-Language headers.
 
+
+## 💡 Vibe Coder Architect: Industry Standard Scaling & "Permanent\" Unban Methods
+The industry explicitly avoids single points of failure by mixing and rotating public instances alongside dark residential networks. Here is the modern blueprint for how aggressive platforms (Meta, YT) are permanently bypassed without excessive costs:
+
+### 1. The Cobalt Aggregator Mix (Free, High Availability)
+Instead of relying strictly on our Hetzner Cobalt instance (which can get ASN-flagged eventually), we can build an **Edge Cobalt Router**.
+- **How it works:** We scrape and maintain a live sub-list of public community Cobalt instances (e.g., \pi.cobalt.foo\, \cobalt.bar\, etc.).
+- **Execution:** When a request hits our backend, it picks a random public Cobalt mirror from an active array. If the mirror is dead/blocked, it immediately catches the \403\ and silently retries on the next mirror in milliseconds.
+- **Why it’s permanent:** Because the instances are hosted across hundreds of different ASNs globally by the community. Meta/YouTube cannot ban all of them at once.
+
+### 2. IPv6 Native Subnet Rotation (VPS Strategy)
+For YouTube, Datacenter IPv4s are burned quickly, but IPv6 has a nearly infinite address space (\/64\ gives you eighteen quintillion IPs).
+- **How it works:** We configure our Hetzner server to bind all \yt-dlp\ or proxy requests to a random IPv6 address from our \/64\ subnet on every single hit.
+- **Result:** YouTube’s BotGuard sees a completely fresh, unique IP every time. A ban is statistically impossible to enforce at the individual IP level.
+
+### 3. Bypassing Meta's Cloudflare Block (Client-Side)
+Meta blocks Datacenter ASNs (like Cloudflare) instantly. To get around this without paying for Residential Proxies:
+- **Client-Side Extraction (Browser CORS):** The user's own browser runs the fetch via a raw CORS proxy. Meta sees the user's natural Residential IP (e.g., Jio, Airtel) fetching the metadata. Zero ban risk for our servers, because the user's own internet is used to scrape the payload link!
+
+### 4. Smart Proxy Waterfalls (The True Vibe)
+1. **Public Cobalt Array:** Try 3 different public instances.
+2. **VPS IPv6 Rotation:** Native extraction using randomized IPv6.
+3. **Ghost Browser Proxy:** Client-side CORS extraction.
+4. **ASocks Fallback:** The final, paid net to ensure 100% success.

@@ -22,11 +22,10 @@
  */
 
 import { Router, Request, Response as ExpressResponse } from 'express';
-type FetchResponse = Awaited<ReturnType<typeof fetch>>;
+import nodeFetch, { FormData as NodeFormData, fileFromSync } from 'node-fetch';
 import multer from 'multer';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Blob } from 'buffer';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { SocksProxyAgent } from 'socks-proxy-agent';
 import { ProxyKitchen } from '../proxyService';
@@ -56,14 +55,13 @@ interface GoFileUploaderData {
 // ── Helper: typed fetch with timeout ───────────────────────────
 async function fetchWithTimeout(
   url: string,
-  options: RequestInit & { agent?: any } = {},
+  options: any = {},
   timeoutMs = 15000,
-): Promise<FetchResponse> {
+): Promise<any> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    // node-fetch / undici both accept signal
-    return await fetch(url, { ...options, signal: ctrl.signal as any });
+    return await nodeFetch(url, { ...options, signal: ctrl.signal as any });
   } finally {
     clearTimeout(timer);
   }
@@ -101,14 +99,10 @@ async function uploadToGoFile(
 ): Promise<GoFileUploaderData> {
   const server = await getGoFileServer(agent);
 
-  // Build FormData with file stream
-  const fileStream = fs.createReadStream(filePath);
-  const formData = new FormData();
-  
-  // Read file into blob for FormData (Node 18+)
-  const fileBuffer = fs.readFileSync(filePath);
-  const blob = new Blob([fileBuffer], { type: mimeType || 'application/octet-stream' }) as any;
-  formData.append('file', blob, fileName);
+  // Build FormData with file from disk (node-fetch supports fileFromSync)
+  const formData = new NodeFormData();
+  const fileBlob = fileFromSync(filePath, mimeType || 'application/octet-stream');
+  formData.append('file', fileBlob, fileName);
 
   const opts: any = {
     method: 'POST',
@@ -122,9 +116,6 @@ async function uploadToGoFile(
     opts,
     10 * 60 * 1000, // 10 min max for large files
   );
-
-  // Cleanup stream
-  fileStream.destroy();
 
   if (!uploadResp.ok) throw new Error(`GoFile upload HTTP ${uploadResp.status}`);
   const result: any = await uploadResp.json();

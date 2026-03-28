@@ -564,11 +564,11 @@ async function modeA(uiLog = null) {
       }
     }
 
+    binnedBatch += binnedThisBatch;
     const pct = Math.round(((i + batch.length) / rawQueue.length) * 100);
-    log('📊', `Progress: ${pct}% | ✅ ${C.green}${verified}${C.reset} verified | 🗑️ ${binnedBatch += binnedThisBatch} binned / ${formatNum(i + batch.length)} total`);
-    if (batchNum % 20 === 0 || pct % 10 === 0) {
-      ui('init', `🦀 VERIFY ${pct}% — ✅ ${verified} verified | 🗑️ ${binnedBatch} binned | ${formatNum(i + batch.length)}/${formatNum(rawQueue.length)}`);
-    }
+    log('📊', `Progress: ${pct}% | ✅ ${C.green}${verified}${C.reset} verified | 🗑️ ${binnedBatch} binned | batch ${batchNum}/${totalBatches}`);
+    // UI update every batch so user always sees live progress
+    ui('init', `🦀 VERIFY ${pct}% | batch ${batchNum}/${totalBatches} | ✅ ${verified} verified | 🗑️ ${binnedBatch} binned | ${formatNum(i + batch.length)}/${formatNum(rawQueue.length)}`);
   }
 
   // Flush remaining buffers
@@ -721,11 +721,9 @@ async function modeBoost(uiLog = null) {
     }
 
     const pct = Math.round(((i + batch.length) / rawQueue.length) * 100);
-    log('📊', `BOOST: ${pct}% done | ✅ ${C.green}${verified}${C.reset} to pool | 🗑️ ${binned} to bin | ${formatNum(i + batch.length)} total processed`);
-    // UI progress update every 10% or every 20 batches
-    if (batchNum % 20 === 0 || pct % 10 === 0) {
-      if (uiLog) uiLog('init', `🦀 VERIFYING ${pct}% — ✅ ${verified} verified | 🗑️ ${binned} binned | ${formatNum(i + batch.length)}/${formatNum(rawQueue.length)} checked`).catch(()=>{});
-    }
+    log('📊', `BOOST: ${pct}% | ✅ ${C.green}${verified}${C.reset} to pool | 🗑️ ${binned} to bin | batch ${batchNum}/${totalBatches} | ${formatNum(i + batch.length)} processed`);
+    // UI update every batch — user always sees live progress
+    if (uiLog) uiLog('init', `🚀 BOOST ${pct}% | batch ${batchNum}/${totalBatches} | ✅ ${verified} verified | 🗑️ ${binned} binned | ${formatNum(i + batch.length)}/${formatNum(rawQueue.length)}`).catch(()=>{});
   }
 
   // ── Step 3: Final flush — retry aggressively (most important data)
@@ -978,7 +976,7 @@ async function modeServer() {
       }
       res.end(JSON.stringify({ ok: true, msg: 'Attack started — verifying queue via local Rust' }));
       currentMode = 'A';
-      pushSyncLog('init', '⚔️ LOCAL ATTACK STARTED — Verifying raw queue via local Rust (500 concurrent)');
+      pushSyncLog('init', '⚔️ LOCAL ATTACK STARTED — Verifying raw queue via local Rust (150 concurrent)');
       modeA(pushSyncLog).then(r => {
         currentMode = null; currentProgress = r;
         pushSyncLog('success', `✅ LOCAL ATTACK DONE — Tested: ${(r.tested || 0).toLocaleString()}, Verified: +${r.verified || 0}, Binned: ${r.binned || 0}`);

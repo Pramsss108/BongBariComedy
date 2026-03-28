@@ -330,7 +330,6 @@ function AppContent() {
   return (
     <>
       <Router />
-      <RelayConsentBanner />
     </>
   );
 }

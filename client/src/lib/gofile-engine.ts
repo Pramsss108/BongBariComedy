@@ -3,6 +3,7 @@
  * High-leverage file sharing using GoFile.io public API
  * Updated March 2026: /getServer is dead → using /servers (array response)
  * Updated March 2026 v2: Server-side proxy upload (bypasses ISP/DNS blocks)
+ * Updated March 2026 v3: Server cache + multi-server retry for unbreakable uploads
  */
 
 import { buildApiUrl } from './queryClient';
@@ -28,7 +29,20 @@ export interface GoFileUploaderResponse {
   };
 }
 
-export async function getBestServer(): Promise<string> {
+// ── Known-good GoFile servers (hardcoded fallback if /servers API is down) ──
+const FALLBACK_SERVERS = [
+  'store-eu-par-4', 'store-eu-par-5', 'store-eu-par-6',
+  'store-na-miami-1', 'store-na-miami-2',
+];
+
+// ── Server list cache (5 minute TTL) ──────────────────────────────────────
+let _serverCache: { servers: string[]; expiry: number } | null = null;
+
+async function fetchServerList(): Promise<string[]> {
+  // Return cached list if still fresh
+  if (_serverCache && Date.now() < _serverCache.expiry) {
+    return _serverCache.servers;
+  }
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
@@ -36,21 +50,35 @@ export async function getBestServer(): Promise<string> {
     clearTimeout(timeout);
     const result: GoFileServerResponse = await response.json();
     if (result.status === 'ok' && result.data.servers?.length > 0) {
-      const idx = Math.floor(Math.random() * result.data.servers.length);
-      return result.data.servers[idx].name;
+      const names = result.data.servers.map(s => s.name);
+      _serverCache = { servers: names, expiry: Date.now() + 5 * 60 * 1000 };
+      return names;
     }
-    throw new Error('No active GoFile servers available');
-  } catch (error: any) {
-    if (error.name === 'AbortError') throw new Error('GoFile server unreachable — try P2P mode instead');
-    console.error('GoFile getBestServer Error:', error);
-    throw error;
+  } catch {
+    // API unreachable — use hardcoded fallback
   }
+  return FALLBACK_SERVERS;
 }
 
-export function uploadFileWithProgress(
-  file: File, 
-  server: string, 
-  onProgress: (percent: number) => void
+export async function getBestServer(): Promise<string> {
+  const servers = await fetchServerList();
+  if (servers.length === 0) throw new Error('GoFile server unreachable — try P2P mode instead');
+  return servers[Math.floor(Math.random() * servers.length)];
+}
+
+/** Get multiple servers in random order (for retry logic) */
+export async function getServerPool(): Promise<string[]> {
+  const servers = await fetchServerList();
+  if (servers.length === 0) return [...FALLBACK_SERVERS].sort(() => Math.random() - 0.5);
+  // Shuffle for load distribution
+  return [...servers].sort(() => Math.random() - 0.5);
+}
+
+/** Upload to a single GoFile server via XHR */
+function uploadToServer(
+  file: File,
+  server: string,
+  onProgress: (percent: number) => void,
 ): Promise<GoFileUploaderResponse['data']> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
@@ -74,32 +102,60 @@ export function uploadFileWithProgress(
             } else {
               reject(new Error(response.status || 'Upload failed'));
             }
-          } catch (e) {
+          } catch {
             reject(new Error('Failed to parse upload response'));
           }
         } else {
-          reject(new Error(`Server returned status ${xhr.status}`));
+          reject(new Error(`GoFile server ${server} returned ${xhr.status}`));
         }
       }
     };
 
-    xhr.onerror = () => reject(new Error('Network error — GoFile may be down. Try P2P mode.'));
-    xhr.ontimeout = () => reject(new Error('Upload timed out — try P2P mode instead.'));
-    xhr.timeout = 300000; // 5 min max
+    xhr.onerror = () => reject(new Error(`Network error on ${server}`));
+    xhr.ontimeout = () => reject(new Error(`Upload timed out on ${server}`));
+    xhr.timeout = 300000; // 5 min max per server
     xhr.open('POST', `https://${server}.gofile.io/uploadFile`);
     xhr.send(formData);
   });
 }
 
 /**
+ * Upload with automatic multi-server retry.
+ * Tries up to 3 different GoFile servers before giving up.
+ * Progress resets to 0 on each retry attempt.
+ */
+export async function uploadFileWithProgress(
+  file: File,
+  _server: string, // kept for backwards compat, actual server picked from pool
+  onProgress: (percent: number) => void
+): Promise<GoFileUploaderResponse['data']> {
+  const pool = await getServerPool();
+  const maxAttempts = Math.min(3, pool.length);
+  let lastError: Error = new Error('No GoFile servers available');
+
+  for (let i = 0; i < maxAttempts; i++) {
+    const server = pool[i];
+    try {
+      onProgress(0);
+      const data = await uploadToServer(file, server, onProgress);
+      return data;
+    } catch (err: any) {
+      lastError = err;
+      console.warn(`[GoFile] Server ${server} failed (attempt ${i + 1}/${maxAttempts}):`, err.message);
+      // Short pause before retry
+      if (i < maxAttempts - 1) await new Promise(r => setTimeout(r, 800));
+    }
+  }
+
+  throw new Error(`All GoFile servers failed — ${lastError.message}. Try P2P mode.`);
+}
+
+/**
  * SERVER-SIDE UPLOAD — bypasses ISP/DNS blocks
- * Browser → POST /api/share/upload → Render → [proxy pool] → GoFile
+ * Browser → POST /api/share/upload → VPS (api.bongbari.com) → GoFile
  * 
- * This is the PRIMARY upload method. Direct XHR to GoFile is the fallback
- * (in case Render itself is down).
- * 
- * Progress tracking works because we measure upload from browser → our server.
- * The server→GoFile hop is fast (datacenter) so total progress feels accurate.
+ * Used as fallback when direct GoFile fails.
+ * Progress: 0–90% = browser→VPS upload, 90–100% animates while VPS→GoFile runs.
  */
 export function uploadFileViaServer(
   file: File,
@@ -110,16 +166,37 @@ export function uploadFileViaServer(
     const formData = new FormData();
     formData.append('file', file);
 
+    // Animate progress from 90 → 99 while waiting for VPS→GoFile
+    let animTimer: ReturnType<typeof setInterval> | null = null;
+    let currentPct = 0;
+
+    const startTailAnimation = () => {
+      if (animTimer) return;
+      animTimer = setInterval(() => {
+        if (currentPct < 99) {
+          currentPct = Math.min(99, currentPct + 0.4);
+          onProgress(Math.round(currentPct));
+        }
+      }, 250);
+    };
+
+    const stopTailAnimation = () => {
+      if (animTimer) { clearInterval(animTimer); animTimer = null; }
+    };
+
     xhr.upload.addEventListener('progress', (event) => {
       if (event.lengthComputable) {
-        // Map browser→server upload as 0–90%, server→GoFile as implicit 90–100%
-        const percent = Math.round((event.loaded / event.total) * 90);
-        onProgress(percent);
+        // Map browser→server upload as 0–90%
+        currentPct = Math.round((event.loaded / event.total) * 90);
+        onProgress(currentPct);
+        // When browser→server part completes, start tail animation
+        if (event.loaded >= event.total) startTailAnimation();
       }
     });
 
     xhr.onreadystatechange = () => {
       if (xhr.readyState === XMLHttpRequest.DONE) {
+        stopTailAnimation();
         if (xhr.status === 200) {
           try {
             const body = JSON.parse(xhr.responseText);
@@ -144,14 +221,13 @@ export function uploadFileViaServer(
       }
     };
 
-    xhr.onerror = () => reject(new Error('Network error connecting to upload server'));
-    xhr.ontimeout = () => reject(new Error('Upload timed out — try P2P mode instead.'));
+    xhr.onerror = () => { stopTailAnimation(); reject(new Error('Network error connecting to upload server')); };
+    xhr.ontimeout = () => { stopTailAnimation(); reject(new Error('Upload timed out — try P2P mode instead.')); };
     xhr.timeout = 11 * 60 * 1000; // 11 min (slightly above server's 10 min)
     xhr.open('POST', buildApiUrl('/api/share/upload'));
     xhr.send(formData);
   });
 }
-
 /* ── Link Cloaking: Encode/Decode GoFile data into branded short URLs ──
    Strategy: Pack file metadata (gofile code + filename + size) into a
    single URL-safe token. XOR with a fixed key then base64url encode.

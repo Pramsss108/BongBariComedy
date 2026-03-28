@@ -137,30 +137,38 @@ const BongShare = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  /* ── Link mode: upload status label ── */
+  const [uploadPhase, setUploadPhase] = useState<string>('');
+
   /* ── Link mode: GoFile upload ── */
   const handleLinkUpload = async () => {
     if (!file) return;
     setMode('link');
     setLinkStatus('uploading');
     setLinkProgress(0);
+    setUploadPhase('Connecting to GoFile…');
     try {
-      let data: Awaited<ReturnType<typeof uploadFileViaServer>>;
+      let data: Awaited<ReturnType<typeof uploadFileWithProgress>>;
       try {
-        // PRIMARY: Server-side proxy (bypasses ISP/DNS blocks on GoFile)
-        data = await uploadFileViaServer(file, (p) => setLinkProgress(p));
-      } catch (serverErr: any) {
-        // FALLBACK: Direct GoFile upload (works if ISP is fine but our Render is down)
-        console.warn('[BongShare] Server proxy failed, trying direct GoFile:', serverErr.message);
-        setLinkProgress(0);
+        // PRIMARY: Direct GoFile from user's residential IP (multi-server retry)
+        setUploadPhase('Uploading directly to GoFile…');
         const server = await getBestServer();
         data = await uploadFileWithProgress(file, server, (p) => setLinkProgress(p));
+      } catch (directErr: any) {
+        // FALLBACK: VPS proxy (if ISP blocks GoFile directly or all servers failed)
+        console.warn('[BongShare] Direct GoFile failed, trying VPS proxy:', directErr.message);
+        setLinkProgress(0);
+        setUploadPhase('Routing via Bong Bari relay…');
+        data = await uploadFileViaServer(file, (p) => setLinkProgress(p));
       }
       const brandedUrl = buildBongBariShareUrl(data.code, file.name, file.size);
       setShareLink(brandedUrl);
       setLinkStatus('success');
+      setUploadPhase('');
       toast({ title: 'Ready to share!', description: 'Link generated — copy it below.' });
     } catch (err: any) {
       setLinkStatus('error');
+      setUploadPhase('');
       toast({ variant: 'destructive', title: 'Upload Failed', description: err.message || 'Something went wrong.' });
     }
   };
@@ -258,7 +266,7 @@ const BongShare = () => {
         )}
 
         {/* ── MAIN ── */}
-        <main className="flex-1 flex flex-col items-center justify-center max-w-3xl mx-auto w-full px-4 sm:px-6 md:px-8 relative z-10 min-h-0 overflow-y-auto">
+        <main className="flex-1 flex flex-col items-center justify-center max-w-3xl mx-auto w-full px-4 sm:px-6 md:px-8 relative z-10 min-h-0 overflow-hidden">
           <AnimatePresence mode="wait">
 
             {/* ===== SCREEN 1: FILE PICKER (no file yet) ===== */}
@@ -452,7 +460,7 @@ const BongShare = () => {
                   ) : (
                     <div className="flex items-center justify-center gap-2 py-2">
                       <div className="w-2 h-2 rounded-full bg-[#40ceed] animate-pulse" />
-                      <span className="text-xs font-mono text-[#40ceed]/60">Transferring packets…</span>
+                      <span className="text-xs font-mono text-[#40ceed]/60">{uploadPhase || 'Transferring packets…'}</span>
                     </div>
                   )}
 
@@ -471,7 +479,11 @@ const BongShare = () => {
                     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-mono" style={{ background: 'rgba(64,206,237,0.06)', border: '1px solid rgba(64,206,237,0.15)' }}>
                       <Signal className="w-2.5 h-2.5 text-[#40ceed]" />
                       <span className="text-[#40ceed]/50">Route:</span>
-                      <span className="text-[#40ceed]/80">{userIp || 'Residential'} → VPS Proxy → GoFile</span>
+                      <span className="text-[#40ceed]/80">
+                        {uploadPhase?.includes('relay')
+                          ? `${userIp || 'You'} → VPS Relay → GoFile`
+                          : `${userIp || 'You'} → GoFile Direct`}
+                      </span>
                     </div>
                   </div>
 

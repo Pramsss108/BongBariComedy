@@ -27,6 +27,9 @@ sym_shape_infer_temp.onnx
 
 # Media & Large Assets
 *.mp4
+*.mov
+*.avi
+*.mkv
 *.webm
 *.mp3
 *.wav

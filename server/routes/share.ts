@@ -46,10 +46,12 @@ const upload = multer({
 interface GoFileUploaderData {
   downloadPage: string;
   code: string;
+  parentFolderCode?: string;
   parentFolder: string;
-  fileId: string;
-  fileName: string;
+  id: string;
+  name: string;
   md5: string;
+  guestToken?: string;
 }
 
 // ── Helper: typed fetch with timeout ───────────────────────────
@@ -120,7 +122,11 @@ async function uploadToGoFile(
   if (!uploadResp.ok) throw new Error(`GoFile upload HTTP ${uploadResp.status}`);
   const result: any = await uploadResp.json();
   if (result.status !== 'ok') throw new Error(`GoFile upload failed: ${result.status}`);
-  return result.data as GoFileUploaderData;
+  const d = result.data as GoFileUploaderData;
+  // Normalize: GoFile renamed 'code' to 'parentFolderCode'
+  if (!d.code && d.parentFolderCode) d.code = d.parentFolderCode;
+  if (!d.code && d.downloadPage) d.code = d.downloadPage.split('/d/').pop() || '';
+  return d;
 }
 
 // ── Core: Get sorted proxy list for GoFile (gf-tagged first) ────

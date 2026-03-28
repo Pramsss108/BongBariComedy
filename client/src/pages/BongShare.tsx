@@ -161,7 +161,9 @@ const BongShare = () => {
         setUploadPhase('Routing via Bong Bari relay…');
         data = await uploadFileViaServer(file, (p) => setLinkProgress(p));
       }
-      const brandedUrl = buildBongBariShareUrl(data.code, file.name, file.size);
+      const gofileCode = data.code || data.parentFolderCode || data.downloadPage?.split('/d/').pop() || '';
+      if (!gofileCode) throw new Error('Upload succeeded but no download code received');
+      const brandedUrl = buildBongBariShareUrl(gofileCode, file.name, file.size);
       setShareLink(brandedUrl);
       setLinkStatus('success');
       setUploadPhase('');

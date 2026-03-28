@@ -19,13 +19,16 @@ export interface GoFileUploaderResponse {
   status: string;
   data: {
     downloadPage: string;
-    code: string;
+    code?: string;
+    parentFolderCode?: string;
     parentFolder: string;
-    fileId: string;
-    fileName: string;
+    id: string;
+    name: string;
     md5: string;
-    directLink: string;
-    info: string;
+    guestToken?: string;
+    mimetype?: string;
+    size?: number;
+    type?: string;
   };
 }
 
@@ -98,7 +101,11 @@ function uploadToServer(
           try {
             const response: GoFileUploaderResponse = JSON.parse(xhr.responseText);
             if (response.status === 'ok') {
-              resolve(response.data);
+              // Normalize: GoFile renamed 'code' to 'parentFolderCode'
+              const d = response.data;
+              if (!d.code && d.parentFolderCode) d.code = d.parentFolderCode;
+              if (!d.code && d.downloadPage) d.code = d.downloadPage.split('/d/').pop() || '';
+              resolve(d);
             } else {
               reject(new Error(response.status || 'Upload failed'));
             }

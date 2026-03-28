@@ -20,6 +20,7 @@ import {
   Lock,
   Eye,
   EyeOff,
+  Signal,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getBestServer, uploadFileWithProgress, uploadFileViaServer, buildBongBariShareUrl } from '@/lib/gofile-engine';
@@ -102,6 +103,15 @@ const BongShare = () => {
   const [p2pProgress, setP2pProgress] = useState(0);
   const [p2pLink, setP2pLink] = useState('');
   const senderRef = useRef<{ destroy: () => void } | null>(null);
+
+  /* ── Your residential proxy IP ── */
+  const [userIp, setUserIp] = useState<string | null>(null);
+  useEffect(() => {
+    fetch('https://api.ipify.org?format=json')
+      .then(r => r.json())
+      .then((d: { ip: string }) => setUserIp(d.ip))
+      .catch(() => {});
+  }, []);
 
   /* ── Drag & drop ── */
   const onDragOver = useCallback((e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); }, []);
@@ -237,8 +247,20 @@ const BongShare = () => {
           <p className="text-[10px] uppercase tracking-[0.15em] text-[#f0c12c] font-bold hidden sm:block whitespace-nowrap shrink-0">Send anything. No stress.</p>
         </header>
 
+        {/* ── YOUR PROXY BADGE ── */}
+        {userIp && (
+          <div className="flex-none w-full flex justify-center pt-2 pb-1 relative z-20">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-mono select-none" style={{ background: 'rgba(64,206,237,0.08)', border: '1px solid rgba(64,206,237,0.2)' }}>
+              <Signal className="w-3 h-3 text-[#40ceed]" />
+              <span className="text-[#40ceed]/70">Your Proxy:</span>
+              <span className="text-[#40ceed] font-bold">{userIp}</span>
+              <span className="text-emerald-400/60">• Residential</span>
+            </div>
+          </div>
+        )}
+
         {/* ── MAIN ── */}
-        <main className="flex-1 flex flex-col items-center justify-center max-w-3xl mx-auto w-full px-4 sm:px-6 md:px-8 relative z-10 min-h-0">
+        <main className="flex-1 flex flex-col items-center justify-center max-w-3xl mx-auto w-full px-4 sm:px-6 md:px-8 relative z-10 min-h-0 overflow-y-auto">
           <AnimatePresence mode="wait">
 
             {/* ===== SCREEN 1: FILE PICKER (no file yet) ===== */}
@@ -444,6 +466,15 @@ const BongShare = () => {
                       <span className="flex items-center gap-1"><Zap className="w-3 h-3 text-amber-500" /> CDN</span>
                     </div>
                     <span className="text-[9px] font-bold uppercase tracking-widest text-[#e2e2e2]">{formatBytes(file.size)} / 10 GB</span>
+                  </div>
+
+                  {/* Upload route indicator */}
+                  <div className="flex items-center justify-center gap-2 py-1">
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-mono" style={{ background: 'rgba(64,206,237,0.06)', border: '1px solid rgba(64,206,237,0.15)' }}>
+                      <Signal className="w-2.5 h-2.5 text-[#40ceed]" />
+                      <span className="text-[#40ceed]/50">Route:</span>
+                      <span className="text-[#40ceed]/80">{userIp || 'Residential'} → VPS Proxy → GoFile</span>
+                    </div>
                   </div>
 
                   {linkStatus === 'success' && (

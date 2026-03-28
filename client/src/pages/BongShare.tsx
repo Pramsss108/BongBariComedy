@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'wouter';
 import { SEOHead } from '@/components/SEOHead';
@@ -15,6 +15,32 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getBestServer, uploadFileWithProgress } from '@/lib/gofile-engine';
+
+const IDLE_JOKES = [
+  '"Drag koro, drop koro, life e first time kichu koro." 🫠',
+  '"File ta eto boro je WhatsApp boleche — NO." 😤',
+  '"Tomar 4GB meme folder? Amra ready." 💪',
+  '"Pendrive khojar age ekhane try koro." 🔌',
+  '"Upload koro — judge korbo na." 🙈',
+  '"Google Drive boleche 15GB shesh. Amra bolchi — chill." ☕',
+  '"Eto file pathao je postman-o lojja pay." 📦',
+];
+
+const UPLOAD_JOKES = [
+  '"Uploading… chai er cup ta niye esho." ☕',
+  '"Tor internet er speed dekhe rickshaw-o hasche." 🛺',
+  '"Relax. Amra tomar ex ke pathacchi na, file pathacchi." 😏',
+  '"Uploading eto fast je tui refresh marar agei hobe." ⚡',
+  '"Bong Bari server gulaan gym kore — heavy lifting expert." 🏋️',
+];
+
+const SUCCESS_JOKES = [
+  '"Done! Ebar link ta pathiye bondhur kache credit nao." 🏆',
+  '"Upload complete — tui official tech-savvy." 🤓',
+  '"Link ready. Tor baba-o impress hobe." 👨‍👦',
+  '"Mission accomplished. James Bond-o parto na." 🕶️',
+  '"Ekhon share koro. Baki karma." 🎬',
+];
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
@@ -94,6 +120,19 @@ const BongShare = () => {
   };
 
   const isTransferring = uploadStatus === 'uploading' || uploadStatus === 'success';
+
+  // Rotating jokes
+  const [jokeIdx, setJokeIdx] = useState(0);
+  const jokePool = useMemo(() => {
+    if (uploadStatus === 'uploading') return UPLOAD_JOKES;
+    if (uploadStatus === 'success') return SUCCESS_JOKES;
+    return IDLE_JOKES;
+  }, [uploadStatus]);
+  useEffect(() => {
+    const t = setInterval(() => setJokeIdx(i => (i + 1) % jokePool.length), 5000);
+    return () => clearInterval(t);
+  }, [jokePool]);
+  const currentJoke = jokePool[jokeIdx % jokePool.length];
 
   return (
     <>
@@ -344,8 +383,24 @@ const BongShare = () => {
           </AnimatePresence>
         </main>
 
+        {/* ── Joke ticker ── */}
+        <div className="flex-none w-full py-3 flex justify-center relative z-10">
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={currentJoke}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.4 }}
+              className="text-[11px] text-[#f0c12c]/60 font-medium italic text-center px-4 max-w-lg"
+            >
+              {currentJoke}
+            </motion.p>
+          </AnimatePresence>
+        </div>
+
         {/* ── Footer ── */}
-        <footer className="flex-none w-full py-5 flex justify-center border-t border-white/5 relative z-10">
+        <footer className="flex-none w-full py-4 flex justify-center border-t border-white/5 relative z-10">
           <p className="text-[9px] font-bold tracking-[0.4em] text-[#d1c5ad]/40 uppercase">
             Files auto-delete after 10 days of inactivity
           </p>

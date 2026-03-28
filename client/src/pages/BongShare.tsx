@@ -22,7 +22,7 @@ import {
   EyeOff,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getBestServer, uploadFileWithProgress, buildBongBariShareUrl } from '@/lib/gofile-engine';
+import { getBestServer, uploadFileWithProgress, uploadFileViaServer, buildBongBariShareUrl } from '@/lib/gofile-engine';
 import { createSender, buildP2PShareUrl, type P2PStatus } from '@/lib/p2p-engine';
 
 /* ── Comedy one-liners ── */
@@ -135,8 +135,17 @@ const BongShare = () => {
     setLinkStatus('uploading');
     setLinkProgress(0);
     try {
-      const server = await getBestServer();
-      const data = await uploadFileWithProgress(file, server, (p) => setLinkProgress(p));
+      let data: Awaited<ReturnType<typeof uploadFileViaServer>>;
+      try {
+        // PRIMARY: Server-side proxy (bypasses ISP/DNS blocks on GoFile)
+        data = await uploadFileViaServer(file, (p) => setLinkProgress(p));
+      } catch (serverErr: any) {
+        // FALLBACK: Direct GoFile upload (works if ISP is fine but our Render is down)
+        console.warn('[BongShare] Server proxy failed, trying direct GoFile:', serverErr.message);
+        setLinkProgress(0);
+        const server = await getBestServer();
+        data = await uploadFileWithProgress(file, server, (p) => setLinkProgress(p));
+      }
       const brandedUrl = buildBongBariShareUrl(data.code, file.name, file.size);
       setShareLink(brandedUrl);
       setLinkStatus('success');

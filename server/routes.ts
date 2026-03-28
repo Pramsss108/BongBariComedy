@@ -18,6 +18,7 @@ import {
   registerDebugRoutes,
   registerDownloaderRoutes
 } from "./routes/index";
+import { registerShareRoutes } from './routes/share';
 
 /**
  * Shared session store for the application.
@@ -179,6 +180,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerCmsRoutes(app);
   registerSystemRoutes(app);
   registerDownloaderRoutes(app, isAuthenticated); // Phrase 2/3/5/14/16: Social Media Downloader (now with Auth)
+  registerShareRoutes(app); // BongShare: server-side GoFile proxy upload with pool fallback
 
   // --- Administrative Diagnostics ---
   app.get('/api/admin/device-logs', isAuthenticated, (req, res) => {

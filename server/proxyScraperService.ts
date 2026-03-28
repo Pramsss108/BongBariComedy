@@ -147,6 +147,7 @@ export interface ProxyPlatforms {
   lastCheckedAt?: string; // Phase 14: ISO timestamp of last verification
   tier?: 'platinum' | 'gold' | 'silver' | 'bronze'; // Phase 14: computed quality tier
   score?: number;         // Stealth: composite quality score (0-100)
+  gf?: boolean;           // GoFile reachable via this proxy (tagged by BongShare upload engine)
 }
 
 // ── Phase 15: Telegram public web scrape sources ─────────────

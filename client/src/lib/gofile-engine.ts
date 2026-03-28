@@ -2,7 +2,10 @@
  * Bong Share - GoFile API Engine
  * High-leverage file sharing using GoFile.io public API
  * Updated March 2026: /getServer is dead → using /servers (array response)
+ * Updated March 2026 v2: Server-side proxy upload (bypasses ISP/DNS blocks)
  */
+
+import { buildApiUrl } from './queryClient';
 
 export interface GoFileServerResponse {
   status: string;
@@ -84,6 +87,67 @@ export function uploadFileWithProgress(
     xhr.ontimeout = () => reject(new Error('Upload timed out — try P2P mode instead.'));
     xhr.timeout = 300000; // 5 min max
     xhr.open('POST', `https://${server}.gofile.io/uploadFile`);
+    xhr.send(formData);
+  });
+}
+
+/**
+ * SERVER-SIDE UPLOAD — bypasses ISP/DNS blocks
+ * Browser → POST /api/share/upload → Render → [proxy pool] → GoFile
+ * 
+ * This is the PRIMARY upload method. Direct XHR to GoFile is the fallback
+ * (in case Render itself is down).
+ * 
+ * Progress tracking works because we measure upload from browser → our server.
+ * The server→GoFile hop is fast (datacenter) so total progress feels accurate.
+ */
+export function uploadFileViaServer(
+  file: File,
+  onProgress: (percent: number) => void,
+): Promise<GoFileUploaderResponse['data']> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    const formData = new FormData();
+    formData.append('file', file);
+
+    xhr.upload.addEventListener('progress', (event) => {
+      if (event.lengthComputable) {
+        // Map browser→server upload as 0–90%, server→GoFile as implicit 90–100%
+        const percent = Math.round((event.loaded / event.total) * 90);
+        onProgress(percent);
+      }
+    });
+
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState === XMLHttpRequest.DONE) {
+        if (xhr.status === 200) {
+          try {
+            const body = JSON.parse(xhr.responseText);
+            if (body.status === 'ok') {
+              onProgress(100);
+              resolve(body.data);
+            } else if (body.fallback === 'p2p') {
+              reject(new Error('GoFile unreachable via all server routes. Try P2P mode.'));
+            } else {
+              reject(new Error(body.message || 'Server upload failed'));
+            }
+          } catch {
+            reject(new Error('Failed to parse server response'));
+          }
+        } else if (xhr.status === 413) {
+          reject(new Error('File too large — maximum 10 GB per transfer'));
+        } else if (xhr.status === 502 || xhr.status === 504) {
+          reject(new Error('GoFile unreachable via all routes. Try P2P mode.'));
+        } else {
+          reject(new Error(`Upload server error (${xhr.status})`));
+        }
+      }
+    };
+
+    xhr.onerror = () => reject(new Error('Network error connecting to upload server'));
+    xhr.ontimeout = () => reject(new Error('Upload timed out — try P2P mode instead.'));
+    xhr.timeout = 11 * 60 * 1000; // 11 min (slightly above server's 10 min)
+    xhr.open('POST', buildApiUrl('/api/share/upload'));
     xhr.send(formData);
   });
 }

@@ -9,8 +9,10 @@ import {
   Zap,
   ArrowLeft,
   AlertTriangle,
+  Clock,
+  HardDrive,
 } from 'lucide-react';
-import { resolveGoFileUrl } from '@/lib/gofile-engine';
+import { resolveShareUrl } from '@/lib/gofile-engine';
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
@@ -48,7 +50,7 @@ const BongShareDownload = () => {
   const [, setLocation] = useLocation();
   const code = params.code || '';
 
-  const resolved = useMemo(() => resolveGoFileUrl(code), [code]);
+  const resolved = useMemo(() => resolveShareUrl(code), [code]);
   const [jokeIdx, setJokeIdx] = useState(0);
 
   useEffect(() => {
@@ -88,8 +90,17 @@ const BongShareDownload = () => {
     );
   }
 
-  const { downloadPage, fileName, fileSize } = resolved;
+  const { downloadUrl, fileName, fileSize, isDirect, host, expires } = resolved;
   const icon = getFileIcon(fileName);
+
+  /** For GoFile (>1GB), trigger a fetch→blob download so they never see GoFile UI */
+  const [proxyProgress, setProxyProgress] = useState(0);
+  const [proxyActive, setProxyActive] = useState(false);
+
+  const handleGoFileProxyDownload = async () => {
+    // Open in new tab — branded message already shown, this is the honest fallback
+    window.open(downloadUrl, '_blank', 'noopener,noreferrer');
+  };
 
   return (
     <>
@@ -151,16 +162,41 @@ const BongShareDownload = () => {
                 <span className="flex items-center gap-1"><FileText className="w-3 h-3 text-blue-400" /> Verified</span>
               </div>
 
-              {/* Download button */}
-              <a
-                href={downloadPage}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full h-14 sm:h-16 bg-[#f0c12c] text-[#695200] font-extrabold uppercase text-sm tracking-widest rounded-full hover:brightness-110 active:scale-[0.97] transition-all shadow-lg flex items-center justify-center gap-3 no-underline"
-              >
-                <Download className="w-5 h-5" />
-                Download Now
-              </a>
+              {/* Litterbox expiry warning */}
+              {expires && (
+                <div className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                  <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+                  <p className="text-[11px] text-amber-300/80 font-medium">This link expires in <strong className="text-amber-300">72 hours</strong> — download it now!</p>
+                </div>
+              )}
+
+              {/* Download button — different per tier */}
+              {isDirect ? (
+                /* Tier 1 & 2: Catbox / Litterbox → direct file download, no third-party */
+                <a
+                  href={downloadUrl}
+                  download={fileName}
+                  className="w-full h-14 sm:h-16 bg-[#f0c12c] text-[#695200] font-extrabold uppercase text-sm tracking-widest rounded-full hover:brightness-110 active:scale-[0.97] transition-all shadow-lg flex items-center justify-center gap-3 no-underline"
+                >
+                  <Download className="w-5 h-5" />
+                  Download Now
+                </a>
+              ) : (
+                /* Tier 3: GoFile (>1 GB) → branded message + honest redirect */
+                <div className="w-full flex flex-col gap-3">
+                  <div className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/15">
+                    <HardDrive className="w-4 h-4 text-blue-400 shrink-0" />
+                    <p className="text-[11px] text-blue-300/70 font-medium">Large file ({formatBytes(fileSize)}) — opens Bong Bari's secure vault for download</p>
+                  </div>
+                  <button
+                    onClick={handleGoFileProxyDownload}
+                    className="w-full h-14 sm:h-16 bg-[#f0c12c] text-[#695200] font-extrabold uppercase text-sm tracking-widest rounded-full hover:brightness-110 active:scale-[0.97] transition-all shadow-lg flex items-center justify-center gap-3"
+                  >
+                    <Download className="w-5 h-5" />
+                    Download Now
+                  </button>
+                </div>
+              )}
 
               {/* Send your own */}
               <button
@@ -192,7 +228,7 @@ const BongShareDownload = () => {
         {/* Footer */}
         <footer className="flex-none w-full py-3 sm:py-4 flex justify-center border-t border-white/5 relative z-10">
           <p className="text-[9px] font-bold tracking-[0.3em] text-[#d1c5ad]/30 uppercase text-center px-4">
-            Powered by Bong Bari &mdash; Files auto-delete after 10 days of inactivity
+            Powered by Bong Bari &mdash; {expires ? 'This link expires in 72 hours' : host === 'catbox' ? 'Permanent file link' : 'Files auto-delete after 10 days of inactivity'}
           </p>
         </footer>
       </div>

@@ -158,73 +158,73 @@ app.get('/health', (_req, res) => {
           log(`serving on port ${port}`);
 
           // Initialize Red Team Proxy Hunter (Phase 1 & 2)
-          // Startup: immediate hunt, then every 3 hours continuously
-          // Daily 3AM: full re-validation sweep to purge dead proxies
-          log('Initializing Red Team Proxy Hunter Auto-Scheduler...');
+          // PRODUCTION ONLY — proxy mining opens 200K+ connections and destroys local bandwidth
+          const isProd = process.env.NODE_ENV?.trim() === 'production';
+          if (isProd) {
+            log('Initializing Red Team Proxy Hunter Auto-Scheduler...');
 
-          // Phase 17: Boot Rust turbo-verifier sidecar (500+ concurrent tasks)
-          startRustVerifier();
-          process.on('exit',    () => stopRustVerifier());
-          process.on('SIGTERM', () => stopRustVerifier());
-          process.on('SIGINT',  () => stopRustVerifier());
+            // Phase 17: Boot Rust turbo-verifier sidecar (500+ concurrent tasks)
+            startRustVerifier();
+            process.on('exit',    () => stopRustVerifier());
+            process.on('SIGTERM', () => stopRustVerifier());
+            process.on('SIGINT',  () => stopRustVerifier());
 
-          // Set next hunt time on schedule so UI can show it
-          const setNextHunt = () => {
-            const next = new Date(Date.now() + 2 * 60 * 60 * 1000);
-            ProxyScraper.nextHuntAt = next;
-            ProxyScraper.huntDetails.nextHuntAt = next.toISOString();
-          };
-          const setNextReval = () => {
-            ProxyScraper.nextRevalAt = new Date(Date.now() + 30 * 60_000);
-          };
+            // Set next hunt time on schedule so UI can show it
+            const setNextHunt = () => {
+              const next = new Date(Date.now() + 2 * 60 * 60 * 1000);
+              ProxyScraper.nextHuntAt = next;
+              ProxyScraper.huntDetails.nextHuntAt = next.toISOString();
+            };
+            const setNextReval = () => {
+              ProxyScraper.nextRevalAt = new Date(Date.now() + 30 * 60_000);
+            };
 
-          // Immediate startup: initialize counters + geo-enrich existing + hunt
-          setNextHunt();
-          setNextReval();
-          // Initialize counters from existing storage (survives restart)
-          // Batch geo-enrich any proxies with missing country/tier data
-          // Delay initial hunt by 20s to ensure Rust verifier is ready
-          (async () => {
-            await ProxyScraper.initFromStorage();
-            await ProxyScraper.enrichExistingProxies();
-            await new Promise(r => setTimeout(r, 20_000));
-            ProxyScraper.runHunt();
-          })();
-
-          // Every 2 hours — continuous mining (+ auto-chains verify after each hunt)
-          cron.schedule('0 */2 * * *', () => {
-            log('Initiating Scheduled Red Team Proxy Hunt (2h cycle)...');
+            // Immediate startup: initialize counters + geo-enrich existing + hunt
             setNextHunt();
-            ProxyScraper.runHunt();
-          });
-
-          // Daily 3AM — full re-validate entire pool, purge dead proxies
-          cron.schedule('0 3 * * *', () => {
-            log('Initiating Daily Re-Validation Sweep (3AM full pass)...');
-            ProxyScraper.runRevalidation();
-          });
-
-          // Phase 14: Every 30 min — tiered revalidation + drain pending verify queue
-          cron.schedule('*/30 * * * *', () => {
-            log('Initiating Tiered Re-Validation Pass (30m cycle)...');
             setNextReval();
-            ProxyScraper.runRevalidation();
-            // Also drain any pending raw candidates accumulated by hunt or beast_harvest
-            ProxyScraper.runVerifyQueue();
-          });
+            (async () => {
+              await ProxyScraper.initFromStorage();
+              await ProxyScraper.enrichExistingProxies();
+              await new Promise(r => setTimeout(r, 20_000));
+              ProxyScraper.runHunt();
+            })();
 
-          // Phase 30: Every 12 hours — purge expired BIN entries (>24h old)
-          cron.schedule('0 */12 * * *', async () => {
-            log('Initiating BIN purge (removing entries >24h old)...');
-            const result = await ProxyKitchen.purgeBinExpired(24);
-            log(`BIN purge complete — ${result.purged} expired entries removed`);
-          });
+            // Every 2 hours — continuous mining (+ auto-chains verify after each hunt)
+            cron.schedule('0 */2 * * *', () => {
+              log('Initiating Scheduled Red Team Proxy Hunt (2h cycle)...');
+              setNextHunt();
+              ProxyScraper.runHunt();
+            });
 
-          // Daily 6AM — auto-audit all OSINT sources (probe, heal, report dead)
-          cron.schedule('0 6 * * *', async () => {
-            log('Initiating Daily Source Health Audit...');
-            await ProxyScraper.auditSourceHealth();
-          });
+            // Daily 3AM — full re-validate entire pool, purge dead proxies
+            cron.schedule('0 3 * * *', () => {
+              log('Initiating Daily Re-Validation Sweep (3AM full pass)...');
+              ProxyScraper.runRevalidation();
+            });
+
+            // Phase 14: Every 30 min — tiered revalidation + drain pending verify queue
+            cron.schedule('*/30 * * * *', () => {
+              log('Initiating Tiered Re-Validation Pass (30m cycle)...');
+              setNextReval();
+              ProxyScraper.runRevalidation();
+              ProxyScraper.runVerifyQueue();
+            });
+
+            // Phase 30: Every 12 hours — purge expired BIN entries (>24h old)
+            cron.schedule('0 */12 * * *', async () => {
+              log('Initiating BIN purge (removing entries >24h old)...');
+              const result = await ProxyKitchen.purgeBinExpired(24);
+              log(`BIN purge complete — ${result.purged} expired entries removed`);
+            });
+
+            // Daily 6AM — auto-audit all OSINT sources (probe, heal, report dead)
+            cron.schedule('0 6 * * *', async () => {
+              log('Initiating Daily Source Health Audit...');
+              await ProxyScraper.auditSourceHealth();
+            });
+          } else {
+            log('⏭ Proxy Hunter SKIPPED in dev mode (saves bandwidth)');
+          }
         });
       } catch (e: any) {
         onError(e);

@@ -181,7 +181,8 @@ export function uploadFileViaServer(
       if (animTimer) return;
       animTimer = setInterval(() => {
         if (currentPct < 99) {
-          currentPct = Math.min(99, currentPct + 0.4);
+          // Slower, more gradual animation for better UX
+          currentPct = Math.min(99, currentPct + 0.1);
           onProgress(Math.round(currentPct));
         }
       }, 250);
@@ -190,6 +191,7 @@ export function uploadFileViaServer(
     const stopTailAnimation = () => {
       if (animTimer) { clearInterval(animTimer); animTimer = null; }
     };
+
 
     xhr.upload.addEventListener('progress', (event) => {
       if (event.lengthComputable) {
@@ -235,6 +237,116 @@ export function uploadFileViaServer(
     xhr.send(formData);
   });
 }
+/* ── Catbox.moe Upload Engine ─────────────────────────────────────────
+   Primary host for files ≤200 MB. Returns a permanent direct-download URL
+   like https://files.catbox.moe/xyz123.mp4 — no third-party UI, 100% branded.
+   ─────────────────────────────────────────────────────────────────── */
+
+const CATBOX_MAX_SIZE = 200 * 1024 * 1024; // 200 MB
+const LITTERBOX_MAX_SIZE = 1024 * 1024 * 1024; // 1 GB
+
+/** Tier 1: permanent catbox (≤200 MB) */
+export function canUseCatbox(file: File): boolean {
+  return file.size <= CATBOX_MAX_SIZE;
+}
+
+/** Tier 2: temporary litterbox (200 MB – 1 GB, 72 h expiry) */
+export function canUseLitterbox(file: File): boolean {
+  return file.size > CATBOX_MAX_SIZE && file.size <= LITTERBOX_MAX_SIZE;
+}
+
+/**
+ * Upload to catbox.moe via server proxy (catbox has no CORS headers).
+ * Browser → Render /api/share/upload-direct → catbox.moe → direct URL back.
+ * Returns the direct download URL (e.g. https://files.catbox.moe/abc123.ext).
+ */
+export function uploadToCatbox(
+  file: File,
+  onProgress: (percent: number) => void,
+): Promise<string> {
+  return uploadViaDirectProxy(file, 'catbox', onProgress);
+}
+
+/**
+ * Upload to litterbox.catbox.moe via server proxy (no CORS).
+ * Browser → Render /api/share/upload-direct → litterbox → direct URL back.
+ * Returns a direct download URL like https://litter.catbox.moe/abc123.ext.
+ */
+export function uploadToLitterbox(
+  file: File,
+  onProgress: (percent: number) => void,
+): Promise<string> {
+  return uploadViaDirectProxy(file, 'litterbox', onProgress);
+}
+
+/**
+ * Shared proxy upload for catbox/litterbox.
+ * Progress: 0–90% = browser → Render, 90–100% animates while Render → host.
+ */
+function uploadViaDirectProxy(
+  file: File,
+  host: 'catbox' | 'litterbox',
+  onProgress: (percent: number) => void,
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('host', host);
+
+    let animTimer: ReturnType<typeof setInterval> | null = null;
+    let currentPct = 0;
+
+    const startTail = () => {
+      if (animTimer) return;
+      animTimer = setInterval(() => {
+        if (currentPct < 99) {
+          currentPct = Math.min(99, currentPct + 0.15);
+          onProgress(Math.round(currentPct));
+        }
+      }, 250);
+    };
+    const stopTail = () => {
+      if (animTimer) { clearInterval(animTimer); animTimer = null; }
+    };
+
+    xhr.upload.addEventListener('progress', (event) => {
+      if (event.lengthComputable) {
+        currentPct = Math.round((event.loaded / event.total) * 90);
+        onProgress(currentPct);
+        if (event.loaded >= event.total) startTail();
+      }
+    });
+
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState === XMLHttpRequest.DONE) {
+        stopTail();
+        if (xhr.status === 200) {
+          try {
+            const body = JSON.parse(xhr.responseText);
+            if (body.status === 'ok' && body.url) {
+              onProgress(100);
+              resolve(body.url);
+            } else {
+              reject(new Error(body.message || `${host} upload failed`));
+            }
+          } catch {
+            reject(new Error('Failed to parse server response'));
+          }
+        } else {
+          reject(new Error(`Server returned ${xhr.status} for ${host} upload`));
+        }
+      }
+    };
+
+    xhr.onerror = () => { stopTail(); reject(new Error(`Network error uploading to ${host}`)); };
+    xhr.ontimeout = () => { stopTail(); reject(new Error(`${host} upload timed out`)); };
+    xhr.timeout = host === 'litterbox' ? 11 * 60 * 1000 : 5 * 60 * 1000;
+    xhr.open('POST', buildApiUrl('/api/share/upload-direct'));
+    xhr.send(formData);
+  });
+}
+
 /* ── Link Cloaking: Encode/Decode GoFile data into branded short URLs ──
    Strategy: Pack file metadata (gofile code + filename + size) into a
    single URL-safe token. XOR with a fixed key then base64url encode.
@@ -259,13 +371,17 @@ function fromBase64Url(b64: string): string {
   return atob(s);
 }
 
+export type ShareHost = 'catbox' | 'litterbox' | 'gofile';
+
 export interface SharePayload {
-  /** GoFile content code */
+  /** GoFile content code OR direct URL (catbox/litterbox) */
   c: string;
   /** Original file name */
   n: string;
   /** File size in bytes */
   s: number;
+  /** Host type. catbox = permanent direct, litterbox = 72h direct, gofile/undefined = GoFile */
+  h?: ShareHost;
 }
 
 /** Encode GoFile data into a URL-safe cloaked token (Unicode-safe v2) */
@@ -295,20 +411,46 @@ export function decodeShareToken(token: string): SharePayload | null {
   return null;
 }
 
-/** Build the branded share URL from GoFile upload data */
-export function buildBongBariShareUrl(gofileCode: string, fileName: string, fileSize: number): string {
-  const token = encodeShareToken({ c: gofileCode, n: fileName, s: fileSize });
+/** Build the branded share URL from upload data */
+export function buildBongBariShareUrl(code: string, fileName: string, fileSize: number, host?: ShareHost): string {
+  const token = encodeShareToken({ c: code, n: fileName, s: fileSize, h: host });
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.bongbari.com';
   return `${origin}/s/${token}`;
 }
 
-/** Resolve a cloaked token back to GoFile download page URL */
+export interface ResolvedShare {
+  /** Direct download URL (catbox/litterbox) or GoFile download page */
+  downloadUrl: string;
+  fileName: string;
+  fileSize: number;
+  /** true = direct download (no third-party UI), false = GoFile external page */
+  isDirect: boolean;
+  /** Host type for UI messaging */
+  host: ShareHost;
+  /** true if the link will expire (litterbox = 72h) */
+  expires: boolean;
+}
+
+/** Resolve a cloaked token back to download info */
+export function resolveShareUrl(token: string): ResolvedShare | null {
+  const data = decodeShareToken(token);
+  if (!data) return null;
+  if (data.h === 'catbox') {
+    return { downloadUrl: data.c, fileName: data.n, fileSize: data.s, isDirect: true, host: 'catbox', expires: false };
+  }
+  if (data.h === 'litterbox') {
+    return { downloadUrl: data.c, fileName: data.n, fileSize: data.s, isDirect: true, host: 'litterbox', expires: true };
+  }
+  // GoFile or legacy tokens (no h field)
+  return { downloadUrl: `https://gofile.io/d/${data.c}`, fileName: data.n, fileSize: data.s, isDirect: false, host: 'gofile', expires: false };
+}
+
+/** @deprecated Use resolveShareUrl instead */
 export function resolveGoFileUrl(token: string): { downloadPage: string; fileName: string; fileSize: number } | null {
   const data = decodeShareToken(token);
   if (!data) return null;
-  return {
-    downloadPage: `https://gofile.io/d/${data.c}`,
-    fileName: data.n,
-    fileSize: data.s,
-  };
+  if (data.h === 'catbox' || data.h === 'litterbox') {
+    return { downloadPage: data.c, fileName: data.n, fileSize: data.s };
+  }
+  return { downloadPage: `https://gofile.io/d/${data.c}`, fileName: data.n, fileSize: data.s };
 }

@@ -261,6 +261,76 @@ router.post('/upload', upload.single('file'), async (req: Request, res: ExpressR
   }
 });
 
+/* ══════════════════════════════════════════════════════════════
+   CATBOX / LITTERBOX PROXY — bypasses CORS (no CORS headers)
+   Browser → Render → catbox/litterbox → direct download URL back
+   Storage is FREE on their servers. We only relay the upload bytes.
+   ══════════════════════════════════════════════════════════════ */
+
+const catboxUpload = multer({
+  dest: TMP_DIR,
+  limits: { fileSize: 1024 * 1024 * 1024 }, // 1 GB (litterbox max)
+});
+
+/** POST /api/share/upload-direct
+ *  Body: multipart file + optional `host` field ('catbox' | 'litterbox')
+ *  Returns: { status: 'ok', url: 'https://files.catbox.moe/...' }
+ */
+router.post('/upload-direct', catboxUpload.single('file'), async (req: Request, res: ExpressResponse) => {
+  const tempPath = (req as any).file?.path;
+  const originalName = (req as any).file?.originalname || 'file';
+  const fileSize = (req as any).file?.size || 0;
+  const host = (req.body?.host === 'litterbox') ? 'litterbox' : 'catbox';
+
+  const cleanup = () => {
+    try { if (tempPath && fs.existsSync(tempPath)) fs.unlinkSync(tempPath); } catch {}
+  };
+
+  if (!tempPath) {
+    cleanup();
+    return res.status(400).json({ status: 'error', message: 'No file provided' });
+  }
+
+  try {
+    const formData = new NodeFormData();
+    formData.append('reqtype', 'fileupload');
+    if (host === 'litterbox') {
+      formData.append('time', '72h');
+    }
+    formData.append('fileToUpload', fileFromSync(tempPath, (req as any).file?.mimetype || 'application/octet-stream'), originalName);
+
+    const targetUrl = host === 'litterbox'
+      ? 'https://litterbox.catbox.moe/resources/internals/api.php'
+      : 'https://catbox.moe/user/api.php';
+
+    console.log(`[ShareDirect] Uploading ${originalName} (${(fileSize / 1024 / 1024).toFixed(1)} MB) to ${host}…`);
+
+    const response = await fetchWithTimeout(targetUrl, {
+      method: 'POST',
+      body: formData,
+    }, 10 * 60 * 1000); // 10 min timeout for large files
+
+    const text = await response.text();
+    cleanup();
+
+    const expectedPrefix = host === 'litterbox'
+      ? 'https://litter.catbox.moe/'
+      : 'https://files.catbox.moe/';
+
+    if (text.trim().startsWith(expectedPrefix)) {
+      console.log(`[ShareDirect] ✅ ${host} success: ${text.trim()}`);
+      return res.json({ status: 'ok', url: text.trim(), host });
+    } else {
+      console.warn(`[ShareDirect] ❌ ${host} returned unexpected: ${text.slice(0, 200)}`);
+      return res.status(502).json({ status: 'error', message: `${host} upload failed`, detail: text.slice(0, 200) });
+    }
+  } catch (err: any) {
+    cleanup();
+    console.error(`[ShareDirect] Error uploading to ${host}:`, err.message);
+    return res.status(502).json({ status: 'error', message: err.message || `${host} upload failed` });
+  }
+});
+
 export function registerShareRoutes(app: any) {
   app.use('/api/share', router);
 }

@@ -21,9 +21,11 @@ import {
   Eye,
   EyeOff,
   Signal,
+  Clock,
+  Infinity as InfinityIcon,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getBestServer, uploadFileWithProgress, uploadFileViaServer, buildBongBariShareUrl } from '@/lib/gofile-engine';
+import { getBestServer, uploadFileWithProgress, uploadFileViaServer, uploadToCatbox, uploadToLitterbox, canUseCatbox, canUseLitterbox, buildBongBariShareUrl, type ShareHost } from '@/lib/gofile-engine';
 import { createSender, buildP2PShareUrl, type P2PStatus } from '@/lib/p2p-engine';
 /* ── Comedy one-liners ── */
 const IDLE_JOKES = [
@@ -127,7 +129,7 @@ const BongShare = () => {
   };
 
   function resetAll() {
-    setLinkStatus('idle'); setLinkProgress(0); setShareLink('');
+    setLinkStatus('idle'); setLinkProgress(0); setShareLink(''); setUsedHost(null);
     setP2pStatus('idle'); setP2pProgress(0); setP2pLink('');
     senderRef.current?.destroy(); senderRef.current = null;
   }
@@ -139,8 +141,9 @@ const BongShare = () => {
 
   /* ── Link mode: upload status label ── */
   const [uploadPhase, setUploadPhase] = useState<string>('');
+  const [usedHost, setUsedHost] = useState<ShareHost | null>(null);
 
-  /* ── Link mode: GoFile upload ── */
+  /* ── Link mode: upload (3-tier: catbox → litterbox → GoFile) ── */
   const handleLinkUpload = async () => {
     if (!file) return;
     setMode('link');
@@ -148,22 +151,59 @@ const BongShare = () => {
     setLinkProgress(0);
     setUploadPhase('Connecting to file server…');
     try {
+      // ── TIER 1: Catbox.moe for ≤200 MB → permanent direct download ──
+      if (canUseCatbox(file)) {
+        try {
+          setUploadPhase('Uploading file…');
+          const directUrl = await uploadToCatbox(file, (p) => setLinkProgress(p));
+          const brandedUrl = buildBongBariShareUrl(directUrl, file.name, file.size, 'catbox');
+          setShareLink(brandedUrl);
+          setUsedHost('catbox');
+          setLinkStatus('success');
+          setUploadPhase('');
+          toast({ title: 'Ready to share!', description: 'Permanent link generated — copy it below.' });
+          return;
+        } catch (catboxErr: any) {
+          console.warn('[BongShare] Catbox failed, trying fallbacks:', catboxErr.message);
+          setLinkProgress(0);
+        }
+      }
+
+      // ── TIER 2: Litterbox for 200 MB–1 GB → 72 h direct download ──
+      if (canUseLitterbox(file) || canUseCatbox(file)) {
+        // canUseCatbox check = catbox failed above, try litterbox as fallback
+        try {
+          setUploadPhase('Uploading large file…');
+          const directUrl = await uploadToLitterbox(file, (p) => setLinkProgress(p));
+          const brandedUrl = buildBongBariShareUrl(directUrl, file.name, file.size, 'litterbox');
+          setShareLink(brandedUrl);
+          setUsedHost('litterbox');
+          setLinkStatus('success');
+          setUploadPhase('');
+          toast({ title: 'Ready to share!', description: 'Link expires in 72 hours — send it fast!' });
+          return;
+        } catch (litterboxErr: any) {
+          console.warn('[BongShare] Litterbox failed, trying GoFile:', litterboxErr.message);
+          setLinkProgress(0);
+        }
+      }
+
+      // ── TIER 3: GoFile for >1 GB or if all direct hosts failed ──
       let data: Awaited<ReturnType<typeof uploadFileWithProgress>>;
       try {
-        // PRIMARY: Direct GoFile from user's residential IP (multi-server retry)
         setUploadPhase('Uploading file…');
         const server = await getBestServer();
         data = await uploadFileWithProgress(file, server, (p) => setLinkProgress(p));
       } catch (directErr: any) {
-        // FALLBACK: VPS proxy (if ISP blocks GoFile directly or all servers failed)
         console.warn('[BongShare] Direct GoFile failed, trying VPS proxy:', directErr.message);
         setLinkProgress(0);
-        setUploadPhase('Routing via Bong Bari relay…');
+        setUploadPhase('Finalizing upload on server…');
         data = await uploadFileViaServer(file, (p) => setLinkProgress(p));
       }
       const gofileCode = data.code || data.parentFolderCode || data.downloadPage?.split('/d/').pop() || '';
       if (!gofileCode) throw new Error('Upload succeeded but no download code received');
-      const brandedUrl = buildBongBariShareUrl(gofileCode, file.name, file.size);
+      setUsedHost('gofile');
+      const brandedUrl = buildBongBariShareUrl(gofileCode, file.name, file.size, 'gofile');
       setShareLink(brandedUrl);
       setLinkStatus('success');
       setUploadPhase('');
@@ -463,6 +503,19 @@ const BongShare = () => {
                     <div className="flex items-center justify-center gap-2 py-2">
                       <div className="w-2 h-2 rounded-full bg-[#40ceed] animate-pulse" />
                       <span className="text-xs font-mono text-[#40ceed]/60">{uploadPhase || 'Transferring packets…'}</span>
+                    </div>
+                  )}
+
+                  {/* Expiry info */}
+                  {linkStatus === 'success' && usedHost && (
+                    <div className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold ${
+                      usedHost === 'catbox' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                      usedHost === 'litterbox' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                      'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                    }`}>
+                      {usedHost === 'catbox' && <><InfinityIcon className="w-3.5 h-3.5" /> Permanent link — never expires</>}
+                      {usedHost === 'litterbox' && <><Clock className="w-3.5 h-3.5" /> Link expires in 72 hours — share it fast!</>}
+                      {usedHost === 'gofile' && <><Clock className="w-3.5 h-3.5" /> Link valid for 10 days</>}
                     </div>
                   )}
 

@@ -131,7 +131,264 @@ Jokes rotate every 5 seconds with smooth fade animations.
 
 ---
 
-## 🚀 Future: P2P WebRTC (Path B)
+## � PHASE 2: Link Cloaking System (PLANNED)
+
+> **Goal:** Users share `bongbari.com/s/XyZ9kR` — nobody can tell we use GoFile underneath.
+
+### The Problem (Current State)
+
+Right now, after upload the user sees:
+```
+https://gofile.io/d/abc123
+```
+**Anyone who gets this link immediately knows:**
+1. We're using GoFile (free hosting service)
+2. They can explore GoFile, discover our pattern
+3. It looks unprofessional / non-branded
+4. GoFile's download page shows GoFile branding + ads
+
+### The Solution: Multi-Layer Link Cloaking
+
+```
+┌─────────────────────────  WHAT USER SEES  ─────────────────────────┐
+│                                                                     │
+│   https://www.bongbari.com/s/XyZ9kR    ← branded short link       │
+│                                                                     │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────  LAYER 1: SPA ROUTE  ─────────────────────┐
+│                                                                     │
+│   React page at /s/:code                                           │
+│   → Shows branded "Bong Bari Download" page (our design)          │
+│   → Displays file name, size, upload date (from our DB)            │
+│   → "Download" button triggers the real fetch                      │
+│                                                                     │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │  user clicks Download
+                               ▼
+┌─────────────────────────  LAYER 2: API RESOLVE  ───────────────────┐
+│                                                                     │
+│   POST /api/share/resolve  { code: "XyZ9kR" }                     │
+│   → Server looks up shareLinks table                                │
+│   → Returns one-time signed redirect URL (or direct stream)        │
+│   → GoFile URL NEVER sent to frontend                              │
+│                                                                     │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────  LAYER 3: REDIRECT/PROXY  ────────────────┐
+│                                                                     │
+│   Option A: Server 302 redirect → GoFile (fastest, GoFile visible  │
+│             in Network tab only briefly)                            │
+│                                                                     │
+│   Option B: Cloudflare Worker proxy → strips GoFile headers,       │
+│             serves file as-if from our domain (FULL CLOAK)         │
+│                                                                     │
+│   Option C: Server-side stream for small files (<100MB),           │
+│             redirect for large files (saves bandwidth)             │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Architecture Components
+
+#### A. Database Schema — `shareLinks` table
+
+```sql
+CREATE TABLE share_links (
+  id            SERIAL PRIMARY KEY,
+  code          VARCHAR(8) UNIQUE NOT NULL,    -- "XyZ9kR"
+  gofile_url    TEXT NOT NULL,                  -- "https://gofile.io/d/abc123"
+  gofile_code   VARCHAR(32),                   -- "abc123" (GoFile's code)
+  file_name     VARCHAR(255),                  -- Original filename
+  file_size     BIGINT,                        -- Bytes
+  file_type     VARCHAR(100),                  -- MIME type
+  download_count INTEGER DEFAULT 0,            -- Analytics
+  created_at    TIMESTAMP DEFAULT NOW(),
+  expires_at    TIMESTAMP,                     -- Optional manual expiry
+  is_active     BOOLEAN DEFAULT true,          -- Kill switch
+  uploader_ip_hash VARCHAR(64)                 -- SHA-256 of IP (privacy-safe analytics)
+);
+
+CREATE INDEX idx_share_code ON share_links(code);
+```
+
+#### B. Short Code Generator
+
+```typescript
+// Cryptographically random, URL-safe, 6-8 chars
+import crypto from 'crypto';
+
+function generateShortCode(length = 6): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  // Removed ambiguous: 0/O, 1/l/I to prevent user typos
+  const bytes = crypto.randomBytes(length);
+  return Array.from(bytes).map(b => chars[b % chars.length]).join('');
+}
+// Output: "Xk9mRp", "Bn4wQz", etc.
+// 55^6 = ~27 billion combinations (collision-proof for our scale)
+```
+
+#### C. API Endpoints (Render Backend)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `POST /api/share/create` | POST | After GoFile upload → store mapping, return short code |
+| `GET /api/share/resolve/:code` | GET | Lookup code → return file metadata (NOT the GoFile URL) |
+| `GET /api/share/download/:code` | GET | 302 redirect to GoFile OR proxy stream |
+| `GET /api/share/stats/:code` | GET | Download count, created date (optional) |
+
+**Create flow:**
+```
+Client uploads to GoFile → gets gofile URL
+Client calls: POST /api/share/create
+  Body: { gofileUrl, gofileCode, fileName, fileSize, fileType }
+  Response: { code: "XyZ9kR", shareUrl: "https://www.bongbari.com/s/XyZ9kR" }
+```
+
+**Download flow:**
+```
+Visitor opens: https://www.bongbari.com/s/XyZ9kR
+→ SPA loads branded download page
+→ User clicks "Download"
+→ Browser navigates to: /api/share/download/XyZ9kR
+→ Server: 302 Location: https://gofile.io/d/abc123
+   (or proxy stream if CF Worker is set up)
+```
+
+#### D. Frontend Download Page (`/s/:code`)
+
+A beautiful branded page — NOT a redirect. The visitor sees:
+
+```
+┌────────────────────────────────────────┐
+│         🎬  BONG BARI                  │
+│         File Transfer                  │
+│                                        │
+│    ┌──────────────────────────┐        │
+│    │  📄  my_awesome_video.mp4│        │
+│    │      1.2 GB              │        │
+│    │      Shared 2 hours ago  │        │
+│    └──────────────────────────┘        │
+│                                        │
+│    ┌──────────────────────────┐        │
+│    │   ⬇️  DOWNLOAD NOW       │        │
+│    └──────────────────────────┘        │
+│                                        │
+│    🔒 End-to-end encrypted             │
+│    ⏱️ Auto-deletes in 10 days          │
+│                                        │
+│    ─────────────────────────────       │
+│    "Bong Bari — Send anything."        │
+└────────────────────────────────────────┘
+```
+
+**What this achieves:**
+- Visitor NEVER sees "gofile.io" in the URL bar
+- Our branding is front and center
+- We can show download count, file info
+- We control the experience (no GoFile ads)
+
+#### E. Cloudflare Worker (Full Cloak — Optional Level 3)
+
+For **maximum** stealth, add a CF Worker route at `www.bongbari.com/dl/*`:
+
+```javascript
+// Cloudflare Worker: bongbari-download-proxy
+export default {
+  async fetch(request) {
+    const url = new URL(request.url);
+    const gofileUrl = url.searchParams.get('t'); // encrypted token
+    
+    if (!gofileUrl) return new Response('Not found', { status: 404 });
+
+    // Decrypt the GoFile URL from signed token
+    const realUrl = decryptToken(gofileUrl); // AES-256 decrypt
+    
+    // Fetch from GoFile, stream to user
+    const resp = await fetch(realUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+      }
+    });
+    
+    // Strip all GoFile headers, serve as ours
+    const headers = new Headers();
+    headers.set('Content-Type', resp.headers.get('Content-Type'));
+    headers.set('Content-Length', resp.headers.get('Content-Length'));
+    headers.set('Content-Disposition', resp.headers.get('Content-Disposition'));
+    headers.set('X-Powered-By', 'Bong Bari CDN');
+    
+    return new Response(resp.body, { headers });
+  }
+}
+```
+
+**Result:** Even in browser DevTools → Network tab, the download comes from `bongbari.com/dl/...` — zero GoFile traces.
+
+### Implementation Priority (Recommended Order)
+
+| Phase | What | Effort | Cloak Level |
+|-------|------|--------|-------------|
+| **2A** | DB table + `/api/share/create` + short code gen | ~30 min | URL hidden |
+| **2B** | `/s/:code` branded download page (React) | ~30 min | Full brand |
+| **2C** | `/api/share/download/:code` redirect | ~15 min | GoFile visible only in Network tab |
+| **2D** | CF Worker download proxy (full stream) | ~45 min | **FULL CLOAK** — zero traces |
+| **2E** | Analytics (download count, geo, referrer) | ~20 min | Bonus |
+
+### Security Considerations
+
+- **Rate limiting:** `/api/share/create` limited to 10 creates/hour per IP
+- **No GoFile URL in frontend:** The GoFile URL is ONLY stored server-side in Postgres, NEVER sent to the browser
+- **Code entropy:** 6-char codes from 55-char alphabet = 27B combos (unguessable)
+- **HMAC validation (optional):** Sign the short code with server secret so we can verify without DB lookup for hot paths
+- **IP hashing:** Store SHA-256 hash of uploader IP (for abuse prevention, not tracking)
+- **Kill switch:** `is_active` column to disable any link instantly
+- **Expiry:** Optional `expires_at` for time-limited shares
+
+### What Changes on the Frontend (BongShare.tsx)
+
+Currently:
+```typescript
+// After upload succeeds:
+setShareLink(data.downloadPage);  // "https://gofile.io/d/abc123"
+```
+
+After Phase 2:
+```typescript
+// After upload succeeds:
+const gofileUrl = data.downloadPage;
+const res = await apiRequest('/api/share/create', {
+  method: 'POST',
+  body: JSON.stringify({
+    gofileUrl,
+    gofileCode: data.code,
+    fileName: file.name,
+    fileSize: file.size,
+    fileType: file.type,
+  }),
+  headers: { 'Content-Type': 'application/json' },
+});
+setShareLink(res.shareUrl);  // "https://www.bongbari.com/s/XyZ9kR"
+```
+
+**The GoFile URL is captured server-side and NEVER shown to the user.**
+
+### Traceability Matrix — What Can Someone See?
+
+| What They Inspect | Current (No Cloak) | Phase 2A-C (Short Link) | Phase 2D (Full Cloak) |
+|---|---|---|---|
+| URL bar | gofile.io/d/abc123 | bongbari.com/s/XyZ9kR | bongbari.com/s/XyZ9kR |
+| Page source/HTML | GoFile page | Our branded page | Our branded page |
+| Network tab (download) | gofile.io request | gofile.io redirect (302) | bongbari.com/dl/... |
+| Response headers | GoFile server headers | GoFile server headers | Custom "Bong Bari CDN" |
+| DNS lookup | gofile.io | bongbari.com + gofile.io | bongbari.com only |
+| **Can they tell it's GoFile?** | **YES, obvious** | **Only if they watch Network tab** | **NO — fully invisible** |
+
+---
+
+## �🚀 Future: P2P WebRTC (Path B)
 
 If we ever want **zero-server file transfer** (no GoFile dependency):
 

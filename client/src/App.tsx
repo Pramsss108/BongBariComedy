@@ -47,6 +47,7 @@ const TermsPage = lazy(() => import("@/pages/TermsPage"));
 const FAQ = lazy(() => import("@/pages/FAQ"));
 const VoiceHub = lazy(() => import("@/pages/VoiceHub"));
 const BongShare = lazy(() => import("./pages/BongShare"));
+const BongShareDownload = lazy(() => import("@/pages/BongShareDownload"));
 
 // Firebase Protected Route Wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -154,7 +155,7 @@ function Router() {
 
   return (
     <>
-      {location !== '/voice-hub' && location !== '/tools/downloader' && location !== '/tools/share' && <Navigation />}
+      {location !== '/voice-hub' && location !== '/tools/downloader' && location !== '/tools/share' && !location.startsWith('/s/') && <Navigation />}
       <div className="min-h-screen bg-brand-yellow relative m-0 p-0">
         <GreetingConsent open={showGreeting} onDecision={handleDecision} />
         {/* Custom belan cursor - hidden for logged-in users (normal cursor instead) */}
@@ -199,6 +200,11 @@ function Router() {
           <Route path="/tools/share">
             <Suspense fallback={<LoadingFallback />}>
               <BongShare />
+            </Suspense>
+          </Route>
+          <Route path="/s/:code">
+            <Suspense fallback={<LoadingFallback />}>
+              <BongShareDownload />
             </Suspense>
           </Route>
           <Route path="/community/feed">
@@ -272,7 +278,7 @@ function Router() {
         {/* <FloatingFAQButton /> */}
 
         {/* Mobile Navigation Dock - Hidden on full-screen tool pages */}
-        {location !== '/tools/humanizer' && location !== '/voice-hub' && location !== '/tools/downloader' && location !== '/tools/share' && <MobileNavBar />}
+        {location !== '/tools/humanizer' && location !== '/voice-hub' && location !== '/tools/downloader' && location !== '/tools/share' && !location.startsWith('/s/') && <MobileNavBar />}
 
         {/* Production Debug overlay - Available via Console/Hidden Trigger */}
         <DebugOverlay />

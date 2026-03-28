@@ -16,7 +16,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getBestServer, uploadFileWithProgress } from '@/lib/gofile-engine';
+import { getBestServer, uploadFileWithProgress, buildBongBariShareUrl } from '@/lib/gofile-engine';
 
 /* ── Comedy one-liners ── */
 const IDLE_JOKES = [
@@ -94,7 +94,8 @@ const BongShare = () => {
     try {
       const server = await getBestServer();
       const data = await uploadFileWithProgress(file, server, (p) => setProgress(p));
-      setShareLink(data.downloadPage);
+      const brandedUrl = buildBongBariShareUrl(data.code, file.name, file.size);
+      setShareLink(brandedUrl);
       setUploadStatus('success');
       toast({ title: 'Ready to share!', description: 'Link generated — copy it below.' });
     } catch (err: any) {

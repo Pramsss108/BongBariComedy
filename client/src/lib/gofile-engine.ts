@@ -82,3 +82,74 @@ export function uploadFileWithProgress(
     xhr.send(formData);
   });
 }
+
+/* ── Link Cloaking: Encode/Decode GoFile data into branded short URLs ──
+   Strategy: Pack file metadata (gofile code + filename + size) into a
+   single URL-safe token. XOR with a fixed key then base64url encode.
+   100% client-side → zero server, zero DB, zero cost, infinite scale.
+   ─────────────────────────────────────────────────────────────────── */
+
+const CLOAK_KEY = 'BongBariEtherealTerminal2026';
+
+function xorCipher(text: string, key: string): string {
+  return Array.from(text)
+    .map((ch, i) => String.fromCharCode(ch.charCodeAt(0) ^ key.charCodeAt(i % key.length)))
+    .join('');
+}
+
+function toBase64Url(str: string): string {
+  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function fromBase64Url(b64: string): string {
+  let s = b64.replace(/-/g, '+').replace(/_/g, '/');
+  while (s.length % 4) s += '=';
+  return atob(s);
+}
+
+export interface SharePayload {
+  /** GoFile content code */
+  c: string;
+  /** Original file name */
+  n: string;
+  /** File size in bytes */
+  s: number;
+}
+
+/** Encode GoFile data into a URL-safe cloaked token */
+export function encodeShareToken(payload: SharePayload): string {
+  const json = JSON.stringify(payload);
+  const ciphered = xorCipher(json, CLOAK_KEY);
+  return toBase64Url(ciphered);
+}
+
+/** Decode a cloaked token back to GoFile data */
+export function decodeShareToken(token: string): SharePayload | null {
+  try {
+    const ciphered = fromBase64Url(token);
+    const json = xorCipher(ciphered, CLOAK_KEY);
+    const parsed = JSON.parse(json);
+    if (parsed && typeof parsed.c === 'string') return parsed as SharePayload;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/** Build the branded share URL from GoFile upload data */
+export function buildBongBariShareUrl(gofileCode: string, fileName: string, fileSize: number): string {
+  const token = encodeShareToken({ c: gofileCode, n: fileName, s: fileSize });
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.bongbari.com';
+  return `${origin}/s/${token}`;
+}
+
+/** Resolve a cloaked token back to GoFile download page URL */
+export function resolveGoFileUrl(token: string): { downloadPage: string; fileName: string; fileSize: number } | null {
+  const data = decodeShareToken(token);
+  if (!data) return null;
+  return {
+    downloadPage: `https://gofile.io/d/${data.c}`,
+    fileName: data.n,
+    fileSize: data.s,
+  };
+}

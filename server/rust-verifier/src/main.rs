@@ -24,9 +24,10 @@ use std::time::{Duration, Instant};
 use tokio::sync::Semaphore;
 use tower_http::cors::CorsLayer;
 
-/// Max concurrent proxy verification tasks to prevent OOM on VPS (4GB RAM).
-/// 500 concurrent HTTPS connections ≈ 200-400MB RAM — safe for CX22.
-const MAX_CONCURRENT_TASKS: usize = 500;
+/// Max concurrent proxy verification tasks.
+/// 100 concurrent = network-friendly for home connections (no router saturation).
+/// Raise to 300+ only if running on a datacenter VPS with a dedicated link.
+const MAX_CONCURRENT_TASKS: usize = 100;
 
 /// Default User-Agent pool — rotated per-proxy to avoid fingerprint repetition
 const DEFAULT_USER_AGENTS: &[&str] = &[

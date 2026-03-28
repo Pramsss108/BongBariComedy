@@ -154,7 +154,7 @@ function Router() {
 
   return (
     <>
-      {location !== '/voice-hub' && location !== '/tools/downloader' && <Navigation />}
+      {location !== '/voice-hub' && location !== '/tools/downloader' && location !== '/tools/share' && <Navigation />}
       <div className="min-h-screen bg-brand-yellow relative m-0 p-0">
         <GreetingConsent open={showGreeting} onDecision={handleDecision} />
         {/* Custom belan cursor - hidden for logged-in users (normal cursor instead) */}

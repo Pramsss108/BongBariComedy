@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { resolveShareUrl } from '@/lib/gofile-engine';
 
+const CF_WORKER_URL = 'https://ancient-king-7fa9.workers.dev';
+
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
   const k = 1024;
@@ -90,12 +92,70 @@ const BongShareDownload = () => {
     );
   }
 
-  const { downloadUrl, fileName, fileSize, isDirect, host, expires } = resolved;
+  const { downloadUrl, fileName, fileSize, isDirect, host, expires, isChunked, chunkUrls } = resolved;
   const icon = getFileIcon(fileName);
 
   /** For GoFile (>1GB), trigger a fetch→blob download so they never see GoFile UI */
   const [proxyProgress, setProxyProgress] = useState(0);
   const [proxyActive, setProxyActive] = useState(false);
+
+  /** Chunked catbox download — fetch each chunk via CF Worker (CORS), reassemble, save file */
+  const [chunkProgress, setChunkProgress] = useState(0);
+  const [chunkActive, setChunkActive] = useState(false);
+  const [chunkPhase, setChunkPhase] = useState('');
+
+  const handleChunkedDownload = async () => {
+    if (!chunkUrls || chunkUrls.length === 0) return;
+    setChunkActive(true);
+    setChunkProgress(0);
+    setChunkPhase('Starting download…');
+    try {
+      if ('showSaveFilePicker' in window) {
+        // Streaming via File System Access API — no RAM limit, works for 100 GB+
+        const fileHandle = await (window as any).showSaveFilePicker({ suggestedName: fileName });
+        const writable = await fileHandle.createWritable();
+        for (let i = 0; i < chunkUrls.length; i++) {
+          setChunkPhase(`Downloading part ${i + 1} of ${chunkUrls.length}…`);
+          // Proxy through CF Worker to get CORS headers on catbox CDN
+          const proxyUrl = `${CF_WORKER_URL}/?url=${encodeURIComponent(chunkUrls[i])}`;
+          const response = await fetch(proxyUrl);
+          if (!response.ok || !response.body) throw new Error(`Part ${i + 1} failed (${response.status})`);
+          const reader = response.body.getReader();
+          for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            await writable.write(value);
+          }
+          setChunkProgress(Math.round(((i + 1) / chunkUrls.length) * 100));
+        }
+        await writable.close();
+        setChunkPhase('Done!');
+      } else {
+        // Fallback: buffer in memory (safe up to ~2 GB on most browsers)
+        const blobs: Blob[] = [];
+        for (let i = 0; i < chunkUrls.length; i++) {
+          setChunkPhase(`Downloading part ${i + 1} of ${chunkUrls.length}…`);
+          const proxyUrl = `${CF_WORKER_URL}/?url=${encodeURIComponent(chunkUrls[i])}`;
+          const response = await fetch(proxyUrl);
+          if (!response.ok) throw new Error(`Part ${i + 1} failed (${response.status})`);
+          blobs.push(await response.blob());
+          setChunkProgress(Math.round(((i + 1) / chunkUrls.length) * 100));
+        }
+        setChunkPhase('Merging parts…');
+        const merged = new Blob(blobs);
+        const url = URL.createObjectURL(merged);
+        const a = document.createElement('a');
+        a.href = url; a.download = fileName;
+        document.body.appendChild(a); a.click();
+        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+        setChunkPhase('Done!');
+      }
+    } catch (err: any) {
+      setChunkPhase(`Error: ${err.message}`);
+    } finally {
+      setChunkActive(false);
+    }
+  };
 
   const handleGoFileProxyDownload = async () => {
     // Open in new tab — branded message already shown, this is the honest fallback
@@ -171,7 +231,34 @@ const BongShareDownload = () => {
               )}
 
               {/* Download button — different per tier */}
-              {isDirect ? (
+              {isChunked ? (
+                /* Chunked catbox — stream-assemble via CF Worker */
+                <div className="w-full flex flex-col gap-3">
+                  <div className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/15">
+                    <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <p className="text-[11px] text-emerald-300/80 font-medium">File is split into {chunkUrls?.length} parts — will be merged automatically on download</p>
+                  </div>
+                  {chunkActive && (
+                    <div className="w-full flex flex-col gap-2">
+                      <div className="flex justify-between items-center text-[10px] font-mono text-[#40ceed]/70">
+                        <span>{chunkPhase}</span>
+                        <span>{chunkProgress}%</span>
+                      </div>
+                      <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
+                        <div className="h-full rounded-full bg-[#40ceed] transition-all duration-300" style={{ width: `${chunkProgress}%` }} />
+                      </div>
+                    </div>
+                  )}
+                  <button
+                    onClick={handleChunkedDownload}
+                    disabled={chunkActive}
+                    className="w-full h-14 sm:h-16 bg-[#f0c12c] text-[#695200] font-extrabold uppercase text-sm tracking-widest rounded-full hover:brightness-110 active:scale-[0.97] transition-all shadow-lg flex items-center justify-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    <Download className="w-5 h-5" />
+                    {chunkActive ? chunkPhase : 'Download Now'}
+                  </button>
+                </div>
+              ) : isDirect ? (
                 /* Tier 1 & 2: Catbox / Litterbox → direct file download, no third-party */
                 <a
                   href={downloadUrl}
@@ -228,7 +315,7 @@ const BongShareDownload = () => {
         {/* Footer */}
         <footer className="flex-none w-full py-3 sm:py-4 flex justify-center border-t border-white/5 relative z-10">
           <p className="text-[9px] font-bold tracking-[0.3em] text-[#d1c5ad]/30 uppercase text-center px-4">
-            Powered by Bong Bari &mdash; {expires ? 'This link expires in 72 hours' : host === 'catbox' ? 'Permanent file link' : 'Files auto-delete after 10 days of inactivity'}
+            Powered by Bong Bari &mdash; {expires ? 'This link expires in 72 hours' : (host === 'catbox' || host === 'catbox-chunked') ? 'Permanent file link' : 'Files auto-delete after 10 days of inactivity'}
           </p>
         </footer>
       </div>

@@ -238,9 +238,17 @@ export function uploadFileViaServer(
   });
 }
 /* ── Catbox.moe Upload Engine ─────────────────────────────────────────
-   Primary host for files ≤200 MB. Returns a permanent direct-download URL
-   like https://files.catbox.moe/xyz123.mp4 — no third-party UI, 100% branded.
+   Primary host for ALL file sizes via chunking.
+   Single file ≤90 MB → one catbox upload → permanent direct URL.
+   Larger files → split into 90 MB chunks → multiple catbox uploads → reassembled on download.
+   All routed through CF Worker (serverless, no Render needed, $0 forever).
    ─────────────────────────────────────────────────────────────────── */
+
+// CF Worker (ancient-king-7fa9.workers.dev) — replaces Render proxy entirely
+const CF_WORKER_URL = 'https://ancient-king-7fa9.workers.dev';
+
+/** Chunk size: 90 MB per chunk (safe for CF Worker free tier body limit) */
+export const CHUNK_SIZE = 90 * 1024 * 1024;
 
 const CATBOX_MAX_SIZE = 200 * 1024 * 1024; // 200 MB
 const LITTERBOX_MAX_SIZE = 1024 * 1024 * 1024; // 1 GB
@@ -256,20 +264,19 @@ export function canUseLitterbox(file: File): boolean {
 }
 
 /**
- * Upload to catbox.moe via server proxy (catbox has no CORS headers).
- * Browser → Render /api/share/upload-direct → catbox.moe → direct URL back.
+ * Upload to catbox.moe via CF Worker proxy (replaces Render — 100% serverless).
+ * Browser → CF Worker → catbox.moe → direct URL back.
  * Returns the direct download URL (e.g. https://files.catbox.moe/abc123.ext).
  */
 export function uploadToCatbox(
-  file: File,
+  file: File | Blob,
   onProgress: (percent: number) => void,
 ): Promise<string> {
   return uploadViaDirectProxy(file, 'catbox', onProgress);
 }
 
 /**
- * Upload to litterbox.catbox.moe via server proxy (no CORS).
- * Browser → Render /api/share/upload-direct → litterbox → direct URL back.
+ * Upload to litterbox.catbox.moe via CF Worker proxy.
  * Returns a direct download URL like https://litter.catbox.moe/abc123.ext.
  */
 export function uploadToLitterbox(
@@ -280,19 +287,31 @@ export function uploadToLitterbox(
 }
 
 /**
- * Shared proxy upload for catbox/litterbox.
- * Progress: 0–90% = browser → Render, 90–100% animates while Render → host.
+ * Shared CF Worker proxy upload for catbox/litterbox.
+ * - Uses catbox API format: reqtype=fileupload + fileToUpload field
+ * - CF Worker adds CORS headers so browser can read catbox plain-text URL response
+ * - Replaces Render /api/share/upload-direct entirely (no pipeline minutes needed)
+ * Progress: 0–90% = browser → CF Worker, 90–100% tail animation until response.
  */
 function uploadViaDirectProxy(
-  file: File,
+  file: File | Blob,
   host: 'catbox' | 'litterbox',
   onProgress: (percent: number) => void,
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('host', host);
+
+    // Catbox API format (not our custom format)
+    formData.append('reqtype', 'fileupload');
+    formData.append('fileToUpload', file);
+    if (host === 'litterbox') formData.append('time', '72h');
+
+    // Route through CF Worker to bypass catbox CORS restrictions
+    const catboxEndpoint = host === 'catbox'
+      ? 'https://catbox.moe/user/api.php'
+      : 'https://litterbox.catbox.moe/resources/internals/api.php';
+    const proxyUrl = `${CF_WORKER_URL}/?url=${encodeURIComponent(catboxEndpoint)}`;
 
     let animTimer: ReturnType<typeof setInterval> | null = null;
     let currentPct = 0;
@@ -322,29 +341,61 @@ function uploadViaDirectProxy(
       if (xhr.readyState === XMLHttpRequest.DONE) {
         stopTail();
         if (xhr.status === 200) {
-          try {
-            const body = JSON.parse(xhr.responseText);
-            if (body.status === 'ok' && body.url) {
-              onProgress(100);
-              resolve(body.url);
-            } else {
-              reject(new Error(body.message || `${host} upload failed`));
-            }
-          } catch {
-            reject(new Error('Failed to parse server response'));
+          // Catbox returns plain-text URL (e.g. "https://files.catbox.moe/abc123.mp4")
+          const url = xhr.responseText.trim();
+          if (url.startsWith('https://') || url.startsWith('http://')) {
+            onProgress(100);
+            resolve(url);
+          } else {
+            reject(new Error(`${host} returned unexpected response: ${url.slice(0, 80)}`));
           }
         } else {
-          reject(new Error(`Server returned ${xhr.status} for ${host} upload`));
+          reject(new Error(`CF Worker returned ${xhr.status} uploading to ${host}`));
         }
       }
     };
 
     xhr.onerror = () => { stopTail(); reject(new Error(`Network error uploading to ${host}`)); };
     xhr.ontimeout = () => { stopTail(); reject(new Error(`${host} upload timed out`)); };
-    xhr.timeout = host === 'litterbox' ? 11 * 60 * 1000 : 5 * 60 * 1000;
-    xhr.open('POST', buildApiUrl('/api/share/upload-direct'));
+    xhr.timeout = 8 * 60 * 1000; // 8 min
+    xhr.open('POST', proxyUrl);
     xhr.send(formData);
   });
+}
+
+/**
+ * Split a large file into CHUNK_SIZE pieces and upload each to catbox.
+ * Returns an array of permanent catbox URLs (one per chunk).
+ * Chunks are uploaded sequentially to avoid hammering catbox.
+ * onProgress receives 0–100 across the entire multi-chunk operation.
+ */
+export async function uploadChunked(
+  file: File,
+  onProgress: (percent: number) => void,
+): Promise<string[]> {
+  const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+  const chunkUrls: string[] = [];
+  const ext = file.name.includes('.') ? '.' + file.name.split('.').pop() : '.bin';
+
+  for (let i = 0; i < totalChunks; i++) {
+    const start = i * CHUNK_SIZE;
+    const end = Math.min(start + CHUNK_SIZE, file.size);
+    const chunkBlob = file.slice(start, end);
+    // Name chunk so catbox gives it a recognizable extension
+    const chunkFile = new File([chunkBlob], `chunk_${String(i).padStart(4, '0')}${ext}`, {
+      type: 'application/octet-stream',
+    });
+
+    const url = await uploadViaDirectProxy(chunkFile, 'catbox', (p) => {
+      // Scale chunk's 0–100 into its share of the total 0–100
+      const base = (i / totalChunks) * 100;
+      onProgress(Math.round(base + (p / 100) * (100 / totalChunks)));
+    });
+    chunkUrls.push(url);
+  }
+
+  onProgress(100);
+  return chunkUrls;
 }
 
 /* ── Link Cloaking: Encode/Decode GoFile data into branded short URLs ──
@@ -354,6 +405,7 @@ function uploadViaDirectProxy(
    ─────────────────────────────────────────────────────────────────── */
 
 const CLOAK_KEY = 'BongBariEtherealTerminal2026';
+
 
 function xorCipher(text: string, key: string): string {
   return Array.from(text)
@@ -371,16 +423,18 @@ function fromBase64Url(b64: string): string {
   return atob(s);
 }
 
-export type ShareHost = 'catbox' | 'litterbox' | 'gofile';
+export type ShareHost = 'catbox' | 'catbox-chunked' | 'litterbox' | 'gofile';
 
 export interface SharePayload {
-  /** GoFile content code OR direct URL (catbox/litterbox) */
+  /** GoFile content code OR single catbox/litterbox URL */
   c: string;
+  /** Chunk URLs for large files split across multiple catbox uploads */
+  urls?: string[];
   /** Original file name */
   n: string;
   /** File size in bytes */
   s: number;
-  /** Host type. catbox = permanent direct, litterbox = 72h direct, gofile/undefined = GoFile */
+  /** Host type. catbox = permanent direct, catbox-chunked = multi-chunk, litterbox = 72h direct, gofile/undefined = GoFile */
   h?: ShareHost;
 }
 
@@ -411,15 +465,22 @@ export function decodeShareToken(token: string): SharePayload | null {
   return null;
 }
 
-/** Build the branded share URL from upload data */
+/** Build the branded share URL for a single upload (catbox, litterbox, or GoFile) */
 export function buildBongBariShareUrl(code: string, fileName: string, fileSize: number, host?: ShareHost): string {
   const token = encodeShareToken({ c: code, n: fileName, s: fileSize, h: host });
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.bongbari.com';
   return `${origin}/s/${token}`;
 }
 
+/** Build the branded share URL for a chunked catbox upload (unlimited size) */
+export function buildBongBariChunkedShareUrl(urls: string[], fileName: string, fileSize: number): string {
+  const token = encodeShareToken({ c: '', urls, n: fileName, s: fileSize, h: 'catbox-chunked' });
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.bongbari.com';
+  return `${origin}/s/${token}`;
+}
+
 export interface ResolvedShare {
-  /** Direct download URL (catbox/litterbox) or GoFile download page */
+  /** Direct download URL (catbox/litterbox) or GoFile download page. Empty for chunked. */
   downloadUrl: string;
   fileName: string;
   fileSize: number;
@@ -429,20 +490,29 @@ export interface ResolvedShare {
   host: ShareHost;
   /** true if the link will expire (litterbox = 72h) */
   expires: boolean;
+  /** true = file was split into chunks that must be reassembled on download */
+  isChunked: boolean;
+  /** Chunk URLs (only set when isChunked = true) */
+  chunkUrls?: string[];
 }
 
 /** Resolve a cloaked token back to download info */
 export function resolveShareUrl(token: string): ResolvedShare | null {
   const data = decodeShareToken(token);
   if (!data) return null;
+
+  // Chunked catbox upload (unlimited size, permanent)
+  if (data.h === 'catbox-chunked' && data.urls && data.urls.length > 0) {
+    return { downloadUrl: '', fileName: data.n, fileSize: data.s, isDirect: true, host: 'catbox-chunked', expires: false, isChunked: true, chunkUrls: data.urls };
+  }
   if (data.h === 'catbox') {
-    return { downloadUrl: data.c, fileName: data.n, fileSize: data.s, isDirect: true, host: 'catbox', expires: false };
+    return { downloadUrl: data.c, fileName: data.n, fileSize: data.s, isDirect: true, host: 'catbox', expires: false, isChunked: false };
   }
   if (data.h === 'litterbox') {
-    return { downloadUrl: data.c, fileName: data.n, fileSize: data.s, isDirect: true, host: 'litterbox', expires: true };
+    return { downloadUrl: data.c, fileName: data.n, fileSize: data.s, isDirect: true, host: 'litterbox', expires: true, isChunked: false };
   }
   // GoFile or legacy tokens (no h field)
-  return { downloadUrl: `https://gofile.io/d/${data.c}`, fileName: data.n, fileSize: data.s, isDirect: false, host: 'gofile', expires: false };
+  return { downloadUrl: `https://gofile.io/d/${data.c}`, fileName: data.n, fileSize: data.s, isDirect: false, host: 'gofile', expires: false, isChunked: false };
 }
 
 /** @deprecated Use resolveShareUrl instead */

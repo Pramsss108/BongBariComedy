@@ -25,7 +25,7 @@ import {
   Infinity as InfinityIcon,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getBestServer, uploadFileWithProgress, uploadFileViaServer, uploadToCatbox, uploadToLitterbox, canUseCatbox, canUseLitterbox, buildBongBariShareUrl, type ShareHost } from '@/lib/gofile-engine';
+import { getBestServer, uploadFileWithProgress, uploadFileViaServer, uploadToCatbox, uploadChunked, CHUNK_SIZE, buildBongBariShareUrl, buildBongBariChunkedShareUrl, type ShareHost } from '@/lib/gofile-engine';
 import { createSender, buildP2PShareUrl, type P2PStatus } from '@/lib/p2p-engine';
 /* ── Comedy one-liners ── */
 const IDLE_JOKES = [
@@ -143,7 +143,7 @@ const BongShare = () => {
   const [uploadPhase, setUploadPhase] = useState<string>('');
   const [usedHost, setUsedHost] = useState<ShareHost | null>(null);
 
-  /* ── Link mode: upload (3-tier: catbox → litterbox → GoFile) ── */
+  /* ── Link mode: upload (CF Worker → catbox — single or chunked, no Render needed) ── */
   const handleLinkUpload = async () => {
     if (!file) return;
     setMode('link');
@@ -151,8 +151,8 @@ const BongShare = () => {
     setLinkProgress(0);
     setUploadPhase('Connecting to file server…');
     try {
-      // ── TIER 1: Catbox.moe for ≤200 MB → permanent direct download ──
-      if (canUseCatbox(file)) {
+      // ── TIER 1: Single catbox upload for files ≤90 MB (fast, one request) ──
+      if (file.size <= CHUNK_SIZE) {
         try {
           setUploadPhase('Uploading file…');
           const directUrl = await uploadToCatbox(file, (p) => setLinkProgress(p));
@@ -164,31 +164,33 @@ const BongShare = () => {
           toast({ title: 'Ready to share!', description: 'Permanent link generated — copy it below.' });
           return;
         } catch (catboxErr: any) {
-          console.warn('[BongShare] Catbox failed, trying fallbacks:', catboxErr.message);
+          console.warn('[BongShare] Catbox single failed, trying chunked:', catboxErr.message);
           setLinkProgress(0);
         }
       }
 
-      // ── TIER 2: Litterbox for 200 MB–1 GB → 72 h direct download ──
-      if (canUseLitterbox(file) || canUseCatbox(file)) {
-        // canUseCatbox check = catbox failed above, try litterbox as fallback
-        try {
-          setUploadPhase('Uploading large file…');
-          const directUrl = await uploadToLitterbox(file, (p) => setLinkProgress(p));
-          const brandedUrl = buildBongBariShareUrl(directUrl, file.name, file.size, 'litterbox');
-          setShareLink(brandedUrl);
-          setUsedHost('litterbox');
-          setLinkStatus('success');
-          setUploadPhase('');
-          toast({ title: 'Ready to share!', description: 'Link expires in 72 hours — send it fast!' });
-          return;
-        } catch (litterboxErr: any) {
-          console.warn('[BongShare] Litterbox failed, trying GoFile:', litterboxErr.message);
-          setLinkProgress(0);
-        }
+      // ── TIER 2: Chunked catbox for any file > 90 MB (unlimited size, permanent) ──
+      try {
+        const chunkCount = Math.ceil(file.size / CHUNK_SIZE);
+        setUploadPhase(`Splitting into ${chunkCount} parts…`);
+        const chunkUrls = await uploadChunked(file, (p) => {
+          setLinkProgress(p);
+          const done = Math.round((p / 100) * chunkCount);
+          setUploadPhase(`Uploading part ${Math.min(done + 1, chunkCount)} of ${chunkCount}…`);
+        });
+        const brandedUrl = buildBongBariChunkedShareUrl(chunkUrls, file.name, file.size);
+        setShareLink(brandedUrl);
+        setUsedHost('catbox');
+        setLinkStatus('success');
+        setUploadPhase('');
+        toast({ title: 'Ready to share!', description: `Split into ${chunkCount} parts — permanent link generated!` });
+        return;
+      } catch (chunkErr: any) {
+        console.warn('[BongShare] Chunked catbox failed, trying GoFile:', chunkErr.message);
+        setLinkProgress(0);
       }
 
-      // ── TIER 3: GoFile for >1 GB or if all direct hosts failed ──
+      // ── TIER 3: GoFile fallback (if catbox fully unreachable) ──
       let data: Awaited<ReturnType<typeof uploadFileWithProgress>>;
       try {
         setUploadPhase('Uploading file…');
@@ -513,7 +515,7 @@ const BongShare = () => {
                       usedHost === 'litterbox' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
                       'bg-blue-500/10 text-blue-400 border border-blue-500/20'
                     }`}>
-                      {usedHost === 'catbox' && <><InfinityIcon className="w-3.5 h-3.5" /> Permanent link — never expires</>}
+                      {(usedHost === 'catbox') && <><InfinityIcon className="w-3.5 h-3.5" /> Permanent link — never expires</>}
                       {usedHost === 'litterbox' && <><Clock className="w-3.5 h-3.5" /> Link expires in 72 hours — share it fast!</>}
                       {usedHost === 'gofile' && <><Clock className="w-3.5 h-3.5" /> Link valid for 10 days</>}
                     </div>

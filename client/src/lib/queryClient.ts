@@ -31,7 +31,7 @@ function detectApiBase(): string {
   // 3. If running on GitHub Pages custom domain, use hardcoded production API host
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
-    if (/bongbari\.com$/i.test(host)) return 'http://78.47.104.43';
+    if (/bongbari\.com$/i.test(host)) return 'https://api.bongbari.com';
   }
   return '';
 }

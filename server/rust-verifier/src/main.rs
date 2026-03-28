@@ -25,9 +25,9 @@ use tokio::sync::Semaphore;
 use tower_http::cors::CorsLayer;
 
 /// Max concurrent proxy verification tasks.
-/// 100 concurrent = network-friendly for home connections (no router saturation).
-/// Raise to 300+ only if running on a datacenter VPS with a dedicated link.
-const MAX_CONCURRENT_TASKS: usize = 100;
+/// 150 concurrent = network-friendly for home connections (3x reduction from original 500).
+/// Raise to 400+ only if running on a datacenter VPS with a dedicated link.
+const MAX_CONCURRENT_TASKS: usize = 150;
 
 /// Default User-Agent pool — rotated per-proxy to avoid fingerprint repetition
 const DEFAULT_USER_AGENTS: &[&str] = &[

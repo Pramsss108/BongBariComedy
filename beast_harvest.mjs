@@ -506,7 +506,10 @@ async function modeA(uiLog = null) {
   let uploadBuffer = [];
   let binBuffer = [];
   const allVerified = [];
-  const RUST_BATCH = 2000; // Send 2K at a time to Rust
+  const RUST_BATCH = 500; // 500 proxies per Rust call — with 150 concurrent = ~35s per batch, UI updates every ~35s
+
+  log('🚀', `VERIFICATION STARTING — ${formatNum(rawQueue.length)} candidates | batch size 500 | ~${Math.ceil(rawQueue.length/500)} batches | ETA ~${Math.ceil(rawQueue.length/150/60)}min`);
+  ui('init', `🚀 VERIFICATION STARTED — ${formatNum(rawQueue.length)} candidates queued`);
 
   for (let i = 0; i < rawQueue.length; i += RUST_BATCH) {
     const batch = rawQueue.slice(i, i + RUST_BATCH);
@@ -651,15 +654,18 @@ async function modeBoost(uiLog = null) {
   let binBuffer = [];
   let localBinFallback = [];  // accumulate here when cloud bin upload fails
   const allVerified = [];
-  const RUST_BATCH = 2000;
+  const RUST_BATCH = 500;
   const BIN_FLUSH_SIZE = 1000;
+
+  log('🚀', `BOOST VERIFICATION STARTING — ${formatNum(rawQueue.length)} candidates | batch size 500 | ~${Math.ceil(rawQueue.length/500)} batches | ETA ~${Math.ceil(rawQueue.length/150/60)}min`);
+  ui('init', `🚀 BOOST STARTED — ${formatNum(rawQueue.length)} candidates | ETA ~${Math.ceil(rawQueue.length/150/60)}min`);
 
   for (let i = 0; i < rawQueue.length; i += RUST_BATCH) {
     const batch = rawQueue.slice(i, i + RUST_BATCH);
     const batchNum = Math.floor(i / RUST_BATCH) + 1;
     const totalBatches = Math.ceil(rawQueue.length / RUST_BATCH);
 
-    log('🦀', `BOOST: Rust batch ${batchNum}/${totalBatches} — ${batch.length} proxies (500+ concurrent)...`);
+    log('🦀', `BOOST: Rust batch ${batchNum}/${totalBatches} — ${batch.length} proxies (150 concurrent)...`);
     const results = await rustVerify(batch);
 
     for (let j = 0; j < batch.length; j++) {
@@ -778,10 +784,12 @@ async function modeB() {
 
   // Step 2: Verify all via local Rust
   const proxyUrls = livePool.map(p => p.url);
-  const RUST_BATCH = 2000;
+  const RUST_BATCH = 500;
   let kept = 0, purged = 0;
   let uploadBuffer = [];
   const allKept = [];
+
+  log('🚀', `REVALIDATION STARTING — ${formatNum(proxyUrls.length)} live proxies | batch size 500 | ETA ~${Math.ceil(proxyUrls.length/150/60)}min`);
 
   for (let i = 0; i < proxyUrls.length; i += RUST_BATCH) {
     const batch = proxyUrls.slice(i, i + RUST_BATCH);

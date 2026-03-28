@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import { resolveShareUrl } from '@/lib/gofile-engine';
 
-const CF_WORKER_URL = 'https://ancient-king-7fa9.workers.dev';
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
@@ -92,20 +91,29 @@ const BongShareDownload = () => {
     );
   }
 
-  const { downloadUrl, fileName, fileSize, isDirect, host, expires, isChunked, chunkUrls } = resolved;
+  const { downloadUrl, fileName, fileSize, isDirect, host, expires, isChunked, chunkUrls, binId, chunkNames } = resolved;
   const icon = getFileIcon(fileName);
 
   /** For GoFile (>1GB), trigger a fetch→blob download so they never see GoFile UI */
   const [proxyProgress, setProxyProgress] = useState(0);
   const [proxyActive, setProxyActive] = useState(false);
 
-  /** Chunked catbox download — fetch each chunk via CF Worker (CORS), reassemble, save file */
+  /** Chunked download: filebin (CORS native, no proxy) or legacy catbox URLs */
   const [chunkProgress, setChunkProgress] = useState(0);
   const [chunkActive, setChunkActive] = useState(false);
   const [chunkPhase, setChunkPhase] = useState('');
 
   const handleChunkedDownload = async () => {
-    if (!chunkUrls || chunkUrls.length === 0) return;
+    // Resolve chunk source: filebin (binId + chunkNames) or legacy catbox (chunkUrls)
+    const isFilebin = !!(binId && chunkNames && chunkNames.length > 0);
+    const totalParts = isFilebin ? chunkNames!.length : (chunkUrls?.length ?? 0);
+    if (totalParts === 0) return;
+
+    const getChunkUrl = (i: number) =>
+      isFilebin
+        ? `https://filebin.net/${binId}/${chunkNames![i]}`  // CORS native — no proxy needed
+        : chunkUrls![i];  // legacy catbox (may lack CORS on old links)
+
     setChunkActive(true);
     setChunkProgress(0);
     setChunkPhase('Starting download…');
@@ -114,11 +122,9 @@ const BongShareDownload = () => {
         // Streaming via File System Access API — no RAM limit, works for 100 GB+
         const fileHandle = await (window as any).showSaveFilePicker({ suggestedName: fileName });
         const writable = await fileHandle.createWritable();
-        for (let i = 0; i < chunkUrls.length; i++) {
-          setChunkPhase(`Downloading part ${i + 1} of ${chunkUrls.length}…`);
-          // Proxy through CF Worker to get CORS headers on catbox CDN
-          const proxyUrl = `${CF_WORKER_URL}/?url=${encodeURIComponent(chunkUrls[i])}`;
-          const response = await fetch(proxyUrl);
+        for (let i = 0; i < totalParts; i++) {
+          setChunkPhase(`Downloading part ${i + 1} of ${totalParts}…`);
+          const response = await fetch(getChunkUrl(i));
           if (!response.ok || !response.body) throw new Error(`Part ${i + 1} failed (${response.status})`);
           const reader = response.body.getReader();
           for (;;) {
@@ -126,20 +132,19 @@ const BongShareDownload = () => {
             if (done) break;
             await writable.write(value);
           }
-          setChunkProgress(Math.round(((i + 1) / chunkUrls.length) * 100));
+          setChunkProgress(Math.round(((i + 1) / totalParts) * 100));
         }
         await writable.close();
         setChunkPhase('Done!');
       } else {
         // Fallback: buffer in memory (safe up to ~2 GB on most browsers)
         const blobs: Blob[] = [];
-        for (let i = 0; i < chunkUrls.length; i++) {
-          setChunkPhase(`Downloading part ${i + 1} of ${chunkUrls.length}…`);
-          const proxyUrl = `${CF_WORKER_URL}/?url=${encodeURIComponent(chunkUrls[i])}`;
-          const response = await fetch(proxyUrl);
+        for (let i = 0; i < totalParts; i++) {
+          setChunkPhase(`Downloading part ${i + 1} of ${totalParts}…`);
+          const response = await fetch(getChunkUrl(i));
           if (!response.ok) throw new Error(`Part ${i + 1} failed (${response.status})`);
           blobs.push(await response.blob());
-          setChunkProgress(Math.round(((i + 1) / chunkUrls.length) * 100));
+          setChunkProgress(Math.round(((i + 1) / totalParts) * 100));
         }
         setChunkPhase('Merging parts…');
         const merged = new Blob(blobs);
@@ -232,11 +237,11 @@ const BongShareDownload = () => {
 
               {/* Download button — different per tier */}
               {isChunked ? (
-                /* Chunked catbox — stream-assemble via CF Worker */
+                /* Filebin chunked — stream-assemble directly (CORS native, no proxy) */
                 <div className="w-full flex flex-col gap-3">
-                  <div className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/15">
-                    <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <p className="text-[11px] text-emerald-300/80 font-medium">File is split into {chunkUrls?.length} parts — will be merged automatically on download</p>
+                  <div className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/15">
+                    <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+                    <p className="text-[11px] text-amber-300/80 font-medium">File is split into {chunkNames?.length ?? chunkUrls?.length} parts — merged automatically on download &mdash; link valid for 6 days</p>
                   </div>
                   {chunkActive && (
                     <div className="w-full flex flex-col gap-2">
@@ -315,7 +320,7 @@ const BongShareDownload = () => {
         {/* Footer */}
         <footer className="flex-none w-full py-3 sm:py-4 flex justify-center border-t border-white/5 relative z-10">
           <p className="text-[9px] font-bold tracking-[0.3em] text-[#d1c5ad]/30 uppercase text-center px-4">
-            Powered by Bong Bari &mdash; {expires ? 'This link expires in 72 hours' : (host === 'catbox' || host === 'catbox-chunked') ? 'Permanent file link' : 'Files auto-delete after 10 days of inactivity'}
+            Powered by Bong Bari &mdash; {expires ? 'This link expires in 72 hours' : host === 'filebin' ? 'Link valid for 6 days' : (host === 'catbox' || host === 'catbox-chunked') ? 'Permanent file link' : 'Files auto-delete after 10 days of inactivity'}
           </p>
         </footer>
       </div>

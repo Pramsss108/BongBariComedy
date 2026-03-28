@@ -25,7 +25,7 @@ import {
   Infinity as InfinityIcon,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getBestServer, uploadFileWithProgress, uploadFileViaServer, uploadToCatbox, uploadChunked, CHUNK_SIZE, buildBongBariShareUrl, buildBongBariChunkedShareUrl, type ShareHost } from '@/lib/gofile-engine';
+import { getBestServer, uploadFileWithProgress, uploadFileViaServer, uploadToFilebin, buildBongBariShareUrl, buildBongBariFilebinUrl, type ShareHost } from '@/lib/gofile-engine';
 import { createSender, buildP2PShareUrl, type P2PStatus } from '@/lib/p2p-engine';
 /* ── Comedy one-liners ── */
 const IDLE_JOKES = [
@@ -143,7 +143,7 @@ const BongShare = () => {
   const [uploadPhase, setUploadPhase] = useState<string>('');
   const [usedHost, setUsedHost] = useState<ShareHost | null>(null);
 
-  /* ── Link mode: upload (CF Worker → catbox — single or chunked, no Render needed) ── */
+  /* ── Link mode: upload (filebin.net — chunked, CORS native, no proxy needed) ── */
   const handleLinkUpload = async () => {
     if (!file) return;
     setMode('link');
@@ -151,46 +151,35 @@ const BongShare = () => {
     setLinkProgress(0);
     setUploadPhase('Connecting to file server…');
     try {
-      // ── TIER 1: Single catbox upload for files ≤90 MB (fast, one request) ──
-      if (file.size <= CHUNK_SIZE) {
-        try {
-          setUploadPhase('Uploading file…');
-          const directUrl = await uploadToCatbox(file, (p) => setLinkProgress(p));
-          const brandedUrl = buildBongBariShareUrl(directUrl, file.name, file.size, 'catbox');
-          setShareLink(brandedUrl);
-          setUsedHost('catbox');
-          setLinkStatus('success');
-          setUploadPhase('');
-          toast({ title: 'Ready to share!', description: 'Permanent link generated — copy it below.' });
-          return;
-        } catch (catboxErr: any) {
-          console.warn('[BongShare] Catbox single failed, trying chunked:', catboxErr.message);
-          setLinkProgress(0);
-        }
-      }
-
-      // ── TIER 2: Chunked catbox for any file > 90 MB (unlimited size, permanent) ──
+      // ── TIER 1: filebin.net (unlimited size, 6-day link, full CORS, no proxy) ──
       try {
-        const chunkCount = Math.ceil(file.size / CHUNK_SIZE);
-        setUploadPhase(`Splitting into ${chunkCount} parts…`);
-        const chunkUrls = await uploadChunked(file, (p) => {
+        const totalChunks = Math.ceil(file.size / (80 * 1024 * 1024));
+        setUploadPhase(totalChunks > 1 ? `Splitting into ${totalChunks} parts…` : 'Uploading file…');
+        const { binId, chunkNames } = await uploadToFilebin(file, (p) => {
           setLinkProgress(p);
-          const done = Math.round((p / 100) * chunkCount);
-          setUploadPhase(`Uploading part ${Math.min(done + 1, chunkCount)} of ${chunkCount}…`);
+          if (totalChunks > 1) {
+            const done = Math.round((p / 100) * totalChunks);
+            setUploadPhase(`Uploading part ${Math.min(done + 1, totalChunks)} of ${totalChunks}…`);
+          }
         });
-        const brandedUrl = buildBongBariChunkedShareUrl(chunkUrls, file.name, file.size);
+        const brandedUrl = buildBongBariFilebinUrl(binId, chunkNames, file.name, file.size);
         setShareLink(brandedUrl);
-        setUsedHost('catbox');
+        setUsedHost('filebin');
         setLinkStatus('success');
         setUploadPhase('');
-        toast({ title: 'Ready to share!', description: `Split into ${chunkCount} parts — permanent link generated!` });
+        toast({
+          title: 'Ready to share!',
+          description: totalChunks > 1
+            ? `Split into ${totalChunks} parts — link active for 6 days!`
+            : 'Link generated — active for 6 days!',
+        });
         return;
-      } catch (chunkErr: any) {
-        console.warn('[BongShare] Chunked catbox failed, trying GoFile:', chunkErr.message);
+      } catch (filebinErr: any) {
+        console.warn('[BongShare] filebin failed, trying GoFile fallback:', filebinErr.message);
         setLinkProgress(0);
       }
 
-      // ── TIER 3: GoFile fallback (if catbox fully unreachable) ──
+      // ── TIER 2: GoFile fallback (if filebin unreachable) ──
       let data: Awaited<ReturnType<typeof uploadFileWithProgress>>;
       try {
         setUploadPhase('Uploading file…');
@@ -511,11 +500,13 @@ const BongShare = () => {
                   {/* Expiry info */}
                   {linkStatus === 'success' && usedHost && (
                     <div className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold ${
+                      usedHost === 'filebin' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
                       usedHost === 'catbox' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
                       usedHost === 'litterbox' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
                       'bg-blue-500/10 text-blue-400 border border-blue-500/20'
                     }`}>
-                      {(usedHost === 'catbox') && <><InfinityIcon className="w-3.5 h-3.5" /> Permanent link — never expires</>}
+                      {usedHost === 'filebin' && <><Clock className="w-3.5 h-3.5" /> Link valid for 6 days — share it fast!</>}
+                      {usedHost === 'catbox' && <><InfinityIcon className="w-3.5 h-3.5" /> Permanent link — never expires</>}
                       {usedHost === 'litterbox' && <><Clock className="w-3.5 h-3.5" /> Link expires in 72 hours — share it fast!</>}
                       {usedHost === 'gofile' && <><Clock className="w-3.5 h-3.5" /> Link valid for 10 days</>}
                     </div>

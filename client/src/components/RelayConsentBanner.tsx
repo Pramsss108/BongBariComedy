@@ -1,18 +1,3 @@
-/**
- * RelayConsentBanner
- * ─────────────────────────────────────────────────────────────
- * Honest, plain-language opt-in to use the visitor's connection
- * as a download/upload relay — exactly like seeding a torrent.
- *
- * What it does when user clicks "Enable":
- *   - A small WebRTC DataChannel node is opened in a SharedWorker
- *   - If another BongBari user needs to pull a file chunk that is
- *     cached in the helper's browser, the relay serves it
- *   - NEVER reads local files or personal data
- *   - Stopped the moment user closes the tab or clicks "Stop Helping"
- *   - Consent is persisted to localStorage so we don't re-ask
- */
-
 import { useState, useEffect } from 'react';
 
 const CONSENT_KEY = 'bongbari_relay_consent';
@@ -27,8 +12,7 @@ export function RelayConsentBanner() {
       setActive(true);
       startRelayWorker();
     } else if (!stored) {
-      // Show banner after 3s delay so it doesn't compete with page load
-      const t = setTimeout(() => setVisible(true), 3000);
+      const t = setTimeout(() => setVisible(true), 4000);
       return () => clearTimeout(t);
     }
   }, []);
@@ -51,59 +35,49 @@ export function RelayConsentBanner() {
     stopRelayWorker();
   }
 
-  // ── Active indicator (top-right corner pill when relay is on) ──
+  // Active dot — tiny, top-right
   if (active) {
     return (
       <div
-        className="fixed top-4 right-4 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium select-none"
-        style={{ background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.4)', color: '#6ee7b7' }}
+        className="fixed top-3 right-3 z-50 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium select-none cursor-pointer"
+        style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', color: '#6ee7b7' }}
+        onClick={handleStop}
+        title="Click to stop"
       >
-        <span className="relative flex h-2 w-2">
+        <span className="relative flex h-1.5 w-1.5">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
         </span>
-        Relay ON
-        <button
-          onClick={handleStop}
-          className="ml-1 opacity-60 hover:opacity-100 transition-opacity"
-          aria-label="Stop relay"
-        >
-          ✕
-        </button>
+        Boosting ✕
       </div>
     );
   }
 
   if (!visible) return null;
 
-  // ── Consent banner ──────────────────────────────────────────
+  // Tiny consent pill — bottom-right
   return (
     <div
-      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md rounded-2xl px-5 py-4 shadow-2xl"
-      style={{ background: 'rgba(15,23,42,0.92)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(16px)' }}
+      className="fixed bottom-4 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-2xl shadow-xl"
+      style={{ background: 'rgba(15,23,42,0.93)', border: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(20px)', maxWidth: '240px' }}
     >
-      <p className="text-sm text-white/90 leading-relaxed mb-3">
-        <span className="font-semibold text-[#f0c12c]">Speed up BongBari for everyone</span>
-        <br />
-        Like seeding a torrent — while you browse, your browser quietly helps
-        relay downloads for other users. <strong>No files are read from your device.</strong>{' '}
-        You can stop anytime.
-      </p>
-
-      <div className="flex gap-2">
+      <div className="flex-1">
+        <p className="text-[11px] font-semibold text-white/90 leading-tight">⚡ Boost speed. Free.</p>
+        <p className="text-[10px] text-white/40 leading-tight mt-0.5">Uses your network briefly.</p>
+      </div>
+      <div className="flex gap-1">
         <button
           onClick={handleEnable}
-          className="flex-1 rounded-xl py-2 text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-95"
+          className="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
           style={{ background: 'linear-gradient(135deg, #f0c12c, #e8a320)', color: '#0f172a' }}
         >
-          Enable — I'm In ⚡
+          On
         </button>
         <button
           onClick={handleSkip}
-          className="px-4 rounded-xl py-2 text-sm text-white/50 hover:text-white/80 transition-colors"
-          style={{ background: 'rgba(255,255,255,0.05)' }}
+          className="px-2 py-1 rounded-lg text-[11px] text-white/40 hover:text-white/70 transition-colors"
         >
-          Skip
+          ✕
         </button>
       </div>
     </div>

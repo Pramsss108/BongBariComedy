@@ -9,8 +9,7 @@ import { useParallaxScroll } from "@/hooks/useParallaxScroll";
 import { useRickshawSound } from "@/hooks/useRickshawSound";
 import { useMagicalHoverSounds } from "@/hooks/useMagicalHoverSounds";
 import { useSimpleCharmSound } from "@/hooks/useSimpleCharmSound";
-import { CharmSoundSelector } from "@/components/CharmSoundSelector";
-import { useState, useEffect, Suspense, lazy } from "react";
+import { CharmSoundSelector } from "@/components/CharmSoundSelector";import { RelayConsentBanner } from '@/components/RelayConsentBanner';import { useState, useEffect, Suspense, lazy } from "react";
 import React from "react";
 import Home from "@/pages/home";
 import Navigation from "@/components/navigation";
@@ -331,6 +330,7 @@ function AppContent() {
   return (
     <>
       <Router />
+      <RelayConsentBanner />
     </>
   );
 }

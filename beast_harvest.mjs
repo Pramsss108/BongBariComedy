@@ -209,6 +209,23 @@ async function apiPost(path, body) {
 // ── Rust Batch Verify ─────────────────────────────────────────
 async function rustVerify(proxyUrls) {
   if (!proxyUrls.length) return [];
+
+  // Health-check before every batch — if Rust crashed, auto-restart and wait
+  let healthy = false;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const h = await fetch(`${RUST_URL}/health`, { signal: AbortSignal.timeout(2000) });
+      if (h.ok) { healthy = true; break; }
+    } catch { /* not responding */ }
+    log('⚠️', `Rust verifier unreachable (attempt ${attempt}/3) — attempting restart...`);
+    await ensureRustVerifier();
+    await new Promise(r => setTimeout(r, 2000));
+  }
+  if (!healthy) {
+    log('❌', `Rust verifier still down after 3 restart attempts — skipping batch (${proxyUrls.length} proxies marked null)`);
+    return proxyUrls.map(() => null);
+  }
+
   try {
     const res = await fetch(`${RUST_URL}/verify`, {
       method: 'POST',

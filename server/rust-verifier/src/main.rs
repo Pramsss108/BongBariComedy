@@ -81,27 +81,14 @@ async fn verify_single(proxy_url: String, timeout_ms: u64, user_agent: &str) -> 
         .build()
         .ok()?;
 
-    // Check each platform concurrently through this proxy
-    let (yt, fb, ig) = tokio::join!(
-        platform_check(client.clone(), "https://www.youtube.com/generate_204"),
-        platform_check(client.clone(), "https://www.facebook.com/favicon.ico"),
-        platform_check(client.clone(), "https://www.instagram.com/favicon.ico"),
-    );
-
-    // Record total wall-clock latency (includes all 3 concurrent checks)
-    // Re-run just to get timing (join already ran above, this is fast since client is warm)
+    // Check each platform concurrently through this proxy (single pass — 3 requests total)
     let start = Instant::now();
-    let (yt2, fb2, ig2) = tokio::join!(
+    let (yt_ok, fb_ok, ig_ok) = tokio::join!(
         platform_check(client.clone(), "https://www.youtube.com/generate_204"),
         platform_check(client.clone(), "https://www.facebook.com/favicon.ico"),
         platform_check(client.clone(), "https://www.instagram.com/favicon.ico"),
     );
     let latency_ms = start.elapsed().as_millis() as u64;
-
-    // Use best result from both passes
-    let yt_ok = yt || yt2;
-    let fb_ok = fb || fb2;
-    let ig_ok = ig || ig2;
 
     if !yt_ok && !fb_ok && !ig_ok {
         return None;

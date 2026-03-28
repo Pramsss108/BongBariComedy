@@ -146,12 +146,12 @@ const BongShare = () => {
     setMode('link');
     setLinkStatus('uploading');
     setLinkProgress(0);
-    setUploadPhase('Connecting to GoFile…');
+    setUploadPhase('Connecting to file server…');
     try {
       let data: Awaited<ReturnType<typeof uploadFileWithProgress>>;
       try {
         // PRIMARY: Direct GoFile from user's residential IP (multi-server retry)
-        setUploadPhase('Uploading directly to GoFile…');
+        setUploadPhase('Uploading file…');
         const server = await getBestServer();
         data = await uploadFileWithProgress(file, server, (p) => setLinkProgress(p));
       } catch (directErr: any) {
@@ -472,19 +472,6 @@ const BongShare = () => {
                       <span className="flex items-center gap-1"><Zap className="w-3 h-3 text-amber-500" /> CDN</span>
                     </div>
                     <span className="text-[9px] font-bold uppercase tracking-widest text-[#e2e2e2]">{formatBytes(file.size)} / 10 GB</span>
-                  </div>
-
-                  {/* Upload route indicator */}
-                  <div className="flex items-center justify-center gap-2 py-1">
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-mono" style={{ background: 'rgba(64,206,237,0.06)', border: '1px solid rgba(64,206,237,0.15)' }}>
-                      <Signal className="w-2.5 h-2.5 text-[#40ceed]" />
-                      <span className="text-[#40ceed]/50">Route:</span>
-                      <span className="text-[#40ceed]/80">
-                        {uploadPhase?.includes('relay')
-                          ? `${userIp || 'You'} → VPS Relay → GoFile`
-                          : `${userIp || 'You'} → GoFile Direct`}
-                      </span>
-                    </div>
                   </div>
 
                   {linkStatus === 'success' && (

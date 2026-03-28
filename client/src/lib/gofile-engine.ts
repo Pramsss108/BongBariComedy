@@ -261,24 +261,31 @@ export interface SharePayload {
   s: number;
 }
 
-/** Encode GoFile data into a URL-safe cloaked token */
+/** Encode GoFile data into a URL-safe cloaked token (Unicode-safe v2) */
 export function encodeShareToken(payload: SharePayload): string {
-  const json = JSON.stringify(payload);
+  // encodeURIComponent makes ALL chars ASCII-safe before XOR + btoa
+  const json = encodeURIComponent(JSON.stringify(payload));
   const ciphered = xorCipher(json, CLOAK_KEY);
   return toBase64Url(ciphered);
 }
 
 /** Decode a cloaked token back to GoFile data */
 export function decodeShareToken(token: string): SharePayload | null {
+  // Try v2 format (encodeURIComponent-wrapped): handles Bengali/emoji filenames
+  try {
+    const ciphered = fromBase64Url(token);
+    const json = decodeURIComponent(xorCipher(ciphered, CLOAK_KEY));
+    const parsed = JSON.parse(json);
+    if (parsed && typeof parsed.c === 'string') return parsed as SharePayload;
+  } catch { /* fall through */ }
+  // Fallback: try legacy v1 format (raw JSON, ASCII filenames only)
   try {
     const ciphered = fromBase64Url(token);
     const json = xorCipher(ciphered, CLOAK_KEY);
     const parsed = JSON.parse(json);
     if (parsed && typeof parsed.c === 'string') return parsed as SharePayload;
-    return null;
-  } catch {
-    return null;
-  }
+  } catch { /* fall through */ }
+  return null;
 }
 
 /** Build the branded share URL from GoFile upload data */

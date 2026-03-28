@@ -27,15 +27,18 @@ export interface GoFileUploaderResponse {
 
 export async function getBestServer(): Promise<string> {
   try {
-    const response = await fetch('https://api.gofile.io/servers');
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const response = await fetch('https://api.gofile.io/servers', { signal: controller.signal });
+    clearTimeout(timeout);
     const result: GoFileServerResponse = await response.json();
     if (result.status === 'ok' && result.data.servers?.length > 0) {
-      // Pick a random server from the pool for load distribution
       const idx = Math.floor(Math.random() * result.data.servers.length);
       return result.data.servers[idx].name;
     }
     throw new Error('No active GoFile servers available');
-  } catch (error) {
+  } catch (error: any) {
+    if (error.name === 'AbortError') throw new Error('GoFile server unreachable — try P2P mode instead');
     console.error('GoFile getBestServer Error:', error);
     throw error;
   }
@@ -77,7 +80,9 @@ export function uploadFileWithProgress(
       }
     };
 
-    xhr.onerror = () => reject(new Error('Network error during upload'));
+    xhr.onerror = () => reject(new Error('Network error — GoFile may be down. Try P2P mode.'));
+    xhr.ontimeout = () => reject(new Error('Upload timed out — try P2P mode instead.'));
+    xhr.timeout = 300000; // 5 min max
     xhr.open('POST', `https://${server}.gofile.io/uploadFile`);
     xhr.send(formData);
   });

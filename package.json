@@ -25,7 +25,7 @@
     "start": "node dist/index.js",
     "verify-env": "node scripts/verify-env.mjs DATABASE_URL GEMINI_API_KEY JWT_SECRET",
     "health": "node scripts/health-check.mjs http://localhost:5000/health",
-    "render:build": "npm install --include=dev && node scripts/update-yt.cjs && cd server/rust-verifier && cargo build --release && cd ../.. && npm run build",
+    "render:build": "npm install --include=dev && node scripts/update-yt.cjs && npm run build",
     "build:rust": "cd server/rust-verifier && cargo build && cd ../..",
     "build:rust:release": "cd server/rust-verifier && cargo build --release && cd ../...",
     "check": "tsc",

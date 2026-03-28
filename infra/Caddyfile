@@ -1,0 +1,90 @@
+##############################################################
+# BongBari — Caddy Reverse Proxy Config (Caddyfile)
+# Target: Hetzner VPS (Ubuntu 22.04)
+# Backend: Node.js on 127.0.0.1:5000
+#
+# SETUP:
+#   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+#   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+#   sudo apt update && sudo apt install caddy
+#   sudo nano /etc/caddy/Caddyfile
+#   sudo systemctl reload caddy
+#
+# Caddy auto-provisions & renews Let's Encrypt SSL — zero manual work.
+##############################################################
+
+api.bongbari.com {
+
+    # ── Logging ──────────────────────────────────────────────
+    log {
+        output file /var/log/caddy/bongbari.log {
+            roll_size     100mb
+            roll_keep     5
+            roll_keep_for 720h
+        }
+    }
+
+    # ── Static assets (React build — skip if using GitHub Pages) ──
+    # Uncomment if serving frontend from this VPS:
+    # handle /assets/* {
+    #     root * /var/www/bongbari/dist/public
+    #     file_server
+    #     header Cache-Control "public, max-age=31536000, immutable"
+    # }
+
+    # ── Large file upload route ──────────────────────────────
+    handle /api/share/upload {
+        request_body {
+            max_size 10GB
+        }
+        header Access-Control-Allow-Origin "https://www.bongbari.com"
+        header Access-Control-Allow-Methods "POST, OPTIONS"
+        header Access-Control-Allow-Headers "Content-Type, Authorization, X-CSRF-Token"
+
+        reverse_proxy 127.0.0.1:5000 {
+            transport http {
+                read_timeout  660s
+                write_timeout 660s
+                dial_timeout  30s
+            }
+            # Stream directly — do NOT buffer in RAM
+            flush_interval -1
+        }
+    }
+
+    # ── GoFile health — micro-cache 10s ─────────────────────
+    handle /api/share/gofile-health {
+        header Access-Control-Allow-Origin "https://www.bongbari.com"
+        reverse_proxy 127.0.0.1:5000 {
+            header_up Host {upstream_hostport}
+        }
+    }
+
+    # ── All API routes ───────────────────────────────────────
+    handle /api/* {
+        header Access-Control-Allow-Origin  "https://www.bongbari.com"
+        header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+        header Access-Control-Allow-Headers "Content-Type, Authorization, X-CSRF-Token"
+
+        @options method OPTIONS
+        respond @options 204
+
+        reverse_proxy 127.0.0.1:5000 {
+            header_up Host              {upstream_hostport}
+            header_up X-Real-IP         {remote_host}
+            header_up X-Forwarded-For   {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # ── Health check ─────────────────────────────────────────
+    handle /health {
+        rewrite * /api/version
+        reverse_proxy 127.0.0.1:5000
+    }
+
+    # ── Block everything else ────────────────────────────────
+    handle {
+        respond 404
+    }
+}

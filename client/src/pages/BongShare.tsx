@@ -24,6 +24,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { getBestServer, uploadFileWithProgress, uploadFileViaServer, buildBongBariShareUrl } from '@/lib/gofile-engine';
 import { createSender, buildP2PShareUrl, type P2PStatus } from '@/lib/p2p-engine';
+import { RelayConsentBanner } from '@/components/RelayConsentBanner';
 
 /* ── Comedy one-liners ── */
 const IDLE_JOKES = [
@@ -491,6 +492,7 @@ const BongShare = () => {
           <p className="text-[9px] font-bold tracking-[0.3em] text-[#d1c5ad]/30 uppercase text-center px-4">P2P: instant, zero-server • Link: download anytime</p>
         </footer>
       </div>
+      <RelayConsentBanner />
     </>
   );
 };

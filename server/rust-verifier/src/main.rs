@@ -16,10 +16,27 @@ use axum::{
     routing::{get, post},
     Router,
 };
+use rand::Rng;
 use reqwest::{Client, Proxy};
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
+use tokio::sync::Semaphore;
 use tower_http::cors::CorsLayer;
+
+/// Max concurrent proxy verification tasks to prevent OOM on VPS (4GB RAM).
+/// 500 concurrent HTTPS connections ≈ 200-400MB RAM — safe for CX22.
+const MAX_CONCURRENT_TASKS: usize = 500;
+
+/// Default User-Agent pool — rotated per-proxy to avoid fingerprint repetition
+const DEFAULT_USER_AGENTS: &[&str] = &[
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
+];
 
 // ── Request / Response types ──────────────────────────────────
 
@@ -27,6 +44,10 @@ use tower_http::cors::CorsLayer;
 struct VerifyRequest {
     proxies: Vec<String>,
     timeout_ms: Option<u64>,
+    /// Optional UA rotation pool — if provided, overrides defaults
+    user_agents: Option<Vec<String>>,
+    /// Optional inter-request delay range [min_ms, max_ms] for stealth
+    delay_ms: Option<[u64; 2]>,
 }
 
 #[derive(Serialize, Clone)]
@@ -47,7 +68,7 @@ struct VerifyResponse {
 
 // ── Single proxy verification ─────────────────────────────────
 
-async fn verify_single(proxy_url: String, timeout_ms: u64) -> Option<ProxyResult> {
+async fn verify_single(proxy_url: String, timeout_ms: u64, user_agent: &str) -> Option<ProxyResult> {
     // Build a dedicated reqwest client wired through this proxy
     let proxy_config = Proxy::all(&proxy_url).ok()?;
 
@@ -55,7 +76,7 @@ async fn verify_single(proxy_url: String, timeout_ms: u64) -> Option<ProxyResult
         .proxy(proxy_config)
         .timeout(Duration::from_millis(timeout_ms))
         .danger_accept_invalid_certs(true)
-        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+        .user_agent(user_agent)
         .build()
         .ok()?;
 
@@ -112,16 +133,45 @@ async fn verify_handler(
 ) -> (StatusCode, Json<VerifyResponse>) {
     let timeout_ms = payload.timeout_ms.unwrap_or(10_000);
     let total = payload.proxies.len();
+    let delay_range = payload.delay_ms;
 
-    // Spawn ALL proxies as independent tokio tasks — true O(1) concurrency
+    // Build UA pool: use provided list or fall back to defaults
+    let ua_pool: Vec<String> = match payload.user_agents {
+        Some(ref uas) if !uas.is_empty() => uas.clone(),
+        _ => DEFAULT_USER_AGENTS.iter().map(|s| s.to_string()).collect(),
+    };
+    let ua_pool = Arc::new(ua_pool);
+
+    // Phase 17-FIX: Semaphore limits concurrent tasks to prevent OOM
+    let semaphore = Arc::new(Semaphore::new(MAX_CONCURRENT_TASKS));
+
     let mut handles = Vec::with_capacity(total);
-    for proxy_url in payload.proxies {
+    for (idx, proxy_url) in payload.proxies.into_iter().enumerate() {
         let t = timeout_ms;
+        let sem = Arc::clone(&semaphore);
+        let uas = Arc::clone(&ua_pool);
         handles.push(tokio::spawn(async move {
+            // Acquire permit — blocks if 500 tasks already running
+            let _permit = sem.acquire().await.expect("semaphore closed");
+
+            // Stealth: optional inter-request delay (jittered)
+            if let Some([min_ms, max_ms]) = delay_range {
+                if min_ms > 0 && max_ms > min_ms {
+                    let delay = {
+                        let mut rng = rand::rng();
+                        rng.random_range(min_ms..=max_ms)
+                    };
+                    tokio::time::sleep(Duration::from_millis(delay)).await;
+                }
+            }
+
+            // Rotate UA based on proxy index
+            let ua = &uas[idx % uas.len()];
+
             // Outer timeout safety guard: t + 3s beyond inner client timeout
             match tokio::time::timeout(
                 Duration::from_millis(t + 3_000),
-                verify_single(proxy_url, t),
+                verify_single(proxy_url, t, ua),
             )
             .await
             {
@@ -165,7 +215,7 @@ async fn main() {
 
     let addr = format!("127.0.0.1:{port}");
     println!("[RustVerifier] 🦀 Proxy verifier online at {addr}");
-    println!("[RustVerifier] Unlimited concurrent tokio tasks — 5000 proxies in ~90s");
+    println!("[RustVerifier] Semaphore-limited to {MAX_CONCURRENT_TASKS} concurrent tasks — safe for 4GB VPS");
 
     let listener = tokio::net::TcpListener::bind(&addr)
         .await

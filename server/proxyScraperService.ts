@@ -4,7 +4,8 @@ import { ProxyKitchen } from './proxyService';
 import { SocksProxyAgent } from 'socks-proxy-agent';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import geoip from 'geoip-lite';
-import { callRustVerify, callHetznerVerify } from './rustVerifier';
+import { callRustVerify, callHetznerVerify, callLocalPcVerify } from './rustVerifier';
+import { calculateProxyScore, adaptBatchSize, getBatchDelay, sleep as stealthSleep, getRandomProfile, detectBanSignal } from './stealthEngine';
 
 /**
  * ============================================================
@@ -24,31 +25,102 @@ import { callRustVerify, callHetznerVerify } from './rustVerifier';
 // ── Master Regex ─────────────────────────────────────────────
 const PROXY_REGEX = /\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}:[0-9]{1,5}\b/g;
 
-// ── OSINT Source Matrix (26 sources) ─────────────────────────
-const MASTER_PROXY_SOURCES = [
+// ── OSINT Source Matrix (26 sources) — each has backup URLs for auto-heal ───
+// When primary returns HTTP 404 / times out / returns <10 IPs,
+// scrapeSource() automatically tries backup[0], backup[1], ... in order.
+interface OsintSource { url: string; proto: string; backup?: string[] }
+const MASTER_PROXY_SOURCES: OsintSource[] = [
   // ── TIER A: SOCKS5 GitHub lists ──────────────────────────
-  { url: 'https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/socks5.txt', proto: 'socks5' },
-  { url: 'https://raw.githubusercontent.com/monosans/proxy-list/main/proxies/socks5.txt', proto: 'socks5' },
-  { url: 'https://raw.githubusercontent.com/hookzof/socks5_list/master/proxy.txt', proto: 'socks5' },
-  { url: 'https://raw.githubusercontent.com/officialputuid/KangProxy/KangProxy/socks5/socks5.txt', proto: 'socks5' },
-  { url: 'https://raw.githubusercontent.com/roosterkid/openproxylist/main/SOCKS5_RAW.txt', proto: 'socks5' },
+  {
+    url: 'https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/socks5.txt', proto: 'socks5',
+    backup: [
+      'https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/socks5.txt',
+      'https://raw.githubusercontent.com/jetkai/proxy-list/main/online-proxies/txt/proxies-socks5.txt',
+      'https://raw.githubusercontent.com/proxifly/free-proxy-list/main/proxies/protocols/socks5/data.txt',
+    ],
+  },
+  {
+    url: 'https://raw.githubusercontent.com/monosans/proxy-list/main/proxies/socks5.txt', proto: 'socks5',
+    backup: [
+      'https://raw.githubusercontent.com/monosans/proxy-list/main/proxies_geolocation/socks5.txt',
+      'https://raw.githubusercontent.com/proxifly/free-proxy-list/main/proxies/protocols/socks5/data.txt',
+      'https://raw.githubusercontent.com/ErcinDedeoglu/proxies/main/proxies/socks5.txt',
+    ],
+  },
+  { url: 'https://raw.githubusercontent.com/hookzof/socks5_list/master/proxy.txt', proto: 'socks5',
+    backup: ['https://raw.githubusercontent.com/HyperBeats/proxy-list/main/socks5.txt'],
+  },
+  {
+    url: 'https://raw.githubusercontent.com/officialputuid/KangProxy/KangProxy/socks5/socks5.txt', proto: 'socks5',
+    backup: [
+      'https://raw.githubusercontent.com/officialputuid/KangProxy/KangProxy/SOCKS5/socks5.txt',
+      'https://raw.githubusercontent.com/prxchk/proxy-list/main/socks5.txt',
+    ],
+  },
+  { url: 'https://raw.githubusercontent.com/roosterkid/openproxylist/main/SOCKS5_RAW.txt', proto: 'socks5',
+    backup: ['https://raw.githubusercontent.com/zloi-user/hideip.me/main/socks5.txt'],
+  },
   // ── TIER A: HTTP GitHub lists ────────────────────────────
-  { url: 'https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt', proto: 'http' },
-  { url: 'https://raw.githubusercontent.com/monosans/proxy-list/main/proxies/http.txt', proto: 'http' },
-  { url: 'https://raw.githubusercontent.com/officialputuid/KangProxy/KangProxy/http/http.txt', proto: 'http' },
-  { url: 'https://raw.githubusercontent.com/roosterkid/openproxylist/main/HTTPS_RAW.txt', proto: 'http' },
-  { url: 'https://raw.githubusercontent.com/ALIILAPRO/Proxy/main/http.txt', proto: 'http' },
-  { url: 'https://raw.githubusercontent.com/clarketm/proxy-list/master/proxy-list-raw.txt', proto: 'http' },
+  {
+    url: 'https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt', proto: 'http',
+    backup: [
+      'https://raw.githubusercontent.com/TheSpeedX/PROXY-List/main/http.txt',
+      'https://raw.githubusercontent.com/jetkai/proxy-list/main/online-proxies/txt/proxies-http.txt',
+      'https://raw.githubusercontent.com/proxifly/free-proxy-list/main/proxies/protocols/http/data.txt',
+    ],
+  },
+  {
+    url: 'https://raw.githubusercontent.com/monosans/proxy-list/main/proxies/http.txt', proto: 'http',
+    backup: [
+      'https://raw.githubusercontent.com/monosans/proxy-list/main/proxies_geolocation/http.txt',
+      'https://raw.githubusercontent.com/proxifly/free-proxy-list/main/proxies/protocols/http/data.txt',
+      'https://raw.githubusercontent.com/ErcinDedeoglu/proxies/main/proxies/http.txt',
+    ],
+  },
+  {
+    url: 'https://raw.githubusercontent.com/officialputuid/KangProxy/KangProxy/http/http.txt', proto: 'http',
+    backup: [
+      'https://raw.githubusercontent.com/officialputuid/KangProxy/KangProxy/HTTPS/https.txt',
+      'https://raw.githubusercontent.com/prxchk/proxy-list/main/http.txt',
+    ],
+  },
+  { url: 'https://raw.githubusercontent.com/roosterkid/openproxylist/main/HTTPS_RAW.txt', proto: 'http',
+    backup: ['https://raw.githubusercontent.com/zloi-user/hideip.me/main/http.txt'],
+  },
+  { url: 'https://raw.githubusercontent.com/ALIILAPRO/Proxy/main/http.txt', proto: 'http',
+    backup: ['https://raw.githubusercontent.com/HyperBeats/proxy-list/main/http.txt'],
+  },
+  { url: 'https://raw.githubusercontent.com/clarketm/proxy-list/master/proxy-list-raw.txt', proto: 'http',
+    backup: ['https://raw.githubusercontent.com/sunny9577/proxy-scraper/master/proxies.txt'],
+  },
   // ── TIER B: MEGA-DUMP aggregators (50k+ candidates/day) ──
-  { url: 'https://raw.githubusercontent.com/MuRongPIG/Proxy-Master/main/http.txt', proto: 'http' },
-  { url: 'https://raw.githubusercontent.com/MuRongPIG/Proxy-Master/main/socks5.txt', proto: 'socks5' },
-  { url: 'https://raw.githubusercontent.com/Zaeem20/FREE_PROXIES_LIST/master/http.txt', proto: 'http' },
-  { url: 'https://raw.githubusercontent.com/Zaeem20/FREE_PROXIES_LIST/master/socks5.txt', proto: 'socks5' },
-  { url: 'https://raw.githubusercontent.com/vakhov/free-proxy-list/main/proxies/http.txt', proto: 'http' },
-  { url: 'https://raw.githubusercontent.com/vakhov/free-proxy-list/main/proxies/socks5.txt', proto: 'socks5' },
-  { url: 'https://raw.githubusercontent.com/caliphdev/Proxy-List/master/http.txt', proto: 'http' },
-  { url: 'https://raw.githubusercontent.com/mmpx12/proxy-list/master/socks5.txt', proto: 'socks5' },
-  { url: 'https://raw.githubusercontent.com/mmpx12/proxy-list/master/http.txt', proto: 'http' },
+  { url: 'https://raw.githubusercontent.com/MuRongPIG/Proxy-Master/main/http.txt', proto: 'http',
+    backup: ['https://raw.githubusercontent.com/rdavydov/proxy-list/main/proxies/http.txt'],
+  },
+  { url: 'https://raw.githubusercontent.com/MuRongPIG/Proxy-Master/main/socks5.txt', proto: 'socks5',
+    backup: ['https://raw.githubusercontent.com/rdavydov/proxy-list/main/proxies/socks5.txt'],
+  },
+  { url: 'https://raw.githubusercontent.com/Zaeem20/FREE_PROXIES_LIST/master/http.txt', proto: 'http',
+    backup: ['https://raw.githubusercontent.com/Zaeem20/FREE_PROXIES_LIST/main/http.txt'],
+  },
+  { url: 'https://raw.githubusercontent.com/Zaeem20/FREE_PROXIES_LIST/master/socks5.txt', proto: 'socks5',
+    backup: ['https://raw.githubusercontent.com/Zaeem20/FREE_PROXIES_LIST/main/socks5.txt'],
+  },
+  { url: 'https://raw.githubusercontent.com/vakhov/free-proxy-list/main/proxies/http.txt', proto: 'http',
+    backup: ['https://raw.githubusercontent.com/ShiftyTR/Proxy-List/master/http.txt'],
+  },
+  { url: 'https://raw.githubusercontent.com/vakhov/free-proxy-list/main/proxies/socks5.txt', proto: 'socks5',
+    backup: ['https://raw.githubusercontent.com/ShiftyTR/Proxy-List/master/socks5.txt'],
+  },
+  { url: 'https://raw.githubusercontent.com/caliphdev/Proxy-List/master/http.txt', proto: 'http',
+    backup: ['https://raw.githubusercontent.com/caliphdev/Proxy-List/master/socks5.txt'],
+  },
+  { url: 'https://raw.githubusercontent.com/mmpx12/proxy-list/master/socks5.txt', proto: 'socks5',
+    backup: ['https://raw.githubusercontent.com/Anonym0usWork1221/Free-Proxies/main/proxy_files/socks5_proxies.txt'],
+  },
+  { url: 'https://raw.githubusercontent.com/mmpx12/proxy-list/master/http.txt', proto: 'http',
+    backup: ['https://raw.githubusercontent.com/Anonym0usWork1221/Free-Proxies/main/proxy_files/http_proxies.txt'],
+  },
   // ── TIER C: Raw web endpoints (no GitHub rate limits) ────
   { url: 'https://multiproxy.org/txt_all/proxy.txt', proto: 'http' },
   { url: 'https://rootjazz.com/proxies/proxies.txt', proto: 'http' },
@@ -74,6 +146,7 @@ export interface ProxyPlatforms {
   failCount?: number;     // Phase 13: consecutive fail count (auto-ban at 3)
   lastCheckedAt?: string; // Phase 14: ISO timestamp of last verification
   tier?: 'platinum' | 'gold' | 'silver' | 'bronze'; // Phase 14: computed quality tier
+  score?: number;         // Stealth: composite quality score (0-100)
 }
 
 // ── Phase 15: Telegram public web scrape sources ─────────────
@@ -87,7 +160,9 @@ const TELEGRAM_SOURCES = [
 export class ProxyScraper {
   static isHunting          = false;
   static isRevalidating     = false;
+  static isVerifyingQueue   = false;  // Phase 21: separate verify pass
   static isForceRevalidating = false;
+  static cloudVerifyPaused   = false;  // When true, cloud auto-verify skips — let local beast handle it
   static huntCount          = 0;
   static totalEverFound     = 0;
   static lastHuntAt: Date | null = null;
@@ -95,10 +170,24 @@ export class ProxyScraper {
   static lastRevalidatedAt: Date | null = null;
   static nextRevalAt: Date | null = null;
   static powerMode          = false;
+  // ── In-Memory Pending Buffer (fallback when Redis push fails) ──
+  // When pushToRawQueue fails (Redis offline/rate-limited), candidates are kept here
+  // so runVerifyQueue can still drain them. Cleared after successful verification.
+  static pendingBuffer: string[] = [];
   // ── Backend Log Buffer (real server activity, streamed to frontend) ──
   static logBuffer: Array<{ time: string; type: string; msg: string }> = [];
   // ── Local Sync Log Buffer (beast-mode uploads from user's local machine) ──
   static localSyncBuffer: Array<{ time: string; type: string; msg: string }> = [];
+  // ── Auto-Heal: tracks which URL was actually used (primary vs backup) ──
+  // key = original primary URL, value = { active: URL currently working, failCount, degraded }
+  private static sourceHealth: Map<string, { active: string; failCount: number; degraded: boolean }> = new Map();
+
+  static getSourceHealth(): Record<string, { active: string; failCount: number; degraded: boolean }> {
+    const out: Record<string, { active: string; failCount: number; degraded: boolean }> = {};
+    this.sourceHealth.forEach((v, k) => { out[k] = v; });
+    return out;
+  }
+
   private static pushLog(type: string, msg: string) {
     const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
     this.logBuffer = [{ time, type, msg }, ...this.logBuffer].slice(0, 200);
@@ -119,6 +208,7 @@ export class ProxyScraper {
     totalEverFound: 0,
     lastHuntAt: null as string | null,
     nextHuntAt: null as string | null,
+    lastMined: 0,       // persisted mine count from last completed hunt
   };
 
   // ── Initialize counters from existing storage (survives restart) ──
@@ -180,6 +270,86 @@ export class ProxyScraper {
     } catch (e: any) {
       console.warn(`[ProxyScraper] Geo-enrichment error: ${e.message}`);
     }
+  }
+
+  // ── Daily Source Health Audit ────────────────────────────────────────
+  // Probes every OSINT source (primary + backups) to check which are alive.
+  // Auto-heals by switching to working backups. Logs dead sources to UI.
+  // Called by daily cron — keeps the source matrix fresh without manual intervention.
+  static async auditSourceHealth(): Promise<{ alive: number; degraded: number; dead: number }> {
+    this.pushLog('init', '🔬 DAILY SOURCE HEALTH AUDIT STARTED — probing all OSINT sources...');
+    console.log('[ProxyScraper] 🔬 Starting daily source health audit...');
+    let alive = 0, degraded = 0, dead = 0;
+
+    for (const source of MASTER_PROXY_SOURCES) {
+      const urlsToTry = [source.url, ...(source.backup || [])];
+      let foundWorking = false;
+
+      for (let i = 0; i < urlsToTry.length; i++) {
+        try {
+          const res = await fetch(urlsToTry[i].trim(), {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+            signal: AbortSignal.timeout(10000),
+          });
+          if (!res.ok) continue;
+          const text = await res.text();
+          const matches = text.match(PROXY_REGEX) || [];
+          if (matches.length >= 10) {
+            // Update health record
+            const health = this.sourceHealth.get(source.url) || { active: source.url, failCount: 0, degraded: false };
+            health.active = urlsToTry[i];
+            health.degraded = i > 0;
+            health.failCount = i;
+            this.sourceHealth.set(source.url, health);
+            if (i > 0) { degraded++; } else { alive++; }
+            foundWorking = true;
+            break;
+          }
+        } catch { /* try next */ }
+      }
+
+      if (!foundWorking) {
+        dead++;
+        const sourceName = source.url.split('/').pop() || source.url;
+        this.sourceHealth.set(source.url, { active: source.url, failCount: urlsToTry.length, degraded: true });
+        this.pushLog('banned', `☠️ SOURCE DEAD: ${sourceName} — all ${urlsToTry.length} URLs failed (primary + ${(source.backup || []).length} backups)`);
+        console.warn(`[ProxyScraper] ☠️ Source dead: ${sourceName} — needs new URL`);
+      }
+    }
+
+    // Also check Telegram sources — track in sourceHealth map
+    for (const tgUrl of TELEGRAM_SOURCES) {
+      const name = tgUrl.split('/').pop() || tgUrl;
+      try {
+        const res = await fetch(tgUrl, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+          signal: AbortSignal.timeout(10000),
+        });
+        if (res.ok) {
+          const text = await res.text();
+          const matches = text.match(PROXY_REGEX) || [];
+          if (matches.length >= 5) {
+            alive++;
+            this.sourceHealth.set(tgUrl, { active: tgUrl, failCount: 0, degraded: false });
+          } else {
+            degraded++;
+            this.sourceHealth.set(tgUrl, { active: tgUrl, failCount: 1, degraded: true });
+          }
+        } else {
+          degraded++;
+          this.sourceHealth.set(tgUrl, { active: tgUrl, failCount: 1, degraded: true });
+        }
+      } catch {
+        dead++;
+        this.sourceHealth.set(tgUrl, { active: tgUrl, failCount: 5, degraded: true });
+        this.pushLog('banned', `☠️ TELEGRAM DEAD: ${name} — unreachable`);
+      }
+    }
+
+    const total = MASTER_PROXY_SOURCES.length + TELEGRAM_SOURCES.length;
+    this.pushLog('success', `SOURCE AUDIT DONE — ✅ ${alive}/${total} ALIVE | ⚠️ ${degraded} DEGRADED | ☠️ ${dead} DEAD`);
+    console.log(`[ProxyScraper] 🔬 Source audit done — alive: ${alive}, degraded: ${degraded}, dead: ${dead}`);
+    return { alive, degraded, dead };
   }
 
   // ── Force Revalidate ALL proxies (ignores tier intervals) ────────────
@@ -261,6 +431,7 @@ export class ProxyScraper {
     this.isHunting = true;
     this.huntCount++;
     this.lastHuntAt = new Date();
+    const prevLastMined = this.huntDetails.lastMined; // preserve across reset
     this.huntDetails = {
       status: 'Extracting OSINT Matrix...',
       progress: 0, total: 0, found: 0, mined: 0, skipped: 0,
@@ -268,6 +439,7 @@ export class ProxyScraper {
       totalEverFound: this.totalEverFound,
       lastHuntAt: this.lastHuntAt.toISOString(),
       nextHuntAt: this.nextHuntAt?.toISOString() ?? null,
+      lastMined: prevLastMined, // keep last hunt's mine count visible while new hunt runs
     };
     console.log(`[ProxyScraper] 🟢 Hunt #${this.huntCount} — Red Team OSINT Initiated...`);
     this.pushLog('init', `HUNT #${this.huntCount} INITIATED — ${this.powerMode ? '⚡ POWER MODE (HETZNER VPS)' : 'STANDARD MODE'}`);
@@ -275,7 +447,7 @@ export class ProxyScraper {
     try {
       // ── Step 1: Scrape all 26 OSINT sources + Telegram in parallel ─────────
       this.pushLog('log', `SCRAPING ${MASTER_PROXY_SOURCES.length} OSINT + ${TELEGRAM_SOURCES.length} TELEGRAM SOURCES...`);
-      const fetchPromises = MASTER_PROXY_SOURCES.map(s => this.scrapeSource(s.url, s.proto));
+      const fetchPromises = MASTER_PROXY_SOURCES.map(s => this.scrapeSource(s.url, s.proto, s.backup));
       const telegramPromises = TELEGRAM_SOURCES.map(url => this.scrapeTelegram(url));
       const results = await Promise.allSettled([...fetchPromises, ...telegramPromises]);
 
@@ -285,51 +457,159 @@ export class ProxyScraper {
       });
 
       this.huntDetails.mined = allProxies.size;
+      this.huntDetails.lastMined = allProxies.size; // persist — survives queue drain
       console.log(`[ProxyScraper] 🟢 Mined ${allProxies.size} unique raw candidates.`);
       this.pushLog('success', `MINED ${allProxies.size.toLocaleString()} UNIQUE RAW CANDIDATES`);
 
-      // ── Step 2: Skip already-known verified proxies ───────
-      const knownProxies = new Set((await ProxyKitchen.getLiveProxies()).map(p => p.url));
-      const newProxies   = Array.from(allProxies).filter(p => !knownProxies.has(p));
-      const skipped      = allProxies.size - newProxies.length;
-      this.huntDetails.skipped = skipped;
-      console.log(`[ProxyScraper] ⏭️  Skipping ${skipped} already-verified proxies.`);
-      this.pushLog('log', `DEDUP: ${skipped.toLocaleString()} ALREADY KNOWN — ${newProxies.length.toLocaleString()} NEW`);
-
-      // ── Step 3: Random sample & verify ───────────────────
-      const sampleSize  = Math.min(SAMPLE_SIZE, newProxies.length);
-      const testSample  = newProxies.sort(() => 0.5 - Math.random()).slice(0, sampleSize);
-      this.huntDetails.total  = sampleSize;
-      this.huntDetails.status = 'Verifying Nodes...';
-      console.log(`[ProxyScraper] 🛂 Verifying ${sampleSize} fresh candidates (${CHUNK_SIZE} concurrency)...`);
-      this.pushLog('init', `VERIFYING ${sampleSize.toLocaleString()} CANDIDATES — ${this.powerMode ? 'HETZNER VPS 500+ CONCURRENT' : 'RUST/NODE ENGINE'}`);
-
-      let verifiedCount = 0;
-      // ── Rust turbo path: all proxies in one shot (~90s vs ~42 min) ──
-      this.huntDetails.status = 'Verifying Nodes (🦀 Rust Engine)...';
-      const batchResults = await this.verifyBatch(testSample);
-      this.huntDetails.progress = sampleSize;
-      for (let j = 0; j < testSample.length; j++) {
-        const platforms = batchResults[j];
-        if (platforms && (platforms.yt || platforms.fb || platforms.ig)) {
-          await ProxyKitchen.addVerifiedProxy(testSample[j], platforms);
-          verifiedCount++;
-          this.totalEverFound++;
-          this.huntDetails.found          = verifiedCount;
-          this.huntDetails.totalEverFound = this.totalEverFound;
-        }
+      // ── Phase 20: Store ALL raw candidates to Redis queue ──
+      const allProxyArr = Array.from(allProxies);
+      const pushed = await ProxyKitchen.pushToRawQueue(allProxyArr);
+      if (pushed > 0) {
+        const liveQueueSize = await ProxyKitchen.getRawQueueSize();
+        this.huntDetails.mined = liveQueueSize;
+        this.pushLog('log', `RAW QUEUE: ${liveQueueSize.toLocaleString()} STORED IN REDIS`);
+      } else {
+        // Redis push failed — store in memory so auto-verify can still drain them
+        this.pendingBuffer = allProxyArr;
+        this.pushLog('log', `⚠️ REDIS PUSH FAILED — ${allProxyArr.length.toLocaleString()} CANDIDATES HELD IN MEMORY FOR DIRECT VERIFICATION`);
+        console.warn(`[ProxyScraper] ⚠️ pushToRawQueue returned 0 — holding ${allProxyArr.length} in pendingBuffer`);
       }
 
-      this.huntDetails.status = 'Idle';
-      console.log(`[ProxyScraper] ✅ Hunt #${this.huntCount} complete — +${verifiedCount} new proxies | ${knownProxies.size} existing | total ever: ${this.totalEverFound}`);
-      this.pushLog('success', `HUNT #${this.huntCount} COMPLETE — +${verifiedCount} VERIFIED | ${knownProxies.size} EXISTING | POOL: ${this.totalEverFound}`);
+      // ── Step 2: Log dedup stats ──
+      const knownProxies = await ProxyKitchen.getLiveProxies();
+      const skipped = knownProxies.filter(p => allProxies.has(p.url)).length;
+      this.huntDetails.skipped = skipped;
+      this.pushLog('log', `HUNT #${this.huntCount} COMPLETE — ${allProxies.size.toLocaleString()} RAW MINED | ${skipped.toLocaleString()} ALREADY KNOWN | AUTO-VERIFY STARTING...`);
+      this.huntDetails.status = 'Verify Queue Starting...';
+      console.log(`[ProxyScraper] ✅ Hunt #${this.huntCount} complete — ${allProxies.size} raw candidates ready for verification.`);
     } catch (e: any) {
       this.huntDetails.status = 'Error';
       console.error(`[ProxyScraper] 🔴 Hunt failed: ${e.message}`);
       this.pushLog('banned', `HUNT #${this.huntCount} FAILED: ${e.message}`);
     } finally {
       this.isHunting = false;
+      this.nextHuntAt = new Date(Date.now() + 2 * 3600_000); // next hunt in 2h
+      this.huntDetails.nextHuntAt = this.nextHuntAt.toISOString();
+
+      // ── AUTO-CHAIN: immediately verify after hunt ──
+      // Check both Redis queue AND in-memory buffer — fire if either has candidates.
+      const qs = await ProxyKitchen.getRawQueueSize();
+      const memCount = this.pendingBuffer.length;
+      const totalPending = qs + memCount;
+      if (totalPending > 0 && !this.isVerifyingQueue) {
+        this.pushLog('init', `🔗 AUTO-VERIFY: ${totalPending.toLocaleString()} candidates (redis:${qs}, memory:${memCount}) → pipeline starting...`);
+        console.log(`[ProxyScraper] 🔗 Auto-chaining runVerifyQueue() after hunt (redis:${qs}, memory:${memCount})`);
+        this.runVerifyQueue();
+      } else if (!this.isVerifyingQueue) {
+        this.pushLog('log', `⚠️ AUTO-VERIFY SKIPPED — no candidates available (redis:${qs}, memory:${memCount})`);
+      }
     }
+  }
+
+  // ── Phase 21: Verify Queue ────────────────────────────────────
+  // Drains the pending SET populated by runHunt() or beast_harvest.mjs.
+  // This is SEPARATE from runHunt() so local hunting and cloud verification
+  // can run independently without blocking each other.
+  // Pop 5K candidates at a time → verify → good: store in verified_hash, bad: discard.
+  // The raw pending SET decrements naturally until it's empty (= queue purged).
+  static async runVerifyQueue(): Promise<{ verified: number; batches: number }> {
+    if (this.isVerifyingQueue) {
+      console.log('[ProxyScraper] Verify queue already running. Skipping.');
+      return { verified: 0, batches: 0 };
+    }
+    if (this.cloudVerifyPaused) {
+      console.log('[ProxyScraper] Cloud verify PAUSED — local beast is handling verification.');
+      this.pushLog('log', '☁️ CLOUD VERIFY PAUSED — raw queue reserved for local beast verification');
+      return { verified: 0, batches: 0 };
+    }
+    const queueSize = await ProxyKitchen.getRawQueueSize();
+    const memSize = this.pendingBuffer.length;
+    const totalPending = queueSize + memSize;
+    if (totalPending === 0) {
+      console.log('[ProxyScraper] Pending queue is empty (redis:0, memory:0) — nothing to verify.');
+      return { verified: 0, batches: 0 };
+    }
+
+    this.isVerifyingQueue = true;
+    let totalVerified = 0;
+    let batchNum = 0;
+    console.log(`[ProxyScraper] 🗂️  runVerifyQueue START — redis:${queueSize}, memory:${memSize} = ${totalPending} total`);
+    this.pushLog('init', `VERIFY QUEUE START — ${totalPending.toLocaleString()} CANDIDATES (redis:${queueSize.toLocaleString()}, memory:${memSize.toLocaleString()})`);
+
+    try {
+      // Phase 1: Drain in-memory pendingBuffer first (from failed Redis push)
+      while (this.pendingBuffer.length > 0) {
+        const candidates = this.pendingBuffer.splice(0, SAMPLE_SIZE);
+        const known = new Set((await ProxyKitchen.getLiveProxies()).map(p => p.url));
+        const fresh = candidates.filter(p => !known.has(p));
+        if (fresh.length === 0) continue;
+
+        batchNum++;
+        this.huntDetails.status = `Verifying Memory Batch ${batchNum}...`;
+        this.huntDetails.total    = fresh.length;
+        this.huntDetails.progress = 0;
+        this.pushLog('init', `VERIFY MEM BATCH ${batchNum}: ${fresh.length.toLocaleString()} CANDIDATES (${this.pendingBuffer.length.toLocaleString()} remaining in memory)`);
+        console.log(`[ProxyScraper] 🛂  Mem-Batch ${batchNum}: verifying ${fresh.length} (${this.pendingBuffer.length} left)`);
+
+        const results = await this.verifyBatch(fresh);
+        this.huntDetails.progress = fresh.length;
+
+        for (let j = 0; j < fresh.length; j++) {
+          const plat = results[j];
+          if (plat && (plat.yt || plat.fb || plat.ig)) {
+            await ProxyKitchen.addVerifiedProxy(fresh[j], plat);
+            totalVerified++;
+            this.totalEverFound++;
+            this.huntDetails.found          = totalVerified;
+            this.huntDetails.totalEverFound = this.totalEverFound;
+          }
+        }
+        this.pushLog('success', `MEM BATCH ${batchNum} DONE — +${totalVerified} TOTAL VERIFIED`);
+      }
+
+      // Phase 2: Drain Redis queue (normal path)
+      while (true) {
+        const candidates = await ProxyKitchen.popFromRawQueue(SAMPLE_SIZE);
+        if (candidates.length === 0) break;
+
+        const known = new Set((await ProxyKitchen.getLiveProxies()).map(p => p.url));
+        const fresh = candidates.filter(p => !known.has(p));
+        if (fresh.length === 0) continue;
+
+        batchNum++;
+        const remaining = await ProxyKitchen.getRawQueueSize();
+        this.huntDetails.status = `Verifying Queue (Batch ${batchNum})...`;
+        this.huntDetails.total    = fresh.length;
+        this.huntDetails.progress = 0;
+        this.pushLog('init', `VERIFY Q BATCH ${batchNum}: ${fresh.length.toLocaleString()} CANDIDATES (${remaining.toLocaleString()} remaining)`);
+        console.log(`[ProxyScraper] 🛂  Q-Batch ${batchNum}: verifying ${fresh.length} (${remaining} left)`);
+
+        const results = await this.verifyBatch(fresh);
+        this.huntDetails.progress = fresh.length;
+
+        for (let j = 0; j < fresh.length; j++) {
+          const plat = results[j];
+          if (plat && (plat.yt || plat.fb || plat.ig)) {
+            await ProxyKitchen.addVerifiedProxy(fresh[j], plat);
+            totalVerified++;
+            this.totalEverFound++;
+            this.huntDetails.found          = totalVerified;
+            this.huntDetails.totalEverFound = this.totalEverFound;
+          }
+        }
+        this.pushLog('success', `VERIFY Q BATCH ${batchNum} DONE — +${totalVerified} TOTAL VERIFIED SO FAR`);
+      }
+    } catch (e: any) {
+      console.error(`[ProxyScraper] runVerifyQueue error: ${e.message}`);
+      this.pushLog('banned', `VERIFY QUEUE ERROR: ${e.message}`);
+    } finally {
+      this.isVerifyingQueue = false;
+      this.huntDetails.status = 'Idle';
+    }
+
+    console.log(`[ProxyScraper] ✅ runVerifyQueue DONE — ${batchNum} batches — +${totalVerified} verified — pool total: ${this.totalEverFound}`);
+    this.pushLog('success', `VERIFY QUEUE COMPLETE — ${batchNum} BATCHES — +${totalVerified} VERIFIED — POOL: ${this.totalEverFound}`);
+    return { verified: totalVerified, batches: batchNum };
   }
 
   // ── Phase 14: Tiered Re-Validation ───────────────────────────
@@ -405,26 +685,101 @@ export class ProxyScraper {
   }
 
   // ── Source Fetcher ──────────────────────────────────────────
-  private static async scrapeSource(url: string, proto: string): Promise<string[]> {
-    try {
-      const response = await fetch(url.trim(), {
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-        signal: AbortSignal.timeout(12000)
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const rawText = await response.text();
-      const matches = rawText.match(PROXY_REGEX) || [];
-      return matches.map(m => `${proto}://${m}`);
-    } catch (error: any) {
-      console.warn(`[ProxyScraper] ⚠️  Source degraded (${url.split('/').pop()}) — ${error.message}`);
-      return [];
+  private static async scrapeSource(primaryUrl: string, proto: string, backupUrls?: string[]): Promise<string[]> {
+    // Build the full list to try: primary first, then backups in order
+    const urlsToTry = [primaryUrl, ...(backupUrls || [])];
+    let health = this.sourceHealth.get(primaryUrl);
+    if (!health) {
+      health = { active: primaryUrl, failCount: 0, degraded: false };
+      this.sourceHealth.set(primaryUrl, health);
     }
+
+    for (let attempt = 0; attempt < urlsToTry.length; attempt++) {
+      const tryUrl = urlsToTry[attempt];
+      const isBackup = attempt > 0;
+      try {
+        const response = await fetch(tryUrl.trim(), {
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+          signal: AbortSignal.timeout(12000)
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const rawText = await response.text();
+        const matches = rawText.match(PROXY_REGEX) || [];
+        // Require at least 10 IPs — otherwise treat as stale/empty and try backup
+        if (matches.length < 10 && attempt < urlsToTry.length - 1) {
+          throw new Error(`Only ${matches.length} IPs (stale/empty)`);
+        }
+        // Success — update health record
+        if (isBackup) {
+          health.active = tryUrl;
+          health.degraded = true;
+          health.failCount = attempt;
+          console.log(`[ProxyScraper] 🔄 AUTO-HEAL: ${primaryUrl.split('/').pop()} → using backup[${attempt}] (${tryUrl.split('/').pop()}) — ${matches.length} IPs`);
+          this.pushLog('log', `AUTO-HEAL: ${primaryUrl.split('/').pop()} → BACKUP ${attempt} — ${matches.length} IPs`);
+        } else {
+          health.active = primaryUrl;
+          health.failCount = 0;
+          health.degraded = false;
+        }
+        return matches.map(m => `${proto}://${m}`);
+      } catch (error: any) {
+        if (isBackup) {
+          console.warn(`[ProxyScraper] ⚠️  Backup[${attempt}] also failed (${tryUrl.split('/').pop()}) — ${error.message}`);
+        } else {
+          console.warn(`[ProxyScraper] ⚠️  Source degraded (${primaryUrl.split('/').pop()}) — ${error.message}${backupUrls?.length ? ` — trying ${backupUrls.length} backup(s)` : ''}`);
+        }
+        health.failCount++;
+        health.degraded = true;
+      }
+    }
+    // All URLs exhausted
+    return [];
   }
 
-  // ── Phase 15: Telegram Public Web Scraper ─────────────────────
-  // Fetches https://t.me/s/CHANNEL (public HTML preview, no API key)
-  // Extracts IP:PORT from message text, tries both http:// and socks5://
+  // ── Phase 15: Telegram Scraper — Bot API preferred, web fallback ────
+  // Bot API is FREE. No payment needed.
+  // Setup: 1) Open @BotFather on Telegram, 2) /newbot, 3) copy token
+  //        4) Add bot to each channel as admin (or it can read public channels)
+  //        5) Set TELEGRAM_BOT_TOKEN in server/.env
+  // If token not set → falls back to web scrape (often blocked by Telegram anti-scrape)
   private static async scrapeTelegram(channelUrl: string): Promise<string[]> {
+    const channelName = channelUrl.split('/').pop() || '';
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+
+    // ── Path A: Bot API (preferred — bypasses anti-scrape) ──────────
+    if (botToken) {
+      try {
+        // Get the latest 100 messages from the public channel via Bot API
+        // Channel identifier = @channelName (public channel username)
+        const apiUrl = `https://api.telegram.org/bot${botToken}/getUpdates?limit=100&allowed_updates=["channel_post"]`;
+        // For public channels use their @username directly
+        const historyUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+        // Best approach: use getChatHistory via messages endpoint
+        // For public channels: forward or search via inline approach
+        // Use updates endpoint — simpler and always free:
+        const updatesRes = await fetch(
+          `https://api.telegram.org/bot${botToken}/getUpdates?limit=100`,
+          { signal: AbortSignal.timeout(10000) }
+        );
+        if (updatesRes.ok) {
+          const updates = await updatesRes.json() as { ok: boolean; result: Array<{ message?: { text?: string }; channel_post?: { text?: string } }> };
+          if (updates.ok) {
+            const allText = updates.result.map(u => u.message?.text || u.channel_post?.text || '').join('\n');
+            const matches = allText.match(PROXY_REGEX) || [];
+            if (matches.length > 0) {
+              const proxies: string[] = [];
+              for (const m of matches) { proxies.push(`http://${m}`); proxies.push(`socks5://${m}`); }
+              console.log(`[ProxyScraper] 📱 Telegram Bot API (${channelName}) — ${matches.length} IPs`);
+              return proxies;
+            }
+          }
+        }
+      } catch (botError: any) {
+        console.warn(`[ProxyScraper] ⚠️  Telegram Bot API failed (${channelName}) — ${botError.message} — falling back to web`);
+      }
+    }
+
+    // ── Path B: Web scrape fallback (no bot token, or bot returned 0) ──
     try {
       const response = await fetch(channelUrl, {
         headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
@@ -433,16 +788,12 @@ export class ProxyScraper {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const html = await response.text();
       const matches = html.match(PROXY_REGEX) || [];
-      // Telegram channels mix protocols — emit both and let verifier sort
       const proxies: string[] = [];
-      for (const m of matches) {
-        proxies.push(`http://${m}`);
-        proxies.push(`socks5://${m}`);
-      }
-      console.log(`[ProxyScraper] 📱 Telegram (${channelUrl.split('/').pop()}) — ${matches.length} IPs found`);
+      for (const m of matches) { proxies.push(`http://${m}`); proxies.push(`socks5://${m}`); }
+      console.log(`[ProxyScraper] 📱 Telegram web (${channelName}) — ${matches.length} IPs found`);
       return proxies;
     } catch (error: any) {
-      console.warn(`[ProxyScraper] ⚠️  Telegram degraded (${channelUrl.split('/').pop()}) — ${error.message}`);
+      console.warn(`[ProxyScraper] ⚠️  Telegram degraded (${channelName}) — ${error.message}`);
       return [];
     }
   }
@@ -464,16 +815,39 @@ export class ProxyScraper {
         let tier: ProxyPlatforms['tier'] = 'bronze';
         if (r.latency_ms < 500 && platformCount === 3) tier = 'platinum';
         else if (platformCount >= 2) tier = 'gold';
-        return { yt: r.yt, fb: r.fb, ig: r.ig, latencyMs: r.latency_ms, country, failCount: 0, lastCheckedAt: new Date().toISOString(), tier };
+
+        // Stealth: compute composite proxy score
+        const { score } = calculateProxyScore(r.latency_ms, platformCount, 0, 1);
+
+        return { yt: r.yt, fb: r.fb, ig: r.ig, latencyMs: r.latency_ms, country, failCount: 0, lastCheckedAt: new Date().toISOString(), tier, score };
       });
     };
 
-    // Power Mode: try Hetzner VPS first (separate IP, 500+ concurrent)
+    // Track success rate for adaptive engine
+    const trackAndAdapt = (results: Array<ProxyPlatforms | null>) => {
+      const successCount = results.filter(Boolean).length;
+      const successRate = results.length > 0 ? (successCount / results.length) * 100 : 50;
+      adaptBatchSize(successRate);
+    };
+
+    // Power Mode: try Local PC first (P27), then Hetzner VPS (separate IP, 500+ concurrent)
     if (this.powerMode) {
+      // P27: Local PC Rust verifier (residential IP, best for undetectable verification)
+      const localPcResult = await callLocalPcVerify(proxyUrls, VERIFY_TIMEOUT);
+      if (localPcResult) {
+        console.log(`[ProxyScraper] 🏠 Local PC verified ${localPcResult.total} — found ${localPcResult.verified}`);
+        const enriched = enrichResults(localPcResult);
+        trackAndAdapt(enriched);
+        return enriched;
+      }
+      console.log('[ProxyScraper] Local PC unavailable — trying Hetzner VPS');
+
       const hetznerResult = await callHetznerVerify(proxyUrls, VERIFY_TIMEOUT);
       if (hetznerResult) {
         console.log(`[ProxyScraper] ⚡ Hetzner VPS verified ${hetznerResult.total} — found ${hetznerResult.verified}`);
-        return enrichResults(hetznerResult);
+        const enriched = enrichResults(hetznerResult);
+        trackAndAdapt(enriched);
+        return enriched;
       }
       console.log('[ProxyScraper] Hetzner unavailable — falling back to local Rust');
     }
@@ -482,25 +856,34 @@ export class ProxyScraper {
     const rustResult = await callRustVerify(proxyUrls, VERIFY_TIMEOUT);
     if (rustResult) {
       console.log(`[ProxyScraper] 🦀 Rust verified ${rustResult.total} proxies — found ${rustResult.verified}`);
-      return enrichResults(rustResult);
+      const enriched = enrichResults(rustResult);
+      trackAndAdapt(enriched);
+      return enriched;
     }
 
-    // Fallback: Node.js CHUNK_SIZE=20 loop (original behavior)
-    console.log(`[ProxyScraper] ⚡ Node.js fallback — verifying ${proxyUrls.length} in chunks of ${CHUNK_SIZE}`);
+    // Fallback: Node.js CHUNK_SIZE=20 loop with stealth UA rotation + delays
+    console.log(`[ProxyScraper] ⚡ Node.js fallback — verifying ${proxyUrls.length} in chunks of ${CHUNK_SIZE} (stealth mode)`);
     const results: Array<ProxyPlatforms | null> = [];
     for (let i = 0; i < proxyUrls.length; i += CHUNK_SIZE) {
       const chunk = proxyUrls.slice(i, i + CHUNK_SIZE);
       const res   = await Promise.all(chunk.map(p => this.verifyProxy(p)));
       results.push(...res);
+
+      // Stealth: add delay between chunks to avoid burst pattern
+      if (i + CHUNK_SIZE < proxyUrls.length) {
+        await stealthSleep(getBatchDelay());
+      }
     }
+    trackAndAdapt(results);
     return results;
   }
 
-  // ── Single-Proxy Verifier (Phase 11: latency + Phase 12: geo) ─────
+  // ── Single-Proxy Verifier (Phase 11: latency + Phase 12: geo + Stealth) ─────
   private static async verifyProxy(proxyUrl: string): Promise<ProxyPlatforms | null> {
     try {
       const isSocks = proxyUrl.startsWith('socks');
       const agent   = isSocks ? new SocksProxyAgent(proxyUrl) : new HttpsProxyAgent(proxyUrl);
+      const profile = getRandomProfile();
 
       const runCheck = async (targetUrl: string): Promise<boolean> => {
         try {
@@ -508,8 +891,13 @@ export class ProxyScraper {
           const res = await fetchModule(targetUrl, {
             agent: agent as any,
             timeout: VERIFY_TIMEOUT,
-            headers: { 'User-Agent': 'Mozilla/5.0' }
+            headers: { 'User-Agent': profile.ua }
           } as any);
+          // Ban detection: check if response indicates block/captcha
+          if (res.status === 429 || res.status === 403) {
+            const body = await res.text().catch(() => '');
+            if (detectBanSignal(body)) return false;
+          }
           return res.status === 204 || res.status === 200;
         } catch { return false; }
       };
@@ -533,11 +921,13 @@ export class ProxyScraper {
         if (geo?.country) country = geo.country;
       } catch { /* geo lookup failed — non-critical */ }
 
-      // Phase 14: Compute quality tier
+      // Phase 14: Compute quality tier + stealth score
       const platformCount = [yt, fb, ig].filter(Boolean).length;
       let tier: 'platinum' | 'gold' | 'silver' | 'bronze' = 'bronze';
       if (latencyMs < 500 && platformCount === 3)       tier = 'platinum';
       else if (platformCount >= 2)                        tier = 'gold';
+
+      const { score } = calculateProxyScore(latencyMs, platformCount, 0, 1);
 
       return {
         yt, fb, ig,
@@ -546,6 +936,7 @@ export class ProxyScraper {
         failCount: 0,
         lastCheckedAt: new Date().toISOString(),
         tier,
+        score,
       };
     } catch { return null; }
   }

@@ -67,6 +67,7 @@ desktop.ini
 *.data
 *.wasm
 data/proxies.json
+data/proxies_local.json
 
 # Red Team Private Docs (NEVER PUBLISH)
 PROXY_EMPIRE_MASTERPLAN.md

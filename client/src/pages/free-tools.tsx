@@ -108,6 +108,22 @@ const FreeTools = () => {
                 </Link>
               </div>
             </motion.div>
+
+            {/* Bong Share (ToffeeShare Clone) Card */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="relative group rounded-2xl p-[1px] bg-gradient-to-br from-violet-500/50 via-fuchsia-500/30 to-purple-500/50 shadow-2xl hover:shadow-violet-500/20 transition-all duration-500">
+              <div className="rounded-2xl h-full w-full bg-black/80 backdrop-blur-xl p-8 flex flex-col border border-white/5 group-hover:bg-black/60 transition-colors">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold font-sans tracking-tight text-white group-hover:text-violet-400 transition-colors">Bong Share</h2>
+                  <div className="flex gap-1.5">
+                    <span className="text-[9px] uppercase tracking-wider bg-violet-500/20 border border-violet-500/30 text-violet-300 px-2 py-1 rounded-md font-medium">Unlimited</span>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-400 leading-relaxed flex-1">Share massive files for free. No server storage, unlimited size, fast & secure. Inspired by ToffeeShare.</p>
+                <Link href="/tools/share" className="mt-8 block">
+                  <Button className="w-full bg-violet-600/20 border border-violet-500/30 text-violet-300 hover:bg-violet-600 hover:text-white transition-all shadow-lg rounded-xl h-12">Start Sharing</Button>
+                </Link>
+              </div>
+            </motion.div>
           </div>
         </main>
       </div>

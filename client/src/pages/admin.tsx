@@ -553,20 +553,7 @@ const Admin = () => {
               </TabsContent>
 
                 <TabsContent value="proxies" className="mt-8 space-y-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-2xl font-semibold text-brand-blue flex items-center">
-                      <Bot className="w-6 h-6 mr-2" />
-                      Proxy Kitchen
-                    </h3>
-                    <Button
-                      onClick={() => setIsMissionControlOpen(true)}
-                      className="bg-gray-900 text-cyan-400 border border-cyan-500/40 hover:bg-gray-800 hover:border-cyan-400 font-mono text-xs tracking-widest uppercase gap-2"
-                    >
-                      <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                      Mission Control
-                    </Button>
-                  </div>
-                  <DatabaseProxyUI />
+                  <ProxyKitchenPortal onOpen={() => setIsMissionControlOpen(true)} />
                 </TabsContent>
             </Tabs>
 
@@ -624,8 +611,119 @@ const tierBadge = (tier?: string) => {
     }
 };
 
+function ProxyKitchenPortal({ onOpen }: { onOpen: () => void }) {
+  const { data } = useQuery<any>({ queryKey: ["/api/admin/proxy-status"], refetchInterval: 3000 });
+  const nodes = data?.activeNodes ?? 0;
+  const isHunting = data?.isHunting ?? false;
+  const tierCounts = data?.tierCounts || {};
+  const platinum = tierCounts.platinum ?? 0;
+  const gold = tierCounts.gold ?? 0;
+  const bronze = tierCounts.bronze ?? 0;
+  const queueSize: number = data?.queueSize ?? 0;
+  const nextHuntAt = data?.nextHuntAt;
+  const [countdown, setCountdown] = useState('');
+  useEffect(() => {
+    const tick = () => {
+      if (!nextHuntAt) { setCountdown(''); return; }
+      const diff = new Date(nextHuntAt).getTime() - Date.now();
+      if (diff <= 0) { setCountdown('NOW'); return; }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setCountdown(h > 0 ? `${h}h ${m}m ${s}s` : `${m}m ${s}s`);
+    };
+    tick(); const id = setInterval(tick, 1000); return () => clearInterval(id);
+  }, [nextHuntAt]);
+
+  return (
+    <div style={{ position: 'relative', borderRadius: 20, overflow: 'hidden', cursor: 'pointer', userSelect: 'none' }} onClick={onOpen}>
+      {/* Background with animated gradient */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'linear-gradient(135deg, #0a0a0f 0%, #0d1a2a 35%, #0a0f1a 60%, #0a0a0f 100%)',
+        borderRadius: 20,
+      }} />
+      {/* Animated border glow */}
+      <div style={{
+        position: 'absolute', inset: 0, borderRadius: 20,
+        boxShadow: isHunting
+          ? '0 0 0 1.5px rgba(239,68,68,0.6), 0 0 40px rgba(239,68,68,0.15), inset 0 0 60px rgba(239,68,68,0.04)'
+          : '0 0 0 1.5px rgba(76,215,246,0.35), 0 0 40px rgba(76,215,246,0.10), inset 0 0 60px rgba(76,215,246,0.03)',
+        pointerEvents: 'none',
+      }} />
+      {/* Subtle grid pattern */}
+      <div style={{
+        position: 'absolute', inset: 0, borderRadius: 20, opacity: 0.03,
+        backgroundImage: 'linear-gradient(rgba(76,215,246,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(76,215,246,0.8) 1px, transparent 1px)',
+        backgroundSize: '40px 40px',
+        pointerEvents: 'none',
+      }} />
+
+      <div style={{ position: 'relative', padding: '40px 48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 32 }}>
+        {/* Left: Title */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+              <h2 style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 28, fontWeight: 700, color: '#4cd7f6', letterSpacing: '-0.02em', margin: 0 }}>
+                Proxy Kitchen
+              </h2>
+              <span style={{
+                fontSize: 10, fontFamily: 'monospace', fontWeight: 700, letterSpacing: '0.1em',
+                padding: '3px 10px', borderRadius: 20,
+                background: isHunting ? 'rgba(239,68,68,0.15)' : 'rgba(76,215,246,0.1)',
+                color: isHunting ? '#ef4444' : '#4cd7f6',
+                border: `1px solid ${isHunting ? 'rgba(239,68,68,0.4)' : 'rgba(76,215,246,0.3)'}`,
+                textTransform: 'uppercase',
+              }}>
+                {isHunting ? '🔴 HUNTING' : '🟢 STANDBY'}
+              </span>
+            </div>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', fontFamily: "'Inter',sans-serif", margin: 0 }}>
+              Red Team OSINT Engine · 30 sources · Rust Verifier · Hetzner VPS
+            </p>
+          </div>
+        </div>
+
+        {/* Center: Live Stats */}
+        <div style={{ display: 'flex', gap: 24, flexShrink: 0 }}>
+          {[
+            { label: 'LIVE NODES', value: nodes.toLocaleString(), color: '#4cd7f6' },
+            { label: 'RAW QUEUE', value: queueSize.toLocaleString(), color: '#fbbf24', title: 'Unverified candidates' },
+            { label: '💎 PLATINUM', value: platinum, color: '#a5f3fc' },
+            { label: '🥇 GOLD', value: gold, color: '#fbbf24' },
+            { label: '🥉 BRONZE', value: bronze, color: '#f97316' },
+            { label: 'NEXT HUNT', value: countdown || '—', color: isHunting ? '#ef4444' : '#a3e635' },
+          ].map(s => (
+            <div key={s.label} style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 22, fontWeight: 700, fontFamily: 'monospace', color: s.color, lineHeight: 1 }}>{s.value}</div>
+              <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.3)', marginTop: 4, fontFamily: "'Space Grotesk',sans-serif" }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Right: CTA Button */}
+        <div style={{ flexShrink: 0 }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10, padding: '14px 28px', borderRadius: 12,
+            background: 'linear-gradient(135deg, rgba(76,215,246,0.15) 0%, rgba(76,215,246,0.05) 100%)',
+            border: '1px solid rgba(76,215,246,0.4)',
+            boxShadow: '0 0 20px rgba(76,215,246,0.12)',
+            transition: 'all 0.2s',
+          }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#4cd7f6', boxShadow: '0 0 8px #4cd7f6', display: 'inline-block', animation: 'pulse 2s infinite' }} />
+            <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 13, fontWeight: 700, color: '#4cd7f6', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              Enter Mission Control
+            </span>
+            <span style={{ fontSize: 16, color: '#4cd7f6' }}>→</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DatabaseProxyUI() {
-    const { data, isLoading } = useQuery<any>({ 
+    const { data, isLoading } = useQuery<any>({
         queryKey: ["/api/admin/proxy-status"],
         refetchInterval: 3000
     });
@@ -635,7 +733,6 @@ function DatabaseProxyUI() {
     const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
     const [filterPlatform, setFilterPlatform] = useState<string>("all");
 
-    // Countdown to next scheduled hunt
     const [countdown, setCountdown] = useState<string>('');
     useEffect(() => {
         const tick = () => {
@@ -653,7 +750,6 @@ function DatabaseProxyUI() {
         return () => clearInterval(id);
     }, [data?.huntDetails?.nextHuntAt]);
 
-    // Countdown to next 30-min revalidation pass
     const [revalCountdown, setRevalCountdown] = useState<string>('');
     useEffect(() => {
         const REVAL_INTERVAL = 30 * 60 * 1000;

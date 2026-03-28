@@ -17,6 +17,10 @@ const redis = redisUrl ? new Redis({
 }) : null;
 
 export const PROXY_REDIS_KEY = 'red_team_proxies:verified_hash';
+export const PROXY_BIN_KEY  = 'red_team_proxies:bin';
+// Phase 20+: Changed from LIST to SET for automatic IP deduplication
+// (sadd is idempotent — re-hunting never creates duplicate entries in the queue)
+export const PROXY_RAW_QUEUE_KEY = 'red_team_proxies:pending';
 
 // File-based persistence for local dev (survives hot-reloads)
 const PROXY_CACHE_FILE = path.join(process.cwd(), 'data', 'proxies.json');
@@ -49,6 +53,7 @@ export interface EnrichedProxy {
 
 export class ProxyKitchen {
   private static localFallbackMemory: Record<string, string> = loadLocalCache();
+  private static localBinMemory: Record<string, string> = {};
 
   /**
    * Phase 5.1: Memory Storage
@@ -91,8 +96,8 @@ export class ProxyKitchen {
   }
 
   /**
-   * Phase 13: Soft-ban with 3-strike logic.
-   * First 2 failures increment failCount. Third strike = permanent removal.
+   * Phase 13 + Phase 29: Soft-ban with 3-strike logic.
+   * First 2 failures increment failCount. Third strike = move to BIN (soft-delete).
    */
   static async banProxy(proxyUrl: string): Promise<void> {
     try {
@@ -101,15 +106,23 @@ export class ProxyKitchen {
       const existing = proxies.find(p => p.url === proxyUrl);
       const currentFails = (existing?.platforms?.failCount || 0) + 1;
 
-      if (currentFails >= 3) {
-        // 3 strikes — permanently purge
+      if (currentFails >= 5) {
+        // 5 strikes — move to BIN (soft-delete, recoverable for 24h)
+        // Free proxies are flaky — 3 strikes was too aggressive, 5 gives them a fair chance
+        const binData = JSON.stringify({
+          ...(existing?.platforms || { yt: false, fb: false, ig: false }),
+          failCount: currentFails,
+          binnedAt: new Date().toISOString(),
+        });
         if (redis) {
+          await redis.hset(PROXY_BIN_KEY, { [proxyUrl]: binData });
           await redis.hdel(PROXY_REDIS_KEY, proxyUrl);
         } else {
+          this.localBinMemory[proxyUrl] = binData;
           delete this.localFallbackMemory[proxyUrl];
           saveLocalCache(this.localFallbackMemory);
         }
-        console.log(`[ProxyKitchen] ☠️ Purged (3-strike): ${proxyUrl}`);
+        console.log(`[ProxyKitchen] 🗑️ Binned (5-strike): ${proxyUrl}`);
       } else {
         // Increment fail count but keep alive
         const updated = { ...(existing?.platforms || { yt: false, fb: false, ig: false }), failCount: currentFails };
@@ -120,10 +133,143 @@ export class ProxyKitchen {
           this.localFallbackMemory[proxyUrl] = data;
           saveLocalCache(this.localFallbackMemory);
         }
-        console.log(`[ProxyKitchen] ⚠️ Strike ${currentFails}/3: ${proxyUrl}`);
+        console.log(`[ProxyKitchen] ⚠️ Strike ${currentFails}/5: ${proxyUrl}`);
       }
     } catch (error) {
       console.error('[ProxyKitchen] Redis ban error:', error);
+    }
+  }
+
+  /**
+   * Phase 29: Get all proxies currently in the BIN (soft-deleted).
+   */
+  static async getBinnedProxies(): Promise<Array<{ url: string; platforms: ProxyPlatforms & { binnedAt?: string } }>> {
+    try {
+      const binData: Record<string, string> | null = redis ? await redis.hgetall(PROXY_BIN_KEY) : this.localBinMemory;
+      if (!binData) return [];
+      return Object.entries(binData).map(([url, dataStr]) => {
+        let platforms: any = { yt: false, fb: false, ig: false };
+        try { platforms = typeof dataStr === 'string' ? JSON.parse(dataStr) : dataStr; } catch {}
+        return { url, platforms };
+      });
+    } catch (error) {
+      console.error('[ProxyKitchen] Redis getBinnedProxies error:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Phase 29: Restore a proxy from BIN back to the live pool.
+   * Resets failCount to 0 and removes binnedAt.
+   */
+  static async restoreFromBin(proxyUrl: string): Promise<boolean> {
+    try {
+      const binned = await this.getBinnedProxies();
+      const entry = binned.find(b => b.url === proxyUrl);
+      if (!entry) return false;
+      const { binnedAt, failCount, ...cleanPlatforms } = entry.platforms as any;
+      const restored = { ...cleanPlatforms, failCount: 0, lastCheckedAt: new Date().toISOString() };
+      await this.addVerifiedProxy(proxyUrl, restored);
+      if (redis) {
+        await redis.hdel(PROXY_BIN_KEY, proxyUrl);
+      } else {
+        delete this.localBinMemory[proxyUrl];
+      }
+      console.log(`[ProxyKitchen] ♻️ Restored from BIN: ${proxyUrl}`);
+      return true;
+    } catch (error) {
+      console.error('[ProxyKitchen] Restore from BIN error:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Phase 30: Purge BIN entries older than maxAgeHours (default 24h).
+   * Called by cron or manually.
+   */
+  static async purgeBinExpired(maxAgeHours: number = 24): Promise<{ purged: number }> {
+    try {
+      const binned = await this.getBinnedProxies();
+      const cutoff = Date.now() - maxAgeHours * 60 * 60 * 1000;
+      let purged = 0;
+      for (const entry of binned) {
+        const binnedAt = entry.platforms.binnedAt ? new Date(entry.platforms.binnedAt).getTime() : 0;
+        if (binnedAt > 0 && binnedAt < cutoff) {
+          if (redis) {
+            await redis.hdel(PROXY_BIN_KEY, entry.url);
+          } else {
+            delete this.localBinMemory[entry.url];
+          }
+          purged++;
+        }
+      }
+      console.log(`[ProxyKitchen] 🧹 BIN purge: ${purged} expired entries removed (>${maxAgeHours}h old)`);
+      return { purged };
+    } catch (error) {
+      console.error('[ProxyKitchen] BIN purge error:', error);
+      return { purged: 0 };
+    }
+  }
+
+  /**
+   * Bulk-add failed proxies to BIN (used by beast BOOST mode).
+   * Each proxy stored with binnedAt timestamp for 24h auto-purge.
+   */
+  static async bulkAddToBin(proxyUrls: string[]): Promise<number> {
+    try {
+      const now = new Date().toISOString();
+      let added = 0;
+      const binData = JSON.stringify({ yt: false, fb: false, ig: false, failCount: 5, binnedAt: now });
+      if (redis) {
+        // Use pipeline for efficiency
+        const pipeline: Record<string, string> = {};
+        for (const url of proxyUrls) {
+          pipeline[url] = binData;
+          added++;
+        }
+        if (added > 0) await redis.hset(PROXY_BIN_KEY, pipeline);
+      } else {
+        for (const url of proxyUrls) {
+          this.localBinMemory[url] = binData;
+          added++;
+        }
+      }
+      console.log(`[ProxyKitchen] 🗑️ Bulk-binned ${added} failed proxies (24h auto-purge)`);
+      return added;
+    } catch (error) {
+      console.error('[ProxyKitchen] bulkAddToBin error:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * RESCUE: Move all BIN entries back to raw queue for re-verification.
+   * Used when proxies were binned due to Rust verifier being offline (not actually bad proxies).
+   */
+  static async rescueBinToRawQueue(): Promise<{ rescued: number; total: number }> {
+    try {
+      const binned = await this.getBinnedProxies();
+      if (binned.length === 0) return { rescued: 0, total: 0 };
+
+      const proxyUrls = binned.map(p => p.url);
+      const rescued = await this.pushToRawQueue(proxyUrls);
+
+      // Clear rescued entries from bin
+      if (redis) {
+        const CHUNK = 500;
+        for (let i = 0; i < proxyUrls.length; i += CHUNK) {
+          await redis.hdel(PROXY_BIN_KEY, ...proxyUrls.slice(i, i + CHUNK));
+        }
+      } else {
+        for (const url of proxyUrls) {
+          delete this.localBinMemory[url];
+        }
+      }
+      console.log(`[ProxyKitchen] 🚑 Rescued ${rescued} proxies from BIN → Raw Queue`);
+      return { rescued, total: binned.length };
+    } catch (error) {
+      console.error('[ProxyKitchen] rescueBinToRawQueue error:', error);
+      return { rescued: 0, total: 0 };
     }
   }
 
@@ -194,6 +340,84 @@ export class ProxyKitchen {
   }
 
   /**
+   * Phase 20: Push raw scraped candidates to Redis list for later verification.
+   * These are IPs that were mined but NOT yet tested — the "queue" of untested candidates.
+   */
+  static async pushToRawQueue(proxyUrls: string[]): Promise<number> {
+    if (!proxyUrls.length) return 0;
+    if (!redis) {
+      console.error('[ProxyKitchen] ⚠️ pushToRawQueue: Redis NOT connected — cannot store raw queue. Set UPSTASH_REST_URL + UPSTASH_REST_TOKEN in .env');
+      return 0;
+    }
+    let totalPushed = 0;
+    try {
+      // Batch in chunks of 500 (smaller = less likely to hit Upstash payload/rate limits)
+      const CHUNK = 500;
+      for (let i = 0; i < proxyUrls.length; i += CHUNK) {
+        const chunk = proxyUrls.slice(i, i + CHUNK);
+        // Retry each chunk up to 3 times with exponential backoff
+        let attempts = 0;
+        while (attempts < 3) {
+          try {
+            await redis.sadd(PROXY_RAW_QUEUE_KEY, ...(chunk as [string, ...string[]]));
+            totalPushed += chunk.length;
+            break; // success
+          } catch (chunkErr: any) {
+            attempts++;
+            if (attempts >= 3) {
+              console.error(`[ProxyKitchen] pushToRawQueue chunk ${Math.floor(i/CHUNK)+1} FAILED after 3 retries: ${chunkErr.message}`);
+              break; // skip this chunk, continue with next
+            }
+            // Exponential backoff: 500ms, 1s, 2s
+            const delay = 500 * Math.pow(2, attempts - 1);
+            console.warn(`[ProxyKitchen] pushToRawQueue chunk retry ${attempts}/3 (delay ${delay}ms)`);
+            await new Promise(r => setTimeout(r, delay));
+          }
+        }
+      }
+      if (totalPushed > 0) {
+        console.log(`[ProxyKitchen] ✅ pushToRawQueue: ${totalPushed.toLocaleString()} candidates stored in Redis`);
+      } else {
+        console.error(`[ProxyKitchen] ⚠️ pushToRawQueue: 0 candidates stored — all chunks failed`);
+      }
+      return totalPushed;
+    } catch (error: any) {
+      console.error(`[ProxyKitchen] pushToRawQueue FATAL error: ${error.message}`);
+      return totalPushed; // return whatever was pushed before the fatal error
+    }
+  }
+
+  /**
+   * Phase 20: Pop a batch of raw candidates from the queue for verification.
+   */
+  static async popFromRawQueue(count: number = 5000): Promise<string[]> {
+    try {
+      if (!redis) return [];
+      // SPOP with count is a single O(N) Redis call — vastly faster than
+      // the previous loop of N individual RPOP calls.
+      const items = await redis.spop(PROXY_RAW_QUEUE_KEY, count);
+      if (!items) return [];
+      return Array.isArray(items) ? (items as string[]) : [items as string];
+    } catch (error) {
+      console.error('[ProxyKitchen] popFromRawQueue error:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Phase 20: Get the current size of the raw candidate queue.
+   */
+  static async getRawQueueSize(): Promise<number> {
+    try {
+      if (!redis) return 0;
+      return await redis.scard(PROXY_RAW_QUEUE_KEY);
+    } catch (error) {
+      console.error('[ProxyKitchen] getRawQueueSize error:', error);
+      return 0;
+    }
+  }
+
+  /**
    * Phase 16: Batch-import proxies from Beast Mode local harvest.
    * Called by POST /api/admin/proxy-bulk-import when local ProxyForge syncs to server.
    * Deduplicates against existing pool automatically.
@@ -203,15 +427,22 @@ export class ProxyKitchen {
     const existingSet = new Set(existing.map(p => p.url));
     let added = 0;
     let skipped = 0;
+    // Build full batch object — one hset call instead of N sequential calls (N+1 fix)
+    const batchData: Record<string, string> = {};
     for (const entry of entries) {
-      if (existingSet.has(entry.url)) {
-        skipped++;
-        continue;
-      }
-      await this.addVerifiedProxy(entry.url, entry.platforms);
+      if (existingSet.has(entry.url)) { skipped++; continue; }
+      batchData[entry.url] = JSON.stringify(entry.platforms);
       added++;
     }
-    console.log(`[ProxyKitchen] BulkImport: +${added} new, ${skipped} dupes skipped`);
+    if (added > 0) {
+      if (redis) {
+        await redis.hset(PROXY_REDIS_KEY, batchData);
+      } else {
+        Object.assign(this.localFallbackMemory, batchData);
+        saveLocalCache(this.localFallbackMemory);
+      }
+    }
+    console.log(`[ProxyKitchen] BulkImport: +${added} new, ${skipped} dupes skipped (single batched hset)`);
     return { added, skipped };
   }
 }

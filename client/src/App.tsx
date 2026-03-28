@@ -46,6 +46,7 @@ const PrivacyPolicy = lazy(() => import("@/pages/PrivacyPolicy"));
 const TermsPage = lazy(() => import("@/pages/TermsPage"));
 const FAQ = lazy(() => import("@/pages/FAQ"));
 const VoiceHub = lazy(() => import("@/pages/VoiceHub"));
+const BongShare = lazy(() => import("./pages/BongShare"));
 
 // Firebase Protected Route Wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -195,6 +196,11 @@ function Router() {
               <SocialDownloaderPage />
             </Suspense>
           </Route>
+          <Route path="/tools/share">
+            <Suspense fallback={<LoadingFallback />}>
+              <BongShare />
+            </Suspense>
+          </Route>
           <Route path="/community/feed">
             <Suspense fallback={<LoadingFallback />}>
               <CommunityFeed />
@@ -266,7 +272,7 @@ function Router() {
         {/* <FloatingFAQButton /> */}
 
         {/* Mobile Navigation Dock - Hidden on full-screen tool pages */}
-        {location !== '/tools/humanizer' && location !== '/voice-hub' && location !== '/tools/downloader' && <MobileNavBar />}
+        {location !== '/tools/humanizer' && location !== '/voice-hub' && location !== '/tools/downloader' && location !== '/tools/share' && <MobileNavBar />}
 
         {/* Production Debug overlay - Available via Console/Hidden Trigger */}
         <DebugOverlay />

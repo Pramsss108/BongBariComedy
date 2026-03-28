@@ -504,28 +504,21 @@ export default function SocialDownloaderPage() {
       <div className="dl-page font-serif md:h-screen md:overflow-hidden md:flex md:flex-col">
         {/* Check SocialDownloaderPage.css for mobile-first styles, we add md: overrides here */}
         
-        <header className="dl-main-header shrink-0">
-          <Link href="/tools">
-            <button className="dl-back-btn group">
-              <span className="group-hover:-translate-x-0.5 transition-transform text-xs">←</span>
-              <span className="hidden md:inline font-tech text-[9px] uppercase tracking-wider">Tools</span>
-            </button>
-          </Link>
+        <header className="dl-main-header shrink-0 flex justify-between items-center px-6 py-4 border-b border-white/5 bg-black/40 backdrop-blur-md">
+          <button 
+            onClick={() => setLocation('/tools')}
+            className="flex items-center gap-2 text-neutral-500 hover:text-white transition-colors group p-2 hover:bg-white/5 rounded-full"
+          >
+            <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+            <span className="text-[10px] uppercase font-bold tracking-widest">Back</span>
+          </button>
 
-          <div className="dl-header-title">
-            <span className="dl-brand-italic">BongBari</span>
-            <div className="dl-tool-info">
-              <span className="dl-tool-name">Downloader</span>
-              <span className="dl-version-badge">V12</span>
-            </div>
+          <div className="flex flex-col items-center gap-0.5">
+            <span className="dl-brand-italic text-sm font-black tracking-tighter uppercase italic text-white/90">Bong Bari</span>
+            <span className="text-[7px] tracking-[0.4em] text-neutral-600 uppercase font-medium">Universal Downloader</span>
           </div>
 
-          <div className="dl-header-right">
-            <div className="dl-mode-pill">
-              <span className="dl-mode-icon">🚀</span>
-              <span className="hidden sm:inline ml-1">Cloud</span>
-            </div>
-          </div>
+          <div className="w-10 h-10" /> {/* Balance */}
         </header>
 
         {/* Background glow orbs */}
@@ -677,47 +670,26 @@ export default function SocialDownloaderPage() {
                     </div>
                   </div>
 
-                  ﻿﻿{/* Developer Engine Override */}
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2 opacity-50 hover:opacity-100 transition-opacity">
-                      <span>⚙️ Developer Engine Override:</span>
+                  <details className="mt-2 opacity-20 hover:opacity-100 transition-opacity">
+                    <summary className="text-[9px] cursor-pointer font-bold tracking-widest uppercase text-neutral-500 list-none flex items-center gap-1">
+                       <HelpCircle className="w-2.5 h-2.5" /> Engine Config
+                    </summary>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
                       <select
                         value={forceEngine}
                         onChange={(e) => setForceEngine(e.target.value)}
-                        className="bg-[#0f0f11] border border-white/10 text-white/90 py-1 px-2 rounded outline-none cursor-pointer hover:bg-black transition-colors"
+                        className="bg-[#0f0f11] border border-white/10 text-white/90 py-1 px-2 rounded outline-none cursor-pointer hover:bg-black transition-colors text-[10px]"
                       >
-                        <option className="bg-[#0f0f11] text-white font-semibold" value="auto">🌟 Smart Auto-Fallback (All Free → Paid Last)</option>
-                        
-                        {/* ── FREE ENGINES (ordered by reliability per platform) ── */}
-                        <option className="bg-[#0f0f11] text-yellow-500" value="layer1">
-                          🌐 L1: Cobalt API · FREE {isMetaUrl ? "· IG/FB ✓" : isYouTubeUrl ? "· YT ✓ Fast" : "· All"}
-                        </option>
-                        
-                        <option className="bg-[#0f0f11] text-emerald-400 font-bold" value="layer7">
-                          🆓 L7: Our Proxy Pool · FREE · $0 {isMetaUrl ? "· IG/FB ✓✓" : isYouTubeUrl ? "· YT ✓" : "· All"}
-                        </option>
-                        
-                        <option className={`bg-[#0f0f11] ${isMetaUrl ? "text-slate-600" : "text-blue-400"}`} value="layer2" disabled={isMetaUrl}>
-                          🛡️ L2: CF Swarm · FREE {isMetaUrl ? "· ✗ Meta Blocked" : "· YT ✓"}
-                        </option>
-                        
-                        <option className={`bg-[#0f0f11] ${isMetaUrl ? "text-slate-600" : "text-orange-400"}`} value="layer3" disabled={isMetaUrl}>
-                          🚀 L3: IPv6 Direct · FREE {isMetaUrl ? "· ✗ YT Only" : "· YT ✓"}
-                        </option>
-
-                        <option className={`bg-[#0f0f11] ${isMetaUrl ? "text-slate-600" : "text-green-400"}`} value="layer4" disabled={isMetaUrl}>
-                          🎭 L4: YTDL-Core · FREE {isMetaUrl ? "· ✗ YT Only" : "· YT ✓"}
-                        </option>
-
-                        <option className="bg-[#0f0f11] text-slate-600" value="layer5" disabled>
-                          ⏭️ L5: Reserved (Skipped)
-                        </option>
-
-                        {/* ── PAID ENGINE (always last) ── */}
-                        <option className="bg-[#0f0f11] text-red-500 font-bold" value="layer6">
-                          💰 L6: ASocks Residential · $0.003/req {isMetaUrl ? "· IG/FB ✓✓" : "· All"}
-                        </option>
+                        <option value="auto">ðŸŒŸ Auto-Fallback</option>
+                        <option value="layer1">ðŸŒ L1: Cobalt</option>
+                        <option value="layer7">ðŸ†“ L7: Proxy Pool</option>
+                        <option value="layer2" disabled={isMetaUrl}>ðŸ›¡ï¸ L2: CF Swarm</option>
+                        <option value="layer3" disabled={isMetaUrl}>ðŸš€ L3: IPv6 Direct</option>
+                        <option value="layer4" disabled={isMetaUrl}>ðŸŽ­ L4: YTDL-Core</option>
+                        <option value="layer6">ðŸ’° L6: Residential</option>
                       </select>
                     </div>
+                  </details>
 
                   
 

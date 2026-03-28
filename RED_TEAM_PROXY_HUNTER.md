@@ -745,6 +745,184 @@ MONTHLY:   1 Beast Mode + 700 patrol hours = 5,000–20,000 live proxies in pool
 
 ---
 
+## 🚀 LOCAL BEAST + CLOUD BOOST — THE COMPLETE TWO-TIER STRATEGY
+
+> **For the non-coder:** This section explains what's happening when you click HUNT, VERIFY, and BOOST in the Proxy Mission Control panel. Read this once and you'll always understand what each button does and why.
+
+---
+
+### The Problem We're Solving
+
+We need thousands of verified residential proxies to download videos from YouTube, Instagram, etc. without getting blocked. Verifying proxies quickly requires:
+- A **residential IP** (not a server IP — servers are blocked by YouTube/Instagram)
+- A **fast CPU** (your PC has 8-16 cores; the cloud server has 1 shared core)
+- **No rate limits** from datacenter filters
+
+The cloud server can't do heavy verification on its own. That's why we have two tiers.
+
+---
+
+### Tier 1 — Cloud (Automatic, Always Running)
+
+```
+CLOUD SERVER (Render.com) — runs 24/7 without you doing anything
+
+Every 2 hours:
+  1. OSINT Hunt → scrapes 25+ sources → finds ~10,000 raw proxy candidates
+  2. Stores them in → "Cloud Raw Queue" (Redis, unverified)
+  3. Cloud Verify → slowly verifies ~600/hour using server's 1 core
+  4. Verified → Cloud Pool (usable by downloader)
+  5. Failed → Cloud Bin (auto-deleted after 24 hours)
+
+Speed: slow but constant. Works even when your PC is OFF.
+```
+
+---
+
+### Tier 2 — Local Beast (Manual, When Your PC Is On)
+
+```
+YOUR LOCAL MACHINE — triggered manually from the admin panel
+
+When you click HUNT on the admin panel:
+  1. beast_harvest.mjs runs on YOUR machine, using YOUR residential IP
+  2. Hunts 25+ OSINT sources simultaneously
+  3. Rust verifier processes 2,000 proxies in parallel at full PC speed
+  4. Verified → uploaded to Cloud Pool immediately
+  5. Raw candidates → Cloud Raw Queue (for cloud to process when you go offline)
+
+Speed: ~50,000 candidates/hour (80× faster than cloud alone)
+```
+
+---
+
+### The BOOST Button — What It Actually Does
+
+> **Plain language:** BOOST picks up all the unverified proxies the cloud found but couldn't verify yet (too slow), brings them to your powerful PC, verifies them instantly using Rust at full speed, then sends the verified ones to the cloud pool and throws away all the bad ones.
+
+```
+BEFORE BOOST:
+  Cloud Raw Queue: 50,000 unverified proxies (cloud is slowly working through them)
+  Cloud Pool: 300 verified proxies
+
+CLICK BOOST (takes 10-20 minutes):
+  Step 1: Your PC pulls ALL 50,000 raw proxies from cloud to local RAM
+          ← At this point, the data is safe in your PC's memory.
+            Even if internet drops, the data is NOT lost.
+
+  Step 2: Rust verifier checks all 50,000 at 2,000/batch (no internet needed)
+          This is 100% local — cloud can be down, doesn't matter
+
+  Step 3: Verified ones (maybe 5,000–15,000) get uploaded to Cloud Pool
+          Each batch of 500 uploads with automatic retry if connection drops
+
+  Step 4: Failed ones get sent to Cloud Bin (auto-deleted in 24 hours)
+
+AFTER BOOST:
+  Cloud Raw Queue: EMPTY (clean slate for next cloud hunt)
+  Cloud Pool: 5,000–15,000 verified proxies (was 300 before)
+```
+
+---
+
+### Why the BOOST Is Network-Resilient
+
+This was specially engineered to survive DNS restarts and short internet drops:
+
+```
+WHAT USED TO HAPPEN (fragile version):
+  Pull 1,000 proxies → verify → try to upload → connection drops → LOSE ALL DATA
+  
+HOW IT WORKS NOW (resilient version):
+  
+  1. LOCAL MEMORY IS SAFE:
+     All 50,000 raw proxies are pulled into your PC's RAM first.
+     Once they're in RAM, the cloud can go offline — the data is safe.
+     
+  2. PROGRESSIVE UPLOADS WITH RETRY:
+     Every 500 verified proxies → attempt upload to cloud
+     If upload fails: wait 3 sec → retry → wait 6 sec → retry → up to 5 attempts
+     That's 15+ seconds of retrying before giving up on a batch
+     
+  3. FINAL FLUSH WITH 8 RETRIES:
+     The last batch at the end gets 8 retry attempts (most important data)
+     If that fails, it saves to a local backup file
+     
+  4. LOCAL BACKUP:
+     After boost completes, all verified proxies saved to data/proxies_backup.json
+     Even worst case (cloud permanently down), your work is preserved locally
+     
+  5. DNS RESTART SCENARIO:
+     Your router restarts (30-60 second outage)
+     → All raw proxies are already in RAM (safe)
+     → Rust verification continues (100% local, no internet needed)
+     → Upload retries wait and keep trying until DNS comes back
+     → Zero data lost, zero restarts needed
+```
+
+---
+
+### The 4 Control Buttons Explained
+
+| Button | What It Does | When To Use |
+|--------|-------------|-------------|
+| **HUNT** | Your PC hunts OSINT sources with your residential IP → sends raw candidates to cloud queue | When you want to add fresh new proxies to the pipeline |
+| **VERIFY** | Takes proxies from cloud raw queue → verifies locally → sends to cloud pool | Light mode: chip away at a smaller backlog |
+| **BOOST** | Pulls the ENTIRE cloud raw queue at once → verifies at max Rust speed → pool/bin | When you see "X,XXX unverified" and want to clear the backlog fast |
+| **STOP** | Gracefully stops any running beast operation | Stop hunting/verifying without corrupting data |
+
+---
+
+### The Complete Flow Visualized
+
+```
+YOUR PC (when BOOST is running)
+───────────────────────────────────────────────────────────────────
+Cloud Raw Queue ──pull all──→  Local RAM (safe, no internet needed)
+                                     ↓
+                               Rust Verifier (2000/batch, pure CPU)
+                               ↙               ↘
+                     VERIFIED (~15%)         FAILED (~85%)
+                          ↓                      ↓
+              Upload to Cloud Pool      Send to Cloud Bin
+              (retry 5x on drop)        (retry 3x on drop)
+              (500 per batch)           (auto-delete 24h)
+                          ↓
+                  Local Backup saved
+                  (data/proxies_backup.json)
+───────────────────────────────────────────────────────────────────
+RESULT: Cloud Raw Queue = EMPTY | Cloud Pool = much bigger
+```
+
+---
+
+### Typical Boost Session Numbers
+
+```
+You arrive home, see this in the admin panel:
+  Cloud Raw Queue:  45,000 unverified (cloud collected while you were away)
+  Cloud Pool:       280 usable proxies
+  
+You click BOOST.
+
+10 minutes later:
+  Step 1 (pull):    45,000 pulled to local RAM in ~2 minutes
+  Step 2 (verify):  45,000 Rust-checked at 2,000/batch = ~5 minutes
+  Step 3 (upload):  ~7,500 verified uploaded to cloud pool
+  Step 4 (bin):     ~37,500 failed sent to bin (auto-removed in 24h)
+  
+After BOOST:
+  Cloud Raw Queue:  0 (empty — ready for next cloud hunt)
+  Cloud Pool:       280 + 7,500 = 7,780 usable proxies 🎉
+```
+
+---
+
+WEEKENDS:  Trigger one local Beast Mode run = massive single harvest
+MONTHLY:   1 Beast Mode + 700 patrol hours = 5,000–20,000 live proxies in pool
+
+---
+
 ## ✅ CURRENT STATUS — LIVE IN PRODUCTION (as of latest session)
 
 ### What's Built & Working

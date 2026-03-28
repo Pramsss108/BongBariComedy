@@ -27,3 +27,4 @@ Here is the exact status of each fallback layer for both Meta (Instagram/Faceboo
 
 ## 🧪 Testing Protocol
 We will use the **new Developer Dropdown** to individually force each layer and analyze the HTTP headers and block rates one by one.
+![table](image.png)

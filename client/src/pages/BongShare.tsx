@@ -382,14 +382,14 @@ const BongShare = () => {
             {hasFiles && mode === 'pick' && (
               <motion.section key="mode-pick" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.35 }} className="w-full flex flex-col gap-3">
 
-                {/* ── File chips — horizontal scroll, compact single row ── */}
-                <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                {/* ── File chips — wrapping layout so all files are visible ── */}
+                <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-0.5" style={{ scrollbarWidth: 'thin' }}>
                   {files.map((f, idx) => (
-                    <div key={idx} className="flex items-center gap-1.5 shrink-0 rounded-full border border-white/5 px-3 py-1.5" style={{ background: 'rgba(27,27,27,0.6)' }}>
+                    <div key={idx} className="flex items-center gap-1.5 shrink-0 rounded-full border border-white/5 px-2.5 py-1" style={{ background: 'rgba(27,27,27,0.6)' }}>
                       <FileText className="w-3 h-3 text-[#40ceed] shrink-0" />
-                      <span className="text-[11px] text-white font-semibold max-w-[110px] truncate">{f.name}</span>
+                      <span className="text-[10px] text-white font-semibold max-w-[100px] truncate">{f.name}</span>
                       <span className="text-[9px] text-[#9a907a] shrink-0">{formatBytes(f.size)}</span>
-                      <button onClick={() => removeFile(idx)} className="ml-0.5 w-4 h-4 rounded-full flex items-center justify-center hover:bg-white/10 text-[#9a907a] hover:text-white transition-all shrink-0">
+                      <button onClick={() => removeFile(idx)} className="ml-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center hover:bg-white/10 text-[#9a907a] hover:text-white transition-all shrink-0">
                         <X className="w-2.5 h-2.5" />
                       </button>
                     </div>

@@ -306,7 +306,8 @@ function uploadFilebinChunk(
     xhr.timeout = 10 * 60 * 1000; // 10 min per chunk
 
     xhr.open('POST', `${FILEBIN_API}/${binId}/${chunkName}`);
-    xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+    // Do NOT set Content-Type — it triggers CORS preflight which filebin rejects.
+    // Browser sends Blob with default type; filebin accepts raw binary fine.
     xhr.send(blob);
   });
 }

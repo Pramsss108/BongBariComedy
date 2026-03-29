@@ -1,0 +1,1 @@
+{"v":1,"files":[{"name":"test-doc.txt","size":3105,"chunks":["f0_full.txt"]},{"name":"test-data.json","size":58,"chunks":["f1_full.json"]},{"name":"test-binary.bin","size":5000,"chunks":["f2_full.bin"]}]}

@@ -43,7 +43,12 @@
     "restore:file": "node scripts/restore-file.mjs",
     "restore:core": "npm run restore:file -- client/src/index.css && npm run restore:file -- client/src/mobile-overrides.css && npm run restore:file -- client/src/components/navigation.tsx",
     "diff:core": "npm run git:fetch && npm run diff:file -- client/src/index.css && npm run diff:file -- client/src/mobile-overrides.css && npm run diff:file -- client/src/components/navigation.tsx",
-    "snapshot:main": "node scripts/snapshot-main.mjs"
+    "snapshot:main": "node scripts/snapshot-main.mjs",
+    "vm:status": "node scripts/oci-vm.mjs status",
+    "vm:stop": "node scripts/oci-vm.mjs stop",
+    "vm:start": "node scripts/oci-vm.mjs start",
+    "vm:reboot": "node scripts/oci-vm.mjs reboot",
+    "vm:ssh": "ssh -i C:\\Users\\guita\\.ssh\\oracle_bongbari2 opc@79.76.110.66"
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",

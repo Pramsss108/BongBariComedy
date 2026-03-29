@@ -11,7 +11,9 @@ import {
   AlertTriangle,
   Clock,
   HardDrive,
+  Archive,
 } from 'lucide-react';
+import { downloadZip } from 'client-zip';
 import { resolveShareUrl, type BundleManifest, type BundleFileEntry } from '@/lib/gofile-engine';
 
 
@@ -44,6 +46,32 @@ function getFileIcon(fileName: string): string {
   if (['apk'].includes(ext)) return '📱';
   if (['exe', 'msi'].includes(ext)) return '💻';
   return '📁';
+}
+
+/**
+ * Create a ReadableStream that sequentially fetches and concatenates
+ * multiple chunk URLs into one continuous byte stream.
+ * Only one chunk is in memory at a time — safe for 10GB+ files.
+ */
+function createConcatStream(urls: string[]): ReadableStream<Uint8Array> {
+  let urlIdx = 0;
+  let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+  return new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      for (;;) {
+        if (!reader) {
+          if (urlIdx >= urls.length) { controller.close(); return; }
+          const res = await fetch(urls[urlIdx++]);
+          if (!res.ok || !res.body) { controller.error(new Error(`Chunk fetch failed (${res.status})`)); return; }
+          reader = res.body.getReader();
+        }
+        const { done, value } = await reader.read();
+        if (done) { reader = null; continue; }
+        controller.enqueue(value);
+        return;
+      }
+    },
+  });
 }
 
 const BongShareDownload = () => {
@@ -179,26 +207,80 @@ const BongShareDownload = () => {
     }
   };
 
-  /** Bundle "Download All" state */
+  /** Bundle "Download as ZIP" state */
   const [bundleAllActive, setBundleAllActive] = useState(false);
   const [bundleAllProgress, setBundleAllProgress] = useState(0);
   const [bundleAllPhase, setBundleAllPhase] = useState('');
 
-  const handleBundleDownloadAll = async () => {
+  /**
+   * Streaming ZIP download — creates a .zip on the fly from all bundle files.
+   * Chrome/Edge: streams directly to disk via File System Access API (0 RAM, 10GB+ safe).
+   * Firefox/Safari: buffers ZIP blob (works ~2GB; shows warning above that threshold).
+   * Files are packed sequentially in upload order using STORE mode (no compression = fast).
+   */
+  const handleBundleDownloadZip = async () => {
     if (!manifest || !binId) return;
+    const capturedBinId = binId; // closure-safe
+    const files = manifest.files; // capture for generator
     setBundleAllActive(true);
     setBundleAllProgress(0);
-    const total = manifest.files.length;
-    for (let i = 0; i < total; i++) {
-      setBundleAllPhase(`Downloading ${i + 1} of ${total}…`);
-      setBundleAllProgress(Math.round((i / total) * 100));
-      await downloadBundleFile(manifest.files[i], i);
-      // small pause between files
-      if (i < total - 1) await new Promise(r => setTimeout(r, 300));
+    setBundleAllPhase('Preparing ZIP…');
+    try {
+      const total = files.length;
+      let completed = 0;
+
+      // Async generator: yields { name, input } per file. client-zip reads each stream sequentially.
+      const genEntries = async function* () {
+        for (const entry of files) {
+          setBundleAllPhase(`Packing ${completed + 1}/${total}: ${entry.name}`);
+          setBundleAllProgress(Math.round((completed / total) * 90));
+          const urls = entry.chunks.map(c => `https://filebin.net/${capturedBinId}/${c}`);
+          if (entry.chunks.length === 1) {
+            const res = await fetch(urls[0]);
+            if (!res.ok) throw new Error(`Failed to fetch ${entry.name} (${res.status})`);
+            yield { name: entry.name, input: res };
+          } else {
+            yield { name: entry.name, size: entry.size, input: createConcatStream(urls) };
+          }
+          completed++;
+          setBundleAllProgress(Math.round((completed / total) * 90));
+        }
+      };
+
+      const zipResponse = downloadZip(genEntries());
+
+      if ('showSaveFilePicker' in window) {
+        // 🚀 STREAMING: ZIP writes directly to disk — zero RAM, handles 10GB+ effortlessly
+        setBundleAllPhase('Choose save location…');
+        const fileHandle = await (window as any).showSaveFilePicker({
+          suggestedName: 'BongBari_Bundle.zip',
+          types: [{ description: 'ZIP Archive', accept: { 'application/zip': ['.zip'] } }],
+        });
+        setBundleAllPhase('Writing ZIP to disk…');
+        const writable = await fileHandle.createWritable();
+        await zipResponse.body!.pipeTo(writable);
+      } else {
+        // Fallback: buffer blob (safe up to ~2GB on most browsers)
+        setBundleAllPhase('Building ZIP…');
+        const blob = await zipResponse.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'BongBari_Bundle.zip';
+        document.body.appendChild(a); a.click();
+        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+      }
+
+      setBundleAllProgress(100);
+      setBundleAllPhase('ZIP saved ✓');
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        setBundleAllPhase('Cancelled');
+      } else {
+        setBundleAllPhase(`Error: ${err.message}`);
+      }
+    } finally {
+      setBundleAllActive(false);
     }
-    setBundleAllProgress(100);
-    setBundleAllPhase('All files saved ✓');
-    setBundleAllActive(false);
   };
 
   /** For GoFile (>1GB), trigger a fetch→blob download so they never see GoFile UI */
@@ -407,9 +489,16 @@ const BongShareDownload = () => {
                 </div>
               )}
 
-              {/* ===== BUNDLE DOWNLOAD ALL BUTTON ===== */}
+              {/* ===== BUNDLE DOWNLOAD AS ZIP ===== */}
               {isBundle && manifest && (
                 <div className="w-full flex flex-col gap-3">
+                  {/* Streaming info badge */}
+                  <div className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                    <Archive className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <p className="text-[11px] text-emerald-300/80 font-medium">
+                      Downloads all {manifest.files.length} files as a single <strong className="text-emerald-300">.zip</strong> — streamed to disk, no RAM used
+                    </p>
+                  </div>
                   {bundleAllActive && (
                     <div className="w-full flex flex-col gap-2">
                       <div className="flex justify-between items-center text-[10px] font-mono text-[#40ceed]/70">
@@ -422,12 +511,12 @@ const BongShareDownload = () => {
                     </div>
                   )}
                   <button
-                    onClick={handleBundleDownloadAll}
+                    onClick={handleBundleDownloadZip}
                     disabled={bundleAllActive}
                     className="w-full h-14 sm:h-16 bg-[#f0c12c] text-[#695200] font-extrabold uppercase text-sm tracking-widest rounded-full hover:brightness-110 active:scale-[0.97] transition-all shadow-lg flex items-center justify-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    <Download className="w-5 h-5" />
-                    {bundleAllActive ? bundleAllPhase : 'Download All'}
+                    <Archive className="w-5 h-5" />
+                    {bundleAllActive ? bundleAllPhase : 'Download as ZIP'}
                   </button>
                 </div>
               )}

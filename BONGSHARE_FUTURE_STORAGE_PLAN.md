@@ -1,7 +1,36 @@
 # BongShare — Future Storage Infrastructure Plan (Red Team Edition)
 
-> **Current state (March 2026):** filebin.net — works, free, 6-day expiry, CORS-native.
+> **Current state (March 2026):** filebin.net — works, free, 6-day expiry, CORS-native.  
+> **Download:** Streaming ZIP via `client-zip` — 10GB+ with zero RAM usage.  
 > **Goal:** Completely free, unlimited scale, zero third-party dependency, full control.
+
+---
+
+## ✅ IMPLEMENTED — Streaming ZIP Download (March 2026)
+
+**How it works (Red Team engineering — zero resource usage):**
+```
+User clicks "Download as ZIP"
+→ Async generator yields { name, input: Response } for each file
+→ client-zip creates ZIP stream (STORE mode, no compression = instant)
+→ Chrome/Edge: showSaveFilePicker → WritableStream → disk (0 RAM)
+→ Firefox/Safari: blob fallback (works ~2GB)
+
+Multi-chunk files: createConcatStream() chains fetch() calls,
+only 1 chunk (~80MB) in memory at a time
+```
+
+**Key specs:**
+| Property | Value |
+|----------|-------|
+| Library | `client-zip` (3KB, zero deps) |
+| Max size (Chrome/Edge) | Unlimited (streams to disk) |
+| Max size (Firefox/Safari) | ~2GB (blob buffer) |
+| Compression | STORE (none — videos/images don't compress) |
+| RAM usage | ~80MB max (one chunk at a time) |
+| CPU usage | Near zero (no compression) |
+| File order | Sequential, exactly as uploaded |
+| Progress | Per-file tracking during ZIP creation |
 
 ---
 

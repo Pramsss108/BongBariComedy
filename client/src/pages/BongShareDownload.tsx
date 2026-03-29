@@ -12,7 +12,7 @@ import {
   Clock,
   HardDrive,
 } from 'lucide-react';
-import { resolveShareUrl, fetchBundleManifest, type BundleManifest, type BundleFileEntry } from '@/lib/gofile-engine';
+import { resolveShareUrl, type BundleManifest, type BundleFileEntry } from '@/lib/gofile-engine';
 
 
 function formatBytes(bytes: number): string {
@@ -91,22 +91,8 @@ const BongShareDownload = () => {
     );
   }
 
-  const { downloadUrl, fileName, fileSize, isDirect, host, expires, isChunked, chunkUrls, binId, chunkNames, isBundle } = resolved;
+  const { downloadUrl, fileName, fileSize, isDirect, host, expires, isChunked, chunkUrls, binId, chunkNames, isBundle, manifest } = resolved;
   const icon = getFileIcon(fileName);
-
-  /** Bundle manifest state (fetched async for filebin-bundle links) */
-  const [manifest, setManifest] = useState<BundleManifest | null>(null);
-  const [manifestLoading, setManifestLoading] = useState(false);
-  const [manifestError, setManifestError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (isBundle && binId) {
-      setManifestLoading(true);
-      fetchBundleManifest(binId)
-        .then(m => { setManifest(m); setManifestLoading(false); })
-        .catch(e => { setManifestError(e.message ?? 'Failed to load file list'); setManifestLoading(false); });
-    }
-  }, [isBundle, binId]);
 
   /** Per-file download state for bundle (keyed by fileIndex) */
   const [fileDownloads, setFileDownloads] = useState<Record<number, { active: boolean; progress: number; phase: string }>>({});
@@ -295,12 +281,8 @@ const BongShareDownload = () => {
                   {isBundle ? `File Bundle` : fileName}
                 </h2>
                 <p className="text-[#9a907a] text-sm font-medium">
-                  {isBundle
-                    ? manifest
-                      ? `${manifest.files.length} files · ${formatBytes(fileSize)}`
-                      : manifestLoading
-                        ? 'Loading file list…'
-                        : formatBytes(fileSize)
+                  {isBundle && manifest
+                    ? `${manifest.files.length} files · ${formatBytes(fileSize)}`
                     : formatBytes(fileSize)
                   }
                 </p>
@@ -332,20 +314,9 @@ const BongShareDownload = () => {
               )}
 
               {/* ===== BUNDLE FILE LIST ===== */}
-              {isBundle && (
+              {isBundle && manifest && (
                 <div className="w-full flex flex-col gap-3">
-                  {manifestError && (
-                    <div className="w-full px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-300">
-                      Failed to load file list: {manifestError}
-                    </div>
-                  )}
-                  {manifestLoading && (
-                    <div className="w-full flex items-center justify-center gap-2 py-4">
-                      <div className="w-2 h-2 rounded-full bg-[#f0c12c] animate-pulse" />
-                      <span className="text-xs text-[#d1c5ad]/60 font-mono">Loading file list…</span>
-                    </div>
-                  )}
-                  {manifest && manifest.files.map((entry, fileIdx) => {
+                  {manifest.files.map((entry, fileIdx) => {
                     const dl = fileDownloads[fileIdx];
                     const isActive = dl?.active ?? false;
                     const dlProgress = dl?.progress ?? 0;

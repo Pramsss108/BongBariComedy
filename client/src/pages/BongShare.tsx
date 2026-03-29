@@ -172,7 +172,7 @@ const BongShare = () => {
         setUploadPhase(
           `Bundling ${files.length} files (${totalChunks} part${totalChunks !== 1 ? 's' : ''})…`,
         );
-        const { binId } = await uploadMultipleToFilebin(
+        const { binId, manifest } = await uploadMultipleToFilebin(
           files,
           (p) => setLinkProgress(p),
           (fileIdx, p) => {
@@ -184,7 +184,7 @@ const BongShare = () => {
             setUploadPhase(`Uploading ${files[fileIdx]?.name ?? ''}…`);
           },
         );
-        const brandedUrl = buildBongBariBundleUrl(binId, totalSize);
+        const brandedUrl = buildBongBariBundleUrl(binId, totalSize, manifest);
         setShareLink(brandedUrl);
         setUsedHost('filebin-bundle');
         setLinkStatus('success');

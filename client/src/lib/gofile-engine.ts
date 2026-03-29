@@ -441,9 +441,12 @@ export async function uploadMultipleToFilebin(
   return { binId, manifest };
 }
 
-/** Build a branded share URL for a multi-file bundle (only binId in the token) */
-export function buildBongBariBundleUrl(binId: string, totalSize: number): string {
-  const token = encodeShareToken({ c: '', b: binId, n: 'bundle', s: totalSize, h: 'filebin-bundle' });
+/** Build a branded share URL for a multi-file bundle.
+ *  The manifest (file list + chunk names) is embedded directly in the token
+ *  so the download page never needs a second network fetch.
+ */
+export function buildBongBariBundleUrl(binId: string, totalSize: number, manifest: BundleManifest): string {
+  const token = encodeShareToken({ c: '', b: binId, n: 'bundle', s: totalSize, h: 'filebin-bundle', m: manifest });
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.bongbari.com';
   return `${origin}/s/${token}`;
 }
@@ -520,6 +523,8 @@ export interface SharePayload {
   s: number;
   /** Host type */
   h?: ShareHost;
+  /** Embedded bundle manifest (only for filebin-bundle) */
+  m?: BundleManifest;
 }
 
 
@@ -577,8 +582,10 @@ export interface ResolvedShare {
   expires: boolean;
   /** true = file was split into chunks that must be reassembled on download */
   isChunked: boolean;
-  /** true = multi-file bundle (manifest must be fetched from filebin) */
+  /** true = multi-file bundle */
   isBundle?: boolean;
+  /** Embedded bundle manifest (set when isBundle = true) */
+  manifest?: BundleManifest;
   /** filebin binId (set for filebin and filebin-bundle) */
   binId?: string;
   /** Chunk file names (only set when isChunked = true — single file) */
@@ -592,7 +599,7 @@ export function resolveShareUrl(token: string): ResolvedShare | null {
   const data = decodeShareToken(token);
   if (!data) return null;
 
-  // Multi-file bundle (filebin-bundle)
+  // Multi-file bundle (filebin-bundle) — manifest embedded in token
   if (data.h === 'filebin-bundle' && data.b) {
     return {
       downloadUrl: '',
@@ -604,6 +611,7 @@ export function resolveShareUrl(token: string): ResolvedShare | null {
       isChunked: false,
       isBundle: true,
       binId: data.b,
+      manifest: data.m as BundleManifest | undefined,
     };
   }
   // Single-file filebin chunked upload (unlimited size, 6-day expiry)

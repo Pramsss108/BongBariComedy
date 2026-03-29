@@ -331,6 +331,122 @@ router.post('/upload-direct', catboxUpload.single('file'), async (req: Request, 
   }
 });
 
+/* ══════════════════════════════════════════════════════════════
+   FILEBIN DOWNLOAD PROXY — cloaks filebin URLs, forces download
+   Browser → Render → filebin (302 → S3 presigned) → stream back
+   User NEVER sees filebin.net domain. All downloads via our API.
+   ══════════════════════════════════════════════════════════════ */
+
+/** GET /api/share/dl/:binId/:chunkName?as=filename.mkv
+ *  Resolves filebin URL → follows 302 → streams S3 file back
+ *  with Content-Disposition: attachment (forces download, not play)
+ */
+router.get('/dl/:binId/:chunkName', async (req: Request, res: ExpressResponse) => {
+  const { binId, chunkName } = req.params;
+  const downloadAs = String(req.query.as || chunkName);
+
+  // Validate params (prevent path traversal)
+  if (!binId || !chunkName || /[\/\\]/.test(binId) || /[\/\\]/.test(chunkName)) {
+    return res.status(400).json({ error: 'Invalid parameters' });
+  }
+
+  try {
+    const filebinUrl = `https://filebin.net/${encodeURIComponent(binId)}/${encodeURIComponent(chunkName)}`;
+    
+    // Step 1: Get the 302 redirect → presigned S3 URL
+    // Must use curl-like User-Agent (filebin serves HTML warning page to browser UAs)
+    const redirectResp = await fetchWithTimeout(filebinUrl, {
+      headers: { 'User-Agent': 'curl/8.0' },
+      redirect: 'manual',
+    }, 30000);
+
+    if (redirectResp.status !== 302) {
+      return res.status(redirectResp.status).json({ error: `Upstream returned ${redirectResp.status} (expected 302)` });
+    }
+
+    const s3Url = redirectResp.headers.get('location');
+    if (!s3Url) {
+      return res.status(502).json({ error: 'No redirect URL from upstream' });
+    }
+
+    // Step 2: Fetch real file from S3 presigned URL
+    const upstream = await fetchWithTimeout(s3Url, {
+      redirect: 'follow',
+    }, 5 * 60 * 1000); // 5 min timeout for large files
+
+    if (!upstream.ok) {
+      return res.status(upstream.status).json({ error: `Storage returned ${upstream.status}` });
+    }
+
+    // Forward content headers, force attachment download
+    const ct = upstream.headers.get('content-type') || 'application/octet-stream';
+    const cl = upstream.headers.get('content-length');
+    
+    res.setHeader('Content-Type', ct);
+    res.setHeader('Content-Disposition', `attachment; filename="${downloadAs.replace(/"/g, '_')}"`);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    if (cl) res.setHeader('Content-Length', cl);
+
+    // Stream body to client
+    if (upstream.body) {
+      upstream.body.pipe(res);
+      upstream.body.on('error', () => { try { res.end(); } catch {} });
+    } else {
+      const buf = await upstream.buffer();
+      res.send(buf);
+    }
+  } catch (err: any) {
+    console.error(`[ShareDL] Error proxying ${binId}/${chunkName}:`, err.message);
+    if (!res.headersSent) {
+      res.status(502).json({ error: 'Download proxy failed', detail: err.message });
+    }
+  }
+});
+
+/** GET /api/share/zip/:binId
+ *  Proxies filebin's native server-side ZIP endpoint.
+ *  Cloaks the filebin URL — user downloads from our domain.
+ */
+router.get('/zip/:binId', async (req: Request, res: ExpressResponse) => {
+  const { binId } = req.params;
+  
+  if (!binId || /[\/\\]/.test(binId)) {
+    return res.status(400).json({ error: 'Invalid bin ID' });
+  }
+
+  try {
+    const zipUrl = `https://filebin.net/archive/${encodeURIComponent(binId)}/zip`;
+
+    const upstream = await fetchWithTimeout(zipUrl, {
+      headers: { 'User-Agent': 'curl/8.0' },
+      redirect: 'follow',
+    }, 10 * 60 * 1000); // 10 min for large ZIPs
+
+    if (!upstream.ok) {
+      return res.status(upstream.status).json({ error: `ZIP endpoint returned ${upstream.status}` });
+    }
+
+    const cl = upstream.headers.get('content-length');
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="BongBari_Bundle.zip"`);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    if (cl) res.setHeader('Content-Length', cl);
+
+    if (upstream.body) {
+      upstream.body.pipe(res);
+      upstream.body.on('error', () => { try { res.end(); } catch {} });
+    } else {
+      const buf = await upstream.buffer();
+      res.send(buf);
+    }
+  } catch (err: any) {
+    console.error(`[ShareZIP] Error proxying ZIP for ${binId}:`, err.message);
+    if (!res.headersSent) {
+      res.status(502).json({ error: 'ZIP proxy failed', detail: err.message });
+    }
+  }
+});
+
 export function registerShareRoutes(app: any) {
   app.use('/api/share', router);
 }

@@ -14,6 +14,7 @@ import {
   Archive,
 } from 'lucide-react';
 import { resolveShareUrl, type BundleManifest, type BundleFileEntry } from '@/lib/gofile-engine';
+import { buildApiUrl } from '@/lib/queryClient';
 
 
 function formatBytes(bytes: number): string {
@@ -95,19 +96,18 @@ const BongShareDownload = () => {
   const { downloadUrl, fileName, fileSize, isDirect, host, expires, isChunked, chunkUrls, binId, chunkNames, isBundle, manifest } = resolved;
   const icon = getFileIcon(fileName);
 
-  /** Open a single bundle file on filebin (browser handles download natively) */
+  /** Download a single bundle file via our backend proxy (forces download, no filebin UI) */
   const downloadBundleFile = (entry: BundleFileEntry) => {
     if (!binId) return;
-    // For single chunk, open directly. For multi-chunk, open first chunk (user may need to save each).
     const chunkName = entry.chunks[0];
-    window.open(`https://filebin.net/${binId}/${chunkName}`, '_blank', 'noopener');
+    // Route through our Render backend → hides filebin, forces Content-Disposition: attachment
+    window.location.href = buildApiUrl(`/api/share/dl/${binId}/${chunkName}?as=${encodeURIComponent(entry.name)}`);
   };
 
-  /** Download all bundle files as server-side ZIP from filebin (no RAM, instant) */
+  /** Download all bundle files as ZIP via our backend proxy (cloaked, forced download) */
   const handleBundleDownloadZip = () => {
     if (!binId) return;
-    // Filebin serves a native server-side ZIP at /archive/{bin}/zip — no cookie needed, CORS OK
-    window.location.href = `https://filebin.net/archive/${binId}/zip`;
+    window.location.href = buildApiUrl(`/api/share/zip/${binId}`);
   };
 
   /** For GoFile (>1GB), trigger a fetch→blob download so they never see GoFile UI */
@@ -127,8 +127,8 @@ const BongShareDownload = () => {
 
     const getChunkUrl = (i: number) =>
       isFilebin
-        ? `https://filebin.net/${binId}/${chunkNames![i]}`  // CORS native — no proxy needed
-        : chunkUrls![i];  // legacy catbox (may lack CORS on old links)
+        ? buildApiUrl(`/api/share/dl/${binId}/${chunkNames![i]}?as=${encodeURIComponent(fileName)}`)
+        : chunkUrls![i];  // legacy catbox
 
     setChunkActive(true);
     setChunkProgress(0);
@@ -288,10 +288,6 @@ const BongShareDownload = () => {
                       </button>
                     </div>
                   ))}
-                  {/* Hint about filebin confirmation page */}
-                  <p className="text-[10px] text-[#9a907a] text-center leading-snug mt-1">
-                    Your browser may show a confirmation page — click <strong className="text-white">"Proceed to download"</strong> to save the file.
-                  </p>
                 </div>
               )}
 

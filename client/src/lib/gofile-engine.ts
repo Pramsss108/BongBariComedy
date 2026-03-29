@@ -342,6 +342,120 @@ export async function uploadToFilebin(
   return { binId, chunkNames };
 }
 
+/**
+ * Upload the bundle manifest JSON as _manifest.json inside the same binId.
+ * This is a small text file uploaded as JSON.
+ */
+async function uploadBundleManifest(manifest: BundleManifest, binId: string): Promise<void> {
+  const json = JSON.stringify(manifest);
+  const blob = new Blob([json], { type: 'application/json' });
+  await uploadFilebinChunk(blob, binId, '_manifest.json', () => {});
+}
+
+/**
+ * Upload multiple files (any mix of types/sizes) to ONE filebin bin.
+ * Large files are split into CHUNK_SIZE chunks automatically.
+ * Files are processed 2 at a time (concurrency=2) for safe rate usage.
+ * Progress: overall 0–95% across all file bytes, then 95–100% for manifest.
+ *
+ * @param files           Array of File objects (any type, any size)
+ * @param onOverallPct    Overall 0–100 progress callback
+ * @param onFilePct       Per-file progress callback(fileIndex, 0–100)
+ * @returns { binId, manifest }
+ */
+export async function uploadMultipleToFilebin(
+  files: File[],
+  onOverallPct: (p: number) => void,
+  onFilePct?: (fileIdx: number, p: number) => void,
+): Promise<{ binId: string; manifest: BundleManifest }> {
+  const binId = generateBinId();
+  const totalBytes = files.reduce((sum, f) => sum + f.size, 0) || 1;
+  // per-file uploaded byte estimate (updated continuously from XHR progress)
+  const fileBytesUploaded = new Float64Array(files.length);
+
+  const emitProgress = () => {
+    const done = fileBytesUploaded.reduce((a, b) => a + b, 0);
+    // 95% of bar for file content, last 5% reserved for manifest
+    onOverallPct(Math.min(95, Math.round((done / totalBytes) * 95)));
+  };
+
+  const uploadOneFile = async (file: File, fileIdx: number): Promise<BundleFileEntry> => {
+    const ext = file.name.includes('.') ? '.' + file.name.split('.').pop()!.toLowerCase() : '.bin';
+    const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+    const chunks: string[] = [];
+
+    for (let c = 0; c < totalChunks; c++) {
+      const start = c * CHUNK_SIZE;
+      const end = Math.min(start + CHUNK_SIZE, file.size);
+      const blob = file.slice(start, end);
+      const chunkBytes = end - start;
+      const chunkName =
+        totalChunks === 1
+          ? `f${fileIdx}_full${ext}`
+          : `f${fileIdx}_c${String(c).padStart(4, '0')}${ext}`;
+      chunks.push(chunkName);
+
+      await uploadFilebinChunk(blob, binId, chunkName, (p) => {
+        // Update this file's running byte estimate
+        fileBytesUploaded[fileIdx] = start + (p / 100) * chunkBytes;
+        // Per-file %
+        const filePercent = Math.round(
+          ((start + (p / 100) * chunkBytes) / file.size) * 100,
+        );
+        onFilePct?.(fileIdx, filePercent);
+        emitProgress();
+      });
+
+      // Chunk done — lock in exact bytes
+      fileBytesUploaded[fileIdx] = end;
+      onFilePct?.(fileIdx, Math.round((end / file.size) * 100));
+      emitProgress();
+    }
+
+    return { name: file.name, size: file.size, chunks };
+  };
+
+  const CONCURRENCY = 2;
+  const manifestFiles: BundleFileEntry[] = new Array(files.length);
+
+  // Process in batches of CONCURRENCY
+  for (let i = 0; i < files.length; i += CONCURRENCY) {
+    const batch = files.slice(i, i + CONCURRENCY);
+    const results = await Promise.all(
+      batch.map((file, bIdx) => uploadOneFile(file, i + bIdx)),
+    );
+    results.forEach((entry, bIdx) => {
+      manifestFiles[i + bIdx] = entry;
+    });
+  }
+
+  const manifest: BundleManifest = { v: 1, files: manifestFiles };
+
+  // Upload manifest (95 → 99)
+  onOverallPct(96);
+  await uploadBundleManifest(manifest, binId);
+  onOverallPct(100);
+
+  return { binId, manifest };
+}
+
+/** Build a branded share URL for a multi-file bundle (only binId in the token) */
+export function buildBongBariBundleUrl(binId: string, totalSize: number): string {
+  const token = encodeShareToken({ c: '', b: binId, n: 'bundle', s: totalSize, h: 'filebin-bundle' });
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.bongbari.com';
+  return `${origin}/s/${token}`;
+}
+
+/** Fetch the bundle manifest from filebin (async, called on the download page) */
+export async function fetchBundleManifest(binId: string): Promise<BundleManifest> {
+  const url = `https://filebin.net/${binId}/_manifest.json`;
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`Manifest fetch failed: HTTP ${res.status}`);
+  const json: BundleManifest = await res.json();
+  if (!json.files || !Array.isArray(json.files)) throw new Error('Invalid manifest format');
+  return json;
+}
+
 /* ── Link Cloaking: Encode/Decode GoFile data into branded short URLs ──
    Strategy: Pack file metadata (gofile code + filename + size) into a
    single URL-safe token. XOR with a fixed key then base64url encode.
@@ -367,18 +481,40 @@ function fromBase64Url(b64: string): string {
   return atob(s);
 }
 
-export type ShareHost = 'filebin' | 'catbox' | 'catbox-chunked' | 'litterbox' | 'gofile';
+export type ShareHost = 'filebin' | 'filebin-bundle' | 'catbox' | 'catbox-chunked' | 'litterbox' | 'gofile';
+
+/* ── Multi-file bundle (filebin.net) ──────────────────────────────────────
+   A "bundle" uploads ALL files (any mix of types/sizes) into one shared
+   binId on filebin.net, then stores a JSON manifest as _manifest.json.
+   The share URL encodes only the binId. Download page fetches the manifest
+   to get the file list, then assembles chunks per file.
+   ─────────────────────────────────────────────────────────────────────── */
+
+export interface BundleFileEntry {
+  /** Original file name (e.g. "vacation.mp4") */
+  name: string;
+  /** Original file size in bytes */
+  size: number;
+  /** Chunk file names stored in filebin (single-chunk or multi-chunk) */
+  chunks: string[];
+}
+
+export interface BundleManifest {
+  /** Schema version */
+  v: 1;
+  files: BundleFileEntry[];
+}
 
 export interface SharePayload {
-  /** GoFile content code OR single filebin URL */
+  /** GoFile content code OR empty for filebin */
   c: string;
-  /** filebin binId for chunked uploads */
+  /** filebin binId */
   b?: string;
-  /** Chunk file names for filebin (chunk_0000.ext, chunk_0001.ext, ...) */
+  /** Chunk file names for single-file filebin uploads */
   urls?: string[];
-  /** Original file name */
+  /** Original file name (or "bundle" for multi-file bundles) */
   n: string;
-  /** File size in bytes */
+  /** Total file size in bytes */
   s: number;
   /** Host type */
   h?: ShareHost;
@@ -427,7 +563,7 @@ export function buildBongBariFilebinUrl(binId: string, chunkNames: string[], fil
 }
 
 export interface ResolvedShare {
-  /** Direct download URL (single file), empty for chunked */
+  /** Direct download URL (single file), empty for chunked/bundle */
   downloadUrl: string;
   fileName: string;
   fileSize: number;
@@ -439,9 +575,11 @@ export interface ResolvedShare {
   expires: boolean;
   /** true = file was split into chunks that must be reassembled on download */
   isChunked: boolean;
-  /** filebin binId (only set when host='filebin') */
+  /** true = multi-file bundle (manifest must be fetched from filebin) */
+  isBundle?: boolean;
+  /** filebin binId (set for filebin and filebin-bundle) */
   binId?: string;
-  /** Chunk file names (only set when isChunked = true) */
+  /** Chunk file names (only set when isChunked = true — single file) */
   chunkNames?: string[];
   /** Legacy catbox chunk URLs (only set when host='catbox-chunked') */
   chunkUrls?: string[];
@@ -452,7 +590,21 @@ export function resolveShareUrl(token: string): ResolvedShare | null {
   const data = decodeShareToken(token);
   if (!data) return null;
 
-  // filebin chunked upload (unlimited size, 6-day expiry)
+  // Multi-file bundle (filebin-bundle)
+  if (data.h === 'filebin-bundle' && data.b) {
+    return {
+      downloadUrl: '',
+      fileName: 'bundle',
+      fileSize: data.s,
+      isDirect: true,
+      host: 'filebin-bundle',
+      expires: true,
+      isChunked: false,
+      isBundle: true,
+      binId: data.b,
+    };
+  }
+  // Single-file filebin chunked upload (unlimited size, 6-day expiry)
   if (data.h === 'filebin' && data.b && data.urls && data.urls.length > 0) {
     return { downloadUrl: '', fileName: data.n, fileSize: data.s, isDirect: true, host: 'filebin', expires: true, isChunked: true, binId: data.b, chunkNames: data.urls };
   }

@@ -12,7 +12,7 @@ import {
   Clock,
   HardDrive,
 } from 'lucide-react';
-import { resolveShareUrl } from '@/lib/gofile-engine';
+import { resolveShareUrl, fetchBundleManifest, type BundleManifest, type BundleFileEntry } from '@/lib/gofile-engine';
 
 
 function formatBytes(bytes: number): string {
@@ -91,8 +91,85 @@ const BongShareDownload = () => {
     );
   }
 
-  const { downloadUrl, fileName, fileSize, isDirect, host, expires, isChunked, chunkUrls, binId, chunkNames } = resolved;
+  const { downloadUrl, fileName, fileSize, isDirect, host, expires, isChunked, chunkUrls, binId, chunkNames, isBundle } = resolved;
   const icon = getFileIcon(fileName);
+
+  /** Bundle manifest state (fetched async for filebin-bundle links) */
+  const [manifest, setManifest] = useState<BundleManifest | null>(null);
+  const [manifestLoading, setManifestLoading] = useState(false);
+  const [manifestError, setManifestError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isBundle && binId) {
+      setManifestLoading(true);
+      fetchBundleManifest(binId)
+        .then(m => { setManifest(m); setManifestLoading(false); })
+        .catch(e => { setManifestError(e.message ?? 'Failed to load file list'); setManifestLoading(false); });
+    }
+  }, [isBundle, binId]);
+
+  /** Per-file download state for bundle (keyed by fileIndex) */
+  const [fileDownloads, setFileDownloads] = useState<Record<number, { active: boolean; progress: number; phase: string }>>({});
+
+  const updateFileDl = (idx: number, patch: Partial<{ active: boolean; progress: number; phase: string }>) => {
+    setFileDownloads(prev => { const cur = prev[idx] ?? { active: false, progress: 0, phase: '' }; return { ...prev, [idx]: { ...cur, ...patch } }; });
+  };
+
+  /** Download a single file from the bundle (handles chunked reassembly) */
+  const downloadBundleFile = async (entry: BundleFileEntry, fileIdx: number) => {
+    if (!binId) return;
+    updateFileDl(fileIdx, { active: true, progress: 0, phase: 'Starting…' });
+    try {
+      const totalChunks = entry.chunks.length;
+      const getUrl = (ci: number) => `https://filebin.net/${binId}/${entry.chunks[ci]}`;
+
+      if (totalChunks === 1) {
+        // Single chunk — direct browser download via anchor
+        updateFileDl(fileIdx, { phase: 'Downloading…', progress: 50 });
+        const a = document.createElement('a');
+        a.href = getUrl(0);
+        a.download = entry.name;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => document.body.removeChild(a), 500);
+        updateFileDl(fileIdx, { active: false, progress: 100, phase: 'Done!' });
+        return;
+      }
+
+      // Multi-chunk — stream reassemble
+      if ('showSaveFilePicker' in window) {
+        const fileHandle = await (window as any).showSaveFilePicker({ suggestedName: entry.name });
+        const writable = await fileHandle.createWritable();
+        for (let ci = 0; ci < totalChunks; ci++) {
+          updateFileDl(fileIdx, { phase: `Part ${ci + 1}/${totalChunks}…`, progress: Math.round((ci / totalChunks) * 100) });
+          const res = await fetch(getUrl(ci));
+          if (!res.ok || !res.body) throw new Error(`Part ${ci + 1} failed (${res.status})`);
+          const reader = res.body.getReader();
+          for (;;) { const { done, value } = await reader.read(); if (done) break; await writable.write(value); }
+          updateFileDl(fileIdx, { progress: Math.round(((ci + 1) / totalChunks) * 100) });
+        }
+        await writable.close();
+      } else {
+        const blobs: Blob[] = [];
+        for (let ci = 0; ci < totalChunks; ci++) {
+          updateFileDl(fileIdx, { phase: `Part ${ci + 1}/${totalChunks}…`, progress: Math.round((ci / totalChunks) * 100) });
+          const res = await fetch(getUrl(ci));
+          if (!res.ok) throw new Error(`Part ${ci + 1} failed (${res.status})`);
+          blobs.push(await res.blob());
+          updateFileDl(fileIdx, { progress: Math.round(((ci + 1) / totalChunks) * 100) });
+        }
+        const merged = new Blob(blobs);
+        const url = URL.createObjectURL(merged);
+        const a = document.createElement('a');
+        a.href = url; a.download = entry.name;
+        document.body.appendChild(a); a.click();
+        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+      }
+      updateFileDl(fileIdx, { active: false, progress: 100, phase: 'Done!' });
+    } catch (err: any) {
+      updateFileDl(fileIdx, { active: false, phase: `Error: ${err.message}` });
+    }
+  };
 
   /** For GoFile (>1GB), trigger a fetch→blob download so they never see GoFile UI */
   const [proxyProgress, setProxyProgress] = useState(0);
@@ -209,13 +286,24 @@ const BongShareDownload = () => {
             >
               {/* File icon */}
               <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-[#1b1b1b] border border-white/5 flex items-center justify-center shadow-xl">
-                <span className="text-4xl sm:text-5xl">{icon}</span>
+                <span className="text-4xl sm:text-5xl">{isBundle ? '📦' : icon}</span>
               </div>
 
               {/* File info */}
               <div className="flex flex-col items-center text-center gap-1">
-                <h2 className="text-lg sm:text-xl font-extrabold text-white tracking-tight break-all max-w-full px-2">{fileName}</h2>
-                <p className="text-[#9a907a] text-sm font-medium">{formatBytes(fileSize)}</p>
+                <h2 className="text-lg sm:text-xl font-extrabold text-white tracking-tight break-all max-w-full px-2">
+                  {isBundle ? `File Bundle` : fileName}
+                </h2>
+                <p className="text-[#9a907a] text-sm font-medium">
+                  {isBundle
+                    ? manifest
+                      ? `${manifest.files.length} files · ${formatBytes(fileSize)}`
+                      : manifestLoading
+                        ? 'Loading file list…'
+                        : formatBytes(fileSize)
+                    : formatBytes(fileSize)
+                  }
+                </p>
               </div>
 
               {/* Security badges */}
@@ -227,16 +315,85 @@ const BongShareDownload = () => {
                 <span className="flex items-center gap-1"><FileText className="w-3 h-3 text-blue-400" /> Verified</span>
               </div>
 
-              {/* Litterbox expiry warning */}
-              {expires && (
+              {/* Bundle expiry badge */}
+              {(isBundle || host === 'filebin' || host === 'filebin-bundle') && (
+                <div className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                  <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+                  <p className="text-[11px] text-amber-300/80 font-medium">Link valid for <strong className="text-amber-300">6 days</strong> — download before it expires!</p>
+                </div>
+              )}
+
+              {/* Litterbox expiry warning (legacy) */}
+              {expires && !isBundle && host !== 'filebin' && host !== 'filebin-bundle' && (
                 <div className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
                   <Clock className="w-4 h-4 text-amber-400 shrink-0" />
                   <p className="text-[11px] text-amber-300/80 font-medium">This link expires in <strong className="text-amber-300">72 hours</strong> — download it now!</p>
                 </div>
               )}
 
-              {/* Download button — different per tier */}
-              {isChunked ? (
+              {/* ===== BUNDLE FILE LIST ===== */}
+              {isBundle && (
+                <div className="w-full flex flex-col gap-3">
+                  {manifestError && (
+                    <div className="w-full px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-300">
+                      Failed to load file list: {manifestError}
+                    </div>
+                  )}
+                  {manifestLoading && (
+                    <div className="w-full flex items-center justify-center gap-2 py-4">
+                      <div className="w-2 h-2 rounded-full bg-[#f0c12c] animate-pulse" />
+                      <span className="text-xs text-[#d1c5ad]/60 font-mono">Loading file list…</span>
+                    </div>
+                  )}
+                  {manifest && manifest.files.map((entry, fileIdx) => {
+                    const dl = fileDownloads[fileIdx];
+                    const isActive = dl?.active ?? false;
+                    const dlProgress = dl?.progress ?? 0;
+                    const dlPhase = dl?.phase ?? '';
+                    const isDone = !isActive && dlProgress === 100;
+                    return (
+                      <div key={fileIdx} className="w-full rounded-xl px-4 py-3 flex flex-col gap-2" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl shrink-0">{getFileIcon(entry.name)}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-white truncate">{entry.name}</p>
+                            <p className="text-[10px] text-[#9a907a]">
+                              {formatBytes(entry.size)}
+                              {entry.chunks.length > 1 && <span className="ml-2 text-amber-400/60">{entry.chunks.length} parts</span>}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => downloadBundleFile(entry, fileIdx)}
+                            disabled={isActive}
+                            className={`shrink-0 h-9 px-4 rounded-full font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all ${
+                              isDone
+                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                : 'bg-[#f0c12c] text-[#695200] hover:brightness-110 active:scale-95 disabled:opacity-50'
+                            }`}
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            {isDone ? 'Done' : isActive ? `${dlProgress}%` : 'Save'}
+                          </button>
+                        </div>
+                        {isActive && (
+                          <div className="flex flex-col gap-1">
+                            <div className="flex justify-between text-[10px] font-mono text-[#40ceed]/60">
+                              <span>{dlPhase}</span>
+                              <span>{dlProgress}%</span>
+                            </div>
+                            <div className="w-full h-1 rounded-full bg-white/5 overflow-hidden">
+                              <div className="h-full rounded-full bg-[#40ceed] transition-all duration-300" style={{ width: `${dlProgress}%` }} />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Download button — different per tier (non-bundle) */}
+              {!isBundle && isChunked ? (
                 /* Filebin chunked — stream-assemble directly (CORS native, no proxy) */
                 <div className="w-full flex flex-col gap-3">
                   <div className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/15">
@@ -320,7 +477,7 @@ const BongShareDownload = () => {
         {/* Footer */}
         <footer className="flex-none w-full py-3 sm:py-4 flex justify-center border-t border-white/5 relative z-10">
           <p className="text-[9px] font-bold tracking-[0.3em] text-[#d1c5ad]/30 uppercase text-center px-4">
-            Powered by Bong Bari &mdash; {expires ? 'This link expires in 72 hours' : host === 'filebin' ? 'Link valid for 6 days' : (host === 'catbox' || host === 'catbox-chunked') ? 'Permanent file link' : 'Files auto-delete after 10 days of inactivity'}
+            Powered by Bong Bari &mdash; {expires ? 'This link expires in 72 hours' : (host === 'filebin' || host === 'filebin-bundle') ? 'Link valid for 6 days' : (host === 'catbox' || host === 'catbox-chunked') ? 'Permanent file link' : 'Files auto-delete after 10 days of inactivity'}
           </p>
         </footer>
       </div>

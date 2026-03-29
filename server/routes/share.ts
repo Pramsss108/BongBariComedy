@@ -447,6 +447,52 @@ router.get('/zip/:binId', async (req: Request, res: ExpressResponse) => {
   }
 });
 
+/** POST /api/share/upload-fb/:binId/:chunkName
+ *  Upload proxy: client streams raw body → Render → filebin.net.
+ *  Bypasses filebin's ~55 KB/s residential IP rate limit.
+ *  Render datacenter → filebin S3 has no such cap → dramatically faster.
+ *  No disk buffering — body is streamed end-to-end, zero OOM risk.
+ */
+router.options('/upload-fb/:binId/:chunkName', (_req: Request, res: ExpressResponse) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Content-Length, X-CSRF-Token, Authorization');
+  res.status(204).end();
+});
+
+router.post('/upload-fb/:binId/:chunkName', async (req: Request, res: ExpressResponse) => {
+  const { binId, chunkName } = req.params;
+
+  // Validate — reject path-traversal attempts
+  if (!binId || !chunkName || /[\/\\<>]/.test(binId) || /[\/\\<>]/.test(chunkName)) {
+    return res.status(400).json({ error: 'Invalid binId or chunkName' });
+  }
+
+  try {
+    const filebinUrl = `https://filebin.net/${encodeURIComponent(binId)}/${encodeURIComponent(chunkName)}`;
+
+    const headers: Record<string, string> = { 'User-Agent': 'curl/8.0' };
+    // Forward Content-Length so filebin knows exactly when the body ends
+    const cl = req.headers['content-length'];
+    if (cl) headers['Content-Length'] = cl;
+
+    // Stream req directly to filebin — no disk write, no memory buffer
+    const upstream = await fetchWithTimeout(
+      filebinUrl,
+      { method: 'POST', body: req as any, headers },
+      30 * 60 * 1000, // 30 min (80 MB chunk @ ~40 KB/s edge case)
+    );
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.status(upstream.status).end();
+  } catch (err: any) {
+    console.error('[ShareUploadFB] Proxy upload failed:', err.message);
+    if (!res.headersSent) {
+      res.status(502).json({ error: 'Upload proxy failed', detail: err.message });
+    }
+  }
+});
+
 export function registerShareRoutes(app: any) {
   app.use('/api/share', router);
 }

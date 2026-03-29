@@ -305,9 +305,11 @@ function uploadFilebinChunk(
     xhr.ontimeout = () => { stopTail(); reject(new Error('Chunk upload timed out')); };
     xhr.timeout = 10 * 60 * 1000; // 10 min per chunk
 
-    xhr.open('POST', `${FILEBIN_API}/${binId}/${chunkName}`);
-    // Send as a typeless Blob so the browser does NOT set Content-Type.
-    // Any Content-Type triggers CORS preflight, which filebin rejects.
+    // Route upload through our Render backend → filebin.net.
+    // This bypasses filebin's ~55 KB/s residential IP rate limit;
+    // Render datacenter → filebin S3 is uncapped and much faster.
+    xhr.open('POST', buildApiUrl(`/api/share/upload-fb/${binId}/${chunkName}`));
+    // Send as a typeless Blob — no Content-Type header, avoids preflight edge cases.
     const raw = new Blob([blob]);  // strips .type → no Content-Type header
     xhr.send(raw);
   });

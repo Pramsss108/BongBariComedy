@@ -380,94 +380,97 @@ const BongShare = () => {
 
             {/* ===== SCREEN 2: MODE SELECTION (files picked, choose mode) ===== */}
             {hasFiles && mode === 'pick' && (
-              <motion.section key="mode-pick" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.35 }} className="w-full flex flex-col gap-4">
+              <motion.section key="mode-pick" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.35 }} className="w-full flex flex-col gap-3">
 
-                {/* File list */}
-                <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto pr-0.5">
+                {/* ── File chips — horizontal scroll, compact single row ── */}
+                <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                   {files.map((f, idx) => (
-                    <div key={idx} className="flex items-center justify-between rounded-xl px-4 py-2.5" style={glassStyle}>
-                      <div className="flex items-center gap-3 min-w-0">
-                        <FileText className="w-4 h-4 text-[#40ceed] shrink-0" />
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold text-white truncate">{f.name}</p>
-                          <p className="text-[10px] text-[#9a907a]">{formatBytes(f.size)}</p>
-                        </div>
-                      </div>
-                      <button onClick={() => removeFile(idx)} className="p-1.5 rounded-lg hover:bg-white/5 text-[#d1c5ad] active:scale-90 transition-all shrink-0"><X className="w-3.5 h-3.5" /></button>
+                    <div key={idx} className="flex items-center gap-1.5 shrink-0 rounded-full border border-white/5 px-3 py-1.5" style={{ background: 'rgba(27,27,27,0.6)' }}>
+                      <FileText className="w-3 h-3 text-[#40ceed] shrink-0" />
+                      <span className="text-[11px] text-white font-semibold max-w-[110px] truncate">{f.name}</span>
+                      <span className="text-[9px] text-[#9a907a] shrink-0">{formatBytes(f.size)}</span>
+                      <button onClick={() => removeFile(idx)} className="ml-0.5 w-4 h-4 rounded-full flex items-center justify-center hover:bg-white/10 text-[#9a907a] hover:text-white transition-all shrink-0">
+                        <X className="w-2.5 h-2.5" />
+                      </button>
                     </div>
                   ))}
                 </div>
 
-                {/* Summary row + Add More button */}
+                {/* ── Summary row ── */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] uppercase tracking-widest text-[#9a907a] font-bold">
                       {files.length === 1 ? '1 file' : `${files.length} files`} &bull; {formatBytes(totalSize)}
                     </span>
                     {files.length > 1 && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#f0c12c]/10 text-[#f0c12c] font-bold uppercase tracking-wider">Bundle</span>
+                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-[#f0c12c]/10 text-[#f0c12c] font-bold uppercase tracking-wider border border-[#f0c12c]/20">Bundle</span>
                     )}
                   </div>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-[#40ceed] font-bold px-3 py-1.5 rounded-lg hover:bg-[#40ceed]/10 transition-colors"
+                    className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-[#40ceed] font-bold px-2.5 py-1 rounded-lg hover:bg-[#40ceed]/10 transition-colors"
                   >
                     <Upload className="w-3 h-3" /> Add More
                   </button>
                   <input ref={fileInputRef} type="file" multiple onChange={handleFileChange} className="hidden" />
                 </div>
 
-                <h2 className="text-center text-lg sm:text-xl font-extrabold text-white tracking-tight">
+                {/* ── Heading ── */}
+                <h2 className="text-center text-base sm:text-lg font-extrabold text-white tracking-tight">
                   How do you want to <span className="text-[#f0c12c] italic">send</span> {files.length > 1 ? 'them' : 'it'}?
                 </h2>
 
-                {/* Dual mode cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  {/* P2P Card — single file only */}
+                {/* ── Compact dual mode cards — always side-by-side ── */}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* P2P Card */}
                   <button
                     onClick={handleP2PStart}
                     disabled={files.length > 1}
-                    className={`group text-left rounded-2xl p-5 sm:p-6 transition-all duration-300 border ${files.length > 1 ? 'opacity-40 cursor-not-allowed border-white/5' : 'hover:scale-[1.02] active:scale-[0.98] border-white/5 hover:border-[#40ceed]/30'}`}
+                    className={`group text-left rounded-2xl p-4 flex flex-col gap-2.5 transition-all duration-300 border ${
+                      files.length > 1 ? 'opacity-35 cursor-not-allowed border-white/5' : 'border-white/5 hover:border-[#40ceed]/30 hover:scale-[1.02] active:scale-[0.98]'
+                    }`}
                     style={glassStyle}
                     title={files.length > 1 ? 'P2P supports one file at a time' : undefined}
                   >
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-xl bg-[#40ceed]/10 flex items-center justify-center">
-                        <Wifi className="w-5 h-5 text-[#40ceed]" />
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-[#40ceed]/10 flex items-center justify-center shrink-0">
+                        <Wifi className="w-4 h-4 text-[#40ceed]" />
                       </div>
-                      <div>
-                        <h3 className="text-base font-extrabold text-white tracking-tight">P2P Transfer</h3>
-                        <p className="text-[10px] uppercase tracking-widest text-[#40ceed] font-bold">{files.length > 1 ? 'Single file only' : 'Real-time'}</p>
+                      <div className="min-w-0">
+                        <p className="text-sm font-extrabold text-white leading-tight">P2P Transfer</p>
+                        <p className="text-[9px] uppercase tracking-widest text-[#40ceed] font-bold truncate">
+                          {files.length > 1 ? 'Single file only' : 'Instant · Zero server'}
+                        </p>
                       </div>
                     </div>
-                    <div className="space-y-2 text-xs text-[#d1c5ad] leading-relaxed">
-                      <div className="flex items-start gap-2"><EyeOff className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" /><span>File never touches any server — pure browser-to-browser</span></div>
-                      <div className="flex items-start gap-2"><Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" /><span>End-to-end encrypted. Nobody can intercept</span></div>
-                      <div className="flex items-start gap-2"><Users className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" /><span>Both devices must be online at the same time</span></div>
-                    </div>
-                    <div className="mt-4 h-10 rounded-xl bg-[#40ceed]/10 flex items-center justify-center gap-2 text-xs font-bold text-[#40ceed] uppercase tracking-wider group-hover:bg-[#40ceed]/20 transition-colors">
+                    <p className="text-[11px] text-[#9a907a] leading-relaxed">Browser-to-browser, E2E encrypted. Both must be online together.</p>
+                    <div className="w-full h-9 rounded-xl bg-[#40ceed]/10 flex items-center justify-center gap-1.5 text-[10px] font-bold text-[#40ceed] uppercase tracking-wider group-hover:bg-[#40ceed]/20 transition-colors">
                       <Wifi className="w-3.5 h-3.5" /> Start P2P
                     </div>
                   </button>
 
                   {/* Generate Link Card */}
-                  <button onClick={handleLinkUpload} className="group text-left rounded-2xl p-5 sm:p-6 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] border border-white/5 hover:border-[#f0c12c]/30" style={glassStyle}>
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-xl bg-[#f0c12c]/10 flex items-center justify-center">
-                        <Globe className="w-5 h-5 text-[#f0c12c]" />
+                  <button
+                    onClick={handleLinkUpload}
+                    className="group text-left rounded-2xl p-4 flex flex-col gap-2.5 transition-all duration-300 border border-white/5 hover:border-[#f0c12c]/30 hover:scale-[1.02] active:scale-[0.98]"
+                    style={glassStyle}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-[#f0c12c]/10 flex items-center justify-center shrink-0">
+                        <Globe className="w-4 h-4 text-[#f0c12c]" />
                       </div>
-                      <div>
-                        <h3 className="text-base font-extrabold text-white tracking-tight">Generate Link</h3>
-                        <p className="text-[10px] uppercase tracking-widest text-[#f0c12c] font-bold">{files.length > 1 ? `Bundle ${files.length} files` : 'Anytime download'}</p>
+                      <div className="min-w-0">
+                        <p className="text-sm font-extrabold text-white leading-tight">Generate Link</p>
+                        <p className="text-[9px] uppercase tracking-widest text-[#f0c12c] font-bold truncate">
+                          {files.length > 1 ? `Bundle ${files.length} files` : 'Anytime download'}
+                        </p>
                       </div>
                     </div>
-                    <div className="space-y-2 text-xs text-[#d1c5ad] leading-relaxed">
-                      <div className="flex items-start gap-2"><Link2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" /><span>{files.length > 1 ? 'All files in one link — any mix of types and sizes' : 'Upload once → share a branded link to anyone'}</span></div>
-                      <div className="flex items-start gap-2"><Eye className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" /><span>Receiver downloads anytime — no need to be online together</span></div>
-                      <div className="flex items-start gap-2"><ShieldCheck className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" /><span>Cloaked URL hides the actual file host from prying eyes</span></div>
-                    </div>
-                    <div className="mt-4 h-10 rounded-xl bg-[#f0c12c]/10 flex items-center justify-center gap-2 text-xs font-bold text-[#f0c12c] uppercase tracking-wider group-hover:bg-[#f0c12c]/20 transition-colors">
-                      <Zap className="w-3.5 h-3.5" /> {files.length > 1 ? `Package & Get Link` : 'Generate Link'}
+                    <p className="text-[11px] text-[#9a907a] leading-relaxed">
+                      {files.length > 1 ? 'All files in one link — any mix of types and sizes.' : 'Upload once, share a branded link to anyone, anytime.'}
+                    </p>
+                    <div className="w-full h-9 rounded-xl bg-[#f0c12c]/10 flex items-center justify-center gap-1.5 text-[10px] font-bold text-[#f0c12c] uppercase tracking-wider group-hover:bg-[#f0c12c]/20 transition-colors">
+                      <Zap className="w-3.5 h-3.5" /> {files.length > 1 ? 'Package & Get Link' : 'Generate Link'}
                     </div>
                   </button>
                 </div>

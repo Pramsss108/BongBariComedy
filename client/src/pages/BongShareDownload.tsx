@@ -13,7 +13,6 @@ import {
   HardDrive,
   Archive,
 } from 'lucide-react';
-import { downloadZip } from 'client-zip';
 import { resolveShareUrl, type BundleManifest, type BundleFileEntry } from '@/lib/gofile-engine';
 
 
@@ -46,32 +45,6 @@ function getFileIcon(fileName: string): string {
   if (['apk'].includes(ext)) return '📱';
   if (['exe', 'msi'].includes(ext)) return '💻';
   return '📁';
-}
-
-/**
- * Create a ReadableStream that sequentially fetches and concatenates
- * multiple chunk URLs into one continuous byte stream.
- * Only one chunk is in memory at a time — safe for 10GB+ files.
- */
-function createConcatStream(urls: string[]): ReadableStream<Uint8Array> {
-  let urlIdx = 0;
-  let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
-  return new ReadableStream<Uint8Array>({
-    async pull(controller) {
-      for (;;) {
-        if (!reader) {
-          if (urlIdx >= urls.length) { controller.close(); return; }
-          const res = await fetch(urls[urlIdx++]);
-          if (!res.ok || !res.body) { controller.error(new Error(`Chunk fetch failed (${res.status})`)); return; }
-          reader = res.body.getReader();
-        }
-        const { done, value } = await reader.read();
-        if (done) { reader = null; continue; }
-        controller.enqueue(value);
-        return;
-      }
-    },
-  });
 }
 
 const BongShareDownload = () => {
@@ -122,165 +95,19 @@ const BongShareDownload = () => {
   const { downloadUrl, fileName, fileSize, isDirect, host, expires, isChunked, chunkUrls, binId, chunkNames, isBundle, manifest } = resolved;
   const icon = getFileIcon(fileName);
 
-  /** Per-file download state for bundle (keyed by fileIndex) */
-  const [fileDownloads, setFileDownloads] = useState<Record<number, { active: boolean; progress: number; phase: string }>>({});
-
-  const updateFileDl = (idx: number, patch: Partial<{ active: boolean; progress: number; phase: string }>) => {
-    setFileDownloads(prev => { const cur = prev[idx] ?? { active: false, progress: 0, phase: '' }; return { ...prev, [idx]: { ...cur, ...patch } }; });
-  };
-
-  /** Download a single file from the bundle (handles chunked reassembly) */
-  const downloadBundleFile = async (entry: BundleFileEntry, fileIdx: number) => {
+  /** Open a single bundle file on filebin (browser handles download natively) */
+  const downloadBundleFile = (entry: BundleFileEntry) => {
     if (!binId) return;
-    updateFileDl(fileIdx, { active: true, progress: 0, phase: 'Connecting…' });
-    try {
-      const totalChunks = entry.chunks.length;
-      const getUrl = (ci: number) => `https://filebin.net/${binId}/${entry.chunks[ci]}`;
-
-      if (totalChunks === 1) {
-        // Single chunk — must fetch as blob because browsers block
-        // download attribute on cross-origin anchors (filebin.net)
-        updateFileDl(fileIdx, { phase: 'Downloading…', progress: 5 });
-        const res = await fetch(getUrl(0));
-        if (!res.ok) throw new Error(`Download failed (${res.status})`);
-        // Track progress via ReadableStream if available
-        const contentLength = Number(res.headers.get('content-length') || entry.size);
-        let loaded = 0;
-        const chunks: Uint8Array[] = [];
-        if (res.body) {
-          const reader = res.body.getReader();
-          for (;;) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            chunks.push(value);
-            loaded += value.length;
-            const pct = contentLength > 0 ? Math.min(95, Math.round((loaded / contentLength) * 95)) : 50;
-            updateFileDl(fileIdx, { progress: pct, phase: `${formatBytes(loaded)} / ${formatBytes(contentLength)}` });
-          }
-        } else {
-          // Fallback: no streaming
-          const blob = await res.blob();
-          chunks.push(new Uint8Array(await blob.arrayBuffer()));
-        }
-        const blob = new Blob(chunks);
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = entry.name;
-        document.body.appendChild(a); a.click();
-        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
-        updateFileDl(fileIdx, { active: false, progress: 100, phase: 'Saved ✓' });
-        return;
-      }
-
-      // Multi-chunk — stream reassemble
-      if ('showSaveFilePicker' in window) {
-        const fileHandle = await (window as any).showSaveFilePicker({ suggestedName: entry.name });
-        const writable = await fileHandle.createWritable();
-        for (let ci = 0; ci < totalChunks; ci++) {
-          updateFileDl(fileIdx, { phase: `Part ${ci + 1}/${totalChunks}…`, progress: Math.round((ci / totalChunks) * 100) });
-          const res = await fetch(getUrl(ci));
-          if (!res.ok || !res.body) throw new Error(`Part ${ci + 1} failed (${res.status})`);
-          const reader = res.body.getReader();
-          for (;;) { const { done, value } = await reader.read(); if (done) break; await writable.write(value); }
-          updateFileDl(fileIdx, { progress: Math.round(((ci + 1) / totalChunks) * 100) });
-        }
-        await writable.close();
-      } else {
-        const blobs: Blob[] = [];
-        for (let ci = 0; ci < totalChunks; ci++) {
-          updateFileDl(fileIdx, { phase: `Part ${ci + 1}/${totalChunks}…`, progress: Math.round((ci / totalChunks) * 100) });
-          const res = await fetch(getUrl(ci));
-          if (!res.ok) throw new Error(`Part ${ci + 1} failed (${res.status})`);
-          blobs.push(await res.blob());
-          updateFileDl(fileIdx, { progress: Math.round(((ci + 1) / totalChunks) * 100) });
-        }
-        const merged = new Blob(blobs);
-        const url = URL.createObjectURL(merged);
-        const a = document.createElement('a');
-        a.href = url; a.download = entry.name;
-        document.body.appendChild(a); a.click();
-        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
-      }
-      updateFileDl(fileIdx, { active: false, progress: 100, phase: 'Saved ✓' });
-    } catch (err: any) {
-      updateFileDl(fileIdx, { active: false, phase: `Error: ${err.message}` });
-    }
+    // For single chunk, open directly. For multi-chunk, open first chunk (user may need to save each).
+    const chunkName = entry.chunks[0];
+    window.open(`https://filebin.net/${binId}/${chunkName}`, '_blank', 'noopener');
   };
 
-  /** Bundle "Download as ZIP" state */
-  const [bundleAllActive, setBundleAllActive] = useState(false);
-  const [bundleAllProgress, setBundleAllProgress] = useState(0);
-  const [bundleAllPhase, setBundleAllPhase] = useState('');
-
-  /**
-   * Streaming ZIP download — creates a .zip on the fly from all bundle files.
-   * Chrome/Edge: streams directly to disk via File System Access API (0 RAM, 10GB+ safe).
-   * Firefox/Safari: buffers ZIP blob (works ~2GB; shows warning above that threshold).
-   * Files are packed sequentially in upload order using STORE mode (no compression = fast).
-   */
-  const handleBundleDownloadZip = async () => {
-    if (!manifest || !binId) return;
-    const capturedBinId = binId; // closure-safe
-    const files = manifest.files; // capture for generator
-    setBundleAllActive(true);
-    setBundleAllProgress(0);
-    setBundleAllPhase('Preparing ZIP…');
-    try {
-      const total = files.length;
-      let completed = 0;
-
-      // Async generator: yields { name, input } per file. client-zip reads each stream sequentially.
-      const genEntries = async function* () {
-        for (const entry of files) {
-          setBundleAllPhase(`Packing ${completed + 1}/${total}: ${entry.name}`);
-          setBundleAllProgress(Math.round((completed / total) * 90));
-          const urls = entry.chunks.map(c => `https://filebin.net/${capturedBinId}/${c}`);
-          if (entry.chunks.length === 1) {
-            const res = await fetch(urls[0]);
-            if (!res.ok) throw new Error(`Failed to fetch ${entry.name} (${res.status})`);
-            yield { name: entry.name, input: res };
-          } else {
-            yield { name: entry.name, size: entry.size, input: createConcatStream(urls) };
-          }
-          completed++;
-          setBundleAllProgress(Math.round((completed / total) * 90));
-        }
-      };
-
-      const zipResponse = downloadZip(genEntries());
-
-      if ('showSaveFilePicker' in window) {
-        // 🚀 STREAMING: ZIP writes directly to disk — zero RAM, handles 10GB+ effortlessly
-        setBundleAllPhase('Choose save location…');
-        const fileHandle = await (window as any).showSaveFilePicker({
-          suggestedName: 'BongBari_Bundle.zip',
-          types: [{ description: 'ZIP Archive', accept: { 'application/zip': ['.zip'] } }],
-        });
-        setBundleAllPhase('Writing ZIP to disk…');
-        const writable = await fileHandle.createWritable();
-        await zipResponse.body!.pipeTo(writable);
-      } else {
-        // Fallback: buffer blob (safe up to ~2GB on most browsers)
-        setBundleAllPhase('Building ZIP…');
-        const blob = await zipResponse.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = 'BongBari_Bundle.zip';
-        document.body.appendChild(a); a.click();
-        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
-      }
-
-      setBundleAllProgress(100);
-      setBundleAllPhase('ZIP saved ✓');
-    } catch (err: any) {
-      if (err.name === 'AbortError') {
-        setBundleAllPhase('Cancelled');
-      } else {
-        setBundleAllPhase(`Error: ${err.message}`);
-      }
-    } finally {
-      setBundleAllActive(false);
-    }
+  /** Download all bundle files as server-side ZIP from filebin (no RAM, instant) */
+  const handleBundleDownloadZip = () => {
+    if (!binId) return;
+    // Filebin serves a native server-side ZIP at /archive/{bin}/zip — no cookie needed, CORS OK
+    window.location.href = `https://filebin.net/archive/${binId}/zip`;
   };
 
   /** For GoFile (>1GB), trigger a fetch→blob download so they never see GoFile UI */
@@ -442,81 +269,48 @@ const BongShareDownload = () => {
               {/* ===== BUNDLE FILE LIST ===== */}
               {isBundle && manifest && (
                 <div className="w-full flex flex-col gap-3">
-                  {manifest.files.map((entry, fileIdx) => {
-                    const dl = fileDownloads[fileIdx];
-                    const isActive = dl?.active ?? false;
-                    const dlProgress = dl?.progress ?? 0;
-                    const dlPhase = dl?.phase ?? '';
-                    const isDone = !isActive && dlProgress === 100;
-                    return (
-                      <div key={fileIdx} className="w-full rounded-xl px-4 py-3 flex flex-col gap-2" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                        <div className="flex items-center gap-3">
-                          <span className="text-xl shrink-0">{getFileIcon(entry.name)}</span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-white truncate">{entry.name}</p>
-                            <p className="text-[10px] text-[#9a907a]">
-                              {formatBytes(entry.size)}
-                              {entry.chunks.length > 1 && <span className="ml-2 text-amber-400/60">{entry.chunks.length} parts</span>}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => downloadBundleFile(entry, fileIdx)}
-                            disabled={isActive}
-                            className={`shrink-0 h-9 px-4 rounded-full font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all ${
-                              isDone
-                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                : 'bg-[#f0c12c] text-[#695200] hover:brightness-110 active:scale-95 disabled:opacity-50'
-                            }`}
-                          >
-                            <Download className="w-3.5 h-3.5" />
-                            {isDone ? 'Done' : isActive ? `${dlProgress}%` : 'Save'}
-                          </button>
-                        </div>
-                        {isActive && (
-                          <div className="flex flex-col gap-1">
-                            <div className="flex justify-between text-[10px] font-mono text-[#40ceed]/60">
-                              <span>{dlPhase}</span>
-                              <span>{dlProgress}%</span>
-                            </div>
-                            <div className="w-full h-1 rounded-full bg-white/5 overflow-hidden">
-                              <div className="h-full rounded-full bg-[#40ceed] transition-all duration-300" style={{ width: `${dlProgress}%` }} />
-                            </div>
-                          </div>
-                        )}
+                  {manifest.files.map((entry, fileIdx) => (
+                    <div key={fileIdx} className="w-full rounded-xl px-4 py-3 flex items-center gap-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <span className="text-xl shrink-0">{getFileIcon(entry.name)}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-white truncate">{entry.name}</p>
+                        <p className="text-[10px] text-[#9a907a]">
+                          {formatBytes(entry.size)}
+                          {entry.chunks.length > 1 && <span className="ml-2 text-amber-400/60">{entry.chunks.length} parts</span>}
+                        </p>
                       </div>
-                    );
-                  })}
+                      <button
+                        onClick={() => downloadBundleFile(entry)}
+                        className="shrink-0 h-9 px-4 rounded-full font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all bg-[#f0c12c] text-[#695200] hover:brightness-110 active:scale-95"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        Save
+                      </button>
+                    </div>
+                  ))}
+                  {/* Hint about filebin confirmation page */}
+                  <p className="text-[10px] text-[#9a907a] text-center leading-snug mt-1">
+                    Your browser may show a confirmation page — click <strong className="text-white">"Proceed to download"</strong> to save the file.
+                  </p>
                 </div>
               )}
 
               {/* ===== BUNDLE DOWNLOAD AS ZIP ===== */}
               {isBundle && manifest && (
                 <div className="w-full flex flex-col gap-3">
-                  {/* Streaming info badge */}
+                  {/* Server-side ZIP info badge */}
                   <div className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
                     <Archive className="w-4 h-4 text-emerald-400 shrink-0" />
                     <p className="text-[11px] text-emerald-300/80 font-medium">
-                      Downloads all {manifest.files.length} files as a single <strong className="text-emerald-300">.zip</strong> — streamed to disk, no RAM used
+                      Downloads all {manifest.files.length} files as a single <strong className="text-emerald-300">.zip</strong> — instant server-side ZIP
                     </p>
                   </div>
-                  {bundleAllActive && (
-                    <div className="w-full flex flex-col gap-2">
-                      <div className="flex justify-between items-center text-[10px] font-mono text-[#40ceed]/70">
-                        <span>{bundleAllPhase}</span>
-                        <span>{bundleAllProgress}%</span>
-                      </div>
-                      <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
-                        <div className="h-full rounded-full bg-[#40ceed] transition-all duration-300" style={{ width: `${bundleAllProgress}%` }} />
-                      </div>
-                    </div>
-                  )}
                   <button
                     onClick={handleBundleDownloadZip}
-                    disabled={bundleAllActive}
-                    className="w-full h-14 sm:h-16 bg-[#f0c12c] text-[#695200] font-extrabold uppercase text-sm tracking-widest rounded-full hover:brightness-110 active:scale-[0.97] transition-all shadow-lg flex items-center justify-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full h-14 sm:h-16 bg-[#f0c12c] text-[#695200] font-extrabold uppercase text-sm tracking-widest rounded-full hover:brightness-110 active:scale-[0.97] transition-all shadow-lg flex items-center justify-center gap-3"
                   >
                     <Archive className="w-5 h-5" />
-                    {bundleAllActive ? bundleAllPhase : 'Download as ZIP'}
+                    Download as ZIP
                   </button>
                 </div>
               )}

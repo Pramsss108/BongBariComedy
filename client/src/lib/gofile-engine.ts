@@ -383,6 +383,8 @@ export async function uploadMultipleToFilebin(
 
   const uploadOneFile = async (file: File, fileIdx: number): Promise<BundleFileEntry> => {
     const ext = file.name.includes('.') ? '.' + file.name.split('.').pop()!.toLowerCase() : '.bin';
+    // Sanitize original filename for use in filebin URL (safe chars only)
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 80);
     const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
     const chunks: string[] = [];
 
@@ -391,10 +393,11 @@ export async function uploadMultipleToFilebin(
       const end = Math.min(start + CHUNK_SIZE, file.size);
       const blob = file.slice(start, end);
       const chunkBytes = end - start;
+      // Use recognizable name: idx_originalname.ext or idx_originalname_c0000.ext
       const chunkName =
         totalChunks === 1
-          ? `f${fileIdx}_full${ext}`
-          : `f${fileIdx}_c${String(c).padStart(4, '0')}${ext}`;
+          ? `${fileIdx}_${safeName}`
+          : `${fileIdx}_${safeName}_c${String(c).padStart(4, '0')}${ext}`;
       chunks.push(chunkName);
 
       await uploadFilebinChunk(blob, binId, chunkName, (p) => {

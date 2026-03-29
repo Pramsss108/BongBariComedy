@@ -91,7 +91,6 @@
     "better-sqlite3": "^12.2.0",
     "bgutils-js": "^3.2.0",
     "class-variance-authority": "^0.7.1",
-    "client-zip": "^2.5.0",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "connect-pg-simple": "^10.0.0",

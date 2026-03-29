@@ -126,3 +126,71 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  # ── Oracle Cloud backend auto-deploy ────────────────────
+  deploy-backend:
+    runs-on: ubuntu-latest
+    # No dependency on 'build' — runs in parallel with frontend deploy
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect server-side changes
+        id: changes
+        uses: tj-actions/changed-files@v45
+        with:
+          files: |
+            server/**
+            shared/**
+            package.json
+            package-lock.json
+            tsconfig*.json
+
+      - name: Decide skip
+        id: decide
+        run: |
+          FORCE_OVERRIDE="${{ contains(github.event.head_commit.message, 'FORCE_ORACLE_DEPLOY') }}"
+          if [ "${{ steps.changes.outputs.any_changed }}" = "false" ] && [ "$FORCE_OVERRIDE" != "true" ]; then
+            echo "No server changes; skipping Oracle deploy"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "Server changes detected — deploying to Oracle"
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy to Oracle Cloud VM
+        if: steps.decide.outputs.skip == 'false'
+        env:
+          ORACLE_HOST: ${{ secrets.ORACLE_HOST }}
+          ORACLE_SSH_KEY: ${{ secrets.ORACLE_SSH_KEY }}
+        run: |
+          if [ -z "$ORACLE_SSH_KEY" ] || [ -z "$ORACLE_HOST" ]; then
+            echo "⚠️  ORACLE_SSH_KEY or ORACLE_HOST secrets not configured — skipping Oracle deploy"
+            echo "Add them at: GitHub repo → Settings → Secrets and variables → Actions"
+            exit 0
+          fi
+          echo "$ORACLE_SSH_KEY" > /tmp/oracle_key
+          chmod 600 /tmp/oracle_key
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "$ORACLE_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh -i /tmp/oracle_key -o StrictHostKeyChecking=no ubuntu@"$ORACLE_HOST" '
+            set -e
+            echo "=== BongBari Oracle Deploy ==="
+            cd /home/ubuntu/bongbari
+            git pull origin main
+            npm ci
+            npx esbuild server/index.ts \
+              --platform=node \
+              --packages=external \
+              --bundle \
+              --format=esm \
+              --outdir=dist
+            pm2 restart bongbari || pm2 start dist/index.js --name bongbari
+            pm2 save
+            echo "=== Deploy complete ==="
+            pm2 list
+          '
+          rm -f /tmp/oracle_key
+          echo "✅ Oracle backend deployed successfully"

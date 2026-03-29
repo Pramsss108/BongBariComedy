@@ -305,10 +305,14 @@ function uploadFilebinChunk(
     xhr.ontimeout = () => { stopTail(); reject(new Error('Chunk upload timed out')); };
     xhr.timeout = 10 * 60 * 1000; // 10 min per chunk
 
-    // Route upload through our Render backend → filebin.net.
-    // This bypasses filebin's ~55 KB/s residential IP rate limit;
-    // Render datacenter → filebin S3 is uncapped and much faster.
-    xhr.open('POST', buildApiUrl(`/api/share/upload-fb/${binId}/${chunkName}`));
+    // If a Cloudflare Worker proxy is configured (VITE_FILEBIN_PROXY_BASE), route through it.
+    // CF Worker = globally fast (300+ POPs), no residential rate limit, free 100K req/day.
+    // Fallback: upload direct to filebin (works but may be rate-limited at ~55 KB/s on some ISPs).
+    const FILEBIN_PROXY = (import.meta.env.VITE_FILEBIN_PROXY_BASE as string || '').replace(/\/$/, '');
+    const uploadTarget = FILEBIN_PROXY
+      ? `${FILEBIN_PROXY}/upload/${binId}/${chunkName}`
+      : `${FILEBIN_API}/${binId}/${chunkName}`;
+    xhr.open('POST', uploadTarget);
     // Send as a typeless Blob — no Content-Type header, avoids preflight edge cases.
     const raw = new Blob([blob]);  // strips .type → no Content-Type header
     xhr.send(raw);

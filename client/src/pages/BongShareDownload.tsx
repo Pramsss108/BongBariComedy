@@ -14,7 +14,6 @@ import {
   Archive,
 } from 'lucide-react';
 import { resolveShareUrl, type BundleManifest, type BundleFileEntry } from '@/lib/gofile-engine';
-import { buildApiUrl } from '@/lib/queryClient';
 
 
 function formatBytes(bytes: number): string {
@@ -96,18 +95,31 @@ const BongShareDownload = () => {
   const { downloadUrl, fileName, fileSize, isDirect, host, expires, isChunked, chunkUrls, binId, chunkNames, isBundle, manifest } = resolved;
   const icon = getFileIcon(fileName);
 
-  /** Download a single bundle file via our backend proxy (forces download, no filebin UI) */
+  // CF Worker proxy (globally fast, free) — set VITE_FILEBIN_PROXY_BASE after deploying worker-filebin/
+  // Fallback: direct filebin URLs (works everywhere, shows filebin warning page for individual files)
+  const FILEBIN_PROXY = (import.meta.env.VITE_FILEBIN_PROXY_BASE as string || '').replace(/\/$/, '');
+
+  const filebinDlUrl = (chunkName: string, downloadAs: string) =>
+    FILEBIN_PROXY
+      ? `${FILEBIN_PROXY}/dl/${binId}/${chunkName}?as=${encodeURIComponent(downloadAs)}`
+      : `https://filebin.net/${binId}/${chunkName}`;
+
+  const filebinZipUrl = () =>
+    FILEBIN_PROXY
+      ? `${FILEBIN_PROXY}/zip/${binId}`
+      : `https://filebin.net/archive/${binId}/zip`;
+
+  /** Download a single bundle file (via CF Worker proxy if configured, else direct filebin) */
   const downloadBundleFile = (entry: BundleFileEntry) => {
     if (!binId) return;
     const chunkName = entry.chunks[0];
-    // Route through our Render backend → hides filebin, forces Content-Disposition: attachment
-    window.location.href = buildApiUrl(`/api/share/dl/${binId}/${chunkName}?as=${encodeURIComponent(entry.name)}`);
+    window.location.href = filebinDlUrl(chunkName, entry.name);
   };
 
-  /** Download all bundle files as ZIP via our backend proxy (cloaked, forced download) */
+  /** Download all bundle files as ZIP (via CF Worker proxy if configured, else direct filebin) */
   const handleBundleDownloadZip = () => {
     if (!binId) return;
-    window.location.href = buildApiUrl(`/api/share/zip/${binId}`);
+    window.location.href = filebinZipUrl();
   };
 
   /** For GoFile (>1GB), trigger a fetch→blob download so they never see GoFile UI */
@@ -127,7 +139,7 @@ const BongShareDownload = () => {
 
     const getChunkUrl = (i: number) =>
       isFilebin
-        ? buildApiUrl(`/api/share/dl/${binId}/${chunkNames![i]}?as=${encodeURIComponent(fileName)}`)
+        ? filebinDlUrl(chunkNames![i], fileName)
         : chunkUrls![i];  // legacy catbox
 
     setChunkActive(true);

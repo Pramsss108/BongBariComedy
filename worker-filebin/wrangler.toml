@@ -1,0 +1,6 @@
+name = "bongbari-filebin-proxy"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+# Deploy:  cd worker-filebin && npx wrangler deploy
+# Then add the worker URL to client/.env.production as VITE_FILEBIN_PROXY_BASE

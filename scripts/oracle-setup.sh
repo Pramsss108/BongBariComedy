@@ -4,12 +4,29 @@
 # Works on: Oracle Linux 9 (dnf) AND Ubuntu 20/22 (apt)
 # Run this once after first SSH into the Oracle VM:
 #   bash oracle-setup.sh
+#
+# SAFE for 503 MB micro VMs — skips heavy system update,
+# installs only what's needed, uses swap to prevent OOM.
 # ============================================================
 set -e
 
 echo "======================================================"
-echo " BongBari Oracle VM Setup"
+echo " BongBari Oracle VM Setup (Low-RAM Safe)"
 echo "======================================================"
+
+# ── Create swap (essential for 503 MB micro VMs) ─────────
+if [ ! -f /swapfile ]; then
+  echo "[0/7] Creating 1 GB swap file (prevents OOM)..."
+  sudo dd if=/dev/zero of=/swapfile bs=1M count=1024
+  sudo chmod 600 /swapfile
+  sudo mkswap /swapfile
+  sudo swapon /swapfile
+  echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+  echo "  → Swap enabled: $(free -m | grep Swap | awk '{print $2}') MB"
+else
+  echo "[0/7] Swap already exists, skipping."
+  sudo swapon /swapfile 2>/dev/null || true
+fi
 
 # ── Detect OS and set package manager ────────────────────
 if command -v dnf &>/dev/null; then
@@ -23,21 +40,23 @@ else
   exit 1
 fi
 
-# ── 1. System Update ─────────────────────────────────────
-echo "[1/7] Updating system..."
-sudo $PKG update -y
+# ── 1. Install packages (NO full system update — saves RAM) ─
+echo "[1/7] Installing required packages (skipping full update)..."
 if [ "$PKG" = "dnf" ]; then
-  sudo dnf install -y curl git nginx
+  sudo dnf install -y curl git nginx --skip-broken
   # Open firewall ports on Oracle Linux (firewalld)
-  sudo systemctl start firewalld
-  sudo firewall-cmd --permanent --add-service=http
-  sudo firewall-cmd --permanent --add-service=https
-  sudo firewall-cmd --permanent --add-service=ssh
-  sudo firewall-cmd --reload
+  sudo systemctl start firewalld 2>/dev/null || true
+  sudo firewall-cmd --permanent --add-service=http 2>/dev/null || true
+  sudo firewall-cmd --permanent --add-service=https 2>/dev/null || true
+  sudo firewall-cmd --permanent --add-service=ssh 2>/dev/null || true
+  sudo firewall-cmd --permanent --add-port=5000/tcp 2>/dev/null || true
+  sudo firewall-cmd --reload 2>/dev/null || true
 else
+  sudo apt-get update -y
   sudo apt-get install -y curl git nginx iptables-persistent
   sudo iptables -I INPUT -p tcp --dport 80 -j ACCEPT
   sudo iptables -I INPUT -p tcp --dport 443 -j ACCEPT
+  sudo iptables -I INPUT -p tcp --dport 5000 -j ACCEPT
   sudo netfilter-persistent save
 fi
 
@@ -102,12 +121,15 @@ npx esbuild server/index.ts \
 
 # ── Nginx config ───────────────────────────────────────
 echo "Configuring Nginx (port 80 → localhost:5000)..."
-sudo tee /etc/nginx/sites-available/bongbari > /dev/null << 'NGINXEOF'
+
+# Oracle Linux uses /etc/nginx/conf.d/; Ubuntu uses sites-available
+if [ "$PKG" = "dnf" ]; then
+  NGINX_CONF="/etc/nginx/conf.d/bongbari.conf"
+  sudo tee "$NGINX_CONF" > /dev/null << 'NGINXEOF'
 server {
     listen 80;
     server_name api.bongbari.com _;
 
-    # Allow large request bodies (file uploads)
     client_max_body_size 200M;
 
     location / {
@@ -125,9 +147,33 @@ server {
     }
 }
 NGINXEOF
+else
+  sudo tee /etc/nginx/sites-available/bongbari > /dev/null << 'NGINXEOF'
+server {
+    listen 80;
+    server_name api.bongbari.com _;
 
-sudo ln -sf /etc/nginx/sites-available/bongbari /etc/nginx/sites-enabled/
-sudo rm -f /etc/nginx/sites-enabled/default
+    client_max_body_size 200M;
+
+    location / {
+        proxy_pass http://localhost:5000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+    }
+}
+NGINXEOF
+  sudo ln -sf /etc/nginx/sites-available/bongbari /etc/nginx/sites-enabled/
+  sudo rm -f /etc/nginx/sites-enabled/default
+fi
+
 sudo nginx -t
 sudo systemctl restart nginx
 sudo systemctl enable nginx
@@ -150,7 +196,7 @@ echo " 3. Test locally on VM:"
 echo "    curl http://localhost:5000/api/version"
 echo ""
 echo " 4. In Cloudflare DNS:"
-echo "    Add record: Type=CNAME, Name=api, Target=130.61.187.107"
+echo "    Add record: Type=A, Name=api, Target=79.76.110.66"
 echo "    Enable proxy (orange cloud ON)"
 echo "    Set SSL mode to Flexible"
 echo ""

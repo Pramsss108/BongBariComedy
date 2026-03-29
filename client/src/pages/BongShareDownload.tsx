@@ -104,21 +104,43 @@ const BongShareDownload = () => {
   /** Download a single file from the bundle (handles chunked reassembly) */
   const downloadBundleFile = async (entry: BundleFileEntry, fileIdx: number) => {
     if (!binId) return;
-    updateFileDl(fileIdx, { active: true, progress: 0, phase: 'Starting…' });
+    updateFileDl(fileIdx, { active: true, progress: 0, phase: 'Connecting…' });
     try {
       const totalChunks = entry.chunks.length;
       const getUrl = (ci: number) => `https://filebin.net/${binId}/${entry.chunks[ci]}`;
 
       if (totalChunks === 1) {
-        // Single chunk — direct browser download via anchor
-        updateFileDl(fileIdx, { phase: 'Downloading…', progress: 50 });
+        // Single chunk — must fetch as blob because browsers block
+        // download attribute on cross-origin anchors (filebin.net)
+        updateFileDl(fileIdx, { phase: 'Downloading…', progress: 5 });
+        const res = await fetch(getUrl(0));
+        if (!res.ok) throw new Error(`Download failed (${res.status})`);
+        // Track progress via ReadableStream if available
+        const contentLength = Number(res.headers.get('content-length') || entry.size);
+        let loaded = 0;
+        const chunks: Uint8Array[] = [];
+        if (res.body) {
+          const reader = res.body.getReader();
+          for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            loaded += value.length;
+            const pct = contentLength > 0 ? Math.min(95, Math.round((loaded / contentLength) * 95)) : 50;
+            updateFileDl(fileIdx, { progress: pct, phase: `${formatBytes(loaded)} / ${formatBytes(contentLength)}` });
+          }
+        } else {
+          // Fallback: no streaming
+          const blob = await res.blob();
+          chunks.push(new Uint8Array(await blob.arrayBuffer()));
+        }
+        const blob = new Blob(chunks);
+        const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = getUrl(0);
-        a.download = entry.name;
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => document.body.removeChild(a), 500);
-        updateFileDl(fileIdx, { active: false, progress: 100, phase: 'Done!' });
+        a.href = url; a.download = entry.name;
+        document.body.appendChild(a); a.click();
+        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+        updateFileDl(fileIdx, { active: false, progress: 100, phase: 'Saved ✓' });
         return;
       }
 
@@ -151,10 +173,32 @@ const BongShareDownload = () => {
         document.body.appendChild(a); a.click();
         setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
       }
-      updateFileDl(fileIdx, { active: false, progress: 100, phase: 'Done!' });
+      updateFileDl(fileIdx, { active: false, progress: 100, phase: 'Saved ✓' });
     } catch (err: any) {
       updateFileDl(fileIdx, { active: false, phase: `Error: ${err.message}` });
     }
+  };
+
+  /** Bundle "Download All" state */
+  const [bundleAllActive, setBundleAllActive] = useState(false);
+  const [bundleAllProgress, setBundleAllProgress] = useState(0);
+  const [bundleAllPhase, setBundleAllPhase] = useState('');
+
+  const handleBundleDownloadAll = async () => {
+    if (!manifest || !binId) return;
+    setBundleAllActive(true);
+    setBundleAllProgress(0);
+    const total = manifest.files.length;
+    for (let i = 0; i < total; i++) {
+      setBundleAllPhase(`Downloading ${i + 1} of ${total}…`);
+      setBundleAllProgress(Math.round((i / total) * 100));
+      await downloadBundleFile(manifest.files[i], i);
+      // small pause between files
+      if (i < total - 1) await new Promise(r => setTimeout(r, 300));
+    }
+    setBundleAllProgress(100);
+    setBundleAllPhase('All files saved ✓');
+    setBundleAllActive(false);
   };
 
   /** For GoFile (>1GB), trigger a fetch→blob download so they never see GoFile UI */
@@ -253,8 +297,8 @@ const BongShareDownload = () => {
           <p className="text-[10px] uppercase tracking-[0.15em] text-[#f0c12c] font-bold hidden sm:block whitespace-nowrap shrink-0">Secure Download</p>
         </header>
 
-        {/* Main */}
-        <main className="flex-1 flex flex-col items-center justify-center max-w-lg mx-auto w-full px-4 sm:px-6 relative z-10 min-h-0">
+        {/* Main — scrollable for large bundles */}
+        <main className="flex-1 flex flex-col items-center max-w-lg mx-auto w-full px-4 sm:px-6 relative z-10 min-h-0 overflow-y-auto py-4 sm:py-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -363,6 +407,31 @@ const BongShareDownload = () => {
                 </div>
               )}
 
+              {/* ===== BUNDLE DOWNLOAD ALL BUTTON ===== */}
+              {isBundle && manifest && (
+                <div className="w-full flex flex-col gap-3">
+                  {bundleAllActive && (
+                    <div className="w-full flex flex-col gap-2">
+                      <div className="flex justify-between items-center text-[10px] font-mono text-[#40ceed]/70">
+                        <span>{bundleAllPhase}</span>
+                        <span>{bundleAllProgress}%</span>
+                      </div>
+                      <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
+                        <div className="h-full rounded-full bg-[#40ceed] transition-all duration-300" style={{ width: `${bundleAllProgress}%` }} />
+                      </div>
+                    </div>
+                  )}
+                  <button
+                    onClick={handleBundleDownloadAll}
+                    disabled={bundleAllActive}
+                    className="w-full h-14 sm:h-16 bg-[#f0c12c] text-[#695200] font-extrabold uppercase text-sm tracking-widest rounded-full hover:brightness-110 active:scale-[0.97] transition-all shadow-lg flex items-center justify-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    <Download className="w-5 h-5" />
+                    {bundleAllActive ? bundleAllPhase : 'Download All'}
+                  </button>
+                </div>
+              )}
+
               {/* Download button — different per tier (non-bundle) */}
               {!isBundle && isChunked ? (
                 /* Filebin chunked — stream-assemble directly (CORS native, no proxy) */
@@ -391,7 +460,7 @@ const BongShareDownload = () => {
                     {chunkActive ? chunkPhase : 'Download Now'}
                   </button>
                 </div>
-              ) : isDirect ? (
+              ) : isDirect && downloadUrl ? (
                 /* Tier 1 & 2: Catbox / Litterbox → direct file download, no third-party */
                 <a
                   href={downloadUrl}
@@ -401,7 +470,7 @@ const BongShareDownload = () => {
                   <Download className="w-5 h-5" />
                   Download Now
                 </a>
-              ) : (
+              ) : !isBundle ? (
                 /* Tier 3: GoFile (>1 GB) → branded message + honest redirect */
                 <div className="w-full flex flex-col gap-3">
                   <div className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/15">
@@ -416,7 +485,7 @@ const BongShareDownload = () => {
                     Download Now
                   </button>
                 </div>
-              )}
+              ) : null}
 
               {/* Send your own */}
               <button

@@ -54,7 +54,9 @@ sudo npm install -g pm2 esbuild
 
 # ── 4. Clone Repo ────────────────────────────────────────
 echo "[4/7] Cloning BongBariComedy repo..."
-cd /home/ubuntu
+# Oracle Linux uses 'opc', Ubuntu uses 'ubuntu'
+HOME_DIR=$(eval echo ~)
+cd "$HOME_DIR"
 if [ -d "bongbari" ]; then
   echo "  → Directory already exists, pulling latest..."
   cd bongbari && git pull origin main
@@ -136,10 +138,10 @@ echo " NEXT STEPS (required before starting server):"
 echo "======================================================"
 echo ""
 echo " 1. Fill in secrets:"
-echo "    nano /home/ubuntu/bongbari/server/.env"
+echo "    nano ~/bongbari/server/.env"
 echo ""
 echo " 2. Start the server with PM2:"
-echo "    cd /home/ubuntu/bongbari"
+echo "    cd ~/bongbari"
 echo "    pm2 start dist/index.js --name bongbari"
 echo "    pm2 startup   ← copy+run the command it prints"
 echo "    pm2 save"

@@ -175,10 +175,10 @@ jobs:
           chmod 600 /tmp/oracle_key
           mkdir -p ~/.ssh
           ssh-keyscan -H "$ORACLE_HOST" >> ~/.ssh/known_hosts 2>/dev/null
-          ssh -i /tmp/oracle_key -o StrictHostKeyChecking=no ubuntu@"$ORACLE_HOST" '
+          ssh -i /tmp/oracle_key -o StrictHostKeyChecking=no opc@"$ORACLE_HOST" '
             set -e
             echo "=== BongBari Oracle Deploy ==="
-            cd /home/ubuntu/bongbari
+            cd ~/bongbari
             git pull origin main
             npm ci
             npx esbuild server/index.ts \

@@ -40,3 +40,35 @@ The YouTube Downloader (`server/routes/downloader.ts`) uses an ASocks Residentia
 To see what is actually happening behind the scenes without waiting blindly:
 1. **Frontend Tracker:** Go to `https://github.com/Pramsss108/BongBariComedy/actions`. If the orange circle is spinning, the CD/CI pipeline is building the new page. Wait until it is a Green Checkmark.
 2. **Backend Tracker:** Open the Render.com Dashboard -> `bongbaricomedy` Web Service -> **Events** tab. If it says "Deploying...", the new server is still booting. Wait until it says "Live".
+
+---
+
+> ## ~~RENDER~~ — BANNED & REPLACED (March 29, 2026)
+> 
+> **All Render references above are OBSOLETE.** Render.com pipeline minutes exhausted, free tier unreliable.
+> 
+> | Old (Render) | New (Oracle Cloud Always Free) |
+> |---|---|
+> | ~~bongbaricomedy.onrender.com~~ | http://79.76.110.66:5000 |
+> | ~~Render free tier (512MB RAM)~~ | Oracle VM (951MB RAM + 1.5GB swap) |
+> | ~~Render auto-deploy~~ | GitHub Actions → Oracle VM SSH deploy |
+> | ~~Render CPU 0.1 vCPU~~ | Oracle 1 OCPU (AMD EPYC) |
+> | ~~Render sleeps after 15min~~ | PM2 24/7, auto-restart on reboot |
+> 
+> **Do NOT add any Render configs, buildpacks, or references. Oracle Cloud is the permanent backend.**
+
+---
+
+> ## ~~RENDER~~ -- BANNED & REPLACED (March 29, 2026)
+> 
+> **All Render references above are OBSOLETE.** Render.com pipeline minutes exhausted, free tier unreliable.
+> 
+> | Old (Render) | New (Oracle Cloud Always Free) |
+> |---|---|
+> | ~~bongbaricomedy.onrender.com~~ | `http://79.76.110.66:5000` |
+> | ~~Render free tier (512MB RAM)~~ | Oracle VM (951MB RAM + 1.5GB swap) |
+> | ~~Render auto-deploy~~ | GitHub Actions -> Oracle VM SSH deploy |
+> | ~~Render CPU 0.1 vCPU~~ | Oracle 1 OCPU (AMD EPYC) |
+> | ~~Render sleeps after 15min~~ | PM2 24/7, auto-restart on reboot |
+> 
+> **Do NOT add any Render configs, buildpacks, or references. Oracle Cloud is the permanent backend.**

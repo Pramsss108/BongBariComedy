@@ -88,3 +88,34 @@ Here is exactly where we stand on the Vibe Coder Architecture Plan:
 - **Task:** Ensure the "Download Clip" button properly cuts the timestamps chosen in the frontend React app without freezing the server.
 
 **Final Note to Human:** This document is securely saved in the root `/KEY_TO_SUCCESS_NOTEDOWN.md`. No AI should overwrite these principles.
+---
+
+> ## ~~RENDER~~ — BANNED & REPLACED (March 29, 2026)
+> 
+> **All Render references above are OBSOLETE.** Render.com pipeline minutes exhausted, free tier unreliable.
+> 
+> | Old (Render) | New (Oracle Cloud Always Free) |
+> |---|---|
+> | ~~bongbaricomedy.onrender.com~~ | http://79.76.110.66:5000 |
+> | ~~Render free tier (512MB RAM)~~ | Oracle VM (951MB RAM + 1.5GB swap) |
+> | ~~Render auto-deploy~~ | GitHub Actions → Oracle VM SSH deploy |
+> | ~~Render CPU 0.1 vCPU~~ | Oracle 1 OCPU (AMD EPYC) |
+> | ~~Render sleeps after 15min~~ | PM2 24/7, auto-restart on reboot |
+> 
+> **Do NOT add any Render configs, buildpacks, or references. Oracle Cloud is the permanent backend.**
+
+---
+
+> ## ~~RENDER~~ -- BANNED & REPLACED (March 29, 2026)
+> 
+> **All Render references above are OBSOLETE.** Render.com pipeline minutes exhausted, free tier unreliable.
+> 
+> | Old (Render) | New (Oracle Cloud Always Free) |
+> |---|---|
+> | ~~bongbaricomedy.onrender.com~~ | `http://79.76.110.66:5000` |
+> | ~~Render free tier (512MB RAM)~~ | Oracle VM (951MB RAM + 1.5GB swap) |
+> | ~~Render auto-deploy~~ | GitHub Actions -> Oracle VM SSH deploy |
+> | ~~Render CPU 0.1 vCPU~~ | Oracle 1 OCPU (AMD EPYC) |
+> | ~~Render sleeps after 15min~~ | PM2 24/7, auto-restart on reboot |
+> 
+> **Do NOT add any Render configs, buildpacks, or references. Oracle Cloud is the permanent backend.**

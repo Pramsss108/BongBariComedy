@@ -63,3 +63,34 @@ Instead of relying on free proxies to tunnel *our* downloads, we rely on free, m
 4. Our Render server does nothing, uses 0 bandwidth, and never gets banned.
 
 If you understand the speed limitations of free proxies and *still* want to build the SpeedX/Monosans proxy roulette into our Render backend as a backup, I can write the code right now. Just say the word.
+---
+
+> ## ~~RENDER~~ — BANNED & REPLACED (March 29, 2026)
+> 
+> **All Render references above are OBSOLETE.** Render.com pipeline minutes exhausted, free tier unreliable.
+> 
+> | Old (Render) | New (Oracle Cloud Always Free) |
+> |---|---|
+> | ~~bongbaricomedy.onrender.com~~ | http://79.76.110.66:5000 |
+> | ~~Render free tier (512MB RAM)~~ | Oracle VM (951MB RAM + 1.5GB swap) |
+> | ~~Render auto-deploy~~ | GitHub Actions → Oracle VM SSH deploy |
+> | ~~Render CPU 0.1 vCPU~~ | Oracle 1 OCPU (AMD EPYC) |
+> | ~~Render sleeps after 15min~~ | PM2 24/7, auto-restart on reboot |
+> 
+> **Do NOT add any Render configs, buildpacks, or references. Oracle Cloud is the permanent backend.**
+
+---
+
+> ## ~~RENDER~~ -- BANNED & REPLACED (March 29, 2026)
+> 
+> **All Render references above are OBSOLETE.** Render.com pipeline minutes exhausted, free tier unreliable.
+> 
+> | Old (Render) | New (Oracle Cloud Always Free) |
+> |---|---|
+> | ~~bongbaricomedy.onrender.com~~ | `http://79.76.110.66:5000` |
+> | ~~Render free tier (512MB RAM)~~ | Oracle VM (951MB RAM + 1.5GB swap) |
+> | ~~Render auto-deploy~~ | GitHub Actions -> Oracle VM SSH deploy |
+> | ~~Render CPU 0.1 vCPU~~ | Oracle 1 OCPU (AMD EPYC) |
+> | ~~Render sleeps after 15min~~ | PM2 24/7, auto-restart on reboot |
+> 
+> **Do NOT add any Render configs, buildpacks, or references. Oracle Cloud is the permanent backend.**

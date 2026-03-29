@@ -50,3 +50,34 @@ We will ensure that if it uses Cobalt, the user clicks "Download" and the video 
 - **Permanent Fix:** As YouTube updates its systems, Cobalt developers patch their servers within hours. You don't have to write any patches yourself.
 
 *If you approve this structured plan, the next step is editing the React code!*
+---
+
+> ## ~~RENDER~~ — BANNED & REPLACED (March 29, 2026)
+> 
+> **All Render references above are OBSOLETE.** Render.com pipeline minutes exhausted, free tier unreliable.
+> 
+> | Old (Render) | New (Oracle Cloud Always Free) |
+> |---|---|
+> | ~~bongbaricomedy.onrender.com~~ | http://79.76.110.66:5000 |
+> | ~~Render free tier (512MB RAM)~~ | Oracle VM (951MB RAM + 1.5GB swap) |
+> | ~~Render auto-deploy~~ | GitHub Actions → Oracle VM SSH deploy |
+> | ~~Render CPU 0.1 vCPU~~ | Oracle 1 OCPU (AMD EPYC) |
+> | ~~Render sleeps after 15min~~ | PM2 24/7, auto-restart on reboot |
+> 
+> **Do NOT add any Render configs, buildpacks, or references. Oracle Cloud is the permanent backend.**
+
+---
+
+> ## ~~RENDER~~ -- BANNED & REPLACED (March 29, 2026)
+> 
+> **All Render references above are OBSOLETE.** Render.com pipeline minutes exhausted, free tier unreliable.
+> 
+> | Old (Render) | New (Oracle Cloud Always Free) |
+> |---|---|
+> | ~~bongbaricomedy.onrender.com~~ | `http://79.76.110.66:5000` |
+> | ~~Render free tier (512MB RAM)~~ | Oracle VM (951MB RAM + 1.5GB swap) |
+> | ~~Render auto-deploy~~ | GitHub Actions -> Oracle VM SSH deploy |
+> | ~~Render CPU 0.1 vCPU~~ | Oracle 1 OCPU (AMD EPYC) |
+> | ~~Render sleeps after 15min~~ | PM2 24/7, auto-restart on reboot |
+> 
+> **Do NOT add any Render configs, buildpacks, or references. Oracle Cloud is the permanent backend.**

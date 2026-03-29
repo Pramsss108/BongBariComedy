@@ -200,3 +200,35 @@ When a user requests an Instagram video on your platform, here is the new Layer 
 * **The Concept:** Paying per gigabyte is a trap for video streaming. Instead of renting residential IPs from ASocks, operators build private proxy nodes using physical 4G/5G modems.
 * **The Execution:** A cheap modem + unlimited data SIM card is connected to a Raspberry Pi. A script periodically turns "Airplane Mode" on and off.
 * **The Result:** Every time it reconnects to the cell tower, the ISP assigns a brand-new, highly trusted mobile IP. You get essentially unlimited bandwidth that is statistically impossible to block (because banning it would ban real users in that city) for merely the cost of a flat-rate cellular plan.
+
+---
+
+> ## ~~RENDER~~ — BANNED & REPLACED (March 29, 2026)
+> 
+> **All Render references above are OBSOLETE.** Render.com pipeline minutes exhausted, free tier unreliable.
+> 
+> | Old (Render) | New (Oracle Cloud Always Free) |
+> |---|---|
+> | ~~bongbaricomedy.onrender.com~~ | http://79.76.110.66:5000 |
+> | ~~Render free tier (512MB RAM)~~ | Oracle VM (951MB RAM + 1.5GB swap) |
+> | ~~Render auto-deploy~~ | GitHub Actions → Oracle VM SSH deploy |
+> | ~~Render CPU 0.1 vCPU~~ | Oracle 1 OCPU (AMD EPYC) |
+> | ~~Render sleeps after 15min~~ | PM2 24/7, auto-restart on reboot |
+> 
+> **Do NOT add any Render configs, buildpacks, or references. Oracle Cloud is the permanent backend.**
+
+---
+
+> ## ~~RENDER~~ -- BANNED & REPLACED (March 29, 2026)
+> 
+> **All Render references above are OBSOLETE.** Render.com pipeline minutes exhausted, free tier unreliable.
+> 
+> | Old (Render) | New (Oracle Cloud Always Free) |
+> |---|---|
+> | ~~bongbaricomedy.onrender.com~~ | `http://79.76.110.66:5000` |
+> | ~~Render free tier (512MB RAM)~~ | Oracle VM (951MB RAM + 1.5GB swap) |
+> | ~~Render auto-deploy~~ | GitHub Actions -> Oracle VM SSH deploy |
+> | ~~Render CPU 0.1 vCPU~~ | Oracle 1 OCPU (AMD EPYC) |
+> | ~~Render sleeps after 15min~~ | PM2 24/7, auto-restart on reboot |
+> 
+> **Do NOT add any Render configs, buildpacks, or references. Oracle Cloud is the permanent backend.**

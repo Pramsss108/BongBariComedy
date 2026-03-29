@@ -160,7 +160,26 @@ jobs:
             echo "skip=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Deploy to Oracle Cloud VM
+      - name: Set up Node (for local build)
+        if: steps.decide.outputs.skip == 'false'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install deps & build server bundle
+        if: steps.decide.outputs.skip == 'false'
+        run: |
+          npm ci
+          npx esbuild server/index.ts \
+            --platform=node \
+            --packages=external \
+            --bundle \
+            --format=esm \
+            --outdir=dist
+          echo "✅ Server bundle built: $(wc -c < dist/index.js) bytes"
+
+      - name: Deploy to Oracle Cloud VM (SCP + restart)
         if: steps.decide.outputs.skip == 'false'
         env:
           ORACLE_HOST: ${{ secrets.ORACLE_HOST }}
@@ -175,18 +194,22 @@ jobs:
           chmod 600 /tmp/oracle_key
           mkdir -p ~/.ssh
           ssh-keyscan -H "$ORACLE_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+          # Copy the pre-built bundle to VM (no git needed on VM!)
+          scp -i /tmp/oracle_key -o StrictHostKeyChecking=no \
+            dist/index.js opc@"$ORACLE_HOST":~/bongbari/dist/index.js
+
+          # Also sync package.json + package-lock.json for npm ci
+          scp -i /tmp/oracle_key -o StrictHostKeyChecking=no \
+            package.json package-lock.json opc@"$ORACLE_HOST":~/bongbari/
+
+          # SSH in: npm ci (only if lockfile changed) + restart PM2
           ssh -i /tmp/oracle_key -o StrictHostKeyChecking=no opc@"$ORACLE_HOST" '
             set -e
+            export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
             echo "=== BongBari Oracle Deploy ==="
             cd ~/bongbari
-            git pull origin main
-            npm ci
-            npx esbuild server/index.ts \
-              --platform=node \
-              --packages=external \
-              --bundle \
-              --format=esm \
-              --outdir=dist
+            npm ci --omit=dev 2>&1 | tail -5
             pm2 restart bongbari || pm2 start dist/index.js --name bongbari
             pm2 save
             echo "=== Deploy complete ==="

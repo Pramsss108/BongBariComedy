@@ -76,3 +76,4 @@ data/proxies_local.json
 PROXY_EMPIRE_MASTERPLAN.md
 proxy-empire/
 proxy_empire_app/
+tests/

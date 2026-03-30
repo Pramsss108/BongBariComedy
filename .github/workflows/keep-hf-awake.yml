@@ -15,8 +15,8 @@ jobs:
       - name: Ping Meta MMS Bengali (Text-to-Speech)
         run: curl -s https://dpc-mmstts.hf.space > /dev/null
 
-      - name: Ping Render Backend (Downloader + API — prevents cold sleep)
-        run: curl -sf https://bongbaricomedy.onrender.com/api/version > /dev/null || echo "Render warming up"
+      - name: Ping Oracle Backend (Downloader + API — health check)
+        run: curl -sf http://79.76.110.66:5000/api/version > /dev/null || echo "Oracle VM not responding"
 
       - name: Log Status
-        run: echo "Pinged Hugging Face Spaces + Render backend successfully."
+        run: echo "Pinged Hugging Face Spaces + Oracle backend successfully."

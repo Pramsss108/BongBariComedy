@@ -38,6 +38,7 @@ interface VideoInfo {
   previewUrl?: string | null;
   title: string; thumbnail: string | null; duration: number;
   durationString: string; uploader: string; platform: string; formats: VideoFormat[];
+  _clientStreams?: Array<{ url: string; quality: string; height?: number; mimeType?: string; isAudioOnly?: boolean }>;
 }
 type Phase = "idle" | "fetching" | "ready" | "downloading" | "trimming" | "error";
 
@@ -193,6 +194,8 @@ export default function SocialDownloaderPage() {
     if (typeof window === "undefined") return;
     const handleResize = () => setIsDesktop(window.innerWidth >= 768);
     window.addEventListener("resize", handleResize);
+    // Pre-warm client extraction mirror cache
+    import('@/lib/clientExtractor').then(m => m.prewarmMirrors()).catch(() => {});
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
@@ -290,6 +293,63 @@ export default function SocialDownloaderPage() {
       abortRef.current = new AbortController();
       const timeoutId = setTimeout(() => abortRef.current?.abort(), 60000);
 
+      // ═══════════════════════════════════════════════════════════════
+      // CLIENT-FIRST EXTRACTION: For YouTube, use visitor's residential
+      // IP directly via Piped/Invidious mirrors. Zero proxy pool needed.
+      // Only falls back to server if ALL mirrors fail.
+      // ═══════════════════════════════════════════════════════════════
+      const detectedPlatform = detectPlatform(url.trim());
+      if (detectedPlatform === 'youtube') {
+        setExtractProgress({ step: 1, msg: "Extracting via your connection...", pct: 15 });
+        const { extractFromClient } = await import('@/lib/clientExtractor');
+        const clientResult = await extractFromClient(url.trim(), 'youtube');
+
+        if (clientResult.success && clientResult.streams.length > 0) {
+          clearTimeout(timeoutId);
+          clearInterval(progressInterval);
+          console.log(`[Client Extractor] ✅ Direct extraction via ${clientResult.mirrorUsed} (${clientResult.latencyMs}ms)`);
+          
+          const formats = clientResult.streams
+            .filter(s => !s.isAudioOnly && s.height)
+            .map(s => ({ id: `mp4-${s.height}`, label: `MP4 ${s.height}p${(s.height ?? 0) >= 1080 ? ' HD' : ''}`, ext: 'mp4', height: s.height, isAudio: false }));
+          formats.push({ id: 'mp3', label: 'MP3 Audio (High)', ext: 'mp3', height: undefined, isAudio: true });
+          formats.push({ id: 'm4a', label: 'M4A Audio (AAC)', ext: 'm4a', height: undefined, isAudio: true });
+          const seen = new Set<string>();
+          const dedupedFormats = formats.filter(f => { if (seen.has(f.id)) return false; seen.add(f.id); return true; });
+          // Sort video formats by height descending
+          dedupedFormats.sort((a, b) => {
+            if (a.isAudio && !b.isAudio) return 1;
+            if (!a.isAudio && b.isAudio) return -1;
+            return (b.height ?? 0) - (a.height ?? 0);
+          });
+
+          setVideoInfo({
+            engine: `Client Extract (${clientResult.mirrorType})`,
+            title: clientResult.title ?? 'Untitled Video',
+            thumbnail: clientResult.thumbnail ?? null,
+            duration: clientResult.duration ?? 0,
+            durationString: clientResult.duration ? `${Math.floor(clientResult.duration / 60)}:${String(clientResult.duration % 60).padStart(2, '0')}` : '—',
+            uploader: clientResult.uploader ?? 'Unknown',
+            platform: 'youtube',
+            formats: dedupedFormats,
+            _clientStreams: clientResult.streams,
+          });
+          setSelectedFormat(dedupedFormats[0]?.id ?? 'mp4-720');
+          setStartTime(0);
+          setEndTime(Math.floor(clientResult.duration ?? 0));
+          setActualDuration(Math.floor(clientResult.duration ?? 0));
+          setPhase("ready");
+          setExtractProgress(null);
+          if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(50);
+          try { (window as any).gtag?.("event", "downloader_fetch", { platform: "youtube", engine: "client_extract" }); } catch {}
+          return;
+        }
+
+        // Client extraction failed — fall through to server extraction
+        console.log(`[Client Extractor] ⚠️ All mirrors failed, falling back to server extraction`);
+        setExtractProgress({ step: 1, msg: "Mirrors busy — routing to server...", pct: 40 });
+      }
+
       const res = await fetch(apiUrl(`/api/downloader/info?url=${encodeURIComponent(url.trim())}${forceEngine !== 'auto' ? `&forceEngine=${forceEngine}` : ''}`), {
           signal: abortRef.current.signal
       });
@@ -302,6 +362,46 @@ export default function SocialDownloaderPage() {
          const error = new Error(data.error || "Could not fetch video info.") as any;
          error.code = data.code;
          throw error;
+      }
+
+      // Server-side client_extract fallback (for edge cases where server proactively delegates)
+      if (data.mode === 'client_extract' && data.videoId) {
+        console.log(`[Client Extractor] Server delegated — trying client-side extraction for ${data.videoId}`);
+        setExtractProgress({ step: 1, msg: "Switching to residential extraction...", pct: 50 });
+        const { extractFromClient } = await import('@/lib/clientExtractor');
+        const clientResult = await extractFromClient(data.originalUrl || url.trim(), data.platform || 'youtube');
+
+        if (clientResult.success && clientResult.streams.length > 0) {
+          console.log(`[Client Extractor] ✅ Success via ${clientResult.mirrorUsed} (${clientResult.latencyMs}ms)`);
+          const formats = clientResult.streams
+            .filter(s => !s.isAudioOnly && s.height)
+            .map(s => ({ id: `mp4-${s.height}`, label: `MP4 ${s.height}p`, ext: 'mp4', height: s.height, isAudio: false }));
+          formats.push({ id: 'mp3', label: 'MP3 Audio', ext: 'mp3', height: undefined, isAudio: true });
+          const seen = new Set<string>();
+          const dedupedFormats = formats.filter(f => { if (seen.has(f.id)) return false; seen.add(f.id); return true; });
+
+          setVideoInfo({
+            engine: `Client Extract (${clientResult.mirrorType})`,
+            title: clientResult.title ?? 'Untitled Video',
+            thumbnail: clientResult.thumbnail ?? null,
+            duration: clientResult.duration ?? 0,
+            durationString: clientResult.duration ? `${Math.floor(clientResult.duration / 60)}:${String(clientResult.duration % 60).padStart(2, '0')}` : '—',
+            uploader: clientResult.uploader ?? 'Unknown',
+            platform: data.platform ?? 'youtube',
+            formats: dedupedFormats,
+            _clientStreams: clientResult.streams,
+          });
+          setSelectedFormat(dedupedFormats[0]?.id ?? 'mp4-720');
+          setStartTime(0);
+          setEndTime(Math.floor(clientResult.duration ?? 0));
+          setActualDuration(Math.floor(clientResult.duration ?? 0));
+          setPhase("ready");
+          setExtractProgress(null);
+          if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(50);
+          return;
+        }
+        setExtractProgress(null);
+        throw new Error(clientResult.error || 'Both server and client extraction failed');
       }
       
       console.log(`[Vibe Coder Tracker] ✅ Metadata fetch success! Phase 1 complete.`);
@@ -338,6 +438,36 @@ export default function SocialDownloaderPage() {
     
     try {
       try { (window as any).gtag?.("event", "downloader_download", { format: selectedFormat }); } catch {}
+
+      // If we have client-extracted streams, download directly from CDN
+      if ((videoInfo as any)?._clientStreams) {
+        const streams = (videoInfo as any)._clientStreams as Array<{ url: string; height?: number; isAudioOnly?: boolean; quality?: string }>;
+        const isAudioFormat = selectedFormat === 'mp3' || selectedFormat === 'm4a';
+        const requestedHeight = parseInt(selectedFormat.replace('mp4-', ''));
+
+        let targetStream = isAudioFormat
+          ? streams.find(s => s.isAudioOnly)
+          : streams.filter(s => !s.isAudioOnly).sort((a, b) => Math.abs((a.height ?? 0) - requestedHeight) - Math.abs((b.height ?? 0) - requestedHeight))[0];
+
+        if (!targetStream) targetStream = streams[0];
+        if (targetStream?.url) {
+          const a = document.createElement('a');
+          a.href = targetStream.url;
+          a.target = "_blank";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setDownloadProgress(100);
+          setTimeout(() => setPhase("ready"), 1500);
+          saveToHistory({
+            title: videoInfo.title,
+            thumbnail: videoInfo.thumbnail || "",
+            url: url,
+            type: "video"
+          });
+          return;
+        }
+      }
 
       // Protected by auth - Phase 15: Attach sessionId to query param for browser nav
       const safeTitle = videoInfo?.title ? videoInfo.title.replace(/[^a-z0-9]/gi, '_').substring(0, 50) : "bongbari_download";

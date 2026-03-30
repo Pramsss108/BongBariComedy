@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type BlogPost, type InsertBlogPost, type CollaborationRequest, type InsertCollaborationRequest, type CommunityPost, type CommunityPendingPost, type ChatbotTraining, type InsertChatbotTraining, type ChatbotTemplate, type InsertChatbotTemplate, type HomepageContent, type InsertHomepageContent, type AdminSetting, type InsertAdminSetting, type GoogleUser, type InsertGoogleUser, type ChatSession, type InsertChatSession, type ChatMessage, type InsertChatMessage, type UserPreferences, type InsertUserPreferences } from "@shared/schema";
+import { type User, type InsertUser, type BlogPost, type InsertBlogPost, type CollaborationRequest, type InsertCollaborationRequest, type CommunityPost, type CommunityPendingPost, type ChatbotTraining, type InsertChatbotTraining, type ChatbotTemplate, type InsertChatbotTemplate, type HomepageContent, type InsertHomepageContent, type AdminSetting, type InsertAdminSetting, type GoogleUser, type InsertGoogleUser, type ChatSession, type InsertChatSession, type ChatMessage, type InsertChatMessage, type UserPreferences, type InsertUserPreferences, type ClientProxyReport, type InsertClientProxyReport, type MirrorHealth } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -67,6 +67,11 @@ export interface IStorage {
   getPublicSettings(): Promise<AdminSetting[]>;
   setAdminSetting(data: InsertAdminSetting): Promise<AdminSetting>;
   deleteAdminSetting(key: string): Promise<boolean>;
+
+  // Client proxy / mirror health methods
+  insertClientProxyReport(data: InsertClientProxyReport): Promise<ClientProxyReport>;
+  getAliveMirrors(): Promise<MirrorHealth[]>;
+  upsertMirrorHealth(mirrorUrl: string, mirrorType: string, success: boolean, latencyMs: number | null, country?: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -408,6 +413,15 @@ export class MemStorage implements IStorage {
   async deleteAdminSetting(): Promise<boolean> {
     return false;
   }
+
+  // Client proxy / mirror health stubs (MemStorage)
+  async insertClientProxyReport(): Promise<ClientProxyReport> {
+    throw new Error('Client proxy reports not available in MemStorage');
+  }
+  async getAliveMirrors(): Promise<MirrorHealth[]> {
+    return [];
+  }
+  async upsertMirrorHealth(): Promise<void> {}
 }
 
 // Dynamic storage selection. In production we avoid loading better-sqlite3 native module.

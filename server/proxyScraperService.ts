@@ -168,7 +168,7 @@ const MASTER_PROXY_SOURCES: OsintSource[] = [
 
 // ── Tuning Constants ─────────────────────────────────────────
 const SAMPLE_SIZE     = 5000;  // Proxies verified per hunt (26 sources = more candidates)
-const CHUNK_SIZE      = 20;    // Concurrent workers (CPU safe on Render: ~60 open sockets)
+const CHUNK_SIZE      = 20;    // Concurrent workers (CPU safe on Hetzner: ~60 open sockets)
 const VERIFY_TIMEOUT  = 10000; // 10s per proxy check
 const STALE_AGE_HOURS = 24;    // Re-validate proxies older than 24h
 

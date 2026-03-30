@@ -363,3 +363,71 @@ export type InsertCommunityInteraction = z.infer<typeof insertCommunityInteracti
 
 export type NewsletterSubscription = typeof newsletterSubscriptions.$inferSelect;
 export type InsertNewsletterSubscription = z.infer<typeof insertNewsletterSubscriptionSchema>;
+
+// ============================================================
+// CLIENT PROXY ACTORS — Crowd-sourced residential IP intelligence
+// ============================================================
+// When site visitors use the downloader, their browser (residential IP)
+// extracts metadata from Piped/Invidious mirrors. We log which mirrors
+// worked from which country/region so the system learns the best
+// extraction paths globally. No visitor IPs are stored — only
+// anonymized geo + mirror success/failure data.
+
+export const clientProxyReports = pgTable("client_proxy_reports", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  // Anonymized client fingerprint (hash, not real IP)
+  clientHash: varchar("client_hash", { length: 64 }).notNull(),
+  // Which country the client is in (from browser timezone/locale, not IP lookup)
+  clientCountry: varchar("client_country", { length: 4 }),
+  // Which mirror was tried
+  mirrorUrl: text("mirror_url").notNull(),
+  mirrorType: varchar("mirror_type", { length: 20 }).notNull(), // 'piped' | 'invidious' | 'oembed' | 'cobalt'
+  // What platform was being extracted
+  platform: varchar("platform", { length: 10 }).notNull(), // 'youtube' | 'instagram' | 'facebook'
+  // Did it succeed?
+  success: boolean("success").notNull(),
+  // Response time in ms (null if failed)
+  latencyMs: integer("latency_ms"),
+  // HTTP status code returned
+  httpStatus: integer("http_status"),
+  // Error message if failed (truncated)
+  errorMsg: varchar("error_msg", { length: 200 }),
+  // Video ID that was being extracted (for dedup)
+  videoId: varchar("video_id", { length: 64 }),
+  // Timestamp
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Mirror health aggregates — server-maintained scoreboard
+export const mirrorHealth = pgTable("mirror_health", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  mirrorUrl: text("mirror_url").notNull().unique(),
+  mirrorType: varchar("mirror_type", { length: 20 }).notNull(),
+  // Rolling stats (updated by server every N reports)
+  totalRequests: integer("total_requests").default(0),
+  successCount: integer("success_count").default(0),
+  avgLatencyMs: integer("avg_latency_ms"),
+  // Per-country success rates (JSON: { "IN": 0.95, "US": 0.80, "DE": 0.70 })
+  countryStats: text("country_stats"),
+  // Is this mirror currently alive?
+  isAlive: boolean("is_alive").default(true),
+  lastCheckedAt: timestamp("last_checked_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertClientProxyReportSchema = createInsertSchema(clientProxyReports).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertMirrorHealthSchema = createInsertSchema(mirrorHealth).omit({
+  id: true,
+  lastCheckedAt: true,
+  updatedAt: true,
+});
+
+export type ClientProxyReport = typeof clientProxyReports.$inferSelect;
+export type InsertClientProxyReport = z.infer<typeof insertClientProxyReportSchema>;
+
+export type MirrorHealth = typeof mirrorHealth.$inferSelect;
+export type InsertMirrorHealth = z.infer<typeof insertMirrorHealthSchema>;

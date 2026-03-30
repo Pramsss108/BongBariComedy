@@ -1,9 +1,10 @@
-import { eq, and, or, desc, sql } from 'drizzle-orm';
+import { eq, and, or, desc, sql, gte } from 'drizzle-orm';
 import { pgDb } from './db.pg';
 import { 
   users, blogPosts, collaborationRequests, communityPosts, communityReactions, communityPendingPosts, rateLimits,
   chatbotTraining, chatbotTemplates, homepageContent, adminSettings,
   googleUsers, chatSessions, chatMessages, userPreferences, communityInteractions, newsletterSubscriptions,
+  clientProxyReports, mirrorHealth,
   type User, type BlogPost,
   type CollaborationRequest,
   type CommunityPost, type CommunityReaction, type CommunityPendingPost,
@@ -14,7 +15,9 @@ import {
   type GoogleUser, type InsertGoogleUser,
   type ChatSession, type InsertChatSession,
   type ChatMessage, type InsertChatMessage,
-  type UserPreferences, type InsertUserPreferences
+  type UserPreferences, type InsertUserPreferences,
+  type ClientProxyReport, type InsertClientProxyReport,
+  type MirrorHealth
 } from '../shared/schema';
 
 type InsertBlogPost = Omit<BlogPost, 'id' | 'createdAt' | 'updatedAt'>;
@@ -483,6 +486,72 @@ export class PostgresStorage {
     if (!this.db) return false;
     const result = await this.db.delete(adminSettings).where(eq(adminSettings.settingKey, key));
     return result.rowCount > 0;
+  }
+
+  // ============================================================
+  // CLIENT PROXY REPORTS & MIRROR HEALTH
+  // ============================================================
+
+  async insertClientProxyReport(data: InsertClientProxyReport): Promise<ClientProxyReport> {
+    if (!this.db) throw new Error('db');
+    const [report] = await this.db.insert(clientProxyReports).values(data).returning();
+    return report;
+  }
+
+  async getAliveMirrors(): Promise<MirrorHealth[]> {
+    if (!this.db) return [];
+    return this.db.select().from(mirrorHealth)
+      .where(eq(mirrorHealth.isAlive, true))
+      .orderBy(desc(mirrorHealth.successCount));
+  }
+
+  async upsertMirrorHealth(
+    url: string, type: string, success: boolean, latencyMs: number | null, country?: string
+  ): Promise<void> {
+    if (!this.db) return;
+    const existing = await this.db.select().from(mirrorHealth)
+      .where(eq(mirrorHealth.mirrorUrl, url));
+
+    if (existing.length > 0) {
+      const cur = existing[0];
+      const newTotal = (cur.totalRequests ?? 0) + 1;
+      const newSuccess = (cur.successCount ?? 0) + (success ? 1 : 0);
+      const newAvg = success && latencyMs
+        ? Math.round(((cur.avgLatencyMs ?? 0) * (cur.totalRequests ?? 0) + latencyMs) / newTotal)
+        : cur.avgLatencyMs;
+
+      // Update per-country stats JSON
+      let countryStats: Record<string, { ok: number; fail: number }> = {};
+      try { countryStats = JSON.parse(cur.countryStats || '{}'); } catch {}
+      if (country) {
+        if (!countryStats[country]) countryStats[country] = { ok: 0, fail: 0 };
+        countryStats[country][success ? 'ok' : 'fail']++;
+      }
+
+      await this.db.update(mirrorHealth)
+        .set({
+          totalRequests: newTotal,
+          successCount: newSuccess,
+          avgLatencyMs: newAvg,
+          countryStats: JSON.stringify(countryStats),
+          isAlive: newSuccess / newTotal > 0.1, // mark dead if <10% success
+          updatedAt: new Date()
+        })
+        .where(eq(mirrorHealth.mirrorUrl, url));
+    } else {
+      const countryStats: Record<string, { ok: number; fail: number }> = {};
+      if (country) countryStats[country] = { ok: success ? 1 : 0, fail: success ? 0 : 1 };
+
+      await this.db.insert(mirrorHealth).values({
+        mirrorUrl: url,
+        mirrorType: type,
+        totalRequests: 1,
+        successCount: success ? 1 : 0,
+        avgLatencyMs: latencyMs ?? null,
+        countryStats: JSON.stringify(countryStats),
+        isAlive: success,
+      });
+    }
   }
 }
 

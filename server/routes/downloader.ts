@@ -4,7 +4,7 @@ import ytdl from "@distube/ytdl-core";
  * Phases , 3, 5, 14, 16, 17 of the masterplan.
  *
  * Stack: youtube-dl-exec (yt-dlp wrapper) + express-rate-limit
- * Cost: $0 — runs on existing Render free tier, streams directly to user (zero disk/storage)
+ * Cost: $0 — runs on Oracle Cloud Always Free VM, streams directly to user (zero disk/storage)
  */
 
 import type { Express, Request, Response } from "express";
@@ -237,7 +237,7 @@ const streamLimiter = rateLimit({
     message: { error: "Download limit reached. Please wait a minute." } });
 // ---------------------------------------------------------------------------
 // GLOBAL RESOURCE GOVERNOR (Phase 14)
-// Protect Render's 512MB RAM by limiting active ffmpeg/yt-dlp spawns
+// Protect Oracle VM's 951MB RAM by limiting active ffmpeg/yt-dlp spawns
 // ---------------------------------------------------------------------------
 let ACTIVE_DOWNLOADS = 0;
 const MAX_CONCURRENT_DOWNLOADS = 3; // Strict limit for free tier to prevent OOM kills
@@ -746,6 +746,23 @@ async function handleInfo(req: Request, res: Response): Promise<void> {
         console.error(`[downloader/info] STDERR: ${err.stderr}`);
     }
     console.error("=========================================================\n");
+
+    // Client-side extraction fallback: if this is a YouTube URL, tell the client
+    // to try extracting with its own residential IP via Piped/Invidious mirrors
+    const ytMatch = validated.url.match(
+      /(?:youtube\.com\/watch\?.*v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/
+    );
+    if (ytMatch) {
+      console.log(`[downloader/info] Server extraction failed — offering client_extract fallback for ${ytMatch[1]}`);
+      res.json({
+        mode: 'client_extract',
+        platform: 'youtube',
+        videoId: ytMatch[1],
+        originalUrl: validated.url,
+        serverError: err?.message?.slice(0, 200),
+      });
+      return;
+    }
     
     const { message, code, status } = mapDownloaderError(err);
     res.status(status).json({ error: message, code });
@@ -783,7 +800,7 @@ async function handleStream(req: Request, res: Response): Promise<void> {
   const mode = (req.query.mode as string) ?? "download"; // 'download' | 'preview'
 
   // Phase 14: Global Concurrency Guard
-    // Since previews return instant 302 redirects to CDN, they do not stress the Render RAM.
+    // Since previews return instant 302 redirects to CDN, they do not stress the Oracle VM RAM.
     const isStreamOrTrimSpawn = mode !== "preview";
     let slotAcquired = false;
 
@@ -857,9 +874,9 @@ async function handleStream(req: Request, res: Response): Promise<void> {
   }
   
   res.setHeader("Content-Type", chosen.isAudio ? "audio/mpeg" : "video/mp4");
-  res.setHeader("X-Accel-Buffering", "no"); // Disable nginx buffering on Render
+  res.setHeader("X-Accel-Buffering", "no"); // Disable nginx buffering on Oracle VM
 
-  // Prevent Render's 100s idle timeout by forcing headers out immediately
+  // Prevent idle timeout by forcing headers out immediately
   res.flushHeaders();
 
   // 10 minute timeout (increased for 4K remuxing)
@@ -1110,7 +1127,7 @@ async function handleStream(req: Request, res: Response): Promise<void> {
 
       // =========================================================================
       // V14 SERVERLESS YOUTUBE STREAMING BYPASS
-      // Since Render IPs are totally tarpitted by BotGuard scraping, we MUST
+      // Since Oracle/datacenter IPs are totally tarpitted by BotGuard scraping, we MUST
       // resolve the exact CDN link using native node crypto, then 302 redirect
       // the client so their own residential IP downloads from Google directly.
       // =========================================================================
@@ -1199,7 +1216,7 @@ async function handleStream(req: Request, res: Response): Promise<void> {
                    return; // End flow because piping handles response
 
               } else {
-                  console.log(`✅ [SUCCESS] Bypassed Render Extractor completely! Redirecting client directly to Hetzner-resolved Google CDN!`);
+                  console.log(`✅ [SUCCESS] Bypassed Oracle Extractor completely! Redirecting client directly to Hetzner-resolved Google CDN!`);
                   res.redirect(302, sourceStreamUrl);
                   return;
               }
@@ -1641,7 +1658,7 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
 }
   export function registerDownloaderRoutes(app: Express, isAuthenticated: any): void {
 // ============================================================================
-// DIAGNOSTIC ENDPOINT: Test ytdl-core BotGuard Bypass on Render
+// DIAGNOSTIC ENDPOINT: Test ytdl-core BotGuard Bypass on Oracle VM
 // ============================================================================
 app.get("/api/downloader/test-ytdl", async (req, res) => {
     try {

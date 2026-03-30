@@ -15,6 +15,7 @@ import {
   Upload,
 } from 'lucide-react';
 import { resolveShareUrl, type BundleManifest, type BundleFileEntry } from '@/lib/gofile-engine';
+import { downloadZip } from 'client-zip';
 
 
 function formatBytes(bytes: number): string {
@@ -90,12 +91,12 @@ const BongShareDownload = () => {
   if (!resolved) {
     return (
       <>
-        <SEOHead title="Link Expired | Bong Bari" description="This file transfer link has expired or is invalid." url="https://www.bongbari.com/s" />
+        <SEOHead title="Link Expired | BongShare" description="This BongShare transfer link has expired or is invalid." url="https://www.bongbari.com/s" />
         <div className="fixed inset-0 flex flex-col overflow-hidden" style={{ background: '#0e0e0f', fontFamily: 'Manrope, sans-serif' }}>
           <div className="pointer-events-none fixed inset-0" style={{ backgroundImage: 'radial-gradient(at 0% 0%, rgba(240,193,44,0.05) 0px, transparent 50%), radial-gradient(at 100% 0%, rgba(64,206,237,0.05) 0px, transparent 50%)' }} />
           <header className="flex-none w-full h-14 sm:h-16 flex items-center px-4 sm:px-6 md:px-8 border-b border-white/5 relative z-30 overflow-hidden select-none">
             <button onClick={() => setLocation('/')} className="shrink-0 p-2 -ml-1 rounded-lg hover:bg-white/5 active:scale-90 transition-all text-[#d1c5ad]"><ArrowLeft className="w-5 h-5" /></button>
-            <h1 className="text-lg sm:text-xl font-extrabold tracking-tighter text-white ml-2">Bong Bari</h1>
+            <h1 className="text-lg sm:text-xl font-extrabold tracking-tighter text-white ml-2">Bong<span style={{ color: '#f0c12c' }}>Share</span></h1>
           </header>
           <main className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center text-center max-w-md">
@@ -141,10 +142,66 @@ const BongShareDownload = () => {
     window.location.href = filebinDlUrl(chunkName, entry.name);
   };
 
-  /** Download all bundle files as ZIP (via CF Worker proxy if configured, else direct filebin) */
-  const handleBundleDownloadZip = () => {
-    if (!binId) return;
-    window.location.href = filebinZipUrl();
+  /** Download all bundle files as ZIP — client-side (excludes manifest, only real files) */
+  const [zipActive, setZipActive] = useState(false);
+  const [zipProgress, setZipProgress] = useState(0);
+  const handleBundleDownloadZip = async () => {
+    if (!binId || !manifest) return;
+    setZipActive(true);
+    setZipProgress(0);
+    try {
+      const totalFiles = manifest.files.length;
+      // Build file entries for client-zip (stream each file, skip _manifest.json)
+      const generateEntries = async function* () {
+        for (let i = 0; i < totalFiles; i++) {
+          const entry = manifest!.files[i];
+          if (entry.chunks.length === 1) {
+            // Single chunk — stream directly
+            const url = filebinDlUrl(entry.chunks[0], entry.name);
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`Failed to fetch ${entry.name}`);
+            yield { name: entry.name, input: res };
+          } else {
+            // Multi-chunk — concatenate all chunks into one stream
+            const streams = entry.chunks.map(ch => () => fetch(filebinDlUrl(ch, entry.name)).then(r => r.body!));
+            const concat = new ReadableStream({
+              async start(controller) {
+                for (const getStream of streams) {
+                  const stream = await getStream();
+                  const reader = stream.getReader();
+                  for (;;) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    controller.enqueue(value);
+                  }
+                }
+                controller.close();
+              }
+            });
+            yield { name: entry.name, input: concat };
+          }
+          setZipProgress(Math.round(((i + 1) / totalFiles) * 100));
+        }
+      }
+      const blob = await downloadZip(generateEntries()).blob();
+      // Trigger download
+      if ('showSaveFilePicker' in window) {
+        const handle = await (window as any).showSaveFilePicker({ suggestedName: 'BongShare-bundle.zip' });
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'BongShare-bundle.zip';
+        document.body.appendChild(a); a.click();
+        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+      }
+    } catch (err: any) {
+      console.error('[BongShare ZIP]', err);
+    } finally {
+      setZipActive(false);
+    }
   };
 
   /** For GoFile (>1GB), trigger a fetch→blob download so they never see GoFile UI */
@@ -223,8 +280,8 @@ const BongShareDownload = () => {
   return (
     <>
       <SEOHead
-        title={`Download ${fileName} | Bong Bari`}
-        description={`Download ${fileName} (${formatBytes(fileSize)}) — shared via Bong Bari file transfer.`}
+        title={`Download ${fileName} | BongShare`}
+        description={`Download ${fileName} (${formatBytes(fileSize)}) — shared via BongShare by Bong Bari.`}
         url={`https://www.bongbari.com/s/${code}`}
       />
 
@@ -239,10 +296,10 @@ const BongShareDownload = () => {
             <button onClick={() => setLocation('/')} className="shrink-0 p-1.5 -ml-1 rounded-lg hover:bg-white/5 active:scale-90 transition-all" style={{ color: '#a89880' }}>
               <ArrowLeft className="w-4 h-4" />
             </button>
-            <h1 className="text-base sm:text-lg font-extrabold tracking-tighter text-white whitespace-nowrap">Bong Bari</h1>
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full ml-1" style={{ background: 'rgba(240,193,44,0.1)', border: '1px solid rgba(240,193,44,0.2)' }}>
-              <HardDrive className="w-2.5 h-2.5 shrink-0" style={{ color: '#f0c12c' }} />
-              <span className="text-[9px] font-extrabold uppercase tracking-[0.18em]" style={{ color: '#f0c12c' }}>File Transfer</span>
+            <h1 className="text-base sm:text-lg font-extrabold tracking-tighter text-white whitespace-nowrap">Bong<span style={{ color: '#f0c12c' }}>Share</span></h1>
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full ml-1" style={{ background: 'rgba(240,193,44,0.06)', border: '1px solid rgba(240,193,44,0.15)' }}>
+              <Zap className="w-2.5 h-2.5 shrink-0" style={{ color: '#f0c12c' }} />
+              <span className="text-[9px] font-extrabold uppercase tracking-[0.18em]" style={{ color: '#f0c12c' }}>Premium Transfer</span>
             </div>
           </div>
           {/* Right: SECURE DOWNLOAD premium badge */}
@@ -309,11 +366,12 @@ const BongShareDownload = () => {
                     </div>
                     <button
                       onClick={handleBundleDownloadZip}
-                      className="w-full h-11 rounded-xl font-extrabold text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.97] shadow-lg"
+                      disabled={zipActive}
+                      className="w-full h-11 rounded-xl font-extrabold text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed shadow-lg"
                       style={{ background: 'linear-gradient(135deg, #f0c12c, #e69520)', color: '#3d2e00', boxShadow: '0 4px 20px rgba(240,193,44,0.25)' }}
                     >
                       <Archive className="w-4 h-4" />
-                      Download All as ZIP
+                      {zipActive ? `Packaging… ${zipProgress}%` : 'Download All as ZIP'}
                     </button>
                   </div>
 
@@ -478,10 +536,15 @@ const BongShareDownload = () => {
         </motion.button>
 
         {/* ── FOOTER — clean, integrated with joke ticker ── */}
-        <footer className="flex-none flex items-center justify-center px-4 sm:px-6 py-2 border-t relative z-10" style={{ borderColor: 'rgba(255,255,255,0.04)', background: 'rgba(10,10,11,0.8)' }}>
+        <footer className="flex-none flex items-center justify-between px-4 sm:px-6 py-2.5 border-t relative z-10" style={{ borderColor: 'rgba(240,193,44,0.08)', background: 'linear-gradient(to right, rgba(10,10,11,0.95), rgba(15,12,8,0.95))' }}>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] font-extrabold tracking-[0.2em] uppercase" style={{ color: 'rgba(240,193,44,0.4)' }}>BongShare</span>
+            <span className="text-[8px]" style={{ color: 'rgba(255,255,255,0.1)' }}>|</span>
+            <span className="text-[8px] font-semibold tracking-wider uppercase" style={{ color: 'rgba(255,255,255,0.15)' }}>by Bong Bari</span>
+          </div>
           <AnimatePresence mode="wait">
             <motion.p key={currentJoke} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.35 }}
-              className="text-[11px] font-semibold italic truncate text-center" style={{ color: '#f0c12c' }}>
+              className="text-[10px] font-semibold italic truncate text-right max-w-[60%]" style={{ color: '#f0c12c' }}>
               {currentJoke}
             </motion.p>
           </AnimatePresence>

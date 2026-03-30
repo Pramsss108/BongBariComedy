@@ -91,8 +91,8 @@ const BongShareP2P = () => {
   return (
     <>
       <SEOHead
-        title="Bong Share P2P | Receiving File"
-        description="Receive a file directly via P2P. No servers involved."
+        title="BongShare P2P | Receiving File"
+        description="Receive a file directly via BongShare P2P. No servers involved."
         url="https://www.bongbari.com/p/"
       />
 
@@ -105,7 +105,7 @@ const BongShareP2P = () => {
             <button onClick={() => setLocation('/tools/share')} className="shrink-0 p-2 -ml-1 rounded-lg hover:bg-white/5 active:scale-90 transition-all text-[#d1c5ad]" aria-label="Go to Bong Share">
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <h1 className="text-lg sm:text-xl font-extrabold tracking-tighter text-white whitespace-nowrap">Bong Share</h1>
+            <h1 className="text-lg sm:text-xl font-extrabold tracking-tighter text-white whitespace-nowrap">Bong<span style={{ color: '#f0c12c' }}>Share</span></h1>
             <div className="h-4 w-px bg-white/10 hidden sm:block shrink-0" />
             <p className="hidden sm:block text-[10px] uppercase tracking-[0.2em] text-[#40ceed] font-semibold whitespace-nowrap">P2P Transfer</p>
           </div>
@@ -162,8 +162,9 @@ const BongShareP2P = () => {
           </AnimatePresence>
         </main>
 
-        <footer className="flex-none w-full py-3 sm:py-4 flex justify-center border-t border-white/5 relative z-10">
-          <p className="text-[9px] font-bold tracking-[0.3em] text-[#d1c5ad]/30 uppercase text-center px-4">Direct browser-to-browser transfer by Bong Bari</p>
+        <footer className="flex-none w-full py-3 sm:py-4 flex justify-between items-center px-4 sm:px-6 border-t relative z-10" style={{ borderColor: 'rgba(240,193,44,0.08)' }}>
+          <span className="text-[9px] font-extrabold tracking-[0.2em] uppercase" style={{ color: 'rgba(240,193,44,0.4)' }}>BongShare</span>
+          <p className="text-[9px] font-bold tracking-[0.2em] text-[#d1c5ad]/30 uppercase">Browser-to-Browser · E2E Encrypted</p>
         </footer>
       </div>
     </>

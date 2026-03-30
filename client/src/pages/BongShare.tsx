@@ -311,8 +311,8 @@ const BongShare = () => {
   return (
     <>
       <SEOHead
-        title="Bong Share | The Ethereal Terminal"
-        description="High-speed premium file sharing by Bong Bari. P2P or Link — send anything. No stress."
+        title="BongShare | The Ethereal Terminal"
+        description="Premium file sharing by Bong Bari. P2P or Link — send anything. No stress."
         url="https://www.bongbari.com/tools/share"
       />
 
@@ -326,7 +326,7 @@ const BongShare = () => {
             <button onClick={() => setLocation('/tools')} className="shrink-0 p-2 -ml-1 rounded-lg hover:bg-white/5 active:scale-90 transition-all text-[#d1c5ad]" aria-label="Back to tools">
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <h1 className="text-lg sm:text-xl font-extrabold tracking-tighter text-white whitespace-nowrap">Bong Bari</h1>
+            <h1 className="text-lg sm:text-xl font-extrabold tracking-tighter text-white whitespace-nowrap">Bong<span style={{ color: '#f0c12c' }}>Share</span></h1>
             <div className="h-4 w-px bg-white/10 hidden sm:block shrink-0" />
             <p className="hidden sm:block text-[10px] uppercase tracking-[0.2em] text-[#d1c5ad] font-semibold whitespace-nowrap">The Ethereal Terminal</p>
           </div>
@@ -663,8 +663,13 @@ const BongShare = () => {
         </div>
 
         {/* ── Footer ── */}
-        <footer className="flex-none w-full py-3 sm:py-4 flex justify-center border-t border-white/5 relative z-10">
-          <p className="text-[9px] font-bold tracking-[0.3em] text-[#d1c5ad]/30 uppercase text-center px-4">P2P: instant, zero-server • Link: download anytime</p>
+        <footer className="flex-none w-full py-3 sm:py-4 flex justify-between items-center px-4 sm:px-6 border-t relative z-10" style={{ borderColor: 'rgba(240,193,44,0.08)' }}>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] font-extrabold tracking-[0.2em] uppercase" style={{ color: 'rgba(240,193,44,0.4)' }}>BongShare</span>
+            <span className="text-[8px]" style={{ color: 'rgba(255,255,255,0.08)' }}>|</span>
+            <span className="text-[8px] font-semibold tracking-wider uppercase" style={{ color: 'rgba(255,255,255,0.15)' }}>by Bong Bari</span>
+          </div>
+          <p className="text-[9px] font-bold tracking-[0.2em] text-[#d1c5ad]/30 uppercase">P2P · Link · Bundle</p>
         </footer>
       </div>
     </>

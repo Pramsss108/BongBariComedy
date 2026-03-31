@@ -633,6 +633,137 @@ async function executeInstagramEmbedScrape(url: string): Promise<any> {
 }
 
 // ==========================================
+// INSTAGRAM MOBILE API (Server-Side, No Extension Needed)
+// Uses the same endpoint the Instagram Android app uses.
+// Works for public posts — no browser nodes or extensions required.
+// ==========================================
+function shortcodeToMediaId(shortcode: string): string {
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+    let id = BigInt(0);
+    for (const c of shortcode) {
+        const idx = alphabet.indexOf(c);
+        if (idx < 0) continue;
+        id = id * BigInt(64) + BigInt(idx);
+    }
+    return id.toString();
+}
+
+async function executeInstagramMobileAPI(url: string): Promise<any> {
+    console.log('[IG Mobile API] Hitting Instagram Android API for:', url);
+
+    const scMatch = url.match(/\/(p|reel|reels|tv)\/([A-Za-z0-9_-]+)/);
+    if (!scMatch) throw new Error('IG Mobile API: Could not extract shortcode from URL');
+    const shortcode = scMatch[2];
+    const mediaId = shortcodeToMediaId(shortcode);
+
+    // Rotate fake device IDs to reduce per-device rate limiting
+    const fakeDeviceId = crypto.randomBytes(8).toString('hex').replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4');
+    const fakeAndroidId = `android-${crypto.randomBytes(4).toString('hex')}`;
+
+    const apiRes = await axios.get(
+        `https://i.instagram.com/api/v1/media/${mediaId}/info/`,
+        {
+            headers: {
+                'User-Agent': 'Instagram/269.0.0.18.75 (Linux; U; Android 14; en_US; Pixel 8; Build/UD1A.231105.004; Cronet/113.0.5672.163) AppleWebKit/537.36',
+                'X-IG-App-ID': '936619743392459',
+                'X-IG-Device-ID': fakeDeviceId,
+                'X-IG-Android-ID': fakeAndroidId,
+                'Accept-Language': 'en-US',
+                'Accept': 'application/json',
+            },
+            timeout: 12000,
+        }
+    );
+
+    const item = apiRes.data?.items?.[0];
+    if (!item) throw new Error('IG Mobile API: Empty response or no items');
+
+    // Video versions are sorted best-first
+    const videoVersions: any[] = item.video_versions || [];
+    if (videoVersions.length === 0) throw new Error('IG Mobile API: No video_versions in response (may be image post)');
+
+    const best = videoVersions[0];
+    const formats = videoVersions.map((v: any, i: number) => ({
+        ext: 'mp4',
+        height: v.height || (i === 0 ? 1080 : 720),
+        url: v.url,
+        id: `mp4-${v.height || (i === 0 ? 1080 : 720)}`,
+        label: `MP4 ${v.height || (i === 0 ? 1080 : 720)}p`,
+    }));
+
+    const caption = item.caption?.text?.slice(0, 100) || 'Instagram Video';
+    const thumbnail = item.image_versions2?.candidates?.[0]?.url || null;
+
+    return {
+        engine: 'Layer IG-MobileAPI: Instagram Android API (Server-Side)',
+        video_url: best.url,
+        title: caption,
+        duration: item.video_duration || 0,
+        thumbnail,
+        formats,
+    };
+}
+
+// ==========================================
+// TIKTOK NWATERMARK API — Competitor-grade, Server-Side
+// Hits TikTok's internal aweme API to get playAddr (no watermark).
+// ==========================================
+async function executeTikTokNoWatermark(url: string): Promise<any> {
+    console.log('[TikTok NWM] Hitting TikTok aweme API for:', url);
+
+    // Step 1: Resolve short URL / extract video ID
+    let resolvedUrl = url;
+    if (url.includes('vm.tiktok.com') || url.includes('/t/')) {
+        // Follow redirects to get full URL with video ID
+        const redir = await axios.get(url, {
+            maxRedirects: 5,
+            timeout: 8000,
+            headers: { 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15' },
+        });
+        resolvedUrl = redir.request?.res?.responseUrl || redir.config?.url || url;
+    }
+
+    const videoIdMatch = resolvedUrl.match(/video\/(\d+)/);
+    if (!videoIdMatch) throw new Error('TikTok NWM: Could not extract video ID from URL');
+    const videoId = videoIdMatch[1];
+
+    // Step 2: Hit TikTok's internal API (same as the app)
+    const apiRes = await axios.get(
+        `https://api16-normal-c-useast1a.tiktokv.com/aweme/v1/aweme/detail/?aweme_id=${videoId}`,
+        {
+            headers: {
+                'User-Agent': 'com.ss.android.ugc.trill/2613 (Linux; U; Android 10; en_US; Pixel 4; Build/QQ3A.200805.001; Cronet/58.0.2991.0)',
+                'X-SS-TC': '0',
+                'Accept': 'application/json',
+            },
+            timeout: 12000,
+        }
+    );
+
+    const aweme = apiRes.data?.aweme_detail;
+    if (!aweme) throw new Error('TikTok NWM: No aweme_detail in response');
+
+    // play_addr is the no-watermark URL; download_addr has watermark
+    const playUrl = aweme.video?.play_addr?.url_list?.[0]
+        || aweme.video?.download_addr?.url_list?.[0];
+    if (!playUrl) throw new Error('TikTok NWM: No video URL in aweme response');
+
+    const title = aweme.desc?.slice(0, 100) || 'TikTok Video';
+    const thumbnail = aweme.video?.cover?.url_list?.[0] || null;
+
+    return {
+        engine: 'Layer TT-NWM: TikTok Aweme API (No Watermark)',
+        video_url: playUrl,
+        title,
+        duration: Math.round((aweme.video?.duration || 0) / 1000),
+        thumbnail,
+        formats: [
+            { ext: 'mp4', height: aweme.video?.height || 720, url: playUrl, id: 'mp4-720', label: 'MP4 720p (No Watermark)' },
+        ],
+    };
+}
+
+// ==========================================
 // PHRASE 3 FALLBACK: TikTok oEmbed + Embed Scrape (Free)
 // Uses TikTok's public oEmbed API for metadata, then tries to extract video
 // ==========================================
@@ -1116,7 +1247,16 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
           }
 
           if (isTikTok) {
-              // TikTok: oEmbed + embed scrape (free)
+              // TikTok Step A: aweme API (no-watermark, same endpoint the app uses)
+              try {
+                  const resNwm = await executeTikTokNoWatermark(url);
+                  metaCache.set(url, { data: resNwm, expires: Date.now() + 60000 });
+                  return resNwm;
+              } catch (eNwm: any) {
+                  console.log(`[Smart Fallback] TikTok NWM API failed (${eNwm.message}), cascading to embed scrape...`);
+              }
+
+              // TikTok Step B: oEmbed + embed scrape (free)
               try {
                   const resTt = await executeTikTokFallback(url);
                   metaCache.set(url, { data: resTt, expires: Date.now() + 60000 });
@@ -1127,13 +1267,13 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
           }
 
           if (isInstagram) {
-              // Instagram Step A: P2P residential tunnel (permanent, unpatchable)
+              // Instagram Step A: Mobile API (same endpoint Instagram Android app uses, server-side, no extension)
               try {
-                  const resP2P = await executeP2PInstagramTunnel(url);
-                  metaCache.set(url, { data: resP2P, expires: Date.now() + 60000 });
-                  return resP2P;
-              } catch (eP2P: any) {
-                  console.log(`[Smart Fallback] P2P tunnel failed (${eP2P.message}), cascading to embed scrape...`);
+                  const resMob = await executeInstagramMobileAPI(url);
+                  metaCache.set(url, { data: resMob, expires: Date.now() + 60000 });
+                  return resMob;
+              } catch (eMob: any) {
+                  console.log(`[Smart Fallback] IG Mobile API failed (${eMob.message}), cascading to embed scrape...`);
               }
 
               // Instagram Step B: Direct embed scrape (free, no login needed)

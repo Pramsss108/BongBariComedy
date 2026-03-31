@@ -220,6 +220,8 @@ jobs:
             echo "=== BongBari Oracle Deploy ==="
             cd ~/bongbari
             npm ci --omit=dev 2>&1 | tail -5
+            # Ensure runtime-required packages present (not in package.json root but needed by dist/index.js)
+            npm install --no-save drizzle-orm xml2js 2>&1 | tail -3
 
             # Main Express server
             pm2 restart bongbari || pm2 start dist/index.js --name bongbari

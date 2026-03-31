@@ -50,6 +50,7 @@ if [ "$PKG" = "dnf" ]; then
   sudo firewall-cmd --permanent --add-service=https 2>/dev/null || true
   sudo firewall-cmd --permanent --add-service=ssh 2>/dev/null || true
   sudo firewall-cmd --permanent --add-port=5000/tcp 2>/dev/null || true
+  sudo firewall-cmd --permanent --add-port=8080/tcp 2>/dev/null || true
   sudo firewall-cmd --reload 2>/dev/null || true
 else
   sudo apt-get update -y
@@ -57,6 +58,7 @@ else
   sudo iptables -I INPUT -p tcp --dport 80 -j ACCEPT
   sudo iptables -I INPUT -p tcp --dport 443 -j ACCEPT
   sudo iptables -I INPUT -p tcp --dport 5000 -j ACCEPT
+  sudo iptables -I INPUT -p tcp --dport 8080 -j ACCEPT
   sudo netfilter-persistent save
 fi
 

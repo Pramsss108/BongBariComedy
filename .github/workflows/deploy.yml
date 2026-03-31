@@ -199,6 +199,16 @@ jobs:
           scp -i /tmp/oracle_key -o StrictHostKeyChecking=no \
             dist/index.js opc@"$ORACLE_HOST":~/bongbari/dist/index.js
 
+          # Copy the proxy engine (standalone .mjs, no build needed)
+          ssh -i /tmp/oracle_key -o StrictHostKeyChecking=no opc@"$ORACLE_HOST" 'mkdir -p ~/bongbari/server/proxy-engine'
+          scp -i /tmp/oracle_key -o StrictHostKeyChecking=no \
+            server/proxy-engine/server.mjs opc@"$ORACLE_HOST":~/bongbari/server/proxy-engine/server.mjs
+          # Copy proxies.txt if it exists
+          if [ -f server/proxy-engine/proxies.txt ]; then
+            scp -i /tmp/oracle_key -o StrictHostKeyChecking=no \
+              server/proxy-engine/proxies.txt opc@"$ORACLE_HOST":~/bongbari/server/proxy-engine/proxies.txt
+          fi
+
           # Also sync package.json + package-lock.json for npm ci
           scp -i /tmp/oracle_key -o StrictHostKeyChecking=no \
             package.json package-lock.json opc@"$ORACLE_HOST":~/bongbari/
@@ -210,7 +220,13 @@ jobs:
             echo "=== BongBari Oracle Deploy ==="
             cd ~/bongbari
             npm ci --omit=dev 2>&1 | tail -5
+
+            # Main Express server
             pm2 restart bongbari || pm2 start dist/index.js --name bongbari
+
+            # CORS Proxy Engine (port 8080)
+            pm2 restart bongbari-proxy || pm2 start server/proxy-engine/server.mjs --name bongbari-proxy
+
             pm2 save
             echo "=== Deploy complete ==="
             pm2 list

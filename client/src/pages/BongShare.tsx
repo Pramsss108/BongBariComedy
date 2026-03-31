@@ -84,6 +84,18 @@ function formatBytes(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
+function formatDuration(totalSeconds: number): string {
+  if (totalSeconds < 1) return '<1s';
+  const s = Math.round(totalSeconds);
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  if (m < 60) return sec > 0 ? `${m}m ${sec}s` : `${m}m`;
+  const h = Math.floor(m / 60);
+  const min = m % 60;
+  return min > 0 ? `${h}h ${min}m` : `${h}h`;
+}
+
 /* ── Premium card style (ultra-subtle dark) ── */
 const glassStyle = {
   background: 'rgba(255,255,255,0.02)',
@@ -1174,7 +1186,7 @@ const BongShare = () => {
                           <span>{formatBytes(chunkInfo.bytesUploaded)} / {formatBytes(chunkInfo.totalBytes)}</span>
                           {chunkInfo.speed > 0 && <span>{formatBytes(chunkInfo.speed)}/s</span>}
                           {chunkInfo.speed > 0 && chunkInfo.bytesUploaded > 0 && (
-                            <span>~{Math.ceil((chunkInfo.totalBytes - chunkInfo.bytesUploaded) / chunkInfo.speed)}s</span>
+                            <span>~{formatDuration(Math.ceil((chunkInfo.totalBytes - chunkInfo.bytesUploaded) / chunkInfo.speed))}</span>
                           )}
                         </div>
                       )}

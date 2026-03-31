@@ -29,6 +29,19 @@ function formatBytes(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
+/** Format seconds into human-readable duration: "45s", "2m 15s", "1h 5m" */
+function formatDuration(totalSeconds: number): string {
+  if (totalSeconds < 1) return '<1s';
+  const s = Math.round(totalSeconds);
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  if (m < 60) return sec > 0 ? `${m}m ${sec}s` : `${m}m`;
+  const h = Math.floor(m / 60);
+  const min = m % 60;
+  return min > 0 ? `${h}h ${min}m` : `${h}h`;
+}
+
 const DOWNLOAD_JOKES = [
   '"Bong Bari theke file niccho — taste e Bengali, speed e rocket." 🚀',
   '"Download e kono ad nai — just pure bong vibes." ✨',
@@ -236,6 +249,15 @@ const BongShareDownload = () => {
   const [chunkProgress, setChunkProgress] = useState(0);
   const [chunkActive, setChunkActive] = useState(false);
   const [chunkPhase, setChunkPhase] = useState('');
+  /** Per-chunk segment progress: array of 0-100 values, one per chunk */
+  const [segmentProgress, setSegmentProgress] = useState<number[]>([]);
+  /** Download speed in bytes/sec */
+  const [downloadSpeed, setDownloadSpeed] = useState(0);
+  /** Download finished flag (to show completion UI) */
+  const [downloadDone, setDownloadDone] = useState(false);
+  const [savedViaStream, setSavedViaStream] = useState(false);
+  /** Total bytes downloaded for display */
+  const [totalDownloaded, setTotalDownloaded] = useState(0);
 
   /** Fetch a single chunk with validation + retry (3 attempts, exponential backoff) */
   const fetchChunkWithRetry = async (url: string, partNum: number, totalParts: number): Promise<Response> => {
@@ -296,70 +318,124 @@ const BongShareDownload = () => {
 
     setChunkActive(true);
     setChunkProgress(0);
-    setChunkPhase('Starting download…');
+    setChunkPhase('Preparing download…');
+    setDownloadDone(false);
+    setSavedViaStream(false);
+    setDownloadSpeed(0);
+    setTotalDownloaded(0);
+    // Initialize segment progress: all zeros
+    setSegmentProgress(new Array(totalParts).fill(0));
     const startTime = Date.now();
     let totalBytesDownloaded = 0;
+    // Expected bytes per chunk (80MB except last which may be smaller)
+    const CHUNK_SIZE = 80 * 1024 * 1024;
+    const expectedChunkSizes = Array.from({ length: totalParts }, (_, i) => {
+      if (i < totalParts - 1) return CHUNK_SIZE;
+      // last chunk: remainder
+      const remainder = fileSize % CHUNK_SIZE;
+      return remainder === 0 ? CHUNK_SIZE : remainder;
+    });
 
     try {
       if ('showSaveFilePicker' in window) {
         // ── STREAMING PATH (Chrome/Edge) — zero RAM, works for 100GB+ ──
+        // Pre-fetch next chunk while writing current one for speed overlap
         const fileHandle = await (window as any).showSaveFilePicker({ suggestedName: fileName });
         const writable = await fileHandle.createWritable();
-        // writable is open — MUST call close() on success or abort() on failure
         let streamSuccess = false;
         try {
+          let prefetched: Promise<Response> | null = null;
           for (let i = 0; i < totalParts; i++) {
-            setChunkPhase(`Downloading part ${i + 1} of ${totalParts}… (${formatBytes(totalBytesDownloaded)} / ${formatBytes(fileSize)})`);
-            const response = await fetchChunkWithRetry(getChunkUrl(i), i + 1, totalParts);
+            setChunkPhase(`Downloading ${formatBytes(totalBytesDownloaded)} / ${formatBytes(fileSize)}`);
+            // Use pre-fetched response or fetch fresh
+            const response = prefetched
+              ? await prefetched
+              : await fetchChunkWithRetry(getChunkUrl(i), i + 1, totalParts);
+            // Pre-fetch next chunk NOW (overlap network + disk write)
+            prefetched = (i + 1 < totalParts)
+              ? fetchChunkWithRetry(getChunkUrl(i + 1), i + 2, totalParts)
+              : null;
             if (!response.body) throw new Error(`Part ${i + 1} — server returned empty body. Try again.`);
             const reader = response.body.getReader();
+            let chunkBytes = 0;
             for (;;) {
               const { done, value } = await reader.read();
               if (done) break;
               await writable.write(value);
               totalBytesDownloaded += value.byteLength;
+              chunkBytes += value.byteLength;
+              const segPct = Math.min(100, Math.round((chunkBytes / expectedChunkSizes[i]) * 100));
+              setSegmentProgress(prev => { const next = [...prev]; next[i] = segPct; return next; });
+              const elapsed = (Date.now() - startTime) / 1000;
+              if (elapsed > 0.5) setDownloadSpeed(totalBytesDownloaded / elapsed);
+              setTotalDownloaded(totalBytesDownloaded);
             }
+            setSegmentProgress(prev => { const next = [...prev]; next[i] = 100; return next; });
             const elapsed = (Date.now() - startTime) / 1000;
             const speed = totalBytesDownloaded / elapsed;
-            const remaining = fileSize > 0 ? Math.max(0, Math.round((fileSize - totalBytesDownloaded) / speed)) : 0;
+            const remaining = fileSize > 0 ? Math.max(0, (fileSize - totalBytesDownloaded) / speed) : 0;
             setChunkProgress(Math.round(((i + 1) / totalParts) * 100));
-            setChunkPhase(`Part ${i + 1}/${totalParts} done · ${formatBytes(totalBytesDownloaded)} · ~${remaining}s left`);
+            setChunkPhase(`${formatBytes(totalBytesDownloaded)} / ${formatBytes(fileSize)} · ${formatBytes(speed)}/s · ~${formatDuration(remaining)} left`);
           }
-          // All parts done — seal the file
           await writable.close();
           streamSuccess = true;
-          setChunkPhase(`✅ Download complete — ${formatBytes(fileSize)} saved!`);
+          const totalTime = (Date.now() - startTime) / 1000;
+          const avgSpeed = totalBytesDownloaded / totalTime;
+          setChunkPhase(`✅ ${formatBytes(fileSize)} saved · ${formatDuration(totalTime)} · avg ${formatBytes(avgSpeed)}/s`);
+          setSavedViaStream(true);
+          setDownloadDone(true);
         } finally {
-          // If anything threw, abort removes the 0-byte ghost file from disk
           if (!streamSuccess) {
             try { await writable.abort(); } catch { /* ignore */ }
           }
         }
       } else {
-        // ── MEMORY BUFFER PATH (Firefox / Safari) ──
-        if (fileSize > 100 * 1024 * 1024) {
-          setChunkPhase(`Downloading ${formatBytes(fileSize)} — large file, please wait…`);
-        }
-        const blobs: Blob[] = [];
-        for (let i = 0; i < totalParts; i++) {
-          setChunkPhase(`Downloading part ${i + 1} of ${totalParts}… (${formatBytes(totalBytesDownloaded)} / ${formatBytes(fileSize)})`);
-          const response = await fetchChunkWithRetry(getChunkUrl(i), i + 1, totalParts);
+        // ── MEMORY BUFFER PATH (Firefox / Safari) — parallel download (3 concurrent) ──
+        const CONCURRENT = 3;
+        const results: Blob[] = new Array(totalParts);
+        let completedChunks = 0;
+
+        const downloadOneChunk = async (idx: number) => {
+          setChunkPhase(`Downloading ${formatBytes(totalBytesDownloaded)} / ${formatBytes(fileSize)}`);
+          const response = await fetchChunkWithRetry(getChunkUrl(idx), idx + 1, totalParts);
           const blob = await response.blob();
           if (blob.size < 1024 && fileSize > 10000) {
-            throw new Error(`Part ${i + 1} returned 0 bytes — server or network issue. Restart dev server and retry.`);
+            throw new Error(`Part ${idx + 1} returned 0 bytes — server or network issue.`);
           }
-          blobs.push(blob);
+          results[idx] = blob;
           totalBytesDownloaded += blob.size;
-          setChunkProgress(Math.round(((i + 1) / totalParts) * 100));
-        }
-        setChunkPhase('Merging parts…');
-        const merged = new Blob(blobs);
+          completedChunks++;
+          setSegmentProgress(prev => { const next = [...prev]; next[idx] = 100; return next; });
+          setTotalDownloaded(totalBytesDownloaded);
+          const elapsed = (Date.now() - startTime) / 1000;
+          if (elapsed > 0.5) setDownloadSpeed(totalBytesDownloaded / elapsed);
+          const speed = elapsed > 0 ? totalBytesDownloaded / elapsed : 0;
+          const remaining = speed > 0 ? (fileSize - totalBytesDownloaded) / speed : 0;
+          setChunkProgress(Math.round((completedChunks / totalParts) * 100));
+          setChunkPhase(`${formatBytes(totalBytesDownloaded)} / ${formatBytes(fileSize)} · ${formatBytes(speed)}/s · ~${formatDuration(remaining)} left`);
+        };
+
+        // Worker pool: N workers pull from a shared queue
+        const queue = Array.from({ length: totalParts }, (_, i) => i);
+        const workers = Array.from({ length: Math.min(CONCURRENT, totalParts) }, async () => {
+          while (queue.length > 0) {
+            const idx = queue.shift()!;
+            await downloadOneChunk(idx);
+          }
+        });
+        await Promise.all(workers);
+
+        setChunkPhase('Merging…');
+        const merged = new Blob(results);
         const url = URL.createObjectURL(merged);
         const a = document.createElement('a');
         a.href = url; a.download = fileName;
         document.body.appendChild(a); a.click();
         setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
-        setChunkPhase(`✅ Download complete — ${formatBytes(fileSize)} saved!`);
+        const totalTime = (Date.now() - startTime) / 1000;
+        const avgSpeed = totalBytesDownloaded / totalTime;
+        setChunkPhase(`✅ ${formatBytes(fileSize)} saved · ${formatDuration(totalTime)} · avg ${formatBytes(avgSpeed)}/s`);
+        setDownloadDone(true);
       }
     } catch (err: any) {
       setChunkPhase(`❌ ${err.message}`);
@@ -569,27 +645,114 @@ const BongShareDownload = () => {
                   {/* ── CHUNKED DOWNLOAD ── */}
                   {isChunked ? (
                     <div className="w-full flex flex-col gap-3">
-                      <div className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl" style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.15)' }}>
-                        <Clock className="w-4 h-4 shrink-0" style={{ color: '#f59e0b' }} />
-                        <p className="text-[11px] font-medium" style={{ color: '#fbbf24' }}>File is split into {chunkNames?.length ?? chunkUrls?.length} parts — merged automatically on download &mdash; link valid for 6 days</p>
-                      </div>
-                      {chunkActive && (
+                      {/* Info banner — no mention of "parts" or "chunks" to user */}
+                      {!downloadDone && !chunkActive && (
+                        <div className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl" style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.15)' }}>
+                          <Clock className="w-4 h-4 shrink-0" style={{ color: '#f59e0b' }} />
+                          <p className="text-[11px] font-medium" style={{ color: '#fbbf24' }}>Link valid for <strong>6 days</strong> — download before it expires!</p>
+                        </div>
+                      )}
+                      {/* Active download: segmented progress bar */}
+                      {chunkActive && segmentProgress.length > 0 && (
                         <div className="w-full flex flex-col gap-2">
+                          {/* Speed + size info */}
                           <div className="flex justify-between items-center text-[10px] font-mono" style={{ color: 'rgba(64,206,237,0.7)' }}>
                             <span>{chunkPhase}</span>
-                            <span>{chunkProgress}%</span>
+                            {downloadSpeed > 0 && <span>{formatBytes(downloadSpeed)}/s</span>}
                           </div>
-                          <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                            <div className="h-full rounded-full bg-[#40ceed] transition-all duration-300" style={{ width: `${chunkProgress}%` }} />
+                          {/* Segmented progress bar — one segment per chunk */}
+                          <div className="w-full flex gap-[2px] h-2.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                            {segmentProgress.map((pct, idx) => (
+                              <div
+                                key={idx}
+                                className="h-full relative overflow-hidden"
+                                style={{
+                                  flex: 1,
+                                  borderRadius: idx === 0 ? '9999px 0 0 9999px' : idx === segmentProgress.length - 1 ? '0 9999px 9999px 0' : '0',
+                                }}
+                              >
+                                {/* Segment background (dark) */}
+                                <div className="absolute inset-0" style={{ background: 'rgba(255,255,255,0.03)' }} />
+                                {/* Segment fill */}
+                                <div
+                                  className="absolute inset-y-0 left-0 transition-all duration-200"
+                                  style={{
+                                    width: `${pct}%`,
+                                    background: pct >= 100
+                                      ? 'linear-gradient(135deg, #10b981, #34d399)'
+                                      : pct > 0
+                                        ? 'linear-gradient(135deg, #40ceed, #3b82f6)'
+                                        : 'transparent',
+                                    boxShadow: pct > 0 && pct < 100 ? '0 0 8px rgba(64,206,237,0.4)' : 'none',
+                                  }}
+                                />
+                                {/* Thin separator line between segments */}
+                                {idx < segmentProgress.length - 1 && (
+                                  <div className="absolute top-0 right-0 w-[1px] h-full" style={{ background: 'rgba(255,255,255,0.08)' }} />
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                          {/* Overall percentage */}
+                          <div className="flex justify-between items-center text-[9px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                            <span>{formatBytes(totalDownloaded)} / {formatBytes(fileSize)}</span>
+                            <span>{chunkProgress}%</span>
                           </div>
                         </div>
                       )}
-                      <button onClick={handleChunkedDownload} disabled={chunkActive}
-                        className="w-full h-13 sm:h-14 rounded-xl font-extrabold text-sm uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed shadow-lg"
-                        style={{ background: 'linear-gradient(135deg, #f0c12c, #e69520)', color: '#3d2e00' }}>
-                        <Download className="w-5 h-5" />
-                        {chunkActive ? chunkPhase : 'Download Now'}
-                      </button>
+                      {/* Download complete state */}
+                      {downloadDone && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="w-full flex flex-col gap-2.5"
+                        >
+                          {/* Success banner */}
+                          <div className="w-full flex items-center gap-2.5 px-3 py-3 rounded-xl" style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}>
+                            <ShieldCheck className="w-5 h-5 shrink-0" style={{ color: '#10b981' }} />
+                            <div className="min-w-0">
+                              <p className="text-[12px] font-bold" style={{ color: '#34d399' }}>Download complete</p>
+                              <p className="text-[10px] mt-0.5 truncate" style={{ color: 'rgba(110,231,183,0.6)' }}>
+                                {chunkPhase.replace('✅ ', '')}
+                              </p>
+                            </div>
+                          </div>
+                          {/* Tip: where to find the file */}
+                          <div className="w-full flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background: 'rgba(64,206,237,0.05)', border: '1px solid rgba(64,206,237,0.1)' }}>
+                            <HardDrive className="w-3.5 h-3.5 shrink-0" style={{ color: '#40ceed' }} />
+                            <p className="text-[10px]" style={{ color: 'rgba(64,206,237,0.6)' }}>
+                              {savedViaStream
+                                ? <>File saved to your chosen location &middot; <strong>{fileName}</strong></>
+                                : <>Check your <strong>Downloads</strong> folder for <strong>{fileName}</strong></>}
+                            </p>
+                          </div>
+                          {/* Completed segmented bar (all green) */}
+                          <div className="w-full flex gap-[2px] h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                            {segmentProgress.map((_, idx) => (
+                              <div key={idx} className="h-full" style={{ flex: 1, background: 'linear-gradient(135deg, #10b981, #34d399)', borderRadius: idx === 0 ? '9999px 0 0 9999px' : idx === segmentProgress.length - 1 ? '0 9999px 9999px 0' : '0' }} />
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                      {/* Download button (hidden when done) */}
+                      {!downloadDone && (
+                        <button onClick={handleChunkedDownload} disabled={chunkActive}
+                          className="w-full h-13 sm:h-14 rounded-xl font-extrabold text-sm uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed shadow-lg"
+                          style={{ background: 'linear-gradient(135deg, #f0c12c, #e69520)', color: '#3d2e00' }}>
+                          <Download className="w-5 h-5" />
+                          {chunkActive ? `${chunkProgress}% · ${formatBytes(downloadSpeed)}/s` : 'Download Now'}
+                        </button>
+                      )}
+                      {/* Download again button (shown when done) */}
+                      {downloadDone && (
+                        <button
+                          onClick={() => { setDownloadDone(false); setChunkProgress(0); setSegmentProgress([]); handleChunkedDownload(); }}
+                          className="w-full h-11 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.97]"
+                          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }}>
+                          <Download className="w-4 h-4" />
+                          Download Again
+                        </button>
+                      )}
                     </div>
                   ) : isDirect && downloadUrl ? (
                     /* Catbox / Litterbox → direct download */

@@ -21,6 +21,7 @@ import { HttpsProxyAgent } from "https-proxy-agent";
 // @ts-ignore
 import ffmpegPath from "ffmpeg-static";
 import { ProxyKitchen } from '../proxyService.js';
+import { proxyThroughTunnel, getTunnelPoolSize } from '../p2pTunnel.js';
 
 const previewNodes = [
   "http://78.47.104.43:9000/",
@@ -234,6 +235,10 @@ const ALLOWED_HOSTS = new Set([
   "mobile.twitter.com",
   "x.com",
   "www.x.com",
+  // LinkedIn (Phrase 11) — Cobalt + yt-dlp fallback
+  "linkedin.com",
+  "www.linkedin.com",
+  "in.linkedin.com",
 ]);
 
 function validateVideoUrl(rawUrl: string): { ok: true; url: string } | { ok: false; error: string } {
@@ -248,7 +253,7 @@ function validateVideoUrl(rawUrl: string): { ok: true; url: string } | { ok: fal
   if (!ALLOWED_HOSTS.has(host)) {
     return {
       ok: false,
-      error: `Platform not supported. We support YouTube, Instagram, Facebook, TikTok, and Twitter/X.` };
+      error: `Platform not supported. We support YouTube, Instagram, Facebook, TikTok, Twitter/X, and LinkedIn.` };
   }
   return { ok: true, url: rawUrl.trim() };
 }
@@ -472,6 +477,95 @@ async function executePhase5_ExpansionA(url: string): Promise<any> {
 }
 
 // ==========================================
+// PERMANENT LAYER: P2P Residential Tunnel (Free, unpatchable)
+// Routes the fetch() through a connected user's real home IP.
+// Meta sees a genuine residential request — impossible to block at scale.
+// Falls through gracefully if no browser nodes are available.
+// ==========================================
+async function executeP2PInstagramTunnel(url: string): Promise<any> {
+    const poolSize = getTunnelPoolSize();
+    if (poolSize === 0) {
+        throw new Error('P2P_NO_NODES: No browser proxy nodes in pool — waiting for users');
+    }
+    console.log(`[P2P] Routing IG request through residential tunnel. Pool size: ${poolSize}`);
+
+    // Extract shortcode
+    const scMatch = url.match(/\/(p|reel|reels|tv)\/([A-Za-z0-9_-]+)/);
+    if (!scMatch) throw new Error('P2P: Could not extract shortcode from URL');
+    const shortcode = scMatch[2];
+
+    // Attempt 1: Hit the embed/captioned endpoint — this is dependency-locked (Meta cannot
+    // break embedding without destroying WordPress/Squarespace/every CMS on earth)
+    const embedUrl = `https://www.instagram.com/p/${shortcode}/embed/captioned/`;
+    const embedResult = await proxyThroughTunnel(embedUrl, {
+        'x-ig-app-id': '936619743392459',
+        'Accept': 'text/html,application/xhtml+xml',
+        'Accept-Language': 'en-US,en;q=0.9',
+    });
+
+    if (embedResult.status === 200) {
+        const html = embedResult.body.toString('utf8');
+
+        // Deep parse the additionalDataLoaded JSON payload that Instagram's embed page
+        // injects inline — this is the most reliable extraction path.
+        const additionalDataMatch = html.match(/window\.__additionalDataLoaded[\s\S]{0,50}(\{[\s\S]+?\})\s*\)\s*;/)
+            || html.match(/additionalDataLoaded[^(]*\([^,]+,\s*(\{[\s\S]+?\})\s*\)/);
+
+        if (additionalDataMatch) {
+            try {
+                const data = JSON.parse(additionalDataMatch[1]);
+                // Navigate nested structure: data.graphql.shortcode_media, or data.items[0]
+                const media = data?.graphql?.shortcode_media
+                    || data?.items?.[0]
+                    || data?.shortcode_media;
+
+                if (media?.video_url) {
+                    const title = media.edge_media_to_caption?.edges?.[0]?.node?.text?.slice(0, 100)
+                        || `Instagram ${media.product_type || 'Video'}`;
+                    const formats = [
+                        { ext: 'mp4', height: media.dimensions?.height || 720, url: media.video_url, id: 'mp4-720', label: 'MP4 720p' }
+                    ];
+                    return {
+                        engine: 'Layer P2P-Embed: Residential P2P Tunnel (Permanent)',
+                        video_url: media.video_url,
+                        title,
+                        duration: media.video_duration || 0,
+                        thumbnail: media.display_url || null,
+                        formats,
+                    };
+                }
+            } catch { /* fall through to regex patterns */ }
+        }
+
+        // Fallback: regex sweep across raw embed HTML (multiple patterns for resilience)
+        const patterns = [
+            /"video_url"\s*:\s*"([^"]+)"/,
+            /property="og:video"\s+content="([^"]+)"/,
+            /content="([^"]+)"\s+property="og:video"/,
+            /"contentUrl"\s*:\s*"([^"]+)"/,
+            /data-video-url="([^"]+)"/,
+            /video_versions[\s\S]{0,200}"url"\s*:\s*"([^"]+\.mp4[^"]*)"/,
+        ];
+        for (const pat of patterns) {
+            const m = html.match(pat);
+            if (m) {
+                const videoUrl = m[1].replace(/\\u0026/g, '&').replace(/\\/g, '');
+                return {
+                    engine: 'Layer P2P-Regex: Residential P2P Tunnel (Permanent)',
+                    video_url: videoUrl,
+                    title: 'Instagram Video',
+                    duration: 0,
+                    thumbnail: null,
+                    formats: [{ ext: 'mp4', height: 720, url: videoUrl, id: 'mp4-720', label: 'MP4 720p' }],
+                };
+            }
+        }
+    }
+
+    throw new Error(`P2P_EXTRACT_FAIL: Tunnel returned status ${embedResult.status} but no video URL found in payload`);
+}
+
+// ==========================================
 // PHRASE 2 FALLBACK: Instagram Embed Scrape (Free)
 // Scrapes video URL from Instagram's public embed endpoint — no login needed
 // ==========================================
@@ -604,6 +698,120 @@ async function executeTikTokFallback(url: string): Promise<any> {
             { ext: 'mp4', height: 720, url: videoUrl, id: 'mp4-720', label: 'MP4 720p (No Watermark)' },
         ],
     };
+}
+
+// ==========================================
+// LINKEDIN FALLBACK: og:video scrape from public LinkedIn page
+// LinkedIn requires auth for most content but public posts expose og:video meta
+// ==========================================
+async function executeLinkedInFallback(url: string): Promise<any> {
+    console.log('[LinkedIn Fallback] Scraping og:video from public page:', url);
+    
+    // Extract activity ID from URL
+    const activityMatch = url.match(/activity-(\d+)/);
+    const activityId = activityMatch ? activityMatch[1] : null;
+    
+    // Try scraping the public LinkedIn page (some posts are publicly accessible)
+    const headers = {
+        'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+        'Accept': 'text/html,application/xhtml+xml',
+        'Accept-Language': 'en-US,en;q=0.9',
+    };
+    
+    let lastError = '';
+    
+    // Attempt 1: Try the LinkedIn embed endpoint
+    if (activityId) {
+        const embedUrls = [
+            `https://www.linkedin.com/embed/feed/update/urn:li:activity:${activityId}`,
+            `https://www.linkedin.com/embed/feed/update/urn:li:ugcPost:${activityId}`,
+            `https://www.linkedin.com/embed/feed/update/urn:li:share:${activityId}`,
+        ];
+        
+        for (const embedUrl of embedUrls) {
+            try {
+                console.log(`[LinkedIn Fallback] Trying embed: ${embedUrl}`);
+                const res = await axios.get(embedUrl, { timeout: 10000, headers });
+                const html = res.data;
+                
+                // Look for video source in embed HTML
+                const videoMatch = html.match(/data-sources="([^"]+)"/) ||
+                                   html.match(/src="(https:\/\/[^"]*\.mp4[^"]*)"/i) ||
+                                   html.match(/"contentUrl"\s*:\s*"([^"]+)"/i) ||
+                                   html.match(/video[^>]*src="(https?:\/\/[^"]+)"/i);
+                
+                if (videoMatch) {
+                    let videoUrl = videoMatch[1];
+                    // Decode HTML entities
+                    videoUrl = videoUrl.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+                    
+                    // Try to parse data-sources JSON for multiple qualities
+                    const formats: Array<{ext: string; height: number; url: string; id: string; label: string}> = [];
+                    try {
+                        const decoded = videoUrl.replace(/&quot;/g, '"');
+                        const sources = JSON.parse(decoded);
+                        if (Array.isArray(sources)) {
+                            for (const s of sources) {
+                                const src = s.src || s.url;
+                                const h = s.height || s.data?.height || 720;
+                                if (src) formats.push({ ext: 'mp4', height: h, url: src, id: `mp4-${h}`, label: `MP4 ${h}p` });
+                            }
+                        }
+                    } catch { /* not JSON, use as direct URL */ }
+                    
+                    if (formats.length === 0) {
+                        formats.push({ ext: 'mp4', height: 720, url: videoUrl, id: 'mp4-720', label: 'MP4 720p' });
+                    }
+                    formats.sort((a, b) => b.height - a.height);
+                    
+                    // Extract title from embed
+                    const titleMatch = html.match(/<title>([^<]+)<\/title>/i) || html.match(/aria-label="([^"]+)"/);
+                    
+                    return {
+                        engine: 'Layer LI-embed: LinkedIn Embed (Free)',
+                        video_url: formats[0].url,
+                        title: titleMatch ? titleMatch[1].trim().slice(0, 100) : 'LinkedIn Video',
+                        duration: 0,
+                        thumbnail: null,
+                        formats,
+                    };
+                }
+            } catch (err: any) {
+                lastError = err.message || 'Embed failed';
+                console.log(`[LinkedIn Fallback] Embed ${embedUrl} failed: ${lastError}`);
+            }
+        }
+    }
+    
+    // Attempt 2: Scrape the original URL for og:video meta tag
+    try {
+        console.log('[LinkedIn Fallback] Trying og:video meta scrape...');
+        const res = await axios.get(url, { timeout: 10000, headers, maxRedirects: 5 });
+        const html = res.data;
+        
+        const ogVideo = html.match(/<meta\s+(?:property|name)="og:video(?::url)?"\s+content="([^"]+)"/i) ||
+                         html.match(/content="([^"]+)"\s+(?:property|name)="og:video(?::url)?"/i);
+        
+        if (ogVideo) {
+            const videoUrl = ogVideo[1].replace(/&amp;/g, '&');
+            const ogTitle = html.match(/<meta\s+(?:property|name)="og:title"\s+content="([^"]+)"/i);
+            const ogImage = html.match(/<meta\s+(?:property|name)="og:image"\s+content="([^"]+)"/i);
+            
+            return {
+                engine: 'Layer LI-og: LinkedIn og:video (Free)',
+                video_url: videoUrl,
+                title: ogTitle ? ogTitle[1].slice(0, 100) : 'LinkedIn Video',
+                duration: 0,
+                thumbnail: ogImage ? ogImage[1] : null,
+                formats: [{ ext: 'mp4', height: 720, url: videoUrl, id: 'mp4-720', label: 'MP4 720p' }],
+            };
+        }
+    } catch (err: any) {
+        lastError = err.message || 'og:video scrape failed';
+        console.log(`[LinkedIn Fallback] og:video scrape failed: ${lastError}`);
+    }
+    
+    throw new Error(`LinkedIn Fallback: Could not extract video. LinkedIn requires authentication for most video content. Last error: ${lastError}`);
 }
 
 // ==========================================
@@ -881,6 +1089,7 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
           const isTwitter = url.includes('twitter.com') || url.includes('x.com');
           const isInstagram = url.includes('instagram.com') || url.includes('instagr.am');
           const isFacebook = url.includes('facebook.com') || url.includes('fb.watch');
+          const isLinkedIn = url.includes('linkedin.com');
           const isMeta = isInstagram || isFacebook;
 
           // ── Step 1: Cobalt (works for ALL platforms) ──
@@ -916,13 +1125,33 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
           }
 
           if (isInstagram) {
-              // Instagram: embed scrape (free, no login needed)
+              // Instagram Step A: P2P residential tunnel (permanent, unpatchable)
+              try {
+                  const resP2P = await executeP2PInstagramTunnel(url);
+                  metaCache.set(url, { data: resP2P, expires: Date.now() + 60000 });
+                  return resP2P;
+              } catch (eP2P: any) {
+                  console.log(`[Smart Fallback] P2P tunnel failed (${eP2P.message}), cascading to embed scrape...`);
+              }
+
+              // Instagram Step B: Direct embed scrape (free, no login needed)
               try {
                   const resIg = await executeInstagramEmbedScrape(url);
                   metaCache.set(url, { data: resIg, expires: Date.now() + 60000 });
                   return resIg;
               } catch (eIg: any) {
                   console.log(`[Smart Fallback] IG embed scrape failed (${eIg.message}), cascading...`);
+              }
+          }
+
+          if (isLinkedIn) {
+              // LinkedIn: embed page + og:video scrape (free)
+              try {
+                  const resLi = await executeLinkedInFallback(url);
+                  metaCache.set(url, { data: resLi, expires: Date.now() + 60000 });
+                  return resLi;
+              } catch (eLi: any) {
+                  console.log(`[Smart Fallback] LinkedIn fallback failed (${eLi.message}), cascading...`);
               }
           }
 
@@ -972,7 +1201,7 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
               metaCache.set(url, { data: res6, expires: Date.now() + 60000 });
               return res6;
           } catch (e6: any) {
-              throw new Error(`Total engine failure after ALL layers for ${isTikTok ? 'TikTok' : isTwitter ? 'Twitter' : isMeta ? 'Meta' : 'YouTube'}: ${e6.message}`);
+              throw new Error(`Total engine failure after ALL layers for ${isTikTok ? 'TikTok' : isTwitter ? 'Twitter' : isLinkedIn ? 'LinkedIn' : isMeta ? 'Meta' : 'YouTube'}: ${e6.message}`);
           }
       }
 
@@ -2031,6 +2260,14 @@ app.get("/api/downloader/test-ytdl", async (req, res) => {
 
   // Proxy stream URL for preview — PROTECTED
   app.use("/api/downloader/proxy-stream", handleProxyStream);
+
+  // P2P Tunnel pool health — PUBLIC (used by admin dashboard + monitoring)
+  app.get("/api/tunnel/status", (_req, res) => {
+    res.json({
+      nodes: getTunnelPoolSize(),
+      status: getTunnelPoolSize() > 0 ? "active" : "waiting",
+    });
+  });
 }
 
 

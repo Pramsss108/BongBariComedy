@@ -14,7 +14,7 @@ import {
   Download, Play, Pause, ArrowLeft, Scissors, Youtube, Instagram, Facebook,
   Loader2, AlertCircle, Music, Film, CheckCircle2, Search, X, Clock,
   Lock, CloudOff, Hourglass, HelpCircle, Volume2, VolumeX, ShieldCheck,
-  RefreshCcw, Zap,
+  RefreshCcw, Zap, Linkedin,
 } from "lucide-react";
 import { TrimSlider } from "@/components/TrimSlider";
 
@@ -43,13 +43,14 @@ interface VideoInfo {
 }
 type Phase = "idle" | "fetching" | "ready" | "downloading" | "trimming" | "error";
 
-function detectPlatform(url: string): "youtube" | "instagram" | "facebook" | "tiktok" | "twitter" | null {
+function detectPlatform(url: string): "youtube" | "instagram" | "facebook" | "tiktok" | "twitter" | "linkedin" | null {
   if (!url) return null;
   if (/youtube\.com|youtu\.be/i.test(url)) return "youtube";
   if (/instagram\.com/i.test(url)) return "instagram";
   if (/facebook\.com|fb\.watch/i.test(url)) return "facebook";
   if (/tiktok\.com/i.test(url)) return "tiktok";
   if (/twitter\.com|\bx\.com/i.test(url)) return "twitter";
+  if (/linkedin\.com/i.test(url)) return "linkedin";
   return null;
 }
 
@@ -754,7 +755,7 @@ export default function SocialDownloaderPage() {
                     <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400">Universal</span><br/>Downloader
                  </h1>
                  <p className="text-lg text-slate-400 leading-relaxed">
-                    The ultimate video processing suite. Save, trim, and remix content from YouTube, Instagram, and Facebook instantly.
+                    The ultimate video processing suite. Save, trim, and remix content from YouTube, Instagram, Facebook, Twitter/X, and LinkedIn instantly.
                  </p>
               </div>
             )}
@@ -767,13 +768,15 @@ export default function SocialDownloaderPage() {
              <div className="md:hidden pt-8 pb-6 text-center px-4">
                 <h1 className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400 mb-2 tracking-tight">Universal<br/>Downloader</h1>
                 <p className="text-slate-400 text-sm leading-relaxed max-w-xs mx-auto mb-4">
-                  Save, trim, and download any video from YouTube, Instagram, Facebook, and more platforms.
+                  Save, trim, and download any video from YouTube, Instagram, Facebook, Twitter/X, LinkedIn, and more.
                 </p>
                 {/* Platform pills mobile */}
-                <div className="flex justify-center gap-2 mb-2">
+                <div className="flex justify-center gap-2 mb-2 flex-wrap">
                    <span className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-full text-xs font-bold text-slate-300 flex items-center gap-1.5"><Youtube size={12}/> YouTube</span>
                    <span className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-full text-xs font-bold text-slate-300 flex items-center gap-1.5"><Instagram size={12}/> IG</span>
                    <span className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-full text-xs font-bold text-slate-300 flex items-center gap-1.5"><Facebook size={12}/> FB</span>
+                   <span className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-full text-xs font-bold text-slate-300 flex items-center gap-1.5"><X size={12}/> X</span>
+                   <span className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-full text-xs font-bold text-slate-300 flex items-center gap-1.5"><Linkedin size={12}/> LI</span>
                 </div>
              </div>
 
@@ -802,6 +805,20 @@ export default function SocialDownloaderPage() {
                       </button>
                     </div>
                   </div>
+
+                  {/* Platform-specific warnings */}
+                  {platform === "tiktok" && (
+                    <div className="mt-2 px-3 py-2 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-yellow-300 text-xs flex items-center gap-2">
+                      <AlertCircle size={14} className="shrink-0" />
+                      <span>TikTok is banned in India. Downloads may fail if you're accessing from India or if the video is region-restricted.</span>
+                    </div>
+                  )}
+                  {platform === "linkedin" && (
+                    <div className="mt-2 px-3 py-2 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-300 text-xs flex items-center gap-2">
+                      <Lock size={14} className="shrink-0" />
+                      <span>LinkedIn videos require authentication. Only some public posts can be downloaded.</span>
+                    </div>
+                  )}
 
                   <details className="mt-2 opacity-20 hover:opacity-100 transition-opacity">
                     <summary className="text-[9px] cursor-pointer font-bold tracking-widest uppercase text-neutral-500 list-none flex items-center gap-1">

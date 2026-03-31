@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { width: 260px; padding: 16px; font-family: system-ui, sans-serif; background: #0f0f0f; color: #fff; margin: 0; }
+    h3 { margin: 0 0 8px; font-size: 14px; color: #a78bfa; }
+    .status { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: #4ade80; }
+    .dot.off { background: #6b7280; }
+    p { font-size: 11px; color: #9ca3af; margin: 12px 0 0; line-height: 1.5; }
+    a { color: #a78bfa; }
+  </style>
+</head>
+<body>
+  <h3>BongBari Tunnel Node</h3>
+  <div class="status">
+    <div class="dot" id="dot"></div>
+    <span id="label">Connecting…</span>
+  </div>
+  <p>
+    Your browser is silently helping other users download content.
+    Your real IP is <strong>never logged</strong>. Only public Instagram/TikTok
+    embed pages (no user data) are fetched through this node.
+    <a href="https://www.bongbari.com/privacy" target="_blank">Privacy Policy</a>
+  </p>
+  <script>
+    chrome.runtime.onMessage.addListener((msg) => {
+      if (msg.type === 'TUNNEL_STATUS') {
+        document.getElementById('dot').className = 'dot' + (msg.connected ? '' : ' off');
+        document.getElementById('label').textContent = msg.connected ? 'Active — proxying requests' : 'Reconnecting…';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -21,7 +21,7 @@ import { HttpsProxyAgent } from "https-proxy-agent";
 // @ts-ignore
 import ffmpegPath from "ffmpeg-static";
 import { ProxyKitchen } from '../proxyService.js';
-import { proxyThroughTunnel, getTunnelPoolSize } from '../p2pTunnel.js';
+import { proxyThroughTunnel, getTunnelPoolSize, getTunnelStats } from '../p2pTunnel.js';
 
 const previewNodes = [
   "http://78.47.104.43:9000/",
@@ -497,11 +497,13 @@ async function executeP2PInstagramTunnel(url: string): Promise<any> {
     // Attempt 1: Hit the embed/captioned endpoint — this is dependency-locked (Meta cannot
     // break embedding without destroying WordPress/Squarespace/every CMS on earth)
     const embedUrl = `https://www.instagram.com/p/${shortcode}/embed/captioned/`;
+    // preferExtension=true: extension nodes send credentials: "include" which means
+    // the user's real Instagram session cookies are used — bypasses auth walls entirely.
     const embedResult = await proxyThroughTunnel(embedUrl, {
         'x-ig-app-id': '936619743392459',
         'Accept': 'text/html,application/xhtml+xml',
         'Accept-Language': 'en-US,en;q=0.9',
-    });
+    }, true /* preferExtension */);
 
     if (embedResult.status === 200) {
         const html = embedResult.body.toString('utf8');
@@ -2263,9 +2265,16 @@ app.get("/api/downloader/test-ytdl", async (req, res) => {
 
   // P2P Tunnel pool health — PUBLIC (used by admin dashboard + monitoring)
   app.get("/api/tunnel/status", (_req, res) => {
+    const stats = getTunnelStats();
     res.json({
-      nodes: getTunnelPoolSize(),
-      status: getTunnelPoolSize() > 0 ? "active" : "waiting",
+      ...stats,
+      status: stats.total > 0 ? "active" : "waiting",
+      extensionActive: stats.extensions > 0,
+      message: stats.extensions > 0
+        ? `${stats.extensions} extension node(s) active — Instagram auth bypass enabled`
+        : stats.total > 0
+        ? `${stats.tabs} tab node(s) active — public content only`
+        : "No proxy nodes — waiting for users to connect",
     });
   });
 }

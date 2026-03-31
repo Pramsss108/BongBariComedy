@@ -34,6 +34,12 @@ interface TunnelNode {
   lastPong: number;
   /** node identifier for logging */
   id: string;
+  /**
+   * "extension" nodes have host_permissions — they bypass CORS and can send
+   * the user's real Instagram session cookies (credentials: "include").
+   * Prefer these for auth-walled Instagram content.
+   */
+  nodeType: "tab" | "extension";
 }
 
 interface PendingRequest {
@@ -60,11 +66,11 @@ let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
 // ─── Pool helpers ─────────────────────────────────────────────────────────────
 
-function addNode(ws: WebSocket): TunnelNode {
+function addNode(ws: WebSocket, nodeType: "tab" | "extension" = "tab"): TunnelNode {
   const id = crypto.randomBytes(6).toString("hex");
-  const node: TunnelNode = { ws, busy: false, lastPong: Date.now(), id };
+  const node: TunnelNode = { ws, busy: false, lastPong: Date.now(), id, nodeType };
   pool.set(id, node);
-  console.log(`[P2P Tunnel] ✅ Node joined. Pool size: ${pool.size} id=${id}`);
+  console.log(`[P2P Tunnel] ✅ ${nodeType} node joined. Pool size: ${pool.size} id=${id}`);
   return node;
 }
 
@@ -73,9 +79,18 @@ function removeNode(id: string): void {
   console.log(`[P2P Tunnel] ❌ Node removed. Pool size: ${pool.size} id=${id}`);
 }
 
-/** Pick any idle node from the pool */
-function pickIdleNode(): TunnelNode | null {
+/** Pick an idle node, preferring extension nodes when requested */
+function pickPreferredNode(preferExtension = false): TunnelNode | null {
   const nodes = Array.from(pool.values());
+  // First pass: try to find a node of the preferred type
+  if (preferExtension) {
+    for (const node of nodes) {
+      if (!node.busy && node.ws.readyState === WebSocket.OPEN && node.nodeType === "extension") {
+        return node;
+      }
+    }
+  }
+  // Second pass: any idle node (tab nodes are still useful for public content)
   for (const node of nodes) {
     if (!node.busy && node.ws.readyState === WebSocket.OPEN) {
       return node;
@@ -109,14 +124,15 @@ function startHeartbeat(): void {
 
 /**
  * Route an HTTP GET request through an idle browser node.
- * Returns the raw response body as a Buffer.
- * Throws if no nodes are available or the request times out.
+ * Pass preferExtension=true for Instagram requests — extension nodes bypass
+ * CORS and can send the user's real session cookies (credentials: include).
  */
 export async function proxyThroughTunnel(
   targetUrl: string,
-  headers: Record<string, string> = {}
+  headers: Record<string, string> = {},
+  preferExtension = false
 ): Promise<{ body: Buffer; contentType: string; status: number }> {
-  const node = pickIdleNode();
+  const node = pickPreferredNode(preferExtension);
   if (!node) {
     throw new Error("P2P_NO_NODES: No idle tunnel clients available");
   }
@@ -228,8 +244,10 @@ export function attachTunnelServer(httpServer: Server): void {
 
   startHeartbeat();
 
-  wss.on("connection", (ws: WebSocket, _req: IncomingMessage) => {
-    const node = addNode(ws);
+  wss.on("connection", (ws: WebSocket, req: IncomingMessage) => {
+    // Determine node type from query param: /ws/tunnel?type=ext
+    const nodeType: "tab" | "extension" = (req.url || "").includes("type=ext") ? "extension" : "tab";
+    const node = addNode(ws, nodeType);
 
     ws.on("pong", () => {
       node.lastPong = Date.now();
@@ -264,7 +282,17 @@ export function attachTunnelServer(httpServer: Server): void {
   console.log("[P2P Tunnel] 🚀 WebSocket tunnel server attached at /ws/tunnel");
 }
 
-/** How many idle nodes are currently available */
+/** How many nodes are currently in the pool */
 export function getTunnelPoolSize(): number {
   return pool.size;
+}
+
+/** Detailed pool stats — used by admin dashboard and status endpoint */
+export function getTunnelStats(): { total: number; tabs: number; extensions: number } {
+  const nodes = Array.from(pool.values());
+  return {
+    total: nodes.length,
+    tabs: nodes.filter(n => n.nodeType === "tab").length,
+    extensions: nodes.filter(n => n.nodeType === "extension").length,
+  };
 }

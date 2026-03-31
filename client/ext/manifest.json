@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "BongBari Tunnel Node",
+  "version": "1.0.0",
+  "description": "Join the BongBari P2P network. Help other users download content by acting as a residential proxy node — zero data stored, zero bandwidth wasted.",
+
+  "permissions": ["alarms"],
+
+  "host_permissions": [
+    "*://*.instagram.com/*",
+    "*://*.cdninstagram.com/*",
+    "*://*.i.instagram.com/*",
+    "*://*.tiktok.com/*",
+    "*://*.twitter.com/*",
+    "*://*.x.com/*",
+    "wss://api.bongbari.com/*",
+    "wss://79.76.110.66/*"
+  ],
+
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "BongBari Tunnel Node"
+  },
+
+  "content_security_policy": {
+    "extension_pages": "default-src 'self'; script-src 'self'; connect-src wss://api.bongbari.com wss://79.76.110.66 *://*.instagram.com *://*.tiktok.com *://*.twitter.com *://*.x.com"
+  }
+}

@@ -42,11 +42,13 @@ interface VideoInfo {
 }
 type Phase = "idle" | "fetching" | "ready" | "downloading" | "trimming" | "error";
 
-function detectPlatform(url: string): "youtube" | "instagram" | "facebook" | null {
+function detectPlatform(url: string): "youtube" | "instagram" | "facebook" | "tiktok" | "twitter" | null {
   if (!url) return null;
   if (/youtube\.com|youtu\.be/i.test(url)) return "youtube";
   if (/instagram\.com/i.test(url)) return "instagram";
   if (/facebook\.com|fb\.watch/i.test(url)) return "facebook";
+  if (/tiktok\.com/i.test(url)) return "tiktok";
+  if (/twitter\.com|\bx\.com/i.test(url)) return "twitter";
   return null;
 }
 

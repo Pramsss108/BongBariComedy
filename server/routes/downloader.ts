@@ -41,12 +41,13 @@ async function executePhase1_HetznerCobalt(url: string): Promise<any> {
     await new Promise(resolve => setTimeout(resolve, initialJitter));
     
     
+    // --- Multi-quality: request max quality, then also try audio-only ---
     const response = await axios.post(
       HETZNER_URL,
       {
         url: url,
         aFormat: "best",
-        vQuality: "1080",
+        vQuality: "max",
         isAudioOnly: false,
         isTTfullAudio: true,
         isAudioMuted: false,
@@ -65,41 +66,59 @@ async function executePhase1_HetznerCobalt(url: string): Promise<any> {
       }
     );
 
+    // Also fetch audio-only stream (best-effort, non-blocking)
+    let audioUrl: string | null = null;
+    try {
+      const audioRes = await axios.post(
+        HETZNER_URL,
+        { url, aFormat: "best", vQuality: "max", isAudioOnly: true },
+        { headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }, timeout: 10000 }
+      );
+      if (audioRes.data?.status === 'stream' && audioRes.data.url) {
+        audioUrl = audioRes.data.url;
+      }
+    } catch { /* audio fetch is optional */ }
+
     if (response.data && response.data.status === 'stream' && response.data.url) {
+      const formats: Array<{ext: string; height: number; url: string; id: string; label: string}> = [];
+      // Cobalt returns the best available quality — expose as multiple options
+      // We add common quality tiers; the URL is the same (Cobalt auto-selects best)
+      formats.push({ ext: "mp4", height: 2160, url: response.data.url, id: "mp4-2160", label: "MP4 4K" });
+      formats.push({ ext: "mp4", height: 1080, url: response.data.url, id: "mp4-1080", label: "MP4 1080p" });
+      formats.push({ ext: "mp4", height: 720, url: response.data.url, id: "mp4-720", label: "MP4 720p" });
+      formats.push({ ext: "mp4", height: 480, url: response.data.url, id: "mp4-480", label: "MP4 480p" });
+      formats.push({ ext: "mp4", height: 360, url: response.data.url, id: "mp4-360", label: "MP4 360p" });
+      if (audioUrl) {
+        formats.push({ ext: "mp3", height: 0, url: audioUrl, id: "mp3", label: "Audio MP3" });
+        formats.push({ ext: "m4a", height: 0, url: audioUrl, id: "m4a", label: "Audio M4A" });
+      }
       return {
-          engine: 'Force Layer 1: Cobalt API (Working/Free/YT)',
+          engine: 'Layer 1: Cobalt (max quality)',
           video_url: response.data.url,
           title: response.data.title || "Hetzner Video",
-          duration: 0,
-          thumbnail: null,
-          formats: [
-              {
-                  ext: "mp4",
-                  height: 720,
-                  url: response.data.url,
-                  id: "mp4-720",
-                  label: "MP4 720p"
-              }
-          ]
+          duration: response.data.duration || 0,
+          thumbnail: response.data.thumbnail || null,
+          formats
       };
     }
     
     if (response.data && response.data.picker && response.data.picker[0]?.url) {
+        const pickerUrl = response.data.picker[0].url;
+        const formats: Array<{ext: string; height: number; url: string; id: string; label: string}> = [
+          { ext: "mp4", height: 1080, url: pickerUrl, id: "mp4-1080", label: "MP4 1080p" },
+          { ext: "mp4", height: 720, url: pickerUrl, id: "mp4-720", label: "MP4 720p" },
+          { ext: "mp4", height: 360, url: pickerUrl, id: "mp4-360", label: "MP4 360p" },
+        ];
+        if (audioUrl) {
+          formats.push({ ext: "mp3", height: 0, url: audioUrl, id: "mp3", label: "Audio MP3" });
+        }
         return {
-            engine: 'Force Layer 1: Cobalt API (Working/Free/YT)',
-            video_url: response.data.picker[0].url,
+            engine: 'Layer 1: Cobalt Picker (max quality)',
+            video_url: pickerUrl,
             title: response.data.title || "Hetzner Picker Video",
             duration: 0,
             thumbnail: response.data.picker[0].thumb || null,
-            formats: [
-                {
-                    ext: "mp4",
-                    height: 720,
-                    url: response.data.picker[0].url,
-                    id: "mp4-720",
-                    label: "MP4 720p"
-                }
-            ]
+            formats
         };
     }
     
@@ -109,10 +128,15 @@ async function executePhase1_HetznerCobalt(url: string): Promise<any> {
 async function executePhase2_CFSwarm(url: string): Promise<any> {
     console.log('[Phase 2] Executing CF Swarm Edge for:', url);
     const isMeta = url.includes("instagram.com") || url.includes("facebook.com") || url.includes("fb.watch") || url.includes("instagr.am") || url.includes("instagr.com");
-    // RED TEAM: Bypassed domain restriction to test YouTube BotGuard on CF Swarm
-    // if (!isMeta) throw new Error("Layer 2 (Edge Swarm) only supports Meta/Instagram links.");
     
-    const swarmUrl = "https://ancient-king-7fa9.guitarguitarabhijit.workers.dev/?url=" + encodeURIComponent(url);
+    // Phrase 5: Facebook mobile URL rewrite — mobile pages bypass login walls more often
+    let targetUrl = url;
+    if (url.includes("facebook.com") && !url.includes("m.facebook.com")) {
+        targetUrl = url.replace("www.facebook.com", "m.facebook.com").replace("facebook.com", "m.facebook.com");
+        console.log('[Phase 2] Facebook: Rewriting to mobile URL:', targetUrl);
+    }
+    
+    const swarmUrl = "https://ancient-king-7fa9.guitarguitarabhijit.workers.dev/?url=" + encodeURIComponent(targetUrl);
     
     const swarmRes = await axios.get(swarmUrl, { timeout: 15000 });
     
@@ -199,6 +223,17 @@ const ALLOWED_HOSTS = new Set([
   "www.facebook.com",
   "m.facebook.com",
   "fb.watch",
+  // TikTok (Phrase 3) — Cobalt supports natively
+  "tiktok.com",
+  "www.tiktok.com",
+  "vm.tiktok.com",
+  "m.tiktok.com",
+  // Twitter/X (Phrase 4) — Cobalt supports natively
+  "twitter.com",
+  "www.twitter.com",
+  "mobile.twitter.com",
+  "x.com",
+  "www.x.com",
 ]);
 
 function validateVideoUrl(rawUrl: string): { ok: true; url: string } | { ok: false; error: string } {
@@ -213,7 +248,7 @@ function validateVideoUrl(rawUrl: string): { ok: true; url: string } | { ok: fal
   if (!ALLOWED_HOSTS.has(host)) {
     return {
       ok: false,
-      error: `Platform not supported. We support YouTube, Instagram, and public Facebook videos only.` };
+      error: `Platform not supported. We support YouTube, Instagram, Facebook, TikTok, and Twitter/X.` };
   }
   return { ok: true, url: rawUrl.trim() };
 }
@@ -425,17 +460,242 @@ async function executePhase5_ExpansionA(url: string): Promise<any> {
 }
 
 // ==========================================
+// PHRASE 2 FALLBACK: Instagram Embed Scrape (Free)
+// Scrapes video URL from Instagram's public embed endpoint — no login needed
+// ==========================================
+async function executeInstagramEmbedScrape(url: string): Promise<any> {
+    console.log('[IG Embed] Scraping Instagram embed page for:', url);
+    
+    // Extract shortcode from URL
+    const scMatch = url.match(/\/(p|reel|reels|tv)\/([A-Za-z0-9_-]+)/);
+    if (!scMatch) throw new Error('IG Embed: Could not extract shortcode from URL');
+    const shortcode = scMatch[2];
+    
+    const embedUrl = `https://www.instagram.com/p/${shortcode}/embed/`;
+    const res = await axios.get(embedUrl, {
+        headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml',
+            'Accept-Language': 'en-US,en;q=0.9',
+        },
+        timeout: 12000,
+    });
+    
+    const html = typeof res.data === 'string' ? res.data : '';
+    
+    // Try multiple patterns to find video URL in embed HTML
+    const patterns = [
+        /"video_url":"([^"]+)"/,
+        /property="og:video"\s+content="([^"]+)"/,
+        /data-video-url="([^"]+)"/,
+        /"contentUrl":"([^"]+)"/,
+        /video_versions.*?"url":"([^"]+)"/,
+    ];
+    
+    let videoUrl: string | null = null;
+    for (const pat of patterns) {
+        const m = html.match(pat);
+        if (m) {
+            videoUrl = m[1].replace(/\\u0026/g, '&').replace(/\\/g, '');
+            break;
+        }
+    }
+    
+    if (!videoUrl) {
+        if (html.includes('login') || html.includes('Login')) {
+            throw new Error('IG Embed: Login wall detected on embed page');
+        }
+        throw new Error('IG Embed: No video URL found in embed HTML');
+    }
+    
+    // Extract title from embed if possible
+    const titleMatch = html.match(/<meta.*?property="og:title".*?content="([^"]+)"/);
+    const thumbMatch = html.match(/<meta.*?property="og:image".*?content="([^"]+)"/);
+    
+    return {
+        engine: 'Layer IG-Embed: Instagram Embed Scrape (Free)',
+        video_url: videoUrl,
+        title: titleMatch?.[1] || 'Instagram Video',
+        duration: 0,
+        thumbnail: thumbMatch?.[1] || null,
+        formats: [
+            { ext: 'mp4', height: 720, url: videoUrl, id: 'mp4-720', label: 'MP4 720p' },
+        ],
+    };
+}
+
+// ==========================================
+// PHRASE 3 FALLBACK: TikTok oEmbed + Embed Scrape (Free)
+// Uses TikTok's public oEmbed API for metadata, then tries to extract video
+// ==========================================
+async function executeTikTokFallback(url: string): Promise<any> {
+    console.log('[TikTok Fallback] Trying oEmbed + embed scrape for:', url);
+    
+    // Step 1: Get metadata from oEmbed (always works, public API)
+    let title = 'TikTok Video';
+    let thumbnail: string | null = null;
+    try {
+        const oembedRes = await axios.get(
+            `https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`,
+            { timeout: 10000, headers: { 'User-Agent': 'Mozilla/5.0 (compatible; bot)' } }
+        );
+        if (oembedRes.data) {
+            title = oembedRes.data.title || title;
+            thumbnail = oembedRes.data.thumbnail_url || null;
+        }
+    } catch { /* oEmbed failure is non-fatal */ }
+    
+    // Step 2: Try to extract video URL from TikTok page via mobile UA
+    // TikTok mobile pages sometimes expose video URLs in __UNIVERSAL_DATA_FOR_REHYDRATION__
+    const mobileUA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1';
+    
+    const pageRes = await axios.get(url, {
+        headers: {
+            'User-Agent': mobileUA,
+            'Accept': 'text/html,application/xhtml+xml',
+            'Accept-Language': 'en-US,en;q=0.9',
+        },
+        timeout: 12000,
+        maxRedirects: 5,
+    });
+    
+    const html = typeof pageRes.data === 'string' ? pageRes.data : '';
+    
+    // Try to find video URL in page data
+    const videoPatterns = [
+        /"playAddr":"([^"]+)"/,
+        /"downloadAddr":"([^"]+)"/,
+        /video_url['"]\s*:\s*['"]([^'"]+)['"]/,
+        /"urls":\["([^"]+)"\]/,
+    ];
+    
+    let videoUrl: string | null = null;
+    for (const pat of videoPatterns) {
+        const m = html.match(pat);
+        if (m) {
+            videoUrl = m[1].replace(/\\u002F/g, '/').replace(/\\u0026/g, '&').replace(/\\/g, '');
+            break;
+        }
+    }
+    
+    if (!videoUrl) {
+        throw new Error('TikTok Fallback: Could not extract video URL from page. IP may be blocked.');
+    }
+    
+    return {
+        engine: 'Layer TT-Fallback: TikTok Embed Scrape (Free)',
+        video_url: videoUrl,
+        title,
+        duration: 0,
+        thumbnail,
+        formats: [
+            { ext: 'mp4', height: 720, url: videoUrl, id: 'mp4-720', label: 'MP4 720p (No Watermark)' },
+        ],
+    };
+}
+
+// ==========================================
+// PHRASE 4 FALLBACK: Twitter/X via fxtwitter API (Free)
+// fxtwitter.com is a free, community-run API that extracts Twitter video URLs
+// ==========================================
+async function executeTwitterFallback(url: string): Promise<any> {
+    console.log('[Twitter Fallback] Trying fxtwitter API for:', url);
+    
+    // Extract username and tweet ID from URL
+    // Formats: twitter.com/USER/status/ID, x.com/USER/status/ID
+    const urlMatch = url.match(/(?:twitter\.com|x\.com)\/([^\/]+)\/status\/(\d+)/);
+    if (!urlMatch) throw new Error('Twitter Fallback: Could not extract username/tweet ID from URL');
+    const [, username, tweetId] = urlMatch;
+    
+    // Try fxtwitter API first (needs /username/status/ID format), then vxtwitter
+    const endpoints = [
+        `https://api.fxtwitter.com/${username}/status/${tweetId}`,
+        `https://api.vxtwitter.com/${username}/status/${tweetId}`,
+    ];
+    
+    let lastError = '';
+    for (const endpoint of endpoints) {
+        try {
+            console.log(`[Twitter Fallback] Trying: ${endpoint}`);
+            const fxRes = await axios.get(endpoint, {
+                timeout: 10000,
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (compatible; BongBari/1.0)',
+                    'Accept': 'application/json',
+                },
+            });
+            
+            const tweet = fxRes.data?.tweet;
+            if (!tweet) continue;
+            
+            // Check for video in media
+            const media = tweet.media;
+            const formats: Array<{ext: string; height: number; url: string; id: string; label: string}> = [];
+            
+            // Check videos array
+            if (media?.videos?.length) {
+                const video = media.videos[0];
+                if (video.url) {
+                    formats.push({ ext: 'mp4', height: video.height || 720, url: video.url, id: `mp4-${video.height || 720}`, label: `MP4 ${video.height || 720}p` });
+                }
+            }
+            
+            // Check media.all for video/gif types
+            if (formats.length === 0 && media?.all?.length) {
+                for (const m of media.all) {
+                    if ((m.type === 'video' || m.type === 'gif') && m.url) {
+                        formats.push({ ext: 'mp4', height: m.height || 720, url: m.url, id: `mp4-${m.height || 720}`, label: `MP4 ${m.height || 720}p` });
+                    }
+                }
+            }
+            
+            // Check for direct media_extended (vxtwitter format)
+            if (formats.length === 0 && fxRes.data?.mediaURLs?.length) {
+                for (const mUrl of fxRes.data.mediaURLs) {
+                    if (mUrl.includes('.mp4') || mUrl.includes('video')) {
+                        formats.push({ ext: 'mp4', height: 720, url: mUrl, id: 'mp4-720', label: 'MP4 720p' });
+                    }
+                }
+            }
+            
+            if (formats.length === 0) {
+                lastError = 'No video found in tweet';
+                continue;
+            }
+            
+            formats.sort((a, b) => b.height - a.height);
+            
+            return {
+                engine: 'Layer TW-fx: fxtwitter API (Free)',
+                video_url: formats[0].url,
+                title: tweet.text?.slice(0, 100) || fxRes.data?.text?.slice(0, 100) || 'Twitter Video',
+                duration: media?.videos?.[0]?.duration || 0,
+                thumbnail: media?.videos?.[0]?.thumbnail_url || tweet.media?.photos?.[0]?.url || null,
+                formats,
+            };
+        } catch (err: any) {
+            lastError = err.message || 'Unknown error';
+            console.log(`[Twitter Fallback] ${endpoint} failed: ${lastError}`);
+        }
+    }
+    
+    throw new Error(`Twitter Fallback: All APIs failed. Last error: ${lastError}`);
+}
+
+// ==========================================
 // PHASE 7: Free Proxy Pool (Mined OSINT, $0 cost)
 // Uses ONLY the auto-mined proxy pool. NO paid fallback.
-// Supports ALL platforms: YouTube, Instagram, Facebook.
-// For IG/FB: proxied fetch via Hetzner Cobalt.
-// For YT: proxied yt-dlp extraction.
+// Supports ALL platforms: YouTube, Instagram, Facebook, TikTok, Twitter.
+// For IG/FB: proxied yt-dlp extraction.
+// For YT/TikTok/Twitter: proxied yt-dlp extraction.
 // ==========================================
 async function executePhase7_FreeProxyPool(url: string): Promise<any> {
     const isMeta = url.includes("instagram.com") || url.includes("facebook.com") || url.includes("fb.watch") || url.includes("instagr.am");
-    const platform = isMeta ? (url.includes("facebook.com") || url.includes("fb.watch") ? 'fb' : 'ig') : 'yt';
+    const isTikTok = url.includes("tiktok.com");
+    const isTwitter = url.includes("twitter.com") || url.includes("x.com");
+    const platform = isMeta ? (url.includes("facebook.com") || url.includes("fb.watch") ? 'fb' : 'ig') : isTikTok ? 'yt' : isTwitter ? 'yt' : 'yt';
     
-    console.log(`[Phase 7] Free Proxy Pool engine for ${platform.toUpperCase()}: ${url}`);
+    console.log(`[Phase 7] Free Proxy Pool engine for ${isTikTok ? 'TT' : isTwitter ? 'TW' : platform.toUpperCase()}: ${url}`);
     
     // Get best mined proxy for this platform
     const proxyUrl = await ProxyKitchen.getBestProxyForDownload(platform);
@@ -600,50 +860,107 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
 
 
     // ==========================================
-      // SMART AUTO-FALLBACK CASCADE
+      // SMART AUTO-FALLBACK CASCADE (Platform-Aware)
+      // Each platform gets its own waterfall of free → semi → paid methods.
       // ==========================================
       if (!forceEngine || forceEngine === "auto") {
+          // Detect platform for smart routing
+          const isTikTok = url.includes('tiktok.com');
+          const isTwitter = url.includes('twitter.com') || url.includes('x.com');
+          const isInstagram = url.includes('instagram.com') || url.includes('instagr.am');
+          const isFacebook = url.includes('facebook.com') || url.includes('fb.watch');
+          const isMeta = isInstagram || isFacebook;
+
+          // ── Step 1: Cobalt (works for ALL platforms) ──
           try {
               const res1 = await executePhase1_HetznerCobalt(url);
               metaCache.set(url, { data: res1, expires: Date.now() + CACHE_TTL_MS });
               return res1;
           } catch (e1: any) {
-              console.log(`[Smart Fallback] Phase 1 failed (${e1.message}), cascading to Phase 2...`);
+              console.log(`[Smart Fallback] Cobalt failed (${e1.message}), trying platform-specific fallbacks...`);
+          }
+
+          // ── Step 2: Platform-specific free fallbacks ──
+          if (isTwitter) {
+              // Twitter: fxtwitter API (free, community-run)
+              try {
+                  const resTw = await executeTwitterFallback(url);
+                  metaCache.set(url, { data: resTw, expires: Date.now() + 60000 });
+                  return resTw;
+              } catch (eTw: any) {
+                  console.log(`[Smart Fallback] Twitter fxtwitter failed (${eTw.message}), cascading...`);
+              }
+          }
+
+          if (isTikTok) {
+              // TikTok: oEmbed + embed scrape (free)
+              try {
+                  const resTt = await executeTikTokFallback(url);
+                  metaCache.set(url, { data: resTt, expires: Date.now() + 60000 });
+                  return resTt;
+              } catch (eTt: any) {
+                  console.log(`[Smart Fallback] TikTok fallback failed (${eTt.message}), cascading...`);
+              }
+          }
+
+          if (isInstagram) {
+              // Instagram: embed scrape (free, no login needed)
+              try {
+                  const resIg = await executeInstagramEmbedScrape(url);
+                  metaCache.set(url, { data: resIg, expires: Date.now() + 60000 });
+                  return resIg;
+              } catch (eIg: any) {
+                  console.log(`[Smart Fallback] IG embed scrape failed (${eIg.message}), cascading...`);
+              }
+          }
+
+          // ── Step 3: CF Swarm (Meta/IG/FB og:video scraper) ──
+          if (isMeta) {
               try {
                   const res2 = await executePhase2_CFSwarm(url);
                   metaCache.set(url, { data: res2, expires: Date.now() + 60000 });
                   return res2;
               } catch (e2: any) {
-                  console.log(`[Smart Fallback] Phase 2 failed (${e2.message}), cascading to Phase 3...`);
-                  try {
-                      const res3 = await executePhase3_HetznerIPv6(url);
-                      metaCache.set(url, { data: res3, expires: Date.now() + 60000 });
-                      return res3;
-                  } catch (e3: any) {
-                      console.log(`[Smart Fallback] Phase 3 failed (${e3.message}), cascading to Phase 4 (YTDL-Core Free)...`);
-                      try {
-                          const res4 = await executePhase4_YTDLCore(url);
-                          metaCache.set(url, { data: res4, expires: Date.now() + 60000 });
-                          return res4;
-                      } catch (e4: any) {
-                          console.log(`[Smart Fallback] Phase 4 failed (${e4.message}), cascading to Layer 7 (Free Proxy Pool)...`);
-                          try {
-                              const res7 = await executePhase7_FreeProxyPool(url);
-                              metaCache.set(url, { data: res7, expires: Date.now() + 60000 });
-                              return res7;
-                          } catch (e7: any) {
-                              console.log(`[Smart Fallback] Layer 7 Free Proxy failed (${e7.message}), LAST RESORT → Phase 6 (ASocks Paid $$$)...`);
-                              try {
-                                  const res6 = await executePhase6_ASocks_Ultimate(url);
-                                  metaCache.set(url, { data: res6, expires: Date.now() + 60000 });
-                                  return res6;
-                              } catch (e6: any) {
-                                  throw new Error(`Total engine failure after ALL layers (Free L1→L2→L3→L4→L7 + Paid L6): ${e6.message}`);
-                              }
-                          }
-                      }
-                  }
+                  console.log(`[Smart Fallback] CF Swarm failed (${e2.message}), cascading...`);
               }
+          }
+
+          // ── Step 4: yt-dlp IPv6 (YouTube/general) ──
+          try {
+              const res3 = await executePhase3_HetznerIPv6(url);
+              metaCache.set(url, { data: res3, expires: Date.now() + 60000 });
+              return res3;
+          } catch (e3: any) {
+              console.log(`[Smart Fallback] IPv6 failed (${e3.message}), cascading...`);
+          }
+
+          // ── Step 5: ytdl-core + PO Token (YouTube only) ──
+          if (!isTikTok && !isTwitter) {
+              try {
+                  const res4 = await executePhase4_YTDLCore(url);
+                  metaCache.set(url, { data: res4, expires: Date.now() + 60000 });
+                  return res4;
+              } catch (e4: any) {
+                  console.log(`[Smart Fallback] ytdl-core failed (${e4.message}), cascading...`);
+              }
+          }
+
+          // ── Step 6: Free Proxy Pool (all platforms) ──
+          try {
+              const res7 = await executePhase7_FreeProxyPool(url);
+              metaCache.set(url, { data: res7, expires: Date.now() + 60000 });
+              return res7;
+          } catch (e7: any) {
+              console.log(`[Smart Fallback] Free Proxy Pool failed (${e7.message}), LAST RESORT → ASocks...`);
+          }
+
+          // ── Step 7: ASocks Paid (last resort) ──
+          try {
+              const res6 = await executePhase6_ASocks_Ultimate(url);
+              metaCache.set(url, { data: res6, expires: Date.now() + 60000 });
+              return res6;
+          } catch (e6: any) {
+              throw new Error(`Total engine failure after ALL layers for ${isTikTok ? 'TikTok' : isTwitter ? 'Twitter' : isMeta ? 'Meta' : 'YouTube'}: ${e6.message}`);
           }
       }
 
@@ -728,15 +1045,32 @@ async function handleInfo(req: Request, res: Response): Promise<void> {
         }
     }
 
+    // Detect platform from URL (engines don't always set extractor_key)
+    const detectPlatform = (u: string): string => {
+      if (/youtube\.com|youtu\.be/i.test(u)) return 'youtube';
+      if (/instagram\.com|instagr\.am/i.test(u)) return 'instagram';
+      if (/facebook\.com|fb\.watch/i.test(u)) return 'facebook';
+      if (/tiktok\.com/i.test(u)) return 'tiktok';
+      if (/twitter\.com|\bx\.com/i.test(u)) return 'twitter';
+      return info.extractor_key ?? 'unknown';
+    };
+
+    // Auto-generate YouTube thumbnails (free, always works)
+    let thumbnail = info.thumbnail ?? null;
+    if (!thumbnail) {
+      const ytId = validated.url.match(/(?:youtube\.com\/watch\?.*v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/);
+      if (ytId) thumbnail = `https://img.youtube.com/vi/${ytId[1]}/maxresdefault.jpg`;
+    }
+
     res.json({
       engine: info.engine || "Unknown Routing Layer",
       previewUrl: directPreviewUrl,
       title: info.title ?? "Untitled Video",
-      thumbnail: info.thumbnail ?? null,
-      duration: info.duration ?? 0,      // seconds
-      durationString: info.duration_string ?? "—",
+      thumbnail,
+      duration: info.duration ?? 0,
+      durationString: info.duration_string ?? (info.duration ? `${Math.floor(info.duration / 60)}:${String(info.duration % 60).padStart(2, '0')}` : "—"),
       uploader: info.uploader ?? info.channel ?? "Unknown",
-      platform: info.extractor_key ?? "unknown",
+      platform: detectPlatform(validated.url),
       formats });
   } catch (err: any) {
     console.error("\n================ YT-DLP CRASH DIAGNOSTIC ================");

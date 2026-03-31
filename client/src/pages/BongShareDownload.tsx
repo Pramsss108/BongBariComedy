@@ -13,8 +13,11 @@ import {
   HardDrive,
   Archive,
   Upload,
+  X,
 } from 'lucide-react';
 import { resolveShareUrl, type BundleManifest, type BundleFileEntry } from '@/lib/gofile-engine';
+import { buildApiUrl } from '@/lib/queryClient';
+import { BongShareInfoPanel, BongShareInfoButton } from '@/components/BongShareInfoPanel';
 import { downloadZip } from 'client-zip';
 
 
@@ -53,6 +56,33 @@ const DOWNLOAD_JOKES = [
   '"Eto smooth download — butter o jealous." 🧈',
 ];
 
+/* ── Download Joke Ticker — one-at-a-time fade ── */
+const DownloadJokeTickerBar = () => {
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setIdx(i => (i + 1) % DOWNLOAD_JOKES.length), 6000);
+    return () => clearInterval(timer);
+  }, []);
+  return (
+    <div className="flex-none w-full overflow-hidden relative z-10 border-t select-none flex items-center justify-center"
+      style={{ height: '36px', borderColor: 'rgba(240,193,44,0.06)', background: 'rgba(15,12,8,0.9)' }}>
+      <AnimatePresence mode="wait">
+        <motion.span
+          key={idx}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.5 }}
+          className="text-[13px] font-medium tracking-wide text-center px-4"
+          style={{ color: 'rgba(240,193,44,0.6)', textShadow: '0 0 12px rgba(240,193,44,0.15)' }}
+        >
+          {DOWNLOAD_JOKES[idx]}
+        </motion.span>
+      </AnimatePresence>
+    </div>
+  );
+};
+
 /** Detect if browser supports File System Access API (streaming to disk, no RAM limit) */
 const hasNativeFilePicker = typeof window !== 'undefined' && 'showSaveFilePicker' in window;
 /** Check for basic browser support (ReadableStream etc) */
@@ -79,14 +109,8 @@ const BongShareDownload = () => {
   const code = params.code || '';
 
   const resolved = useMemo(() => resolveShareUrl(code), [code]);
-  const [jokeIdx, setJokeIdx] = useState(0);
-
-  useEffect(() => {
-    const t = setInterval(() => setJokeIdx(i => (i + 1) % DOWNLOAD_JOKES.length), 5000);
-    return () => clearInterval(t);
-  }, []);
-
-  const currentJoke = DOWNLOAD_JOKES[jokeIdx % DOWNLOAD_JOKES.length];
+  const [fabHovered, setFabHovered] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
 
   if (!resolved) {
     return (
@@ -122,20 +146,20 @@ const BongShareDownload = () => {
   const icon = getFileIcon(fileName);
 
   // CF Worker proxy (globally fast, free) — set VITE_FILEBIN_PROXY_BASE after deploying worker-filebin/
-  // Fallback: direct filebin URLs (works everywhere, shows filebin warning page for individual files)
+  // Fallback: backend streaming proxy on Oracle VM (curl UA bypasses filebin HTML interstitials)
   const FILEBIN_PROXY = (import.meta.env.VITE_FILEBIN_PROXY_BASE as string || '').replace(/\/$/, '');
 
   const filebinDlUrl = (chunkName: string, downloadAs: string) =>
     FILEBIN_PROXY
       ? `${FILEBIN_PROXY}/dl/${binId}/${chunkName}?as=${encodeURIComponent(downloadAs)}`
-      : `https://filebin.net/${binId}/${chunkName}`;
+      : buildApiUrl(`/api/share/filebin-dl/${binId}/${chunkName}?as=${encodeURIComponent(downloadAs)}`);
 
   const filebinZipUrl = () =>
     FILEBIN_PROXY
       ? `${FILEBIN_PROXY}/zip/${binId}`
-      : `https://filebin.net/archive/${binId}/zip`;
+      : buildApiUrl(`/api/share/filebin-zip/${binId}`);
 
-  /** Download a single bundle file (via CF Worker proxy if configured, else direct filebin) */
+  /** Download a single bundle file (via CF Worker proxy if configured, else server proxy) */
   const downloadBundleFile = (entry: BundleFileEntry) => {
     if (!binId) return;
     const chunkName = entry.chunks[0];
@@ -213,8 +237,44 @@ const BongShareDownload = () => {
   const [chunkActive, setChunkActive] = useState(false);
   const [chunkPhase, setChunkPhase] = useState('');
 
+  /** Fetch a single chunk with validation + retry (3 attempts, exponential backoff) */
+  const fetchChunkWithRetry = async (url: string, partNum: number, totalParts: number): Promise<Response> => {
+    const delays = [0, 1000, 3000];
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt > 0) {
+        setChunkPhase(`Part ${partNum} of ${totalParts} — retrying (attempt ${attempt + 1}/3)…`);
+        await new Promise(r => setTimeout(r, delays[attempt]));
+      }
+      console.log(`[BongShare DL] ⬇️ Part ${partNum}/${totalParts} attempt ${attempt + 1} → ${url}`);
+      try {
+        const response = await fetch(url);
+        const ct = response.headers.get('content-type') || '';
+        const cl = response.headers.get('content-length') || '?';
+        console.log(`[BongShare DL] Part ${partNum} response: status=${response.status} ok=${response.ok} content-type="${ct}" content-length=${cl}`);
+        if (!response.ok) {
+          const body = await response.text();
+          console.error(`[BongShare DL] ❌ Part ${partNum} HTTP ${response.status}. Body: ${body.slice(0, 300)}`);
+          if (attempt === 2) throw new Error(`Part ${partNum} failed: HTTP ${response.status} — ${body.slice(0, 120)}`);
+          continue;
+        }
+        if (ct.includes('text/html')) {
+          const body = await response.text();
+          console.error(`[BongShare DL] ❌ Part ${partNum} got HTML (bot block?). Snippet: ${body.slice(0, 300)}`);
+          if (attempt === 2) throw new Error(`Part ${partNum} — filebin returned HTML page. Link expired or blocked.`);
+          continue;
+        }
+        console.log(`[BongShare DL] ✅ Part ${partNum} fetch OK, streaming bytes…`);
+        return response;
+      } catch (fetchErr: any) {
+        console.error(`[BongShare DL] ❌ Part ${partNum} fetch threw:`, fetchErr.message);
+        if (attempt === 2) throw fetchErr;
+      }
+    }
+    throw new Error(`Part ${partNum} failed after 3 attempts`);
+  };
+
+
   const handleChunkedDownload = async () => {
-    // Resolve chunk source: filebin (binId + chunkNames) or legacy catbox (chunkUrls)
     const isFilebin = !!(binId && chunkNames && chunkNames.length > 0);
     const totalParts = isFilebin ? chunkNames!.length : (chunkUrls?.length ?? 0);
     if (totalParts === 0) return;
@@ -222,38 +282,74 @@ const BongShareDownload = () => {
     const getChunkUrl = (i: number) =>
       isFilebin
         ? filebinDlUrl(chunkNames![i], fileName)
-        : chunkUrls![i];  // legacy catbox
+        : chunkUrls![i];
+
+    // DEBUG: print all chunk URLs and config so we can paste to diagnose
+    console.log('[BongShare DL] 🚀 Starting download:', {
+      fileName, fileSize, totalParts, binId,
+      chunkNames,
+      proxyBase: (import.meta.env.VITE_FILEBIN_PROXY_BASE || '(none)'),
+      chunk0url: totalParts > 0 ? getChunkUrl(0) : '(none)',
+      hasSaveFilePicker: 'showSaveFilePicker' in window,
+    });
+
 
     setChunkActive(true);
     setChunkProgress(0);
     setChunkPhase('Starting download…');
+    const startTime = Date.now();
+    let totalBytesDownloaded = 0;
+
     try {
       if ('showSaveFilePicker' in window) {
-        // Streaming via File System Access API — no RAM limit, works for 100 GB+
+        // ── STREAMING PATH (Chrome/Edge) — zero RAM, works for 100GB+ ──
         const fileHandle = await (window as any).showSaveFilePicker({ suggestedName: fileName });
         const writable = await fileHandle.createWritable();
-        for (let i = 0; i < totalParts; i++) {
-          setChunkPhase(`Downloading part ${i + 1} of ${totalParts}…`);
-          const response = await fetch(getChunkUrl(i));
-          if (!response.ok || !response.body) throw new Error(`Part ${i + 1} failed (${response.status})`);
-          const reader = response.body.getReader();
-          for (;;) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            await writable.write(value);
+        // writable is open — MUST call close() on success or abort() on failure
+        let streamSuccess = false;
+        try {
+          for (let i = 0; i < totalParts; i++) {
+            setChunkPhase(`Downloading part ${i + 1} of ${totalParts}… (${formatBytes(totalBytesDownloaded)} / ${formatBytes(fileSize)})`);
+            const response = await fetchChunkWithRetry(getChunkUrl(i), i + 1, totalParts);
+            if (!response.body) throw new Error(`Part ${i + 1} — server returned empty body. Try again.`);
+            const reader = response.body.getReader();
+            for (;;) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              await writable.write(value);
+              totalBytesDownloaded += value.byteLength;
+            }
+            const elapsed = (Date.now() - startTime) / 1000;
+            const speed = totalBytesDownloaded / elapsed;
+            const remaining = fileSize > 0 ? Math.max(0, Math.round((fileSize - totalBytesDownloaded) / speed)) : 0;
+            setChunkProgress(Math.round(((i + 1) / totalParts) * 100));
+            setChunkPhase(`Part ${i + 1}/${totalParts} done · ${formatBytes(totalBytesDownloaded)} · ~${remaining}s left`);
           }
-          setChunkProgress(Math.round(((i + 1) / totalParts) * 100));
+          // All parts done — seal the file
+          await writable.close();
+          streamSuccess = true;
+          setChunkPhase(`✅ Download complete — ${formatBytes(fileSize)} saved!`);
+        } finally {
+          // If anything threw, abort removes the 0-byte ghost file from disk
+          if (!streamSuccess) {
+            try { await writable.abort(); } catch { /* ignore */ }
+          }
         }
-        await writable.close();
-        setChunkPhase('Done!');
       } else {
-        // Fallback: buffer in memory (safe up to ~2 GB on most browsers)
+        // ── MEMORY BUFFER PATH (Firefox / Safari) ──
+        if (fileSize > 100 * 1024 * 1024) {
+          setChunkPhase(`Downloading ${formatBytes(fileSize)} — large file, please wait…`);
+        }
         const blobs: Blob[] = [];
         for (let i = 0; i < totalParts; i++) {
-          setChunkPhase(`Downloading part ${i + 1} of ${totalParts}…`);
-          const response = await fetch(getChunkUrl(i));
-          if (!response.ok) throw new Error(`Part ${i + 1} failed (${response.status})`);
-          blobs.push(await response.blob());
+          setChunkPhase(`Downloading part ${i + 1} of ${totalParts}… (${formatBytes(totalBytesDownloaded)} / ${formatBytes(fileSize)})`);
+          const response = await fetchChunkWithRetry(getChunkUrl(i), i + 1, totalParts);
+          const blob = await response.blob();
+          if (blob.size < 1024 && fileSize > 10000) {
+            throw new Error(`Part ${i + 1} returned 0 bytes — server or network issue. Restart dev server and retry.`);
+          }
+          blobs.push(blob);
+          totalBytesDownloaded += blob.size;
           setChunkProgress(Math.round(((i + 1) / totalParts) * 100));
         }
         setChunkPhase('Merging parts…');
@@ -263,14 +359,15 @@ const BongShareDownload = () => {
         a.href = url; a.download = fileName;
         document.body.appendChild(a); a.click();
         setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
-        setChunkPhase('Done!');
+        setChunkPhase(`✅ Download complete — ${formatBytes(fileSize)} saved!`);
       }
     } catch (err: any) {
-      setChunkPhase(`Error: ${err.message}`);
+      setChunkPhase(`❌ ${err.message}`);
     } finally {
       setChunkActive(false);
     }
   };
+
 
   const handleGoFileProxyDownload = async () => {
     // Open in new tab — branded message already shown, this is the honest fallback
@@ -522,33 +619,63 @@ const BongShareDownload = () => {
 
         </main>
 
-        {/* ── FLOATING FAB: Send Yours — positioned above footer ── */}
-        <motion.button
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.5, type: 'spring', stiffness: 200 }}
-          onClick={() => setLocation('/tools/share')}
-          className="fixed bottom-16 right-5 z-50 flex items-center gap-2 px-5 py-3 rounded-2xl font-extrabold text-xs uppercase tracking-wider shadow-2xl transition-all hover:scale-105 active:scale-95"
-          style={{ background: 'linear-gradient(135deg, #f0c12c, #e69520)', color: '#3d2e00', boxShadow: '0 8px 30px rgba(240,193,44,0.45), 0 2px 10px rgba(0,0,0,0.5)' }}
-        >
-          <Upload className="w-4 h-4" />
-          Send Yours
-        </motion.button>
+        {/* ── JOKE TICKER — one-at-a-time fade animation ── */}
+        <DownloadJokeTickerBar />
 
-        {/* ── FOOTER — clean, integrated with joke ticker ── */}
-        <footer className="flex-none flex items-center justify-between px-4 sm:px-6 py-2.5 border-t relative z-10" style={{ borderColor: 'rgba(240,193,44,0.08)', background: 'linear-gradient(to right, rgba(10,10,11,0.95), rgba(15,12,8,0.95))' }}>
-          <div className="flex items-center gap-1.5">
-            <span className="text-[9px] font-extrabold tracking-[0.2em] uppercase" style={{ color: 'rgba(240,193,44,0.4)' }}>BongShare</span>
-            <span className="text-[8px]" style={{ color: 'rgba(255,255,255,0.1)' }}>|</span>
-            <span className="text-[8px] font-semibold tracking-wider uppercase" style={{ color: 'rgba(255,255,255,0.15)' }}>by Bong Bari</span>
-          </div>
-          <AnimatePresence mode="wait">
-            <motion.p key={currentJoke} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.35 }}
-              className="text-[10px] font-semibold italic truncate text-right max-w-[60%]" style={{ color: '#f0c12c' }}>
-              {currentJoke}
-            </motion.p>
+        {/* ── FLOATING FAB: Send Yours — circle with pulse ring ── */}
+        <div className="fixed bottom-20 right-5 z-50 flex flex-col items-center">
+          {/* Tooltip (above circle) */}
+          <AnimatePresence>
+            {fabHovered && (
+              <motion.div
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 4 }}
+                className="mb-2 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
+                style={{ background: 'rgba(20,20,20,0.95)', color: '#f0c12c', border: '1px solid rgba(240,193,44,0.2)' }}
+              >
+                Send Yours
+                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45"
+                  style={{ background: 'rgba(20,20,20,0.95)', borderRight: '1px solid rgba(240,193,44,0.2)', borderBottom: '1px solid rgba(240,193,44,0.2)' }} />
+              </motion.div>
+            )}
           </AnimatePresence>
+          {/* Circle button */}
+          <motion.button
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.4, delay: 0.5, type: 'spring', stiffness: 200, damping: 15 }}
+            whileHover={{ scale: 1.12 }}
+            whileTap={{ scale: 0.92 }}
+            onMouseEnter={() => setFabHovered(true)}
+            onMouseLeave={() => setFabHovered(false)}
+            onClick={() => setLocation('/tools/share')}
+            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center shadow-2xl"
+            style={{
+              background: 'linear-gradient(135deg, #f0c12c, #e69520)',
+              color: '#3d2e00',
+              boxShadow: '0 8px 30px rgba(240,193,44,0.45), 0 2px 10px rgba(0,0,0,0.5)',
+              animation: 'fab-pulse-ring 2.5s ease-out infinite',
+            }}
+          >
+            <Upload className="w-5 h-5 sm:w-6 sm:h-6" />
+          </motion.button>
+        </div>
+
+        {/* ── Info "?" FAB + Full-screen Panel ── */}
+        <BongShareInfoButton onClick={() => setInfoOpen(true)} />
+        <BongShareInfoPanel isOpen={infoOpen} onClose={() => setInfoOpen(false)} />
+
+        {/* ── FOOTER — clean branding only ── */}
+        <footer className="flex-none flex items-center justify-center px-4 py-2 border-t relative z-10"
+          style={{ borderColor: 'rgba(240,193,44,0.04)', background: 'rgba(10,10,11,0.95)' }}>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] font-extrabold tracking-[0.2em] uppercase" style={{ color: 'rgba(240,193,44,0.35)' }}>BongShare</span>
+            <span className="text-[8px]" style={{ color: 'rgba(255,255,255,0.08)' }}>|</span>
+            <span className="text-[8px] font-semibold tracking-wider uppercase" style={{ color: 'rgba(255,255,255,0.12)' }}>by Bong Bari</span>
+          </div>
         </footer>
+
       </div>
     </>
   );

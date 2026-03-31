@@ -331,22 +331,204 @@ router.post('/upload-direct', catboxUpload.single('file'), async (req: Request, 
   }
 });
 
-/* ══════════════════════════════════════════════════════════════
-   FILEBIN DOWNLOAD/UPLOAD PROXIES — REMOVED (March 2026)
-   ──────────────────────────────────────────────────────────────
-   Why removed:
-   - Client already downloads DIRECTLY from filebin.net (CORS ✅)
-   - Client already uploads DIRECTLY to filebin.net (CORS ✅)
-   - These proxy routes streamed bytes through Oracle VM unnecessarily
-   - On a 1GB VM, proxying large files → instant OOM/swap death
-   - Direct client ↔ filebin = faster (no VPS middleman) + uses
-     visitor's residential IP (no datacenter rate-limiting)
+// Security: prevent SSRF via path traversal in binId / chunkName
+function isValidBinId(id: string): boolean {
+  return /^[a-zA-Z0-9_\-]{1,80}$/.test(id);
+}
+function isValidChunkName(name: string): boolean {
+  return /^[a-zA-Z0-9_\-\.]{1,120}$/.test(name);
+}
 
-   If ISP-level filebin blocks appear in the future:
-   - Deploy the Cloudflare Worker (worker-filebin/) and set
-     VITE_FILEBIN_PROXY_BASE in client/.env.production
-   - CF Worker has 300+ global POPs, 100K free req/day
+/* ══════════════════════════════════════════════════════════════
+   FILEBIN UPLOAD STREAMING PROXY (March 2026)
+   ──────────────────────────────────────────────────────────────
+   Why needed:
+   - Direct browser→filebin returns HTTP 500 on some chunks due to
+     rate limiting or browser detection on residential IPs.
+   - Server-side fetch with curl UA bypasses rate limits entirely.
+   - Uses Node stream pipe — ZERO buffering. Memory ~64KB per req.
+   - Chunks are ~80MB each; piped in 64KB slices, no OOM risk.
    ══════════════════════════════════════════════════════════════ */
+
+// POST /api/share/filebin-upload/:binId/:chunkName
+// Stream upload: browser → server → filebin.net (with curl UA)
+router.post('/filebin-upload/:binId/:chunkName', async (req: Request, res: ExpressResponse) => {
+  const { binId, chunkName } = req.params;
+
+  if (!isValidBinId(binId) || !isValidChunkName(chunkName)) {
+    return res.status(400).json({ error: 'Invalid parameters' });
+  }
+
+  const filebinUrl = `https://filebin.net/${encodeURIComponent(binId)}/${encodeURIComponent(chunkName)}`;
+
+  try {
+    const headers: Record<string, string> = {
+      'User-Agent': 'curl/8.0',
+    };
+    // Forward content-length if available (filebin needs it for progress)
+    const cl = req.headers['content-length'];
+    if (cl) headers['Content-Length'] = cl;
+
+    const upstream = await nodeFetch(filebinUrl, {
+      method: 'POST',
+      headers,
+      body: req as any, // pipe request body directly — zero buffering
+    });
+
+    if (upstream.ok || upstream.status === 201) {
+      return res.status(201).json({ ok: true });
+    } else {
+      const body = await upstream.text().catch(() => '');
+      console.warn(`[FilebinUpload] HTTP ${upstream.status} for ${chunkName}: ${body.slice(0, 200)}`);
+      return res.status(upstream.status).json({ error: `Filebin returned ${upstream.status}`, detail: body.slice(0, 200) });
+    }
+  } catch (err: any) {
+    console.error(`[FilebinUpload] Error uploading ${chunkName}:`, err.message);
+    if (!res.headersSent) {
+      return res.status(502).json({ error: 'Upload proxy error', detail: err.message });
+    }
+  }
+});
+
+/* ══════════════════════════════════════════════════════════════
+   FILEBIN DOWNLOAD STREAMING PROXY (March 2026)
+   ──────────────────────────────────────────────────────────────
+   Why needed:
+   - Direct browser→filebin returns HTML interstitial (not raw bytes)
+   - Browser fetch cannot set User-Agent (forbidden header)
+   - Server-side fetch with curl UA → filebin returns binary data
+   
+   Why this is safe on 1GB VM:
+   - Uses Node stream pipe — ZERO buffering. Memory ~64KB per request.
+   - Chunks are ~75-100MB each; pipe streams them in 64KB slices.
+   - Previous proxy (removed) was OOM because it buffered entire files.
+   
+   Long-term: deploy CF Worker (worker-filebin/) for edge CDN speed.
+   ══════════════════════════════════════════════════════════════ */
+
+// GET /api/share/filebin-dl/:binId/:chunkName?as=filename
+// Streaming proxy: server → filebin → pipe to client
+// Falls back to residential proxy pool if Oracle VPS IP is flagged by filebin
+router.get('/filebin-dl/:binId/:chunkName', async (req: Request, res: ExpressResponse) => {
+  const { binId, chunkName } = req.params;
+  const downloadAs = String(req.query.as || chunkName).replace(/"/g, '_');
+
+  if (!isValidBinId(binId) || !isValidChunkName(chunkName)) {
+    return res.status(400).json({ error: 'Invalid parameters' });
+  }
+
+  const filebinUrl = `https://filebin.net/${encodeURIComponent(binId)}/${encodeURIComponent(chunkName)}`;
+
+  // Use curl UA — same trick as upload proxy. Browser UA gets HTML interstitials.
+  const browserHeaders: Record<string, string> = {
+    'User-Agent': 'curl/8.0',
+    'Accept': 'application/octet-stream,*/*;q=0.9',
+    'Accept-Encoding': 'identity',
+  };
+
+  /** Try fetching filebinUrl (optionally through a proxy agent). Returns null if HTML/blocked. */
+  async function tryFetch(agent?: any): Promise<import('node-fetch').Response | null> {
+    const opts: any = { headers: browserHeaders, redirect: 'follow' };
+    if (agent) opts.agent = agent;
+    try {
+      const r = await nodeFetch(filebinUrl, opts);
+      if (!r.ok) {
+        console.warn(`[FilebinDL] HTTP ${r.status} from filebin${agent ? ' (via proxy)' : ''}`);
+        return null;
+      }
+      const ct = r.headers.get('content-type') || '';
+      if (ct.includes('text/html')) {
+        console.warn(`[FilebinDL] Got HTML${agent ? ' (via proxy)' : ''} — IP blocked by filebin`);
+        return null;
+      }
+      return r;
+    } catch (e: any) {
+      console.warn(`[FilebinDL] Fetch error${agent ? ' (via proxy)' : ''}:`, e.message);
+      return null;
+    }
+  }
+
+  try {
+    // ── Layer 1: Direct fetch (fastest, works if VPS IP not blocked) ──
+    let upstream = await tryFetch();
+
+    // ── Layer 2: Proxy pool (residential IPs — filebin can't block these) ──
+    if (!upstream) {
+      console.log(`[FilebinDL] Direct blocked — trying residential proxy pool for ${chunkName}`);
+      const proxies = await getBestProxiesForGoFile(10); // reuse same pool
+      for (const proxyUrl of proxies) {
+        const agent = makeAgent(proxyUrl);
+        upstream = await tryFetch(agent);
+        if (upstream) {
+          console.log(`[FilebinDL] ✅ Got bytes via proxy ${proxyUrl.slice(0, 40)}`);
+          break;
+        }
+      }
+    }
+
+    if (!upstream) {
+      return res.status(503).json({
+        error: 'Filebin unreachable — VPS IP blocked and all proxy pool attempts failed. Try again later.',
+      });
+    }
+
+    // ── Stream the response directly to browser — zero buffering ──
+    const ct = upstream.headers.get('content-type') || 'application/octet-stream';
+    const cl = upstream.headers.get('content-length');
+    console.log(`[FilebinDL] ✅ Streaming ${chunkName} | ${ct} | ${cl ? Math.round(parseInt(cl) / 1024 / 1024) + ' MB' : '? MB'}`);
+
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename="${downloadAs}"`);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Disposition');
+    if (cl) res.setHeader('Content-Length', cl);
+
+    upstream.body!.pipe(res);
+
+  } catch (err: any) {
+    console.error(`[FilebinDL] Unexpected error:`, err.message);
+    if (!res.headersSent) {
+      res.status(502).json({ error: 'Download temporarily unavailable', detail: err.message });
+    }
+  }
+});
+
+
+
+// GET /api/share/filebin-zip/:binId
+// Streaming proxy for filebin native ZIP endpoint
+router.get('/filebin-zip/:binId', async (req: Request, res: ExpressResponse) => {
+  const { binId } = req.params;
+
+  if (!isValidBinId(binId)) {
+    return res.status(400).json({ error: 'Invalid parameters' });
+  }
+
+  const zipUrl = `https://filebin.net/archive/${encodeURIComponent(binId)}/zip`;
+
+  try {
+    const upstream = await nodeFetch(zipUrl, {
+      headers: { 'User-Agent': 'curl/8.0' },
+      redirect: 'follow',
+    });
+
+    if (!upstream.ok) {
+      return res.status(upstream.status).json({ error: `Upstream ${upstream.status}` });
+    }
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="BongShare_Bundle.zip"');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    const cl = upstream.headers.get('content-length');
+    if (cl) res.setHeader('Content-Length', cl);
+
+    upstream.body!.pipe(res);
+  } catch (err: any) {
+    if (!res.headersSent) {
+      res.status(502).json({ error: 'Download temporarily unavailable' });
+    }
+  }
+});
 
 export function registerShareRoutes(app: any) {
   app.use('/api/share', router);

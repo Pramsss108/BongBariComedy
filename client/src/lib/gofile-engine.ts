@@ -262,8 +262,8 @@ function generateBinId(): string {
 
 /**
  * Upload one chunk (or a whole small file) to filebin.net.
- * Uses raw binary body (Content-Type: application/octet-stream).
- * CORS is fully supported — no proxy required.
+ * Primary path: server proxy (curl UA, no rate limits, datacenter speed).
+ * Fallback: direct browser→filebin (may be rate-limited / get 500s).
  * Progress tracked via XHR upload events.
  */
 function uploadFilebinChunk(
@@ -297,21 +297,63 @@ function uploadFilebinChunk(
       if (xhr.readyState === XMLHttpRequest.DONE) {
         stopTail();
         if (xhr.status === 201 || xhr.status === 200) { onProgress(100); resolve(); }
-        else reject(new Error(`filebin upload failed: HTTP ${xhr.status}`));
+        else {
+          // Server proxy failed — try direct as fallback
+          const directFallback = () => {
+            const xhr2 = new XMLHttpRequest();
+            let anim2: ReturnType<typeof setInterval> | null = null;
+            let pct2 = 0;
+            const startT2 = () => { if (anim2) return; anim2 = setInterval(() => { if (pct2 < 99) { pct2 = Math.min(99, pct2 + 0.2); onProgress(Math.round(pct2)); } }, 250); };
+            const stopT2 = () => { if (anim2) { clearInterval(anim2); anim2 = null; } };
+            xhr2.upload.addEventListener('progress', (e) => { if (e.lengthComputable) { pct2 = Math.round((e.loaded / e.total) * 90); onProgress(pct2); if (e.loaded >= e.total) startT2(); } });
+            xhr2.onreadystatechange = () => {
+              if (xhr2.readyState === XMLHttpRequest.DONE) {
+                stopT2();
+                if (xhr2.status === 201 || xhr2.status === 200) { onProgress(100); resolve(); }
+                else reject(new Error(`filebin upload failed: HTTP ${xhr2.status} (direct fallback)`));
+              }
+            };
+            xhr2.onerror = () => { stopT2(); reject(new Error('Network error uploading chunk (direct fallback)')); };
+            xhr2.ontimeout = () => { stopT2(); reject(new Error('Chunk upload timed out (direct fallback)')); };
+            xhr2.timeout = 10 * 60 * 1000;
+            xhr2.open('POST', `${FILEBIN_API}/${binId}/${chunkName}`);
+            xhr2.send(new Blob([blob]));
+          };
+
+          console.warn(`[BongShare] Server proxy upload failed (HTTP ${xhr.status}), trying direct…`);
+          directFallback();
+        }
       }
     };
 
-    xhr.onerror = () => { stopTail(); reject(new Error('Network error uploading chunk to filebin')); };
+    xhr.onerror = () => {
+      stopTail();
+      // Server unreachable — try direct
+      console.warn('[BongShare] Server proxy unreachable, trying direct filebin…');
+      const xhr2 = new XMLHttpRequest();
+      xhr2.upload.addEventListener('progress', (e) => { if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 90)); });
+      xhr2.onreadystatechange = () => {
+        if (xhr2.readyState === XMLHttpRequest.DONE) {
+          if (xhr2.status === 201 || xhr2.status === 200) { onProgress(100); resolve(); }
+          else reject(new Error(`filebin upload failed: HTTP ${xhr2.status}`));
+        }
+      };
+      xhr2.onerror = () => reject(new Error('Network error uploading chunk to filebin'));
+      xhr2.ontimeout = () => reject(new Error('Chunk upload timed out'));
+      xhr2.timeout = 10 * 60 * 1000;
+      xhr2.open('POST', `${FILEBIN_API}/${binId}/${chunkName}`);
+      xhr2.send(new Blob([blob]));
+    };
+
     xhr.ontimeout = () => { stopTail(); reject(new Error('Chunk upload timed out')); };
     xhr.timeout = 10 * 60 * 1000; // 10 min per chunk
 
-    // If a Cloudflare Worker proxy is configured (VITE_FILEBIN_PROXY_BASE), route through it.
-    // CF Worker = globally fast (300+ POPs), no residential rate limit, free 100K req/day.
-    // Fallback: upload direct to filebin (works but may be rate-limited at ~55 KB/s on some ISPs).
+    // PRIMARY: route through server proxy (curl UA, no rate limits)
+    // If a CF Worker proxy is configured, use that instead (even faster — edge CDN).
     const FILEBIN_PROXY = (import.meta.env.VITE_FILEBIN_PROXY_BASE as string || '').replace(/\/$/, '');
     const uploadTarget = FILEBIN_PROXY
       ? `${FILEBIN_PROXY}/upload/${binId}/${chunkName}`
-      : `${FILEBIN_API}/${binId}/${chunkName}`;
+      : buildApiUrl(`/api/share/filebin-upload/${binId}/${chunkName}`);
     xhr.open('POST', uploadTarget);
     // Send as a typeless Blob — no Content-Type header, avoids preflight edge cases.
     const raw = new Blob([blob]);  // strips .type → no Content-Type header
@@ -319,19 +361,48 @@ function uploadFilebinChunk(
   });
 }
 
+/** Detailed progress info for chunked uploads */
+export interface ChunkUploadProgress {
+  /** Overall 0–100 percent */
+  percent: number;
+  /** Current chunk index (0-based) */
+  chunkIndex: number;
+  /** Total number of chunks */
+  totalChunks: number;
+  /** Bytes uploaded so far across all chunks */
+  bytesUploaded: number;
+  /** Total file size in bytes */
+  totalBytes: number;
+  /** Current upload speed in bytes/sec (smoothed) */
+  speed: number;
+  /** Is this a retry attempt? */
+  isRetry: boolean;
+  /** Retry attempt number (0 = first attempt) */
+  retryAttempt: number;
+}
+
 /**
  * Upload a file to filebin.net — split into CHUNK_SIZE pieces if large.
  * Returns { binId, chunkNames[] } to store in share token.
- * onProgress: 0–100 across the entire upload.
+ * Enhanced with per-chunk retry (3 attempts, exponential backoff) and
+ * rich progress reporting (speed, bytes, chunk info, retry status).
  */
 export async function uploadToFilebin(
   file: File,
   onProgress: (p: number) => void,
+  onDetailedProgress?: (info: ChunkUploadProgress) => void,
 ): Promise<{ binId: string; chunkNames: string[] }> {
   const binId = generateBinId();
   const ext = file.name.includes('.') ? '.' + file.name.split('.').pop()!.toLowerCase() : '.bin';
   const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
   const chunkNames: string[] = [];
+
+  // Speed tracking
+  let uploadStartTime = Date.now();
+  let totalBytesUploaded = 0;
+
+  const MAX_RETRIES = 3;
+  const BACKOFF_BASE_MS = 2000;
 
   for (let i = 0; i < totalChunks; i++) {
     const start = i * CHUNK_SIZE;
@@ -339,14 +410,57 @@ export async function uploadToFilebin(
     const chunkBlob = file.slice(start, end);
     const chunkName = `chunk_${String(i).padStart(4, '0')}${ext}`;
     chunkNames.push(chunkName);
+    const chunkBytes = end - start;
 
-    await uploadFilebinChunk(chunkBlob, binId, chunkName, (p) => {
-      const base = (i / totalChunks) * 100;
-      onProgress(Math.round(base + (p / 100) * (100 / totalChunks)));
-    });
+    let lastError: Error | null = null;
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const isRetry = attempt > 0;
+        if (isRetry) {
+          const delay = BACKOFF_BASE_MS * Math.pow(2, attempt - 1);
+          console.warn(`[BongShare] Retrying chunk ${i + 1}/${totalChunks} (attempt ${attempt + 1}) after ${delay}ms`);
+          await new Promise(r => setTimeout(r, delay));
+        }
+
+        await uploadFilebinChunk(chunkBlob, binId, chunkName, (p) => {
+          const chunkUploaded = (p / 100) * chunkBytes;
+          const currentTotal = totalBytesUploaded + chunkUploaded;
+          const elapsed = (Date.now() - uploadStartTime) / 1000;
+          const speed = elapsed > 0.5 ? currentTotal / elapsed : 0;
+
+          const overallPct = Math.round(((totalBytesUploaded + chunkUploaded) / file.size) * 100);
+          onProgress(Math.min(99, overallPct));
+
+          onDetailedProgress?.({
+            percent: Math.min(99, overallPct),
+            chunkIndex: i,
+            totalChunks,
+            bytesUploaded: Math.round(currentTotal),
+            totalBytes: file.size,
+            speed: Math.round(speed),
+            isRetry,
+            retryAttempt: attempt,
+          });
+        });
+
+        totalBytesUploaded += chunkBytes;
+        lastError = null;
+        break;
+      } catch (err: any) {
+        lastError = err;
+        if (attempt >= MAX_RETRIES) {
+          throw new Error(`Chunk ${i + 1}/${totalChunks} failed after ${MAX_RETRIES + 1} attempts: ${err.message}`);
+        }
+      }
+    }
   }
 
   onProgress(100);
+  onDetailedProgress?.({
+    percent: 100, chunkIndex: totalChunks - 1, totalChunks,
+    bytesUploaded: file.size, totalBytes: file.size, speed: 0,
+    isRetry: false, retryAttempt: 0,
+  });
   return { binId, chunkNames };
 }
 
@@ -524,8 +638,12 @@ export interface SharePayload {
   c: string;
   /** filebin binId */
   b?: string;
-  /** Chunk file names for single-file filebin uploads */
+  /** Chunk file names for single-file filebin uploads (legacy — new tokens use k+x) */
   urls?: string[];
+  /** Compact: chunk count (replaces urls array in new tokens) */
+  k?: number;
+  /** Compact: file extension for chunks e.g. "mp4" (replaces urls array in new tokens) */
+  x?: string;
   /** Original file name (or "bundle" for multi-file bundles) */
   n: string;
   /** Total file size in bytes */
@@ -545,6 +663,11 @@ export function encodeShareToken(payload: SharePayload): string {
   return toBase64Url(ciphered);
 }
 
+/** Reconstruct chunk names from compact k+x format */
+function expandChunkNames(count: number, ext: string): string[] {
+  return Array.from({ length: count }, (_, i) => `chunk_${String(i).padStart(4, '0')}.${ext}`);
+}
+
 /** Decode a cloaked token back to GoFile data */
 export function decodeShareToken(token: string): SharePayload | null {
   // Try v2 format (encodeURIComponent-wrapped): handles Bengali/emoji filenames
@@ -552,14 +675,28 @@ export function decodeShareToken(token: string): SharePayload | null {
     const ciphered = fromBase64Url(token);
     const json = decodeURIComponent(xorCipher(ciphered, CLOAK_KEY));
     const parsed = JSON.parse(json);
-    if (parsed && typeof parsed.c === 'string') return parsed as SharePayload;
+    // B.2 compat: treat missing c as empty string
+    if (parsed && (typeof parsed.c === 'string' || parsed.c === undefined)) {
+      if (parsed.c === undefined) parsed.c = '';
+      // B.1 compat: expand compact k+x into urls array
+      if (parsed.k && parsed.x && !parsed.urls) {
+        parsed.urls = expandChunkNames(parsed.k, parsed.x);
+      }
+      return parsed as SharePayload;
+    }
   } catch { /* fall through */ }
   // Fallback: try legacy v1 format (raw JSON, ASCII filenames only)
   try {
     const ciphered = fromBase64Url(token);
     const json = xorCipher(ciphered, CLOAK_KEY);
     const parsed = JSON.parse(json);
-    if (parsed && typeof parsed.c === 'string') return parsed as SharePayload;
+    if (parsed && (typeof parsed.c === 'string' || parsed.c === undefined)) {
+      if (parsed.c === undefined) parsed.c = '';
+      if (parsed.k && parsed.x && !parsed.urls) {
+        parsed.urls = expandChunkNames(parsed.k, parsed.x);
+      }
+      return parsed as SharePayload;
+    }
   } catch { /* fall through */ }
   return null;
 }
@@ -573,7 +710,9 @@ export function buildBongBariShareUrl(code: string, fileName: string, fileSize: 
 
 /** Build the branded share URL for a filebin chunked upload (unlimited size, 6-day expiry) */
 export function buildBongBariFilebinUrl(binId: string, chunkNames: string[], fileName: string, fileSize: number): string {
-  const token = encodeShareToken({ c: '', b: binId, urls: chunkNames, n: fileName, s: fileSize, h: 'filebin' });
+  // Compact format: store chunk count + extension instead of full urls array (saves ~80-120 chars)
+  const ext = fileName.includes('.') ? fileName.split('.').pop()! : '';
+  const token = encodeShareToken({ c: '', b: binId, k: chunkNames.length, x: ext, n: fileName, s: fileSize, h: 'filebin' });
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.bongbari.com';
   return `${origin}/s/${token}`;
 }

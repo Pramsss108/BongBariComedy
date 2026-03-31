@@ -315,3 +315,187 @@ export function createReceiver(
     },
   };
 }
+
+/* ── Local Transfer: Same WiFi / Hotspot via 6-digit pairing code ──
+ * Uses PeerJS convention: peer ID = `bonglocal-{6digitCode}`
+ * Zero backend changes — code IS the peer ID.
+ * On same LAN, WebRTC routes through local network (LAN speed).
+ */
+
+/** Create a local sender — peer ID is deterministic from code */
+export function createLocalSender(
+  file: File,
+  onStatus: (s: P2PStatus) => void,
+  onProgress: (pct: number) => void,
+): { code: string; destroy: () => void } {
+  const code = String(Math.floor(100000 + Math.random() * 900000));
+  const peerId = `bonglocal-${code}`;
+  let destroyed = false;
+  let peer: any = null;
+  let keepalive: ReturnType<typeof setInterval> | null = null;
+
+  (async () => {
+    try {
+      await loadPeerJS();
+      if (destroyed) return;
+
+      const PeerClass = (window as any).Peer;
+      peer = new PeerClass(peerId, PEER_CONFIG);
+
+      peer.on('open', () => {
+        if (destroyed) return;
+        onStatus('waiting');
+      });
+
+      peer.on('connection', (conn: any) => {
+        if (destroyed) return;
+        onStatus('connecting');
+
+        conn.on('open', () => {
+          if (destroyed) return;
+          onStatus('transferring');
+
+          keepalive = setInterval(() => {
+            if (!destroyed && conn.open) conn.send({ type: 'ping' });
+          }, 10000);
+
+          conn.send({ type: 'meta', name: file.name, size: file.size, mime: file.type });
+
+          const rawDC: RTCDataChannel | undefined = conn.dataChannel || conn._dc;
+          let offset = 0;
+          let paused = false;
+
+          const sendNextChunk = () => {
+            if (destroyed || paused) return;
+            if (offset >= file.size) {
+              conn.send({ type: 'done' });
+              onStatus('complete');
+              onProgress(100);
+              if (keepalive) { clearInterval(keepalive); keepalive = null; }
+              return;
+            }
+            if (rawDC && rawDC.bufferedAmount > BUFFER_HIGH) {
+              paused = true;
+              rawDC.bufferedAmountLowThreshold = BUFFER_LOW;
+              rawDC.onbufferedamountlow = () => {
+                paused = false;
+                rawDC.onbufferedamountlow = null;
+                sendNextChunk();
+              };
+              return;
+            }
+            const slice = file.slice(offset, offset + CHUNK_SIZE);
+            slice.arrayBuffer().then((buf) => {
+              if (destroyed) return;
+              conn.send({ type: 'chunk', data: buf });
+              offset += buf.byteLength;
+              onProgress(Math.min(99, Math.round((offset / file.size) * 100)));
+              setTimeout(sendNextChunk, 0);
+            }).catch(() => {
+              if (!destroyed) onStatus('error');
+            });
+          };
+          sendNextChunk();
+        });
+
+        conn.on('error', () => {
+          if (keepalive) { clearInterval(keepalive); keepalive = null; }
+          if (!destroyed) onStatus('error');
+        });
+      });
+
+      peer.on('error', () => {
+        if (!destroyed) onStatus('error');
+      });
+    } catch {
+      if (!destroyed) onStatus('error');
+    }
+  })();
+
+  return {
+    code,
+    destroy: () => {
+      destroyed = true;
+      if (keepalive) { clearInterval(keepalive); keepalive = null; }
+      peer?.destroy();
+    },
+  };
+}
+
+/** Connect to a local sender by 6-digit code */
+export function connectToLocalSender(
+  code: string,
+  onStatus: (s: P2PStatus) => void,
+  onProgress: (pct: number) => void,
+  onFile: (blob: Blob, name: string) => void,
+): { destroy: () => void } {
+  const senderPeerId = `bonglocal-${code}`;
+  let destroyed = false;
+  let peer: any = null;
+
+  (async () => {
+    try {
+      await loadPeerJS();
+      if (destroyed) return;
+
+      const PeerClass = (window as any).Peer;
+      peer = new PeerClass(undefined, PEER_CONFIG);
+
+      peer.on('open', () => {
+        if (destroyed) return;
+        onStatus('connecting');
+        const conn = peer.connect(senderPeerId, { reliable: true, serialization: 'binary' });
+
+        let fileName = 'download';
+        let fileSize = 0;
+        const chunks: ArrayBuffer[] = [];
+        let received = 0;
+
+        conn.on('open', () => {
+          if (!destroyed) onStatus('transferring');
+        });
+
+        conn.on('data', (msg: any) => {
+          if (destroyed) return;
+          if (msg.type === 'ping') {
+            // keepalive — ignore
+          } else if (msg.type === 'meta') {
+            fileName = msg.name;
+            fileSize = msg.size;
+          } else if (msg.type === 'chunk') {
+            const buf: ArrayBuffer = msg.data;
+            chunks.push(buf);
+            received += buf.byteLength;
+            onProgress(Math.min(99, Math.round((received / fileSize) * 100)));
+          } else if (msg.type === 'done') {
+            onProgress(100);
+            const blob = new Blob(chunks);
+            onFile(blob, fileName);
+            onStatus('complete');
+          }
+        });
+
+        conn.on('error', () => {
+          if (!destroyed) onStatus('error');
+        });
+
+        conn.on('close', () => {
+          if (!destroyed && received < fileSize && fileSize > 0) onStatus('error');
+        });
+      });
+
+      peer.on('error', () => {
+        if (!destroyed) onStatus('error');
+      });
+    } catch {
+      if (!destroyed) onStatus('error');
+    }
+  })();
+
+  return {
+    destroy: () => {
+      destroyed = true;
+      peer?.destroy();
+    },
+  };
+}

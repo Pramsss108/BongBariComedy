@@ -18,6 +18,7 @@ import { ensureAudioUnlocked } from "@/lib/audioUnlock";
 import GreetingConsent from "@/components/GreetingConsent";
 import { isAudioUnlocked, resumeAudioNow } from "@/lib/audioUnlock";
 import BongBot from "@/components/BongBot";
+// BongBotMascot retired — SVG BongBotHero replaces it (no Rive dep)
 import { useAuth } from "@/hooks/useAuth";
 import FloatingFAQButton from "@/components/FloatingFAQButton";
 import { DebugOverlay } from "@/components/DebugOverlay";
@@ -48,6 +49,7 @@ const VoiceHub = lazy(() => import("@/pages/VoiceHub"));
 const BongShare = lazy(() => import("./pages/BongShare"));
 const BongShareDownload = lazy(() => import("@/pages/BongShareDownload"));
 const BongShareP2P = lazy(() => import("@/pages/BongShareP2P"));
+const BotDemo = lazy(() => import("@/pages/BotDemo"));
 
 // Firebase Protected Route Wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -262,6 +264,11 @@ function Router() {
               <FAQ />
             </Suspense>
           </Route>
+          <Route path="/bot-demo">
+            <Suspense fallback={<LoadingFallback />}>
+              <BotDemo />
+            </Suspense>
+          </Route>
           <Route path="/voice-hub">
             <Suspense fallback={<LoadingFallback />}>
               <ProtectedRoute>
@@ -278,6 +285,8 @@ function Router() {
 
         {/* Professional Bong Bot - Triggered via Header on Mobile */}
         <BongBot onOpenChange={setIsChatbotOpen} />
+
+        {/* BongBotMascot retired — replaced by SVG BongBotHero */}
 
         {/* Floating FAQ Button - REMOVED per cleanup request */}
         {/* <FloatingFAQButton /> */}

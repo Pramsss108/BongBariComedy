@@ -14,6 +14,7 @@ import {
   Download, Play, Pause, ArrowLeft, Scissors, Youtube, Instagram, Facebook,
   Loader2, AlertCircle, Music, Film, CheckCircle2, Search, X, Clock,
   Lock, CloudOff, Hourglass, HelpCircle, Volume2, VolumeX, ShieldCheck,
+  RefreshCcw, Zap,
 } from "lucide-react";
 import { TrimSlider } from "@/components/TrimSlider";
 
@@ -675,9 +676,9 @@ export default function SocialDownloaderPage() {
                       <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
                           <p className="text-white/40 text-xs">@{videoInfo.uploader} • {videoInfo.platform}</p>
                           {videoInfo.engine && (
-                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-purple-500/30 text-[10px] text-purple-300 shadow-[0_0_8px_rgba(168,85,247,0.2)]">
-                              <ShieldCheck className="w-3 h-3" />
-                              {videoInfo.engine}
+                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-500/10 to-cyan-500/10 border border-purple-500/30 text-[10px] text-purple-300 shadow-[0_0_8px_rgba(168,85,247,0.2)]">
+                              <Zap className="w-3 h-3 text-cyan-400" />
+                              {videoInfo.engine.replace(/^Layer \d+: /, '')}
                             </span>
                           )}
                       </div>
@@ -849,11 +850,12 @@ export default function SocialDownloaderPage() {
                 {phase === "error" && errorMsg && (
                   <div className={`p-4 rounded-xl flex gap-3 text-sm items-start animate-in slide-in-from-top-2 border ${
                       errorCode === "RATE_LIMIT" ? "bg-yellow-500/10 border-yellow-500/20 text-yellow-200" :
-                      errorCode === "COBALT_DOWN" ? "bg-orange-500/10 border-orange-500/20 text-orange-200" :
+                      errorCode === "COBALT_DOWN" || errorCode === "PLATFORM_BLOCK" ? "bg-orange-500/10 border-orange-500/20 text-orange-200" :
+                      errorCode === "LOGIN_WALL" ? "bg-purple-500/10 border-purple-500/20 text-purple-200" :
                       "bg-red-500/10 border-red-500/20 text-red-200"
                   }`}>
-                    {errorCode === "PRIVATE_VIDEO" || errorCode === "AGE_RESTRICTED" ? <Lock size={16} className="mt-0.5 shrink-0" /> :
-                     errorCode === "COBALT_DOWN" ? <CloudOff size={16} className="mt-0.5 shrink-0" /> :
+                    {errorCode === "PRIVATE_VIDEO" || errorCode === "AGE_RESTRICTED" || errorCode === "LOGIN_WALL" ? <Lock size={16} className="mt-0.5 shrink-0" /> :
+                     errorCode === "COBALT_DOWN" || errorCode === "PLATFORM_BLOCK" ? <CloudOff size={16} className="mt-0.5 shrink-0" /> :
                      errorCode === "RATE_LIMIT" ? <Hourglass size={16} className="mt-0.5 shrink-0" /> :
                      <AlertCircle size={16} className="mt-0.5 shrink-0" />}
                     
@@ -861,10 +863,15 @@ export default function SocialDownloaderPage() {
                       <div className="font-bold text-xs uppercase tracking-wider opacity-90 mb-1">
                           {errorCode === "PRIVATE_VIDEO" ? "Access Denied" :
                            errorCode === "AGE_RESTRICTED" ? "Login Required" :
+                           errorCode === "LOGIN_WALL" ? "Login Wall" :
                            errorCode === "COBALT_DOWN" ? "Service Overload" :
+                           errorCode === "PLATFORM_BLOCK" ? "Platform Block" :
                            errorCode === "RATE_LIMIT" ? "Please Wait" : "Error"}
                       </div>
                       {errorMsg}
+                      <button onClick={handleFetch} className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white text-xs font-medium transition-all">
+                        <RefreshCcw size={12} /> Try Again
+                      </button>
                     </div>
                     <button onClick={() => { setPhase("idle"); setErrorMsg(""); setErrorCode(""); }}><X size={14} /></button>
                   </div>

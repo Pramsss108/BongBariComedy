@@ -326,10 +326,22 @@ function mapDownloaderError(err: any): { code: string; message: string; status: 
   }
   
   // If "Both engines failed", try to pick the most relevant reason
-  if (full.includes("both engines failed")) {
+  if (full.includes("both engines failed") || full.includes("total engine failure")) {
       if (full.includes("cobalt") && (full.includes("api error") || full.includes("down"))) {
          return { code: "COBALT_DOWN", message: "Our external download engine is temporarily unavailable. Please try again later.", status: 503 };
       }
+      if (full.includes("tiktok")) {
+         return { code: "PLATFORM_BLOCK", message: "TikTok is blocking our servers. Try again in a few seconds — we rotate IPs automatically.", status: 503 };
+      }
+      if (full.includes("twitter")) {
+         return { code: "PLATFORM_BLOCK", message: "Could not extract this tweet's video. Make sure the tweet contains a video and is publicly accessible.", status: 422 };
+      }
+      if (full.includes("instagram") || full.includes("meta")) {
+         return { code: "LOGIN_WALL", message: "Instagram requires login for this content. Try a different public reel or post.", status: 403 };
+      }
+  }
+  if (full.includes("login wall") || full.includes("login required") || full.includes("rate-limit reached")) {
+     return { code: "LOGIN_WALL", message: "This platform requires login to access this content. Try a public video instead.", status: 403 };
   }
 
   // Generic fallback: Expose raw stderr for live debugging

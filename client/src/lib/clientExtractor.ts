@@ -27,9 +27,26 @@ import { buildApiUrl } from './queryClient';
 const CF_EXTRACTOR =
   (import.meta.env as any).VITE_EXTRACTOR_CF_URL?.replace(/\/$/, '') || null;
 
+// Oracle CORS Proxy for bypassing CORS on Piped/Invidious mirrors
+const CORS_PROXY_URL =
+  ((import.meta.env as any).VITE_CORS_PROXY_URL || '').replace(/\/$/, '') || null;
+const CORS_PROXY_KEY =
+  (import.meta.env as any).VITE_CORS_PROXY_KEY || '';
+
 function extractorUrl(path: string): string {
   if (CF_EXTRACTOR) return `${CF_EXTRACTOR}${path}`;
   return buildApiUrl(`/api/extractor${path}`);
+}
+
+/** Route a URL through the Oracle CORS Proxy */
+function proxiedUrl(targetUrl: string): string {
+  if (!CORS_PROXY_URL) throw new Error('CORS proxy not configured');
+  return `${CORS_PROXY_URL}/proxy?url=${encodeURIComponent(targetUrl)}`;
+}
+
+/** Fetch headers for proxied requests */
+function proxyHeaders(): Record<string, string> {
+  return CORS_PROXY_KEY ? { 'x-api-key': CORS_PROXY_KEY } : {};
 }
 
 // ── Types ────────────────────────────────────────────────────────
@@ -287,6 +304,77 @@ async function tryInvidious(mirror: string, videoId: string, signal: AbortSignal
   };
 }
 
+// ── Proxy-wrapped Mirror Fetchers ────────────────────────────
+// Route requests through Oracle CORS Proxy when direct calls fail (CORS/GeoBlock)
+
+async function tryPipedViaProxy(mirror: string, videoId: string, signal: AbortSignal): Promise<ExtractionResult> {
+  const start = performance.now();
+  const res = await fetch(proxiedUrl(`${mirror}/streams/${videoId}`), {
+    signal,
+    headers: proxyHeaders(),
+  });
+  const latency = Math.round(performance.now() - start);
+
+  if (!res.ok) {
+    throw Object.assign(new Error(`Piped-proxy ${res.status}`), { httpStatus: res.status, latency });
+  }
+
+  const data = await res.json();
+  const streams: ExtractedStream[] = [];
+
+  if (Array.isArray(data.videoStreams)) {
+    for (const s of data.videoStreams) {
+      if (s.url && s.quality) {
+        streams.push({ url: s.url, quality: s.quality, height: parseInt(s.quality) || undefined, mimeType: s.mimeType, isAudioOnly: false });
+      }
+    }
+  }
+  if (Array.isArray(data.audioStreams)) {
+    for (const s of data.audioStreams) {
+      if (s.url) {
+        streams.push({ url: s.url, quality: s.quality || 'audio', mimeType: s.mimeType, isAudioOnly: true });
+      }
+    }
+  }
+
+  return { success: streams.length > 0, title: data.title, thumbnail: data.thumbnailUrl, duration: data.duration, uploader: data.uploader, streams, mirrorUsed: mirror, mirrorType: 'piped-proxy', latencyMs: latency };
+}
+
+async function tryInvidiousViaProxy(mirror: string, videoId: string, signal: AbortSignal): Promise<ExtractionResult> {
+  const start = performance.now();
+  const res = await fetch(proxiedUrl(`${mirror}/api/v1/videos/${videoId}?fields=title,videoThumbnails,lengthSeconds,author,formatStreams,adaptiveFormats`), {
+    signal,
+    headers: proxyHeaders(),
+  });
+  const latency = Math.round(performance.now() - start);
+
+  if (!res.ok) {
+    throw Object.assign(new Error(`Invidious-proxy ${res.status}`), { httpStatus: res.status, latency });
+  }
+
+  const data = await res.json();
+  const streams: ExtractedStream[] = [];
+
+  if (Array.isArray(data.formatStreams)) {
+    for (const s of data.formatStreams) {
+      if (s.url) {
+        streams.push({ url: s.url, quality: s.qualityLabel || s.quality || 'unknown', height: parseInt(s.qualityLabel) || undefined, mimeType: s.type, isAudioOnly: false });
+      }
+    }
+  }
+  if (Array.isArray(data.adaptiveFormats)) {
+    for (const s of data.adaptiveFormats) {
+      if (s.url) {
+        const isAudio = s.type?.startsWith('audio/');
+        streams.push({ url: s.url, quality: s.qualityLabel || s.bitrate?.toString() || 'adaptive', height: isAudio ? undefined : (parseInt(s.qualityLabel) || undefined), mimeType: s.type, isAudioOnly: !!isAudio });
+      }
+    }
+  }
+
+  const thumb = Array.isArray(data.videoThumbnails) && data.videoThumbnails.length > 0 ? data.videoThumbnails[0].url : undefined;
+  return { success: streams.length > 0, title: data.title, thumbnail: thumb, duration: data.lengthSeconds, uploader: data.author, streams, mirrorUsed: mirror, mirrorType: 'invidious-proxy', latencyMs: latency };
+}
+
 // ── Main Extractor Entry Point ───────────────────────────────────
 
 /**
@@ -316,8 +404,9 @@ export async function extractFromClient(
     return { success: false, streams: [], error: 'No mirrors available' };
   }
 
-  // Try each mirror with a 12-second timeout
+  // Try each mirror: first direct, then via CORS proxy if direct fails
   for (const mirror of mirrors) {
+    // ── Attempt 1: Direct fetch (uses visitor's residential IP) ──
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 12_000);
 
@@ -329,6 +418,7 @@ export async function extractFromClient(
       } else if (mirror.type === 'invidious') {
         result = await tryInvidious(mirror.url, videoId, controller.signal);
       } else {
+        clearTimeout(timeout);
         continue; // Skip unknown mirror types
       }
 
@@ -347,6 +437,31 @@ export async function extractFromClient(
 
       // Report failure (fire-and-forget)
       reportExtraction(mirror.url, mirror.type, platform, false, latency, httpStatus, err.message, videoId);
+
+      // ── Attempt 2: Retry via Oracle CORS Proxy ──
+      if (CORS_PROXY_URL) {
+        const proxyCtrl = new AbortController();
+        const proxyTimeout = setTimeout(() => proxyCtrl.abort(), 12_000);
+        try {
+          let result: ExtractionResult;
+          if (mirror.type === 'piped') {
+            result = await tryPipedViaProxy(mirror.url, videoId, proxyCtrl.signal);
+          } else if (mirror.type === 'invidious') {
+            result = await tryInvidiousViaProxy(mirror.url, videoId, proxyCtrl.signal);
+          } else {
+            clearTimeout(proxyTimeout);
+            continue;
+          }
+          clearTimeout(proxyTimeout);
+          if (result.success) {
+            reportExtraction(mirror.url, mirror.type + '-proxy', platform, true, result.latencyMs, 200, undefined, videoId);
+            return result;
+          }
+        } catch {
+          clearTimeout(proxyTimeout);
+          // Proxy attempt also failed — continue to next mirror
+        }
+      }
     }
   }
 

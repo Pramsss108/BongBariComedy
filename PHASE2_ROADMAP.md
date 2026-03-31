@@ -308,25 +308,15 @@ Step 5: 🔴 PAID     — yt-dlp + ASocks residential
 
 ---
 
-### PHRASE 6: Wire Oracle CORS Proxy Into Extraction Chain
+### PHRASE 6: Wire Oracle CORS Proxy Into Extraction Chain ✅ DONE
 
-**What:** Connect the Oracle VM CORS Proxy (port 8080) that we built in Phase 2 into the actual extraction chain.
-
-**Why:** Right now the proxy engine sits idle on port 8080. We need the frontend's client-side extractor (`clientExtractor.ts`) to use it as a fallback when direct Piped/Invidious calls fail.
-
-**What to do:**
-- Add `VITE_PROXY_URL=http://79.76.110.66:8080` to frontend env
-- Update `clientExtractor.ts`: if direct Piped call fails (CORS / timeout), retry via Oracle CORS Proxy
-- Add Piped/Invidious/embed scrape routes through the proxy
-- Frontend already has `_clientStreams` support — proxy-fetched streams go there
-
-**Done when:** Client extractor uses Oracle Proxy as fallback. Test: block Piped directly → still works via proxy.
+**Implementation:** Added `VITE_CORS_PROXY_URL` and `VITE_CORS_PROXY_KEY` env vars. `clientExtractor.ts` now tries direct Piped/Invidious first, then retries through Oracle CORS Proxy (`/proxy?url=...`) on failure. Added `tryPipedViaProxy()` and `tryInvidiousViaProxy()` functions.
 
 ---
 
-### PHRASE 7: Multi-Quality Picker Enhancement
+### PHRASE 7: Multi-Quality Picker Enhancement ✅ DONE (in Phrase 1)
 
-**What:** Right now Cobalt returns one URL (usually 720p). Enhance to show all available qualities.
+**Implementation:** Already done as part of Phrase 1 — Cobalt `vQuality: "max"` + audio-only fetch + 7 format output (4K/1080/720/480/360/MP3/M4A).
 
 **What to do:**
 - Cobalt API: Change `vQuality: "1080"` to `vQuality: "max"` — returns best available
@@ -372,18 +362,9 @@ Step 5: 🔴 PAID     — yt-dlp + ASocks residential
 
 ---
 
-### PHRASE 10: Error Recovery + User Feedback
+### PHRASE 10: Error Recovery + User Feedback ✅ DONE
 
-**What:** Make sure when ALL waterfall steps fail, the user gets a helpful message (not a blank error).
-
-**What to do:**
-- Each waterfall step logs which engine tried and why it failed
-- If all fail → show: "This video is private/unavailable" or "Try again in a few seconds"
-- Add retry button (one click re-runs the waterfall)
-- Add "Report broken link" button (saves URL to server for debugging)
-- Badge shows which engine succeeded: "⚡ Fetched via Cobalt" or "🌐 Client Extract"
-
-**Done when:** Every error case shows a human-readable message. Retry button works.
+**Implementation:** Added retry button (RefreshCcw icon) to error card. Enhanced engine badge with Zap icon and gradient styling. Added platform-specific error codes: `PLATFORM_BLOCK` (TikTok), `LOGIN_WALL` (Instagram), and improved Twitter error messages. Error card now color-codes by error type (yellow=rate limit, orange=platform block, purple=login wall, red=generic).
 
 ---
 

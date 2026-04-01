@@ -155,6 +155,26 @@ app.get('/health', (_req, res) => {
 
           // Proxy Hunter DISABLED — runs on Hetzner VPS, not on this Oracle 1GB VM
           log('⏭ Proxy Hunter disabled (Hetzner handles proxy scraping)');
+
+          // Phase Reaper B: Oracle VM deep verifier
+          // Pulls ISP candidates (pushed by GH Actions proxy-reaper every 4h)
+          // and runs real Instagram API verification every 30 min.
+          const hasRedis = !!(process.env.UPSTASH_REDIS_REST_URL || process.env.UPSTASH_REST_URL);
+          if (hasRedis) {
+            import('./proxyScraperService').then(({ ProxyScraper }) => {
+              const runDeepVerify = () => {
+                ProxyScraper.runCandidateVerifier(20).catch((e: any) => {
+                  console.warn('[ReaperB] verifier error:', e?.message);
+                });
+              };
+              // 5-min startup grace, then every 30 min
+              setTimeout(runDeepVerify, 5 * 60 * 1000);
+              setInterval(runDeepVerify, 30 * 60 * 1000);
+              log('🔬 Oracle deep-verifier scheduled (30-min intervals, batch=20)');
+            }).catch(() => {
+              log('⚠️ Could not load proxyScraperService for Reaper deep-verifier');
+            });
+          }
         });
       } catch (e: any) {
         onError(e);

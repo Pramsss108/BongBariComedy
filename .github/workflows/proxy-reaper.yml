@@ -1,0 +1,34 @@
+name: Proxy Reaper (ISP Candidate Harvest)
+
+on:
+  schedule:
+    # Run every 4 hours to refresh the candidate pool
+    - cron: '0 */4 * * *'
+  workflow_dispatch:
+    inputs:
+      sample_size:
+        description: 'Override MAX_SAMPLE (default 2000)'
+        required: false
+        default: '2000'
+
+jobs:
+  harvest:
+    name: Reap & ASN-filter proxy candidates
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    env:
+      UPSTASH_REDIS_REST_URL:   ${{ secrets.UPSTASH_REDIS_REST_URL }}
+      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify Node version (18+ required for native fetch)
+        run: |
+          node --version
+          node -e "if (parseInt(process.version.slice(1)) < 18) { console.error('Node 18+ required'); process.exit(1); }"
+
+      - name: Run Proxy Reaper
+        run: node scripts/proxy-reaper.mjs

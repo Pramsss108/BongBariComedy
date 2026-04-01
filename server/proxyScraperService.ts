@@ -976,4 +976,108 @@ export class ProxyScraper {
       };
     } catch { return null; }
   }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Phase Reaper B: Oracle VM Deep Verifier
+  // Pulls ISP-candidate proxies (from GH Actions Reaper) and does a real
+  // Instagram API check — the only true test of whether a proxy bypasses Meta's
+  // datacenter IP blocks.
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Deep Instagram verification through a single proxy.
+   * Hits the Instagram web profile API (not favicon — actual data API)
+   * and checks for `edge_followed_by` in the response body.
+   *
+   * Why this endpoint: it requires no login but is blocked for datacenter IPs,
+   * making it the sharpest residential-proxy litmus test available.
+   */
+  static async verifyInstagramDeep(proxyUrl: string): Promise<{ passed: boolean; latencyMs: number }> {
+    const t0 = Date.now();
+    try {
+      const isSocks = proxyUrl.startsWith('socks');
+      const agent = isSocks ? new SocksProxyAgent(proxyUrl) : new HttpsProxyAgent(proxyUrl);
+      const fetchModule = (await import('node-fetch')).default;
+      const res = await fetchModule(
+        'https://i.instagram.com/api/v1/users/web_profile_info/?username=instagram',
+        {
+          agent: agent as any,
+          timeout: 12000,
+          headers: {
+            'x-ig-app-id': '936619743392459',
+            // Mobile UA — Instagram API is more permissive with genuine mobile strings
+            'User-Agent': 'Instagram 275.0.0.27.98 Android (33/13; 420dpi; 1080x2400; samsung; SM-G991B; o1s; exynos2100; en_US; 458229237)',
+            'Accept': '*/*',
+            'Accept-Language': 'en-US',
+            'Connection': 'close',
+          },
+        } as any
+      );
+
+      const latencyMs = Date.now() - t0;
+      if (res.status !== 200) return { passed: false, latencyMs };
+
+      const body = await res.text();
+      const passed = body.includes('edge_followed_by');
+      return { passed, latencyMs };
+    } catch {
+      return { passed: false, latencyMs: Date.now() - t0 };
+    }
+  }
+
+  /**
+   * Pull up to `batchSize` candidates from `proxies:candidates:ig` (via SPOP),
+   * run deep Instagram verification on each concurrently, and promote passes to:
+   *   1. ProxyKitchen HASH   — for immediate use by existing cascade fallbacks
+   *   2. proxies:verified:ig ZADD — for priority retrieval via getBestFromVerifiedPool()
+   *
+   * Called every 30 min by setInterval in server/index.ts.
+   * Safe on 951MB Oracle VM: 20 concurrent × 12s timeout ≈ 240MB peak RAM.
+   */
+  static async runCandidateVerifier(batchSize: number = 20): Promise<{ tested: number; passed: number }> {
+    try {
+      const candidates = await ProxyKitchen.spopCandidates('proxies:candidates:ig', batchSize);
+      if (candidates.length === 0) {
+        console.log('[ProxyScraper] 🔬 CandidateVerifier: no candidates queued, skipping.');
+        return { tested: 0, passed: 0 };
+      }
+
+      console.log(`[ProxyScraper] 🔬 CandidateVerifier: deep-testing ${candidates.length} Instagram proxies...`);
+      this.pushLog('init', `🔬 REAPER VERIFY: testing ${candidates.length} IG candidates...`);
+
+      const results = await Promise.all(
+        candidates.map(proxy => this.verifyInstagramDeep(proxy))
+      );
+
+      let passed = 0;
+      for (let i = 0; i < candidates.length; i++) {
+        const { passed: ok, latencyMs } = results[i];
+        if (ok) {
+          passed++;
+          const proxy = candidates[i];
+          // 1. Add to HASH pool (existing cascade immediately picks it up)
+          await ProxyKitchen.addVerifiedProxy(proxy, {
+            yt: false,
+            fb: false,
+            ig: true,
+            latencyMs,
+            failCount: 0,
+            lastCheckedAt: new Date().toISOString(),
+            tier: latencyMs < 1500 ? 'gold' : 'bronze',
+          });
+          // 2. Add to ZADD sorted set for fast priority retrieval
+          await ProxyKitchen.zaddVerified('ig', latencyMs, proxy);
+          console.log(`[ProxyScraper] ✅ Reaper verified: ${proxy} (${latencyMs}ms)`);
+        }
+      }
+
+      const msg = `REAPER DEEP-VERIFY DONE — ${passed}/${candidates.length} new IG proxies promoted`;
+      this.pushLog(passed > 0 ? 'success' : 'log', msg);
+      console.log(`[ProxyScraper] 🔬 ${msg}`);
+      return { tested: candidates.length, passed };
+    } catch (error: any) {
+      console.error('[ProxyScraper] runCandidateVerifier error:', error.message);
+      return { tested: 0, passed: 0 };
+    }
+  }
 }

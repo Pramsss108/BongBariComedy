@@ -445,4 +445,87 @@ export class ProxyKitchen {
     console.log(`[ProxyKitchen] BulkImport: +${added} new, ${skipped} dupes skipped (single batched hset)`);
     return { added, skipped };
   }
+
+  // ── Phase Reaper: Redis Sorted Set (ZADD) operations ─────────────────────────
+  // Used by Oracle VM deep verifier to store verified proxies by latency score.
+  // Lower score = faster proxy = returned first.
+  // Key format: `proxies:verified:{platform}` — TTL 6h (refreshed on write).
+
+  private static readonly VERIFIED_POOL_TTL = 6 * 60 * 60; // 6h in seconds
+
+  /**
+   * Pop `count` candidates from the Reaper candidate SET.
+   * Oracle VM verifier calls this every 30 min to grab a batch for deep-testing.
+   */
+  static async spopCandidates(key: string, count: number = 20): Promise<string[]> {
+    try {
+      if (!redis) return [];
+      const items = await redis.spop(key, count);
+      if (!items) return [];
+      return Array.isArray(items) ? (items as string[]) : [items as string];
+    } catch (error) {
+      console.error('[ProxyKitchen] spopCandidates error:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Add a proxy to a platform sorted set scored by latency (ms).
+   * Automatically refreshes 6h TTL on each write.
+   */
+  static async zaddVerified(platform: string, latencyMs: number, proxyUrl: string): Promise<void> {
+    try {
+      if (!redis) return;
+      const key = `proxies:verified:${platform}`;
+      await redis.zadd(key, { score: latencyMs, member: proxyUrl });
+      await redis.expire(key, ProxyKitchen.VERIFIED_POOL_TTL);
+    } catch (error) {
+      console.error('[ProxyKitchen] zaddVerified error:', error);
+    }
+  }
+
+  /**
+   * Return the best (lowest latency) proxy for a platform from the sorted set.
+   * Falls back to legacy HASH-based getBestProxyForDownload() when the set is empty.
+   */
+  static async getBestFromVerifiedPool(platform: 'yt' | 'ig' | 'fb'): Promise<string | null> {
+    try {
+      if (!redis) return ProxyKitchen.getBestProxyForDownload(platform);
+      const key = `proxies:verified:${platform}`;
+      const results = await redis.zrange(key, 0, 4); // top-5 fastest
+      if (!results || results.length === 0) {
+        return ProxyKitchen.getBestProxyForDownload(platform);
+      }
+      // Spread load across top-5
+      const picked = results[Math.floor(Math.random() * results.length)];
+      return (picked as string) ?? null;
+    } catch (error) {
+      console.error('[ProxyKitchen] getBestFromVerifiedPool error:', error);
+      return ProxyKitchen.getBestProxyForDownload(platform);
+    }
+  }
+
+  /**
+   * Remove a proxy from the platform sorted set on failure.
+   */
+  static async removeFromVerifiedPool(platform: string, proxyUrl: string): Promise<void> {
+    try {
+      if (!redis) return;
+      await redis.zrem(`proxies:verified:${platform}`, proxyUrl);
+    } catch (error) {
+      console.error('[ProxyKitchen] removeFromVerifiedPool error:', error);
+    }
+  }
+
+  /**
+   * Get the number of proxies in a platform's verified sorted set.
+   */
+  static async getVerifiedPoolSize(platform: string): Promise<number> {
+    try {
+      if (!redis) return 0;
+      return (await redis.zcard(`proxies:verified:${platform}`)) || 0;
+    } catch {
+      return 0;
+    }
+  }
 }

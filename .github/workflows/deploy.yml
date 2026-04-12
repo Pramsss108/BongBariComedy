@@ -194,45 +194,54 @@ jobs:
           echo "$ORACLE_SSH_KEY" > /tmp/oracle_key
           chmod 600 /tmp/oracle_key
           mkdir -p ~/.ssh
-          ssh-keyscan -H "$ORACLE_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+          SSH_OPTS="-i /tmp/oracle_key -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ServerAliveInterval=15 -o ServerAliveCountMax=3"
+
+          echo "::group::SSH keyscan"
+          ssh-keyscan -T 10 -H "$ORACLE_HOST" >> ~/.ssh/known_hosts 2>&1 || echo "keyscan warning (non-fatal)"
+          echo "::endgroup::"
+
+          # Verify key format
+          echo "Key fingerprint:"
+          ssh-keygen -l -f /tmp/oracle_key 2>&1 || { echo "❌ Invalid SSH key format"; exit 1; }
 
           # Write .env from secret (if configured)
+          echo "::group::Sync .env"
           if [ -n "$ORACLE_ENV" ]; then
             echo "$ORACLE_ENV" > /tmp/oracle_env
-            scp -i /tmp/oracle_key -o StrictHostKeyChecking=no \
-              /tmp/oracle_env opc@"$ORACLE_HOST":~/bongbari/.env
+            scp $SSH_OPTS /tmp/oracle_env opc@"$ORACLE_HOST":~/bongbari/.env
             rm -f /tmp/oracle_env
             echo "✅ .env synced to Oracle"
           else
             echo "⚠️  ORACLE_ENV secret not set — .env not updated"
           fi
+          echo "::endgroup::"
 
-          # Copy the pre-built bundle to VM (no git needed on VM!)
-          scp -i /tmp/oracle_key -o StrictHostKeyChecking=no \
-            dist/index.js opc@"$ORACLE_HOST":~/bongbari/dist/index.js
+          # Copy the pre-built bundle to VM
+          echo "::group::Upload files"
+          scp $SSH_OPTS dist/index.js opc@"$ORACLE_HOST":~/bongbari/dist/index.js
+          echo "✅ Bundle uploaded"
 
-          # Copy the proxy engine (standalone .mjs, no build needed)
-          ssh -i /tmp/oracle_key -o StrictHostKeyChecking=no opc@"$ORACLE_HOST" 'mkdir -p ~/bongbari/server/proxy-engine'
-          scp -i /tmp/oracle_key -o StrictHostKeyChecking=no \
-            server/proxy-engine/server.mjs opc@"$ORACLE_HOST":~/bongbari/server/proxy-engine/server.mjs
-          # Copy proxies.txt if it exists
+          # Copy the proxy engine
+          ssh $SSH_OPTS opc@"$ORACLE_HOST" 'mkdir -p ~/bongbari/server/proxy-engine'
+          scp $SSH_OPTS server/proxy-engine/server.mjs opc@"$ORACLE_HOST":~/bongbari/server/proxy-engine/server.mjs
           if [ -f server/proxy-engine/proxies.txt ]; then
-            scp -i /tmp/oracle_key -o StrictHostKeyChecking=no \
-              server/proxy-engine/proxies.txt opc@"$ORACLE_HOST":~/bongbari/server/proxy-engine/proxies.txt
+            scp $SSH_OPTS server/proxy-engine/proxies.txt opc@"$ORACLE_HOST":~/bongbari/server/proxy-engine/proxies.txt
           fi
 
-          # Also sync package.json + package-lock.json for npm ci
-          scp -i /tmp/oracle_key -o StrictHostKeyChecking=no \
-            package.json package-lock.json opc@"$ORACLE_HOST":~/bongbari/
+          # Sync package files
+          scp $SSH_OPTS package.json package-lock.json opc@"$ORACLE_HOST":~/bongbari/
+          echo "✅ All files uploaded"
+          echo "::endgroup::"
 
           # SSH in: npm ci + install runtime deps + restart PM2
-          ssh -i /tmp/oracle_key -o StrictHostKeyChecking=no opc@"$ORACLE_HOST" '
+          echo "::group::Install & restart"
+          ssh $SSH_OPTS opc@"$ORACLE_HOST" '
             set -e
             export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
             echo "=== BongBari Oracle Deploy ==="
             cd ~/bongbari
             npm ci --omit=dev 2>&1 | tail -5
-            # Ensure runtime-required packages present (devDeps skipped by --omit=dev)
             npm install --no-save drizzle-orm xml2js @upstash/redis 2>&1 | tail -3
 
             # Main Express server
@@ -245,5 +254,6 @@ jobs:
             echo "=== Deploy complete ==="
             pm2 list
           '
+          echo "::endgroup::"
           rm -f /tmp/oracle_key
           echo "✅ Oracle backend deployed successfully"

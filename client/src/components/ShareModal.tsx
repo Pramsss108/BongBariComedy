@@ -1892,12 +1892,16 @@ export default function ShareModal({ isOpen, onClose, shareLink, username, theme
                           </div>
                         </div>
 
-                        {/* Title + description + copy pill — single fixed block */}
-                        <div className="text-center flex flex-col items-center justify-center h-[52px]">
+                        {/* Title + description — fixed block */}
+                        <div className="text-center flex flex-col items-center justify-start h-[42px] overflow-hidden">
                           <h4 className="text-white/90 text-[12px] font-bold leading-tight">{stepData.title}</h4>
                           <p className="text-white/40 text-[9px] mt-0.5 leading-snug max-w-[280px] line-clamp-2">{stepData.desc}</p>
+                        </div>
+
+                        {/* Copy pill row — fixed height, only active on IG step 3 */}
+                        <div className="h-[24px] flex items-center justify-center overflow-hidden">
                           {screen === 'ig-guide' && tutorialStep === 3 && (
-                            <div className="flex items-center justify-center gap-2 mt-1">
+                            <div className="flex items-center justify-center gap-2">
                               <code className="text-emerald-300 text-[9px] bg-white/[0.06] px-2 py-0.5 rounded-lg break-all max-w-[160px] truncate">{shareLink}</code>
                               <button onClick={async () => { await clipCopy(shareLink); setCopied(true); showToast(bn ? '✅ Link কপি হয়ে গেছে!' : '✅ Link copied!'); }}
                                 className="text-[9px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-lg font-bold hover:bg-emerald-500/30 transition-colors flex-shrink-0">
@@ -2009,7 +2013,7 @@ export default function ShareModal({ isOpen, onClose, shareLink, username, theme
                         )}
 
                         {/* Premium double-tap hint — animated pinch icon */}
-                        <div className="h-[20px] flex items-center justify-center">
+                        <div className="h-[28px] flex items-center justify-center overflow-hidden">
                           {screen === 'ig-guide' && tutorialStep === 4 && !step5Expanded && (
                             <motion.div
                               initial={{ opacity: 0, scale: 0.8 }}

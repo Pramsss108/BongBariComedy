@@ -1892,9 +1892,10 @@ export default function ShareModal({ isOpen, onClose, shareLink, username, theme
                           </div>
                         </div>
 
-                        <div className="text-center flex flex-col items-center justify-center">
+                        {/* Title + description — fixed height to prevent jumps */}
+                        <div className="text-center flex flex-col items-center justify-center min-h-[38px]">
                           <h4 className="text-white/90 text-[12px] font-bold leading-tight">{stepData.title}</h4>
-                          <p className="text-white/40 text-[9px] mt-0.5 leading-snug max-w-[280px]">{stepData.desc}</p>
+                          <p className="text-white/40 text-[9px] mt-0.5 leading-snug max-w-[280px] line-clamp-2">{stepData.desc}</p>
                         </div>
                         {/* Step 4 (index 3): Copy link pill — always reserve height */}
                         <div className="min-h-[24px] flex items-center justify-center">

@@ -184,6 +184,7 @@ jobs:
         env:
           ORACLE_HOST: ${{ secrets.ORACLE_HOST }}
           ORACLE_SSH_KEY: ${{ secrets.ORACLE_SSH_KEY }}
+          ORACLE_ENV: ${{ secrets.ORACLE_ENV }}
         run: |
           if [ -z "$ORACLE_SSH_KEY" ] || [ -z "$ORACLE_HOST" ]; then
             echo "⚠️  ORACLE_SSH_KEY or ORACLE_HOST secrets not configured — skipping Oracle deploy"
@@ -194,6 +195,17 @@ jobs:
           chmod 600 /tmp/oracle_key
           mkdir -p ~/.ssh
           ssh-keyscan -H "$ORACLE_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+          # Write .env from secret (if configured)
+          if [ -n "$ORACLE_ENV" ]; then
+            echo "$ORACLE_ENV" > /tmp/oracle_env
+            scp -i /tmp/oracle_key -o StrictHostKeyChecking=no \
+              /tmp/oracle_env opc@"$ORACLE_HOST":~/bongbari/.env
+            rm -f /tmp/oracle_env
+            echo "✅ .env synced to Oracle"
+          else
+            echo "⚠️  ORACLE_ENV secret not set — .env not updated"
+          fi
 
           # Copy the pre-built bundle to VM (no git needed on VM!)
           scp -i /tmp/oracle_key -o StrictHostKeyChecking=no \
@@ -213,15 +225,15 @@ jobs:
           scp -i /tmp/oracle_key -o StrictHostKeyChecking=no \
             package.json package-lock.json opc@"$ORACLE_HOST":~/bongbari/
 
-          # SSH in: npm ci (only if lockfile changed) + restart PM2
+          # SSH in: npm ci + install runtime deps + restart PM2
           ssh -i /tmp/oracle_key -o StrictHostKeyChecking=no opc@"$ORACLE_HOST" '
             set -e
             export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
             echo "=== BongBari Oracle Deploy ==="
             cd ~/bongbari
             npm ci --omit=dev 2>&1 | tail -5
-            # Ensure runtime-required packages present (not in package.json root but needed by dist/index.js)
-            npm install --no-save drizzle-orm xml2js 2>&1 | tail -3
+            # Ensure runtime-required packages present (devDeps skipped by --omit=dev)
+            npm install --no-save drizzle-orm xml2js @upstash/redis 2>&1 | tail -3
 
             # Main Express server
             pm2 restart bongbari || pm2 start dist/index.js --name bongbari

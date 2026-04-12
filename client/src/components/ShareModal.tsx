@@ -1896,8 +1896,8 @@ export default function ShareModal({ isOpen, onClose, shareLink, username, theme
                           <h4 className="text-white/90 text-[12px] font-bold leading-tight">{stepData.title}</h4>
                           <p className="text-white/40 text-[9px] mt-0.5 leading-snug max-w-[280px]">{stepData.desc}</p>
                         </div>
-                        {/* Step 4 (index 3): Copy link pill */}
-                        <div className={`${tutorialStep === 3 ? 'min-h-[24px]' : ''} flex items-center justify-center`}>
+                        {/* Step 4 (index 3): Copy link pill — always reserve height */}
+                        <div className="min-h-[24px] flex items-center justify-center">
                           {screen === 'ig-guide' && tutorialStep === 3 && (
                             <div className="flex items-center justify-center gap-2">
                               <code className="text-emerald-300 text-[9px] bg-white/[0.06] px-2 py-1 rounded-lg break-all max-w-[160px] truncate">{shareLink}</code>
@@ -2010,24 +2010,28 @@ export default function ShareModal({ isOpen, onClose, shareLink, username, theme
                           </div>
                         )}
 
-                        {/* Double-tap hint for Step 5 (IG only) */}
-                        {screen === 'ig-guide' && tutorialStep === 4 && !step5Expanded && (
-                          <motion.p
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }}
-                            className="text-white/15 text-[7px] text-center mt-0.5"
-                          >
-                            {bn ? 'ডবল ট্যাপ করো বড় করতে' : 'Double-tap to expand'}
-                          </motion.p>
-                        )}
-
-                        {/* Slim nav: primary CTA on last step + Story Card link */}
-                        <div className="flex flex-col gap-1 min-h-[36px] mt-1">
-                          {isLast && deepLink && (
-                            <motion.button whileTap={{ scale: 0.97 }} onClick={() => onComplete('app')}
-                              className={`w-full bg-gradient-to-r ${themeAccent.gradient} text-white font-bold py-2.5 rounded-xl text-[11px] hover:brightness-110 transition-all shadow-lg ${themeAccent.shadow}`}>
-                              📲 {bn ? `${deepLink.label} খোলো` : `Open ${deepLink.label}`}
-                            </motion.button>
+                        {/* Double-tap hint for Step 5 (IG only) — always reserve height */}
+                        <div className="min-h-[14px]">
+                          {screen === 'ig-guide' && tutorialStep === 4 && !step5Expanded && (
+                            <motion.p
+                              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }}
+                              className="text-white/15 text-[7px] text-center"
+                            >
+                              {bn ? 'ডবল ট্যাপ করো বড় করতে' : 'Double-tap to expand'}
+                            </motion.p>
                           )}
+                        </div>
+
+                        {/* Slim nav: primary CTA on last step + Story Card link — fixed height */}
+                        <div className="flex flex-col gap-1 min-h-[70px] mt-1">
+                          <div className="min-h-[36px]">
+                            {isLast && deepLink && (
+                              <motion.button whileTap={{ scale: 0.97 }} onClick={() => onComplete('app')}
+                                className={`w-full bg-gradient-to-r ${themeAccent.gradient} text-white font-bold py-2.5 rounded-xl text-[11px] hover:brightness-110 transition-all shadow-lg ${themeAccent.shadow}`}>
+                                📲 {bn ? `${deepLink.label} খোলো` : `Open ${deepLink.label}`}
+                              </motion.button>
+                            )}
+                          </div>
                           <button onClick={() => { gEvent('ngl_skip_to_story_card', { source: 'tutorial' }); if (isLast) onComplete('card'); else { onOpenStoryPreview(); onClose(); } }}
                             className="w-full text-white/20 text-[8px] font-medium text-center hover:text-white/35 transition-colors">
                             📸 {bn ? 'Story Card' : 'Story Card'}

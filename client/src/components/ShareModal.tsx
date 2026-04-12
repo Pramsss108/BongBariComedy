@@ -1892,18 +1892,15 @@ export default function ShareModal({ isOpen, onClose, shareLink, username, theme
                           </div>
                         </div>
 
-                        {/* Title + description — fixed height to prevent jumps */}
-                        <div className="text-center flex flex-col items-center justify-center min-h-[38px]">
+                        {/* Title + description + copy pill — single fixed block */}
+                        <div className="text-center flex flex-col items-center justify-center h-[52px]">
                           <h4 className="text-white/90 text-[12px] font-bold leading-tight">{stepData.title}</h4>
                           <p className="text-white/40 text-[9px] mt-0.5 leading-snug max-w-[280px] line-clamp-2">{stepData.desc}</p>
-                        </div>
-                        {/* Step 4 (index 3): Copy link pill — always reserve height */}
-                        <div className="min-h-[24px] flex items-center justify-center">
                           {screen === 'ig-guide' && tutorialStep === 3 && (
-                            <div className="flex items-center justify-center gap-2">
-                              <code className="text-emerald-300 text-[9px] bg-white/[0.06] px-2 py-1 rounded-lg break-all max-w-[160px] truncate">{shareLink}</code>
+                            <div className="flex items-center justify-center gap-2 mt-1">
+                              <code className="text-emerald-300 text-[9px] bg-white/[0.06] px-2 py-0.5 rounded-lg break-all max-w-[160px] truncate">{shareLink}</code>
                               <button onClick={async () => { await clipCopy(shareLink); setCopied(true); showToast(bn ? '✅ Link কপি হয়ে গেছে!' : '✅ Link copied!'); }}
-                                className="text-[9px] bg-emerald-500/20 text-emerald-300 px-2 py-1 rounded-lg font-bold hover:bg-emerald-500/30 transition-colors flex-shrink-0">
+                                className="text-[9px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-lg font-bold hover:bg-emerald-500/30 transition-colors flex-shrink-0">
                                 {bn ? '📋 কপি' : '📋 Copy'}
                               </button>
                             </div>
@@ -2011,28 +2008,46 @@ export default function ShareModal({ isOpen, onClose, shareLink, username, theme
                           </div>
                         )}
 
-                        {/* Double-tap hint for Step 5 (IG only) — always reserve height */}
-                        <div className="min-h-[14px]">
+                        {/* Premium double-tap hint — animated pinch icon */}
+                        <div className="h-[20px] flex items-center justify-center">
                           {screen === 'ig-guide' && tutorialStep === 4 && !step5Expanded && (
-                            <motion.p
-                              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }}
-                              className="text-white/15 text-[7px] text-center"
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: 1, type: 'spring', stiffness: 200 }}
+                              className="flex items-center gap-1.5 bg-white/[0.06] backdrop-blur-sm px-3 py-1 rounded-full border border-white/[0.08] cursor-pointer"
+                              onClick={() => setStep5Expanded(true)}
                             >
-                              {bn ? 'ডবল ট্যাপ করো বড় করতে' : 'Double-tap to expand'}
-                            </motion.p>
+                              <motion.span
+                                animate={{ scale: [1, 1.3, 1] }}
+                                transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                                className="text-[10px]"
+                              >👆</motion.span>
+                              <span className="text-white/40 text-[8px] font-medium">
+                                {bn ? 'ট্যাপ করে বড় করো' : 'Tap to expand'}
+                              </span>
+                              <motion.svg
+                                width="10" height="10" viewBox="0 0 24 24" fill="none"
+                                stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round"
+                                animate={{ y: [0, -2, 0] }}
+                                transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                              >
+                                <path d="M7 17L17 7M17 7H7M17 7V17"/>
+                              </motion.svg>
+                            </motion.div>
                           )}
                         </div>
 
-                        {/* Slim nav: primary CTA on last step + Story Card link — fixed height */}
-                        <div className="flex flex-col gap-1 min-h-[70px] mt-1">
-                          <div className="min-h-[36px]">
-                            {isLast && deepLink && (
-                              <motion.button whileTap={{ scale: 0.97 }} onClick={() => onComplete('app')}
-                                className={`w-full bg-gradient-to-r ${themeAccent.gradient} text-white font-bold py-2.5 rounded-xl text-[11px] hover:brightness-110 transition-all shadow-lg ${themeAccent.shadow}`}>
-                                📲 {bn ? `${deepLink.label} খোলো` : `Open ${deepLink.label}`}
-                              </motion.button>
-                            )}
-                          </div>
+                        {/* Bottom nav — always same height */}
+                        <div className="flex flex-col items-center gap-1 h-[50px]">
+                          {isLast && deepLink ? (
+                            <motion.button whileTap={{ scale: 0.97 }} onClick={() => onComplete('app')}
+                              className={`w-full bg-gradient-to-r ${themeAccent.gradient} text-white font-bold py-2 rounded-xl text-[11px] hover:brightness-110 transition-all shadow-lg ${themeAccent.shadow}`}>
+                              📲 {bn ? `${deepLink.label} খোলো` : `Open ${deepLink.label}`}
+                            </motion.button>
+                          ) : (
+                            <div className="h-[34px]" />
+                          )}
                           <button onClick={() => { gEvent('ngl_skip_to_story_card', { source: 'tutorial' }); if (isLast) onComplete('card'); else { onOpenStoryPreview(); onClose(); } }}
                             className="w-full text-white/20 text-[8px] font-medium text-center hover:text-white/35 transition-colors">
                             📸 {bn ? 'Story Card' : 'Story Card'}

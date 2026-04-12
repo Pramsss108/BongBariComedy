@@ -1793,26 +1793,26 @@ export default function ShareModal({ isOpen, onClose, shareLink, username, theme
                         <AnimatePresence>
                           {showCelebration && (
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                              className="absolute inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-2xl overflow-hidden">
+                              className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-md">
                               {/* Confetti particles */}
-                              {Array.from({ length: 20 }).map((_, i) => (
+                              {Array.from({ length: 30 }).map((_, i) => (
                                 <motion.div key={i}
-                                  className="absolute w-2 h-2 rounded-full"
-                                  style={{ background: ['#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ef4444'][i % 6], left: `${10 + Math.random() * 80}%` }}
-                                  initial={{ top: '50%', opacity: 1, scale: 0 }}
-                                  animate={{ top: `${-10 + Math.random() * 30}%`, opacity: [1, 1, 0], scale: [0, 1, 0.5], x: (Math.random() - 0.5) * 100 }}
-                                  transition={{ duration: 1 + Math.random() * 0.5, delay: Math.random() * 0.3, ease: 'easeOut' }}
+                                  className="absolute w-3 h-3 rounded-full"
+                                  style={{ background: ['#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ef4444'][i % 6], left: `${5 + Math.random() * 90}%` }}
+                                  initial={{ top: '55%', opacity: 1, scale: 0 }}
+                                  animate={{ top: `${-5 + Math.random() * 40}%`, opacity: [1, 1, 0], scale: [0, 1.2, 0.6], x: (Math.random() - 0.5) * 200 }}
+                                  transition={{ duration: 1.2 + Math.random() * 0.6, delay: Math.random() * 0.4, ease: 'easeOut' }}
                                 />
                               ))}
                               <motion.div initial={{ scale: 0 }} animate={{ scale: [0, 1.3, 1] }} transition={{ duration: 0.5 }}
                                 className="text-center z-10">
-                                <span className="text-5xl block">🎉</span>
+                                <span className="text-7xl block">🎉</span>
                                 <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-                                  className="text-white font-bold text-[15px] mt-2">
+                                  className="text-white font-bold text-xl mt-3">
                                   {bn ? 'তুমি তৈয়ার! 🚀' : "You're all set! 🚀"}
                                 </motion.p>
                                 <motion.p initial={{ opacity: 0 }} animate={{ opacity: 0.7 }} transition={{ delay: 0.5 }}
-                                  className="text-white/60 text-[11px] mt-1">
+                                  className="text-white/60 text-sm mt-1.5">
                                   {bn ? 'এখন Story পোস্ট করো' : 'Now post your Story'}
                                 </motion.p>
                               </motion.div>

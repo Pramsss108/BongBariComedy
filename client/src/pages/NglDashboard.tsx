@@ -1964,11 +1964,11 @@ export default function NglDashboard() {
                 {storyScreen === 'preview' && (
                   <>
                     {/* Preview card — large and clean */}
-                    <div className="relative w-full max-h-[55vh] rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border border-white/[0.06]">
+                    <div className="relative w-full max-h-[70vh] rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border border-white/[0.06]">
                       <img
                         src={storyPreview}
                         alt="Story card"
-                        className={`w-full h-full object-cover object-top transition-opacity duration-200 ${generatingCard ? 'opacity-40' : 'opacity-100'}`}
+                        className={`w-full h-auto transition-opacity duration-200 ${generatingCard ? 'opacity-40' : 'opacity-100'}`}
                         style={{ aspectRatio: '9/16' }}
                       />
                       {generatingCard && (

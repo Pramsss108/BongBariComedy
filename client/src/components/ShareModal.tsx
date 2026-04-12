@@ -818,313 +818,331 @@ const WA_STATUS_STEPS = {
 // ══════════════════════════════════════
 // Facebook Story Tutorial (3 steps) — pixel-accurate FB dark UI
 // ══════════════════════════════════════
-function FbTutorial({ step, shareLink, lang }: { step: number; shareLink: string; lang: string }) {
+function FbTutorial({ step, shareLink, lang, username, storyPreviewUrl }: { step: number; shareLink: string; lang: string; username?: string; storyPreviewUrl?: string | null; onOpenStoryPreview?: () => void; onClose?: () => void; expanded?: boolean }) {
   const bn = lang === 'bn';
+  const trimLink = shareLink.replace('https://', '').replace('http://', '');
 
-  // Step 0 — Facebook home → Create Story card (pixel-perfect dark mode)
+  // Step 0 — Prerequisite: Link Facebook & Instagram in Account Center
   if (step === 0) return (
     <PhoneFrame>
-      <div className="bg-[#18191a]">
-        {/* FB top bar */}
-        <div className="flex items-center justify-between px-3 py-2">
-          <span className="text-[#1877f2] text-[22px] font-black leading-none">f</span>
-          <div className="flex items-center gap-2.5">
-            {/* Search */}
-            <div className="w-7 h-7 rounded-full bg-[#3a3b3c] flex items-center justify-center">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#e4e6eb" strokeWidth="2"/><path d="M20 20l-3-3" stroke="#e4e6eb" strokeWidth="2" strokeLinecap="round"/></svg>
+      <div className="bg-[#0a0a0a] h-full overflow-hidden">
+        {/* IG-style settings header */}
+        <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-white/[0.08]">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l6-6M5 12l6 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <span className="text-white text-[12px] font-bold">{bn ? 'Account Center' : 'Account Center'}</span>
+          <span className="w-4" />
+        </div>
+        {/* Meta Account Center UI */}
+        <div className="px-3.5 py-3">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1877f2] to-[#0055d4] flex items-center justify-center">
+              <span className="text-white text-[10px] font-black">M</span>
             </div>
-            {/* Messenger with badge */}
-            <div className="w-7 h-7 rounded-full bg-[#3a3b3c] flex items-center justify-center relative">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="#e4e6eb" strokeWidth="2"/></svg>
-              <div className="absolute -top-0.5 -right-0.5 w-[12px] h-[12px] rounded-full bg-[#f02849] border-[1.5px] border-[#18191a] flex items-center justify-center">
-                <span className="text-white text-[6px] font-bold">2</span>
+            <div>
+              <span className="text-white text-[10px] font-bold block">{bn ? 'Meta Account Center' : 'Meta Account Center'}</span>
+              <span className="text-white/40 text-[8px]">{bn ? 'অ্যাকাউন্ট সংযুক্ত করো' : 'Manage connected accounts'}</span>
+            </div>
+          </div>
+          {/* Connected accounts */}
+          <div className="space-y-2">
+            {/* Instagram account — connected */}
+            <div className="bg-white/[0.06] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#f09433] via-[#e6683c] to-[#bc1888] flex items-center justify-center">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><rect x="2" y="2" width="20" height="20" rx="5" stroke="white" strokeWidth="0" fill="none"/><circle cx="12" cy="12" r="4.5" stroke="white" strokeWidth="1.5" fill="none"/><circle cx="17.5" cy="6.5" r="1.2" fill="white"/></svg>
               </div>
-            </div>
-          </div>
-        </div>
-        {/* Navigation icons row — Home, Video, Marketplace, Notifications, Menu */}
-        <div className="flex items-center justify-between px-4 py-1.5 border-b border-[#3a3b3c]">
-          <div className="flex-1 flex justify-center">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="#1877f2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/></svg>
-          </div>
-          <div className="flex-1 flex justify-center opacity-30">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="2" stroke="#b0b3b8" strokeWidth="1.5"/><path d="M10 9l5 3-5 3V9z" fill="#b0b3b8"/></svg>
-          </div>
-          <div className="flex-1 flex justify-center opacity-30">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" stroke="#b0b3b8" strokeWidth="1.5"/></svg>
-          </div>
-          <div className="flex-1 flex justify-center relative opacity-30">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="#b0b3b8" strokeWidth="1.5"/><path d="M13.73 21a2 2 0 01-3.46 0" stroke="#b0b3b8" strokeWidth="1.5"/></svg>
-            <div className="absolute -top-1 right-0 w-[10px] h-[10px] rounded-full bg-[#f02849] flex items-center justify-center">
-              <span className="text-white text-[5px] font-bold">5</span>
-            </div>
-          </div>
-          <div className="flex-1 flex justify-center opacity-30">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="#b0b3b8" strokeWidth="1.5" strokeLinecap="round"/></svg>
-          </div>
-        </div>
-        {/* Stories row */}
-        <div className="px-2.5 py-2.5">
-          <div className="flex gap-2 overflow-hidden">
-            {/* Create Story — highlighted + circle tap indicator */}
-            <div className="flex flex-col items-center gap-0.5 relative">
-              <GlowRing color="rgba(24,119,242,0.5)">
-                <div className="w-[72px] flex-shrink-0 rounded-xl bg-[#242526] overflow-hidden border border-[#1877f2]/30">
-                  <div className="h-[80px] bg-[#3a3b3c] relative">
-                    <div className="absolute bottom-0 left-0 right-0 h-[32px] bg-[#242526] flex flex-col items-center justify-end pb-1">
-                      <div className="w-7 h-7 rounded-full bg-[#1877f2] border-[3px] border-[#242526] flex items-center justify-center -mt-4 mb-0.5">
-                        <span className="text-white text-[14px] font-bold leading-none">+</span>
-                      </div>
-                      <span className="text-[#e4e6eb] text-[7px] font-medium">{bn ? 'Create' : 'Create'}</span>
-                    </div>
-                  </div>
-                </div>
-              </GlowRing>
-              {/* Pulsing circle tap on Create Story */}
-              <motion.div
-                className="absolute top-[40px] left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20"
-                animate={{ scale: [0.4, 1, 1.6, 0.4], opacity: [0, 0.9, 0, 0] }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: 'easeOut' }}
-              >
-                <div className="w-16 h-16 rounded-full border-2 border-[#1877f2]/80 bg-[#1877f2]/15" />
-              </motion.div>
-              <motion.div
-                className="absolute -bottom-3 left-1/2 -translate-x-1/2 pointer-events-none z-20"
-                animate={{ y: [0, -6, 0, 0], opacity: [0, 1, 1, 0], scale: [0.8, 1, 1, 0.8] }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-              >
-                <span className="text-[12px]">👆</span>
-              </motion.div>
-            </div>
-            {/* Other stories (dim) */}
-            {['Rina', 'Joy'].map(name => (
-              <div key={name} className="w-[72px] flex-shrink-0 rounded-xl bg-[#242526] overflow-hidden opacity-25">
-                <div className="h-[80px] bg-[#3a3b3c] relative">
-                  <div className="absolute top-1.5 left-1.5 w-7 h-7 rounded-full border-[3px] border-[#1877f2] bg-[#3a3b3c]" />
-                  <div className="absolute bottom-0 left-0 right-0 px-1 pb-1.5">
-                    <span className="text-[#e4e6eb] text-[7px]">{name}</span>
-                  </div>
-                </div>
+              <div className="flex-1">
+                <span className="text-white text-[10px] font-bold block">Instagram</span>
+                <span className="text-white/40 text-[8px]">@{username || 'your_username'}</span>
               </div>
-            ))}
+              <span className="text-emerald-400 text-[9px] font-bold">✓</span>
+            </div>
+            {/* Facebook account — connect it! */}
+            <GlowRing color="rgba(24,119,242,0.5)">
+              <div className="bg-[#1877f2]/15 rounded-xl px-3 py-2.5 flex items-center gap-2.5 border border-[#1877f2]/30 w-full">
+                <div className="w-8 h-8 rounded-full bg-[#1877f2] flex items-center justify-center">
+                  <span className="text-white text-[14px] font-black">f</span>
+                </div>
+                <div className="flex-1">
+                  <span className="text-white text-[10px] font-bold block">Facebook</span>
+                  <span className="text-[#1877f2] text-[8px]">{bn ? 'সংযুক্ত করো' : 'Link account'}</span>
+                </div>
+                <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 1.5, repeat: Infinity }}>
+                  <span className="text-[#1877f2] text-[12px]">→</span>
+                </motion.div>
+              </div>
+            </GlowRing>
           </div>
-        </div>
-        {/* Post composer (dim) */}
-        <div className="mx-3 mt-1 bg-[#242526] rounded-lg p-2.5 flex items-center gap-2.5 opacity-30">
-          <div className="w-8 h-8 rounded-full bg-[#3a3b3c]" />
-          <span className="text-[#b0b3b8] text-[10px]">{bn ? 'কি মনে হচ্ছে?' : "What's on your mind?"}</span>
+          {/* Tip box */}
+          <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
+            className="mt-3 bg-white/[0.04] rounded-lg px-3 py-2 border border-white/[0.06]">
+            <span className="text-white/50 text-[8px] leading-relaxed">
+              💡 {bn ? 'Settings → Account Center → Accounts → Facebook link করো' : 'Settings → Account Center → Accounts → Link your Facebook'}
+            </span>
+          </motion.div>
         </div>
       </div>
     </PhoneFrame>
   );
 
-  // Step 1 — Create Story screen → choose Link sticker / Text
+  // Step 1 — Instagram story editor with NGL story card (reuse IG flow)
   if (step === 1) return (
     <PhoneFrame>
-      <div className="bg-[#18191a]">
-        {/* Header bar */}
-        <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-[#3a3b3c]">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M19 12H5M5 12l6-6M5 12l6 6" stroke="#e4e6eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          <span className="text-[#e4e6eb] text-[13px] font-bold">{bn ? 'Story তৈরি করো' : 'Create Story'}</span>
-          <span className="w-[18px]" />
+      <div className="relative overflow-hidden h-full">
+        {/* Story card background */}
+        {storyPreviewUrl ? (
+          <img src={storyPreviewUrl} alt="Story card" className="absolute inset-0 w-full h-full object-cover object-center" draggable={false} />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-[#ec4899] via-[#f43f5e] to-[#fb923c]" />
+        )}
+        {/* IG top toolbar */}
+        <div className="absolute top-0 left-0 right-0 z-10 flex items-start justify-between px-2 pt-1.5">
+          <div className="w-4 h-4 rounded-full bg-black/40 flex items-center justify-center backdrop-blur-sm">
+            <span className="text-white text-[7px] font-bold">✕</span>
+          </div>
+          <div className="flex flex-col items-center gap-0.5">
+            <div className="w-4 h-4 rounded-full bg-black/40 flex items-center justify-center backdrop-blur-sm"><span className="text-white text-[7px] font-bold">Aa</span></div>
+            <div className="w-4 h-4 rounded-full bg-black/40 flex items-center justify-center backdrop-blur-sm"><span className="text-white text-[7px]">☺</span></div>
+          </div>
         </div>
-        {/* Create options grid */}
-        <div className="px-3 py-3">
-          <div className="grid grid-cols-2 gap-2.5">
-            {/* Photo option */}
-            <div className="bg-[#242526] rounded-xl p-3 flex flex-col items-center gap-1.5 opacity-30">
-              <div className="w-10 h-10 rounded-full bg-[#3a3b3c] flex items-center justify-center">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" stroke="#e4e6eb" strokeWidth="1.5"/><circle cx="12" cy="13" r="4" stroke="#e4e6eb" strokeWidth="1.5"/></svg>
-              </div>
-              <span className="text-[#e4e6eb] text-[9px] font-medium">Photo</span>
-            </div>
-            {/* Text option — highlighted + circle tap indicator */}
-            <div className="flex flex-col items-center gap-0.5 relative">
-              <GlowRing color="rgba(24,119,242,0.6)">
-                <div className="bg-[#1877f2]/15 rounded-xl p-3 flex flex-col items-center gap-1.5 border border-[#1877f2]/40">
-                  <div className="w-10 h-10 rounded-full bg-[#1877f2]/25 flex items-center justify-center">
-                    <span className="text-[#1877f2] text-[18px] font-black">Aa</span>
-                  </div>
-                  <span className="text-[#1877f2] text-[9px] font-bold">Text</span>
+        {/* Link sticker on story */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+          <div className="bg-white rounded-full px-2 py-[3px] flex items-center gap-1 shadow-lg">
+            <svg viewBox="0 0 24 24" fill="#0095f6" className="w-2.5 h-2.5 flex-shrink-0"><path d="M13.06 8.11l1.415 1.414a7 7 0 010 9.9l-.354.353a7 7 0 01-9.9-9.9l1.415 1.415a5 5 0 107.07 7.07l.354-.353a5 5 0 000-7.07L11.65 9.524l1.41-1.414zm6.718-6.718a7 7 0 010 9.9l-1.415-1.414a5 5 0 00-7.07-7.07l-.354.353a5 5 0 000 7.07l1.415 1.415-1.415 1.414-1.414-1.414a7 7 0 010-9.9l.354-.354a7 7 0 019.9 0z"/></svg>
+            <span className="text-black text-[8px] font-bold max-w-[130px] truncate">{trimLink}</span>
+          </div>
+        </div>
+        {/* IG bottom share bar */}
+        <div className="absolute bottom-0 left-0 right-0 z-10 px-1.5 pb-1.5">
+          <div className="flex items-center gap-1">
+            <GlowRing color="rgba(236,72,153,0.6)">
+              <div className="flex-1 bg-black/40 backdrop-blur-md rounded-full py-[4px] px-2 flex items-center justify-center gap-0.5">
+                <div className="w-4 h-4 rounded-full bg-gradient-to-tr from-pink-500 to-orange-400 flex items-center justify-center">
+                  <span className="text-white text-[6px]">👤</span>
                 </div>
-              </GlowRing>
-              {/* Pulsing circle tap on Text */}
-              <motion.div
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20"
-                animate={{ scale: [0.4, 1, 1.6, 0.4], opacity: [0, 0.9, 0, 0] }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: 'easeOut' }}
-              >
-                <div className="w-16 h-16 rounded-full border-2 border-[#1877f2]/80 bg-[#1877f2]/15" />
-              </motion.div>
-              <motion.div
-                className="absolute -bottom-3 left-1/2 -translate-x-1/2 pointer-events-none z-20"
-                animate={{ y: [0, -6, 0, 0], opacity: [0, 1, 1, 0], scale: [0.8, 1, 1, 0.8] }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-              >
-                <span className="text-[12px]">👆</span>
-              </motion.div>
+                <span className="text-white text-[8px] font-semibold">{bn ? 'তোর story' : 'Your stories'}</span>
+              </div>
+            </GlowRing>
+            <div className="flex-1 bg-black/40 backdrop-blur-md rounded-full py-[4px] px-1.5 flex items-center justify-center gap-0.5">
+              <span className="text-[#1cd14f] text-[8px]">★</span>
+              <span className="text-white/80 text-[8px] font-medium">{bn ? 'ঘনিষ্ঠ বন্ধু' : 'Close Friends'}</span>
+            </div>
+            <div className="w-5 h-5 rounded-full bg-white/30 flex items-center justify-center flex-shrink-0">
+              <span className="text-white/80 text-[9px]">→</span>
             </div>
           </div>
         </div>
-        {/* Tip */}
-        <div className="mx-3 bg-[#242526] rounded-lg px-3 py-2 text-center">
-          <span className="text-[#b0b3b8] text-[9px]">{bn ? 'Text বাছো → link paste করো' : 'Pick Text → paste your link'}</span>
-        </div>
+        {/* Hint: Long-press the story button */}
+        <motion.div
+          className="absolute z-30 bottom-8 left-0 right-0 flex justify-center pointer-events-none"
+          animate={{ opacity: [0, 1, 1, 0.7] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          <span className="bg-black/70 backdrop-blur-sm text-yellow-300 text-[8px] px-2.5 py-1 rounded-full font-bold">
+            👆 {bn ? '"Your Stories" লং-প্রেস করো!' : 'Long-press "Your Stories"!'}
+          </span>
+        </motion.div>
       </div>
     </PhoneFrame>
   );
 
-  // Step 2 — Text story editor with link pasted
+  // Step 2 — "Share this to" bottom sheet — select IG + Facebook Story
   if (step === 2) return (
     <PhoneFrame>
-      <div className="h-full overflow-hidden flex flex-col" style={{ background: 'linear-gradient(135deg, #1877f2 0%, #6c63ff 100%)' }}>
-        {/* Top toolbar */}
-        <div className="flex items-center justify-between px-3.5 py-2.5">
-          <span className="text-white/80 text-xs font-bold">{bn ? 'বাতিল' : 'Discard'}</span>
-          <div className="flex items-center gap-3">
-            <span className="text-white/60 text-[18px] font-black">Aa</span>
-            <div className="w-5 h-5 rounded-full bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 opacity-60" />
+      <div className="bg-[#0a0a0a] h-full overflow-hidden flex flex-col">
+        {/* Dim story background */}
+        <div className="flex-1 relative">
+          {storyPreviewUrl ? (
+            <img src={storyPreviewUrl} alt="Story" className="absolute inset-0 w-full h-full object-cover object-center opacity-40 blur-sm" draggable={false} />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-[#ec4899] via-[#f43f5e] to-[#fb923c] opacity-40 blur-sm" />
+          )}
+        </div>
+        {/* Bottom sheet — "Share this to" */}
+        <motion.div
+          initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3, type: 'spring', damping: 20 }}
+          className="bg-white rounded-t-2xl px-4 pt-3 pb-3"
+        >
+          {/* Sheet handle */}
+          <div className="flex justify-center mb-2.5">
+            <div className="w-8 h-1 rounded-full bg-gray-300" />
           </div>
-        </div>
-        {/* Text content — center, with clipboard fly animation */}
-        <div className="flex-1 flex flex-col items-center justify-center px-6 gap-2.5 relative">
-          {/* Phase 7: Clipboard fly animation */}
-          <motion.div
-            className="absolute top-2 left-1/2 -translate-x-1/2"
-            initial={{ opacity: 1, y: 0, scale: 1 }}
-            animate={{ opacity: [1, 1, 0], y: [0, 40, 60], scale: [1, 0.8, 0.6] }}
-            transition={{ duration: 1.2, ease: 'easeIn' }}
-          >
-            <span className="text-[18px]">📋</span>
-          </motion.div>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} className="text-center">
-            <p className="text-white text-[15px] font-bold leading-relaxed break-all">
-              {shareLink.replace('https://', '').replace('http://', '')}
-            </p>
-          </motion.div>
-          <motion.div initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 1.2, type: 'spring', stiffness: 300 }}
-            className="bg-emerald-400/20 border border-emerald-400/40 rounded-full px-4 py-1.5">
-            <span className="text-emerald-300 text-[9px] font-bold">✅ {bn ? 'Link paste হয়েছে!' : 'Link pasted!'}</span>
-          </motion.div>
-        </div>
-        {/* Bottom — Share to Story */}
-        <div className="px-3.5 py-3">
-          <GlowRing color="rgba(255,255,255,0.3)">
-            <div className="bg-white rounded-full py-2.5 text-center">
-              <span className="text-[#1877f2] text-[12px] font-bold">{bn ? 'Share to Story' : 'Share to Story'}</span>
+          <h3 className="text-black text-[13px] font-bold text-center mb-3">{bn ? 'শেয়ার করো' : 'Share this to'}</h3>
+          {/* Your story (IG) — checked */}
+          <div className="flex items-center gap-3 py-2">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#833ab4] via-[#fd1d1d] to-[#fcb045] p-[2px]">
+              <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
+                <span className="text-[12px]">👤</span>
+              </div>
             </div>
-          </GlowRing>
-        </div>
+            <div className="flex-1">
+              <span className="text-black text-[11px] font-bold block">{bn ? 'তোর story' : 'Your story'}</span>
+              <span className="text-gray-400 text-[8px]">{bn ? 'সবসময় Instagram-এ share হয়' : 'Always shared to Instagram'}</span>
+            </div>
+            <div className="w-5 h-5 rounded-full bg-[#0095f6] flex items-center justify-center">
+              <span className="text-white text-[10px] font-bold">✓</span>
+            </div>
+          </div>
+          {/* Your Facebook Story — THIS is the key step, animate check */}
+          <div className="flex items-center gap-3 py-2">
+            <div className="w-9 h-9 rounded-full bg-[#1877f2] flex items-center justify-center">
+              <span className="text-white text-[14px] font-black">f</span>
+            </div>
+            <div className="flex-1">
+              <span className="text-black text-[11px] font-bold block">{bn ? 'তোর Facebook Story' : 'Your Facebook Story'}</span>
+              <span className="text-gray-400 text-[8px]">{bn ? 'বন্ধুদের কাছে' : 'Friends'}</span>
+            </div>
+            <GlowRing color="rgba(24,119,242,0.6)">
+              <motion.div
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 1, type: 'spring', stiffness: 300 }}
+                className="w-5 h-5 rounded-full bg-[#1877f2] flex items-center justify-center"
+              >
+                <span className="text-white text-[10px] font-bold">✓</span>
+              </motion.div>
+            </GlowRing>
+          </div>
+          {/* Bouncing arrow pointing at FB checkbox */}
+          <motion.div
+            className="flex justify-end pr-1 -mt-1 pointer-events-none"
+            animate={{ x: [0, -4, 0] }}
+            transition={{ duration: 1, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <span className="text-[12px]">👆</span>
+          </motion.div>
+          {/* Share button */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }}>
+            <GlowRing color="rgba(98,89,222,0.5)">
+              <div className="bg-[#6259de] rounded-xl py-2.5 text-center w-full mt-2">
+                <span className="text-white text-[12px] font-bold">Share</span>
+              </div>
+            </GlowRing>
+          </motion.div>
+        </motion.div>
       </div>
     </PhoneFrame>
   );
 
-  // Step 3 — Share confirmation dialog
+  // Step 3 — Tap Share — story posting to both platforms
   if (step === 3) return (
     <PhoneFrame>
-      <div className="bg-[#18191a] h-full overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-[#3a3b3c]">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M19 12H5M5 12l6-6M5 12l6 6" stroke="#e4e6eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          <span className="text-[#e4e6eb] text-[13px] font-bold">{bn ? 'Preview' : 'Preview'}</span>
-          <span className="w-[18px]" />
-        </div>
-        {/* Story preview card */}
-        <div className="mx-3 mt-3 rounded-xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #1877f2 0%, #6c63ff 100%)' }}>
-          <div className="px-4 py-5 flex items-center justify-center">
-            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
-              className="text-white text-[13px] font-bold text-center break-all leading-relaxed">
-              {shareLink.replace('https://', '').replace('http://', '')}
-            </motion.p>
-          </div>
-        </div>
-        {/* Share options */}
-        <div className="px-3 mt-3 space-y-2">
-          <div className="flex items-center gap-2.5 px-3 py-2 bg-[#242526] rounded-lg opacity-30">
-            <span className="text-[14px]">🌐</span>
-            <span className="text-[#e4e6eb] text-[10px]">{bn ? 'সবাই' : 'Public'}</span>
-          </div>
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5 }}
-            className="flex items-center gap-2.5 px-3 py-2 bg-[#1877f2]/15 rounded-lg border border-[#1877f2]/30">
-            <span className="text-[14px]">👥</span>
-            <span className="text-[#e4e6eb] text-[10px] font-bold">{bn ? 'বন্ধুরা' : 'Friends'}</span>
-            <span className="text-[#1877f2] text-[8px] ml-auto">✓</span>
+      <div className="bg-[#0a0a0a] h-full overflow-hidden flex flex-col items-center justify-center">
+        {/* Posting animation */}
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 200 }}
+          className="text-center"
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+            className="w-12 h-12 mx-auto mb-3 rounded-full border-2 border-white/10 border-t-[#1877f2] border-r-[#e1306c]"
+          />
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
+            <p className="text-white/80 text-[11px] font-bold">{bn ? 'পোস্ট হচ্ছে...' : 'Sharing...'}</p>
           </motion.div>
-        </div>
-        {/* Share button */}
-        <div className="px-3.5 mt-3 pb-3">
-          <GlowRing color="rgba(24,119,242,0.5)">
-            <div className="bg-[#1877f2] rounded-full py-2.5 text-center w-full">
-              <span className="text-white text-[12px] font-bold">{bn ? 'এখনই Share করো' : 'Share Now'}</span>
+          {/* Two platform badges */}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1 }}
+            className="flex items-center justify-center gap-2 mt-3">
+            <div className="flex items-center gap-1 bg-gradient-to-r from-[#833ab4]/20 to-[#fd1d1d]/20 border border-[#e1306c]/30 rounded-full px-2.5 py-1">
+              <span className="text-[10px]">📸</span>
+              <span className="text-white/70 text-[8px] font-bold">Instagram</span>
+              <motion.span initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 1.5 }}
+                className="text-emerald-400 text-[8px]">✓</motion.span>
             </div>
-          </GlowRing>
-          <BouncingArrow direction="up" className="!text-sm mt-1 flex justify-center" />
-        </div>
+            <div className="flex items-center gap-1 bg-[#1877f2]/15 border border-[#1877f2]/30 rounded-full px-2.5 py-1">
+              <span className="text-[10px]">🔵</span>
+              <span className="text-white/70 text-[8px] font-bold">Facebook</span>
+              <motion.span initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 2 }}
+                className="text-emerald-400 text-[8px]">✓</motion.span>
+            </div>
+          </motion.div>
+          {/* Success message */}
+          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 2.5 }}
+            className="mt-3 bg-emerald-500/15 border border-emerald-400/30 rounded-full px-4 py-1.5">
+            <span className="text-emerald-300 text-[9px] font-bold">🎉 {bn ? 'দুটোতেই পোস্ট হয়ে গেছে!' : 'Posted on both!'}</span>
+          </motion.div>
+        </motion.div>
       </div>
     </PhoneFrame>
   );
 
-  // Step 4 — Live story with views and reactions
+  // Step 4 — Live Facebook story with viewers + swipe up
   return (
     <PhoneFrame>
       <div className="bg-[#18191a] h-full overflow-hidden">
         {/* Story progress bar */}
-        <div className="px-3 pt-3">
+        <div className="px-3 pt-2.5">
           <div className="h-[2px] bg-[#3a3b3c] rounded-full overflow-hidden">
-            <motion.div initial={{ width: '0%' }} animate={{ width: '100%' }} transition={{ duration: 3, ease: 'linear' }}
+            <motion.div initial={{ width: '0%' }} animate={{ width: '100%' }} transition={{ duration: 4, ease: 'linear' }}
               className="h-full bg-white/80 rounded-full" />
           </div>
         </div>
-        {/* Story header — user info */}
+        {/* Story header — user name + "Just now" */}
         <div className="flex items-center gap-2.5 px-3 py-2">
-          <div className="w-8 h-8 rounded-full bg-[#3a3b3c] flex items-center justify-center">
-            <span className="text-[#e4e6eb] text-[12px]">👤</span>
+          <div className="w-7 h-7 rounded-full bg-[#3a3b3c] flex items-center justify-center">
+            <span className="text-[#e4e6eb] text-[10px]">👤</span>
           </div>
           <div className="flex-1">
-            <p className="text-[#e4e6eb] text-[10px] font-bold">{bn ? 'তুমি' : 'You'}</p>
+            <p className="text-[#e4e6eb] text-[10px] font-bold">{username || (bn ? 'তুমি' : 'You')}</p>
             <p className="text-[#b0b3b8] text-[7px]">{bn ? 'এইমাত্র' : 'Just now'}</p>
           </div>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="5" r="1.5" fill="#e4e6eb"/><circle cx="12" cy="12" r="1.5" fill="#e4e6eb"/><circle cx="12" cy="19" r="1.5" fill="#e4e6eb"/></svg>
-        </div>
-        {/* Story content — gradient with link */}
-        <div className="mx-2 rounded-xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #1877f2 0%, #6c63ff 100%)' }}>
-          <div className="px-5 py-6 flex items-center justify-center">
-            <p className="text-white text-[14px] font-bold text-center break-all leading-relaxed">
-              {shareLink.replace('https://', '').replace('http://', '')}
-            </p>
-          </div>
-        </div>
-        {/* Bottom — views + reactions */}
-        <div className="px-3 py-2.5 flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" stroke="#b0b3b8" strokeWidth="1.5"/>
-              <circle cx="12" cy="12" r="3" stroke="#b0b3b8" strokeWidth="1.5"/>
-            </svg>
-            <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
-              className="text-[#b0b3b8] text-[10px]">
-              {bn ? '৫ জন দেখেছে' : '5 viewers'}
-            </motion.span>
-          </div>
-          {/* Reaction emojis floating up */}
           <div className="flex items-center gap-1">
-            {['😍', '🔥', '👏'].map((emoji, i) => (
-              <motion.span key={i}
-                initial={{ opacity: 0, y: 10, scale: 0 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ delay: 1 + i * 0.25, type: 'spring', stiffness: 300 }}
-                className="text-[14px]">{emoji}</motion.span>
+            <span className="text-white/30 text-[8px]">⋯</span>
+            <span className="text-white/30 text-[8px]">✕</span>
+          </div>
+        </div>
+        {/* Story content — NGL story card or gradient */}
+        <div className="mx-2 rounded-xl overflow-hidden relative" style={{ height: '55%' }}>
+          {storyPreviewUrl ? (
+            <img src={storyPreviewUrl} alt="Story" className="w-full h-full object-cover object-center" draggable={false} />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-[#ec4899] via-[#f43f5e] to-[#fb923c] flex items-center justify-center">
+              <div className="text-center">
+                <span className="text-white text-[11px] font-bold block">{bn ? 'আমার সম্পর্কে anonymous কিছু বলো 🙈' : 'send me anonymous messages!'}</span>
+                <div className="bg-white rounded-full px-2 py-0.5 mt-2 mx-auto inline-flex items-center gap-1">
+                  <span className="text-[8px]">🔗</span>
+                  <span className="text-black text-[8px] font-bold">{trimLink}</span>
+                </div>
+              </div>
+            </div>
+          )}
+          {/* Swipe up arrows */}
+          <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2 pointer-events-none">
+            {[0, 1].map(i => (
+              <motion.div key={i}
+                animate={{ y: [0, -6, 0], opacity: [0.3, 0.8, 0.3] }}
+                transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+        {/* Bottom bar — No viewers yet + Add story + IG + Highlight */}
+        <div className="px-3 pt-2 flex items-center justify-between">
+          <div className="flex items-center gap-1">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" stroke="#b0b3b8" strokeWidth="1.5"/><circle cx="12" cy="12" r="3" stroke="#b0b3b8" strokeWidth="1.5"/></svg>
+            <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }}
+              className="text-[#b0b3b8] text-[8px]">{bn ? 'কেউ এখনও দেখেনি' : 'No viewers yet'}</motion.span>
+          </div>
+          <div className="flex items-center gap-2">
+            {['Add story', 'Instagram', 'Highlight'].map((label, i) => (
+              <motion.div key={label} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 + i * 0.15 }}
+                className="flex flex-col items-center gap-0.5">
+                <div className="w-5 h-5 rounded-full bg-[#3a3b3c] flex items-center justify-center">
+                  <span className="text-[#e4e6eb] text-[7px]">{i === 0 ? '⊕' : i === 1 ? '📷' : '◉'}</span>
+                </div>
+                <span className="text-[#b0b3b8] text-[6px]">{label}</span>
+              </motion.div>
             ))}
           </div>
         </div>
         {/* Success badge */}
         <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 1.5 }}
-          className="mx-3 mb-2 bg-[#1877f2]/15 rounded-full px-3 py-1.5 text-center border border-[#1877f2]/20">
-          <span className="text-[#1877f2] text-[9px] font-bold">🎉 {bn ? 'Story লাইভ! বন্ধুরা react করছে' : 'Story is live! Friends are reacting'}</span>
+          className="mx-3 mt-2 bg-[#1877f2]/15 rounded-full px-3 py-1.5 text-center border border-[#1877f2]/20">
+          <span className="text-[#1877f2] text-[9px] font-bold">🎉 {bn ? 'Facebook Story লাইভ!' : 'Facebook Story is live!'}</span>
         </motion.div>
       </div>
     </PhoneFrame>
@@ -1133,18 +1151,18 @@ function FbTutorial({ step, shareLink, lang }: { step: number; shareLink: string
 
 const FB_STEPS = {
   bn: [
-    { title: '"Create Story" ট্যাপ করো', desc: 'Facebook home → story cards উপরে' },
-    { title: '🔗 Text story বাছো', desc: 'Text option ট্যাপ করো — link paste করতে' },
-    { title: 'Link paste করো', desc: 'তোর link copy আছে 📋 — paste করো' },
-    { title: 'Share to Story চাপো', desc: 'Preview দেখো → Share Now ট্যাপ করো' },
-    { title: 'Story লাইভ! 🎉', desc: 'বন্ধুরা দেখছে ও react করছে' },
+    { title: 'IG ↔ FB সংযুক্ত করো', desc: 'Settings → Account Center → Facebook link করো' },
+    { title: 'IG Story বানাও + Link দাও', desc: 'Instagram Story → Link sticker → তোর link paste করো' },
+    { title: '"Facebook Story" চেক করো ✓', desc: '"Your stories" লং-প্রেস → Facebook Story সিলেক্ট করো' },
+    { title: 'Share ট্যাপ করো', desc: 'দুটোতেই একসাথে পোস্ট হবে!' },
+    { title: 'FB Story লাইভ! 🎉', desc: 'Facebook-এ তোর NGL story দেখা যাচ্ছে' },
   ],
   en: [
-    { title: 'Tap "Create Story"', desc: 'Facebook home → Story cards at top' },
-    { title: 'Choose Text story', desc: 'Tap Text option — to paste your link' },
-    { title: 'Paste your link', desc: 'Your link is already copied 📋' },
-    { title: 'Tap Share to Story', desc: 'Preview it → tap Share Now' },
-    { title: 'Story is live! 🎉', desc: 'Friends are viewing & reacting' },
+    { title: 'Link IG ↔ Facebook', desc: 'Settings → Account Center → Connect your Facebook' },
+    { title: 'Create IG Story + Add Link', desc: 'Instagram Story → Link sticker → Paste your link' },
+    { title: 'Check "Facebook Story" ✓', desc: 'Long-press "Your stories" → Select Facebook Story' },
+    { title: 'Tap Share', desc: 'Posts to both platforms at once!' },
+    { title: 'FB Story is live! 🎉', desc: 'Your NGL story is now on Facebook' },
   ],
 };
 

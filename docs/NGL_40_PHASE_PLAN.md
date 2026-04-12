@@ -22,11 +22,11 @@
 | 18 | Dark bg consistency audit | ✅ DONE (audit confirmed compliant) | `ShareModal.tsx`, `NglDashboard.tsx` |
 | 19 | Button color hierarchy | ✅ DONE | `ShareModal.tsx`, `NglDashboard.tsx` |
 | 20 | Icon/emoji consistency sweep | ✅ DONE (all platforms use SVG) | `ShareModal.tsx` |
-| 21 | GA4 share funnel events | ⬜ TODO | `ShareModal.tsx` |
-| 22 | Return-from-app tracking | ⬜ TODO | `ShareModal.tsx` |
-| 23 | Dashboard GA4 heatmap events | ⬜ TODO | `NglDashboard.tsx` |
-| 24 | Error tracking (onerror + API) | ⬜ TODO | `client/index.html`, `queryClient.ts` |
-| 25 | Performance metrics | ⬜ TODO | `NglDashboard.tsx`, `ShareModal.tsx` |
+| 21 | GA4 share funnel events | ✅ DONE | `ShareModal.tsx` |
+| 22 | Return-from-app tracking | ✅ DONE | `ShareModal.tsx` |
+| 23 | Dashboard GA4 heatmap events | ✅ DONE | `NglDashboard.tsx` |
+| 24 | Error tracking (onerror + API) | ✅ DONE | `client/index.html`, `queryClient.ts` |
+| 25 | Performance metrics | ✅ DONE | `NglDashboard.tsx`, `ShareModal.tsx` |
 | 26 | PhoneFrame responsive scaling | ⬜ TODO | `ShareModal.tsx` |
 | 27 | Share cards 2-col on tiny phones | ⬜ TODO | `NglDashboard.tsx` |
 | 28 | Modal scroll handling | ⬜ TODO | `ShareModal.tsx` |
@@ -175,7 +175,7 @@
 ---
 
 ### Phase 21 — GA4 share funnel events
-- **Status**: ⬜ TODO
+- **Status**: ✅ DONE (Apr 2026)
 - **File**: `client/src/components/ShareModal.tsx`
 - **What exists**: `trackShare(platform)` saves to localStorage only. No gtag() calls.
 - **Steps**:
@@ -191,7 +191,7 @@
 ---
 
 ### Phase 22 — Return-from-app tracking
-- **Status**: ⬜ TODO
+- **Status**: ✅ DONE (Apr 2026)
 - **File**: `client/src/components/ShareModal.tsx`
 - **Steps**:
   1. In `smartOpen()`, after opening external app, add `document.addEventListener('visibilitychange', ...)` listener
@@ -202,7 +202,7 @@
 ---
 
 ### Phase 23 — Dashboard GA4 heatmap events
-- **Status**: ⬜ TODO
+- **Status**: ✅ DONE (Apr 2026)
 - **File**: `client/src/pages/NglDashboard.tsx`
 - **Steps**:
   1. Import/reuse `gEvent` helper (or define locally)
@@ -213,7 +213,7 @@
 ---
 
 ### Phase 24 — Error tracking
-- **Status**: ⬜ TODO
+- **Status**: ✅ DONE (Apr 2026)
 - **Files**: `client/index.html`, `client/src/lib/queryClient.ts`
 - **Steps**:
   1. In `client/index.html` `<head>`, add:
@@ -228,7 +228,7 @@
 ---
 
 ### Phase 25 — Performance metrics
-- **Status**: ⬜ TODO
+- **Status**: ✅ DONE (Apr 2026)
 - **Files**: `NglDashboard.tsx`, `ShareModal.tsx`
 - **Steps**:
   1. In dashboard mount: `performance.mark('dashboard_render')` → in first useEffect after render: `performance.measure('dashboard_load', 'dashboard_render')` → fire `gEvent('perf_dashboard_load', { duration })`

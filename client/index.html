@@ -129,6 +129,16 @@
     });
   </script>
 
+  <!-- Phase 24: Global error tracking → GA4 -->
+  <script>
+    window.onerror = function(msg, url, line) {
+      if (window.gtag) window.gtag('event', 'js_error', { message: String(msg).slice(0,100), source: String(url).split('/').pop(), line: String(line) });
+    };
+    window.onunhandledrejection = function(e) {
+      if (window.gtag) window.gtag('event', 'unhandled_rejection', { reason: String(e.reason).slice(0,100) });
+    };
+  </script>
+
   <!-- Schema Markup (JSON-LD) - deferred for performance -->
   <script>
     window.addEventListener('load', function () {

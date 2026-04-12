@@ -59,6 +59,8 @@ export function buildApiUrl(url: string): string {
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
+    // Phase 24: Track API errors in GA4
+    try { (window as any).gtag?.('event', 'api_error', { endpoint: res.url?.split('/api/')[1]?.slice(0, 50) || 'unknown', status: String(res.status) }); } catch {}
     throw new Error(`${res.status}: ${text}`);
   }
 }

@@ -101,6 +101,8 @@ export default function NglDashboard() {
   const username = params?.username || '';
   const [, navigate] = useLocation();
   const { t, lang } = useNglLang();
+  // Phase 23: GA4 event helper
+  const gEvent = (name: string, params?: Record<string, string>) => { try { (window as any).gtag?.('event', name, params); } catch {} };
 
   const [tab, setTab] = useState<'play' | 'inbox'>('play');
   const [messages, setMessages] = useState<NglMessage[]>([]);
@@ -194,6 +196,16 @@ export default function NglDashboard() {
       setSecretKey(k);
     } catch { navigate('/ngl/create', { replace: true }); }
   }, [username, navigate]);
+
+  // Phase 25: Track dashboard load performance
+  useEffect(() => {
+    const t0 = performance.now();
+    return () => {
+      const dur = Math.round(performance.now() - t0);
+      if (dur > 500) gEvent('perf_dashboard_load', { duration: String(dur) });
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Load profile
   useEffect(() => {
@@ -301,6 +313,7 @@ export default function NglDashboard() {
   }, [loadInbox]);
 
   const handleCopy = async () => {
+    gEvent('ngl_copy_link');
     let ok = false;
     try { await navigator.clipboard.writeText(shareLink); ok = true; } catch {
       try {
@@ -346,6 +359,7 @@ export default function NglDashboard() {
   };
 
   const handleDice = async () => {
+    gEvent('ngl_prompt_shuffle');
     setDiceLoading(true);
     // Pick a random prompt from local pool (instant) — avoid repeating current
     const pool = PROMPT_POOL.filter(p => p[lang as 'bn' | 'en'] !== prompt);
@@ -648,10 +662,12 @@ export default function NglDashboard() {
     const promptText = decodeEntities(rawPrompt).slice(0, 60) + (rawPrompt.length > 60 ? '...' : '');
     ctx.fillText(`"${promptText}"`, 540, 680);
 
-    // Messages count
-    ctx.fillStyle = textMuted;
-    ctx.font = '600 28px system-ui, sans-serif';
-    ctx.fillText(`🔥 ${messages.length} messages received`, 540, 760);
+    // Messages count (only show if > 0)
+    if (messages.length > 0) {
+      ctx.fillStyle = textMuted;
+      ctx.font = '600 28px system-ui, sans-serif';
+      ctx.fillText(`🔥 ${messages.length} messages received`, 540, 760);
+    }
 
     // CTA button
     ctx.fillStyle = ctaBg;
@@ -813,6 +829,7 @@ export default function NglDashboard() {
 
   // Phase 27: React to a message
   const handleReact = async (msgId: string, reaction: string | null) => {
+    gEvent('ngl_reaction', { reaction: reaction || 'remove' });
     try {
       const currentMsg = messages.find(m => m.id === msgId);
       const newReaction = currentMsg?.reaction === reaction ? null : reaction;
@@ -829,6 +846,7 @@ export default function NglDashboard() {
   // Phase 28: Set theme — NO auto-close, user taps ✕ when done
   const handleSetTheme = async (newTheme: string) => {
     if (newTheme === theme) return; // already selected
+    gEvent('ngl_theme_change', { theme: newTheme });
     setSettingTheme(true);
     setTheme(newTheme); // optimistic instant switch
     try {
@@ -990,14 +1008,14 @@ export default function NglDashboard() {
         <div className="flex w-full max-w-2xl px-4 sm:px-6 mb-1.5 flex-shrink-0">
           <div className="flex w-full bg-white/[0.04] rounded-xl p-0.5 border border-white/[0.06]">
             <button
-              onClick={() => setTab('play')}
+              onClick={() => { gEvent('ngl_tab_switch', { tab: 'play' }); setTab('play'); }}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[12px] font-extrabold rounded-lg transition-all duration-300 ${tab === 'play' ? `bg-gradient-to-r ${NGL_THEMES[theme]?.accent || NGL_THEMES.default.accent} text-white shadow-lg` : 'text-white/30 hover:text-white/50'}`}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
               {lang === 'bn' ? 'হোম' : 'Home'}
             </button>
             <button
-              onClick={() => { setTab('inbox'); setNewMsgCount(0); }}
+              onClick={() => { gEvent('ngl_tab_switch', { tab: 'inbox' }); setTab('inbox'); setNewMsgCount(0); }}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[12px] font-extrabold rounded-lg transition-all duration-300 relative ${tab === 'inbox' ? `bg-gradient-to-r ${NGL_THEMES[theme]?.accent || NGL_THEMES.default.accent} text-white shadow-lg` : 'text-white/30 hover:text-white/50'}`}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
@@ -1221,10 +1239,10 @@ export default function NglDashboard() {
                 {/* ═══ SHARE CARDS: 4 premium icon buttons ═══ */}
                 <div className="grid grid-cols-4 gap-2">
                   {[
-                    { label: lang === 'bn' ? 'হোয়াটসঅ্যাপ' : 'WhatsApp', color: 'from-green-500/20 to-green-600/10 border-green-500/15', action: () => { setShareModalScreen('whatsapp'); setShowShareModal(true); }, renderIcon: () => <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-green-400"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg> },
-                    { label: lang === 'bn' ? 'IG স্টোরি' : 'IG Story', color: 'from-pink-500/20 to-purple-600/10 border-pink-500/15', action: () => { setShareModalScreen('ig-guide'); setShowShareModal(true); }, renderIcon: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-pink-400"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg> },
-                    { label: lang === 'bn' ? 'স্টোরি কার্ড' : 'Story Card', color: 'from-violet-500/20 to-indigo-600/10 border-violet-500/15', action: () => openStoryPreview(), renderIcon: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-violet-400"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg> },
-                    { label: lang === 'bn' ? 'আরো' : 'More', color: 'from-blue-500/20 to-cyan-600/10 border-blue-500/15', action: () => { setShareModalScreen('picker'); setShowShareModal(true); }, renderIcon: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-blue-400"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg> },
+                    { label: lang === 'bn' ? 'হোয়াটসঅ্যাপ' : 'WhatsApp', color: 'from-green-500/20 to-green-600/10 border-green-500/15', action: () => { gEvent('ngl_share_card', { platform: 'whatsapp' }); setShareModalScreen('whatsapp'); setShowShareModal(true); }, renderIcon: () => <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-green-400"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg> },
+                    { label: lang === 'bn' ? 'IG স্টোরি' : 'IG Story', color: 'from-pink-500/20 to-purple-600/10 border-pink-500/15', action: () => { gEvent('ngl_share_card', { platform: 'ig-story' }); setShareModalScreen('ig-guide'); setShowShareModal(true); }, renderIcon: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-pink-400"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg> },
+                    { label: lang === 'bn' ? 'স্টোরি কার্ড' : 'Story Card', color: 'from-violet-500/20 to-indigo-600/10 border-violet-500/15', action: () => { gEvent('ngl_share_card', { platform: 'story-card' }); openStoryPreview(); }, renderIcon: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-violet-400"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg> },
+                    { label: lang === 'bn' ? 'আরো' : 'More', color: 'from-blue-500/20 to-cyan-600/10 border-blue-500/15', action: () => { gEvent('ngl_share_card', { platform: 'more' }); setShareModalScreen('picker'); setShowShareModal(true); }, renderIcon: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-blue-400"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg> },
                   ].map((item, i) => (
                     <motion.button
                       key={item.label}

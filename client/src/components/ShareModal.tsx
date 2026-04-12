@@ -1165,6 +1165,7 @@ function isTutorialDone(scr: string): boolean {
   try { return !!(TUT_DONE_KEYS[scr] && localStorage.getItem(TUT_DONE_KEYS[scr])); } catch { return false; }
 }
 function markTutorialDone(scr: string) {
+  gEvent('ngl_tutorial_complete', { platform: scr });
   try { const k = TUT_DONE_KEYS[scr]; if (k) localStorage.setItem(k, '1'); } catch {}
   // Phase 10: Clear resume data on completion
   try { localStorage.removeItem('bng_tut_resume_' + scr); } catch {}
@@ -1205,6 +1206,9 @@ const DEEP_LINKS: Record<string, { native: string; web: string; label: string }>
   'wa-status-guide': { native: 'whatsapp://status', web: 'https://web.whatsapp.com', label: 'WhatsApp' },
   'fb-guide': { native: 'fb://story/create', web: 'https://www.facebook.com', label: 'Facebook' },
 };
+
+// Phase 21: GA4 event helper
+const gEvent = (name: string, params?: Record<string, string>) => { try { (window as any).gtag?.('event', name, params); } catch {} };
 
 // ══════════════════════════════════════════════
 // MAIN SHARE MODAL
@@ -1256,6 +1260,7 @@ export default function ShareModal({ isOpen, onClose, shareLink, username, theme
   // Phase 10: Save tutorial progress mid-session for resume
   useEffect(() => {
     if (screen && TUT_DONE_KEYS[screen] && tutorialStep > 0) {
+      gEvent('ngl_tutorial_step', { platform: screen, step: String(tutorialStep) });
       try { localStorage.setItem('bng_tut_resume_' + screen, JSON.stringify({ step: tutorialStep, ts: Date.now() })); } catch {}
     }
   }, [tutorialStep, screen]);
@@ -1288,6 +1293,7 @@ export default function ShareModal({ isOpen, onClose, shareLink, username, theme
 
   useEffect(() => {
     if (isOpen) {
+      gEvent('ngl_share_modal_open');
       setScreen(initialScreen);
       setTutorialStep(0);
       setCopied(false);
@@ -1323,10 +1329,20 @@ export default function ShareModal({ isOpen, onClose, shareLink, username, theme
 
   // Phase 5: Smart open — try native deep link on mobile, fallback to web URL
   const smartOpen = (nativeUrl: string, webUrl: string) => {
-    if (!mobile) { window.open(webUrl, '_blank'); return; }
+    if (!mobile) { window.open(webUrl, '_blank'); gEvent('ngl_open_app', { platform: screen, mode: 'desktop' }); return; }
     // Try native deep link first
     const start = Date.now();
     const w = window.open(nativeUrl, '_blank');
+    gEvent('ngl_open_app', { platform: screen, mode: 'mobile' });
+    // Phase 22: Track return from external app
+    const onReturn = () => {
+      if (document.visibilityState === 'visible') {
+        gEvent('ngl_return_from_app', { platform: screen });
+        document.removeEventListener('visibilitychange', onReturn);
+      }
+    };
+    document.addEventListener('visibilitychange', onReturn);
+    setTimeout(() => document.removeEventListener('visibilitychange', onReturn), 120000);
     // If native scheme fails (no app), the window either closes fast or never opens
     // Fallback after a short delay
     setTimeout(() => {
@@ -1345,6 +1361,7 @@ export default function ShareModal({ isOpen, onClose, shareLink, username, theme
     if (resumeStep) showToast(bn ? `⏩ ধাপ ${resumeStep + 1} থেকে আবার শুরু` : `⏩ Resuming from step ${resumeStep + 1}`, 2500);
     // Phase 6: Check if user completed this tutorial before
     setQuickMode(isTutorialDone(target));
+    gEvent('ngl_platform_select', { platform: target });
     setScreen(target);
     // Phase 9: Show animated copy confirmation
     setShowCopyAnim(true);
@@ -1541,7 +1558,7 @@ export default function ShareModal({ isOpen, onClose, shareLink, username, theme
                           animate={{ opacity: 1, scale: 1, y: 0 }}
                           transition={{ delay: 0.50, type: 'spring', stiffness: 400, damping: 16 }}
                           whileTap={{ scale: 0.8 }}
-                          onClick={() => { onOpenStoryPreview(); onClose(); }}
+                          onClick={() => { gEvent('ngl_skip_to_story_card', { source: 'picker' }); onOpenStoryPreview(); onClose(); }}
                           className="flex flex-col items-center gap-1.5"
                         >
                           <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-violet-500/15 flex items-center justify-center border border-violet-400/15">
@@ -2005,7 +2022,7 @@ export default function ShareModal({ isOpen, onClose, shareLink, username, theme
                               📲 {bn ? `${deepLink.label} খোলো` : `Open ${deepLink.label}`}
                             </motion.button>
                           )}
-                          <button onClick={() => { if (isLast) onComplete('card'); else { onOpenStoryPreview(); onClose(); } }}
+                          <button onClick={() => { gEvent('ngl_skip_to_story_card', { source: 'tutorial' }); if (isLast) onComplete('card'); else { onOpenStoryPreview(); onClose(); } }}
                             className="w-full text-white/20 text-[8px] font-medium text-center hover:text-white/35 transition-colors">
                             📸 {bn ? 'Story Card' : 'Story Card'}
                           </button>

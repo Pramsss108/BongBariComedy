@@ -44,12 +44,12 @@ function PhoneFrame({ children, className = '', expanded = false, glowColor }: {
   const sizeClass = expanded
     ? 'w-[280px] sm:w-[340px] md:w-[380px]'
     : 'w-[200px] sm:w-[220px] md:w-[240px] lg:w-[280px]';
-  const innerH = expanded ? 'h-[480px] sm:h-[580px] md:h-[640px]' : 'h-[320px] sm:h-[340px]';
+  const innerH = expanded ? 'h-[480px] sm:h-[580px] md:h-[640px]' : 'h-[290px] sm:h-[320px] md:h-[340px]';
   return (
-    <div className={`relative mx-auto ${sizeClass} rounded-[32px] border-[3px] border-white/[0.08] bg-black overflow-hidden shadow-2xl shadow-black/60 ${className}`}
+    <div className={`relative mx-auto ${sizeClass} rounded-[28px] border-[2.5px] border-white/[0.08] bg-black overflow-hidden shadow-2xl shadow-black/60 ${className}`}
       style={glowColor ? { boxShadow: `0 0 40px ${glowColor}, 0 25px 50px -12px rgba(0,0,0,0.6)` } : undefined}>
-      <div className="absolute top-[6px] left-1/2 -translate-x-1/2 w-20 h-[22px] bg-black rounded-full z-20 border border-white/[0.04]" />
-      <div className={`relative pt-9 pb-4 ${innerH} overflow-hidden`}>{children}</div>
+      <div className="absolute top-[5px] left-1/2 -translate-x-1/2 w-16 h-[18px] bg-black rounded-full z-20 border border-white/[0.04]" />
+      <div className={`relative pt-7 pb-2 ${innerH}`}>{children}</div>
     </div>
   );
 }
@@ -283,7 +283,7 @@ function IgTutorial({ step, shareLink, lang, username, storyPreviewUrl, expanded
   // Step 3 — "Add link" screen — pixel-perfect match to real IG dark mode
   if (step === 3) return (
     <PhoneFrame>
-      <div className="bg-[#0a0a0a] min-h-[260px]">
+      <div className="bg-[#0a0a0a] h-full overflow-hidden">
         {/* iOS drag handle */}
         <div className="flex justify-center pt-2.5 pb-1.5">
           <div className="w-9 h-[4px] rounded-full bg-[#3a3a3c]" />
@@ -330,8 +330,6 @@ function IgTutorial({ step, shareLink, lang, username, storyPreviewUrl, expanded
           <span className="text-[#86868b] text-[18px] font-light">+</span>
           <span className="text-white/60 text-[13px]">{bn ? 'Sticker text কাস্টমাইজ করো' : 'Customise sticker text'}</span>
         </div>
-        {/* Spacer to fill phone frame naturally */}
-        <div className="h-[40px]" />
       </div>
     </PhoneFrame>
   );
@@ -497,7 +495,7 @@ function WaStatusTutorial({ step, shareLink, lang }: { step: number; shareLink: 
   // Step 0 — WhatsApp home → Status tab → tap pencil (pixel-perfect dark mode)
   if (step === 0) return (
     <PhoneFrame>
-      <div className="bg-[#111b21]">
+      <div className="bg-[#111b21] h-full overflow-hidden">
         {/* WA header — exact green #075e54 top bar like real WA dark */}
         <div className="bg-[#1f2c34] px-3 pt-1.5 pb-0">
           <div className="flex items-center justify-between mb-1.5">
@@ -711,7 +709,7 @@ function WaStatusTutorial({ step, shareLink, lang }: { step: number; shareLink: 
   // Step 3 — Link preview bubble (what it looks like after posting)
   if (step === 3) return (
     <PhoneFrame>
-      <div className="bg-[#111b21] min-h-[280px]">
+      <div className="bg-[#111b21] h-full overflow-hidden">
         {/* WA header */}
         <div className="bg-[#1f2c34] px-3 py-2 flex items-center justify-between">
           <span className="text-[#e9edef] text-[13px] font-bold">Status</span>
@@ -749,7 +747,7 @@ function WaStatusTutorial({ step, shareLink, lang }: { step: number; shareLink: 
   // Step 4 — Posted status visible to friends (with viewers)
   return (
     <PhoneFrame>
-      <div className="bg-[#111b21] min-h-[280px]">
+      <div className="bg-[#111b21] h-full overflow-hidden">
         {/* Status progress bar at top */}
         <div className="px-3 pt-3">
           <div className="h-[2px] bg-[#3a4a54] rounded-full overflow-hidden">
@@ -981,7 +979,7 @@ function FbTutorial({ step, shareLink, lang }: { step: number; shareLink: string
   // Step 2 — Text story editor with link pasted
   if (step === 2) return (
     <PhoneFrame>
-      <div className="min-h-[280px] flex flex-col" style={{ background: 'linear-gradient(135deg, #1877f2 0%, #6c63ff 100%)' }}>
+      <div className="h-full overflow-hidden flex flex-col" style={{ background: 'linear-gradient(135deg, #1877f2 0%, #6c63ff 100%)' }}>
         {/* Top toolbar */}
         <div className="flex items-center justify-between px-3.5 py-2.5">
           <span className="text-white/80 text-xs font-bold">{bn ? 'বাতিল' : 'Discard'}</span>
@@ -1026,7 +1024,7 @@ function FbTutorial({ step, shareLink, lang }: { step: number; shareLink: string
   // Step 3 — Share confirmation dialog
   if (step === 3) return (
     <PhoneFrame>
-      <div className="bg-[#18191a] min-h-[280px]">
+      <div className="bg-[#18191a] h-full overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-[#3a3b3c]">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -1073,7 +1071,7 @@ function FbTutorial({ step, shareLink, lang }: { step: number; shareLink: string
   // Step 4 — Live story with views and reactions
   return (
     <PhoneFrame>
-      <div className="bg-[#18191a] min-h-[280px]">
+      <div className="bg-[#18191a] h-full overflow-hidden">
         {/* Story progress bar */}
         <div className="px-3 pt-3">
           <div className="h-[2px] bg-[#3a3b3c] rounded-full overflow-hidden">
@@ -1415,7 +1413,7 @@ export default function ShareModal({ isOpen, onClose, shareLink, username, theme
             transition={{ type: 'spring', damping: 18, stiffness: 300 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
           >
-            <div className="pointer-events-auto w-full max-w-md max-h-[90vh] overflow-y-auto scrollbar-hide">
+            <div className="pointer-events-auto w-full max-w-md max-h-[95vh] overflow-y-auto scrollbar-hide">
               {/* Toast */}
               <AnimatePresence>
                 {toastMsg && (
@@ -1788,7 +1786,7 @@ export default function ShareModal({ isOpen, onClose, shareLink, username, theme
                     );
 
                     return (
-                      <div className="space-y-1.5 relative">
+                      <div className="space-y-1 relative">
                         {/* Phase 10: Celebration overlay */}
                         <AnimatePresence>
                           {showCelebration && (
@@ -1856,8 +1854,8 @@ export default function ShareModal({ isOpen, onClose, shareLink, username, theme
                         <div className="space-y-1">
                           <div className="flex items-center gap-1.5">
                             {/* Pause/Play button */}
-                            <button onClick={togglePause} className="flex-shrink-0 w-7 h-7 -m-1 rounded-full bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center transition-colors min-w-[44px] min-h-[44px]" title={autoAdvancePaused ? 'Play (Space)' : 'Pause (Space)'}>
-                              <span className="text-white/40 text-[10px]">{autoAdvancePaused ? '▶' : '⏸'}</span>
+                            <button onClick={togglePause} className="flex-shrink-0 w-6 h-6 rounded-full bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center transition-colors" title={autoAdvancePaused ? 'Play (Space)' : 'Pause (Space)'}>
+                              <span className="text-white/40 text-[9px]">{autoAdvancePaused ? '▶' : '⏸'}</span>
                             </button>
                             {/* Bars */}
                             <div className="flex gap-1 flex-1">
@@ -1888,8 +1886,8 @@ export default function ShareModal({ isOpen, onClose, shareLink, username, theme
                           {/* Language toggle */}
                           <div className="flex items-center justify-center">
                             <div className="inline-flex bg-white/[0.04] rounded-full p-0.5 gap-0.5">
-                              <button onClick={() => setLangOverride('en')} className={`text-[8px] px-3 py-1.5 rounded-full font-medium transition-all min-h-[44px] min-w-[44px] flex items-center justify-center ${effectiveLang === 'en' ? 'bg-white/10 text-white/70' : 'text-white/25 hover:text-white/40'}`}>EN</button>
-                              <button onClick={() => setLangOverride('bn')} className={`text-[8px] px-3 py-1.5 rounded-full font-medium transition-all min-h-[44px] min-w-[44px] flex items-center justify-center ${effectiveLang === 'bn' ? 'bg-white/10 text-white/70' : 'text-white/25 hover:text-white/40'}`}>বাং</button>
+                              <button onClick={() => setLangOverride('en')} className={`text-[8px] px-2.5 py-1 rounded-full font-medium transition-all ${effectiveLang === 'en' ? 'bg-white/10 text-white/70' : 'text-white/25 hover:text-white/40'}`}>EN</button>
+                              <button onClick={() => setLangOverride('bn')} className={`text-[8px] px-2.5 py-1 rounded-full font-medium transition-all ${effectiveLang === 'bn' ? 'bg-white/10 text-white/70' : 'text-white/25 hover:text-white/40'}`}>বাং</button>
                             </div>
                           </div>
                         </div>

@@ -39,9 +39,21 @@
 				"run",
 				"dev:live"
 			],
-			"problemMatcher": [],
+			"isBackground": true,
+			"problemMatcher": {
+				"pattern": { "regexp": "^$" },
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": ".",
+					"endsPattern": "ready in"
+				}
+			},
 			"presentation": {
-				"reveal": "always"
+				"reveal": "always",
+				"panel": "dedicated"
+			},
+			"runOptions": {
+				"runOn": "folderOpen"
 			}
 		},
 		{

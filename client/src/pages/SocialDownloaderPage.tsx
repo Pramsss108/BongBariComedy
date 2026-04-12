@@ -43,13 +43,12 @@ interface VideoInfo {
 }
 type Phase = "idle" | "fetching" | "ready" | "downloading" | "trimming" | "error";
 
-function detectPlatform(url: string): "youtube" | "instagram" | "facebook" | "tiktok" | "twitter" | "linkedin" | null {
+function detectPlatform(url: string): "youtube" | "instagram" | "facebook" | "tiktok" | "linkedin" | null {
   if (!url) return null;
   if (/youtube\.com|youtu\.be/i.test(url)) return "youtube";
   if (/instagram\.com/i.test(url)) return "instagram";
   if (/facebook\.com|fb\.watch/i.test(url)) return "facebook";
   if (/tiktok\.com/i.test(url)) return "tiktok";
-  if (/twitter\.com|\bx\.com/i.test(url)) return "twitter";
   if (/linkedin\.com/i.test(url)) return "linkedin";
   return null;
 }
@@ -755,7 +754,7 @@ export default function SocialDownloaderPage() {
                     <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400">Universal</span><br/>Downloader
                  </h1>
                  <p className="text-lg text-slate-400 leading-relaxed">
-                    The ultimate video processing suite. Save, trim, and remix content from YouTube, Instagram, Facebook, Twitter/X, and LinkedIn instantly.
+                    The ultimate video processing suite. Save, trim, and remix content from YouTube, Instagram, Facebook, TikTok, and LinkedIn instantly.
                  </p>
               </div>
             )}
@@ -768,14 +767,13 @@ export default function SocialDownloaderPage() {
              <div className="md:hidden pt-8 pb-6 text-center px-4">
                 <h1 className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400 mb-2 tracking-tight">Universal<br/>Downloader</h1>
                 <p className="text-slate-400 text-sm leading-relaxed max-w-xs mx-auto mb-4">
-                  Save, trim, and download any video from YouTube, Instagram, Facebook, Twitter/X, LinkedIn, and more.
+                  Save, trim, and download any video from YouTube, Instagram, Facebook, TikTok, LinkedIn, and more.
                 </p>
                 {/* Platform pills mobile */}
                 <div className="flex justify-center gap-2 mb-2 flex-wrap">
                    <span className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-full text-xs font-bold text-slate-300 flex items-center gap-1.5"><Youtube size={12}/> YouTube</span>
                    <span className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-full text-xs font-bold text-slate-300 flex items-center gap-1.5"><Instagram size={12}/> IG</span>
                    <span className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-full text-xs font-bold text-slate-300 flex items-center gap-1.5"><Facebook size={12}/> FB</span>
-                   <span className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-full text-xs font-bold text-slate-300 flex items-center gap-1.5"><X size={12}/> X</span>
                    <span className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-full text-xs font-bold text-slate-300 flex items-center gap-1.5"><Linkedin size={12}/> LI</span>
                 </div>
              </div>

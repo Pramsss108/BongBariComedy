@@ -20,6 +20,8 @@ import {
 } from "./routes/index";
 import { registerShareRoutes } from './routes/share';
 import { registerExtractorRoutes } from './routes/extractor';
+import { registerKhistiRoutes } from './routes/khisti';
+import { registerNglRoutes } from './routes/ngl';
 import { attachTunnelServer } from './p2pTunnel';
 
 /**
@@ -184,6 +186,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerDownloaderRoutes(app, isAuthenticated); // Phrase 2/3/5/14/16: Social Media Downloader (now with Auth)
   registerShareRoutes(app); // BongShare: server-side GoFile proxy upload with pool fallback
   registerExtractorRoutes(app); // Client-side extraction intelligence (mirror health & reporting)
+  registerKhistiRoutes(app); // Anonymous Khisti community board (temp in-memory storage)
+  registerNglRoutes(app); // Bong NGL: anonymous message links (NGL.link clone)
 
   // --- Administrative Diagnostics ---
   app.get('/api/admin/device-logs', isAuthenticated, (req, res) => {

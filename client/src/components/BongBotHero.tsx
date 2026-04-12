@@ -73,10 +73,7 @@ export default function BongBotHero({ onPersonalityChange }: { onPersonalityChan
     };
 
     // ── RIGHT ARM drink / sip
-    // Pivot: (224, 218) = right shoulder socket
-    // At rest 0°: cup hangs at (224, 330) — right-side of body ✓
-    // At sip +125° CW: cup reaches (≈142, 150) — near face/mouth ✓  [VERIFIED MATH]
-    // Cup-group counter-rotates so it stays upright during arm swing
+    // Pure single-pivot pendulum swing (matching the beloved left arm)
     let drinkAng = 0;
     let cupCounterRot = 0;   // keeps cup upright
     let cupSipTilt = 0;      // extra tilt when sipping (+22° toward face)
@@ -186,11 +183,9 @@ export default function BongBotHero({ onPersonalityChange }: { onPersonalityChan
       el('left-wrist-group')?.setAttribute('transform', `rotate(${wristEcho},56,318)`);
 
       /* ── RIGHT ARM sip ───────────────────────────────────────────────
-         Pivot (224, 218) — right shoulder socket.
-         +125° CW  → cup reaches face level  (VERIFIED: cup at ≈142,150)
-         0°        → cup hangs at rest position
-         Cup counter-rotation: keeps cup upright during arm swing.
-         sip tilt: +22° extra when actually drinking.
+         Pure single pivot: Arm stiffly rotates to face (robot style)
+         Pivot: 224, 218.
+         +125° CW swings the arm up to the mouth.
       ── */
       drinkT -= dt;
       let drinkTgt = 0;
@@ -198,10 +193,14 @@ export default function BongBotHero({ onPersonalityChange }: { onPersonalityChan
       if (drinkPhase==='up')   { drinkTgt=125; if(Math.abs(drinkAng-125)<5){drinkPhase='hold';drinkT=2.2;} }
       if (drinkPhase==='hold') { drinkTgt=125; drinkT-=dt; if(drinkT<=0)drinkPhase='down'; }
       if (drinkPhase==='down') { if(Math.abs(drinkAng)<5){drinkPhase='idle';drinkT=14+Math.random()*6;} }
-      drinkAng = lerp(drinkAng, drinkTgt, dt*(drinkPhase==='up'?4:2.5));
+      
+      const dSpd = drinkPhase==='up'?4:2.6;
+      drinkAng = lerp(drinkAng, drinkTgt, dt*dSpd);
+      
       el('right-arm')?.setAttribute('transform', `rotate(${drinkAng},224,218)`);
+
       // Counter-rotate hand+cup so they stay upright + tilt toward face during sip
-      cupCounterRot = lerp(cupCounterRot, -drinkAng * 0.85, dt*6);
+      cupCounterRot = lerp(cupCounterRot, -drinkAng * 0.85, dt*7);
       cupSipTilt    = lerp(cupSipTilt, drinkPhase==='hold'?22:0, dt*4);
       el('cup-group')?.setAttribute('transform',
         `rotate(${cupCounterRot+cupSipTilt},224,320)`);
@@ -210,8 +209,8 @@ export default function BongBotHero({ onPersonalityChange }: { onPersonalityChan
       for (let i=0; i<3; i++) {
         const ph = (t*.65+i*.38)%1, se = el(`steam-${i}`);
         if (se) {
-          se.setAttribute('cx', String(228+Math.sin(ph*9+i*1.4)*6));
-          se.setAttribute('cy', String(300-ph*32));
+          se.setAttribute('cx', String(204+Math.sin(ph*9+i*1.4)*6));
+          se.setAttribute('cy', String(292-ph*32));
           se.setAttribute('r',  String(4*(.5+ph*1.1)));
           se.setAttribute('opacity', String(Math.max(0,ph<.35?(ph/.35)*.7:(1-ph)*.7)));
         }
@@ -339,18 +338,8 @@ export default function BongBotHero({ onPersonalityChange }: { onPersonalityChan
 
           {/* ════════════════════════════════════════════════════════════
                LEFT ARM — single pivot at (56, 222)
-               Arm hangs naturally LEFT of body (body left edge ≈ x=81)
-               At 0°:   arm straight down — hand at (56, 330)
-               At 108°: arm raised upper-left — welcoming wave position
-
-               HAND DESIGN (Rule 10 — open palm, welcoming):
-               • Wide palm ellipse (not a circle-knob)
-               • 4 finger stubs radiating from top of palm
-               • Thumb on inner side
-               • Palm highlight for 3D depth
-               • Gold knuckle ridge across top
           ════════════════════════════════════════════════════════════ */}
-          <g id="left-arm">
+          <g id="left-arm" style={{ filter: 'drop-shadow(4px 4px 6px rgba(0,0,0,0.5))' }}>
             {/* ── Upper arm tube ── */}
             <rect x="43" y="222" width="26" height="52" rx="13" fill="url(#bodyGrad)"/>
             <rect x="48" y="226" width="8"  height="30" rx="4"  fill="white" opacity="0.07"/>
@@ -386,52 +375,56 @@ export default function BongBotHero({ onPersonalityChange }: { onPersonalityChan
           <circle cx="224" cy="220" r="11" fill="url(#bodyGrad)" stroke="url(#goldGrad)" strokeWidth="2.5"/>
           <circle cx="224" cy="220" r="5"  fill="url(#goldGrad)" opacity="0.6"/>
 
-          {/* ════ RIGHT ARM — chai sip ════
-               Pivot: (224, 218)
-               At 0°:    arm straight down, cup at (224,330)
-               At +125°: cup rises to face level (≈142,150) for sip
-               cup-group counter-rotates to stay upright
-          ════ */}
-          <g id="right-arm">
-            {/* Upper arm */}
+          {/* ════ RIGHT ARM — chai sip (Single Pivot Stiff Arm) ════ */}
+          <g id="right-arm" style={{ filter: 'drop-shadow(-4px 4px 6px rgba(0,0,0,0.5))' }}>
+            {/* Upper arm tube */}
             <rect x="211" y="218" width="26" height="52" rx="13" fill="url(#bodyGrad)"/>
             <rect x="216" y="222" width="8"  height="30" rx="4"  fill="white" opacity="0.07"/>
             {/* Elbow joint */}
             <circle cx="224" cy="272" r="14" fill="url(#bodyMidGrad)"/>
             <circle cx="224" cy="272" r="14" fill="none" stroke="url(#goldGrad)" strokeWidth="1.8" opacity="0.55"/>
             <circle cx="224" cy="272" r="6"  fill="url(#bodyGrad)" opacity="0.75"/>
-            {/* Forearm */}
+            
+            {/* Forearm tube */}
             <rect x="211" y="270" width="26" height="48" rx="13" fill="url(#bodyMidGrad)"/>
             <rect x="216" y="274" width="8"  height="26" rx="4"  fill="white" opacity="0.05"/>
-            {/* Wrist Joint base (stays rigidly with arm) */}
+            
+            {/* Wrist Joint base */}
             <circle cx="224" cy="320" r="12" fill="url(#bodyGrad)"/>
             <circle cx="224" cy="320" r="12" fill="none" stroke="url(#goldGrad)" strokeWidth="1.2" opacity="0.4"/>
 
-            {/* ── HAND & CUP GROUP (counter-rotates as one unit to stay level) ── */}
+            {/* ── HAND & CUP GROUP (Counter-rotates as one unit) ── */}
             <g id="cup-group">
-              {/* Back of the hand */}
-              <circle cx="224" cy="320" r="15" fill="url(#bodyGrad)"/>
+              {/* 1. CUP (shifted left so handle aligns with hand) */}
+              <path d="M 190 298 L 194 330 L 214 330 L 218 298 Z" fill="url(#goldGrad)"/>
+              <ellipse cx="204" cy="298" rx="14" ry="4.5" fill="#ffe07a"/>
+              {/* Tea */}
+              <ellipse cx="204" cy="300" rx="12" ry="3.5" fill="#3a1a05" opacity="0.95"/>
+              {/* Shine */}
+              <path d="M 193 300 L 195 328" stroke="white" strokeWidth="2.5" strokeLinecap="round" opacity="0.15"/>
               
-              {/* Cup body — handle-less clay style (Bong Bhar style, but gold) */}
-              <path d="M 210 298 L 214 330 L 234 330 L 238 298 Z" fill="url(#goldGrad)"/>
-              <ellipse cx="224" cy="298" rx="14" ry="4.5" fill="#ffe07a"/>
-              {/* Liquid inside */}
-              <ellipse cx="224" cy="300" rx="12" ry="3.5" fill="#3a1a05" opacity="0.95"/>
-              {/* 3D Body shine */}
-              <path d="M 213 300 L 215 328" stroke="white" strokeWidth="2.5" strokeLinecap="round" opacity="0.15"/>
-              
-              {/* Steam */}
-              <circle id="steam-0" cx="218" cy="288" r="4"   fill="white" opacity="0"/>
-              <circle id="steam-1" cx="224" cy="284" r="3.5" fill="white" opacity="0"/>
-              <circle id="steam-2" cx="230" cy="288" r="3"   fill="white" opacity="0"/>
+              {/* Handle (extends right into the hand grip at x=224) */}
+              <path d="M 218 306 Q 234 306 234 316 Q 234 326 216 326" 
+                fill="none" stroke="#e0a810" strokeWidth="5.5" strokeLinecap="round"/>
 
-              {/* Fingers wrapping over the FRONT of the cup */}
-              <path d="M 210 320 Q 224 326 238 320" fill="none" stroke="url(#bodyGrad)" strokeWidth="12" strokeLinecap="round"/>
-              <path d="M 216 321 L 216 325 M 224 322 L 224 326 M 232 321 L 232 325" stroke="#131421" strokeWidth="1.5" opacity="0.8"/>
-              {/* Finger knuckles */}
-              <circle cx="213" cy="320" r="2" fill="url(#goldGrad)" opacity="0.7"/>
-              <circle cx="224" cy="322" r="2" fill="url(#goldGrad)" opacity="0.7"/>
-              <circle cx="235" cy="320" r="2" fill="url(#goldGrad)" opacity="0.7"/>
+              {/* Steam dots */}
+              <circle id="steam-0" cx="200" cy="288" r="4"   fill="white" opacity="0"/>
+              <circle id="steam-1" cx="206" cy="284" r="3.5" fill="white" opacity="0"/>
+              <circle id="steam-2" cx="212" cy="288" r="3"   fill="white" opacity="0"/>
+
+              {/* 2. HAND (Drawn OVER the handle, implying a grip) */}
+              <circle cx="224" cy="320" r="15" fill="url(#bodyGrad)"/>
+              <circle cx="224" cy="320" r="15" fill="none" stroke="url(#goldGrad)" strokeWidth="1.5" opacity="0.45"/>
+              
+              {/* Fingers wrapping the handle */}
+              <circle cx="213" cy="327" r="5" fill="#131421"/>
+              <circle cx="224" cy="332" r="5" fill="#131421"/>
+              <circle cx="235" cy="327" r="5" fill="#131421"/>
+              
+              {/* Knuckles */}
+              <circle cx="213" cy="327" r="1.5" fill="url(#goldGrad)" opacity="0.6"/>
+              <circle cx="224" cy="332" r="1.5" fill="url(#goldGrad)" opacity="0.6"/>
+              <circle cx="235" cy="327" r="1.5" fill="url(#goldGrad)" opacity="0.6"/>
             </g>
           </g>
 

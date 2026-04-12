@@ -1,4 +1,4 @@
-# Bong Bot 3D Implementation Plan (React Three Fiber)
+npm run dev:livenpm run dev:live# Bong Bot 3D Implementation Plan (React Three Fiber)
 
 ## The Winning Strategy
 Based on AI research, standard video formats (WebM/MP4) or 2D animations (Lottie/GIF) **cannot track a user's mouse**. To achieve the "premium Awwwards vibe" where the robot looks at the cursor, we must use a **3D WebGL Canvas**.

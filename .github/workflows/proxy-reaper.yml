@@ -1,4 +1,4 @@
-name: Proxy Reaper (ISP Candidate Harvest)
+name: Proxy Reaper + Source Hunter (Self-Healing Pipeline)
 
 on:
   schedule:
@@ -13,13 +13,15 @@ on:
 
 jobs:
   harvest:
-    name: Reap & ASN-filter proxy candidates
+    name: Reap proxies + hunt new sources
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
     env:
       UPSTASH_REDIS_REST_URL:   ${{ secrets.UPSTASH_REDIS_REST_URL }}
       UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+      # Auto-injected by GH Actions — bumps GitHub API from 60 to 1000 req/hr
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: Checkout repository
@@ -30,5 +32,5 @@ jobs:
           node --version
           node -e "if (parseInt(process.version.slice(1)) < 18) { console.error('Node 18+ required'); process.exit(1); }"
 
-      - name: Run Proxy Reaper
+      - name: Run Proxy Reaper + Source Hunter
         run: node scripts/proxy-reaper.mjs

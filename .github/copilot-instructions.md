@@ -2,6 +2,13 @@
 
 Purpose: Make AI agents productive fast by documenting how this repo is organized, how it builds/tests/deploys, and the project-specific patterns to follow.
 
+## 🚀 AUTO-START SERVERS (MANDATORY — every chat session)
+**Before doing ANY work**, the agent MUST ensure dev servers are running:
+1. Run `npm run dev:live` in a **background** terminal at the start of every new chat/session.
+2. Wait for `ready in` (Vite) and `serving on port 5000` (Express) in output.
+3. If ports are already in use (servers already running), that's fine — skip.
+This is non-negotiable. The user is a vibe coder — servers must always be live so they can see changes instantly.
+
 ## Platform policy (read first)
 - Frontend hosting: GitHub Pages (canonical domain: `www.bongbari.com`).
 - Backend: **Oracle Cloud Always Free VM** (`79.76.110.66`, Oracle Linux 9, user `opc`). Auto-deployed via GitHub Actions on push to `main`.

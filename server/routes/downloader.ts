@@ -1,7 +1,6 @@
-import ytdl from "@distube/ytdl-core";
 /**
  * BongBari Social Media Downloader — Backend Routes
- * Phases , 3, 5, 14, 16, 17 of the masterplan.
+ * Phases 3, 5, 14, 16, 17 of the masterplan.
  *
  * Stack: youtube-dl-exec (yt-dlp wrapper) + express-rate-limit
  * Cost: $0 — runs on Oracle Cloud Always Free VM, streams directly to user (zero disk/storage)
@@ -13,7 +12,6 @@ import path from "path";
 import os from "os";
 import { execFile, spawn } from "child_process";
 import fs from "fs";
-import { getPoToken } from './poTokenService.js';
 import { youtubeService } from '../youtubeService.js';
 import crypto from "crypto";
 import axios from "axios";
@@ -229,12 +227,6 @@ const ALLOWED_HOSTS = new Set([
   "www.tiktok.com",
   "vm.tiktok.com",
   "m.tiktok.com",
-  // Twitter/X (Phrase 4) — Cobalt supports natively
-  "twitter.com",
-  "www.twitter.com",
-  "mobile.twitter.com",
-  "x.com",
-  "www.x.com",
   // LinkedIn (Phrase 11) — Cobalt + yt-dlp fallback
   "linkedin.com",
   "www.linkedin.com",
@@ -253,7 +245,7 @@ function validateVideoUrl(rawUrl: string): { ok: true; url: string } | { ok: fal
   if (!ALLOWED_HOSTS.has(host)) {
     return {
       ok: false,
-      error: `Platform not supported. We support YouTube, Instagram, Facebook, TikTok, Twitter/X, and LinkedIn.` };
+      error: `Platform not supported. We support YouTube, Instagram, Facebook, TikTok, and LinkedIn.` };
   }
   return { ok: true, url: rawUrl.trim() };
 }
@@ -338,11 +330,17 @@ function mapDownloaderError(err: any): { code: string; message: string; status: 
       if (full.includes("tiktok")) {
          return { code: "PLATFORM_BLOCK", message: "TikTok is blocking our servers. Try again in a few seconds — we rotate IPs automatically.", status: 503 };
       }
-      if (full.includes("twitter")) {
-         return { code: "PLATFORM_BLOCK", message: "Could not extract this tweet's video. Make sure the tweet contains a video and is publicly accessible.", status: 422 };
+      if (full.includes("facebook.com") || full.includes("fb.watch")) {
+         return { code: "LOGIN_WALL", message: "Facebook requires login for this content. Try a different public video.", status: 403 };
       }
-      if (full.includes("instagram") || full.includes("meta")) {
+      if (full.includes("linkedin.com")) {
+         return { code: "LOGIN_WALL", message: "LinkedIn requires login for most video content. Try a public activity post.", status: 403 };
+      }
+      if (full.includes("instagram")) {
          return { code: "LOGIN_WALL", message: "Instagram requires login for this content. Try a different public reel or post.", status: 403 };
+      }
+      if (full.includes("meta")) {
+         return { code: "LOGIN_WALL", message: "This Meta content requires login. Try a different public post.", status: 403 };
       }
   }
   if (full.includes("login wall") || full.includes("login required") || full.includes("rate-limit reached")) {
@@ -453,11 +451,25 @@ async function executePhase3_HetznerIPv6(url: string): Promise<any> {
 // ==========================================
 async function executePhase6_ASocks_Ultimate(url: string): Promise<any> {
     console.log('[Phase 6] Executing ASocks + Mobile (Upstream) for:', url);
-    const dataJSON = await executeYtDlpExtract(url, [], true); // Pass true to disable the 25s direct fallback attempt which causes frontend 45s timeout!
+
+    // CRITICAL: Call yt-dlp DIRECTLY with the paid residential proxy — do NOT go through
+    // executeYtDlpExtract() because that function has a disableDirectFallback guard that
+    // accidentally skips the paid proxy too. Phase 6 = always use the paid residential proxy.
+    const ytArgs = [
+        "--dump-json",
+        "--no-warnings",
+        "--geo-bypass",
+        // Instagram-specific: use Android User-Agent so the extractor hits the right endpoint
+        "--user-agent", "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Mobile Safari/537.36 Instagram/299.0.0.33.109",
+    ];
+
+    const paidProxy = generateRotatedProxy();
+    console.log('[Phase 6] Using ASocks residential proxy (India IP)...');
+    const dataJSON = await executeYtDlp(url, [...ytArgs, "--proxy", paidProxy], 35000);
     const data = typeof dataJSON === 'string' ? JSON.parse(dataJSON) : dataJSON;
 
     let video_url = data.url || (data.requested_downloads && data.requested_downloads[0]?.url);
-    if (!video_url) throw new Error("Phase 4: No video URL matched in ASocks Upstream extraction");
+    if (!video_url) throw new Error("Phase 6: No video URL matched in ASocks extraction");
 
     return {
         engine: 'Force Layer 6: ASocks + Mobile (Locked/Paid)',
@@ -467,13 +479,6 @@ async function executePhase6_ASocks_Ultimate(url: string): Promise<any> {
         thumbnail: data.thumbnail || null,
         formats: data.formats || data.requested_formats || []
     };
-}
-
-// ==========================================
-// PHASE 5: Public Cobalt Node Array (Free)
-// ==========================================
-async function executePhase5_ExpansionA(url: string): Promise<any> {
-    throw new Error('Phase 5 is empty (Public Cobalt removed as requested).');
 }
 
 // ==========================================
@@ -947,108 +952,20 @@ async function executeLinkedInFallback(url: string): Promise<any> {
     throw new Error(`LinkedIn Fallback: Could not extract video. LinkedIn requires authentication for most video content. Last error: ${lastError}`);
 }
 
-// ==========================================
-// PHRASE 4 FALLBACK: Twitter/X via fxtwitter API (Free)
-// fxtwitter.com is a free, community-run API that extracts Twitter video URLs
-// ==========================================
-async function executeTwitterFallback(url: string): Promise<any> {
-    console.log('[Twitter Fallback] Trying fxtwitter API for:', url);
-    
-    // Extract username and tweet ID from URL
-    // Formats: twitter.com/USER/status/ID, x.com/USER/status/ID
-    const urlMatch = url.match(/(?:twitter\.com|x\.com)\/([^\/]+)\/status\/(\d+)/);
-    if (!urlMatch) throw new Error('Twitter Fallback: Could not extract username/tweet ID from URL');
-    const [, username, tweetId] = urlMatch;
-    
-    // Try fxtwitter API first (needs /username/status/ID format), then vxtwitter
-    const endpoints = [
-        `https://api.fxtwitter.com/${username}/status/${tweetId}`,
-        `https://api.vxtwitter.com/${username}/status/${tweetId}`,
-    ];
-    
-    let lastError = '';
-    for (const endpoint of endpoints) {
-        try {
-            console.log(`[Twitter Fallback] Trying: ${endpoint}`);
-            const fxRes = await axios.get(endpoint, {
-                timeout: 10000,
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (compatible; BongBari/1.0)',
-                    'Accept': 'application/json',
-                },
-            });
-            
-            const tweet = fxRes.data?.tweet;
-            if (!tweet) continue;
-            
-            // Check for video in media
-            const media = tweet.media;
-            const formats: Array<{ext: string; height: number; url: string; id: string; label: string}> = [];
-            
-            // Check videos array
-            if (media?.videos?.length) {
-                const video = media.videos[0];
-                if (video.url) {
-                    formats.push({ ext: 'mp4', height: video.height || 720, url: video.url, id: `mp4-${video.height || 720}`, label: `MP4 ${video.height || 720}p` });
-                }
-            }
-            
-            // Check media.all for video/gif types
-            if (formats.length === 0 && media?.all?.length) {
-                for (const m of media.all) {
-                    if ((m.type === 'video' || m.type === 'gif') && m.url) {
-                        formats.push({ ext: 'mp4', height: m.height || 720, url: m.url, id: `mp4-${m.height || 720}`, label: `MP4 ${m.height || 720}p` });
-                    }
-                }
-            }
-            
-            // Check for direct media_extended (vxtwitter format)
-            if (formats.length === 0 && fxRes.data?.mediaURLs?.length) {
-                for (const mUrl of fxRes.data.mediaURLs) {
-                    if (mUrl.includes('.mp4') || mUrl.includes('video')) {
-                        formats.push({ ext: 'mp4', height: 720, url: mUrl, id: 'mp4-720', label: 'MP4 720p' });
-                    }
-                }
-            }
-            
-            if (formats.length === 0) {
-                lastError = 'No video found in tweet';
-                continue;
-            }
-            
-            formats.sort((a, b) => b.height - a.height);
-            
-            return {
-                engine: 'Layer TW-fx: fxtwitter API (Free)',
-                video_url: formats[0].url,
-                title: tweet.text?.slice(0, 100) || fxRes.data?.text?.slice(0, 100) || 'Twitter Video',
-                duration: media?.videos?.[0]?.duration || 0,
-                thumbnail: media?.videos?.[0]?.thumbnail_url || tweet.media?.photos?.[0]?.url || null,
-                formats,
-            };
-        } catch (err: any) {
-            lastError = err.message || 'Unknown error';
-            console.log(`[Twitter Fallback] ${endpoint} failed: ${lastError}`);
-        }
-    }
-    
-    throw new Error(`Twitter Fallback: All APIs failed. Last error: ${lastError}`);
-}
 
 // ==========================================
 // PHASE 7: Free Proxy Pool (Mined OSINT, $0 cost)
 // Uses ONLY the auto-mined proxy pool. NO paid fallback.
-// Supports ALL platforms: YouTube, Instagram, Facebook, TikTok, Twitter.
+// Supports ALL platforms: YouTube, Instagram, Facebook, TikTok.
 // For IG/FB: proxied yt-dlp extraction.
-// For YT/TikTok/Twitter: proxied yt-dlp extraction.
+// For YT/TikTok: proxied yt-dlp extraction.
 // ==========================================
 async function executePhase7_FreeProxyPool(url: string): Promise<any> {
     const isMeta = url.includes("instagram.com") || url.includes("facebook.com") || url.includes("fb.watch") || url.includes("instagr.am");
     const isTikTok = url.includes("tiktok.com");
-    const isTwitter = url.includes("twitter.com") || url.includes("x.com");
-    const platform = isMeta ? (url.includes("facebook.com") || url.includes("fb.watch") ? 'fb' : 'ig') : isTikTok ? 'yt' : isTwitter ? 'yt' : 'yt';
+    const platform = isMeta ? (url.includes("facebook.com") || url.includes("fb.watch") ? 'fb' : 'ig') : 'yt';
     
-    console.log(`[Phase 7] Free Proxy Pool engine for ${isTikTok ? 'TT' : isTwitter ? 'TW' : platform.toUpperCase()}: ${url}`);
+    console.log(`[Phase 7] Free Proxy Pool engine for ${isTikTok ? 'TT' : platform.toUpperCase()}: ${url}`);
     
     // Get best mined proxy for this platform
     const proxyUrl = await ProxyKitchen.getBestProxyForDownload(platform);
@@ -1118,40 +1035,6 @@ async function executePhase7_FreeProxyPool(url: string): Promise<any> {
     }
 }
 
-// ==========================================
-// PHASE 6: Direct ytdl-core + BotGuard Bypass
-// ==========================================
-async function executePhase4_YTDLCore(url: string): Promise<any> {
-    console.log('[Phase 4] Executing YTDL-Core + BotGuard Bypass for:', url);
-    if (!url.includes('youtube.com') && !url.includes('youtu.be')) throw new Error("Not a YouTube domain");
-    
-    
-    
-    const { visitorData, poToken } = await getPoToken();
-    const info = await ytdl.getInfo(url, {
-        requestOptions: {
-            headers: {
-                'X-Youtube-Identity-Token': poToken,
-                'X-Goog-Visitor-Id': visitorData
-            }
-        }
-    });
-
-    const mergedFormats = info.formats.filter((f: any) => f.hasVideo && f.hasAudio);
-    let selectedFormat = mergedFormats.find((f: any) => (f.height || 0) <= 720) || ytdl.chooseFormat(mergedFormats, { quality: 'highest' });
-    
-    if (!selectedFormat || !selectedFormat.url) throw new Error('Phase 6: No stream url found in ytdl-core');
-
-    return {
-        engine: 'Force Layer 4: YTDL-Core Native (Backup)',
-        video_url: selectedFormat.url,
-        title: info.videoDetails.title || "YTDL-Core Video",
-        duration: parseInt(info.videoDetails.lengthSeconds) || 0,
-        thumbnail: info.videoDetails.thumbnails?.[0]?.url || null,
-        formats: [{ ext: "mp4", height: selectedFormat.height || 720, url: selectedFormat.url, id: "mp4-720", label: "MP4 720p" }]
-    };
-}
-
 async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<any> {
     if (!forceEngine && metaCache.has(url)) {
         const cached = metaCache.get(url)!;
@@ -1187,18 +1070,6 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
         return result; // Crashes if fails, NO fallback
     }
 
-    if (forceEngine === "layer4") {
-        const result = await executePhase4_YTDLCore(url);
-        metaCache.set(url, { data: result, expires: Date.now() + 60000 });
-        return result; // Crashes if fails, NO fallback
-    }
-
-    if (forceEngine === "layer5") {
-        const result = await executePhase5_ExpansionA(url);
-        metaCache.set(url, { data: result, expires: Date.now() + 60000 });
-        return result; 
-    }
-
     if (forceEngine === "layer6") {
         const result = await executePhase6_ASocks_Ultimate(url);
         metaCache.set(url, { data: result, expires: Date.now() + 60000 });
@@ -1219,7 +1090,6 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
       if (!forceEngine || forceEngine === "auto") {
           // Detect platform for smart routing
           const isTikTok = url.includes('tiktok.com');
-          const isTwitter = url.includes('twitter.com') || url.includes('x.com');
           const isInstagram = url.includes('instagram.com') || url.includes('instagr.am');
           const isFacebook = url.includes('facebook.com') || url.includes('fb.watch');
           const isLinkedIn = url.includes('linkedin.com');
@@ -1235,17 +1105,6 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
           }
 
           // ── Step 2: Platform-specific free fallbacks ──
-          if (isTwitter) {
-              // Twitter: fxtwitter API (free, community-run)
-              try {
-                  const resTw = await executeTwitterFallback(url);
-                  metaCache.set(url, { data: resTw, expires: Date.now() + 60000 });
-                  return resTw;
-              } catch (eTw: any) {
-                  console.log(`[Smart Fallback] Twitter fxtwitter failed (${eTw.message}), cascading...`);
-              }
-          }
-
           if (isTikTok) {
               // TikTok Step A: aweme API (no-watermark, same endpoint the app uses)
               try {
@@ -1317,16 +1176,7 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
               console.log(`[Smart Fallback] IPv6 failed (${e3.message}), cascading...`);
           }
 
-          // ── Step 5: ytdl-core + PO Token (YouTube only) ──
-          if (!isTikTok && !isTwitter) {
-              try {
-                  const res4 = await executePhase4_YTDLCore(url);
-                  metaCache.set(url, { data: res4, expires: Date.now() + 60000 });
-                  return res4;
-              } catch (e4: any) {
-                  console.log(`[Smart Fallback] ytdl-core failed (${e4.message}), cascading...`);
-              }
-          }
+          // ── Step 5: ytdl-core REMOVED (crashes server OOM + broken PO Token) ──
 
           // ── Step 6: Free Proxy Pool (all platforms) ──
           try {
@@ -1343,7 +1193,7 @@ async function fetchSmartMetadata(url: string, forceEngine?: string): Promise<an
               metaCache.set(url, { data: res6, expires: Date.now() + 60000 });
               return res6;
           } catch (e6: any) {
-              throw new Error(`Total engine failure after ALL layers for ${isTikTok ? 'TikTok' : isTwitter ? 'Twitter' : isLinkedIn ? 'LinkedIn' : isMeta ? 'Meta' : 'YouTube'}: ${e6.message}`);
+              throw new Error(`Total engine failure after ALL layers for ${isTikTok ? 'TikTok' : isLinkedIn ? 'LinkedIn' : isMeta ? 'Meta' : 'YouTube'}: ${e6.message}`);
           }
       }
 
@@ -1434,7 +1284,6 @@ async function handleInfo(req: Request, res: Response): Promise<void> {
       if (/instagram\.com|instagr\.am/i.test(u)) return 'instagram';
       if (/facebook\.com|fb\.watch/i.test(u)) return 'facebook';
       if (/tiktok\.com/i.test(u)) return 'tiktok';
-      if (/twitter\.com|\bx\.com/i.test(u)) return 'twitter';
       return info.extractor_key ?? 'unknown';
     };
 
@@ -2299,24 +2148,9 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
           // If we exhaust fast APIs or explicit Layer 3 forced...
           console.log(`[Layer 4] PREVIEW Route: Falling back to executeYtDlpExtract...`);
           try {
-              if (isYT) {
-                  const { visitorData, poToken } = await getPoToken();
-                  const info = await ytdl.getInfo(validated.url, {
-                      requestOptions: {
-                          headers: {
-                              'Cookie': `po_token=web+${poToken}; visitor_data=${visitorData}`
-                          }
-                      }
-                  });
-                  const mergedFormats = info.formats.filter((f: any) => f.hasVideo && f.hasAudio);
-                  let selectedFormat = mergedFormats.sort((a: any, b: any) => (b.height || 0) - (a.height || 0)).find((f: any) => (f.height || 0) <= qStr);
-                  if (!selectedFormat) selectedFormat = ytdl.chooseFormat(mergedFormats, { quality: 'highest' });
-                  if (selectedFormat && selectedFormat.url) bestStreamUrl = selectedFormat.url;
-              } else {
-                  // Meta / other extract via proxy
-                  const data = await executeYtDlpExtract(url, ["--format", "b"]);
-                  bestStreamUrl = data.url || (data.requested_downloads && data.requested_downloads[0]?.url);
-              }
+              // Use yt-dlp for all platforms (ytdl-core removed - crashes server)
+              const data = await executeYtDlpExtract(url, ["--format", "b"]);
+              bestStreamUrl = data.url || (data.requested_downloads && data.requested_downloads[0]?.url);
           } catch(e: any) {
               console.error("[Layer 3] yt-dlp fallback also failed:", e.message);
           }
@@ -2374,25 +2208,6 @@ async function handleProxyStream(req: Request, res: Response): Promise<void> {
   formatNotAvailable(res, "Preview streaming unavailable right now.");
 }
   export function registerDownloaderRoutes(app: Express, isAuthenticated: any): void {
-// ============================================================================
-// DIAGNOSTIC ENDPOINT: Test ytdl-core BotGuard Bypass on Oracle VM
-// ============================================================================
-app.get("/api/downloader/test-ytdl", async (req, res) => {
-    try {
-        // Assuming getPoToken and ytdl are imported or defined elsewhere
-        const { visitorData, poToken } = await getPoToken();
-        const info = await ytdl.getInfo(req.query.url as string, {
-            requestOptions: {
-                headers: {
-                    'Cookie': `po_token=web+${poToken}; visitor_data=${visitorData}`
-                }
-            }
-        });
-        res.json({ success: true, title: info.videoDetails.title, formatsCount: info.formats.length });
-    } catch (e: any) {
-        res.status(500).json({ success: false, error: e.message });
-    }
-});
 
   // Info endpoint — lenient rate limit (10/min) — PUBLIC
   app.get("/api/downloader/info", infoLimiter, handleInfo);

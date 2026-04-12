@@ -124,6 +124,56 @@ const FreeTools = () => {
                 </Link>
               </div>
             </motion.div>
+
+            {/* Bong PDF Ninja Card */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="relative group rounded-2xl p-[1px] bg-gradient-to-br from-emerald-500/50 via-teal-500/30 to-green-500/50 shadow-2xl hover:shadow-emerald-500/20 transition-all duration-500">
+              <div className="rounded-2xl h-full w-full bg-black/80 backdrop-blur-xl p-8 flex flex-col border border-white/5 group-hover:bg-black/60 transition-colors">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold font-sans tracking-tight text-white group-hover:text-emerald-400 transition-colors">Bong PDF Ninja</h2>
+                  <div className="flex gap-1.5">
+                    <span className="text-[9px] uppercase tracking-wider bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 px-2 py-1 rounded-md font-medium">Local Free</span>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-400 leading-relaxed flex-1">Ultra-fast, 100% client-side PDF editor. Merge, split, rotate, and extract pages securely in your browser with zero server uploads.</p>
+                <Link href="/tools/pdf-ninja" className="mt-8 block">
+                  <Button className="w-full bg-emerald-600/20 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-600 hover:text-black hover:font-bold transition-all shadow-lg rounded-xl h-12">Open Ninja</Button>
+                </Link>
+              </div>
+            </motion.div>
+
+            {/* Bong NGL Card */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="relative group rounded-2xl p-[1px] bg-gradient-to-br from-pink-500/50 via-rose-500/30 to-orange-500/50 shadow-2xl hover:shadow-pink-500/20 transition-all duration-500">
+              <div className="rounded-2xl h-full w-full bg-black/80 backdrop-blur-xl p-8 flex flex-col border border-white/5 group-hover:bg-black/60 transition-colors">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold font-sans tracking-tight text-white group-hover:text-pink-400 transition-colors">Bong NGL</h2>
+                  <div className="flex gap-1.5">
+                    <span className="text-[9px] uppercase tracking-wider bg-pink-500/20 border border-pink-500/30 text-pink-300 px-2 py-1 rounded-md font-medium">🔥 New</span>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-400 leading-relaxed flex-1">Anonymous message link — NGL-এর মতো। নিজের link তৈরি করো, WhatsApp/Instagram-এ share করো, anonymous messages পাও!</p>
+                <Link href="/ngl" className="mt-8 block">
+                  <Button className="w-full bg-pink-600/20 border border-pink-500/30 text-pink-300 hover:bg-pink-600 hover:text-white hover:font-bold transition-all shadow-lg rounded-xl h-12">Get Started 🎭</Button>
+                </Link>
+              </div>
+            </motion.div>
+
+            {/* Anonymous Khisti Card */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="relative group rounded-2xl p-[1px] bg-gradient-to-br from-red-500/50 via-orange-500/30 to-yellow-500/50 shadow-2xl hover:shadow-red-500/20 transition-all duration-500">
+              <div className="rounded-2xl h-full w-full bg-black/80 backdrop-blur-xl p-8 flex flex-col border border-white/5 group-hover:bg-black/60 transition-colors">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold font-sans tracking-tight text-white group-hover:text-red-400 transition-colors">Anonymous খিস্তি</h2>
+                  <div className="flex gap-1.5">
+                    <span className="text-[9px] uppercase tracking-wider bg-red-500/20 border border-red-500/30 text-red-300 px-2 py-1 rounded-md font-medium">🔥 New</span>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-400 leading-relaxed flex-1">Anonymous confession & rant board. WhatsApp/Instagram Story তে share করো — কেউ জানবে না কে লিখেছে। Temp storage, no login.</p>
+                <Link href="/tools/khisti" className="mt-8 block">
+                  <Button className="w-full bg-red-600/20 border border-red-500/30 text-red-300 hover:bg-red-600 hover:text-white hover:font-bold transition-all shadow-lg rounded-xl h-12">Drop খিস্তি 💣</Button>
+                </Link>
+              </div>
+            </motion.div>
+
+
           </div>
         </main>
       </div>

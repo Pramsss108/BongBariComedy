@@ -4,6 +4,9 @@ worker/node_modules/
 .pnp
 .pnp.js
 
+# Junk YouTube player-scripts (cause mgt.clearMarks VS Code errors)
+*-player-script.js
+
 # Production / Build
 dist/
 build/

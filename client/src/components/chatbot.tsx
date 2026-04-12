@@ -628,7 +628,7 @@ export default function Chatbot({ className = "" }: ChatbotProps) {
               >
                 <ScrollArea 
                   ref={scrollAreaRef}
-                  className="h-full px-4 py-3 custom-scrollbar smooth-scroll"
+                  className="h-full px-4 py-3"
                   style={{ 
                     touchAction: 'pan-y',
                     scrollBehavior: 'smooth',

@@ -431,3 +431,57 @@ export type InsertClientProxyReport = z.infer<typeof insertClientProxyReportSche
 
 export type MirrorHealth = typeof mirrorHealth.$inferSelect;
 export type InsertMirrorHealth = z.infer<typeof insertMirrorHealthSchema>;
+
+// ============================================================
+// NGL — Anonymous Message Link (Permanent Storage)
+// ============================================================
+
+export const nglUsers = pgTable("ngl_users", {
+  username: varchar("username", { length: 20 }).primaryKey(),
+  prompt: text("prompt").notNull().default('send me anonymous messages!'),
+  secretKeyHash: varchar("secret_key_hash", { length: 64 }).notNull(),
+  pinHash: varchar("pin_hash", { length: 64 }),
+  theme: varchar("theme", { length: 20 }).default('default'),
+  photo: text("photo"),
+  messageCount: integer("message_count").notNull().default(0),
+  // Phase 33: Streak tracking
+  streakDays: integer("streak_days").notNull().default(0),
+  lastMessageDay: varchar("last_message_day", { length: 10 }), // 'YYYY-MM-DD'
+  // Phase 35: WhatsApp OTP phone verification
+  phone: varchar("phone", { length: 15 }),           // E.164 e.g. "918777849865"
+  phoneVerified: integer("phone_verified").notNull().default(0), // 0=no, 1=yes
+  otpHash: varchar("otp_hash", { length: 64 }),      // SHA-256 of current OTP
+  otpExpiry: timestamp("otp_expiry"),                 // null = no pending OTP
+  // Phase 40: Custom OG meta for link previews
+  ogTitle: varchar("og_title", { length: 200 }),
+  ogDescription: varchar("og_description", { length: 500 }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const nglMessages = pgTable("ngl_messages", {
+  id: varchar("id", { length: 60 }).primaryKey(),
+  recipientUsername: varchar("recipient_username", { length: 20 }).notNull().references(() => nglUsers.username, { onDelete: "cascade" }),
+  text: text("text").notNull(),
+  emoji: varchar("emoji", { length: 10 }).notNull(),
+  reaction: varchar("reaction", { length: 10 }),
+  senderLang: varchar("sender_lang", { length: 100 }),
+  senderTz: varchar("sender_tz", { length: 100 }),
+  senderDevice: varchar("sender_device", { length: 50 }),
+  // Phase 40: Advanced sender intelligence (all legally collected)
+  senderBrowser: varchar("sender_browser", { length: 80 }),
+  senderOs: varchar("sender_os", { length: 80 }),
+  senderCity: varchar("sender_city", { length: 100 }),
+  senderRegion: varchar("sender_region", { length: 100 }),
+  senderCountry: varchar("sender_country", { length: 80 }),
+  senderIsp: varchar("sender_isp", { length: 120 }),
+  senderScreenRes: varchar("sender_screen_res", { length: 30 }),
+  senderConnectionType: varchar("sender_connection_type", { length: 30 }),
+  senderBatteryLevel: varchar("sender_battery_level", { length: 20 }),
+  senderDarkMode: varchar("sender_dark_mode", { length: 10 }),
+  senderReferrer: varchar("sender_referrer", { length: 200 }),
+  senderLocalTime: varchar("sender_local_time", { length: 30 }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type NglUser = typeof nglUsers.$inferSelect;
+export type NglMessage = typeof nglMessages.$inferSelect;

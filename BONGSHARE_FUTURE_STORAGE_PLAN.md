@@ -157,3 +157,5 @@ Both are essentially free at any reasonable BongBari scale. R2 wins on simplicit
 
 *Last updated: March 29, 2026*
 *Status: filebin.net is working — migrate to R2 when ready for permanent own-infra*
+Safe revert point created. If ANYTHING breaks, revert with:
+git reset --hard abaf6d6a

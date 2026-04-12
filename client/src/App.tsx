@@ -9,7 +9,8 @@ import { useParallaxScroll } from "@/hooks/useParallaxScroll";
 import { useRickshawSound } from "@/hooks/useRickshawSound";
 import { useMagicalHoverSounds } from "@/hooks/useMagicalHoverSounds";
 import { useSimpleCharmSound } from "@/hooks/useSimpleCharmSound";
-import { CharmSoundSelector } from "@/components/CharmSoundSelector";import { RelayConsentBanner } from '@/components/RelayConsentBanner';import { useState, useEffect, Suspense, lazy } from "react";
+import { CharmSoundSelector } from "@/components/CharmSoundSelector";import { RelayConsentBanner } from '@/components/RelayConsentBanner';import { NglLangProvider } from '@/components/NglLang';
+import { useState, useEffect, Suspense, lazy } from "react";
 import React from "react";
 import Home from "@/pages/home";
 import Navigation from "@/components/navigation";
@@ -50,6 +51,12 @@ const BongShare = lazy(() => import("./pages/BongShare"));
 const BongShareDownload = lazy(() => import("@/pages/BongShareDownload"));
 const BongShareP2P = lazy(() => import("@/pages/BongShareP2P"));
 const BotDemo = lazy(() => import("@/pages/BotDemo"));
+const FreeToolsPdf = lazy(() => import("./pages/free-tools-pdf"));
+const AnonymousKhisti = lazy(() => import("./pages/AnonymousKhisti"));
+const NglLanding = lazy(() => import("./pages/NglLanding"));
+const NglCreate = lazy(() => import("./pages/NglCreate"));
+const NglSend = lazy(() => import("./pages/NglSend"));
+const NglDashboard = lazy(() => import("./pages/NglDashboard"));
 
 // Firebase Protected Route Wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -157,7 +164,7 @@ function Router() {
 
   return (
     <>
-      {location !== '/voice-hub' && location !== '/tools/downloader' && location !== '/tools/share' && !location.startsWith('/s/') && !location.startsWith('/p/') && <Navigation />}
+      {location !== '/voice-hub' && location !== '/tools/downloader' && location !== '/tools/share' && location !== '/tools/pdf-ninja' && location !== '/tools/khisti' && !location.startsWith('/s/') && !location.startsWith('/p/') && !location.startsWith('/ngl') && <Navigation />}
       <div className="min-h-screen bg-brand-yellow relative m-0 p-0">
         <GreetingConsent open={showGreeting} onDecision={handleDecision} />
         {/* Custom belan cursor - hidden for logged-in users (normal cursor instead) */}
@@ -204,6 +211,45 @@ function Router() {
               <BongShare />
             </Suspense>
           </Route>
+          <Route path="/tools/pdf-ninja">
+            <Suspense fallback={<LoadingFallback />}>
+              <FreeToolsPdf />
+            </Suspense>
+          </Route>
+          <Route path="/tools/khisti">
+            <Suspense fallback={<LoadingFallback />}>
+              <AnonymousKhisti />
+            </Suspense>
+          </Route>
+          <Route path="/ngl">
+            <NglLangProvider>
+            <Suspense fallback={<LoadingFallback />}>
+              <NglLanding />
+            </Suspense>
+            </NglLangProvider>
+          </Route>
+          <Route path="/ngl/create">
+            <NglLangProvider>
+            <Suspense fallback={<LoadingFallback />}>
+              <NglCreate />
+            </Suspense>
+            </NglLangProvider>
+          </Route>
+          <Route path="/ngl/q/:username">
+            <NglLangProvider>
+            <Suspense fallback={<LoadingFallback />}>
+              <NglSend />
+            </Suspense>
+            </NglLangProvider>
+          </Route>
+          <Route path="/ngl/at/:username">
+            <NglLangProvider>
+            <Suspense fallback={<LoadingFallback />}>
+              <NglDashboard />
+            </Suspense>
+            </NglLangProvider>
+          </Route>
+
           <Route path="/s/:code">
             <Suspense fallback={<LoadingFallback />}>
               <BongShareDownload />
@@ -292,7 +338,7 @@ function Router() {
         {/* <FloatingFAQButton /> */}
 
         {/* Mobile Navigation Dock - Hidden on full-screen tool pages */}
-        {location !== '/tools/humanizer' && location !== '/voice-hub' && location !== '/tools/downloader' && location !== '/tools/share' && !location.startsWith('/s/') && !location.startsWith('/p/') && <MobileNavBar />}
+        {location !== '/tools/humanizer' && location !== '/voice-hub' && location !== '/tools/downloader' && location !== '/tools/share' && location !== '/tools/pdf-ninja' && location !== '/tools/khisti' && location !== '/tools/free-tools-cta' && !location.startsWith('/tools/board/') && !location.startsWith('/s/') && !location.startsWith('/p/') && <MobileNavBar />}
 
         {/* Production Debug overlay - Available via Console/Hidden Trigger */}
         <DebugOverlay />

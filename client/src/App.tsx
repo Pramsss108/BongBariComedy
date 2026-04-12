@@ -45,6 +45,7 @@ const AdminModeration = lazy(() => import("@/pages/AdminModeration"));
 const CommunityFeed = lazy(() => import("@/pages/community-feed"));
 const PrivacyPolicy = lazy(() => import("@/pages/PrivacyPolicy"));
 const TermsPage = lazy(() => import("@/pages/TermsPage"));
+const RefundPolicy = lazy(() => import("@/pages/RefundPolicy"));
 const FAQ = lazy(() => import("@/pages/FAQ"));
 const VoiceHub = lazy(() => import("@/pages/VoiceHub"));
 const BongShare = lazy(() => import("./pages/BongShare"));
@@ -303,6 +304,11 @@ function Router() {
           <Route path="/terms">
             <Suspense fallback={<LoadingFallback />}>
               <TermsPage />
+            </Suspense>
+          </Route>
+          <Route path="/refund">
+            <Suspense fallback={<LoadingFallback />}>
+              <RefundPolicy />
             </Suspense>
           </Route>
           <Route path="/faq">

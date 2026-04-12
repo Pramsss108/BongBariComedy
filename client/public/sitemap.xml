@@ -98,6 +98,14 @@
     <priority>0.3</priority>
   </url>
   
+  <!-- Refund and cancellation policy -->
+  <url>
+    <loc>https://www.bongbari.com/refund</loc>
+    <lastmod>2026-04-01</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  
   <!-- robots.txt -->
   <url>
     <loc>https://www.bongbari.com/robots.txt</loc>

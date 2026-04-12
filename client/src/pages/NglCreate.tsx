@@ -61,6 +61,11 @@ export default function NglCreate() {
     setStatusMsg(t('create.checking'));
     try {
       const res = await fetch(buildApiUrl(`/api/ngl/check/${encodeURIComponent(name)}`));
+      if (!res.ok) {
+        setStatus('error');
+        setStatusMsg(t('create.error'));
+        return;
+      }
       const data = await res.json();
       if (data.available) {
         setStatus('available');
@@ -451,7 +456,7 @@ export default function NglCreate() {
                       </div>
 
                       {/* 6-digit OTP input boxes */}
-                      <div className="flex gap-2 mb-4" onPaste={handleOtpPaste}>
+                      <div className="flex gap-1.5 sm:gap-2 mb-4 justify-center" onPaste={handleOtpPaste}>
                         {otpDigits.map((digit, i) => (
                           <input
                             key={`otp-${i}`}
@@ -463,7 +468,7 @@ export default function NglCreate() {
                             onChange={e => handleOtpDigitChange(i, e.target.value)}
                             onKeyDown={e => handleOtpKeyDown(i, e)}
                             autoFocus={i === 0}
-                            className={`w-11 h-14 text-center text-xl font-bold font-mono rounded-xl border-2 outline-none transition-all ${
+                            className={`w-10 h-12 sm:w-11 sm:h-14 text-center text-lg sm:text-xl font-bold font-mono rounded-xl border-2 outline-none transition-all ${
                               digit
                                 ? 'bg-white/[0.12] border-purple-500/60 text-white'
                                 : 'bg-white/[0.06] border-white/[0.12] text-white/60'

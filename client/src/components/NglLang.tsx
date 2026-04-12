@@ -64,7 +64,7 @@ const translations: Record<string, Record<Lang, string>> = {
   'create.continue': { bn: 'এগিয়ে যাও →', en: 'Continue →' },
   'create.creating': { bn: 'তৈরি হচ্ছে...', en: 'Creating...' },
   'create.linkPreview': { bn: 'তোর link:', en: 'Your link:' },
-  'create.error': { bn: 'connection error', en: 'connection error' },
+  'create.error': { bn: 'সার্ভার পাওয়া যাচ্ছে না, আবার চেষ্টা করো', en: 'Server unavailable, try again later' },
   'create.welcomeTitle': { bn: 'স্বাগতম! 🎉', en: 'Welcome! 🎉' },
   'create.photoPrompt': { bn: 'প্রোফাইল ফটো দাও, বন্ধুরা চিনবে', en: 'Add a profile photo so friends recognize you' },
   'create.tapToUpload': { bn: 'ট্যাপ করো', en: 'Tap to upload' },

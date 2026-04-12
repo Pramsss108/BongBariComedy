@@ -1066,7 +1066,7 @@ export default function NglDashboard() {
                       <span className="text-white/60">{uploadingPhoto ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3 animate-spin"><path d="M12 2v4m0 12v4m10-10h-4M6 12H2"/></svg> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>}</span>
                     </div>
                     {photo && (
-                      <button onClick={(e) => { e.stopPropagation(); handleRemovePhoto(); }} className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#0a0a14] border border-white/10 flex items-center justify-center text-white/30 hover:text-red-400/60 transition-colors text-[7px]">✕</button>
+                      <button onClick={(e) => { e.stopPropagation(); handleRemovePhoto(); }} className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#0a0a14] border border-white/10 flex items-center justify-center text-white/30 hover:text-red-400/60 transition-colors text-[8px] min-w-[44px] min-h-[44px] -m-[10px]">✕</button>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -1128,8 +1128,10 @@ export default function NglDashboard() {
                             {lang === 'bn' ? '👀 মানুষ যা দেখবে' : '👀 What people see'}
                           </p>
                           <p
-                            className="font-semibold text-white/90 text-[18px] sm:text-[22px] leading-snug cursor-pointer select-none hover:text-white transition-colors"
-                            role="status"
+                            className="font-semibold text-white/90 text-[18px] sm:text-[22px] leading-snug cursor-pointer select-none hover:text-white transition-colors focus-visible:outline-2 focus-visible:outline-white/20 focus-visible:outline-offset-2 rounded-lg"
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => { if (e.key === 'Enter') { setEditingPrompt(true); setPromptDraft(decodeEntities(prompt)); } }}
                             onDoubleClick={() => { setEditingPrompt(true); setPromptDraft(decodeEntities(prompt)); }}
                             onTouchEnd={(e) => {
                               const now = Date.now();
@@ -1237,7 +1239,7 @@ export default function NglDashboard() {
                 </motion.div>
 
                 {/* ═══ SHARE CARDS: 4 premium icon buttons ═══ */}
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {[
                     { label: lang === 'bn' ? 'হোয়াটসঅ্যাপ' : 'WhatsApp', color: 'from-green-500/20 to-green-600/10 border-green-500/15', action: () => { gEvent('ngl_share_card', { platform: 'whatsapp' }); setShareModalScreen('whatsapp'); setShowShareModal(true); }, renderIcon: () => <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-green-400"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg> },
                     { label: lang === 'bn' ? 'IG স্টোরি' : 'IG Story', color: 'from-pink-500/20 to-purple-600/10 border-pink-500/15', action: () => { gEvent('ngl_share_card', { platform: 'ig-story' }); setShareModalScreen('ig-guide'); setShowShareModal(true); }, renderIcon: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-pink-400"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg> },
@@ -1252,10 +1254,10 @@ export default function NglDashboard() {
                       whileTap={{ scale: 0.88 }}
                       whileHover={{ scale: 1.04 }}
                       onClick={item.action}
-                      className={`flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-gradient-to-b ${item.color} border hover:brightness-125 active:brightness-150 transition-all`}
+                      className={`flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-gradient-to-b ${item.color} border hover:brightness-125 active:brightness-150 transition-all focus-visible:outline-2 focus-visible:outline-white/20 focus-visible:outline-offset-2`}
                     >
                       <span className="w-6 h-6 flex items-center justify-center">{item.renderIcon()}</span>
-                      <span className="text-[9px] font-bold text-white/50 leading-none">{item.label}</span>
+                      <span className="text-[10px] sm:text-[9px] font-bold text-white/50 leading-none">{item.label}</span>
                     </motion.button>
                   ))}
                 </div>
@@ -1269,7 +1271,7 @@ export default function NglDashboard() {
                 >
                   <button
                     onClick={() => { setDeleteStep(1); setBanishConfirm(''); }}
-                    className="w-9 h-9 rounded-xl flex items-center justify-center text-white/[0.08] hover:text-red-400/40 hover:bg-red-500/8 active:bg-red-500/15 transition-all flex-shrink-0 group"
+                    className="w-11 h-11 rounded-xl flex items-center justify-center text-white/[0.08] hover:text-red-400/40 hover:bg-red-500/8 active:bg-red-500/15 transition-all flex-shrink-0 group"
                     title={t('dash.banish')}
                   >
                     <svg viewBox="0 0 24 24" fill="none" className="w-[18px] h-[18px]" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -2112,7 +2114,7 @@ export default function NglDashboard() {
                               key={i}
                               onClick={() => changeStoryColor(i)}
                               disabled={generatingCard}
-                              className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold transition-all border ${
+                              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] font-bold transition-all border min-h-[44px] ${
                                 storyColorIdx === i
                                   ? 'bg-white/15 text-white border-white/20'
                                   : 'bg-white/[0.04] text-white/35 border-white/[0.04] hover:bg-white/[0.08] hover:text-white/50'

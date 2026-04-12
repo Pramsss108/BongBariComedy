@@ -27,11 +27,11 @@
 | 23 | Dashboard GA4 heatmap events | ✅ DONE | `NglDashboard.tsx` |
 | 24 | Error tracking (onerror + API) | ✅ DONE | `client/index.html`, `queryClient.ts` |
 | 25 | Performance metrics | ✅ DONE | `NglDashboard.tsx`, `ShareModal.tsx` |
-| 26 | PhoneFrame responsive scaling | ⬜ TODO | `ShareModal.tsx` |
-| 27 | Share cards 2-col on tiny phones | ⬜ TODO | `NglDashboard.tsx` |
-| 28 | Modal scroll handling | ⬜ TODO | `ShareModal.tsx` |
-| 29 | Touch target 44px audit | ⬜ TODO | `ShareModal.tsx`, `NglDashboard.tsx` |
-| 30 | Keyboard a11y (tabIndex, focus) | ⬜ TODO | `ShareModal.tsx`, `NglDashboard.tsx` |
+| 26 | PhoneFrame responsive scaling | ✅ DONE | `ShareModal.tsx` |
+| 27 | Share cards 2-col on tiny phones | ✅ DONE | `NglDashboard.tsx` |
+| 28 | Modal scroll handling | ✅ DONE | `ShareModal.tsx` |
+| 29 | Touch target 44px audit | ✅ DONE | `ShareModal.tsx`, `NglDashboard.tsx` |
+| 30 | Keyboard a11y (tabIndex, focus) | ✅ DONE | `ShareModal.tsx`, `NglDashboard.tsx` |
 | 31 | Tutorial description freshness | ✅ DONE (5 steps × 2 langs × 3 platforms) | `ShareModal.tsx` |
 | 32 | Bengali translation 100% | ⬜ TODO | `ShareModal.tsx`, `NglDashboard.tsx` |
 | 33 | Share templates 6+6 | ⬜ TODO | `ShareModal.tsx` |
@@ -239,65 +239,58 @@
 ---
 
 ### Phase 26 — PhoneFrame responsive scaling
-- **Status**: ⬜ TODO
+- **Status**: ✅ DONE (Apr 2026)
 - **File**: `client/src/components/ShareModal.tsx`
-- **What exists**: PhoneFrame `w-[220px] md:w-[240px]` + `h-[340px] md:h-[380px]` (compact)
-- **Steps**:
-  1. Test at 320px viewport width — check if phone overflows
-  2. If overflow, reduce to `w-[200px] sm:w-[220px] md:w-[240px]`
-  3. Verify inner content (toolbar icons, bottom bar, sticker) doesn't clip
-  4. Test at 768px (iPad) — should look centered and not too small
-- **Done when**: PhoneFrame renders clean at 320px, 375px, 768px, 1440px
+- **What was done**:
+  - Non-expanded: `w-[200px] sm:w-[220px] md:w-[240px] lg:w-[280px]` (was `w-[220px] md:w-[240px]`)
+  - Expanded: `w-[280px] sm:w-[340px] md:w-[380px]` (from 300px base)
+  - Height: non-exp `h-[320px] sm:h-[340px]`, exp `h-[480px] sm:h-[580px] md:h-[640px]`
+  - Scales clean at 320px, 375px, 768px, 1440px
 
 ---
 
 ### Phase 27 — Share cards 2-col grid on tiny phones
-- **Status**: ⬜ TODO
+- **Status**: ✅ DONE (Apr 2026)
 - **File**: `client/src/pages/NglDashboard.tsx`
-- **Steps**:
-  1. Find share cards grid (likely `grid grid-cols-4 gap-2`)
-  2. Change to `grid grid-cols-2 sm:grid-cols-4 gap-2`
-  3. Adjust card inner text: `text-[10px] sm:text-xs`
-  4. Test at 320px — cards should be ~140px wide (comfortable)
-- **Done when**: 2-col grid on phones ≤640px, 4-col on larger
+- **What was done**:
+  - Changed grid from `grid-cols-4` to `grid-cols-2 sm:grid-cols-4`
+  - Card label text: `text-[10px] sm:text-[9px]` (slightly bigger on 2-col)
+  - 2×2 grid on phones ≤640px, 4-col row on larger screens
 
 ---
 
 ### Phase 28 — Modal scroll handling (short viewports)
-- **Status**: ⬜ TODO
+- **Status**: ✅ DONE (Apr 2026)
 - **File**: `client/src/components/ShareModal.tsx`
-- **Steps**:
-  1. Find modal content wrapper div
-  2. Add `max-h-[90vh] overflow-y-auto` to it
-  3. Test in landscape mode (640px height) — content scrolls if needed
-  4. Optional: add subtle gradient fade at bottom when scrollable
-- **Done when**: Modal never clips on 640px height viewport
+- **What was done**:
+  - Added `max-h-[90vh] overflow-y-auto scrollbar-hide` to modal content wrapper
+  - Content scrolls on landscape mode (640px height) without clipping
 
 ---
 
 ### Phase 29 — Touch target 44px minimum
-- **Status**: ⬜ TODO
+- **Status**: ✅ DONE (Apr 2026)
 - **Files**: `ShareModal.tsx`, `NglDashboard.tsx`
-- **Steps**:
-  1. Find all interactive elements (buttons, links, clickable divs)
-  2. Measure: any `w-*` or `h-*` < 44px on interactive elements
-  3. For small elements (e.g., progress dots at 8px), wrap in a 44px invisible tap zone: `<div className="p-4 -m-4"><span className="w-2 h-2 ..." /></div>`
-  4. For buttons, ensure min `min-h-[44px] min-w-[44px]`
-- **Done when**: All interactive elements ≥ 44px tap zone
+- **What was done**:
+  - Pause/Play button: `w-7 h-7` visual + `min-w-[44px] min-h-[44px]` tap zone
+  - Language toggle (EN/বাং): `min-h-[44px] min-w-[44px]` + larger padding
+  - Progress bar segments: `py-[10px] -my-[10px]` invisible padding for 44px+ tap zone
+  - Close button: `min-h-[44px] min-w-[44px]` with flex centering
+  - Story palette buttons: `min-h-[44px]` + `px-2.5 py-1.5`
+  - Banish button: `w-11 h-11` (44px)
+  - Photo remove button: visual `w-5` + `min-w-[44px]` tap zone
 
 ---
 
 ### Phase 30 — Keyboard accessibility
-- **Status**: ⬜ TODO
+- **Status**: ✅ DONE (Apr 2026)
 - **Files**: `ShareModal.tsx`, `NglDashboard.tsx`
-- **What exists**: Arrow keys, Space, Escape handlers in ShareModal.
-- **What's missing**: `tabIndex`, `onKeyDown` on clickable `div`s, visible focus rings.
-- **Steps**:
-  1. Add `tabIndex={0}` + `onKeyDown={e => e.key === 'Enter' && handler()}` on: share cards, platform picker items, theme circles
-  2. Add focus ring: `focus-visible:outline-2 focus-visible:outline-white/20 focus-visible:outline-offset-2`
-  3. Add `role="button"` on clickable `div`s that aren't `<button>`
-  4. Verify Tab order makes sense through the modal flow
-- **Done when**: Full Tab → Enter navigation works through entire flow
+- **What was done**:
+  - Prompt text: `tabIndex={0}`, `role="button"`, Enter key opens editor, `focus-visible:outline-2 focus-visible:outline-white/20`
+  - Progress bar segments: `tabIndex={0}`, `role="button"`, Enter/Space navigates steps
+  - All picker buttons (IG, WA, FB, Telegram, Twitter/X, Copy, Story Card): `focus-visible:outline-2 focus-visible:outline-white/20 focus-visible:outline-offset-2 rounded-xl`
+  - Share cards in dashboard: `focus-visible:outline-2 focus-visible:outline-white/20 focus-visible:outline-offset-2`
+  - Full Tab → Enter navigation works through picker and tutorial flows
 
 ---
 
@@ -454,6 +447,11 @@
 | 13 | OTP tooltip for first-time users | ✅ Apr 2026 |
 | 14 | Theme picker tooltip + gradient audit | ✅ Apr 2026 |
 | 16 | ShareModal theme integration (dynamic accent colors) | ✅ Apr 2026 |
+| 26 | PhoneFrame responsive scaling | ✅ Apr 2026 |
+| 27 | Share cards 2-col on tiny phones | ✅ Apr 2026 |
+| 28 | Modal scroll handling (short viewports) | ✅ Apr 2026 |
+| 29 | Touch target 44px minimum | ✅ Apr 2026 |
+| 30 | Keyboard accessibility (tabIndex, focus rings) | ✅ Apr 2026 |
 
 ---
 

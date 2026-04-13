@@ -114,7 +114,7 @@ export default function PrivacyPolicy() {
 
         <section style={{ marginBottom: "0.05rem" }}>
           <h2 style={{ fontSize: "1.75rem", fontWeight: 600, color: "#1565c0", marginBottom: "0.05rem", marginTop: "0.05rem" }}>About This Privacy Policy</h2>
-          <p style={{ lineHeight: 1.4, color: "#333", marginBottom: "0.05rem" }}>Hey there! We're Bong Bari, a comedy content brand run by our team at Dopmaine (UDYAM-WB-14-0096694) in Kolkata. We create funny Bengali videos and digital content that hopefully makes you laugh.</p>
+          <p style={{ lineHeight: 1.4, color: "#333", marginBottom: "0.05rem" }}>Hey there! We're Bong Bari, a comedy content brand founded by Abhijit Pramanik and run under Dopmaine (UDYAM-WB-14-0096694) in Kolkata. We create funny Bengali videos and digital content that hopefully makes you laugh.</p>
           <p style={{ lineHeight: 1.4, color: "#333", marginBottom: "0.05rem" }}>This privacy policy tells you how we handle your information when you visit our website (<a href="https://www.bongbari.com" style={{ color: "#1565c0", textDecoration: "underline" }}>www.bongbari.com</a>), follow us on social media, or get in touch with us through WhatsApp or email.</p>
           <p style={{ lineHeight: 1.4, color: "#333" }}>By using our website or contacting us, you're okay with how we handle your data as described here.</p>
         </section>
@@ -260,8 +260,9 @@ export default function PrivacyPolicy() {
           <h2 style={{ fontSize: "1.75rem", fontWeight: 600, color: "#1565c0", marginBottom: "0.05rem", marginTop: "0.05rem" }}>16. Contact Information</h2>
           <div style={{ lineHeight: 1.4, color: "#333" }}>
             <p style={{ marginBottom: "0.05rem" }}><strong>Bong Bari — a Dopmaine brand</strong></p>
+            <p style={{ marginBottom: "0.05rem" }}>Proprietor: <strong>Abhijit Pramanik</strong></p>
             <p style={{ marginBottom: "0.05rem" }}>Registered Entity ID: UDYAM-WB-14-0096694</p>
-            <p style={{ marginBottom: "0.05rem" }}>Location: Kolkata, West Bengal, India</p>
+            <p style={{ marginBottom: "0.05rem" }}>Location: 222, Laxmi Narayan Rd, Vivekanand Pally, Dum Dum Cantonment, Kolkata 700065, West Bengal, India</p>
             <p style={{ marginBottom: "0.05rem" }}>Email: <a href="mailto:team@bongbari.com" style={{ color: "#1565c0", textDecoration: "underline" }}>team@bongbari.com</a></p>
             <p style={{ marginBottom: "0.05rem" }}>Phone / WhatsApp: <a href="https://wa.me/919875319691" style={{ color: "#1565c0", textDecoration: "underline" }}>+91 98753 19691</a></p>
             <p>Website: <a href="https://www.bongbari.com" style={{ color: "#1565c0", textDecoration: "underline" }}>www.bongbari.com</a></p>
@@ -304,7 +305,7 @@ export default function PrivacyPolicy() {
           border: "1px solid #e9ecef",
           fontFamily: "system-ui, -apple-system, sans-serif"
         }}>
-        <p style={{ margin: "0 0 0.75rem 0", fontWeight: 500, color: "#333" }}>© 2025 Bong Bari | Operated by Dopmaine (UDYAM-WB-14-0096694)</p>
+        <p style={{ margin: "0 0 0.75rem 0", fontWeight: 500, color: "#333" }}>© 2025 Bong Bari | Proprietor: Abhijit Pramanik | Operated by Dopmaine (UDYAM-WB-14-0096694)</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: "0.5rem", marginTop: "0.05rem" }}>
           <a href="/" style={{ color: "#1565c0", textDecoration: "none", padding: "0.25rem", borderRadius: "0.25rem", transition: "background-color 0.2s" }}>Home</a>
           <a href="/privacy" style={{ color: "#1565c0", textDecoration: "none", padding: "0.25rem", borderRadius: "0.25rem", transition: "background-color 0.2s" }}>Privacy Policy</a>

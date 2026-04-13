@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import MagicalCursor from "@/components/MagicalCursor";
 import { useGlobalCursor } from "@/hooks/useGlobalCursor";
 import { useParallaxScroll } from "@/hooks/useParallaxScroll";
+import { ScrollProgress } from "@/components/scroll-progress";
+import { useDeviceTier } from "@/hooks/useDeviceTier";
 import { useRickshawSound } from "@/hooks/useRickshawSound";
 import { useMagicalHoverSounds } from "@/hooks/useMagicalHoverSounds";
 import { useSimpleCharmSound } from "@/hooks/useSimpleCharmSound";
@@ -165,6 +167,8 @@ function Router() {
 
   return (
     <>
+      {/* Phase 2: Scroll progress bar — visible on all pages */}
+      <ScrollProgress />
       {location !== '/voice-hub' && location !== '/tools/downloader' && location !== '/tools/share' && location !== '/tools/pdf-ninja' && location !== '/tools/khisti' && !location.startsWith('/s/') && !location.startsWith('/p/') && !location.startsWith('/ngl') && <Navigation />}
       <div className="min-h-screen bg-brand-yellow relative m-0 p-0">
         <GreetingConsent open={showGreeting} onDecision={handleDecision} />
@@ -406,9 +410,41 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AppContent />
+      <LenisProvider>
+        <AppContent />
+      </LenisProvider>
     </QueryClientProvider>
   );
+}
+
+/** Phase 1: Lenis smooth scroll — desktop/tablet only, disabled on mobile */
+function LenisProvider({ children }: { children: React.ReactNode }) {
+  const device = useDeviceTier();
+
+  useEffect(() => {
+    // Skip Lenis on mobile + reduced-motion (native scroll is better)
+    if (device.isMobile || device.prefersReducedMotion) return;
+
+    let lenis: any;
+    let rafId: number;
+    import('lenis').then(({ default: Lenis }) => {
+      lenis = new Lenis({
+        duration: 0.8,
+        easing: (t: number) => 1 - Math.pow(1 - t, 3),
+        touchMultiplier: 1,
+        wheelMultiplier: 1,
+      });
+      const raf = (time: number) => {
+        lenis.raf(time);
+        rafId = requestAnimationFrame(raf);
+      };
+      rafId = requestAnimationFrame(raf);
+    });
+
+    return () => { if (rafId) cancelAnimationFrame(rafId); lenis?.destroy(); };
+  }, [device.isMobile, device.prefersReducedMotion]);
+
+  return <>{children}</>;
 }
 
 export default App;

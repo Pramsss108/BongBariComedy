@@ -386,3 +386,73 @@
     width: 100% !important;
   }
 }
+
+/* ==================================================
+   Phase 35: Viewport height fix — svh/dvh fallback chain
+   Ensure sticky/pinned sections handle mobile browser chrome
+   ================================================== */
+@media (max-width: 768px) {
+  [data-testid="hero-section"] {
+    min-height: 100svh;
+    min-height: 100dvh; /* fallback: dvh for dynamic address bar */
+  }
+}
+
+/* ==================================================
+   Phase 38: Landscape mode lock — prevent hero from
+   consuming entire tiny viewport when phone is rotated.
+   ================================================== */
+@media (orientation: landscape) and (max-height: 500px) {
+  [data-testid="hero-section"] {
+    min-height: auto !important;
+    padding-top: 4rem !important;
+    padding-bottom: 1rem !important;
+  }
+
+  [data-testid="hero-section"] .aspect-video {
+    max-height: 280px !important;
+  }
+
+  [data-testid="hero-section"] h1 {
+    font-size: 1.5rem !important;
+  }
+}
+
+/* ==================================================
+   Phase 36: Card grid responsive reflow validation
+   At <375px consider larger cards in single column
+   ================================================== */
+@media (max-width: 374px) {
+  [data-testid="latest-videos-grid"],
+  [data-testid="loved-videos-grid"] {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+}
+
+/* ==================================================
+   Phase 37: Form responsiveness guard
+   Tighter border-radius + reduced field stagger on mobile
+   ================================================== */
+@media (max-width: 640px) {
+  [data-testid="collaboration-section"] .rounded-2xl,
+  [data-testid="collaboration-section"] .sm\\:rounded-\\[2\\.5rem\\] {
+    border-radius: 1.25rem !important;
+  }
+
+  [data-testid="select-country-code"] {
+    min-width: 90px !important;
+  }
+
+  /* Reduce form field stagger on mobile (Phase 23) */
+  .form-revealed [data-testid="collaboration-form"] > *:nth-child(1) { animation-delay: 0ms !important; }
+  .form-revealed [data-testid="collaboration-form"] > *:nth-child(2) { animation-delay: 50ms !important; }
+  .form-revealed [data-testid="collaboration-form"] > *:nth-child(3) { animation-delay: 100ms !important; }
+  .form-revealed [data-testid="collaboration-form"] > *:nth-child(4) { animation-delay: 150ms !important; }
+  .form-revealed [data-testid="collaboration-form"] > *:nth-child(5) { animation-delay: 200ms !important; }
+  .form-revealed [data-testid="collaboration-form"] > *:nth-child(6) { animation-delay: 250ms !important; }
+
+  .form-revealed [data-testid="button-submit-collaboration"] {
+    animation-delay: 300ms !important;
+  }
+}

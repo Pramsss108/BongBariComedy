@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import SEOHead from "@/components/seo-head";
+import Footer from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ParallaxSection, ParallaxContainer } from "@/components/parallax-section";
@@ -146,220 +147,89 @@ const WorkWithUs = () => {
         canonical="/work-with-us"
       />
       
-      <ParallaxContainer>
-        <main className="pb-16">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <ParallaxSection speed={0.3} delay={0.1}>
-                <motion.h1 
-                  className="text-4xl font-bold text-center text-brand-blue mb-4" 
-                  data-testid="page-title-english"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 1.2, ease: "easeOut" }}
-                >
-                  Work with Us
-                </motion.h1>
-              </ParallaxSection>
-              
-              <ParallaxSection speed={0.4} delay={0.2}>
-                <motion.h2 
-                  className="text-3xl font-bold text-center text-brand-blue mb-12 bangla-text" 
-                  data-testid="page-title-bengali"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 1.4, delay: 0.3, ease: "easeOut" }}
-                >
-                  আমাদের সাথে কাজ করুন
-                </motion.h2>
-              </ParallaxSection>
-            
-            <Card className="mb-12">
-              <CardContent className="p-8">
-                <h3 className="text-2xl font-semibold text-brand-red mb-6" data-testid="collaboration-title">
-                  Brand Collaborations
-                </h3>
-                <p className="text-lg text-gray-700 mb-6 leading-relaxed" data-testid="collaboration-description-english">
-                  Looking to reach Bengali families with authentic, engaging content? 
-                  Partner with Bong Bari for brand integrations that feel natural and resonate with our audience. 
-                  We specialize in creating branded content that doesn't feel like advertising.
-                </p>
-                
-                <p className="text-lg text-gray-700 mb-6 leading-relaxed bangla-text" data-testid="collaboration-description-bengali">
-                  বাঙালি পরিবারের কাছে পৌঁছাতে চান সত্যিকারের, আকর্ষণীয় কন্টেন্টের মাধ্যমে? 
-                  বং বাড়ির সাথে পার্টনার হন ব্র্যান্ড ইন্টিগ্রেশনের জন্য যা স্বাভাবিক লাগে এবং 
-                  আমাদের দর্শকদের সাথে সংযোগ স্থাপন করে।
-                </p>
-                
-                <div className="grid md:grid-cols-3 gap-6 mt-8" data-testid="collaboration-types">
-                  {collaborationTypes.map((type, index) => (
-                    <motion.div 
-                      key={index}
-                      className="text-center p-6 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-500 ease-out hover:border-brand-blue/30 hover:-translate-y-1 group magical-hover"
-                      data-testid={`collaboration-type-${index}`}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.8, delay: 0.1 * index, ease: "easeOut" }}
-                    >
-                      <h4 className="font-semibold text-brand-blue mb-3 group-hover:text-brand-red transition-colors duration-300">{type.title}</h4>
-                      <p className="text-sm text-gray-600 leading-relaxed">{type.description}</p>
-                    </motion.div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-            
-            {/* Collaboration Form */}
-            <Card id="form">
-              <CardContent className="p-8">
-                <h3 className="text-2xl font-semibold text-brand-blue mb-6 text-center" data-testid="form-title">
-                  Let's Collaborate!
+      <div className="min-h-screen bg-[#050505] text-white relative">
+        {/* Premium Background Glow */}
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-brand-yellow/10 rounded-full blur-[120px]" />
+          <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-violet-500/10 rounded-full blur-[120px]" />
+        </div>
+
+        <main className="pt-32 pb-24 px-6 max-w-5xl mx-auto relative z-10">
+          {/* Hero */}
+          <motion.div className="text-center mb-16" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
+            <h1 className="text-5xl md:text-6xl font-extrabold mb-3">
+              Work <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow to-yellow-600">With Us</span>
+            </h1>
+            <p className="text-xl text-gray-400 bangla-text">আমাদের সাথে কাজ করুন</p>
+            <p className="text-gray-500 mt-4 max-w-2xl mx-auto">Partner with Bong Bari for brand integrations that feel natural and resonate with Bengali families.</p>
+          </motion.div>
+
+          {/* Collaboration Types */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.6 }} className="mb-12">
+            <div className="grid md:grid-cols-3 gap-6" data-testid="collaboration-types">
+              {collaborationTypes.map((type, index) => {
+                const gradients = [
+                  "from-brand-yellow/50 via-brand-yellow/30 to-brand-yellow/50",
+                  "from-violet-500/50 via-violet-500/30 to-violet-500/50",
+                  "from-cyan-500/50 via-cyan-500/30 to-cyan-500/50"
+                ];
+                const iconColors = ["text-brand-yellow", "text-violet-400", "text-cyan-400"];
+                return (
+                  <motion.div
+                    key={index}
+                    data-testid={`collaboration-type-${index}`}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
+                    className={`relative group rounded-2xl p-[1px] bg-gradient-to-br ${gradients[index]} shadow-2xl`}
+                  >
+                    <div className="rounded-2xl h-full bg-black/80 backdrop-blur-xl p-8 text-center border border-white/5 group-hover:bg-black/60 transition-colors duration-500">
+                      <h4 className={`font-bold text-lg mb-2 ${iconColors[index]}`}>{type.title}</h4>
+                      <p className="text-sm text-gray-400">{type.description}</p>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+
+          {/* Collaboration Form */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.6 }}>
+            <div className="relative rounded-2xl p-[1px] bg-gradient-to-br from-brand-yellow/50 via-brand-yellow/30 to-brand-yellow/50 shadow-2xl">
+              <div className="rounded-2xl bg-black/80 backdrop-blur-xl p-8 md:p-10 border border-white/5">
+                <h3 className="text-2xl font-bold text-white mb-8 text-center" data-testid="form-title">
+                  Let's <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow to-yellow-600">Collaborate!</span>
                 </h3>
                 
                 {isSubmitted ? (
                   <motion.div 
-                    className="bg-gradient-to-br from-green-50 to-blue-50 border border-green-200 rounded-2xl p-12 text-center"
+                    className="text-center py-12"
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.5 }}
                   >
-                    <CheckCircle2 className="w-20 h-20 text-green-500 mx-auto mb-6" />
-                    <h4 className="text-2xl font-bold text-gray-800 mb-3">Thank You! 🎉</h4>
-                    <p className="text-gray-600 max-w-md mx-auto">
+                    <CheckCircle2 className="w-20 h-20 text-emerald-400 mx-auto mb-6" />
+                    <h4 className="text-2xl font-bold text-white mb-3">Thank You! 🎉</h4>
+                    <p className="text-gray-400 max-w-md mx-auto">
                       Your collaboration request has been received. Our team will review it and get back to you within 2-3 business days.
                     </p>
                   </motion.div>
                 ) : (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, delay: 0.2 }}
-                  >
-                    <Form {...form}>
-                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                        <div className="grid md:grid-cols-2 gap-6">
-                          <FormField
-                            control={form.control}
-                            name="name"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Your Name *</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    placeholder="John Doe" 
-                                    {...field} 
-                                    data-testid="input-name"
-                                    className="border-gray-300 focus:border-brand-blue"
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="company"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Company/Brand Name *</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    placeholder="Your Company" 
-                                    {...field}
-                                    data-testid="input-company"
-                                    className="border-gray-300 focus:border-brand-blue"
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        
-                        <div className="grid md:grid-cols-2 gap-6">
-                          <FormField
-                            control={form.control}
-                            name="email"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Email Address</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    type="email"
-                                    placeholder="john@example.com" 
-                                    {...field}
-                                    data-testid="input-email"
-                                    className="border-gray-300 focus:border-brand-blue"
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormItem>
-                            <FormLabel>Phone Number</FormLabel>
-                            <div className="flex gap-2">
-                              <FormField
-                                control={form.control}
-                                name="countryCode"
-                                render={({ field }) => (
-                                  <FormItem className="w-[180px]">
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                      <FormControl>
-                                        <SelectTrigger className="border-gray-300 focus:border-brand-blue">
-                                          <SelectValue placeholder="Code" />
-                                        </SelectTrigger>
-                                      </FormControl>
-                                      <SelectContent>
-                                        {countryCodes.map((code) => (
-                                          <SelectItem key={code.value} value={code.value}>
-                                            {code.label}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                  </FormItem>
-                                )}
-                              />
-                              <FormField
-                                control={form.control}
-                                name="phoneNumber"
-                                render={({ field }) => (
-                                  <FormItem className="flex-1">
-                                    <FormControl>
-                                      <div className="relative">
-                                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                                        <Input 
-                                          placeholder="98765 43210" 
-                                          {...field}
-                                          data-testid="input-phone"
-                                          className="border-gray-300 focus:border-brand-blue pl-10"
-                                        />
-                                      </div>
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
-                          </FormItem>
-                        </div>
-                        
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                      <div className="grid md:grid-cols-2 gap-6">
                         <FormField
                           control={form.control}
-                          name="message"
+                          name="name"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Tell us about your collaboration idea</FormLabel>
+                              <FormLabel className="text-gray-300">Your Name *</FormLabel>
                               <FormControl>
-                                <Textarea 
-                                  placeholder="Share your vision for our collaboration... What kind of content would you like to create together?"
-                                  rows={6}
-                                  {...field}
-                                  data-testid="input-message"
-                                  className="border-gray-300 focus:border-brand-blue resize-none"
+                                <Input 
+                                  placeholder="John Doe" 
+                                  {...field} 
+                                  data-testid="input-name"
+                                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-600 focus:border-brand-yellow/50 focus:ring-brand-yellow/20"
                                 />
                               </FormControl>
                               <FormMessage />
@@ -367,33 +237,142 @@ const WorkWithUs = () => {
                           )}
                         />
                         
-                        <div className="text-center pt-4">
-                          <Button 
-                            type="submit"
-                            disabled={submitCollaborationMutation.isPending}
-                            className="bg-gradient-to-r from-brand-blue to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 px-8 py-3 rounded-full font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg transform magical-hover no-rickshaw-sound"
-                            data-testid="button-submit"
-                          >
-                            {submitCollaborationMutation.isPending ? (
-                              <>Submitting...</>
-                            ) : (
-                              <>
-                                <Send className="w-4 h-4 mr-2 inline" />
-                                Submit Collaboration Request
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </form>
-                    </Form>
-                  </motion.div>
+                        <FormField
+                          control={form.control}
+                          name="company"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-gray-300">Company/Brand Name *</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="Your Company" 
+                                  {...field}
+                                  data-testid="input-company"
+                                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-600 focus:border-brand-yellow/50 focus:ring-brand-yellow/20"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <FormField
+                          control={form.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-gray-300">Email Address</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="email"
+                                  placeholder="john@example.com" 
+                                  {...field}
+                                  data-testid="input-email"
+                                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-600 focus:border-brand-yellow/50 focus:ring-brand-yellow/20"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormItem>
+                          <FormLabel className="text-gray-300">Phone Number</FormLabel>
+                          <div className="flex gap-2">
+                            <FormField
+                              control={form.control}
+                              name="countryCode"
+                              render={({ field }) => (
+                                <FormItem className="w-[180px]">
+                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                      <SelectTrigger className="bg-white/5 border-white/10 text-white focus:border-brand-yellow/50">
+                                        <SelectValue placeholder="Code" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      {countryCodes.map((code) => (
+                                        <SelectItem key={code.value} value={code.value}>
+                                          {code.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="phoneNumber"
+                              render={({ field }) => (
+                                <FormItem className="flex-1">
+                                  <FormControl>
+                                    <div className="relative">
+                                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600 w-4 h-4" />
+                                      <Input 
+                                        placeholder="98765 43210" 
+                                        {...field}
+                                        data-testid="input-phone"
+                                        className="bg-white/5 border-white/10 text-white placeholder:text-gray-600 focus:border-brand-yellow/50 focus:ring-brand-yellow/20 pl-10"
+                                      />
+                                    </div>
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        </FormItem>
+                      </div>
+                      
+                      <FormField
+                        control={form.control}
+                        name="message"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-gray-300">Tell us about your collaboration idea</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="Share your vision for our collaboration..."
+                                rows={6}
+                                {...field}
+                                data-testid="input-message"
+                                className="bg-white/5 border-white/10 text-white placeholder:text-gray-600 focus:border-brand-yellow/50 focus:ring-brand-yellow/20 resize-none"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <div className="text-center pt-4">
+                        <Button 
+                          type="submit"
+                          disabled={submitCollaborationMutation.isPending}
+                          className="bg-brand-yellow/20 border border-brand-yellow/30 text-brand-yellow hover:bg-yellow-600 hover:text-white transition-all shadow-lg rounded-xl h-12 px-10 font-medium"
+                          data-testid="button-submit"
+                        >
+                          {submitCollaborationMutation.isPending ? (
+                            <>Submitting...</>
+                          ) : (
+                            <>
+                              <Send className="w-4 h-4 mr-2 inline" />
+                              Submit Collaboration Request
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
                 )}
-              </CardContent>
-            </Card>
+              </div>
             </div>
-          </div>
+          </motion.div>
         </main>
-      </ParallaxContainer>
+        <Footer />
+      </div>
     </>
   );
 };

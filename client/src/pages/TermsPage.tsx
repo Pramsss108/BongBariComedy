@@ -243,11 +243,12 @@ export default function TermsPage() {
           <h2 style={{ fontSize: "1.75rem", fontWeight: 600, color: "#1565c0", marginBottom: "0.05rem", marginTop: "0.05rem" }}>16. Contact Information</h2>
           <div style={{ lineHeight: 1.4, color: "#333" }}>
             <p style={{ marginBottom: "0.05rem" }}><strong>Bong Bari — Operated by Dopmaine</strong></p>
+            <p style={{ marginBottom: "0.05rem" }}>Proprietor: <strong>Abhijit Pramanik</strong></p>
             <p style={{ marginBottom: "0.05rem" }}>UDYAM Registration: UDYAM-WB-14-0096694</p>
             <p style={{ marginBottom: "0.05rem" }}>Email: <a href="mailto:team@bongbari.com" style={{ color: "#1565c0", textDecoration: "underline" }}>team@bongbari.com</a></p>
             <p style={{ marginBottom: "0.05rem" }}>Phone / WhatsApp: <a href="https://wa.me/919875319691" style={{ color: "#1565c0", textDecoration: "underline" }}>+91 98753 19691</a></p>
             <p style={{ marginBottom: "0.05rem" }}>Website: <a href="https://www.bongbari.com" style={{ color: "#1565c0", textDecoration: "underline" }}>www.bongbari.com</a></p>
-            <p>Address: Kolkata, West Bengal, India</p>
+            <p>Address: 222, Laxmi Narayan Rd, Vivekanand Pally, Dum Dum Cantonment, Kolkata 700065, West Bengal, India</p>
           </div>
         </section>
 
@@ -292,7 +293,7 @@ export default function TermsPage() {
           border: "1px solid #e9ecef",
           fontFamily: "system-ui, -apple-system, sans-serif"
         }}>
-        <p style={{ margin: "0 0 0.75rem 0", fontWeight: 500, color: "#333" }}>© 2025 Bong Bari | Operated by Dopmaine (UDYAM-WB-14-0096694)</p>
+        <p style={{ margin: "0 0 0.75rem 0", fontWeight: 500, color: "#333" }}>© 2025 Bong Bari | Proprietor: Abhijit Pramanik | Operated by Dopmaine (UDYAM-WB-14-0096694)</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: "0.5rem", marginTop: "0.05rem" }}>
           <a href="/" style={{ color: "#1565c0", textDecoration: "none", padding: "0.25rem", borderRadius: "0.25rem", transition: "background-color 0.2s" }}>Home</a>
           <a href="/privacy" style={{ color: "#1565c0", textDecoration: "none", padding: "0.25rem", borderRadius: "0.25rem", transition: "background-color 0.2s" }}>Privacy Policy</a>

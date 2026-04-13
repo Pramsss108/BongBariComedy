@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, ChevronDown, ChevronUp, MessageCircle, Users, Video, Phone, Info } from 'lucide-react';
 import { useLocation } from 'wouter';
+import Footer from '@/components/footer';
 
 // Add CSS for smooth animations
 const pageStyles = `
@@ -252,71 +253,80 @@ export default function FAQ() {
     <>
       <style>{pageStyles}</style>
       
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-pink-50">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-orange-600 via-yellow-500 to-pink-500 text-white py-16 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6">
-            🤔 Frequently Asked Questions
-          </h1>
-          <p className="text-xl md:text-2xl opacity-90 max-w-2xl mx-auto">
-            Everything you need to know about Bong Bari Comedy, our content, and how we work
-          </p>
-        </div>
+    <div className="min-h-screen bg-[#050505] text-white relative">
+      {/* Premium Background Glow */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-brand-yellow/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/10 rounded-full blur-[120px]" />
       </div>
 
-      {/* Search Section */}
-      <div className="max-w-4xl mx-auto px-4 -mt-8 relative z-10">
-        <div className="bg-white rounded-2xl shadow-2xl p-6">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <span className="text-gray-400 text-xl">🔍</span>
+      <div className="pt-32 pb-24 px-6 max-w-7xl mx-auto relative z-10">
+        {/* Hero */}
+        <div className="text-center mb-12">
+          <h1 className="text-5xl md:text-6xl font-extrabold mb-3">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow to-yellow-600">FAQ</span>
+          </h1>
+          <p className="text-xl text-gray-400">Everything you need to know about Bong Bari Comedy</p>
+        </div>
+
+        {/* Search */}
+        <div className="max-w-2xl mx-auto mb-10">
+          <div className="relative rounded-2xl p-[1px] bg-gradient-to-br from-brand-yellow/50 via-brand-yellow/20 to-brand-yellow/50">
+            <div className="relative rounded-2xl bg-black/80 backdrop-blur-xl border border-white/5">
+              <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                <Search className="w-5 h-5 text-brand-yellow" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search for questions..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-14 pr-5 py-4 rounded-2xl bg-transparent text-white text-lg focus:outline-none placeholder:text-gray-600"
+              />
             </div>
-            <input
-              type="text"
-              placeholder="Search for questions..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 rounded-xl text-gray-800 text-lg focus:outline-none focus:ring-4 focus:ring-orange-300 shadow-lg"
-            />
           </div>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar Categories - Mobile Horizontal Scroll, Desktop Fixed */}
-          <div className="lg:w-80">
-            <div className="lg:sticky lg:top-8">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">📋 Categories</h2>
+          {/* Sidebar Categories */}
+          <div className="lg:w-72 shrink-0">
+            <div className="lg:sticky lg:top-8 space-y-2">
+              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 px-1">Categories</h2>
               
               {/* Mobile: Horizontal scroll */}
               <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible pb-4 lg:pb-0">
                 <button
                   onClick={() => setSelectedCategory('all')}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all whitespace-nowrap lg:whitespace-normal lg:w-full ${
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all whitespace-nowrap lg:whitespace-normal lg:w-full text-sm ${
                     selectedCategory === 'all'
-                      ? 'bg-orange-100 text-orange-700 border-2 border-orange-300'
-                      : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-orange-200'
+                      ? 'bg-brand-yellow/20 text-brand-yellow border border-brand-yellow/30'
+                      : 'bg-white/5 text-gray-400 border border-white/5 hover:border-white/20 hover:text-white'
                   }`}
                 >
-                  <span className="text-orange-600">🔍</span>
-                  All Questions ({faqData.length})
+                  <Search className="w-4 h-4" />
+                  All ({faqData.length})
                 </button>
                 
                 {faqCategories.map(category => {
                   const count = faqData.filter(item => item.category === category.id).length;
+                  const catColors: Record<string, string> = {
+                    about: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+                    content: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+                    collaboration: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+                    audience: 'bg-violet-500/20 text-violet-400 border-violet-500/30',
+                    contact: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
+                  };
                   return (
                     <button
                       key={category.id}
                       onClick={() => setSelectedCategory(category.id)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all whitespace-nowrap lg:whitespace-normal lg:w-full ${
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all whitespace-nowrap lg:whitespace-normal lg:w-full text-sm ${
                         selectedCategory === category.id
-                          ? 'bg-orange-100 text-orange-700 border-2 border-orange-300'
-                          : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-orange-200'
+                          ? `${catColors[category.id]} border`
+                          : 'bg-white/5 text-gray-400 border border-white/5 hover:border-white/20 hover:text-white'
                       }`}
                     >
-                      <span className={category.color}>{category.icon}</span>
+                      <span>{category.icon}</span>
                       {category.title} ({count})
                     </button>
                   );
@@ -325,188 +335,141 @@ export default function FAQ() {
             </div>
           </div>
 
-          {/* FAQ Content - ONLY THIS PART IN SCROLLABLE CONTAINER */}
+          {/* FAQ Content */}
           <div className="flex-1">
-            {/* Container for FAQ Questions Only */}
-            <div 
-              className="bg-white rounded-xl shadow-lg border border-gray-200 custom-scrollbar"
-              style={{
-                maxHeight: "70vh",
-                overflowY: "auto",
-                padding: "1.5rem",
-                scrollBehavior: "smooth"
-              }}
-            >
-              
-              {/* Add custom scrollbar styles */}
-              <style>{`
-                .custom-scrollbar::-webkit-scrollbar {
-                  width: 8px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-track {
-                  background: #f1f5f9;
-                  border-radius: 4px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                  background: #cbd5e1;
-                  border-radius: 4px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                  background: #94a3b8;
-                }
-                .custom-scrollbar {
-                  scrollbar-width: thin;
-                  scrollbar-color: #cbd5e1 #f1f5f9;
-                }
-              `}</style>
+            <div className="mb-4 flex items-center justify-between px-1">
+              <p className="text-sm text-gray-500">
+                Showing {displayedFAQs.length} of {filteredFAQs.length} question{filteredFAQs.length !== 1 ? 's' : ''}
+                {selectedCategory !== 'all' && ` in ${faqCategories.find(c => c.id === selectedCategory)?.title}`}
+                {searchTerm && ` matching "${searchTerm}"`}
+              </p>
+            </div>
 
-              <div className="mb-6 flex items-center justify-between">
-                <p className="text-gray-600">
-                  Showing {displayedFAQs.length} of {filteredFAQs.length} question{filteredFAQs.length !== 1 ? 's' : ''} 
-                  {selectedCategory !== 'all' && ` in ${faqCategories.find(c => c.id === selectedCategory)?.title}`}
-                  {searchTerm && ` matching "${searchTerm}"`}
-                </p>
-                
-                {/* Google-style Quick Stats */}
-                {selectedCategory === 'all' && !searchTerm && (
-                  <div className="hidden md:flex items-center gap-4 text-sm text-gray-500">
-                    <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded-full">
-                      📊 {filteredFAQs.length} Total FAQs
-                    </span>
-                    <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                      ⚡ {displayedFAQs.length} Showing
-                    </span>
-                  </div>
-                )}
+            {filteredFAQs.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="text-6xl mb-4">🤔</div>
+                <h3 className="text-xl font-semibold text-white mb-2">No questions found</h3>
+                <p className="text-gray-500">Try adjusting your search terms or browse different categories</p>
               </div>
-
-              {filteredFAQs.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="text-6xl mb-4">🤔</div>
-                  <h3 className="text-xl font-semibold text-gray-700 mb-2">No questions found</h3>
-                  <p className="text-gray-600">
-                    Try adjusting your search terms or browse different categories
-                  </p>
-                </div>
-              ) : (
-                <>
-                  <div className="space-y-4">
-                    {displayedFAQs.map((item, index) => {
-                      const isExpanded = expandedItems.includes(item.id);
-                      const category = faqCategories.find(c => c.id === item.category);
-                      
-                      return (
-                        <div
-                          key={item.id}
-                          className="bg-gray-50 rounded-xl shadow-sm border-2 border-gray-100 hover:border-orange-200 transition-all"
-                          style={{ 
-                            animationDelay: `${index * 50}ms`,
-                            animation: 'fadeIn 0.3s ease-out forwards'
-                          }}
-                        >
+            ) : (
+              <>
+                <div className="space-y-3">
+                  {displayedFAQs.map((item, index) => {
+                    const isExpanded = expandedItems.includes(item.id);
+                    const category = faqCategories.find(c => c.id === item.category);
+                    const borderColors: Record<string, string> = {
+                      about: 'from-orange-500/40 via-orange-500/20 to-orange-500/40',
+                      content: 'from-blue-500/40 via-blue-500/20 to-blue-500/40',
+                      collaboration: 'from-emerald-500/40 via-emerald-500/20 to-emerald-500/40',
+                      audience: 'from-violet-500/40 via-violet-500/20 to-violet-500/40',
+                      contact: 'from-rose-500/40 via-rose-500/20 to-rose-500/40',
+                    };
+                    const accentColors: Record<string, string> = {
+                      about: 'border-orange-500/30',
+                      content: 'border-blue-500/30',
+                      collaboration: 'border-emerald-500/30',
+                      audience: 'border-violet-500/30',
+                      contact: 'border-rose-500/30',
+                    };
+                    
+                    return (
+                      <div
+                        key={item.id}
+                        className={`rounded-2xl p-[1px] bg-gradient-to-br ${borderColors[item.category] || 'from-white/10 via-white/5 to-white/10'} transition-all duration-300`}
+                        style={{ animationDelay: `${index * 50}ms`, animation: 'fadeIn 0.3s ease-out forwards' }}
+                      >
+                        <div className={`rounded-2xl bg-black/80 backdrop-blur-xl border border-white/5 overflow-hidden ${isExpanded ? 'bg-black/60' : ''} transition-colors`}>
                           <button
                             onClick={() => toggleExpanded(item.id)}
-                            className="w-full px-6 py-5 text-left flex items-center justify-between gap-4 hover:bg-gray-100 rounded-xl transition-colors"
+                            className="w-full px-6 py-5 text-left flex items-center justify-between gap-4 hover:bg-white/5 transition-colors"
                           >
                             <div className="flex items-start gap-3 flex-1">
-                              <span className={`${category?.color} flex-shrink-0 mt-1`}>
-                                {category?.icon}
-                              </span>
-                              <h3 className="font-semibold text-gray-800 text-lg leading-tight">
+                              <span className="flex-shrink-0 mt-0.5 opacity-60">{category?.icon}</span>
+                              <h3 className="font-semibold text-white text-base leading-snug">
                                 {item.question}
                               </h3>
                             </div>
                             <div className="flex-shrink-0">
                               {isExpanded ? (
-                                <ChevronUp className="w-5 h-5 text-orange-600" />
+                                <ChevronUp className="w-5 h-5 text-brand-yellow" />
                               ) : (
-                                <ChevronDown className="w-5 h-5 text-gray-400" />
+                                <ChevronDown className="w-5 h-5 text-gray-600" />
                               )}
                             </div>
                           </button>
                           
                           {isExpanded && (
                             <div className="px-6 pb-6">
-                              <div className="pl-8 border-l-4 border-orange-200">
-                                <p className="text-gray-700 leading-relaxed text-base">
+                              <div className={`pl-8 border-l-2 ${accentColors[item.category] || 'border-white/10'}`}>
+                                <p className="text-gray-400 leading-relaxed text-sm">
                                   {item.answer}
                                 </p>
                               </div>
                             </div>
                           )}
                         </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Google-style: Smart Load More/Less Controls */}
-                  {(hasMoreQuestions || canShowLess) && (
-                    <div className="mt-8 text-center">
-                      <div className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-xl p-6 border border-orange-200">
-                        {hasMoreQuestions && (
-                          <div className="mb-4">
-                            <button
-                              onClick={handleShowMore}
-                              className="bg-gradient-to-r from-orange-500 to-yellow-500 text-white px-8 py-3 rounded-xl font-semibold hover:from-orange-600 hover:to-yellow-600 transition-all transform hover:scale-105 shadow-lg"
-                            >
-                              📄 Show More Questions ({filteredFAQs.length - displayedFAQs.length} remaining)
-                            </button>
-                            <p className="text-gray-600 mt-2 text-sm">
-                              Loading in batches like Google for better performance
-                            </p>
-                          </div>
-                        )}
-                        
-                        {canShowLess && (
-                          <div>
-                            <button
-                              onClick={handleShowLess}
-                              className="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-gray-200 transition-all border border-gray-300"
-                            >
-                              ⬆️ Show Less (Back to Top 6)
-                            </button>
-                            <p className="text-gray-500 mt-2 text-sm">
-                              Minimize for easier browsing
-                            </p>
-                          </div>
-                        )}
                       </div>
-                    </div>
-                  )}
-                </>
-              )}
+                    );
+                  })}
+                </div>
+
+                {/* Show More/Less */}
+                {(hasMoreQuestions || canShowLess) && (
+                  <div className="mt-8 text-center space-y-3">
+                    {hasMoreQuestions && (
+                      <button
+                        onClick={handleShowMore}
+                        className="bg-brand-yellow/20 border border-brand-yellow/30 text-brand-yellow px-8 py-3 rounded-xl font-semibold hover:bg-yellow-600 hover:text-white transition-all shadow-lg"
+                      >
+                        Show More ({filteredFAQs.length - displayedFAQs.length} remaining)
+                      </button>
+                    )}
+                    {canShowLess && (
+                      <button
+                        onClick={handleShowLess}
+                        className="bg-white/5 text-gray-400 px-6 py-2 rounded-lg font-medium hover:bg-white/10 transition-all border border-white/10 ml-3"
+                      >
+                        Show Less
+                      </button>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div className="mt-20">
+          <div className="relative rounded-2xl p-[1px] bg-gradient-to-br from-brand-yellow/50 via-brand-yellow/30 to-brand-yellow/50 shadow-2xl">
+            <div className="rounded-2xl bg-black/80 backdrop-blur-xl p-10 md:p-14 text-center border border-white/5">
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+                Still have questions?
+              </h2>
+              <p className="text-gray-400 mb-8 max-w-lg mx-auto">
+                Can't find what you're looking for? Our AI chatbot and support team are here to help!
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button 
+                  onClick={handleChatWithBot}
+                  className="bg-brand-yellow/20 border border-brand-yellow/30 text-brand-yellow px-8 py-3 rounded-xl font-semibold hover:bg-yellow-600 hover:text-white transition-all shadow-lg flex items-center justify-center gap-2"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                  Chat with AI Bot
+                </button>
+                <button 
+                  onClick={handleContactSupport}
+                  className="bg-white/5 border border-white/10 text-gray-300 px-8 py-3 rounded-xl font-semibold hover:bg-white/10 hover:text-white transition-all shadow-lg flex items-center justify-center gap-2"
+                >
+                  <Phone className="w-5 h-5" />
+                  Contact Support
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* CTA Section */}
-      <div className="bg-gradient-to-r from-orange-600 to-yellow-500 text-white py-12 px-4 mt-16">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl md:text-3xl font-bold mb-4">
-            Still have questions? 🤔
-          </h2>
-          <p className="text-lg opacity-90 mb-8">
-            Can't find what you're looking for? Our AI chatbot and support team are here to help!
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button 
-              onClick={handleChatWithBot}
-              className="bg-white text-orange-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
-            >
-              <MessageCircle className="w-5 h-5" />
-              Chat with AI Bot
-            </button>
-            <button 
-              onClick={handleContactSupport}
-              className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-orange-600 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
-            >
-              <Phone className="w-5 h-5" />
-              Contact Support
-            </button>
-          </div>
-        </div>
-      </div>
+      <Footer />
     </div>
     </>
   );

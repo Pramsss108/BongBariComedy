@@ -262,10 +262,11 @@ export default function RefundPolicy() {
           </p>
           <ul style={{ color: "#374151", lineHeight: 1.65, fontSize: "0.95rem", paddingLeft: "1.5rem" }}>
             <li><strong>Business Name:</strong> Dopmaine</li>
+            <li><strong>Proprietor:</strong> Abhijit Pramanik</li>
             <li><strong>UDYAM Registration:</strong> WB-14-0096694</li>
             <li><strong>Email:</strong> <a href="mailto:bongbari@gmail.com" style={{ color: "#2563eb" }}>bongbari@gmail.com</a></li>
             <li><strong>Website:</strong> <a href="https://www.bongbari.com" style={{ color: "#2563eb" }}>www.bongbari.com</a></li>
-            <li><strong>Location:</strong> Kolkata, West Bengal, India</li>
+            <li><strong>Address:</strong> 222, Laxmi Narayan Rd, Vivekanand Pally, Dum Dum Cantonment, Kolkata 700065, West Bengal, India</li>
           </ul>
 
           {/* Bottom spacer */}
@@ -289,7 +290,7 @@ export default function RefundPolicy() {
         <a href="/privacy" style={{ color: "#2563eb", textDecoration: "none" }}>Privacy Policy</a>
         {" · "}
         <a href="/terms" style={{ color: "#2563eb", textDecoration: "none" }}>Terms &amp; Conditions</a>
-        <div style={{ marginTop: "0.5rem" }}>© {new Date().getFullYear()} Dopmaine (Bong Bari). All rights reserved.</div>
+        <div style={{ marginTop: "0.5rem" }}>© {new Date().getFullYear()} Dopmaine (Bong Bari) | Proprietor: Abhijit Pramanik. All rights reserved.</div>
       </div>
     </>
   );

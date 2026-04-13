@@ -428,6 +428,15 @@ button:hover {
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
 
+/* Phase 33: Touch scroll safety — never block vertical swipe on animated elements */
+.yt-card-container,
+[data-testid="latest-videos-grid"],
+[data-testid="loved-videos-grid"],
+[data-testid="collaboration-section"],
+[data-testid="hero-section"] {
+  touch-action: pan-y !important;
+}
+
 /* Respect Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
 
@@ -604,23 +613,13 @@ button:hover {
     padding: 0 !important;
   }
 
-  /* ULTRA FAST Performance optimizations for all animated elements */
+  /* GPU acceleration only on elements that actually animate */
   .floating-bg-element,
   .youtube-short,
-  .blog-post,
-  .card,
-  nav,
-  h1,
-  h2,
-  h3,
-  button,
   .magnetic-button,
-  section,
   .magical-hover {
-    will-change: transform, opacity;
+    will-change: auto;
     backface-visibility: hidden;
-    transform-style: preserve-3d;
-    contain: layout style paint;
     transform: translateZ(0);
   }
 
@@ -1197,7 +1196,8 @@ section,
 }
 
 .youtube-short:hover {
-  transform: scale(1.05) translateZ(0) !important;
+  /* R2: Removed old scale(1.05) — thumbnail zoom handled inside .yt-card via group-hover:scale */
+  transform: none !important;
 }
 
 .card:hover {
@@ -2598,4 +2598,739 @@ section:nth-child(odd) {
 
 .animate-drink {
   animation: sci-fi-drink 10s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════
+   PREMIUM VIDEO CARDS — Cinematic Reels Showcase
+   Performance-optimized: single rotating beam, GPU-composited
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Card container — lightweight entrance ── */
+.yt-card-container {
+  animation: yt-fadeInUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  opacity: 0;
+  overflow: visible;
+  contain: layout style;
+}
+
+@keyframes yt-fadeInUp {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ══════════════════════════════════════════════════════
+   ROTATING GOLD BORDER — Smooth single-beam with soft tail
+   ══════════════════════════════════════════════════════ */
+.yt-gold-border-wrap {
+  position: relative;
+  padding: 4px;
+  border-radius: 16px;
+  background: #0a0a0a;
+  overflow: hidden;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.45s ease;
+}
+
+/* The rotating gold beam — ultra-smooth tail with wide fade zones */
+.yt-gold-border-wrap::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    transparent 15%,
+    rgba(139, 105, 20, 0.08) 18%,
+    rgba(139, 105, 20, 0.20) 22%,
+    rgba(184, 134, 11, 0.40) 26%,
+    #B8860B 30%,
+    #DAA520 34%,
+    #FFD700 37%,
+    #FFF8DC 40%,
+    #FFD700 43%,
+    #DAA520 46%,
+    #B8860B 50%,
+    rgba(184, 134, 11, 0.40) 54%,
+    rgba(139, 105, 20, 0.20) 58%,
+    rgba(139, 105, 20, 0.08) 62%,
+    transparent 66%,
+    transparent 100%
+  );
+  animation: yt-border-rotate 5s linear infinite;
+  z-index: 0;
+  transform: translateZ(0);
+}
+
+/* Static gold ring — subtle always-visible border */
+.yt-gold-border-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  border: 1.5px solid rgba(255, 204, 0, 0.15);
+  z-index: 0;
+  pointer-events: none;
+  transition: border-color 0.35s ease;
+}
+
+/* Hover — clean lift + golden aura (no 3D/perspective overhead) */
+.yt-card-container:hover .yt-gold-border-wrap {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow:
+    0 0 24px rgba(255, 204, 0, 0.14),
+    0 0 48px rgba(255, 204, 0, 0.04),
+    0 20px 50px -12px rgba(0, 0, 0, 0.55);
+}
+
+/* Hover — beam widens smoothly */
+.yt-card-container:hover .yt-gold-border-wrap::before {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    transparent 10%,
+    rgba(139, 105, 20, 0.10) 14%,
+    rgba(139, 105, 20, 0.25) 18%,
+    rgba(184, 134, 11, 0.50) 22%,
+    #B8860B 26%,
+    #DAA520 31%,
+    #FFD700 35%,
+    #FFF8DC 40%,
+    #FFD700 45%,
+    #DAA520 49%,
+    #B8860B 54%,
+    rgba(184, 134, 11, 0.50) 58%,
+    rgba(139, 105, 20, 0.25) 62%,
+    rgba(139, 105, 20, 0.10) 66%,
+    transparent 70%,
+    transparent 100%
+  );
+  animation-duration: 3s;
+}
+
+/* Hover — ring brightens */
+.yt-card-container:hover .yt-gold-border-wrap::after {
+  border-color: rgba(255, 204, 0, 0.40);
+}
+
+/* Playing — freeze */
+.yt-card-container.is-playing .yt-gold-border-wrap {
+  transform: none !important;
+}
+
+@keyframes yt-border-rotate {
+  from { transform: rotate(0deg) translateZ(0); }
+  to   { transform: rotate(360deg) translateZ(0); }
+}
+
+/* Cinematic vignette — bottom gradient for readability */
+.yt-vignette {
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.95) 0%,
+    rgba(0, 0, 0, 0.70) 15%,
+    rgba(0, 0, 0, 0.25) 35%,
+    transparent 60%
+  );
+}
+
+/* Top vignette — subtle depth from above */
+.yt-vignette-top {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.20) 0%,
+    transparent 30%
+  );
+}
+
+/* Play button — clean glass, no idle animation */
+.yt-glass-play {
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+              background 0.35s ease,
+              border-color 0.35s ease,
+              box-shadow 0.35s ease;
+}
+
+/* Play button hover — gold reveal */
+.yt-card-container:hover .yt-glass-play {
+  background: rgba(255, 204, 0, 0.06);
+  border-color: rgba(255, 204, 0, 0.45);
+  box-shadow:
+    0 0 20px rgba(255, 204, 0, 0.12),
+    0 4px 20px rgba(0, 0, 0, 0.4);
+  transform: scale(1.10);
+}
+
+/* Play ring — only activates on hover */
+.yt-play-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  pointer-events: none;
+  transition: all 0.4s ease;
+}
+.yt-card-container:hover .yt-play-ring {
+  border-color: rgba(255, 204, 0, 0.18);
+  inset: -10px;
+  animation: yt-play-pulse 1.8s ease-out infinite;
+}
+@keyframes yt-play-pulse {
+  0%   { opacity: 0.7; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+
+/* Card number badge — Phase 18: always visible with pop-in animation */
+.yt-card-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 20;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 13px;
+  color: #000;
+  background: linear-gradient(135deg, #FFD700, #FFC107, #FFD700);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  transform: scale(0);
+  animation: badgePopIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s forwards;
+}
+.yt-card-container:hover .yt-card-badge {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+@keyframes badgePopIn {
+  0% { opacity: 0; transform: scale(0); }
+  60% { opacity: 1; transform: scale(1.15); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Shimmer sweep on hover */
+.yt-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 38%,
+    rgba(255, 255, 255, 0.04) 44%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.04) 56%,
+    transparent 62%
+  );
+  background-size: 200% 100%;
+  pointer-events: none;
+  z-index: 5;
+  border-radius: 10px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.yt-card-container:hover .yt-shimmer {
+  opacity: 1;
+  animation: yt-shimmer-sweep 1.2s ease-out;
+}
+@keyframes yt-shimmer-sweep {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+/* Title slide-up on hover */
+.yt-title-wrap {
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.yt-card-container:hover .yt-title-wrap {
+  transform: translateY(-3px);
+}
+
+/* Section title accent — gold underline on hover */
+.yt-section-title-accent {
+  position: relative;
+  display: inline-block;
+}
+.yt-section-title-accent::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background: linear-gradient(to right, #FFD700, rgba(255, 215, 0, 0.3));
+  border-radius: 2px;
+  transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.yt-section-title-accent:hover::after {
+  width: 100%;
+}
+
+/* View All button — premium pill */
+.yt-view-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8px);
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+.yt-view-all:hover {
+  color: #FFD700;
+  border-color: rgba(255, 204, 0, 0.30);
+  background: rgba(255, 204, 0, 0.05);
+  box-shadow: 0 0 16px rgba(255, 204, 0, 0.08);
+}
+.yt-view-all .yt-arrow {
+  transition: transform 0.3s ease;
+}
+.yt-view-all:hover .yt-arrow {
+  transform: translateX(3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yt-card-container { animation: none; opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   SECTION ACCENT LINES
+   ═══════════════════════════════════════════════════════ */
+.section-line-cyan {
+  background: linear-gradient(to right, transparent, #06B6D4, transparent);
+}
+.section-line-pink {
+  background: linear-gradient(to right, transparent, #EC4899, transparent);
+}
+.section-line-gold {
+  background: linear-gradient(to right, transparent, #FFD700, transparent);
+}
+
+/* Animated gold divider — shimmer sweep between sections */
+.yt-divider-animated {
+  height: 1px;
+  width: 100%;
+  position: relative;
+  background: linear-gradient(to right,
+    transparent 0%,
+    rgba(255, 204, 0, 0.08) 15%,
+    rgba(255, 204, 0, 0.15) 50%,
+    rgba(255, 204, 0, 0.08) 85%,
+    transparent 100%
+  );
+  overflow: hidden;
+}
+.yt-divider-animated::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(to right,
+    transparent,
+    rgba(255, 215, 0, 0.6),
+    #FFD700,
+    rgba(255, 215, 0, 0.6),
+    transparent
+  );
+  animation: yt-divider-sweep 4s ease-in-out infinite;
+}
+@keyframes yt-divider-sweep {
+  0%   { left: -60%; }
+  100% { left: 100%; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   PREMIUM FOOTER
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Footer root — NO overflow hidden, text must never clip ── */
+.footer-root {
+  background: linear-gradient(180deg, #050505 0%, #080808 40%, #0a0a0a 100%);
+}
+
+/* ── THICK PREMIUM EDGE — glowing separator bar ── */
+.footer-premium-edge {
+  height: 2px;
+  position: relative;
+  background:
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 204, 0, 0.0) 10%,
+      rgba(255, 204, 0, 0.6) 50%,
+      rgba(255, 204, 0, 0.0) 90%,
+      transparent 100%
+    );
+  background-size: 200% 100%;
+  animation: footer-edge-sweep 5s ease-in-out infinite;
+}
+.footer-premium-edge::before {
+  content: '';
+  position: absolute;
+  inset: -12px 5% 0 5%;
+  height: 24px;
+  background: radial-gradient(ellipse at center, rgba(255,204,0,0.15) 0%, transparent 70%);
+  filter: blur(12px);
+  pointer-events: none;
+}
+.footer-premium-edge::after {
+  content: '';
+  position: absolute;
+  inset: 0 10% -6px 10%;
+  height: 10px;
+  background: radial-gradient(ellipse at center, rgba(255,204,0,0.10) 0%, transparent 70%);
+  filter: blur(6px);
+  pointer-events: none;
+}
+
+@keyframes footer-edge-sweep {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Brand Text — gold metallic gradient, glow via CSS only (no div hacks) ── */
+.footer-brand-text {
+  background: linear-gradient(
+    105deg,
+    #FFD700 0%,
+    #FFF8DC 20%,
+    #DAA520 40%,
+    #FFD700 55%,
+    #FFF8DC 70%,
+    #B8860B 85%,
+    #FFD700 100%
+  );
+  background-size: 400% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: footer-brand-shimmer 8s ease-in-out infinite;
+}
+
+@keyframes footer-brand-shimmer {
+  0%   { background-position: 400% center; }
+  50%  { background-position: 0% center; }
+  100% { background-position: 400% center; }
+}
+
+/* ── Marquee ── */
+.footer-marquee-wrap {
+  border-top: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  background: linear-gradient(180deg, rgba(255,255,255,0.015) 0%, transparent 100%);
+}
+
+.footer-marquee {
+  animation: footer-scroll 30s linear infinite;
+}
+
+@keyframes footer-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-33.333%); }
+}
+
+.footer-marquee:hover {
+  animation-play-state: paused;
+}
+
+.footer-marquee-word {
+  transition: color 0.4s, text-shadow 0.4s, letter-spacing 0.4s;
+}
+.footer-marquee:hover .footer-marquee-word {
+  color: rgba(255, 255, 255, 0.55);
+  text-shadow: 0 0 30px rgba(255, 204, 0, 0.1);
+  letter-spacing: 0.35em;
+}
+
+/* ── Footer Grid Background — frosted glass with inner border glow ── */
+.footer-grid-bg {
+  background: linear-gradient(180deg, rgba(255,255,255,0.025) 0%, rgba(255,255,255,0.01) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.footer-inner-glow-top {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 204, 0, 0.0) 20%,
+    rgba(255, 204, 0, 0.15) 50%,
+    rgba(255, 204, 0, 0.0) 80%,
+    transparent 100%
+  );
+}
+
+/* ── Animated glow line above copyright ── */
+.footer-glow-line {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(244, 196, 48, 0.0) 10%,
+    rgba(244, 196, 48, 0.4) 50%,
+    rgba(244, 196, 48, 0.0) 90%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: footer-glow-sweep 4s ease-in-out infinite;
+}
+
+@keyframes footer-glow-sweep {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Link hover underline reveal ── */
+.footer-link-hover {
+  position: relative;
+}
+.footer-link-hover::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255,204,0,0.5), transparent);
+  transition: width 0.3s ease;
+}
+.footer-link-hover:hover::after {
+  width: 100%;
+}
+
+/* =====================================================
+   Phase 23: Form fields sequential reveal
+   Triggered when parent form card enters view via .form-revealed class
+   ===================================================== */
+@keyframes formFieldReveal {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.form-revealed [data-testid="collaboration-form"] > * {
+  opacity: 0;
+  animation: formFieldReveal 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+/* Stagger each child: base 80ms, mobile 50ms via override */
+.form-revealed [data-testid="collaboration-form"] > *:nth-child(1) { animation-delay: 0ms; }
+.form-revealed [data-testid="collaboration-form"] > *:nth-child(2) { animation-delay: 80ms; }
+.form-revealed [data-testid="collaboration-form"] > *:nth-child(3) { animation-delay: 160ms; }
+.form-revealed [data-testid="collaboration-form"] > *:nth-child(4) { animation-delay: 240ms; }
+.form-revealed [data-testid="collaboration-form"] > *:nth-child(5) { animation-delay: 320ms; }
+.form-revealed [data-testid="collaboration-form"] > *:nth-child(6) { animation-delay: 400ms; }
+
+/* Phase 24: Submit button glow entrance — single red pulse */
+@keyframes submitGlow {
+  0%   { box-shadow: 0 0 0 0 rgba(229, 57, 53, 0); }
+  50%  { box-shadow: 0 0 20px 4px rgba(229, 57, 53, 0.5); }
+  100% { box-shadow: 0 0 0 0 rgba(229, 57, 53, 0); }
+}
+
+.form-revealed [data-testid="button-submit-collaboration"] {
+  animation: formFieldReveal 0.4s cubic-bezier(0.22, 1, 0.36, 1) 480ms forwards,
+             submitGlow 0.8s ease 600ms 1;
+}
+
+/* Phase 14: Card thumbnail parallax — faux inner drift on viewport entry */
+.yt-thumb-img {
+  transition: transform 0.5s ease-out;
+  will-change: transform;
+}
+.yt-card-container:hover .yt-thumb-img {
+  transform: scale(1.04);
+}
+
+@media (min-width: 1025px) {
+  .yt-thumb-img {
+    transform: scale(1.06) translateY(3%);
+    transition: transform 2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .grid-visible .yt-thumb-img {
+    transform: scale(1.06) translateY(-2%);
+  }
+  .grid-visible > :nth-child(1) .yt-thumb-img { transition-delay: 0ms; }
+  .grid-visible > :nth-child(2) .yt-thumb-img { transition-delay: 100ms; }
+  .grid-visible > :nth-child(3) .yt-thumb-img { transition-delay: 200ms; }
+  .grid-visible > :nth-child(4) .yt-thumb-img { transition-delay: 300ms; }
+  .yt-card-container:hover .yt-thumb-img {
+    transform: scale(1.10) translateY(-2%);
+    transition: transform 0.5s ease-out;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .yt-thumb-img {
+    transform: scale(1.03) translateY(1.5%);
+    transition: transform 2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .grid-visible .yt-thumb-img {
+    transform: scale(1.03) translateY(-0.5%);
+  }
+  .yt-card-container:hover .yt-thumb-img {
+    transform: scale(1.06) translateY(-0.5%);
+    transition: transform 0.5s ease-out;
+  }
+}
+
+/* ══════════════════════════ PHASE E — Premium Polish ══════════════════════════ */
+
+/* Phase 9: Bengali underline glow — single gentle pulse 2s after page load */
+@keyframes bengali-glow-pulse {
+  0%, 100% { filter: drop-shadow(0 0 0 rgba(244, 196, 48, 0)); }
+  50% { filter: drop-shadow(0 0 12px rgba(244, 196, 48, 0.3)); }
+}
+.bengali-underline-svg {
+  animation: bengali-glow-pulse 1.5s ease-in-out 2s 1;
+}
+
+/* Premium Bengali subtitle glow — warm gold shimmer for section subtitles */
+.bengali-subtitle-glow {
+  background: linear-gradient(
+    105deg,
+    #D4A847 0%,
+    #FFD700 30%,
+    #FFF0B3 50%,
+    #DAA520 70%,
+    #D4A847 100%
+  );
+  background-size: 300% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: bengali-subtitle-shimmer 6s ease-in-out infinite;
+}
+@keyframes bengali-subtitle-shimmer {
+  0%   { background-position: 300% center; }
+  50%  { background-position: 0% center; }
+  100% { background-position: 300% center; }
+}
+
+/* Language toggle pill — premium glass */
+.lang-toggle-pill {
+  transition: box-shadow 0.3s ease;
+}
+.lang-toggle-pill:hover {
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4), 0 0 12px rgba(244,196,48,0.08);
+}
+
+/* Phase 25: Form card glass shimmer — single diagonal light sweep (desktop/tablet) */
+@keyframes glassShimmer {
+  0%   { left: -50%; opacity: 0; }
+  15%  { opacity: 1; }
+  100% { left: 150%; opacity: 0; }
+}
+
+@media (min-width: 769px) {
+  .form-revealed.form-shimmer-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -50%;
+    width: 30%;
+    height: 100%;
+    z-index: 5;
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.06) 50%,
+      transparent
+    );
+    transform: skewX(-20deg);
+    animation: glassShimmer 1.2s ease-in-out 1s 1;
+  }
+}
+
+/* Phase 27: Footer curtain reveal — content sits above footer with z-index layering */
+@media (min-width: 769px) {
+  .home-content-wrapper {
+    position: relative;
+    z-index: 2;
+  }
+  .footer-root {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+/* Phase 34: Safe area padding — extend to fixed/sticky elements */
+@supports (padding: env(safe-area-inset-top)) {
+  [data-testid="hero-section"] {
+    padding-top: max(5rem, calc(5rem + env(safe-area-inset-top)));
+  }
+}
+
+/* ===== v4: Form card subtle gold border (desktop) ===== */
+@media (min-width: 769px) {
+  .form-shimmer-card {
+    border: 1px solid rgba(255, 204, 0, 0.06) !important;
+    transition: border-color 0.4s ease, box-shadow 0.4s ease;
+  }
+  .form-shimmer-card:hover {
+    border-color: rgba(255, 204, 0, 0.12) !important;
+    box-shadow: 0 0 40px rgba(255, 204, 0, 0.04), 0 12px 40px rgba(0,0,0,0.5);
+  }
+}
+
+/* ===== v4: Submit button gradient + shine sweep ===== */
+@keyframes buttonShineSweep {
+  0%   { left: -80%; }
+  100% { left: 180%; }
+}
+.submit-btn-premium {
+  background: linear-gradient(135deg, #E53935 0%, #B71C1C 100%) !important;
+  position: relative;
+  overflow: hidden;
+}
+.submit-btn-premium:not(:disabled):hover {
+  box-shadow: 0 0 24px rgba(229, 57, 53, 0.5), 0 4px 16px rgba(0,0,0,0.3);
+}
+.submit-btn-premium:not(:disabled):hover::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -80%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+  transform: skewX(-20deg);
+  animation: buttonShineSweep 0.7s ease-out 1;
+  pointer-events: none;
+}
+
+/* ===== v4: Form field focus glow ===== */
+.form-shimmer-card input:focus,
+.form-shimmer-card textarea:focus {
+  border-color: rgba(255, 204, 0, 0.2) !important;
+  box-shadow: 0 0 0 2px rgba(255, 204, 0, 0.06) !important;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* ===== v4: Card hover uplift (desktop) ===== */
+@media (min-width: 769px) {
+  [data-testid="latest-videos-grid"] > div,
+  [data-testid="loved-videos-grid"] > div {
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease;
+  }
+  [data-testid="latest-videos-grid"] > div:hover,
+  [data-testid="loved-videos-grid"] > div:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    z-index: 5;
+  }
 }

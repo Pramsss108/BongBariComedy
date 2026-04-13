@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'wouter';
 import { motion } from 'framer-motion';
 import { SEOHead } from '@/components/SEOHead';
+import Footer from '@/components/footer';
 
 const FREE_TOOLS_SCHEMA = {
   "@context": "https://schema.org",
@@ -176,6 +177,7 @@ const FreeTools = () => {
 
           </div>
         </main>
+        <Footer />
       </div>
     </>
   );

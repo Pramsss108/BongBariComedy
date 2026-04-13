@@ -1,11 +1,9 @@
-import { motion } from "framer-motion";
-import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState, useRef, useEffect } from "react";
 import SEOHead from "@/components/seo-head";
 import Footer from "@/components/footer";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ParallaxSection, ParallaxContainer } from "@/components/parallax-section";
-import { FileText, Send, CheckCircle2, Phone } from "lucide-react";
+import { Send, CheckCircle2, Phone, User, Building2, Mail, MessageSquare, ChevronDown, Sparkles, Zap, Palette, Share2 } from "lucide-react";
 import { useFunnySubmissionSound } from "@/hooks/useFunnySubmissionSound";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,18 +13,8 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -42,102 +30,163 @@ const collaborationFormSchema = z.object({
   company: z.string().min(2, "Company name is required"),
   message: z.string().optional(),
 }).refine((data) => {
-  // At least one contact method must be provided
   return data.email || (data.phoneNumber && data.countryCode);
 }, {
-  message: "Please provide either an email address or phone number",
+  message: "Please provide either an email or phone number",
   path: ["email"]
 }).transform((data) => ({
   ...data,
   phone: data.phoneNumber ? `${data.countryCode} ${data.phoneNumber}` : undefined
 }));
 
-type CollaborationFormData = z.infer<typeof collaborationFormSchema>;
+/* ── Custom Country Code Dropdown ── */
+const countryCodes = [
+  { value: "+91", flag: "🇮🇳", label: "India", short: "+91" },
+  { value: "+880", flag: "🇧🇩", label: "Bangladesh", short: "+880" },
+  { value: "+1", flag: "🇺🇸", label: "USA/Canada", short: "+1" },
+  { value: "+44", flag: "🇬🇧", label: "UK", short: "+44" },
+  { value: "+971", flag: "🇦🇪", label: "UAE", short: "+971" },
+  { value: "+61", flag: "🇦🇺", label: "Australia", short: "+61" },
+  { value: "+65", flag: "🇸🇬", label: "Singapore", short: "+65" },
+  { value: "+49", flag: "🇩🇪", label: "Germany", short: "+49" },
+  { value: "+33", flag: "🇫🇷", label: "France", short: "+33" },
+  { value: "+86", flag: "🇨🇳", label: "China", short: "+86" },
+];
+
+function CountryCodeDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const selected = countryCodes.find(c => c.value === value) || countryCodes[0];
+
+  useEffect(() => {
+    const close = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="wws-input flex items-center gap-1.5 px-3 py-0 h-[44px] w-[90px] cursor-pointer select-none"
+      >
+        <span className="text-base leading-none">{selected.flag}</span>
+        <span className="text-[13px] text-white/80 font-medium">{selected.short}</span>
+        <ChevronDown className={`w-3 h-3 text-gray-500 ml-auto transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -4, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.97 }}
+            transition={{ duration: 0.15 }}
+            className="absolute top-full left-0 mt-1 w-56 rounded-xl bg-[#111]/95 backdrop-blur-2xl border border-white/[0.08] shadow-[0_16px_48px_rgba(0,0,0,0.6)] z-50 overflow-hidden"
+          >
+            <div
+              className="max-h-56 overflow-y-auto overscroll-contain wws-scroll py-1"
+              onWheel={e => e.stopPropagation()}
+            >
+              {countryCodes.map(code => (
+                <button
+                  key={code.value}
+                  type="button"
+                  onClick={() => { onChange(code.value); setOpen(false); }}
+                  className={`wws-dropdown-item w-full flex items-center gap-3 px-3 py-2.5 text-left outline-none transition-all duration-150 ${
+                    code.value === value
+                      ? 'bg-brand-yellow/10 text-brand-yellow'
+                      : 'text-gray-300 hover:bg-white/[0.06] hover:text-white'
+                  }`}
+                >
+                  <span className="text-lg leading-none">{code.flag}</span>
+                  <span className="text-[13px] font-medium flex-1">{code.label}</span>
+                  <span className="text-[11px] text-gray-500 tabular-nums">{code.short}</span>
+                  {code.value === value && (
+                    <motion.div
+                      layoutId="cc-check"
+                      className="w-1.5 h-1.5 rounded-full bg-brand-yellow"
+                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                    />
+                  )}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/* ── Premium floating-label input ── */
+function FloatingInput({ icon: Icon, label, ...props }: { icon: any; label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+  const [focused, setFocused] = useState(false);
+  const hasValue = !!props.value;
+  return (
+    <div className="relative group">
+      <div className={`absolute -inset-[1px] rounded-xl opacity-0 ${focused ? 'opacity-100' : ''} bg-gradient-to-r from-brand-yellow/20 via-brand-yellow/5 to-brand-yellow/20 blur-[2px] transition-opacity duration-300`} />
+      <div className="wws-input relative flex items-center">
+        <Icon className={`w-4 h-4 flex-shrink-0 transition-colors duration-200 ${focused ? 'text-brand-yellow/70' : 'text-gray-600'}`} />
+        <div className="flex-1 relative ml-3">
+          <span className={`absolute left-0 transition-all duration-200 pointer-events-none ${
+            focused || hasValue ? 'text-[9px] -top-1.5 text-brand-yellow/60 font-semibold tracking-wider uppercase' : 'text-[13px] top-1/2 -translate-y-1/2 text-gray-500'
+          }`}>{label}</span>
+          <input
+            {...props}
+            autoComplete="off"
+            onFocus={e => { setFocused(true); props.onFocus?.(e); }}
+            onBlur={e => { setFocused(false); props.onBlur?.(e); }}
+            className="w-full bg-transparent text-white text-[13px] outline-none pt-2 pb-0.5 wws-autofill-fix"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 const WorkWithUs = () => {
   const { playFunnySubmissionSound } = useFunnySubmissionSound({ enabled: true, volume: 0.2 });
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isSubmitted, setIsSubmitted] = useState(false);
-  
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+
   const collaborationTypes = [
-    {
-      title: "Product Integration",
-      description: "Natural product placements in our comedy sketches"
-    },
-    {
-      title: "Custom Content", 
-      description: "Branded episodes tailored to your brand message"
-    },
-    {
-      title: "Social Media",
-      description: "Cross-platform promotion and engagement"
-    }
+    { icon: Zap, title: "Product Integration", desc: "Natural placements in our comedy sketches", color: "brand-yellow" },
+    { icon: Palette, title: "Custom Content", desc: "Branded episodes tailored to your message", color: "violet-400" },
+    { icon: Share2, title: "Social Media", desc: "Cross-platform promotion & engagement", color: "cyan-400" },
   ];
 
   const form = useForm<any>({
     resolver: zodResolver(collaborationFormSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      countryCode: "+91",
-      phoneNumber: "",
-      company: "",
-      message: "",
-    },
+    defaultValues: { name: "", email: "", countryCode: "+91", phoneNumber: "", company: "", message: "" },
   });
-
-  const countryCodes = [
-    { value: "+91", label: "🇮🇳 +91 (India)" },
-    { value: "+880", label: "🇧🇩 +880 (Bangladesh)" },
-    { value: "+1", label: "🇺🇸 +1 (USA/Canada)" },
-    { value: "+44", label: "🇬🇧 +44 (UK)" },
-    { value: "+971", label: "🇦🇪 +971 (UAE)" },
-    { value: "+61", label: "🇦🇺 +61 (Australia)" },
-    { value: "+65", label: "🇸🇬 +65 (Singapore)" },
-    { value: "+49", label: "🇩🇪 +49 (Germany)" },
-    { value: "+33", label: "🇫🇷 +33 (France)" },
-    { value: "+86", label: "🇨🇳 +86 (China)" },
-  ];
 
   const submitCollaborationMutation = useMutation({
     mutationFn: async (data: any) => {
       const response = await apiRequest("/api/collaboration-requests", {
         method: "POST",
         body: JSON.stringify(data),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
       });
       return response;
     },
     onSuccess: () => {
       playFunnySubmissionSound();
       setIsSubmitted(true);
-      toast({
-        title: "Success! 🎉",
-        description: "Your collaboration request has been submitted. We'll get back to you soon!",
-      });
+      toast({ title: "Success! 🎉", description: "Your collaboration request has been submitted!" });
       form.reset();
-      
-      // Invalidate the collaboration requests cache
       queryClient.invalidateQueries({ queryKey: ['/api/collaboration-requests'] });
-      
-      // Reset submitted state after 5 seconds
       setTimeout(() => setIsSubmitted(false), 5000);
     },
     onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to submit collaboration request. Please try again.",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error.message || "Failed to submit. Please try again.", variant: "destructive" });
     },
   });
 
-  const onSubmit = (data: any) => {
-    submitCollaborationMutation.mutate(data);
-  };
+  const onSubmit = (data: any) => { submitCollaborationMutation.mutate(data); };
 
   return (
     <>
@@ -146,231 +195,232 @@ const WorkWithUs = () => {
         description="Partner with Bong Bari for authentic Bengali comedy brand integrations. Custom content, product placements, and social media collaborations."
         canonical="/work-with-us"
       />
-      
+
       <div className="min-h-screen bg-[#050505] text-white relative">
-        {/* Premium Background Glow */}
+        {/* Ambient background */}
         <div className="fixed inset-0 pointer-events-none">
-          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-brand-yellow/10 rounded-full blur-[120px]" />
-          <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-violet-500/10 rounded-full blur-[120px]" />
+          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-brand-yellow/[0.06] rounded-full blur-[140px]" />
+          <div className="absolute bottom-[-30%] right-[-10%] w-[45%] h-[50%] bg-violet-500/[0.04] rounded-full blur-[140px]" />
         </div>
 
-        <main className="pt-32 pb-24 px-6 max-w-5xl mx-auto relative z-10">
-          {/* Hero */}
-          <motion.div className="text-center mb-16" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-            <h1 className="text-5xl md:text-6xl font-extrabold mb-3">
-              Work <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow to-yellow-600">With Us</span>
-            </h1>
-            <p className="text-xl text-gray-400 bangla-text">আমাদের সাথে কাজ করুন</p>
-            <p className="text-gray-500 mt-4 max-w-2xl mx-auto">Partner with Bong Bari for brand integrations that feel natural and resonate with Bengali families.</p>
-          </motion.div>
+        {/* ═══ FIRST FOLD — Hero + Form in one viewport ═══ */}
+        <div className="min-h-[100dvh] flex flex-col relative z-10 pt-[72px] sm:pt-[80px]">
+          <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 max-w-5xl mx-auto w-full py-4 sm:py-6">
 
-          {/* Collaboration Types */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.6 }} className="mb-12">
-            <div className="grid md:grid-cols-3 gap-6" data-testid="collaboration-types">
-              {collaborationTypes.map((type, index) => {
-                const gradients = [
-                  "from-brand-yellow/50 via-brand-yellow/30 to-brand-yellow/50",
-                  "from-violet-500/50 via-violet-500/30 to-violet-500/50",
-                  "from-cyan-500/50 via-cyan-500/30 to-cyan-500/50"
-                ];
-                const iconColors = ["text-brand-yellow", "text-violet-400", "text-cyan-400"];
-                return (
-                  <motion.div
-                    key={index}
-                    data-testid={`collaboration-type-${index}`}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
-                    className={`relative group rounded-2xl p-[1px] bg-gradient-to-br ${gradients[index]} shadow-2xl`}
-                  >
-                    <div className="rounded-2xl h-full bg-black/80 backdrop-blur-xl p-8 text-center border border-white/5 group-hover:bg-black/60 transition-colors duration-500">
-                      <h4 className={`font-bold text-lg mb-2 ${iconColors[index]}`}>{type.title}</h4>
-                      <p className="text-sm text-gray-400">{type.description}</p>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </motion.div>
+            {/* Compact hero */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="text-center mb-4 sm:mb-6"
+            >
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <div className="h-px w-8 bg-gradient-to-r from-transparent to-brand-yellow/30" />
+                <span className="text-[10px] uppercase tracking-[0.2em] text-brand-yellow/50 font-semibold">Partnerships</span>
+                <div className="h-px w-8 bg-gradient-to-l from-transparent to-brand-yellow/30" />
+              </div>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
+                Work <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow via-amber-300 to-yellow-500">With Us</span>
+              </h1>
+              <p className="text-[11px] sm:text-xs text-gray-500 mt-1">Partner with Bong Bari for brand integrations that feel natural</p>
+            </motion.div>
 
-          {/* Collaboration Form */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.6 }}>
-            <div className="relative rounded-2xl p-[1px] bg-gradient-to-br from-brand-yellow/50 via-brand-yellow/30 to-brand-yellow/50 shadow-2xl">
-              <div className="rounded-2xl bg-black/80 backdrop-blur-xl p-8 md:p-10 border border-white/5">
-                <h3 className="text-2xl font-bold text-white mb-8 text-center" data-testid="form-title">
-                  Let's <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow to-yellow-600">Collaborate!</span>
-                </h3>
-                
-                {isSubmitted ? (
-                  <motion.div 
-                    className="text-center py-12"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <CheckCircle2 className="w-20 h-20 text-emerald-400 mx-auto mb-6" />
-                    <h4 className="text-2xl font-bold text-white mb-3">Thank You! 🎉</h4>
-                    <p className="text-gray-400 max-w-md mx-auto">
-                      Your collaboration request has been received. Our team will review it and get back to you within 2-3 business days.
-                    </p>
-                  </motion.div>
-                ) : (
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                      <div className="grid md:grid-cols-2 gap-6">
-                        <FormField
-                          control={form.control}
-                          name="name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-gray-300">Your Name *</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  placeholder="John Doe" 
-                                  {...field} 
-                                  data-testid="input-name"
-                                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-600 focus:border-brand-yellow/50 focus:ring-brand-yellow/20"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="company"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-gray-300">Company/Brand Name *</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  placeholder="Your Company" 
-                                  {...field}
-                                  data-testid="input-company"
-                                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-600 focus:border-brand-yellow/50 focus:ring-brand-yellow/20"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      
-                      <div className="grid md:grid-cols-2 gap-6">
-                        <FormField
-                          control={form.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-gray-300">Email Address</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  type="email"
-                                  placeholder="john@example.com" 
-                                  {...field}
-                                  data-testid="input-email"
-                                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-600 focus:border-brand-yellow/50 focus:ring-brand-yellow/20"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormItem>
-                          <FormLabel className="text-gray-300">Phone Number</FormLabel>
-                          <div className="flex gap-2">
-                            <FormField
-                              control={form.control}
-                              name="countryCode"
-                              render={({ field }) => (
-                                <FormItem className="w-[180px]">
-                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                      <SelectTrigger className="bg-white/5 border-white/10 text-white focus:border-brand-yellow/50">
-                                        <SelectValue placeholder="Code" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      {countryCodes.map((code) => (
-                                        <SelectItem key={code.value} value={code.value}>
-                                          {code.label}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="phoneNumber"
-                              render={({ field }) => (
-                                <FormItem className="flex-1">
+            {/* ── The Form Card ── */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+            >
+              {/* Outer glow border */}
+              <div className="relative rounded-2xl p-[1px] bg-gradient-to-br from-brand-yellow/30 via-brand-yellow/10 to-violet-500/20 shadow-[0_0_60px_-10px_rgba(244,196,48,0.15)]">
+                {/* Glass card */}
+                <div className="rounded-2xl bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/[0.04] px-4 sm:px-8 py-5 sm:py-7">
+
+                  <AnimatePresence mode="wait">
+                    {isSubmitted ? (
+                      <motion.div
+                        key="success"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        className="text-center py-10"
+                      >
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
+                        >
+                          <CheckCircle2 className="w-16 h-16 text-emerald-400 mx-auto mb-4" />
+                        </motion.div>
+                        <h3 className="text-xl font-bold text-white mb-2">Request Sent!</h3>
+                        <p className="text-sm text-gray-400">We'll get back to you within 2-3 business days.</p>
+                      </motion.div>
+                    ) : (
+                      <motion.div key="form">
+                        {/* Title row */}
+                        <div className="flex items-center gap-3 mb-5">
+                          <div className="w-8 h-8 rounded-lg bg-brand-yellow/10 border border-brand-yellow/20 flex items-center justify-center flex-shrink-0">
+                            <Sparkles className="w-4 h-4 text-brand-yellow" />
+                          </div>
+                          <div>
+                            <h2 className="text-base sm:text-lg font-bold text-white leading-tight">
+                              Let's <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow to-amber-300">Collaborate</span>
+                            </h2>
+                            <p className="text-[10px] text-gray-500">Fill in your details and we'll reach out</p>
+                          </div>
+                        </div>
+
+                        <Form {...form}>
+                          <form onSubmit={form.handleSubmit(onSubmit)} autoComplete="off" className="space-y-3.5">
+                            {/* Row 1: Name + Company */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <FormField control={form.control} name="name" render={({ field }) => (
+                                <FormItem>
                                   <FormControl>
-                                    <div className="relative">
-                                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600 w-4 h-4" />
-                                      <Input 
-                                        placeholder="98765 43210" 
+                                    <FloatingInput icon={User} label="Your Name *" data-testid="input-name" {...field} />
+                                  </FormControl>
+                                  <FormMessage className="text-[11px] mt-1" />
+                                </FormItem>
+                              )} />
+                              <FormField control={form.control} name="company" render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <FloatingInput icon={Building2} label="Company / Brand *" data-testid="input-company" {...field} />
+                                  </FormControl>
+                                  <FormMessage className="text-[11px] mt-1" />
+                                </FormItem>
+                              )} />
+                            </div>
+
+                            {/* Row 2: Email + Phone (country code + number) */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <FormField control={form.control} name="email" render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <FloatingInput icon={Mail} label="Email Address" type="email" data-testid="input-email" {...field} />
+                                  </FormControl>
+                                  <FormMessage className="text-[11px] mt-1" />
+                                </FormItem>
+                              )} />
+
+                              {/* Phone: country dropdown + input */}
+                              <div className="flex gap-2">
+                                <FormField control={form.control} name="countryCode" render={({ field }) => (
+                                  <FormItem>
+                                    <FormControl>
+                                      <CountryCodeDropdown value={field.value} onChange={field.onChange} />
+                                    </FormControl>
+                                  </FormItem>
+                                )} />
+                                <FormField control={form.control} name="phoneNumber" render={({ field }) => (
+                                  <FormItem className="flex-1">
+                                    <FormControl>
+                                      <FloatingInput icon={Phone} label="Phone Number" data-testid="input-phone" {...field} />
+                                    </FormControl>
+                                    <FormMessage className="text-[11px] mt-1" />
+                                  </FormItem>
+                                )} />
+                              </div>
+                            </div>
+
+                            {/* Row 3: Message */}
+                            <FormField control={form.control} name="message" render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <div className="relative group">
+                                    <div className={`absolute -inset-[1px] rounded-xl opacity-0 ${focusedField === 'message' ? 'opacity-100' : ''} bg-gradient-to-r from-brand-yellow/20 via-brand-yellow/5 to-brand-yellow/20 blur-[2px] transition-opacity duration-300`} />
+                                    <div className="wws-input relative flex items-start pt-3">
+                                      <MessageSquare className={`w-4 h-4 flex-shrink-0 mt-0.5 transition-colors duration-200 ${focusedField === 'message' ? 'text-brand-yellow/70' : 'text-gray-600'}`} />
+                                      <textarea
                                         {...field}
-                                        data-testid="input-phone"
-                                        className="bg-white/5 border-white/10 text-white placeholder:text-gray-600 focus:border-brand-yellow/50 focus:ring-brand-yellow/20 pl-10"
+                                        rows={2}
+                                        autoComplete="off"
+                                        placeholder="Tell us about your collaboration idea..."
+                                        data-testid="input-message"
+                                        onFocus={() => setFocusedField('message')}
+                                        onBlur={() => setFocusedField(null)}
+                                        className="flex-1 ml-3 bg-transparent text-white text-[13px] outline-none placeholder:text-gray-600 resize-none leading-relaxed"
                                       />
                                     </div>
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                        </FormItem>
-                      </div>
-                      
-                      <FormField
-                        control={form.control}
-                        name="message"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-gray-300">Tell us about your collaboration idea</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                placeholder="Share your vision for our collaboration..."
-                                rows={6}
-                                {...field}
-                                data-testid="input-message"
-                                className="bg-white/5 border-white/10 text-white placeholder:text-gray-600 focus:border-brand-yellow/50 focus:ring-brand-yellow/20 resize-none"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <div className="text-center pt-4">
-                        <Button 
-                          type="submit"
-                          disabled={submitCollaborationMutation.isPending}
-                          className="bg-brand-yellow/20 border border-brand-yellow/30 text-brand-yellow hover:bg-yellow-600 hover:text-white transition-all shadow-lg rounded-xl h-12 px-10 font-medium"
-                          data-testid="button-submit"
-                        >
-                          {submitCollaborationMutation.isPending ? (
-                            <>Submitting...</>
-                          ) : (
-                            <>
-                              <Send className="w-4 h-4 mr-2 inline" />
-                              Submit Collaboration Request
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                )}
+                                  </div>
+                                </FormControl>
+                                <FormMessage className="text-[11px] mt-1" />
+                              </FormItem>
+                            )} />
+
+                            {/* Submit button */}
+                            <motion.div className="pt-1" whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}>
+                              <Button
+                                type="submit"
+                                disabled={submitCollaborationMutation.isPending}
+                                data-testid="button-submit"
+                                className="wws-submit w-full h-11 rounded-xl font-semibold text-sm"
+                              >
+                                {submitCollaborationMutation.isPending ? (
+                                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}>
+                                    <Send className="w-4 h-4" />
+                                  </motion.div>
+                                ) : (
+                                  <>
+                                    <Send className="w-4 h-4 mr-2" />
+                                    Send Collaboration Request
+                                  </>
+                                )}
+                              </Button>
+                            </motion.div>
+                          </form>
+                        </Form>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
-            </div>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* ═══ BELOW FOLD — Why Work With Us cards ═══ */}
+        <section className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-40px' }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-8"
+          >
+            <h2 className="text-xl sm:text-2xl font-bold text-white">
+              Why <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow to-amber-300">Partner</span> With Us?
+            </h2>
+            <p className="text-xs text-gray-500 mt-1">Three ways we can make magic together</p>
           </motion.div>
-        </main>
+
+          <div className="grid sm:grid-cols-3 gap-4" data-testid="collaboration-types">
+            {collaborationTypes.map((type, i) => {
+              const colors = ['from-brand-yellow/20 to-brand-yellow/5', 'from-violet-500/20 to-violet-500/5', 'from-cyan-500/20 to-cyan-500/5'];
+              const borders = ['border-brand-yellow/15', 'border-violet-500/15', 'border-cyan-500/15'];
+              const textColors = ['text-brand-yellow', 'text-violet-400', 'text-cyan-400'];
+              return (
+                <motion.div
+                  key={i}
+                  data-testid={`collaboration-type-${i}`}
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: i * 0.1 }}
+                  whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                  className={`group relative rounded-2xl bg-gradient-to-b ${colors[i]} border ${borders[i]} p-6 text-center cursor-default`}
+                >
+                  <div className={`w-10 h-10 rounded-xl bg-black/40 border ${borders[i]} flex items-center justify-center mx-auto mb-3`}>
+                    <type.icon className={`w-5 h-5 ${textColors[i]}`} />
+                  </div>
+                  <h3 className={`font-bold text-sm mb-1 ${textColors[i]}`}>{type.title}</h3>
+                  <p className="text-[12px] text-gray-400 leading-relaxed">{type.desc}</p>
+                </motion.div>
+              );
+            })}
+          </div>
+        </section>
+
         <Footer />
       </div>
     </>

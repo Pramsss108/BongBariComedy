@@ -182,6 +182,31 @@ const faqData: FAQItem[] = [
   }
 ];
 
+// Bengali translations — Kolkata style (formal আপনি/তুমি)
+const faqBn: Record<string, { q: string; a: string }> = {
+  '1': { q: 'বং বাড়ি কমেডি কী?', a: 'বং বাড়ি কমেডি হলো একটি বাংলা কমেডি চ্যানেল যেটি সারা বিশ্বের বাঙালি দর্শকদের জন্য আসল, মজার কন্টেন্ট তৈরি করে। আমরা স্কেচ কমেডি, প্যারোডি এবং বিনোদনমূলক ভিডিও তৈরি করি যা বাংলা সংস্কৃতি ও হাস্যরসকে তুলে ধরে।' },
+  '2': { q: 'বং বাড়ি কমেডির পেছনে কারা আছেন?', a: 'বং বাড়ি কমেডি তৈরি করেন কিছু আবেগী বাঙালি কন্টেন্ট ক্রিয়েটর যাঁরা বাংলা হাস্যরস ও সংস্কৃতির সূক্ষ্মতা ভালো করে বোঝেন। আমাদের টিমে আছেন লেখক, অভিনেতা এবং ভিডিও প্রোডিউসার।' },
+  '3': { q: 'বং বাড়ি কমেডি কেন আলাদা?', a: 'আমরা আসল বাংলা হাস্যরসে মনোযোগ দিই যা পুরোনো ও নতুন দুই প্রজন্মের দর্শকদের কাছে পৌঁছায়। আমাদের কন্টেন্ট প্রজন্মের ব্যবধান কমায় এবং সাংস্কৃতিক সত্যতা বজায় রাখে।' },
+  '4': { q: 'বং বাড়ি কমেডি কবে শুরু হয়েছিল?', a: 'বং বাড়ি কমেডি ডিজিটাল প্ল্যাটফর্মে মানসম্পন্ন বাংলা কমেডি কন্টেন্ট আনার উদ্দেশ্যে যাত্রা শুরু করেছিল। আমরা ধারাবাহিকভাবে এমন কন্টেন্ট তৈরি করে চলেছি যা আমাদের বাঙালি দর্শকদের আনন্দ দেয়।' },
+  '5': { q: 'আপনারা কী ধরনের কন্টেন্ট তৈরি করেন?', a: 'আমরা স্কেচ কমেডি, প্যারোডি, সাংস্কৃতিক ভাষ্য, উৎসব স্পেশাল, পরিবার-বান্ধব হাস্যরস এবং দৈনন্দিন জীবনের মজার পরিস্থিতি নিয়ে ভিডিও তৈরি করি।' },
+  '6': { q: 'নতুন ভিডিও কত ঘন ঘন আপলোড হয়?', a: 'আমরা নিয়মিতভাবে নতুন কন্টেন্ট আপলোড করার চেষ্টা করি। সর্বশেষ আপডেটের জন্য আমাদের ইউটিউব চ্যানেল ও সোশ্যাল মিডিয়া ফলো করুন।' },
+  '7': { q: 'আমি কি ভিডিওর আইডিয়া দিতে পারি?', a: 'অবশ্যই! আমরা দর্শকদের মতামত শুনতে ভালোবাসি। আপনি সোশ্যাল মিডিয়া, ইউটিউব কমেন্ট বা কন্টাক্ট ফর্মের মাধ্যমে ভিডিওর আইডিয়া পাঠাতে পারেন।' },
+  '8': { q: 'আপনারা কি ইংরেজিতেও কন্টেন্ট তৈরি করেন?', a: 'আমাদের মূল ফোকাস বাংলা কন্টেন্ট, তবে মাঝে মাঝে দ্বিভাষিক কন্টেন্ট তৈরি করি বা সাবটাইটেল যোগ করি। আমাদের আসল শক্তি হলো খাঁটি বাংলা হাস্যরস।' },
+  '9': { q: 'আপনাদের ভিডিও কি পরিবারের সবার জন্য উপযুক্ত?', a: 'হ্যাঁ! আমরা পরিবার-বান্ধব কন্টেন্ট তৈরি করি যা সব বয়সের দর্শক উপভোগ করতে পারেন। আমাদের হাস্যরস স্বাস্থ্যকর ও সবার জন্য মানানসই।' },
+  '10': { q: 'আপনারা কি ব্র্যান্ড পার্টনারশিপ নেন?', a: 'হ্যাঁ, আমরা এমন ব্র্যান্ডের সাথে কাজ করতে আগ্রহী যারা আমাদের কন্টেন্ট ও দর্শকদের পছন্দের সাথে মানানসই। পার্টনারশিপের জন্য আমাদের বিজনেস চ্যানেলে যোগাযোগ করুন।' },
+  '11': { q: 'বং বাড়ি কমেডির সাথে কোলাবোরেশন কীভাবে করবো?', a: 'আমরা অন্যান্য কন্টেন্ট ক্রিয়েটর, শিল্পী ও সৃজনশীল মানুষদের সাথে কোলাবোরেশন স্বাগত জানাই। আমাদের কোলাবোরেশন ফর্ম বা বিজনেস ইমেইলে যোগাযোগ করুন।' },
+  '12': { q: 'আপনারা কি নতুন শিল্পীদের সাথে কাজ করেন?', a: 'অবশ্যই! আমরা বাংলা সৃজনশীল সম্প্রদায়ের উদীয়মান প্রতিভাদের সাপোর্ট করতে চাই। আপনি নতুন শিল্পী বা ক্রিয়েটর হলে আমাদের সাথে যোগাযোগ করুন।' },
+  '13': { q: 'কোলাবোরেশনের শর্ত ও খরচ কেমন?', a: 'শর্তাবলী প্রজেক্টের ধরন ও পার্টনারশিপের ওপর নির্ভর করে। আমরা রেভিনিউ শেয়ারিং, ফিক্সড ফি বা ক্রস প্রোমোশন — বিভিন্ন ব্যবস্থা অফার করি। বিস্তারিত জানতে যোগাযোগ করুন।' },
+  '14': { q: 'আপনাদের টার্গেট দর্শক কারা?', a: 'আমাদের কন্টেন্ট সারা বিশ্বের বাংলাভাষী ও বাংলা সংস্কৃতিপ্রেমীদের জন্য। টিনএজার থেকে প্রাপ্তবয়স্ক — সব বয়সের মানুষ আমাদের কন্টেন্ট উপভোগ করেন।' },
+  '15': { q: 'নতুন কন্টেন্টের আপডেট কীভাবে পাবো?', a: 'আমাদের ইউটিউব চ্যানেল সাবস্ক্রাইব করুন, সোশ্যাল মিডিয়ায় ফলো করুন এবং নিয়মিত ওয়েবসাইট দেখুন। নোটিফিকেশন চালু রাখলে নতুন ভিডিওর খবর সাথে সাথে পাবেন।' },
+  '16': { q: 'আপনারা কি দর্শকদের সাথে যোগাযোগ রাখেন?', a: 'হ্যাঁ! আমরা কমেন্ট, সোশ্যাল মিডিয়া, লাইভ সেশন ও কমিউনিটি পোস্টের মাধ্যমে দর্শকদের সাথে সক্রিয়ভাবে যুক্ত থাকি।' },
+  '17': { q: 'আমি কি আপনাদের ভিডিও শেয়ার করতে পারি?', a: 'অবশ্যই! সোশ্যাল মিডিয়ায় শেয়ার করতে আমরা উৎসাহিত করি। শুধু বং বাড়ি কমেডির ক্রেডিট দিন এবং মূল ভিডিওর লিংক দিন।' },
+  '18': { q: 'ব্যবসায়িক বিষয়ে কীভাবে যোগাযোগ করবো?', a: 'ব্যবসায়িক প্রশ্ন, স্পন্সরশিপ বা মিডিয়া রিকোয়েস্টের জন্য "Work with Us" পেজের ফর্ম ব্যবহার করুন বা অফিসিয়াল ইমেইলে লিখুন। আমরা সাধারণত ২-৩ কার্যদিবসের মধ্যে উত্তর দিই।' },
+  '19': { q: 'আপনারা কি ফ্যান মেসেজের উত্তর দেন?', a: 'আমরা সব ফ্যান মেসেজ পড়ি এবং যতটা সম্ভব উত্তর দেওয়ার চেষ্টা করি। বেশি মেসেজের কারণে সবাইকে উত্তর দেওয়া সম্ভব না হলেও প্রতিটি মতামত আমরা পড়ি।' },
+  '20': { q: 'সর্বশেষ আপডেট কোথায় পাবো?', a: 'আমাদের অফিসিয়াল সোশ্যাল মিডিয়া ও ওয়েবসাইটে সর্বশেষ আপডেট, নেপথ্যের গল্প ও আসন্ন প্রজেক্টের খবর পাবেন।' },
+  '21': { q: 'ওয়েবসাইটে সমস্যা হলে কীভাবে জানাবো?', a: 'ওয়েবসাইট বা ভিডিও সংক্রান্ত কোনো সমস্যা হলে আমাদের সাপোর্ট চ্যানেলে যোগাযোগ করুন। সমস্যার বিবরণ ও স্ক্রিনশট দিলে দ্রুত সমাধান করতে পারবো।' },
+};
+
 // ── Component ──
 export default function FAQ() {
   const [, navigate] = useLocation();
@@ -202,6 +227,7 @@ export default function FAQ() {
     if (typeof window === 'undefined') return 'bn';
     return (localStorage.getItem('bbc.lang') as 'en' | 'bn') || 'bn';
   });
+  useEffect(() => { localStorage.setItem('bbc.lang', lang); }, [lang]);
   useEffect(() => {
     const sync = () => setLang((localStorage.getItem('bbc.lang') as 'en' | 'bn') || 'bn');
     window.addEventListener('storage', sync);
@@ -210,7 +236,8 @@ export default function FAQ() {
 
   // ── Filtering ──
   const filteredFAQs = faqData.filter(item => {
-    const matchesSearch = !searchTerm || item.question.toLowerCase().includes(searchTerm.toLowerCase()) || item.answer.toLowerCase().includes(searchTerm.toLowerCase());
+    const bn = faqBn[item.id];
+    const matchesSearch = !searchTerm || item.question.toLowerCase().includes(searchTerm.toLowerCase()) || item.answer.toLowerCase().includes(searchTerm.toLowerCase()) || (bn && (bn.q.includes(searchTerm) || bn.a.includes(searchTerm)));
     const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -280,6 +307,18 @@ export default function FAQ() {
   return (
     <div className="bg-[#050505] text-white">
 
+      {/* Premium Language Toggle — fixed floating pill (matches homepage) */}
+      <div className="fixed top-4 right-4 z-[100]">
+        <div className="lang-toggle-pill relative flex items-center bg-black/70 backdrop-blur-xl border border-white/[0.08] rounded-full p-[3px] shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
+          <div
+            className="lang-toggle-indicator absolute top-[3px] h-[calc(100%-6px)] w-[calc(50%-2px)] rounded-full bg-gradient-to-r from-brand-yellow/15 to-amber-500/15 border border-brand-yellow/25 transition-all duration-300"
+            style={{ left: lang === 'en' ? '3px' : 'calc(50% - 1px)' }}
+          />
+          <button onClick={() => setLang('en')} className={`relative z-10 px-3 py-1.5 text-[11px] font-bold rounded-full transition-colors duration-200 ${lang === 'en' ? 'text-brand-yellow' : 'text-white/35 hover:text-white/55'}`}>EN</button>
+          <button onClick={() => setLang('bn')} className={`relative z-10 px-3 py-1.5 text-[11px] font-bold rounded-full font-bengali transition-colors duration-200 ${lang === 'bn' ? 'text-brand-yellow' : 'text-white/35 hover:text-white/55'}`}>বাং</button>
+        </div>
+      </div>
+
       {/* ═══════ FIRST FOLD — fits exactly one viewport ═══════ */}
       <div ref={sectionRef} className="h-[100dvh] flex flex-col relative">
         {/* Parallax ambient blobs */}
@@ -296,7 +335,7 @@ export default function FAQ() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-6 mb-4"
+            className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 sm:gap-3 mb-2"
           >
             {/* Left: title block — premium */}
             <div className="flex-shrink-0">
@@ -516,8 +555,8 @@ function FAQCard({ item, isOpen, onToggle, index, accent, category, lang }: {
           </span>
 
           {/* Question */}
-          <span className={`flex-1 text-[13px] sm:text-[13.5px] font-medium leading-snug transition-colors duration-200 ${isOpen ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>
-            {item.question}
+          <span className={`flex-1 text-[13px] sm:text-[13.5px] font-medium leading-snug transition-colors duration-200 ${isOpen ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'} ${lang === 'bn' ? 'font-bengali' : ''}`}>
+            {lang === 'bn' && faqBn[item.id] ? faqBn[item.id].q : item.question}
           </span>
 
           {/* Chevron */}
@@ -546,9 +585,9 @@ function FAQCard({ item, isOpen, onToggle, index, accent, category, lang }: {
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-                    className="text-[13px] text-gray-400 leading-[1.85]"
+                    className={`text-[13px] text-gray-400 leading-[1.85] ${lang === 'bn' ? 'font-bengali' : ''}`}
                   >
-                    {item.answer}
+                    {lang === 'bn' && faqBn[item.id] ? faqBn[item.id].a : item.answer}
                   </motion.p>
                 </div>
               </div>

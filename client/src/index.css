@@ -996,6 +996,81 @@ button:hover {
   opacity: 1;
 }
 
+/* ═══ Work With Us — Premium Form Styles ═══ */
+.wws-input {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
+}
+.wws-input:focus-within {
+  border-color: rgba(244,196,48,0.25);
+  background: rgba(255,255,255,0.035);
+  box-shadow: 0 0 0 3px rgba(244,196,48,0.06), 0 2px 8px rgba(0,0,0,0.3);
+}
+.wws-submit {
+  background: linear-gradient(135deg, rgba(244,196,48,0.15) 0%, rgba(244,196,48,0.08) 100%);
+  border: 1px solid rgba(244,196,48,0.25);
+  color: #f4c430;
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+}
+.wws-submit:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f4c430 0%, #d4a017 100%);
+  color: #000;
+  border-color: #f4c430;
+  box-shadow: 0 0 30px rgba(244,196,48,0.25), 0 4px 16px rgba(244,196,48,0.15);
+}
+.wws-submit:active:not(:disabled) {
+  box-shadow: 0 0 12px rgba(244,196,48,0.2);
+}
+.wws-scroll::-webkit-scrollbar { width: 4px; }
+.wws-scroll::-webkit-scrollbar-track { background: transparent; }
+.wws-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+.wws-scroll::-webkit-scrollbar-thumb:hover { background: rgba(244,196,48,0.2); }
+
+/* Dropdown items — kill all browser defaults */
+.wws-dropdown-item {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  user-select: none;
+  border: none;
+  background: transparent;
+}
+.wws-dropdown-item:focus,
+.wws-dropdown-item:focus-visible {
+  outline: none;
+  background: rgba(255,255,255,0.04);
+}
+.wws-dropdown-item:active {
+  background: rgba(244,196,48,0.08);
+  transform: scale(0.99);
+}
+
+/* Kill browser autofill white background on all form inputs */
+.wws-autofill-fix:-webkit-autofill,
+.wws-autofill-fix:-webkit-autofill:hover,
+.wws-autofill-fix:-webkit-autofill:focus,
+.wws-autofill-fix:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 50px #0a0a0a inset !important;
+  -webkit-text-fill-color: #fff !important;
+  caret-color: #fff !important;
+  background-color: transparent !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+.wws-input input:-webkit-autofill,
+.wws-input input:-webkit-autofill:hover,
+.wws-input input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 50px #0a0a0a inset !important;
+  -webkit-text-fill-color: #fff !important;
+  caret-color: #fff !important;
+}
+textarea:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 50px #0a0a0a inset !important;
+  -webkit-text-fill-color: #fff !important;
+}
+
 /* Bengali SVG brush-stroke underline animation */
 @keyframes bengali-brush {
   to { stroke-dashoffset: 0; }

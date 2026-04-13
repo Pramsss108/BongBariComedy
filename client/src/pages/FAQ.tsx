@@ -1,31 +1,17 @@
-import React, { useState } from 'react';
-import { Search, ChevronDown, ChevronUp, MessageCircle, Users, Video, Phone, Info } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Search, ChevronDown, X, MessageCircle, Users, Video, Phone, Info, Layers } from 'lucide-react';
 import { useLocation } from 'wouter';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import Footer from '@/components/footer';
 
-// Add CSS for smooth animations
-const pageStyles = `
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  
-  .faq-item {
-    animation: fadeIn 0.3s ease-out forwards;
-  }
-  
-  .loading-skeleton {
-    background: linear-gradient(90deg, #f0f0f0 25%, transparent 37%, #f0f0f0 63%);
-    background-size: 400% 100%;
-    animation: shimmer 1.5s ease-in-out infinite;
-  }
-  
-  @keyframes shimmer {
-    0% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
-`;
+/* ════════════════════════════════════════════════════════════════
+   FAQ — Scrollable with Parallax (v3)
+   • Normal page flow: navbar → hero → pills → parallax question list → CTA → footer
+   • Internal scroll container for questions with per-card parallax
+   • Compact accordion, Bengali support, glassmorphism search
+   ════════════════════════════════════════════════════════════════ */
 
+// ── Types ──
 interface FAQItem {
   id: string;
   question: string;
@@ -36,17 +22,27 @@ interface FAQItem {
 interface FAQCategory {
   id: string;
   title: string;
+  titleBn: string;
   icon: React.ReactNode;
-  color: string;
 }
 
+// ── Data ──
 const faqCategories: FAQCategory[] = [
-  { id: 'about', title: 'About Bong Bari', icon: <Info className="w-5 h-5" />, color: 'text-orange-600' },
-  { id: 'content', title: 'Content & Videos', icon: <Video className="w-5 h-5" />, color: 'text-blue-600' },
-  { id: 'collaboration', title: 'Collaboration', icon: <Users className="w-5 h-5" />, color: 'text-green-600' },
-  { id: 'audience', title: 'For Our Audience', icon: <MessageCircle className="w-5 h-5" />, color: 'text-purple-600' },
-  { id: 'contact', title: 'Contact & Support', icon: <Phone className="w-5 h-5" />, color: 'text-red-600' }
+  { id: 'about', title: 'About Bong Bari', titleBn: 'বং বাড়ি সম্পর্কে', icon: <Info className="w-4 h-4" /> },
+  { id: 'content', title: 'Content & Videos', titleBn: 'কন্টেন্ট ও ভিডিও', icon: <Video className="w-4 h-4" /> },
+  { id: 'collaboration', title: 'Collaboration', titleBn: 'সহযোগিতা', icon: <Users className="w-4 h-4" /> },
+  { id: 'audience', title: 'For Our Audience', titleBn: 'দর্শকদের জন্য', icon: <MessageCircle className="w-4 h-4" /> },
+  { id: 'contact', title: 'Contact & Support', titleBn: 'যোগাযোগ ও সহায়তা', icon: <Phone className="w-4 h-4" /> },
 ];
+
+// ── Accent lookup ──
+const catAccent: Record<string, { dot: string; ring: string; bg: string; bgSolid: string; text: string; border: string; glow: string }> = {
+  about:         { dot: 'bg-orange-400',  ring: 'ring-orange-400/40',  bg: 'bg-orange-500/8',   bgSolid: 'bg-orange-500/15',  text: 'text-orange-400',  border: 'border-orange-400/20',  glow: 'shadow-orange-500/10' },
+  content:       { dot: 'bg-blue-400',    ring: 'ring-blue-400/40',    bg: 'bg-blue-500/8',     bgSolid: 'bg-blue-500/15',    text: 'text-blue-400',    border: 'border-blue-400/20',    glow: 'shadow-blue-500/10' },
+  collaboration: { dot: 'bg-emerald-400', ring: 'ring-emerald-400/40', bg: 'bg-emerald-500/8',  bgSolid: 'bg-emerald-500/15', text: 'text-emerald-400', border: 'border-emerald-400/20', glow: 'shadow-emerald-500/10' },
+  audience:      { dot: 'bg-violet-400',  ring: 'ring-violet-400/40',  bg: 'bg-violet-500/8',   bgSolid: 'bg-violet-500/15',  text: 'text-violet-400',  border: 'border-violet-400/20',  glow: 'shadow-violet-500/10' },
+  contact:       { dot: 'bg-rose-400',    ring: 'ring-rose-400/40',    bg: 'bg-rose-500/8',     bgSolid: 'bg-rose-500/15',    text: 'text-rose-400',    border: 'border-rose-400/20',    glow: 'shadow-rose-500/10' },
+};
 
 const faqData: FAQItem[] = [
   // About Bong Bari Category
@@ -186,291 +182,380 @@ const faqData: FAQItem[] = [
   }
 ];
 
+// ── Component ──
 export default function FAQ() {
   const [, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [expandedItems, setExpandedItems] = useState<string[]>([]);
-  const [displayLimit, setDisplayLimit] = useState(6); // Google-style: Show 6 initially
-  const [isShowingAll, setIsShowingAll] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const sectionRef = useRef<HTMLDivElement>(null);
 
-  const toggleExpanded = (id: string) => {
-    setExpandedItems(prev => 
-      prev.includes(id) 
-        ? prev.filter(item => item !== id)
-        : [...prev, id]
-    );
-  };
+  // Parallax scroll for background elements
+  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start end', 'end start'] });
+  const bgY = useTransform(scrollYProgress, [0, 1], ['0%', '30%']);
+  const bgOpacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0.3, 1, 1, 0.3]);
 
+  // Language
+  const [lang, setLang] = useState<'en' | 'bn'>(() => {
+    if (typeof window === 'undefined') return 'bn';
+    return (localStorage.getItem('bbc.lang') as 'en' | 'bn') || 'bn';
+  });
+  useEffect(() => {
+    const sync = () => setLang((localStorage.getItem('bbc.lang') as 'en' | 'bn') || 'bn');
+    window.addEventListener('storage', sync);
+    return () => window.removeEventListener('storage', sync);
+  }, []);
+
+  // ── Filtering ──
   const filteredFAQs = faqData.filter(item => {
-    const matchesSearch = item.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.answer.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = !searchTerm || item.question.toLowerCase().includes(searchTerm.toLowerCase()) || item.answer.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  // Google-style: Smart display logic
-  const displayedFAQs = isShowingAll || searchTerm || selectedCategory !== 'all' 
-    ? filteredFAQs 
-    : filteredFAQs.slice(0, displayLimit);
+  // Reset on filter change
+  useEffect(() => {
+    setActiveId(null);
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [selectedCategory, searchTerm]);
 
-  const hasMoreQuestions = !isShowingAll && !searchTerm && selectedCategory === 'all' && filteredFAQs.length > displayLimit;
-  const canShowLess = (isShowingAll || displayLimit > 6) && !searchTerm && selectedCategory === 'all';
-
-  const handleShowMore = () => {
-    if (displayLimit >= filteredFAQs.length) {
-      setIsShowingAll(true);
-    } else {
-      setDisplayLimit(prev => prev + 6); // Load 6 more like Google
-    }
-  };
-
-  const handleShowLess = () => {
-    setDisplayLimit(6);
-    setIsShowingAll(false);
-    // Scroll to top of FAQ section smoothly
-    setTimeout(() => {
-      document.querySelector('.faq-content')?.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 100);
-  };
-
-  // Handler for Chat with AI Bot button
+  // Handlers
   const handleChatWithBot = () => {
-    // Trigger the floating chatbot
-    const chatEvent = new CustomEvent('openChatbot', { 
-      detail: { message: 'Hi! I have a question from the FAQ page.' }
-    });
-    window.dispatchEvent(chatEvent);
+    window.dispatchEvent(new CustomEvent('openChatbot', { detail: { message: 'Hi! I have a question from the FAQ page.' } }));
   };
+  const handleContactSupport = () => navigate('/work-with-us');
+  const clearSearch = () => { setSearchTerm(''); searchRef.current?.focus(); };
 
-  // Handler for Contact Support button
-  const handleContactSupport = () => {
-    // Navigate to Work with Us page
-    navigate('/work-with-us');
+  const toggleQuestion = useCallback((id: string) => {
+    setActiveId(prev => prev === id ? null : id);
+  }, []);
+
+  // Keyboard: / to search, Esc to clear
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === '/' && document.activeElement !== searchRef.current) {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+      if (e.key === 'Escape') {
+        if (searchTerm) setSearchTerm('');
+        else if (activeId) setActiveId(null);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [searchTerm, activeId]);
+
+  // Translations
+  const tx = lang === 'en' ? {
+    title: 'Frequently Asked Questions',
+    subtitle: 'Find answers to everything about Bong Bari Comedy',
+    searchPlaceholder: 'Search questions...',
+    allCats: 'All',
+    noResults: 'No questions found',
+    noResultsSub: 'Try a different search or category',
+    clearSearch: 'Clear search',
+    chatBot: 'Chat with AI',
+    contactUs: 'Contact Support',
+    still: 'Still have questions?',
+    stillSub: "Can't find what you're looking for? We're here to help!",
+    results: 'results',
+  } : {
+    title: 'প্রশ্নোত্তর',
+    subtitle: 'বং বাড়ি কমেডি সম্পর্কে সব উত্তর এখানে',
+    searchPlaceholder: 'প্রশ্ন অনুসন্ধান করুন...',
+    allCats: 'সব',
+    noResults: 'কোনো প্রশ্ন পাওয়া যায়নি',
+    noResultsSub: 'অন্য অনুসন্ধান বা ক্যাটাগরি ব্যবহার করুন',
+    clearSearch: 'অনুসন্ধান মুছুন',
+    chatBot: 'AI বট',
+    contactUs: 'যোগাযোগ',
+    still: 'আরো প্রশ্ন আছে?',
+    stillSub: 'যা খুঁজছেন পাচ্ছেন না? আমরা সাহায্য করতে প্রস্তুত!',
+    results: 'টি ফলাফল',
   };
 
   return (
-    <>
-      <style>{pageStyles}</style>
-      
-    <div className="min-h-screen bg-[#050505] text-white relative">
-      {/* Premium Background Glow */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-brand-yellow/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/10 rounded-full blur-[120px]" />
-      </div>
+    <div className="bg-[#050505] text-white">
 
-      <div className="pt-32 pb-24 px-6 max-w-7xl mx-auto relative z-10">
-        {/* Hero */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl md:text-6xl font-extrabold mb-3">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow to-yellow-600">FAQ</span>
-          </h1>
-          <p className="text-xl text-gray-400">Everything you need to know about Bong Bari Comedy</p>
-        </div>
+      {/* ═══════ FIRST FOLD — fits exactly one viewport ═══════ */}
+      <div ref={sectionRef} className="h-[100dvh] flex flex-col relative">
+        {/* Parallax ambient blobs */}
+        <motion.div style={{ y: bgY, opacity: bgOpacity }} className="absolute inset-0 pointer-events-none z-0">
+          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[60%] bg-brand-yellow/[0.06] rounded-full blur-[140px]" />
+          <div className="absolute bottom-[-30%] right-[-10%] w-[45%] h-[50%] bg-indigo-500/[0.05] rounded-full blur-[140px]" />
+        </motion.div>
 
-        {/* Search */}
-        <div className="max-w-2xl mx-auto mb-10">
-          <div className="relative rounded-2xl p-[1px] bg-gradient-to-br from-brand-yellow/50 via-brand-yellow/20 to-brand-yellow/50">
-            <div className="relative rounded-2xl bg-black/80 backdrop-blur-xl border border-white/5">
-              <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                <Search className="w-5 h-5 text-brand-yellow" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search for questions..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-14 pr-5 py-4 rounded-2xl bg-transparent text-white text-lg focus:outline-none placeholder:text-gray-600"
-              />
-            </div>
-          </div>
-        </div>
+        {/* ── Header: compact title row + search + pills ── */}
+        <div className="relative z-10 flex-shrink-0 pt-[72px] sm:pt-[84px] px-5 sm:px-8 max-w-5xl mx-auto w-full">
 
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar Categories */}
-          <div className="lg:w-72 shrink-0">
-            <div className="lg:sticky lg:top-8 space-y-2">
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 px-1">Categories</h2>
-              
-              {/* Mobile: Horizontal scroll */}
-              <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible pb-4 lg:pb-0">
-                <button
-                  onClick={() => setSelectedCategory('all')}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all whitespace-nowrap lg:whitespace-normal lg:w-full text-sm ${
-                    selectedCategory === 'all'
-                      ? 'bg-brand-yellow/20 text-brand-yellow border border-brand-yellow/30'
-                      : 'bg-white/5 text-gray-400 border border-white/5 hover:border-white/20 hover:text-white'
-                  }`}
-                >
-                  <Search className="w-4 h-4" />
-                  All ({faqData.length})
-                </button>
-                
-                {faqCategories.map(category => {
-                  const count = faqData.filter(item => item.category === category.id).length;
-                  const catColors: Record<string, string> = {
-                    about: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-                    content: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-                    collaboration: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-                    audience: 'bg-violet-500/20 text-violet-400 border-violet-500/30',
-                    contact: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
-                  };
-                  return (
-                    <button
-                      key={category.id}
-                      onClick={() => setSelectedCategory(category.id)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all whitespace-nowrap lg:whitespace-normal lg:w-full text-sm ${
-                        selectedCategory === category.id
-                          ? `${catColors[category.id]} border`
-                          : 'bg-white/5 text-gray-400 border border-white/5 hover:border-white/20 hover:text-white'
-                      }`}
-                    >
-                      <span>{category.icon}</span>
-                      {category.title} ({count})
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* FAQ Content */}
-          <div className="flex-1">
-            <div className="mb-4 flex items-center justify-between px-1">
-              <p className="text-sm text-gray-500">
-                Showing {displayedFAQs.length} of {filteredFAQs.length} question{filteredFAQs.length !== 1 ? 's' : ''}
-                {selectedCategory !== 'all' && ` in ${faqCategories.find(c => c.id === selectedCategory)?.title}`}
-                {searchTerm && ` matching "${searchTerm}"`}
-              </p>
-            </div>
-
-            {filteredFAQs.length === 0 ? (
-              <div className="text-center py-16">
-                <div className="text-6xl mb-4">🤔</div>
-                <h3 className="text-xl font-semibold text-white mb-2">No questions found</h3>
-                <p className="text-gray-500">Try adjusting your search terms or browse different categories</p>
-              </div>
-            ) : (
-              <>
-                <div className="space-y-3">
-                  {displayedFAQs.map((item, index) => {
-                    const isExpanded = expandedItems.includes(item.id);
-                    const category = faqCategories.find(c => c.id === item.category);
-                    const borderColors: Record<string, string> = {
-                      about: 'from-orange-500/40 via-orange-500/20 to-orange-500/40',
-                      content: 'from-blue-500/40 via-blue-500/20 to-blue-500/40',
-                      collaboration: 'from-emerald-500/40 via-emerald-500/20 to-emerald-500/40',
-                      audience: 'from-violet-500/40 via-violet-500/20 to-violet-500/40',
-                      contact: 'from-rose-500/40 via-rose-500/20 to-rose-500/40',
-                    };
-                    const accentColors: Record<string, string> = {
-                      about: 'border-orange-500/30',
-                      content: 'border-blue-500/30',
-                      collaboration: 'border-emerald-500/30',
-                      audience: 'border-violet-500/30',
-                      contact: 'border-rose-500/30',
-                    };
-                    
-                    return (
-                      <div
-                        key={item.id}
-                        className={`rounded-2xl p-[1px] bg-gradient-to-br ${borderColors[item.category] || 'from-white/10 via-white/5 to-white/10'} transition-all duration-300`}
-                        style={{ animationDelay: `${index * 50}ms`, animation: 'fadeIn 0.3s ease-out forwards' }}
-                      >
-                        <div className={`rounded-2xl bg-black/80 backdrop-blur-xl border border-white/5 overflow-hidden ${isExpanded ? 'bg-black/60' : ''} transition-colors`}>
-                          <button
-                            onClick={() => toggleExpanded(item.id)}
-                            className="w-full px-6 py-5 text-left flex items-center justify-between gap-4 hover:bg-white/5 transition-colors"
-                          >
-                            <div className="flex items-start gap-3 flex-1">
-                              <span className="flex-shrink-0 mt-0.5 opacity-60">{category?.icon}</span>
-                              <h3 className="font-semibold text-white text-base leading-snug">
-                                {item.question}
-                              </h3>
-                            </div>
-                            <div className="flex-shrink-0">
-                              {isExpanded ? (
-                                <ChevronUp className="w-5 h-5 text-brand-yellow" />
-                              ) : (
-                                <ChevronDown className="w-5 h-5 text-gray-600" />
-                              )}
-                            </div>
-                          </button>
-                          
-                          {isExpanded && (
-                            <div className="px-6 pb-6">
-                              <div className={`pl-8 border-l-2 ${accentColors[item.category] || 'border-white/10'}`}>
-                                <p className="text-gray-400 leading-relaxed text-sm">
-                                  {item.answer}
-                                </p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+          {/* 1️⃣ Title + Search in one premium row */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-6 mb-4"
+          >
+            {/* Left: title block — premium */}
+            <div className="flex-shrink-0">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-[3px] h-7 rounded-full bg-gradient-to-b from-brand-yellow via-amber-400 to-amber-600/50 shadow-[0_0_8px_rgba(244,196,48,0.3)]" />
+                <div>
+                  <h1 className="text-xl sm:text-2xl lg:text-[1.75rem] font-extrabold tracking-tight leading-none">
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-brand-yellow to-amber-300">{tx.title}</span>
+                  </h1>
+                  <p className={`text-[11px] sm:text-xs mt-1 ${lang === 'bn' ? 'font-bengali bengali-subtitle-glow' : 'text-gray-500'}`}>
+                    {tx.subtitle}
+                  </p>
                 </div>
+              </div>
+            </div>
 
-                {/* Show More/Less */}
-                {(hasMoreQuestions || canShowLess) && (
-                  <div className="mt-8 text-center space-y-3">
-                    {hasMoreQuestions && (
-                      <button
-                        onClick={handleShowMore}
-                        className="bg-brand-yellow/20 border border-brand-yellow/30 text-brand-yellow px-8 py-3 rounded-xl font-semibold hover:bg-yellow-600 hover:text-white transition-all shadow-lg"
-                      >
-                        Show More ({filteredFAQs.length - displayedFAQs.length} remaining)
-                      </button>
-                    )}
-                    {canShowLess && (
-                      <button
-                        onClick={handleShowLess}
-                        className="bg-white/5 text-gray-400 px-6 py-2 rounded-lg font-medium hover:bg-white/10 transition-all border border-white/10 ml-3"
-                      >
-                        Show Less
-                      </button>
-                    )}
+            {/* Right: search bar */}
+            <div className="relative w-full sm:w-72 lg:w-80 flex-shrink-0">
+              <div className="relative group">
+                {/* 2️⃣ Premium glow ring on focus */}
+                <div className="absolute -inset-[1px] rounded-xl opacity-0 group-focus-within:opacity-100 bg-gradient-to-r from-brand-yellow/20 via-brand-yellow/5 to-brand-yellow/20 blur-[2px] transition-opacity duration-500" />
+                <div className="relative rounded-xl bg-white/[0.04] backdrop-blur-xl border border-white/[0.07] group-focus-within:border-brand-yellow/25 transition-all duration-300">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <Search className="w-3.5 h-3.5 text-gray-600 group-focus-within:text-brand-yellow/60 transition-colors" />
                   </div>
-                )}
-              </>
-            )}
-          </div>
+                  <input
+                    ref={searchRef}
+                    type="text"
+                    placeholder={tx.searchPlaceholder}
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-9 py-2 rounded-xl bg-transparent text-white text-[13px] focus:outline-none placeholder:text-gray-600"
+                  />
+                  {searchTerm && (
+                    <button onClick={clearSearch} className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-white transition-colors">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+              {searchTerm && (
+                <span className="absolute -bottom-4 right-1 text-[10px] text-gray-600 tabular-nums">
+                  {filteredFAQs.length} {tx.results}
+                </span>
+              )}
+            </div>
+          </motion.div>
+
+          {/* 3️⃣ Category pills with subtle divider line above */}
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent mb-3" />
+            <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 snap-x" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <button
+              onClick={() => setSelectedCategory('all')}
+              className={`faq-pill ${selectedCategory === 'all' ? 'faq-pill--active-gold' : ''}`}
+            >
+              <Layers className="w-3 h-3" />
+              <span>{tx.allCats}</span>
+              <span className="faq-pill-count">{faqData.length}</span>
+            </button>
+            {faqCategories.map(cat => {
+              const count = faqData.filter(f => f.category === cat.id).length;
+              const isActive = selectedCategory === cat.id;
+              const a = catAccent[cat.id];
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`faq-pill ${isActive ? `${a.bg} ${a.text} ${a.border} border` : ''}`}
+                >
+                  {cat.icon}
+                  <span className="whitespace-nowrap">{lang === 'bn' ? cat.titleBn : cat.title}</span>
+                  <span className="faq-pill-count">{count}</span>
+                </button>
+              );
+            })}
+            </div>
+          </motion.div>
         </div>
 
-        {/* CTA */}
-        <div className="mt-20">
-          <div className="relative rounded-2xl p-[1px] bg-gradient-to-br from-brand-yellow/50 via-brand-yellow/30 to-brand-yellow/50 shadow-2xl">
-            <div className="rounded-2xl bg-black/80 backdrop-blur-xl p-10 md:p-14 text-center border border-white/5">
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
-                Still have questions?
-              </h2>
-              <p className="text-gray-400 mb-8 max-w-lg mx-auto">
-                Can't find what you're looking for? Our AI chatbot and support team are here to help!
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button 
-                  onClick={handleChatWithBot}
-                  className="bg-brand-yellow/20 border border-brand-yellow/30 text-brand-yellow px-8 py-3 rounded-xl font-semibold hover:bg-yellow-600 hover:text-white transition-all shadow-lg flex items-center justify-center gap-2"
+        {/* ── Question list fills remaining viewport ── */}
+        <div className="relative z-10 flex-1 min-h-0 max-w-5xl mx-auto w-full px-5 sm:px-8 pt-3 pb-4">
+          {/* 4️⃣ Premium container with inner glow */}
+          <div className="h-full rounded-2xl bg-white/[0.015] border border-white/[0.06] backdrop-blur-sm overflow-hidden faq-parallax-container relative">
+            {/* 5️⃣ Top fade gradient for scroll depth illusion */}
+            <div className="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-[#0a0a0a] to-transparent z-10 pointer-events-none rounded-t-2xl" />
+            {/* 6️⃣ Bottom fade */}
+            <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#0a0a0a] to-transparent z-10 pointer-events-none rounded-b-2xl" />
+            <div
+              ref={scrollContainerRef}
+              className="h-full overflow-y-auto overscroll-contain faq-scroll-zone pt-4 pb-6"
+              onWheel={e => e.stopPropagation()}
+            >
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={selectedCategory + searchTerm}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  className="p-3 sm:p-4"
                 >
-                  <MessageCircle className="w-5 h-5" />
-                  Chat with AI Bot
-                </button>
-                <button 
-                  onClick={handleContactSupport}
-                  className="bg-white/5 border border-white/10 text-gray-300 px-8 py-3 rounded-xl font-semibold hover:bg-white/10 hover:text-white transition-all shadow-lg flex items-center justify-center gap-2"
-                >
-                  <Phone className="w-5 h-5" />
-                  Contact Support
-                </button>
-              </div>
+                  {filteredFAQs.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.05] flex items-center justify-center mb-3">
+                        <span className="text-2xl">🤔</span>
+                      </div>
+                      <h3 className="text-sm font-semibold text-white mb-1">{tx.noResults}</h3>
+                      <p className="text-xs text-gray-500 mb-3">{tx.noResultsSub}</p>
+                      {searchTerm && (
+                        <button onClick={clearSearch} className="text-xs text-brand-yellow border border-brand-yellow/15 px-4 py-1.5 rounded-full hover:bg-brand-yellow/10 transition-colors">
+                          {tx.clearSearch}
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {filteredFAQs.map((item, idx) => (
+                        <FAQCard
+                          key={item.id}
+                          item={item}
+                          isOpen={activeId === item.id}
+                          onToggle={toggleQuestion}
+                          index={idx}
+                          accent={catAccent[item.category] || catAccent.about}
+                          category={faqCategories.find(c => c.id === item.category)}
+                          lang={lang}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
             </div>
           </div>
         </div>
       </div>
+
+      {/* ═══════ BELOW THE FOLD — CTA + Footer (scroll to see) ═══════ */}
+      <section className="relative z-10 max-w-4xl mx-auto px-5 sm:px-8 py-16 sm:py-20">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-40px' }}
+          transition={{ duration: 0.5 }}
+          className="relative rounded-2xl overflow-hidden"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-brand-yellow/[0.06] via-transparent to-indigo-500/[0.04]" />
+          <div className="relative rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-sm px-6 sm:px-10 py-10 sm:py-12 text-center">
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">{tx.still}</h2>
+            <p className={`text-sm max-w-md mx-auto mb-6 ${lang === 'bn' ? 'font-bengali text-gray-400' : 'text-gray-400'}`}>
+              {tx.stillSub}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={handleChatWithBot}
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold bg-brand-yellow/10 text-brand-yellow border border-brand-yellow/20 hover:bg-brand-yellow/20 transition-all active:scale-[0.97]"
+              >
+                <MessageCircle className="w-4 h-4" />
+                {tx.chatBot}
+              </button>
+              <button
+                onClick={handleContactSupport}
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold bg-white/[0.03] text-gray-300 border border-white/[0.06] hover:bg-white/[0.06] hover:text-white transition-all active:scale-[0.97]"
+              >
+                <Phone className="w-4 h-4" />
+                {tx.contactUs}
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </section>
+
       <Footer />
     </div>
-    </>
+  );
+}
+
+/* ═══════ FAQ Question Card with Parallax ═══════ */
+function FAQCard({ item, isOpen, onToggle, index, accent, category, lang }: {
+  item: FAQItem;
+  isOpen: boolean;
+  onToggle: (id: string) => void;
+  index: number;
+  accent: typeof catAccent['about'];
+  category?: FAQCategory;
+  lang: 'en' | 'bn';
+}) {
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  return (
+    <motion.div
+      ref={cardRef}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: Math.min(index * 0.04, 0.4), ease: [0.16, 1, 0.3, 1] }}
+      className="faq-card-wrapper"
+    >
+      <div className={`faq-card group relative ${isOpen ? `faq-card--open ${accent.border}` : ''}`}>
+        {/* Accent bar (left edge glow on open) */}
+        <div className={`absolute left-0 top-3 bottom-3 w-[2px] rounded-full transition-all duration-300 ${isOpen ? `${accent.dot} opacity-100` : 'opacity-0'}`} />
+
+        <button
+          onClick={() => onToggle(item.id)}
+          className="w-full text-left flex items-center gap-3 px-4 sm:px-5 py-3.5 sm:py-4"
+        >
+          {/* Category dot */}
+          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 transition-all duration-300 ${accent.dot} ${isOpen ? 'scale-150 opacity-100' : 'opacity-30 group-hover:opacity-50'}`} />
+
+          {/* Category label (desktop) — abbreviated */}
+          <span className={`hidden sm:inline text-[9px] font-bold uppercase tracking-widest flex-shrink-0 w-[4.5rem] truncate transition-colors duration-200 ${isOpen ? accent.text : 'text-gray-600 group-hover:text-gray-500'}`}>
+            {category ? (lang === 'bn' ? category.titleBn.split(' ')[0] : category.id.toUpperCase()) : ''}
+          </span>
+
+          {/* Question */}
+          <span className={`flex-1 text-[13px] sm:text-[13.5px] font-medium leading-snug transition-colors duration-200 ${isOpen ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>
+            {item.question}
+          </span>
+
+          {/* Chevron */}
+          <motion.span
+            animate={{ rotate: isOpen ? 180 : 0 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="flex-shrink-0"
+          >
+            <ChevronDown className={`w-4 h-4 transition-colors duration-200 ${isOpen ? 'text-brand-yellow' : 'text-gray-700 group-hover:text-gray-500'}`} />
+          </motion.span>
+        </button>
+
+        {/* Answer */}
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className="overflow-hidden"
+            >
+              <div className="px-4 sm:px-5 pb-4 sm:pb-5 pl-8 sm:pl-[5rem]">
+                <div className={`pl-4 border-l-2 ${accent.border} py-1`}>
+                  <motion.p
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+                    className="text-[13px] text-gray-400 leading-[1.85]"
+                  >
+                    {item.answer}
+                  </motion.p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
   );
 }

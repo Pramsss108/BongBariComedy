@@ -885,6 +885,117 @@ button:hover {
   -ms-overflow-style: none;
 }
 
+/* FAQ internal scroll zone — thin custom scrollbar override */
+.faq-scroll-zone::-webkit-scrollbar {
+  display: block;
+  width: 4px;
+}
+.faq-scroll-zone::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 8px 0;
+}
+.faq-scroll-zone::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.06);
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+.faq-scroll-zone::-webkit-scrollbar-thumb:hover {
+  background: rgba(244,196,48,0.2);
+}
+.faq-scroll-zone {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.06) transparent;
+  scroll-behavior: smooth;
+}
+
+/* ═══════ FAQ Premium Component Styles (v4 — 10 premium finishes) ═══════ */
+
+/* Category pills */
+.faq-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
+  background: rgba(255,255,255,0.03);
+  color: rgba(255,255,255,0.4);
+  border: 1px solid rgba(255,255,255,0.05);
+  scroll-snap-align: start;
+}
+.faq-pill:hover {
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.65);
+  transform: translateY(-1px);
+}
+.faq-pill:active {
+  transform: scale(0.97);
+}
+.faq-pill--active-gold {
+  background: rgba(244,196,48,0.1) !important;
+  color: var(--brand-yellow, #F4C430) !important;
+  border-color: rgba(244,196,48,0.25) !important;
+  box-shadow: 0 0 12px rgba(244,196,48,0.08);
+}
+.faq-pill-count {
+  font-size: 0.5625rem;
+  opacity: 0.45;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Parallax container */
+.faq-parallax-container {
+  position: relative;
+}
+
+/* Card wrapper */
+.faq-card-wrapper {
+  position: relative;
+}
+
+/* 7️⃣ FAQ Card — premium glass with hover glow */
+.faq-card {
+  position: relative;
+  border-radius: 0.875rem;
+  background: rgba(255,255,255,0.015);
+  border: 1px solid rgba(255,255,255,0.04);
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+  overflow: hidden;
+}
+.faq-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(ellipse at 50% 0%, rgba(244,196,48,0.03) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.faq-card:hover {
+  background: rgba(255,255,255,0.028);
+  border-color: rgba(255,255,255,0.08);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.03) inset;
+}
+.faq-card:hover::before {
+  opacity: 1;
+}
+/* 8️⃣ Open state — deeper glass + accent glow */
+.faq-card--open {
+  background: rgba(255,255,255,0.035) !important;
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.faq-card--open::before {
+  opacity: 1;
+}
+
 /* Bengali SVG brush-stroke underline animation */
 @keyframes bengali-brush {
   to { stroke-dashoffset: 0; }

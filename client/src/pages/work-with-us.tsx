@@ -211,28 +211,52 @@ const WorkWithUs = () => {
 
             {/* Compact hero — brand-style title on mobile */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.92, filter: 'blur(10px)' }}
-              animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-              transition={{ type: 'spring', stiffness: 180, damping: 18, mass: 0.8 }}
-              className="text-center mb-1 sm:mb-6"
+              initial={{ opacity: 0, y: -20, filter: 'blur(12px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              transition={{ type: 'spring', stiffness: 160, damping: 20, mass: 0.8 }}
+              className="text-center mb-1.5 sm:mb-6"
             >
-              <div className="hidden sm:flex items-center justify-center gap-2 mb-1">
-                <div className="h-px w-8 bg-gradient-to-r from-transparent to-brand-yellow/30" />
-                <span className="text-[10px] uppercase tracking-[0.2em] text-brand-yellow/50 font-semibold">Partnerships</span>
-                <div className="h-px w-8 bg-gradient-to-l from-transparent to-brand-yellow/30" />
-              </div>
-              <h1 className="footer-brand-text text-[clamp(1.1rem,5vw,2.5rem)] sm:text-3xl lg:text-4xl font-black tracking-tight leading-none">
+              {/* Partnerships badge — both mobile & desktop */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.15, duration: 0.4 }}
+                className="flex items-center justify-center gap-2 mb-1"
+              >
+                <div className="h-px w-6 sm:w-8 bg-gradient-to-r from-transparent to-brand-yellow/30" />
+                <span className="text-[8px] sm:text-[10px] uppercase tracking-[0.2em] text-brand-yellow/50 font-semibold">Partnerships</span>
+                <div className="h-px w-6 sm:w-8 bg-gradient-to-l from-transparent to-brand-yellow/30" />
+              </motion.div>
+              <motion.h1
+                initial={{ opacity: 0, scale: 0.85, filter: 'blur(8px)' }}
+                animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                transition={{ type: 'spring', stiffness: 200, damping: 18, delay: 0.08 }}
+                className="footer-brand-text text-[clamp(1.4rem,7vw,2.5rem)] sm:text-3xl lg:text-4xl font-black tracking-tight leading-none"
+              >
                 Work With Us
-              </h1>
-              <div className="mx-auto mt-0.5 h-[1px] w-8 sm:hidden rounded-full" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,204,0,0.4), transparent)' }} />
-              <p className="hidden sm:block text-xs text-gray-500 mt-1">Partner with Bong Bari for brand integrations that feel natural</p>
+              </motion.h1>
+              <motion.div
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ delay: 0.3, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                className="mx-auto mt-1 h-[1.5px] w-12 sm:w-16 rounded-full origin-center"
+                style={{ background: 'linear-gradient(90deg, transparent, rgba(255,204,0,0.5), transparent)' }}
+              />
+              <motion.p
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35, duration: 0.4 }}
+                className="hidden sm:block text-xs text-gray-500 mt-1.5"
+              >
+                Partner with Bong Bari for brand integrations that feel natural
+              </motion.p>
             </motion.div>
 
             {/* ── The Form Card ── */}
             <motion.div
-              initial={{ opacity: 0, y: 24, scale: 0.96 }}
+              initial={{ opacity: 0, y: 30, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ type: 'spring', stiffness: 180, damping: 22, mass: 0.8, delay: 0.1 }}
+              transition={{ type: 'spring', stiffness: 140, damping: 20, mass: 0.8, delay: 0.2 }}
             >
               {/* Outer glow border */}
               <div className="relative rounded-xl sm:rounded-2xl p-[1px] bg-gradient-to-br from-brand-yellow/30 via-brand-yellow/10 to-violet-500/20 shadow-[0_0_60px_-10px_rgba(244,196,48,0.15)]">
@@ -243,40 +267,65 @@ const WorkWithUs = () => {
                     {isSubmitted ? (
                       <motion.div
                         key="success"
-                        initial={{ opacity: 0, scale: 0.9 }}
+                        initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
                         className="text-center py-10"
                       >
                         <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
+                          initial={{ scale: 0, rotate: -180 }}
+                          animate={{ scale: 1, rotate: 0 }}
                           transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
                         >
                           <CheckCircle2 className="w-16 h-16 text-emerald-400 mx-auto mb-4" />
                         </motion.div>
-                        <h3 className="text-xl font-bold text-white mb-2">Request Sent!</h3>
-                        <p className="text-sm text-gray-400">We'll get back to you within 2-3 business days.</p>
+                        <motion.h3
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.3 }}
+                          className="text-xl font-bold text-white mb-2"
+                        >Request Sent!</motion.h3>
+                        <motion.p
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.4 }}
+                          className="text-sm text-gray-400"
+                        >We'll get back to you within 2-3 business days.</motion.p>
                       </motion.div>
                     ) : (
                       <motion.div key="form">
                         {/* Title row */}
-                        <div className="flex items-center gap-2 sm:gap-3 mb-1.5 sm:mb-5">
-                          <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-brand-yellow/10 border border-brand-yellow/20 flex items-center justify-center flex-shrink-0">
+                        <motion.div
+                          initial={{ opacity: 0, x: -16 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.3, type: 'spring', stiffness: 200, damping: 20 }}
+                          className="flex items-center gap-2 sm:gap-3 mb-1.5 sm:mb-5"
+                        >
+                          <motion.div
+                            initial={{ scale: 0, rotate: -90 }}
+                            animate={{ scale: 1, rotate: 0 }}
+                            transition={{ delay: 0.35, type: 'spring', stiffness: 300, damping: 18 }}
+                            className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-brand-yellow/10 border border-brand-yellow/20 flex items-center justify-center flex-shrink-0"
+                          >
                             <Handshake className="w-3 h-3 sm:w-4 sm:h-4 text-brand-yellow" />
-                          </div>
+                          </motion.div>
                           <div>
                             <h2 className="text-[13px] sm:text-lg font-bold text-white leading-tight">
                               Let's <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow to-amber-300">Collaborate</span>
                             </h2>
                             <p className="text-[8px] sm:text-[10px] text-white/40 tracking-wide">Fill in your details and we'll reach out</p>
                           </div>
-                        </div>
+                        </motion.div>
 
                         <Form {...form}>
                           <form onSubmit={form.handleSubmit(onSubmit)} autoComplete="off" className="space-y-1.5 sm:space-y-3.5">
                             {/* Row 1: Name + Company */}
-                            <div className="grid grid-cols-2 gap-1.5 sm:gap-3">
+                            <motion.div
+                              initial={{ opacity: 0, y: 12 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.4, duration: 0.35 }}
+                              className="grid grid-cols-2 gap-1.5 sm:gap-3"
+                            >
                               <FormField control={form.control} name="name" render={({ field }) => (
                                 <FormItem>
                                   <FormControl>
@@ -293,10 +342,15 @@ const WorkWithUs = () => {
                                   <FormMessage className="text-[11px] mt-1" />
                                 </FormItem>
                               )} />
-                            </div>
+                            </motion.div>
 
                             {/* Row 2: Email + Phone (country code + number) */}
-                            <div className="grid grid-cols-2 gap-1.5 sm:gap-3">
+                            <motion.div
+                              initial={{ opacity: 0, y: 12 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.5, duration: 0.35 }}
+                              className="grid grid-cols-2 gap-1.5 sm:gap-3"
+                            >
                               <FormField control={form.control} name="email" render={({ field }) => (
                                 <FormItem>
                                   <FormControl>
@@ -336,9 +390,14 @@ const WorkWithUs = () => {
                                   )} />
                                 </div>
                               </div>
-                            </div>
+                            </motion.div>
 
                             {/* Row 3: Message */}
+                            <motion.div
+                              initial={{ opacity: 0, y: 12 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.6, duration: 0.35 }}
+                            >
                             <FormField control={form.control} name="message" render={({ field }) => (
                               <FormItem>
                                 <FormControl>
@@ -362,9 +421,16 @@ const WorkWithUs = () => {
                                 <FormMessage className="text-[11px] mt-1" />
                               </FormItem>
                             )} />
+                            </motion.div>
 
                             {/* Submit button — premium gradient glow */}
-                            <motion.div className="pt-0.5 sm:pt-1" whileTap={{ scale: 0.97 }}>
+                            <motion.div
+                              initial={{ opacity: 0, y: 12, scale: 0.95 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              transition={{ delay: 0.7, type: 'spring', stiffness: 200, damping: 20 }}
+                              className="pt-0.5 sm:pt-1"
+                              whileTap={{ scale: 0.97 }}
+                            >
                               <Button
                                 type="submit"
                                 disabled={submitCollaborationMutation.isPending}
@@ -397,10 +463,10 @@ const WorkWithUs = () => {
         {/* ═══ BELOW FOLD — Why Work With Us cards ═══ */}
         <section className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-20">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 24, filter: 'blur(6px)' }}
+            whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
             viewport={{ once: true, margin: '-40px' }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             className="text-center mb-8"
           >
             <h2 className="text-xl sm:text-2xl font-bold text-white">
@@ -418,16 +484,22 @@ const WorkWithUs = () => {
                 <motion.div
                   key={i}
                   data-testid={`collaboration-type-${i}`}
-                  initial={{ opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0, y: 24, scale: 0.9 }}
+                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: i * 0.1 }}
-                  whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                  transition={{ duration: 0.5, delay: i * 0.12, type: 'spring', stiffness: 180, damping: 20 }}
+                  whileHover={{ y: -6, scale: 1.02, transition: { duration: 0.2 } }}
                   className={`group relative rounded-2xl bg-gradient-to-b ${colors[i]} border ${borders[i]} p-6 text-center cursor-default`}
                 >
-                  <div className={`w-10 h-10 rounded-xl bg-black/40 border ${borders[i]} flex items-center justify-center mx-auto mb-3`}>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    whileInView={{ scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.2 + i * 0.12, type: 'spring', stiffness: 300, damping: 18 }}
+                    className={`w-10 h-10 rounded-xl bg-black/40 border ${borders[i]} flex items-center justify-center mx-auto mb-3`}
+                  >
                     <type.icon className={`w-5 h-5 ${textColors[i]}`} />
-                  </div>
+                  </motion.div>
                   <h3 className={`font-bold text-sm mb-1 ${textColors[i]}`}>{type.title}</h3>
                   <p className="text-[12px] text-gray-400 leading-relaxed">{type.desc}</p>
                 </motion.div>

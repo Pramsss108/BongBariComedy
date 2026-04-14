@@ -110,7 +110,7 @@ function BrandReveal() {
   const subOpacity = useTransform(scrollYProgress, [0, 0.3, 0.42, 0.78, 1], device.isMobile ? [1, 1, 1, 1, 1] : [0, 0, 1, 1, 0.2]);
 
   return (
-    <div ref={ref} className="relative pt-5 pb-3 sm:pt-14 sm:pb-10 flex flex-col items-center justify-center text-center">
+    <div ref={ref} className="relative pt-3 pb-1 sm:pt-14 sm:pb-10 flex flex-col items-center justify-center text-center">
 
       <motion.h2
         className="footer-brand-text relative z-10 text-[clamp(1.75rem,6vw,4rem)] sm:text-[clamp(2rem,7vw,4rem)] font-black leading-none"
@@ -145,7 +145,7 @@ function BrandReveal() {
 
 export default function Footer() {
   return (
-    <footer className="relative mt-0 pb-24 sm:pb-6 footer-root">
+    <footer className="relative mt-0 pb-20 sm:pb-6 footer-root">
       {/* Noise */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none z-[1]" style={{ backgroundImage: "url(/noise.svg)", backgroundRepeat: "repeat" }} />
 
@@ -182,7 +182,7 @@ export default function Footer() {
                   <span className="text-white/30 text-[10px] tracking-[0.15em] uppercase font-medium">Comedy Studio</span>
                 </div>
               </div>
-              <p className="text-white/50 text-[13px] leading-[1.7] max-w-[320px] mb-7">
+              <p className="text-white/50 text-[13px] leading-[1.7] max-w-[320px] mb-7 hidden sm:block">
                 Bengal's funniest comedy brand — sketches, entertainment, and pure creative chaos from Kolkata.
               </p>
 
@@ -198,7 +198,7 @@ export default function Footer() {
                     className={`group flex items-center gap-2 px-3 py-2 rounded-full ring-1 ring-white/[0.08] bg-white/[0.03] text-white/50 hover:text-white hover:bg-white/[0.08] transition-all duration-300 min-h-[44px] ${s.ring} ${s.glow}`}
                   >
                     <s.icon className={`w-4 h-4 transition-colors duration-300 ${s.text}`} />
-                    <span className={`text-[11px] font-medium tracking-wide transition-colors duration-300 ${s.text}`}>{s.label}</span>
+                    <span className={`text-[11px] font-medium tracking-wide transition-colors duration-300 hidden sm:inline ${s.text}`}>{s.label}</span>
                   </motion.a>
                 ))}
               </motion.div>

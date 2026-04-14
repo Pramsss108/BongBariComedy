@@ -490,7 +490,7 @@
    ================================================== */
 @media (max-width: 640px) {
   footer.footer-root {
-    padding-bottom: 6rem !important; /* Match pb-24 from footer.tsx — dock has its own dark bg now */
+    padding-bottom: 5rem !important; /* Match pb-20 — dock has own dark bg */
   }
 
   /* Ensure last content on pages isn't hidden behind dock */
@@ -607,13 +607,13 @@
   /* Link columns: tighter */
   footer .col-span-1 h3 {
     font-size: 10px !important;
-    margin-bottom: 0.25rem !important;
+    margin-bottom: 0.125rem !important;
   }
   footer .col-span-1 .mb-5 {
-    margin-bottom: 0.375rem !important;
+    margin-bottom: 0.25rem !important;
   }
   footer ul.space-y-3 > li {
-    margin-top: 0.25rem !important;
+    margin-top: 0.125rem !important;
     margin-bottom: 0 !important;
   }
   footer ul.space-y-3 > li:first-child {

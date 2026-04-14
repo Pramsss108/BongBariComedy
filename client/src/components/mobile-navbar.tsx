@@ -1,8 +1,9 @@
-import { Home, PlaySquare, MessageCircle, Menu, X, Info, Briefcase, FileText, HelpCircle, Wrench, ChevronUp, Bot } from "lucide-react";
+import { Home, MessageCircle, X, Info, FileText, HelpCircle, Wrench, Bot } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+/* ─── Ultra-Premium Dock ─── iOS 18 / Apple Tab Bar level ─── */
 const MobileNavBar = () => {
     const [location] = useLocation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -10,7 +11,8 @@ const MobileNavBar = () => {
         (typeof window !== 'undefined' && localStorage.getItem('bbc.lang') as 'en' | 'bn') || 'en'
     );
     const menuRef = useRef<HTMLDivElement>(null);
-    const toggleButtonRef = useRef<HTMLButtonElement>(null);
+    const toggleRef = useRef<HTMLButtonElement>(null);
+    const [activeIdx, setActiveIdx] = useState(-1); // for haptic-style press
 
     const switchLang = (next: 'en' | 'bn') => {
         setLangState(next);
@@ -19,87 +21,75 @@ const MobileNavBar = () => {
     };
 
     const [isBotOpen, setIsBotOpen] = useState(false);
-
-    // Listen for BongBot open/close to reflect active state in dock
     useEffect(() => {
-        const handleBotToggle = () => setIsBotOpen(prev => !prev);
-        window.addEventListener('toggle-chatbot', handleBotToggle);
-        return () => window.removeEventListener('toggle-chatbot', handleBotToggle);
+        const h = () => setIsBotOpen(p => !p);
+        window.addEventListener('toggle-chatbot', h);
+        return () => window.removeEventListener('toggle-chatbot', h);
     }, []);
 
-    // Close menu when clicking outside
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (
-                menuRef.current && 
-                !menuRef.current.contains(event.target as Node) &&
-                (!toggleButtonRef.current || !toggleButtonRef.current.contains(event.target as Node))
-            ) {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node) &&
+                (!toggleRef.current || !toggleRef.current.contains(e.target as Node)))
                 setIsMenuOpen(false);
-            }
         };
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // Map the current path to the active state
-    const isActive = (path: string) => location === path || (path === "/" && location === "");
+    const isActive = useCallback((p: string) => location === p || (p === "/" && location === ""), [location]);
 
-    // Main Dock Items (Visible always)
     const navItems = [
-        { icon: Home, label: "Home", href: "/", active: isActive("/") },
-        { icon: HelpCircle, label: "Question", href: "/faq", active: isActive("/faq") },
-        { icon: MessageCircle, label: "Contact", href: "/work-with-us", active: isActive("/work-with-us") },
+        { icon: Home, label: "Home", href: "/" },
+        { icon: HelpCircle, label: "FAQ", href: "/faq" },
+        { icon: MessageCircle, label: "Collab", href: "/work-with-us" },
     ];
 
-    // Extended Menu Items (Inside the popup)
     const menuItems = [
-        { icon: Info, label: "About Us", href: "/about" },
-        { icon: FileText, label: "Blog Posts", href: "/blog" },
+        { icon: Info, label: "About", href: "/about" },
+        { icon: FileText, label: "Blog", href: "/blog" },
         { icon: HelpCircle, label: "FAQ", href: "/faq" },
         { icon: Wrench, label: "Tools", href: "/tools" },
     ];
 
     return (
         <>
-            {/* EXPANDED MENU DRAWER (Blinkit Style Popup) */}
+            {/* ─── Context Menu (slim iOS popup) ─── */}
             <AnimatePresence>
                 {isMenuOpen && (
                     <motion.div
                         ref={menuRef}
-                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        initial={{ opacity: 0, scale: 0.92, y: 12 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                        transition={{ type: "spring", bounce: 0.3, duration: 0.3 }}
-                        className="fixed bottom-20 right-4 z-[10000] w-44 rounded-[14px] overflow-hidden"
+                        exit={{ opacity: 0, scale: 0.92, y: 12 }}
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.25 }}
+                        className="fixed bottom-[72px] right-3 z-[10000] w-[156px] rounded-[14px] overflow-hidden"
                         style={{
-                            background: 'rgba(28,28,30,0.92)',
-                            backdropFilter: 'blur(40px) saturate(1.9)',
-                            WebkitBackdropFilter: 'blur(40px) saturate(1.9)',
-                            boxShadow: '0 4px 24px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.08)'
+                            background: 'rgba(28,28,30,0.88)',
+                            backdropFilter: 'blur(50px) saturate(2)',
+                            WebkitBackdropFilter: 'blur(50px) saturate(2)',
+                            boxShadow: '0 8px 32px rgba(0,0,0,0.55), 0 0 0 0.5px rgba(255,255,255,0.07)'
                         }}
                     >
-                        <div className="py-1">
-                            {/* Language Toggle — inline row */}
-                            <div className="flex items-center justify-between px-3 py-[7px]">
-                                <span className="text-[10px] text-white/35 font-medium uppercase tracking-[0.12em]">Lang</span>
-                                <div className="relative flex items-center bg-black/50 rounded-full p-[2px] border border-white/[0.06]">
+                        <div className="py-[5px]">
+                            {/* Lang toggle */}
+                            <div className="flex items-center justify-between px-3 py-[6px]">
+                                <span className="text-[9px] text-white/30 font-semibold uppercase tracking-[0.14em]">Lang</span>
+                                <div className="relative flex items-center bg-white/[0.06] rounded-full p-[2px]">
                                     <div
-                                        className="absolute top-[2px] h-[calc(100%-4px)] w-[calc(50%-1px)] rounded-full bg-brand-yellow/15 border border-brand-yellow/25 transition-all duration-300"
+                                        className="absolute top-[2px] h-[calc(100%-4px)] w-[calc(50%-1px)] rounded-full bg-white/[0.12] transition-all duration-300 ease-out"
                                         style={{ left: lang === 'en' ? '2px' : 'calc(50%)' }}
                                     />
-                                    <button onClick={() => switchLang('en')} className={`relative z-10 px-2.5 py-0.5 text-[10px] font-bold rounded-full transition-colors ${lang === 'en' ? 'text-brand-yellow' : 'text-white/30'}`}>EN</button>
-                                    <button onClick={() => switchLang('bn')} className={`relative z-10 px-2.5 py-0.5 text-[10px] font-bold rounded-full font-bengali transition-colors ${lang === 'bn' ? 'text-brand-yellow' : 'text-white/30'}`}>বাং</button>
+                                    <button onClick={() => switchLang('en')} className={`relative z-10 px-2 py-[2px] text-[10px] font-semibold rounded-full transition-colors ${lang === 'en' ? 'text-white' : 'text-white/30'}`}>EN</button>
+                                    <button onClick={() => switchLang('bn')} className={`relative z-10 px-2 py-[2px] text-[10px] font-semibold rounded-full font-bengali transition-colors ${lang === 'bn' ? 'text-white' : 'text-white/30'}`}>বাং</button>
                                 </div>
                             </div>
-
-                            <div className="mx-2.5 h-[0.5px] bg-white/[0.08]" />
-
+                            <div className="mx-3 h-[0.5px] bg-white/[0.07]" />
                             {menuItems.map((item, idx) => (
                                 <Link key={idx} href={item.href} onClick={() => setIsMenuOpen(false)}>
-                                    <div className={`flex items-center gap-2.5 px-3 py-[9px] transition-colors ${isActive(item.href) ? "text-brand-yellow" : "text-white/80 active:bg-white/[0.08]"}`}>
-                                        <item.icon size={15} className={isActive(item.href) ? '' : 'opacity-50'} />
-                                        <span className="text-[13px]">{item.label}</span>
+                                    <div className={`flex items-center gap-2.5 px-3 py-[8px] transition-colors ${isActive(item.href) ? "text-white" : "text-white/60 active:bg-white/[0.06]"}`}>
+                                        <item.icon size={14} strokeWidth={isActive(item.href) ? 2.2 : 1.8} />
+                                        <span className="text-[13px] font-medium">{item.label}</span>
                                     </div>
                                 </Link>
                             ))}
@@ -108,95 +98,126 @@ const MobileNavBar = () => {
                 )}
             </AnimatePresence>
 
-            {/* FLOATING GLASS DOCK (Slim Blinkit Style - Wider & Thinner) */}
-            <div className="fixed bottom-0 left-0 right-0 z-[9999] sm:hidden flex flex-col items-center pointer-events-none" style={{ willChange: 'transform', transform: 'translateZ(0)', contain: 'layout', paddingBottom: 'env(safe-area-inset-bottom, 0px)', background: '#0a0a0a' }}>
-                <div className="w-[98%] max-w-[400px] pointer-events-auto mb-1 mt-3">
-                    <div className="
-                    flex justify-between items-center px-1
-                    bg-[#111113]/95 backdrop-blur-xl
-                    border border-white/10
-                    rounded-full
-                    py-2
-                    shadow-[0_-2px_20px_rgba(0,0,0,0.6)]
-                    relative
-                    overflow-hidden
-                ">
-                        {/* Glass Shine Effect */}
-                        <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-                        
-                        {/* Bottom Glow */}
-                        <div className="absolute inset-x-0 bottom-0 h-[20px] bg-gradient-to-t from-brand-blue/10 to-transparent opacity-50" />
-
-                        {navItems.map((item, index) => (
-                            <Link key={index} href={item.href}>
-                                <button className="relative flex flex-col items-center justify-center group outline-none w-14">
-                                    <item.icon
-                                        className={`
-                                        w-5 h-5 transition-all duration-300 mb-0.5
-                                        ${item.active
-                                                ? "text-brand-blue fill-brand-blue/20 rotate-0 scale-110 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]"
-                                                : "text-zinc-400 group-hover:text-zinc-200"
-                                            }
-                                    `}
-                                        strokeWidth={item.active ? 2.5 : 2}
-                                    />
-                                    <span className={`text-[10px] sm:text-xs font-medium transition-all leading-tight ${item.active ? "text-brand-blue" : "text-zinc-500"}`}>
-                                        {item.label}
-                                    </span>
+            {/* ─── DOCK ─── ultra-premium floating tab bar ─── */}
+            <div
+                className="fixed bottom-0 left-0 right-0 z-[9999] sm:hidden flex justify-center pointer-events-none"
+                style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)', background: '#0a0a0a' }}
+            >
+                <nav
+                    className="pointer-events-auto flex items-center justify-evenly w-[92%] max-w-[380px] mb-[6px] relative"
+                    style={{
+                        height: '52px',
+                        borderRadius: '22px',
+                        background: 'rgba(22,22,24,0.75)',
+                        backdropFilter: 'blur(40px) saturate(1.8)',
+                        WebkitBackdropFilter: 'blur(40px) saturate(1.8)',
+                        boxShadow: '0 2px 20px rgba(0,0,0,0.45), inset 0 0.5px 0 rgba(255,255,255,0.06), 0 0 0 0.5px rgba(255,255,255,0.04)',
+                        willChange: 'transform',
+                        contain: 'layout style',
+                    }}
+                >
+                    {/* Nav Items */}
+                    {navItems.map((item, i) => {
+                        const active = isActive(item.href);
+                        return (
+                            <Link key={i} href={item.href}>
+                                <button
+                                    className="relative flex flex-col items-center justify-center outline-none w-[52px] h-full select-none"
+                                    onPointerDown={() => setActiveIdx(i)}
+                                    onPointerUp={() => setActiveIdx(-1)}
+                                    onPointerLeave={() => setActiveIdx(-1)}
+                                >
+                                    <motion.div
+                                        animate={{
+                                            scale: activeIdx === i ? 0.82 : active ? 1 : 0.92,
+                                            opacity: active ? 1 : 0.45
+                                        }}
+                                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                                        className="flex flex-col items-center"
+                                    >
+                                        <item.icon size={20} strokeWidth={active ? 2.4 : 1.7} className={active ? 'text-white' : 'text-white'} />
+                                        <span className={`text-[9px] mt-[2px] font-medium leading-none ${active ? 'text-white' : 'text-white'}`}>
+                                            {item.label}
+                                        </span>
+                                    </motion.div>
+                                    {/* Active dot */}
+                                    {active && (
+                                        <motion.div
+                                            layoutId="dock-dot"
+                                            className="absolute -bottom-[1px] w-[4px] h-[4px] rounded-full bg-white"
+                                            transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                                        />
+                                    )}
                                 </button>
                             </Link>
-                        ))}
+                        );
+                    })}
 
-                        {/* BONG BOT DOCK BUTTON */}
-                        <button
-                            onClick={() => window.dispatchEvent(new Event('toggle-chatbot'))}
-                            className="relative flex flex-col items-center justify-center group outline-none w-14"
+                    {/* Bot */}
+                    <button
+                        onClick={() => window.dispatchEvent(new Event('toggle-chatbot'))}
+                        className="relative flex flex-col items-center justify-center outline-none w-[52px] h-full select-none"
+                        onPointerDown={() => setActiveIdx(3)}
+                        onPointerUp={() => setActiveIdx(-1)}
+                        onPointerLeave={() => setActiveIdx(-1)}
+                    >
+                        <motion.div
+                            animate={{
+                                scale: activeIdx === 3 ? 0.82 : isBotOpen ? 1 : 0.92,
+                                opacity: isBotOpen ? 1 : 0.45
+                            }}
+                            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                            className="flex flex-col items-center"
                         >
-                            <Bot
-                                className={`
-                                    w-5 h-5 transition-all duration-300 mb-0.5
-                                    ${isBotOpen
-                                        ? "text-brand-blue fill-brand-blue/20 scale-110 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]"
-                                        : "text-zinc-400 group-hover:text-zinc-200"
-                                    }
-                                `}
-                                strokeWidth={isBotOpen ? 2.5 : 2}
+                            <Bot size={20} strokeWidth={isBotOpen ? 2.4 : 1.7} />
+                            <span className={`text-[9px] mt-[2px] font-medium leading-none`}>Bot</span>
+                        </motion.div>
+                        {isBotOpen && (
+                            <motion.div
+                                layoutId="dock-dot"
+                                className="absolute -bottom-[1px] w-[4px] h-[4px] rounded-full bg-white"
+                                transition={{ type: 'spring', stiffness: 400, damping: 28 }}
                             />
-                            <span className={`text-[10px] sm:text-xs font-medium transition-all leading-tight ${isBotOpen ? "text-brand-blue" : "text-zinc-500"}`}>
-                                Bot
-                            </span>
-                        </button>
+                        )}
+                    </button>
 
-                        {/* MENU TOGGLE BUTTON (Slim) */}
-                        <button
-                            ref={toggleButtonRef}
-                            onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            className="relative flex flex-col items-center justify-center group outline-none w-14"
+                    {/* Menu */}
+                    <button
+                        ref={toggleRef}
+                        onClick={() => setIsMenuOpen(p => !p)}
+                        className="relative flex flex-col items-center justify-center outline-none w-[52px] h-full select-none"
+                        onPointerDown={() => setActiveIdx(4)}
+                        onPointerUp={() => setActiveIdx(-1)}
+                        onPointerLeave={() => setActiveIdx(-1)}
+                    >
+                        <motion.div
+                            animate={{
+                                scale: activeIdx === 4 ? 0.82 : isMenuOpen ? 1 : 0.92,
+                                opacity: isMenuOpen ? 1 : 0.45,
+                                rotate: isMenuOpen ? 45 : 0
+                            }}
+                            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                            className="flex flex-col items-center"
                         >
-                            <div className={`
-                                transition-all duration-300 mb-0.5 rounded-full p-0.5
-                                ${isMenuOpen ? "text-brand-yellow rotate-0" : "text-zinc-400 group-hover:text-zinc-200"}
-                            `}>
-                                {isMenuOpen ? <X size={18} /> : <CategoryIcon />}
-                            </div>
-                            <span className={`text-[10px] sm:text-xs font-medium transition-all leading-tight ${isMenuOpen ? "text-brand-yellow" : "text-zinc-500"}`}>
-                                Menu
+                            {isMenuOpen ? <X size={20} strokeWidth={2.4} /> : <GridIcon />}
+                            <span className={`text-[9px] mt-[2px] font-medium leading-none ${isMenuOpen ? '' : ''}`}>
+                                {isMenuOpen ? 'Close' : 'More'}
                             </span>
-                        </button>
-                    </div>
-                </div>
+                        </motion.div>
+                    </button>
+                </nav>
             </div>
         </>
     );
 };
 
-// Custom Grid Icon for "Menu"
-const CategoryIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="7" height="7" rx="2" />
-        <rect x="14" y="3" width="7" height="7" rx="2" />
-        <rect x="14" y="14" width="7" height="7" rx="2" />
-        <rect x="3" y="14" width="7" height="7" rx="2" />
+/* Minimal 2×2 grid icon (SF Symbols style) */
+const GridIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="5.5" height="5.5" rx="1.5" />
+        <rect x="11.5" y="3" width="5.5" height="5.5" rx="1.5" />
+        <rect x="3" y="11.5" width="5.5" height="5.5" rx="1.5" />
+        <rect x="11.5" y="11.5" width="5.5" height="5.5" rx="1.5" />
     </svg>
 );
 

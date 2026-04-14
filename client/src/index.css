@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Baloo+Da+2:wght@400;500;600;700&display=swap');
+/* Fonts loaded via <link rel="preload"> in index.html — no @import here */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

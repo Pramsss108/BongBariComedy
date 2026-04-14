@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
@@ -120,7 +120,6 @@ function SectionRevealTitle({ title, subtitle, accentColor = 'brand-yellow', bad
 const Home = () => {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const { playFunnySubmissionSound } = useFunnySubmissionSound({ enabled: true, volume: 0.25 });
   const [typewriterText, setTypewriterText] = useState("");
   const [currentWordIndex, setCurrentWordIndex] = useState(0);

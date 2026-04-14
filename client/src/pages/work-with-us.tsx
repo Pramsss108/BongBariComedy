@@ -69,11 +69,11 @@ function CountryCodeDropdown({ value, onChange }: { value: string; onChange: (v:
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 px-3 py-0 h-full w-[88px] cursor-pointer select-none bg-transparent border-none outline-none"
+        className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-0 h-full w-[72px] sm:w-[88px] cursor-pointer select-none bg-transparent border-none outline-none"
       >
-        <span className="text-base leading-none">{selected.flag}</span>
-        <span className="text-[13px] text-white/70 font-medium">{selected.short}</span>
-        <ChevronDown className={`w-3 h-3 text-gray-500 ml-auto transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+        <span className="text-sm sm:text-base leading-none">{selected.flag}</span>
+        <span className="text-[11px] sm:text-[13px] text-white/70 font-medium">{selected.short}</span>
+        <ChevronDown className={`w-2.5 h-2.5 sm:w-3 sm:h-3 text-gray-500 ml-auto transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
       </button>
       <AnimatePresence>
         {open && (
@@ -126,11 +126,11 @@ function FloatingInput({ icon: Icon, label, ...props }: { icon: any; label: stri
   return (
     <div className="relative group">
       <div className={`absolute -inset-[1px] rounded-xl opacity-0 ${focused ? 'opacity-100' : ''} bg-gradient-to-r from-brand-yellow/20 via-brand-yellow/5 to-brand-yellow/20 blur-[2px] transition-opacity duration-300 pointer-events-none`} />
-      <div className="wws-input relative flex items-center h-[40px] sm:h-[44px]">
-        <Icon className={`w-4 h-4 flex-shrink-0 transition-colors duration-200 ${focused ? 'text-brand-yellow/70' : 'text-gray-600'}`} />
-        <div className="flex-1 relative ml-3">
+      <div className="wws-input relative flex items-center h-[36px] sm:h-[44px]">
+        <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 transition-colors duration-200 ${focused ? 'text-brand-yellow/70' : 'text-gray-600'}`} />
+        <div className="flex-1 relative ml-2 sm:ml-3">
           <span className={`absolute left-0 transition-all duration-200 pointer-events-none ${
-            focused || hasValue ? 'text-[9px] -top-1.5 text-brand-yellow/60 font-semibold tracking-[0.15em] uppercase' : 'text-[13px] top-1/2 -translate-y-1/2 text-white/30'
+            focused || hasValue ? 'text-[8px] sm:text-[9px] -top-1.5 text-brand-yellow/60 font-semibold tracking-[0.15em] uppercase' : 'text-[11px] sm:text-[13px] top-1/2 -translate-y-1/2 text-white/30'
           }`}>{label}</span>
           <input
             {...props}
@@ -139,7 +139,7 @@ function FloatingInput({ icon: Icon, label, ...props }: { icon: any; label: stri
             data-form-type="other"
             onFocus={e => { setFocused(true); props.onFocus?.(e); }}
             onBlur={e => { setFocused(false); props.onBlur?.(e); }}
-            className="w-full bg-transparent text-white text-[13px] outline-none pt-2 pb-0.5 wws-autofill-fix"
+            className="w-full bg-transparent text-white text-[11px] sm:text-[13px] outline-none pt-2 pb-0.5 wws-autofill-fix"
           />
         </div>
       </div>
@@ -206,8 +206,8 @@ const WorkWithUs = () => {
         </div>
 
         {/* ═══ FIRST FOLD — Hero + Form in one viewport ═══ */}
-        <div className="min-h-[100dvh] flex flex-col relative z-10 pt-[56px] sm:pt-[80px] pb-[80px] sm:pb-0">
-          <div className="flex-1 flex flex-col justify-center px-3 sm:px-6 max-w-5xl mx-auto w-full py-0 sm:py-6">
+        <div className="min-h-[100dvh] flex flex-col relative z-10 pt-[56px] sm:pt-[80px] pb-[72px] sm:pb-0">
+          <div className="flex-1 flex flex-col justify-center px-2.5 sm:px-6 max-w-5xl mx-auto w-full py-0 sm:py-6">
 
             {/* Compact hero — brand-style title on mobile */}
             <motion.div
@@ -221,10 +221,10 @@ const WorkWithUs = () => {
                 <span className="text-[10px] uppercase tracking-[0.2em] text-brand-yellow/50 font-semibold">Partnerships</span>
                 <div className="h-px w-8 bg-gradient-to-l from-transparent to-brand-yellow/30" />
               </div>
-              <h1 className="footer-brand-text text-[clamp(1.2rem,5.5vw,2.5rem)] sm:text-3xl lg:text-4xl font-black tracking-tight leading-none">
+              <h1 className="footer-brand-text text-[clamp(1.1rem,5vw,2.5rem)] sm:text-3xl lg:text-4xl font-black tracking-tight leading-none">
                 Work With Us
               </h1>
-              <div className="mx-auto mt-1 h-[1.5px] w-10 sm:hidden rounded-full" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,204,0,0.4), transparent)' }} />
+              <div className="mx-auto mt-0.5 h-[1px] w-8 sm:hidden rounded-full" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,204,0,0.4), transparent)' }} />
               <p className="hidden sm:block text-xs text-gray-500 mt-1">Partner with Bong Bari for brand integrations that feel natural</p>
             </motion.div>
 
@@ -235,9 +235,9 @@ const WorkWithUs = () => {
               transition={{ type: 'spring', stiffness: 180, damping: 22, mass: 0.8, delay: 0.1 }}
             >
               {/* Outer glow border */}
-              <div className="relative rounded-2xl p-[1px] bg-gradient-to-br from-brand-yellow/30 via-brand-yellow/10 to-violet-500/20 shadow-[0_0_60px_-10px_rgba(244,196,48,0.15)]">
+              <div className="relative rounded-xl sm:rounded-2xl p-[1px] bg-gradient-to-br from-brand-yellow/30 via-brand-yellow/10 to-violet-500/20 shadow-[0_0_60px_-10px_rgba(244,196,48,0.15)]">
                 {/* Glass card */}
-                <div className="rounded-2xl bg-white/[0.03] backdrop-blur-2xl border border-white/[0.06] px-3 sm:px-8 py-1 sm:py-7">
+                <div className="rounded-xl sm:rounded-2xl bg-white/[0.03] backdrop-blur-2xl border border-white/[0.06] px-2.5 sm:px-8 py-2 sm:py-7">
 
                   <AnimatePresence mode="wait">
                     {isSubmitted ? (
@@ -276,7 +276,7 @@ const WorkWithUs = () => {
                         <Form {...form}>
                           <form onSubmit={form.handleSubmit(onSubmit)} autoComplete="off" className="space-y-1.5 sm:space-y-3.5">
                             {/* Row 1: Name + Company */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                            <div className="grid grid-cols-2 gap-1.5 sm:gap-3">
                               <FormField control={form.control} name="name" render={({ field }) => (
                                 <FormItem>
                                   <FormControl>
@@ -296,7 +296,7 @@ const WorkWithUs = () => {
                             </div>
 
                             {/* Row 2: Email + Phone (country code + number) */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                            <div className="grid grid-cols-2 gap-1.5 sm:gap-3">
                               <FormField control={form.control} name="email" render={({ field }) => (
                                 <FormItem>
                                   <FormControl>
@@ -308,7 +308,7 @@ const WorkWithUs = () => {
 
                               {/* Phone: unified wrapper — country code + input as one visual unit */}
                               <div className="relative group">
-                                <div className="wws-input relative flex items-center h-[40px] sm:h-[44px] p-0 overflow-hidden">
+                                <div className="wws-input relative flex items-center h-[36px] sm:h-[44px] p-0 overflow-hidden">
                                   <FormField control={form.control} name="countryCode" render={({ field }) => (
                                     <FormItem className="flex-shrink-0">
                                       <FormControl>
@@ -328,7 +328,7 @@ const WorkWithUs = () => {
                                           data-lpignore="true"
                                           data-form-type="other"
                                           data-testid="input-phone"
-                                          className="w-full h-full bg-transparent text-white text-[13px] outline-none px-3 placeholder:text-white/25 wws-autofill-fix"
+                                          className="w-full h-full bg-transparent text-white text-[11px] sm:text-[13px] outline-none px-2 sm:px-3 placeholder:text-white/25 wws-autofill-fix"
                                         />
                                       </FormControl>
                                       <FormMessage className="text-[11px] mt-1" />
@@ -344,17 +344,17 @@ const WorkWithUs = () => {
                                 <FormControl>
                                   <div className="relative group">
                                     <div className={`absolute -inset-[1px] rounded-xl opacity-0 ${focusedField === 'message' ? 'opacity-100' : ''} bg-gradient-to-r from-brand-yellow/20 via-brand-yellow/5 to-brand-yellow/20 blur-[2px] transition-opacity duration-300 pointer-events-none`} />
-                                    <div className="wws-input relative flex items-start pt-1.5 sm:pt-3 min-h-[36px] sm:min-h-[72px]">
-                                      <MessageSquare className={`w-4 h-4 flex-shrink-0 mt-0.5 transition-colors duration-200 ${focusedField === 'message' ? 'text-brand-yellow/70' : 'text-gray-600'}`} />
+                                    <div className="wws-input relative flex items-start pt-1.5 sm:pt-3 min-h-[34px] sm:min-h-[72px]">
+                                      <MessageSquare className={`w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 mt-0.5 transition-colors duration-200 ${focusedField === 'message' ? 'text-brand-yellow/70' : 'text-gray-600'}`} />
                                       <textarea
                                         {...field}
                                         rows={1}
                                         autoComplete="off"
-                                        placeholder="Tell us about your collaboration idea..."
+                                        placeholder="Collaboration idea..."
                                         data-testid="input-message"
                                         onFocus={() => setFocusedField('message')}
                                         onBlur={() => setFocusedField(null)}
-                                        className="flex-1 ml-3 bg-transparent text-white text-[12px] sm:text-[13px] outline-none placeholder:text-white/25 resize-none leading-snug sm:leading-relaxed"
+                                        className="flex-1 ml-2 sm:ml-3 bg-transparent text-white text-[11px] sm:text-[13px] outline-none placeholder:text-white/25 resize-none leading-snug sm:leading-relaxed"
                                       />
                                     </div>
                                   </div>

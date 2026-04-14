@@ -142,18 +142,27 @@ const Navigation = () => {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -8, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-[999]"
+                      className="absolute right-0 top-full mt-2 w-52 rounded-2xl py-2 z-[999] overflow-hidden"
+                      style={{
+                        background: 'linear-gradient(135deg, rgba(17,17,19,0.97) 0%, rgba(10,10,12,0.98) 100%)',
+                        backdropFilter: 'blur(24px) saturate(1.8)',
+                        WebkitBackdropFilter: 'blur(24px) saturate(1.8)',
+                        boxShadow: '0 8px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.05)'
+                      }}
                     >
-                      <div className="px-3 py-2 border-b border-gray-100">
-                        <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Signed in as</p>
-                        <p className="text-sm font-semibold text-gray-800 truncate">{displayName}</p>
+                      <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                      <div className="px-3 py-2.5 border-b border-white/[0.06]">
+                        <p className="text-[10px] text-white/40 uppercase tracking-[0.15em] font-semibold">Signed in as</p>
+                        <p className="text-sm font-semibold text-white/90 truncate mt-0.5">{displayName}</p>
                       </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleLogout(); }}
-                        className="w-full flex items-center gap-2 px-3 py-3 text-red-600 hover:bg-red-50 active:bg-red-100 transition-colors text-sm font-bold min-h-[48px]"
-                      >
-                        <LogOut className="w-4 h-4" /> Sign Out
-                      </button>
+                      <div className="p-1.5">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleLogout(); }}
+                          className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-red-400 hover:bg-red-500/10 active:bg-red-500/15 transition-all text-sm font-semibold min-h-[48px]"
+                        >
+                          <LogOut className="w-4 h-4" /> Sign Out
+                        </button>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -214,19 +223,28 @@ const Navigation = () => {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -8, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute right-0 top-full mt-2 w-52 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-[999]"
+                      className="absolute right-0 top-full mt-2 w-56 rounded-2xl py-2 z-[999] overflow-hidden"
+                      style={{
+                        background: 'linear-gradient(135deg, rgba(17,17,19,0.97) 0%, rgba(10,10,12,0.98) 100%)',
+                        backdropFilter: 'blur(24px) saturate(1.8)',
+                        WebkitBackdropFilter: 'blur(24px) saturate(1.8)',
+                        boxShadow: '0 8px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.05)'
+                      }}
                     >
-                      <div className="px-3 py-2 border-b border-gray-100">
-                        <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Signed in as</p>
-                        <p className="text-sm font-semibold text-gray-800 truncate">{displayName}</p>
-                        {user?.email && <p className="text-xs text-gray-400 truncate">{user.email}</p>}
+                      <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                      <div className="px-3 py-2.5 border-b border-white/[0.06]">
+                        <p className="text-[10px] text-white/40 uppercase tracking-[0.15em] font-semibold">Signed in as</p>
+                        <p className="text-sm font-semibold text-white/90 truncate mt-0.5">{displayName}</p>
+                        {user?.email && <p className="text-xs text-white/40 truncate mt-0.5">{user.email}</p>}
                       </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleLogout(); }}
-                        className="w-full flex items-center gap-2 px-3 py-3 text-red-600 hover:bg-red-50 active:bg-red-100 transition-colors text-sm font-bold"
-                      >
-                        <LogOut className="w-4 h-4" /> Sign Out
-                      </button>
+                      <div className="p-1.5">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleLogout(); }}
+                          className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-red-400 hover:bg-red-500/10 active:bg-red-500/15 transition-all text-sm font-semibold"
+                        >
+                          <LogOut className="w-4 h-4" /> Sign Out
+                        </button>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>

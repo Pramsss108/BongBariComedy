@@ -583,10 +583,10 @@ const Home = () => {
             data-testid="latest-comedy-section"
             initial="hidden"
             whileInView="visible"
-            viewport={{ margin: device.isMobile ? '-20px' : '-60px', once: device.isMobile }}
+            viewport={{ margin: device.isMobile ? '-10px' : '-60px', once: false }}
             variants={{
               hidden: { opacity: 0 },
-              visible: { opacity: 1, transition: { duration: device.isMobile ? 0.35 : 0.6, ease: [0.22, 1, 0.36, 1], staggerChildren: device.isMobile ? 0.05 : 0.1 } },
+              visible: { opacity: 1, transition: { duration: device.isMobile ? 0.3 : 0.6, ease: [0.22, 1, 0.36, 1], staggerChildren: device.isMobile ? 0.04 : 0.1 } },
             }}
           >
 
@@ -659,10 +659,10 @@ const Home = () => {
             data-testid="loved-comedy-section"
             initial="hidden"
             whileInView="visible"
-            viewport={{ margin: device.isMobile ? '-20px' : '-60px', once: device.isMobile }}
+            viewport={{ margin: device.isMobile ? '-10px' : '-60px', once: false }}
             variants={{
               hidden: { opacity: 0 },
-              visible: { opacity: 1, transition: { duration: device.isMobile ? 0.35 : 0.6, ease: [0.22, 1, 0.36, 1], staggerChildren: device.isMobile ? 0.05 : 0.1 } },
+              visible: { opacity: 1, transition: { duration: device.isMobile ? 0.3 : 0.6, ease: [0.22, 1, 0.36, 1], staggerChildren: device.isMobile ? 0.04 : 0.1 } },
             }}
           >
 

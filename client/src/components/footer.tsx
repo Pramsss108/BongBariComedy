@@ -144,8 +144,94 @@ function BrandReveal() {
 }
 
 export default function Footer() {
+  const device = useDeviceTier();
+
+  /* ── Mobile footer: clean, compact, one-screen, premium ── */
+  if (device.isMobile) {
+    return (
+      <footer className="mobile-footer relative mt-0 footer-root" style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}>
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none z-[1]" style={{ backgroundImage: "url(/noise.svg)", backgroundRepeat: "repeat" }} />
+
+        {/* ── Brand Title ── */}
+        <div className="text-center pt-4 pb-2">
+          <h2 className="footer-brand-text text-[clamp(1.5rem,6vw,2.5rem)] font-black leading-none">BONG BARI</h2>
+          <div className="mx-auto mt-1.5 h-[1.5px] w-16 rounded-full" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,204,0,0.5), transparent)' }} />
+          <p className="text-white/35 text-[9px] mt-1 tracking-[0.3em] uppercase font-semibold">Bengal's Comedy Brand</p>
+        </div>
+
+        {/* ── Marquee ── */}
+        <MarqueeStrip />
+
+        {/* ── Grid: Brand info + Links ── */}
+        <div className="relative z-[2] footer-grid-bg">
+          <div className="footer-inner-glow-top" />
+          <div className="px-5 pt-4 pb-3">
+
+            {/* Logo + Name + Socials — single row */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2.5">
+                <img src="/logo.png" alt="Bong Bari" className="w-8 h-8 rounded-lg ring-1 ring-white/[0.08]" loading="lazy" decoding="async" />
+                <div>
+                  <span className="text-white font-bold text-[13px] tracking-wide block leading-tight">Bong Bari</span>
+                  <span className="text-white/25 text-[8px] tracking-[0.15em] uppercase font-medium">Comedy Studio</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {socials.map((s) => (
+                  <a
+                    key={s.href}
+                    href={s.href}
+                    target={s.href.startsWith("mailto:") ? undefined : "_blank"}
+                    rel={s.href.startsWith("mailto:") ? undefined : "noopener noreferrer"}
+                    aria-label={s.label}
+                    className="flex items-center justify-center w-8 h-8 rounded-full ring-1 ring-white/[0.08] bg-white/[0.04] text-white/40 active:scale-95 transition-transform"
+                  >
+                    <s.icon className="w-3.5 h-3.5" />
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* Link Columns — 3-col */}
+            <div className="grid grid-cols-3 gap-3 mb-3">
+              {linkColumns.map((col) => (
+                <div key={col.title}>
+                  <h3 className="text-brand-yellow/80 text-[9px] font-bold uppercase tracking-[0.2em] mb-1.5">{col.title}</h3>
+                  <div className="w-4 h-[1.5px] bg-brand-yellow/25 rounded-full mb-2" />
+                  <ul className="space-y-1">
+                    {col.links.map((link) => (
+                      <li key={link.href}>
+                        <Link href={link.href} className="text-white/45 text-[11px] hover:text-white transition-colors leading-snug block">
+                          {link.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Glow line */}
+          <div className="footer-glow-line h-[1.5px] w-full" />
+
+          {/* Copyright */}
+          <div className="px-5 py-2.5 flex flex-col items-center gap-1 text-[10px]">
+            <span className="text-white/25 text-center">© {new Date().getFullYear()} Bong Bari · Dopmaine (UDYAM-WB-14-0096694) · Abhijit Pramanik</span>
+            <div className="flex items-center gap-4 text-white/25">
+              <Link href="/privacy" className="hover:text-white/60 transition-colors">Privacy</Link>
+              <Link href="/terms" className="hover:text-white/60 transition-colors">Terms</Link>
+              <span className="flex items-center gap-0.5"><MapPin className="w-2.5 h-2.5 text-brand-yellow/30" /> Kolkata</span>
+            </div>
+          </div>
+        </div>
+      </footer>
+    );
+  }
+
+  /* ── Desktop footer (unchanged) ── */
   return (
-    <footer className="relative mt-0 pb-20 sm:pb-6 footer-root">
+    <footer className="relative mt-0 pb-6 footer-root">
       {/* Noise */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none z-[1]" style={{ backgroundImage: "url(/noise.svg)", backgroundRepeat: "repeat" }} />
 

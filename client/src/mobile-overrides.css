@@ -371,20 +371,7 @@
     /* Ensure high contrast */
   }
 
-  /* ==================================================
-   Footer stack
-   ================================================== */
-  footer .container {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 0.75rem !important;
-  }
-
-  footer nav,
-  footer ul {
-    width: 100% !important;
-  }
+  /* Footer: handled by dedicated mobile JSX in footer.tsx */
 }
 
 /* ==================================================
@@ -489,9 +476,7 @@
    Phase 7: Global dock clearance — all pages
    ================================================== */
 @media (max-width: 640px) {
-  footer.footer-root {
-    padding-bottom: 5rem !important; /* Match pb-20 — dock has own dark bg */
-  }
+  /* Mobile footer handles its own dock clearance via inline style */
 
   /* Ensure last content on pages isn't hidden behind dock */
   .min-h-screen > div:last-child {
@@ -523,110 +508,18 @@
 }
 
 /* ==================================================
-   Batch 1 Phase 8: Footer text and link sizing on mobile
+   Mobile footer — handled by dedicated JSX in footer.tsx
+   Only minimal overrides needed here
    ================================================== */
 @media (max-width: 768px) {
-  /* Footer description text */
-  footer .text-\\[13px\\] {
-    font-size: 12px !important;
-    line-height: 1.6 !important;
-  }
-
-  /* Footer link columns: reduce spacing between items */
-  footer ul.space-y-3 {
-    gap: 0 !important;
-  }
-  footer ul.space-y-3 > li {
-    margin-top: 0.5rem !important;
-  }
-  footer ul.space-y-3 > li:first-child {
-    margin-top: 0 !important;
-  }
-
-  /* Footer section padding: tight for one-view compact layout */
-  footer .py-12 {
-    padding-top: 1rem !important;
-    padding-bottom: 1rem !important;
-  }
-
-  /* Bengali text in footer/nav: ensure proper line-height */
-  .font-bengali {
-    line-height: 1.4 !important;
-  }
-
-  /* Social icons: compact row with touch targets */
-  footer .flex.items-center.gap-2 a {
-    min-height: 40px !important;
-    min-width: 40px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 0.375rem 0.625rem !important;
-  }
-
-  /* Brand reveal: compact on mobile */
-  .footer-brand-text {
-    font-size: clamp(1.5rem, 5.5vw, 2.5rem) !important;
-  }
-
-  /* Phase 10: Marquee strip — compact on mobile */
+  /* Marquee: compact */
   .footer-marquee-wrap {
     padding-top: 0.25rem !important;
     padding-bottom: 0.25rem !important;
   }
-  .footer-marquee-wrap span,
-  .footer-marquee-wrap .marquee-text {
+  .footer-marquee-wrap span {
     font-size: 10px !important;
     letter-spacing: 0.1em !important;
-    gap: 4px !important;
-  }
-
-  /* Footer grid: one-view premium — stacks brand then links row */
-  footer .grid.grid-cols-1 {
-    display: grid !important;
-    grid-template-columns: 1fr !important;
-    gap: 0.5rem !important;
-  }
-
-  /* Footer brand column: compact */
-  footer .col-span-1.sm\\:col-span-5 {
-    grid-column: 1 / -1 !important; /* Full width on mobile */
-  }
-  footer .col-span-1.sm\\:col-span-5 p {
-    font-size: 11px !important;
-    line-height: 1.5 !important;
-    margin-bottom: 0.5rem !important;
-  }
-  footer .col-span-1.sm\\:col-span-5 .mb-5 {
-    margin-bottom: 0.5rem !important;
-  }
-  footer .col-span-1.sm\\:col-span-5 .mb-7 {
-    margin-bottom: 0.5rem !important;
-  }
-
-  /* Link columns: tighter */
-  footer .col-span-1 h3 {
-    font-size: 10px !important;
-    margin-bottom: 0.125rem !important;
-  }
-  footer .col-span-1 .mb-5 {
-    margin-bottom: 0.25rem !important;
-  }
-  footer ul.space-y-3 > li {
-    margin-top: 0.125rem !important;
-    margin-bottom: 0 !important;
-  }
-  footer ul.space-y-3 > li:first-child {
-    margin-top: 0 !important;
-  }
-  footer .text-\[13px\] {
-    font-size: 12px !important;
-  }
-
-  /* Copyright bar: tight */
-  footer .py-5 {
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
   }
 }
 
@@ -640,7 +533,7 @@
   }
 }
 
-/* Phase 11+12 merged into Phase 8 block above */
+/* Phase 11+12: handled by mobile footer JSX */
 
 /* ==================================================
    Phase 38: Landscape mode lock — prevent hero from

@@ -79,10 +79,12 @@ function SectionRevealTitle({ title, subtitle, accentColor = 'brand-yellow', bad
   children?: React.ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] });
   const textOpacity = useTransform(scrollYProgress, [0, 0.15, 0.35, 0.7, 0.85], [0, 0.5, 1, 1, 0.8]);
-  const blurVal = useTransform(scrollYProgress, [0, 0.15, 0.3], [6, 2, 0]);
-  const filterStr = useTransform(blurVal, (v) => `blur(${v}px)`);
+  // Skip blur on mobile for perf — only opacity transition
+  const blurVal = useTransform(scrollYProgress, [0, 0.15, 0.3], isMobile ? [0, 0, 0] : [6, 2, 0]);
+  const filterStr = useTransform(blurVal, (v) => v > 0 ? `blur(${v}px)` : 'none');
   const subOpacity = useTransform(scrollYProgress, [0.1, 0.3, 0.7, 0.85], [0, 1, 1, 0.6]);
 
   return (
@@ -581,10 +583,10 @@ const Home = () => {
             data-testid="latest-comedy-section"
             initial="hidden"
             whileInView="visible"
-            viewport={{ margin: device.isMobile ? '-20px' : '-60px', once: false }}
+            viewport={{ margin: device.isMobile ? '-20px' : '-60px', once: device.isMobile }}
             variants={{
               hidden: { opacity: 0 },
-              visible: { opacity: 1, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1], staggerChildren: device.isMobile ? 0.08 : 0.1 } },
+              visible: { opacity: 1, transition: { duration: device.isMobile ? 0.35 : 0.6, ease: [0.22, 1, 0.36, 1], staggerChildren: device.isMobile ? 0.05 : 0.1 } },
             }}
           >
 
@@ -616,21 +618,21 @@ const Home = () => {
             <motion.div
               className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-5 relative z-10"
               data-testid="latest-videos-grid"
-              variants={{ hidden: {}, visible: { transition: { staggerChildren: device.isMobile ? 0.07 : device.isTablet ? 0.08 : 0.1 } } }}
+              variants={{ hidden: {}, visible: { transition: { staggerChildren: device.isMobile ? 0.04 : device.isTablet ? 0.08 : 0.1 } } }}
               onViewportEnter={(entry) => { const el = (entry?.target ?? null) as HTMLElement | null; if (el) el.classList.add('grid-visible'); }}
             >
               {[0, 1, 2, 3].map((i) => {
                 const video = latestVideoData[i];
                 if (!video) return null;
-                const cardY = device.isMobile ? 20 : device.isTablet ? 18 : 24;
+                const cardY = device.isMobile ? 16 : device.isTablet ? 18 : 24;
                 // Phase 13: Scroll entrance tilt — desktop cards enter with subtle rotateX then spring flat
                 const scrollTilt = device.isDesktop && !device.prefersReducedMotion ? 4 : 0;
                 return (
                   <TiltCard
                     key={video.videoId + i}
                     variants={{
-                      hidden: { opacity: 0, y: cardY, scale: device.isMobile ? 0.92 : 1, rotateX: scrollTilt },
-                      visible: { opacity: 1, y: 0, scale: 1, rotateX: 0, transition: device.isMobile ? { type: 'spring', stiffness: 300, damping: 24, mass: 0.8 } : { duration: 0.55, ease: [0.22, 1, 0.36, 1] } }
+                      hidden: { opacity: 0, y: cardY, scale: device.isMobile ? 0.96 : 1, rotateX: scrollTilt },
+                      visible: { opacity: 1, y: 0, scale: 1, rotateX: 0, transition: device.isMobile ? { duration: 0.3, ease: [0.22, 1, 0.36, 1] } : { duration: 0.55, ease: [0.22, 1, 0.36, 1] } }
                     }}
                     tiltEnabled={device.isDesktop && !device.prefersReducedMotion}
                     style={device.isDesktop ? { perspective: 600 } : undefined}
@@ -657,10 +659,10 @@ const Home = () => {
             data-testid="loved-comedy-section"
             initial="hidden"
             whileInView="visible"
-            viewport={{ margin: device.isMobile ? '-20px' : '-60px', once: false }}
+            viewport={{ margin: device.isMobile ? '-20px' : '-60px', once: device.isMobile }}
             variants={{
               hidden: { opacity: 0 },
-              visible: { opacity: 1, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1], staggerChildren: device.isMobile ? 0.08 : 0.1 } },
+              visible: { opacity: 1, transition: { duration: device.isMobile ? 0.35 : 0.6, ease: [0.22, 1, 0.36, 1], staggerChildren: device.isMobile ? 0.05 : 0.1 } },
             }}
           >
 
@@ -693,21 +695,21 @@ const Home = () => {
             <motion.div
               className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-5 relative z-10"
               data-testid="loved-videos-grid"
-              variants={{ hidden: {}, visible: { transition: { staggerChildren: device.isMobile ? 0.07 : device.isTablet ? 0.08 : 0.1 } } }}
+              variants={{ hidden: {}, visible: { transition: { staggerChildren: device.isMobile ? 0.04 : device.isTablet ? 0.08 : 0.1 } } }}
               onViewportEnter={(entry) => { const el = (entry?.target ?? null) as HTMLElement | null; if (el) el.classList.add('grid-visible'); }}
             >
               {[0, 1, 2, 3].map((i) => {
                 const video = popularVideoData[i];
                 if (!video) return null;
-                const cardY = device.isMobile ? 20 : device.isTablet ? 18 : 24;
+                const cardY = device.isMobile ? 16 : device.isTablet ? 18 : 24;
                 // Phase 13: Scroll entrance tilt (reverse cascade — slight rotateX tilt on enter)
                 const scrollTilt = device.isDesktop && !device.prefersReducedMotion ? -3 : 0;
                 return (
                   <TiltCard
                     key={video.videoId + i}
                     variants={{
-                      hidden: { opacity: 0, y: cardY, x: device.isMobile ? 0 : 15, scale: device.isMobile ? 0.92 : 1, rotateX: scrollTilt },
-                      visible: { opacity: 1, y: 0, x: 0, scale: 1, rotateX: 0, transition: device.isMobile ? { type: 'spring', stiffness: 300, damping: 24, mass: 0.8 } : { duration: 0.55, ease: [0.22, 1, 0.36, 1] } }
+                      hidden: { opacity: 0, y: cardY, x: device.isMobile ? 0 : 15, scale: device.isMobile ? 0.96 : 1, rotateX: scrollTilt },
+                      visible: { opacity: 1, y: 0, x: 0, scale: 1, rotateX: 0, transition: device.isMobile ? { duration: 0.3, ease: [0.22, 1, 0.36, 1] } : { duration: 0.55, ease: [0.22, 1, 0.36, 1] } }
                     }}
                     tiltEnabled={device.isDesktop && !device.prefersReducedMotion}
                     style={device.isDesktop ? { perspective: 600 } : undefined}

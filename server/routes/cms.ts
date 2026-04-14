@@ -1,6 +1,7 @@
 import { Express } from "express";
 import { storage } from "../storage";
 import { youtubeService } from "../youtubeService";
+import { instagramService } from "../instagramService";
 import { memeService } from "../memeService";
 import { insertBlogPostSchema } from "@shared/schema";
 import { z } from "zod";
@@ -41,6 +42,32 @@ export function registerCmsRoutes(app: Express) {
             // Popular data is refreshed as part of the same cycle as latest
             res.json(youtubeService.getPopular(4));
         } catch { res.status(200).json([]); }
+    });
+
+    // Instagram Reels API (permanent Graph API integration)
+    app.get("/api/instagram/latest", async (req, res) => {
+        try {
+            const userId = process.env.INSTAGRAM_USER_ID;
+            const token = process.env.INSTAGRAM_ACCESS_TOKEN;
+            if (!userId || !token) return res.json([]);
+            instagramService.start(userId, token);
+            await instagramService.forceRefresh();
+            res.json(instagramService.getLatest(4));
+        } catch { res.status(200).json([]); }
+    });
+
+    app.get("/api/instagram/popular", async (req, res) => {
+        try {
+            const userId = process.env.INSTAGRAM_USER_ID;
+            const token = process.env.INSTAGRAM_ACCESS_TOKEN;
+            if (!userId || !token) return res.json([]);
+            instagramService.start(userId, token);
+            res.json(instagramService.getPopular(4));
+        } catch { res.status(200).json([]); }
+    });
+
+    app.get("/api/instagram/info", async (_req, res) => {
+        res.json(instagramService.getInfo());
     });
 
     // Meme logic

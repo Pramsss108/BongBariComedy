@@ -1,177 +1,297 @@
-# Instagram Migration Plan — Replace YouTube with Instagram
+# Instagram Migration Plan — Permanent Instagram Graph API
 
 > **Status:** Planning → Ready for execution  
 > **Priority:** HIGH — Instagram driving more audience than YouTube  
 > **Scope:** Homepage hero, video sections, CTAs, footer, backend API  
+> **Approach:** 100% PERMANENT — Instagram Graph API with auto-refresh tokens (mirrors YouTube service architecture)
 
 ---
 
 ## 🎯 Goal
 
-Replace YouTube as the primary content platform with Instagram Reels. YouTube stays as a secondary link — Instagram becomes the hero, the grid, the CTAs.
+Replace YouTube as the primary content platform with Instagram Reels using the **permanent Instagram Graph API** — automatic fetching of latest + most viral reels, auto-refreshing tokens, zero manual curation. YouTube stays as a secondary footer link.
+
+---
+
+## 🔑 Instagram Graph API — Permanent Setup Guide
+
+### Prerequisites (One-Time Setup)
+
+#### Step 1: Convert to Instagram Professional Account
+1. Open Instagram app → Settings → Account → Switch to Professional Account
+2. Choose **Business** (not Creator) for full API access
+3. Connect to a **Facebook Page** (create one if needed — can be hidden from public)
+4. Account: `@thebongbari`
+
+#### Step 2: Create Meta Developer App
+1. Go to https://developers.facebook.com/apps/
+2. Click **Create App** → Choose **Business** type
+3. App name: `BongBari Website` (or similar)
+4. Add product: **Instagram Graph API** (or "Instagram API with Facebook Login")
+5. Note your **App ID** and **App Secret**
+
+#### Step 3: Get Long-Lived Access Token (60 Days, Auto-Refreshable)
+
+**Method A: Graph API Explorer (Fastest for Own Account)**
+1. Go to https://developers.facebook.com/tools/explorer/
+2. Select your app from dropdown
+3. Click **Generate Access Token**
+4. Select permissions:
+   - `instagram_basic` — Read profile + media
+   - `instagram_manage_insights` — Get engagement metrics (likes, comments, plays)
+   - `pages_show_list` — Access linked Facebook Page
+   - `pages_read_engagement` — Read page engagement data
+5. Click **Generate** → Authorize → Copy the **short-lived token**
+
+**Method B: Business Login for Instagram (Recommended for Production)**
+1. In App Dashboard → Instagram → API Setup with Instagram Login
+2. Note the **Instagram App ID** and **Instagram App Secret**
+3. Redirect URI: `http://79.76.110.66:5000/api/instagram/callback` (Oracle VM)
+4. Authorization URL:
+   ```
+   https://api.instagram.com/oauth/authorize
+     ?client_id={instagram-app-id}
+     &redirect_uri={redirect-uri}
+     &scope=instagram_business_basic,instagram_business_manage_insights
+     &response_type=code
+   ```
+5. Exchange code for token at server endpoint
+
+#### Step 4: Exchange Short-Lived → Long-Lived Token
+
+**For Facebook Login tokens:**
+```
+GET https://graph.facebook.com/v25.0/oauth/access_token
+  ?grant_type=fb_exchange_token
+  &client_id={app-id}
+  &client_secret={app-secret}
+  &fb_exchange_token={short-lived-token}
+```
+
+**For Instagram Login tokens:**
+```
+GET https://graph.instagram.com/access_token
+  ?grant_type=ig_exchange_token
+  &client_secret={instagram-app-secret}
+  &access_token={short-lived-token}
+```
+
+Returns a **60-day long-lived token**. Our server will auto-refresh it before expiry.
+
+#### Step 5: Get Your Instagram User ID
+```
+GET https://graph.instagram.com/me?fields=id,username&access_token={long-lived-token}
+```
+Response: `{ "id": "17841400XXXXXXX", "username": "thebongbari" }`
+
+#### Step 6: Set Environment Variables
+Add to `server/.env`:
+```env
+INSTAGRAM_ACCESS_TOKEN=your-long-lived-token-here
+INSTAGRAM_USER_ID=17841400XXXXXXX
+INSTAGRAM_APP_ID=your-app-id
+INSTAGRAM_APP_SECRET=your-app-secret
+```
+
+### API Endpoints We Use
+
+#### Fetch All Media (Latest Reels)
+```
+GET https://graph.instagram.com/{user-id}/media
+  ?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count
+  &access_token={token}
+```
+- Returns up to 10K most recent media
+- Filter `media_type === 'VIDEO'` for reels only
+- Sort by `timestamp` desc → **Latest Reels**
+- Supports time-based pagination with `since` and `until`
+
+#### Fetch Engagement (Most Viral)
+Same endpoint, but sort by engagement score:
+```
+engagement = like_count + (comments_count * 3)
+```
+Higher weight on comments (indicates deeper engagement). Sort desc → **Most Viral Reels**
+
+#### Auto-Refresh Token (Every 50 Days)
+
+**For Instagram Login tokens:**
+```
+GET https://graph.instagram.com/refresh_access_token
+  ?grant_type=ig_refresh_token
+  &access_token={long-lived-token}
+```
+
+**For Facebook Login tokens:**
+```
+GET https://graph.facebook.com/v25.0/oauth/access_token
+  ?grant_type=fb_exchange_token
+  &client_id={app-id}
+  &client_secret={app-secret}
+  &fb_exchange_token={current-long-lived-token}
+```
+
+Returns a **new 60-day token**. Our `instagramService.ts` handles this automatically.
+
+### Access Level: Standard (No App Review Needed)
+Since we only access **our own account** (`@thebongbari`), we only need **Standard Access** — no Meta App Review, no Business Verification. This works permanently for:
+- Reading our own media (reels, posts)
+- Getting engagement metrics (likes, comments)
+- Refreshing tokens indefinitely
+
+### Rate Limits
+- `4800 × impressions` calls per 24-hour rolling window
+- For a typical account: ~4,800–48,000 calls/day (more than enough)
+- Our service refreshes every 2 minutes = ~720 calls/day (well within limits)
 
 ---
 
 ## 📋 Migration Phases
 
-### Phase 1: Hero Section (High Impact)
-**Current:** YouTube video embed (iframe, nocookie domain, tap-to-watch)  
-**Target:** Instagram Reel embed or native video player
+### Phase 1: Backend API (Foundation — Do First)
+**Current:** YouTube Data API v3 + RSS scraping (`youtubeService.ts`)  
+**Target:** Instagram Graph API with identical architecture (`instagramService.ts`)
 
 | Task | File | Details |
 |------|------|---------|
-| Replace hero YouTube iframe with Instagram Reel embed | `client/src/pages/home.tsx` L447-468 | Use `instagram.com/reel/{id}/embed` or self-hosted MP4 for speed |
-| Update "Tap to Watch" thumbnail | `home.tsx` L441 | Replace `i.ytimg.com` thumbnail with IG reel cover or custom poster |
-| Change Subscribe CTA → Follow on Instagram | `home.tsx` L518 | Red YouTube button → Gradient IG button with IG icon |
-| Remove YouTube icon import | `home.tsx` L21 | Replace `Youtube` with `Instagram` from lucide-react |
+| Create Instagram service | `server/instagramService.ts` | Class-based, 2-min refresh, auto token refresh, latest + popular |
+| Add API routes | `server/routes/cms.ts` | `/api/instagram/latest` + `/api/instagram/popular` |
+| Set env vars | `server/.env` | `INSTAGRAM_ACCESS_TOKEN`, `INSTAGRAM_USER_ID`, `INSTAGRAM_APP_ID`, `INSTAGRAM_APP_SECRET` |
 
-**Decision Point:** Instagram embeds are SLOW (heavy iframe). Options:
-1. **Self-hosted MP4** (fastest — host 1-2 featured reels as MP4 on the server/CDN) ⭐ RECOMMENDED
-2. **Instagram oEmbed** (requires Facebook API token, still iframe-based)
-3. **Instagram embed iframe** (no API needed, but heavy and may break)
-
-### Phase 2: Video Grid Sections (Latest Comedy + Most Loved)
-**Current:** YouTube Shorts cards with thumbnails → iframe on click  
-**Target:** Instagram Reels grid
-
-| Task | File | Details |
-|------|------|---------|
-| Create `InstagramReel` component | New: `client/src/components/instagram-reel.tsx` | Thumbnail + play overlay → opens IG reel in new tab (or inline embed) |
-| Replace `YouTubeShort` usage in home.tsx | `home.tsx` L636, L713 | Swap `<YouTubeShort>` → `<InstagramReel>` |
-| Update fallback video data | `home.tsx` L320-327 | Replace YouTube `videoId`s with Instagram reel shortcodes |
-| Update section titles/links | `home.tsx` L605, L682 | "View All on YouTube" → "View All on Instagram" |
-
-**Data structure change:**
+**Service Architecture (mirrors YouTubeService):**
 ```typescript
-// Before (YouTube)
-interface YouTubeVideo {
-  videoId: string;      // YouTube video ID
-  title: string;
-  thumbnail: string;    // i.ytimg.com URL
-  publishedAt: string;
-}
-
-// After (Instagram)
-interface InstagramReel {
-  reelId: string;       // Instagram reel shortcode (e.g., "C1234abcdef")
-  title: string;        // Caption or custom title
-  thumbnail: string;    // CDN-hosted thumbnail (IG thumbnails need auth)
-  publishedAt: string;
-  permalink: string;    // Full Instagram URL
+class InstagramService {
+  // Identical pattern to YouTubeService
+  start(userId, token)     // Begin auto-refresh cycle
+  stop()                   // Stop interval
+  getLatest(count)         // Recent reels by timestamp
+  getPopular(count)        // Most viral by engagement score
+  forceRefresh()           // Immediate fetch
+  refreshToken()           // Auto-refresh before 60-day expiry
 }
 ```
 
-### Phase 3: Backend API Migration
-**Current:** YouTube Data API v3 + RSS scraping  
-**Target:** Instagram Graph API (or manual curation)
+### Phase 2: Hero Section (High Impact)
+**Current:** YouTube video embed (iframe, nocookie domain, tap-to-watch)  
+**Target:** Instagram Reel embed or self-hosted MP4
 
 | Task | File | Details |
 |------|------|---------|
-| Create IG service | New: `server/instagramService.ts` | Fetch reels via Graph API or manual JSON |
-| Update API routes | `server/routes/cms.ts` | `/api/youtube/latest` → `/api/instagram/latest` |
-| Update client queries | `home.tsx` L310-318 | Change query URLs to `/api/instagram/*` |
-| New env vars | `server/.env` | `INSTAGRAM_ACCESS_TOKEN`, `INSTAGRAM_USER_ID` |
+| Replace hero YouTube iframe with IG reel | `home.tsx` | Use self-hosted MP4 (fastest) or `instagram.com/reel/{id}/embed` |
+| Update "Tap to Watch" thumbnail | `home.tsx` | Use `thumbnail_url` from Graph API (CDN-fresh) |
+| Change Subscribe CTA → Follow on Instagram | `home.tsx` | Red YouTube button → Gradient IG button with IG icon |
+| Replace YouTube icon import | `home.tsx` | `Youtube` → `Instagram` from lucide-react |
 
-**Instagram API Options:**
-1. **Instagram Graph API** (requires Facebook Business account + long-lived token)
-   - Endpoint: `GET /{user-id}/media?fields=id,caption,media_url,thumbnail_url,permalink,timestamp&media_type=VIDEO`
-   - Token refresh: every 60 days
-   - Pros: Official, reliable
-   - Cons: Needs Facebook Business setup
-   
-2. **Manual curation** (no API needed) ⭐ SIMPLEST
-   - Hardcode 4-8 featured reels in a JSON config file
-   - Update monthly or when new content drops
-   - Pros: Zero API dependency, instant, free
-   - Cons: Manual updates needed
+**Hero Strategy:** Self-hosted MP4 for speed. The `instagramService` provides the reel URL — we can cache the actual video file on the Oracle VM for instant loading.
 
-3. **Hybrid** (recommended for v1)
-   - Start with manual curation (Phase 1)
-   - Add Graph API later when token setup is done (Phase 2)
+### Phase 3: Video Grid Sections
+**Current:** YouTube Shorts cards with thumbnails → iframe on click  
+**Target:** Instagram Reels grid powered by live API data
+
+| Task | File | Details |
+|------|------|---------|
+| Create `InstagramReel` component | `client/src/components/instagram-reel.tsx` | Thumbnail + play overlay → opens IG reel in new tab |
+| Replace `YouTubeShort` in home.tsx | `home.tsx` | Swap to `<InstagramReel>` using API data |
+| Update useQuery hooks | `home.tsx` | `/api/youtube/*` → `/api/instagram/*` |
+| Update section titles | `home.tsx` | "View All on YouTube" → "View All on Instagram" |
+
+**Data Structure:**
+```typescript
+interface InstagramReel {
+  reelId: string;         // Instagram media ID
+  caption: string;        // First line of caption
+  thumbnail: string;      // thumbnail_url from Graph API
+  permalink: string;      // Full instagram.com URL
+  publishedAt: string;    // ISO timestamp
+  likeCount: number;      // For engagement scoring
+  commentCount: number;   // For engagement scoring
+}
+```
 
 ### Phase 4: CTAs & Links Sitewide
 | Task | File | Details |
 |------|------|---------|
-| Hero Subscribe → Follow | `home.tsx` L515-518 | YouTube subscribe → `instagram.com/thebongbari` |
-| Footer YouTube link priority | `footer.tsx` L38 | Move Instagram to first position, YouTube secondary |
+| Hero Subscribe → Follow | `home.tsx` | YouTube subscribe → `instagram.com/thebongbari` |
+| Footer IG link priority | `footer.tsx` | Move Instagram to first position |
 | Schema.org JSON-LD | `client/index.html` | Update sameAs URLs — Instagram first |
 | Social meta tags | SEO head | og:see_also → Instagram profile |
-| Work With Us trust badges | `work-with-us.tsx` | "1M+ Views" → "500K+ Reels Views" or similar |
 
 ### Phase 5: Thumbnail Strategy
-**Problem:** Instagram doesn't provide public thumbnail URLs like YouTube does.
+**Solved by Graph API:** The `thumbnail_url` field from Graph API provides CDN-hosted thumbnails directly. No need for self-hosting.
 
-**Solutions:**
-1. **Self-hosted thumbnails** — Screenshot reel covers, host in `client/public/reels/` ⭐
-2. **Use `media_url`** from Graph API (requires token)
-3. **Use Instagram CDN** — URLs expire, NOT recommended for production
-
-**Recommended approach:** Host thumbnails as WebP in `client/public/reels/thumb-{reelId}.webp`
+- **Primary:** `thumbnail_url` from `GET /{user-id}/media` (auto-refreshed with data)
+- **Fallback:** Self-hosted WebP in `client/public/reels/` for hero/featured content
+- **CDN URLs are session-valid** — they refresh every 2 minutes with our service cycle
 
 ---
 
-## 🏗️ Implementation Order
+## 🏗️ Implementation Order (All Permanent, No Manual Steps)
 
 ```
-Week 1 (Quick Wins):
-├── 1. Replace hero CTA: Subscribe → Follow on Instagram
-├── 2. Update footer: IG link first
-├── 3. Manually curate 8 featured reels (4 latest, 4 popular)
-├── 4. Create InstagramReel component (thumbnail + external link)
-└── 5. Swap video grids to use InstagramReel
+Phase 1 — Backend (DO FIRST):
+├── 1. ✅ Create instagramService.ts (mirrors youtubeService.ts)
+├── 2. ✅ Add /api/instagram/latest + /api/instagram/popular routes
+├── 3. Get Instagram Graph API token (one-time setup, then auto-refresh)
+└── 4. Test endpoints: GET http://localhost:5000/api/instagram/latest
 
-Week 2 (Polish):
-├── 6. Self-host reel thumbnails as WebP
-├── 7. Hero section: self-hosted MP4 or IG embed
-├── 8. Update schema.org & meta tags
-└── 9. Remove YouTube service code (cleanup)
+Phase 2 — Frontend Hero:
+├── 5. Replace hero video with latest/featured IG reel
+├── 6. Subscribe CTA → Follow on Instagram
+└── 7. Update hero thumbnail source
 
-Week 3 (Optional API):
-├── 10. Setup Instagram Graph API token
-├── 11. Create instagramService.ts
-├── 12. Auto-fetch latest reels via API
-└── 13. Token refresh cron job
+Phase 3 — Frontend Grids:
+├── 8. Create InstagramReel component
+├── 9. Swap YouTubeShort → InstagramReel in Latest Comedy section
+├── 10. Swap YouTubeShort → InstagramReel in Most Loved section
+└── 11. Update useQuery URLs to /api/instagram/*
+
+Phase 4 — Sitewide:
+├── 12. Footer: IG link first, YT secondary
+├── 13. Schema.org + meta tags
+└── 14. Remove youtubeService.ts (cleanup, keep YouTube routes as legacy)
 ```
-
----
-
-## ⚠️ Key Decisions Needed
-
-| Decision | Options | Recommendation |
-|----------|---------|----------------|
-| Hero video source | Self-hosted MP4 / IG embed / Keep YT | **Self-hosted MP4** (fastest load) |
-| Reel grid behavior on click | Open in new tab / Inline embed / Modal | **Open in new tab** (simplest, sends traffic to IG) |
-| Data source | Graph API / Manual JSON / Both | **Manual JSON first**, API later |
-| Keep YouTube at all? | Remove completely / Secondary link | **Keep as secondary** in footer only |
-| Thumbnail hosting | Self-hosted WebP / CDN / API | **Self-hosted WebP** in `/public/reels/` |
 
 ---
 
 ## 📂 Files to Create/Modify
 
 ### New Files
+- `server/instagramService.ts` — Permanent IG Graph API service (auto-refresh tokens + data)
 - `client/src/components/instagram-reel.tsx` — Reel card component
-- `client/src/data/featured-reels.ts` — Manual reel curation data
-- `client/public/reels/` — Thumbnail directory
-- `server/instagramService.ts` — (Phase 3, optional)
 
 ### Modified Files
+- `server/routes/cms.ts` — Add `/api/instagram/latest` + `/api/instagram/popular`
+- `server/.env` — Add `INSTAGRAM_ACCESS_TOKEN`, `INSTAGRAM_USER_ID`, `INSTAGRAM_APP_ID`, `INSTAGRAM_APP_SECRET`
 - `client/src/pages/home.tsx` — Hero, sections, CTAs, data queries
 - `client/src/components/footer.tsx` — Social link priority
 - `client/index.html` — Schema.org, meta tags
-- `server/routes/cms.ts` — New API endpoints
-- `shared/schema.ts` — New types (if Graph API)
 
-### Deprecated (can remove after migration)
-- `client/src/components/youtube-short.tsx` — Replace with instagram-reel.tsx
-- `server/youtubeService.ts` — Replace with instagramService.ts (or remove if manual)
+### Keep as Legacy (remove later)
+- `server/youtubeService.ts` — Keep working, YouTube routes stay functional
+- `client/src/components/youtube-short.tsx` — Replace with instagram-reel.tsx after testing
 
 ---
 
-## 🚀 Quick Start Command
+## 🔒 Security Notes
 
-To begin Phase 1 (hero CTA + footer), tell the agent:
-> "Execute Instagram migration Phase 1 — change hero Subscribe to Follow on Instagram, update footer IG link priority"
+- **NEVER commit tokens to git.** All tokens live in `server/.env` (gitignored).
+- **Token auto-refresh** runs server-side only — no tokens exposed to frontend.
+- **Standard Access** = no App Review needed for own account. Fully permanent.
+- **Rate limiting** is generous (4800 × impressions/day). Our 2-min refresh is well within limits.
 
-To begin Phase 2 (video grids), tell the agent:
-> "Execute Instagram migration Phase 2 — create InstagramReel component, swap video grids with manual reel data"
+---
+
+## 🚀 Quick Start Commands
+
+**After setting up env vars, test the API:**
+```powershell
+# Start servers
+npm run dev:live
+
+# Test Instagram API endpoints
+curl http://localhost:5000/api/instagram/latest
+curl http://localhost:5000/api/instagram/popular
+```
+
+**To begin frontend migration, tell the agent:**
+> "Execute Instagram migration Phase 2 — replace hero with Instagram, swap video grids to InstagramReel component"

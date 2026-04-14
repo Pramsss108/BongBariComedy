@@ -411,7 +411,7 @@ const Home = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
               style={device.prefersReducedMotion ? undefined : { scale: heroVideoScale, opacity: heroVideoOpacity }}
-              className={`relative w-full max-w-xl md:max-w-2xl mx-auto rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.6)] border border-white/10 cursor-pointer mb-4 md:mb-5 aspect-video flex-shrink-0 transition-all duration-500 ${enteredSite ? 'ring-2 ring-[#E53935]/60' : 'hover:shadow-[0_0_40px_rgba(229,57,53,0.3)] hover:-translate-y-1'}`}
+              className={`relative w-full max-w-xl md:max-w-2xl mx-auto rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.6)] border border-white/10 cursor-pointer mb-4 md:mb-5 aspect-video flex-shrink-0 transition-all duration-500 ${enteredSite ? 'ring-2 ring-brand-yellow/40 shadow-[0_0_30px_rgba(244,196,48,0.15)]' : 'hover:shadow-[0_0_40px_rgba(244,196,48,0.2)] hover:-translate-y-1'}`}
               onClick={() => setEnteredSite(true)}
             >
               {!enteredSite ? (

@@ -166,7 +166,7 @@ export default function Footer() {
 
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-12 sm:py-16">
           <motion.div
-            className="grid grid-cols-2 sm:grid-cols-12 gap-10 sm:gap-6"
+            className="grid grid-cols-2 sm:grid-cols-12 gap-4 sm:gap-6"
             initial="hidden"
             whileInView="visible"
             viewport={vp}
@@ -180,7 +180,7 @@ export default function Footer() {
                   <div className="absolute -inset-1.5 rounded-xl bg-brand-yellow/10 blur-lg -z-10" />
                 </div>
                 <div>
-                  <span className="text-white font-bold text-[17px] tracking-wide block leading-tight">Bong Bari</span>
+                  <span className="text-white font-bold text-[15px] sm:text-[17px] tracking-wide block leading-tight">Bong Bari</span>
                   <span className="text-white/30 text-[10px] tracking-[0.15em] uppercase font-medium">Comedy Studio</span>
                 </div>
               </div>
@@ -197,7 +197,7 @@ export default function Footer() {
                     target={s.href.startsWith("mailto:") ? undefined : "_blank"}
                     rel={s.href.startsWith("mailto:") ? undefined : "noopener noreferrer"}
                     aria-label={s.label}
-                    className={`group flex items-center gap-2 px-3 py-2 rounded-full ring-1 ring-white/[0.08] bg-white/[0.03] text-white/50 hover:text-white hover:bg-white/[0.08] transition-all duration-300 ${s.ring} ${s.glow}`}
+                    className={`group flex items-center gap-2 px-3 py-2 rounded-full ring-1 ring-white/[0.08] bg-white/[0.03] text-white/50 hover:text-white hover:bg-white/[0.08] transition-all duration-300 min-h-[44px] ${s.ring} ${s.glow}`}
                   >
                     <s.icon className={`w-4 h-4 transition-colors duration-300 ${s.text}`} />
                     <span className={`text-[11px] font-medium tracking-wide hidden sm:inline transition-colors duration-300 ${s.text}`}>{s.label}</span>
@@ -209,7 +209,7 @@ export default function Footer() {
             {/* Link Columns */}
             {linkColumns.map((col, ci) => (
               <motion.div key={col.title} variants={fadeUp} className={`col-span-1 sm:col-span-2 ${ci === 0 ? "sm:col-start-7" : ""}`}>
-                <h3 className="text-brand-yellow/90 text-[11px] font-bold uppercase tracking-[0.25em] mb-1.5">{col.title}</h3>
+                <h3 className="text-brand-yellow/90 text-xs sm:text-[11px] font-bold uppercase tracking-[0.25em] mb-1.5">{col.title}</h3>
                 <div className="w-6 h-[2px] bg-brand-yellow/30 rounded-full mb-5" />
                 <ul className="space-y-3">
                   {col.links.map((link) => (
@@ -229,7 +229,7 @@ export default function Footer() {
         <div className="footer-glow-line h-[2px] w-full" />
 
         <motion.div
-          className="max-w-7xl mx-auto px-6 sm:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px]"
+          className="max-w-7xl mx-auto px-6 sm:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs sm:text-[11px]"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={vp}

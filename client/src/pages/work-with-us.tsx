@@ -126,7 +126,7 @@ function FloatingInput({ icon: Icon, label, ...props }: { icon: any; label: stri
   return (
     <div className="relative group">
       <div className={`absolute -inset-[1px] rounded-xl opacity-0 ${focused ? 'opacity-100' : ''} bg-gradient-to-r from-brand-yellow/20 via-brand-yellow/5 to-brand-yellow/20 blur-[2px] transition-opacity duration-300 pointer-events-none`} />
-      <div className="wws-input relative flex items-center h-[44px]">
+      <div className="wws-input relative flex items-center h-[40px] sm:h-[44px]">
         <Icon className={`w-4 h-4 flex-shrink-0 transition-colors duration-200 ${focused ? 'text-brand-yellow/70' : 'text-gray-600'}`} />
         <div className="flex-1 relative ml-3">
           <span className={`absolute left-0 transition-all duration-200 pointer-events-none ${
@@ -206,7 +206,7 @@ const WorkWithUs = () => {
         </div>
 
         {/* ═══ FIRST FOLD — Hero + Form in one viewport ═══ */}
-        <div className="min-h-[100dvh] flex flex-col relative z-10 pt-[56px] sm:pt-[80px] pb-[100px] sm:pb-0">
+        <div className="min-h-[100dvh] flex flex-col relative z-10 pt-[56px] sm:pt-[80px] pb-[80px] sm:pb-0">
           <div className="flex-1 flex flex-col justify-center px-3 sm:px-6 max-w-5xl mx-auto w-full py-0 sm:py-6">
 
             {/* Compact hero — brand-style title on mobile */}
@@ -221,10 +221,10 @@ const WorkWithUs = () => {
                 <span className="text-[10px] uppercase tracking-[0.2em] text-brand-yellow/50 font-semibold">Partnerships</span>
                 <div className="h-px w-8 bg-gradient-to-l from-transparent to-brand-yellow/30" />
               </div>
-              <h1 className="footer-brand-text text-[clamp(1.4rem,6vw,2.5rem)] sm:text-3xl lg:text-4xl font-black tracking-tight leading-none">
+              <h1 className="footer-brand-text text-[clamp(1.2rem,5.5vw,2.5rem)] sm:text-3xl lg:text-4xl font-black tracking-tight leading-none">
                 Work With Us
               </h1>
-              <div className="mx-auto mt-1 h-[1.5px] w-12 sm:hidden rounded-full" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,204,0,0.4), transparent)' }} />
+              <div className="mx-auto mt-1 h-[1.5px] w-10 sm:hidden rounded-full" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,204,0,0.4), transparent)' }} />
               <p className="hidden sm:block text-xs text-gray-500 mt-1">Partner with Bong Bari for brand integrations that feel natural</p>
             </motion.div>
 
@@ -237,7 +237,7 @@ const WorkWithUs = () => {
               {/* Outer glow border */}
               <div className="relative rounded-2xl p-[1px] bg-gradient-to-br from-brand-yellow/30 via-brand-yellow/10 to-violet-500/20 shadow-[0_0_60px_-10px_rgba(244,196,48,0.15)]">
                 {/* Glass card */}
-                <div className="rounded-2xl bg-white/[0.03] backdrop-blur-2xl border border-white/[0.06] px-3 sm:px-8 py-1.5 sm:py-7">
+                <div className="rounded-2xl bg-white/[0.03] backdrop-blur-2xl border border-white/[0.06] px-3 sm:px-8 py-1 sm:py-7">
 
                   <AnimatePresence mode="wait">
                     {isSubmitted ? (
@@ -261,20 +261,20 @@ const WorkWithUs = () => {
                     ) : (
                       <motion.div key="form">
                         {/* Title row */}
-                        <div className="flex items-center gap-2.5 sm:gap-3 mb-2 sm:mb-5">
-                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-brand-yellow/10 border border-brand-yellow/20 flex items-center justify-center flex-shrink-0">
-                            <Handshake className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand-yellow" />
+                        <div className="flex items-center gap-2 sm:gap-3 mb-1.5 sm:mb-5">
+                          <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-brand-yellow/10 border border-brand-yellow/20 flex items-center justify-center flex-shrink-0">
+                            <Handshake className="w-3 h-3 sm:w-4 sm:h-4 text-brand-yellow" />
                           </div>
                           <div>
-                            <h2 className="text-sm sm:text-lg font-bold text-white leading-tight">
+                            <h2 className="text-[13px] sm:text-lg font-bold text-white leading-tight">
                               Let's <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow to-amber-300">Collaborate</span>
                             </h2>
-                            <p className="text-[9px] sm:text-[10px] text-white/40 tracking-wide">Fill in your details and we'll reach out</p>
+                            <p className="text-[8px] sm:text-[10px] text-white/40 tracking-wide">Fill in your details and we'll reach out</p>
                           </div>
                         </div>
 
                         <Form {...form}>
-                          <form onSubmit={form.handleSubmit(onSubmit)} autoComplete="off" className="space-y-2 sm:space-y-3.5">
+                          <form onSubmit={form.handleSubmit(onSubmit)} autoComplete="off" className="space-y-1.5 sm:space-y-3.5">
                             {/* Row 1: Name + Company */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                               <FormField control={form.control} name="name" render={({ field }) => (
@@ -308,7 +308,7 @@ const WorkWithUs = () => {
 
                               {/* Phone: unified wrapper — country code + input as one visual unit */}
                               <div className="relative group">
-                                <div className="wws-input relative flex items-center h-[44px] p-0 overflow-hidden">
+                                <div className="wws-input relative flex items-center h-[40px] sm:h-[44px] p-0 overflow-hidden">
                                   <FormField control={form.control} name="countryCode" render={({ field }) => (
                                     <FormItem className="flex-shrink-0">
                                       <FormControl>
@@ -344,7 +344,7 @@ const WorkWithUs = () => {
                                 <FormControl>
                                   <div className="relative group">
                                     <div className={`absolute -inset-[1px] rounded-xl opacity-0 ${focusedField === 'message' ? 'opacity-100' : ''} bg-gradient-to-r from-brand-yellow/20 via-brand-yellow/5 to-brand-yellow/20 blur-[2px] transition-opacity duration-300 pointer-events-none`} />
-                                    <div className="wws-input relative flex items-start pt-2 sm:pt-3 min-h-[40px] sm:min-h-[72px]">
+                                    <div className="wws-input relative flex items-start pt-1.5 sm:pt-3 min-h-[36px] sm:min-h-[72px]">
                                       <MessageSquare className={`w-4 h-4 flex-shrink-0 mt-0.5 transition-colors duration-200 ${focusedField === 'message' ? 'text-brand-yellow/70' : 'text-gray-600'}`} />
                                       <textarea
                                         {...field}
@@ -354,7 +354,7 @@ const WorkWithUs = () => {
                                         data-testid="input-message"
                                         onFocus={() => setFocusedField('message')}
                                         onBlur={() => setFocusedField(null)}
-                                        className="flex-1 ml-3 bg-transparent text-white text-[13px] outline-none placeholder:text-white/25 resize-none leading-relaxed"
+                                        className="flex-1 ml-3 bg-transparent text-white text-[12px] sm:text-[13px] outline-none placeholder:text-white/25 resize-none leading-snug sm:leading-relaxed"
                                       />
                                     </div>
                                   </div>
@@ -364,12 +364,12 @@ const WorkWithUs = () => {
                             )} />
 
                             {/* Submit button — premium gradient glow */}
-                            <motion.div className="pt-0 sm:pt-1" whileTap={{ scale: 0.97 }}>
+                            <motion.div className="pt-0.5 sm:pt-1" whileTap={{ scale: 0.97 }}>
                               <Button
                                 type="submit"
                                 disabled={submitCollaborationMutation.isPending}
                                 data-testid="button-submit"
-                                className="wws-submit w-full h-9 sm:h-12 rounded-xl font-semibold text-sm relative overflow-hidden"
+                                className="wws-submit w-full h-8 sm:h-12 rounded-xl font-semibold text-[13px] sm:text-sm relative overflow-hidden"
                               >
                                 {submitCollaborationMutation.isPending ? (
                                   <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}>

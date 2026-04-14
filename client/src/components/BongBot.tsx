@@ -107,8 +107,9 @@ export default function BongBot({ onOpenChange }: BongBotProps) {
 
   return (
     <motion.div
-      className="fixed bottom-20 right-4 z-[10001] select-none flex flex-col overflow-hidden"
+      className="fixed right-4 z-[10001] select-none flex flex-col overflow-hidden"
       style={{
+        bottom: 'calc(66px + env(safe-area-inset-bottom, 0px))',
         width: window.innerWidth < 640 ? 'calc(100vw - 32px)' : '350px',
         maxHeight: '60vh',
         minHeight: '400px'

@@ -17,14 +17,14 @@ const card = (delay: number, children: React.ReactNode, gradient = "from-brand-y
 
 const About = () => {
   return (
-    <div className="min-h-screen bg-[#050505] text-white relative">
+    <div className="min-h-screen bg-[#050505] text-white relative overflow-hidden">
       <title>About Us — Bong Bari</title>
       <meta name="description" content="About Bong Bari — founded by Abhijit Pramanik, operated by Dopmaine (UDYAM-WB-14-0096694), Kolkata, India." />
 
-      {/* Premium Background Glow */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-brand-yellow/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/10 rounded-full blur-[120px]" />
+      {/* Premium Background Glow — absolute on mobile (clipped by overflow-hidden), fixed on desktop */}
+      <div className="absolute sm:fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[40%] bg-brand-yellow/[0.06] sm:bg-brand-yellow/10 rounded-full blur-[120px]" />
+        <div className="absolute top-[25%] right-[-15%] w-[50%] h-[35%] bg-indigo-500/[0.04] sm:bg-indigo-500/10 rounded-full blur-[120px]" />
       </div>
 
       <main className="pt-32 pb-24 px-6 max-w-5xl mx-auto relative z-10">

@@ -18,7 +18,7 @@ import SEOHead from "@/components/seo-head";
 import Footer from "@/components/footer";
 // Removed PromoMarquee (promo API disabled)
 // Parallax removed for performance
-import { Youtube, Send, Home as HomeIcon, Users, TrendingUp, Smile, Edit3, Volume2, VolumeX, Play, Sparkles, Heart, Star, Video, Eye, Handshake } from "lucide-react";
+import { Youtube, Send, Home as HomeIcon, Users, TrendingUp, Smile, Edit3, Volume2, VolumeX, Play, Heart, Video, Eye, Handshake, Award, Flame } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { insertCollaborationRequestSchema, type CollaborationRequest } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
@@ -86,13 +86,13 @@ function SectionRevealTitle({ title, subtitle, accentColor = 'brand-yellow', bad
   const subOpacity = useTransform(scrollYProgress, [0.1, 0.3, 0.7, 0.85], [0, 1, 1, 0.6]);
 
   return (
-    <div ref={ref} className="relative mb-6 sm:mb-8">
+    <div ref={ref} className="relative mb-3 sm:mb-8">
       {badge && (
         <motion.div
-          className="flex justify-center mb-3"
+          className="flex justify-center mb-2 sm:mb-3"
           style={{ opacity: subOpacity }}
         >
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.05] border border-white/[0.08] text-[11px] font-semibold uppercase tracking-[0.2em] text-white/60">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-white/[0.05] border border-white/[0.08] text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.2em] text-white/60">
             {BadgeIcon && <BadgeIcon className="w-3 h-3" />}
             {badge}
           </span>
@@ -106,7 +106,7 @@ function SectionRevealTitle({ title, subtitle, accentColor = 'brand-yellow', bad
       </motion.div>
       {subtitle && (
         <motion.p
-          className={`text-center text-sm sm:text-base mt-2 ${/[\u0980-\u09FF]/.test(subtitle) ? 'font-bengali bengali-subtitle-glow' : 'text-gray-400 tracking-wide'}`}
+          className={`text-center text-xs sm:text-sm sm:text-base mt-1 sm:mt-2 ${/[\u0980-\u09FF]/.test(subtitle) ? 'font-bengali bengali-subtitle-glow' : 'text-gray-400 tracking-wide'}`}
           style={{ opacity: subOpacity }}
         >
           {subtitle}
@@ -398,13 +398,22 @@ const Home = () => {
       </div>
 
       {/* Main Layout - "700 Years UX" - PREMIUM GLASS & MESH GRADIENT */}
-      <div className="home-content-wrapper min-h-screen bg-[#050505] relative selection:bg-brand-yellow selection:text-black font-sans overflow-x-hidden pb-24 sm:pb-0 scroll-smooth">
+      <div className="home-content-wrapper min-h-screen bg-[#050505] relative selection:bg-brand-yellow selection:text-black font-sans overflow-x-hidden scroll-smooth">
 
-        {/* Premium Background Glow — Phase 3: parallax depth on scroll */}
+        {/* Premium Background Glow — Phase 3: parallax depth on scroll
+            Desktop: fixed full-viewport blobs with parallax
+            Mobile: absolute blobs clipped inside content wrapper (no footer bleed) */}
+        {device.isMobile ? (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+            <div className="absolute top-[5%] left-[-15%] w-[60%] h-[40%] bg-brand-yellow/[0.06] rounded-full blur-[100px]" />
+            <div className="absolute top-[30%] right-[-15%] w-[50%] h-[35%] bg-indigo-500/[0.04] rounded-full blur-[100px]" />
+          </div>
+        ) : (
         <div className="fixed inset-0 pointer-events-none">
           <motion.div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-brand-yellow/10 rounded-full blur-[80px]" style={{ y: glowYellowY, willChange: 'transform' }} />
           <motion.div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/10 rounded-full blur-[80px]" style={{ y: glowIndigoY, willChange: 'transform' }} />
         </div>
+        )}
 
         <main className="relative z-10 w-full flex flex-col items-center">
 
@@ -412,8 +421,8 @@ const Home = () => {
           {/* Phase 5: Sticky pin wrapper — hero stays pinned on desktop/tablet while content scrolls over */}
           <div ref={heroRef} className={device.isMobile ? 'w-full' : 'relative w-full'} style={device.isMobile ? undefined : { height: '115vh' }}>
             <section
-              className={`w-full flex flex-col items-center ${device.isMobile ? 'justify-start' : 'justify-center'} px-4 sm:px-6 lg:px-8 pt-20 sm:pt-20 pb-28 sm:pb-6 relative ${device.isMobile ? '' : 'sticky top-0'}`}
-              style={{ minHeight: device.isMobile ? 'calc(100dvh - 80px)' : '100svh' }}
+              className={`w-full flex flex-col items-center ${device.isMobile ? 'justify-center' : 'justify-center'} px-4 sm:px-6 lg:px-8 ${device.isMobile ? 'pt-2 pb-0' : 'pt-20 pb-6'} relative ${device.isMobile ? '' : 'sticky top-0'}`}
+              style={{ minHeight: device.isMobile ? undefined : '100svh', height: device.isMobile ? 'calc(100dvh - 56px - 70px)' : undefined }}
               data-testid="hero-section"
             >
             <motion.div
@@ -421,7 +430,7 @@ const Home = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
               style={device.prefersReducedMotion ? undefined : { scale: heroVideoScale, opacity: heroVideoOpacity }}
-              className={`relative w-full max-w-xl md:max-w-2xl mx-auto rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.6)] border border-white/10 cursor-pointer mb-4 md:mb-5 aspect-video flex-shrink-0 transition-all duration-500 ${enteredSite ? 'ring-2 ring-brand-yellow/40 shadow-[0_0_30px_rgba(244,196,48,0.15)]' : 'hover:shadow-[0_0_40px_rgba(244,196,48,0.2)] hover:-translate-y-1'}`}
+              className={`relative w-full max-w-xl md:max-w-2xl mx-auto rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.6)] border border-white/10 cursor-pointer ${device.isMobile ? 'mb-2' : 'mb-5'} aspect-video flex-shrink-0 transition-all duration-500 ${enteredSite ? 'ring-2 ring-brand-yellow/40 shadow-[0_0_30px_rgba(244,196,48,0.15)]' : 'hover:shadow-[0_0_40px_rgba(244,196,48,0.2)] hover:-translate-y-1'}`}
               onClick={() => setEnteredSite(true)}
             >
               {!enteredSite ? (
@@ -460,8 +469,8 @@ const Home = () => {
               )}
             </motion.div>
 
-            <motion.div className="text-center space-y-2 md:space-y-3 w-full max-w-2xl mx-auto" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight">
+            <motion.div className={`text-center ${device.isMobile ? 'space-y-1' : 'space-y-3'} w-full max-w-2xl mx-auto`} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}>
+              <h1 className={`${device.isMobile ? 'text-xl' : 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl'} font-extrabold tracking-tight text-white leading-tight`}>
                 <motion.span className="inline-block" style={device.prefersReducedMotion ? undefined : { y: titleAuthenticY }}>Authentic</motion.span>{' '}
                 <span className="relative inline-block pb-1">
                   <span className="text-[#F4C430] drop-shadow-[0_0_18px_rgba(244,196,48,0.22)]">Bengali</span>
@@ -492,7 +501,7 @@ const Home = () => {
                 </span>
                 {' '}<motion.span className="inline-block" style={device.prefersReducedMotion ? undefined : { y: titleComedyY }}>Comedy</motion.span>
               </h1>
-              <p className={`text-sm sm:text-base md:text-lg font-medium ${lang === 'bn' ? 'font-bengali bengali-subtitle-glow' : 'text-gray-400'}`}>{tx.heroSubtitle}</p>
+              <p className={`${device.isMobile ? 'text-xs' : 'text-sm sm:text-base md:text-lg'} font-medium ${lang === 'bn' ? 'font-bengali bengali-subtitle-glow' : 'text-gray-400'}`}>{tx.heroSubtitle}</p>
               <motion.div
                 className="flex flex-row justify-center items-center gap-3 pt-1"
                 initial={{ opacity: 0, y: 16 }}
@@ -500,10 +509,10 @@ const Home = () => {
                 transition={{ duration: 0.5, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 style={device.prefersReducedMotion ? undefined : { opacity: heroCTAOpacity, y: heroCTAY }}
               >
-                <button onClick={() => setLocation('/tools')} className="flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-[#1a1a2e]/80 hover:bg-[#1a1a2e] border border-white/15 text-white font-semibold text-sm backdrop-blur-md transition-all active:scale-95 hover:border-white/30 whitespace-nowrap">
-                  <Sparkles className="w-4 h-4 text-[#F4C430]" />Bong Kahini
+                <button onClick={() => setLocation('/tools')} className={`flex items-center justify-center gap-2 ${device.isMobile ? 'px-4 py-2.5 text-xs' : 'px-5 py-3 text-sm'} rounded-full bg-[#1a1a2e]/80 hover:bg-[#1a1a2e] border border-white/15 text-white font-semibold backdrop-blur-md transition-all active:scale-95 hover:border-white/30 whitespace-nowrap`}>
+                  <Flame className="w-4 h-4 text-[#F4C430]" />Bong Kahini
                 </button>
-                <button onClick={() => { const u = channelId ? `https://www.youtube.com/channel/${channelId}?sub_confirmation=1` : `https://www.youtube.com/@BongBari?sub_confirmation=1`; window.open(u, '_blank', 'noopener,noreferrer'); }} className="flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-[#E53935] hover:bg-[#c62828] text-white font-semibold text-sm shadow-[0_4px_20px_rgba(229,57,53,0.5)] transition-all active:scale-95 whitespace-nowrap">
+                <button onClick={() => { const u = channelId ? `https://www.youtube.com/channel/${channelId}?sub_confirmation=1` : `https://www.youtube.com/@BongBari?sub_confirmation=1`; window.open(u, '_blank', 'noopener,noreferrer'); }} className={`flex items-center justify-center gap-2 ${device.isMobile ? 'px-4 py-2.5 text-xs' : 'px-5 py-3 text-sm'} rounded-full bg-[#E53935] hover:bg-[#c62828] text-white font-semibold shadow-[0_4px_20px_rgba(229,57,53,0.5)] transition-all active:scale-95 whitespace-nowrap`}>
                   <Youtube className="w-5 h-5 fill-white" />Subscribe
                 </button>
               </motion.div>
@@ -524,61 +533,64 @@ const Home = () => {
           </div>
           {/* End Phase 5 sticky wrapper */}
 
-          {/* v4 Phase 1: Hero→Content Bridge — fills the gap with a cinematic reveal */}
+          {/* v4 Phase 1: Hero→Content Bridge — cinematic parallax reveal */}
+          {/* On mobile: pushed well below hero fold with parallax + staggered entrance */}
           <motion.div
-            className="w-full py-6 md:py-10 flex flex-col items-center justify-center text-center"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ margin: '-30px' }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className={`w-full ${device.isMobile ? 'py-6' : 'py-6 md:py-10'} flex flex-col items-center justify-center text-center`}
+            initial={{ opacity: 0, y: device.isMobile ? 40 : 12, scale: device.isMobile ? 0.95 : 1 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ margin: device.isMobile ? '-10px' : '-30px', once: false }}
+            transition={device.isMobile ? { type: 'spring', stiffness: 200, damping: 20, mass: 0.8 } : { duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           >
-            <motion.p
-              className="text-[11px] sm:text-xs uppercase tracking-[0.4em] text-white/30 font-semibold mb-3"
-              initial={{ opacity: 0, y: 8 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ margin: '-20px' }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              {tx.bridgeLabel}
-            </motion.p>
+            {!device.isMobile && (
+              <motion.p
+                className="text-[11px] sm:text-xs uppercase tracking-[0.4em] text-white/30 font-semibold mb-3"
+                initial={{ opacity: 0, y: 8 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ margin: '-20px' }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+              >
+                {tx.bridgeLabel}
+              </motion.p>
+            )}
             <motion.h2
-              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight"
-              initial={{ opacity: 0, y: 16, filter: 'blur(8px)' }}
-              whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              viewport={{ margin: '-20px' }}
-              transition={{ duration: 0.6, delay: 0.15 }}
+              className={`${device.isMobile ? 'text-lg' : 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl'} font-extrabold tracking-tight leading-tight`}
+              initial={{ opacity: 0, y: device.isMobile ? 20 : 10, filter: 'blur(8px)', scale: 0.9 }}
+              whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)', scale: 1 }}
+              viewport={{ margin: '-10px', once: false }}
+              transition={device.isMobile ? { type: 'spring', stiffness: 180, damping: 18, mass: 0.7 } : { duration: 0.5, delay: 0.1 }}
             >
               <span className="text-white">{tx.bridgeTitlePrefix} </span>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow via-amber-400 to-yellow-500">{tx.bridgeTitleAccent}</span>
             </motion.h2>
             <motion.div
-              className="w-16 h-[2px] bg-gradient-to-r from-transparent via-brand-yellow/50 to-transparent mt-4"
+              className={`${device.isMobile ? 'w-10 mt-2' : 'w-16 mt-4'} h-[2px] bg-gradient-to-r from-transparent via-brand-yellow/50 to-transparent`}
               initial={{ scaleX: 0 }}
               whileInView={{ scaleX: 1 }}
               viewport={{ margin: '-20px' }}
-              transition={{ duration: 0.5, delay: 0.3 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
             />
           </motion.div>
 
           {/* ===== LATEST COMEDY — Premium Cinematic Showcase ===== */}
           <motion.section
-            className="w-full max-w-7xl mx-auto px-6 md:px-12 pt-4 pb-10 md:pt-6 md:pb-14 relative overflow-visible"
+            className={`w-full max-w-7xl mx-auto ${device.isMobile ? 'px-3 pt-1 pb-4' : 'px-6 md:px-12 pt-4 pb-10 md:pt-6 md:pb-14'} relative overflow-visible`}
             data-testid="latest-comedy-section"
             initial="hidden"
             whileInView="visible"
-            viewport={{ margin: '-60px' }}
+            viewport={{ margin: device.isMobile ? '-20px' : '-60px', once: false }}
             variants={{
               hidden: { opacity: 0 },
-              visible: { opacity: 1, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1], staggerChildren: device.isMobile ? 0.06 : 0.1 } },
+              visible: { opacity: 1, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1], staggerChildren: device.isMobile ? 0.08 : 0.1 } },
             }}
           >
 
             {/* v4 Phase 6: Premium section header with scroll-linked blur */}
             <SectionRevealTitle
               badge={tx.latestBadge}
-              badgeIcon={Sparkles}
+              badgeIcon={Flame}
               title={
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white leading-none tracking-tight">
+                <h2 className="text-base sm:text-3xl md:text-4xl font-extrabold text-white leading-none tracking-tight">
                   {tx.latestTitlePrefix}{' '}
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow via-yellow-400 to-amber-500">{tx.latestTitleAccent}</span>
                 </h2>
@@ -599,23 +611,23 @@ const Home = () => {
 
             {/* Phase 12: Card grid cascade — stagger adapts to device tier */}
             <motion.div
-              className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-5 relative z-10"
+              className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-5 relative z-10"
               data-testid="latest-videos-grid"
-              variants={{ hidden: {}, visible: { transition: { staggerChildren: device.isMobile ? 0.04 : device.isTablet ? 0.08 : 0.1 } } }}
+              variants={{ hidden: {}, visible: { transition: { staggerChildren: device.isMobile ? 0.07 : device.isTablet ? 0.08 : 0.1 } } }}
               onViewportEnter={(entry) => { const el = (entry?.target ?? null) as HTMLElement | null; if (el) el.classList.add('grid-visible'); }}
             >
               {[0, 1, 2, 3].map((i) => {
                 const video = latestVideoData[i];
                 if (!video) return null;
-                const cardY = device.isMobile ? 12 : device.isTablet ? 18 : 24;
+                const cardY = device.isMobile ? 20 : device.isTablet ? 18 : 24;
                 // Phase 13: Scroll entrance tilt — desktop cards enter with subtle rotateX then spring flat
                 const scrollTilt = device.isDesktop && !device.prefersReducedMotion ? 4 : 0;
                 return (
                   <TiltCard
                     key={video.videoId + i}
                     variants={{
-                      hidden: { opacity: 0, y: cardY, rotateX: scrollTilt },
-                      visible: { opacity: 1, y: 0, rotateX: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } }
+                      hidden: { opacity: 0, y: cardY, scale: device.isMobile ? 0.92 : 1, rotateX: scrollTilt },
+                      visible: { opacity: 1, y: 0, scale: 1, rotateX: 0, transition: device.isMobile ? { type: 'spring', stiffness: 300, damping: 24, mass: 0.8 } : { duration: 0.55, ease: [0.22, 1, 0.36, 1] } }
                     }}
                     tiltEnabled={device.isDesktop && !device.prefersReducedMotion}
                     style={device.isDesktop ? { perspective: 600 } : undefined}
@@ -628,34 +640,24 @@ const Home = () => {
           </motion.section>
 
           {/* v4 Phase 5: Breathing spacer between Latest & Most Loved */}
-          <motion.div
-            className="w-full max-w-7xl mx-auto px-6 md:px-12 py-2"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ margin: '-20px' }}
-            transition={{ duration: 0.8 }}
-          >
+          <div className="w-full max-w-7xl mx-auto px-6 md:px-12 py-1 sm:py-2">
             <div className="flex items-center gap-4">
               <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
-              <motion.div
-                className="w-1.5 h-1.5 rounded-full bg-brand-yellow/30"
-                animate={{ opacity: [0.3, 0.7, 0.3] }}
-                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-              />
+              <div className="w-1 h-1 rounded-full bg-brand-yellow/30" />
               <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
             </div>
-          </motion.div>
+          </div>
 
           {/* ===== MOST LOVED — Premium Cinematic Showcase ===== */}
           <motion.section
-            className="w-full max-w-7xl mx-auto px-6 md:px-12 pt-4 pb-10 md:pt-6 md:pb-14 relative overflow-visible"
+            className={`w-full max-w-7xl mx-auto ${device.isMobile ? 'px-3 pt-1 pb-4' : 'px-6 md:px-12 pt-4 pb-10 md:pt-6 md:pb-14'} relative overflow-visible`}
             data-testid="loved-comedy-section"
             initial="hidden"
             whileInView="visible"
-            viewport={{ margin: '-60px' }}
+            viewport={{ margin: device.isMobile ? '-20px' : '-60px', once: false }}
             variants={{
               hidden: { opacity: 0 },
-              visible: { opacity: 1, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1], staggerChildren: device.isMobile ? 0.06 : 0.1 } },
+              visible: { opacity: 1, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1], staggerChildren: device.isMobile ? 0.08 : 0.1 } },
             }}
           >
 
@@ -665,7 +667,7 @@ const Home = () => {
               badgeIcon={Heart}
               accentColor="brand-red"
               title={
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white leading-none tracking-tight">
+                <h2 className="text-base sm:text-3xl md:text-4xl font-extrabold text-white leading-none tracking-tight">
                   {tx.lovedTitlePrefix}{' '}
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-rose-500 to-red-500">{tx.lovedTitleAccent}</span>
                 </h2>
@@ -686,23 +688,23 @@ const Home = () => {
 
             {/* Phase 17: Card grid cascade reverse — Most Loved enters from right */}
             <motion.div
-              className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-5 relative z-10"
+              className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-5 relative z-10"
               data-testid="loved-videos-grid"
-              variants={{ hidden: {}, visible: { transition: { staggerChildren: device.isMobile ? 0.04 : device.isTablet ? 0.08 : 0.1 } } }}
+              variants={{ hidden: {}, visible: { transition: { staggerChildren: device.isMobile ? 0.07 : device.isTablet ? 0.08 : 0.1 } } }}
               onViewportEnter={(entry) => { const el = (entry?.target ?? null) as HTMLElement | null; if (el) el.classList.add('grid-visible'); }}
             >
               {[0, 1, 2, 3].map((i) => {
                 const video = popularVideoData[i];
                 if (!video) return null;
-                const cardY = device.isMobile ? 12 : device.isTablet ? 18 : 24;
+                const cardY = device.isMobile ? 20 : device.isTablet ? 18 : 24;
                 // Phase 13: Scroll entrance tilt (reverse cascade — slight rotateX tilt on enter)
                 const scrollTilt = device.isDesktop && !device.prefersReducedMotion ? -3 : 0;
                 return (
                   <TiltCard
                     key={video.videoId + i}
                     variants={{
-                      hidden: { opacity: 0, y: cardY, x: device.isMobile ? 0 : 15, rotateX: scrollTilt },
-                      visible: { opacity: 1, y: 0, x: 0, rotateX: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } }
+                      hidden: { opacity: 0, y: cardY, x: device.isMobile ? 0 : 15, scale: device.isMobile ? 0.92 : 1, rotateX: scrollTilt },
+                      visible: { opacity: 1, y: 0, x: 0, scale: 1, rotateX: 0, transition: device.isMobile ? { type: 'spring', stiffness: 300, damping: 24, mass: 0.8 } : { duration: 0.55, ease: [0.22, 1, 0.36, 1] } }
                     }}
                     tiltEnabled={device.isDesktop && !device.prefersReducedMotion}
                     style={device.isDesktop ? { perspective: 600 } : undefined}
@@ -715,30 +717,44 @@ const Home = () => {
           </motion.section>
 
           {/* v4 Phase 5: Breathing spacer between Most Loved & Work with Us */}
-          <motion.div
-            className="w-full max-w-7xl mx-auto px-6 md:px-12 py-2"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ margin: '-20px' }}
-            transition={{ duration: 0.8 }}
-          >
+          <div className="w-full max-w-7xl mx-auto px-6 md:px-12 py-1 sm:py-2">
             <div className="flex items-center gap-4">
               <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
-              <motion.div
-                className="w-1.5 h-1.5 rounded-full bg-rose-400/30"
-                animate={{ opacity: [0.3, 0.7, 0.3] }}
-                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-              />
+              <div className="w-1 h-1 rounded-full bg-rose-400/30" />
               <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
             </div>
-          </motion.div>
+          </div>
 
           {/* ===== WORK WITH US — Premium Collaboration Portal ===== */}
-          <motion.div ref={workRef} className="py-6 sm:py-10 w-full px-4 sm:px-6 lg:px-8 relative" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ margin: '-60px' }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}>
-            <section className="max-w-4xl mx-auto relative pb-4 sm:pb-8" data-testid="collaboration-section">
+          {device.isMobile ? (
+            /* Mobile: Minimal CTA row — premium slide-up entrance */
+            <motion.div
+              className="w-full px-4 py-1"
+              initial={{ opacity: 0, y: 24, scale: 0.96 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              viewport={{ margin: '-10px', once: false }}
+              transition={{ type: 'spring', stiffness: 280, damping: 22 }}
+            >              <button
+                onClick={() => setLocation('/work-with-us')}
+                className="w-full relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-r from-brand-yellow/30 via-white/[0.08] to-violet-500/20 active:scale-[0.98] transition-transform"
+              >
+                <div className="rounded-2xl bg-[#0a0a0a]/95 backdrop-blur-xl flex items-center gap-4 px-5 py-4 relative overflow-hidden">
+                  <div className="absolute top-[-50%] right-[-30%] w-[50%] h-[120%] bg-brand-yellow/[0.04] rounded-full blur-[60px] pointer-events-none" />
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-yellow/20 to-brand-yellow/5 border border-brand-yellow/15 flex items-center justify-center flex-shrink-0">
+                    <Handshake className="w-5 h-5 text-brand-yellow" />
+                  </div>
+                  <div className="flex-1 text-left relative z-10">
+                    <p className="text-[14px] font-semibold text-white leading-tight">Work With Us</p>
+                    <p className="text-[11px] text-white/35 mt-0.5">Brand collabs & partnerships</p>
+                  </div>
+                  <svg className="w-4 h-4 text-white/25 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                </div>
+              </button>
+            </motion.div>
+          ) : (
+          <motion.div ref={workRef} className="py-10 w-full px-4 sm:px-6 lg:px-8 relative" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ margin: '-60px' }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}>
+            <section className="max-w-4xl mx-auto relative pb-8" data-testid="collaboration-section">
               <motion.div className="absolute inset-0 -z-10 bg-radial-glow" style={{ opacity: radialGlowOpacity }} />
-
-              {/* v4 Phase 8: Premium Work with Us header — confident, not desperate */}
               <SectionRevealTitle
                 badge={tx.workBadge}
                 badgeIcon={Handshake}
@@ -761,7 +777,7 @@ const Home = () => {
                   {[
                     { icon: Video, label: tx.trustVideos, color: 'text-red-400' },
                     { icon: Eye, label: tx.trustViews, color: 'text-blue-400' },
-                    { icon: Star, label: tx.trustCreator, color: 'text-brand-yellow' },
+                    { icon: Award, label: tx.trustCreator, color: 'text-brand-yellow' },
                   ].map((s) => (
                     <motion.div
                       key={s.label}
@@ -786,76 +802,84 @@ const Home = () => {
                   {tx.workDescription}
                 </motion.p>
               </SectionRevealTitle>
-              {/* Form card — delayed entrance + Phase 23 field reveal */}
+              /* Desktop: Full form card */
               <motion.div
-                className="form-shimmer-card relative overflow-hidden rounded-2xl sm:rounded-[2.5rem] bg-black/60 shadow-2xl border border-white/10 text-white backdrop-blur-sm"
-                initial={{ opacity: 0, y: device.isMobile ? 15 : 24 }}
+                className="form-shimmer-card relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] shadow-2xl border border-white/[0.07] text-white backdrop-blur-2xl"
+                initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-                whileHover={device.isDesktop ? { scale: 1.01, transition: { duration: 0.2 } } : undefined}
+                whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}
                 onViewportEnter={(entry) => {
                   const el = (entry?.target ?? null) as HTMLElement | null;
                   if (el) el.classList.add('form-revealed');
                 }}
               >
-                <div className="p-5 sm:p-8 md:p-12">
+                <div className="p-8 md:p-12">
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" data-testid="collaboration-form">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-2 gap-4">
                         <FormField control={form.control} name="name" render={({ field }) => (
-                          <FormItem><FormLabel>{tx.formName} <span className="text-red-500">*</span></FormLabel>
-                            <FormControl><Input placeholder="Your Name" data-testid="input-name" className="focus:ring-2 focus:ring-[#00E5FF]/40 focus:border-[#00E5FF]/40 transition-all" {...field} /></FormControl>
+                          <FormItem>
+                            <FormLabel className="text-[10px] uppercase tracking-[0.15em] text-white/40 font-semibold">{tx.formName} <span className="text-brand-yellow/60">*</span></FormLabel>
+                            <FormControl><Input placeholder="Your Name" data-testid="input-name" className="wws-input h-[48px] text-[13px] text-white placeholder:text-white/25 border-0" {...field} /></FormControl>
                             <FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="email" render={({ field }) => (
-                          <FormItem><FormLabel>Email {!hasPhone ? <span className="text-red-500">*</span> : <span className="text-gray-400">(Optional)</span>}</FormLabel>
-                            <FormControl><Input type="email" placeholder="your@email.com" data-testid="input-email" className="focus:ring-2 focus:ring-[#00E5FF]/40 focus:border-[#00E5FF]/40 transition-all" {...field} value={field.value ?? ""} /></FormControl>
+                          <FormItem>
+                            <FormLabel className="text-[10px] uppercase tracking-[0.15em] text-white/40 font-semibold">Email {!hasPhone ? <span className="text-brand-yellow/60">*</span> : <span className="text-white/20">(Optional)</span>}</FormLabel>
+                            <FormControl><Input type="email" placeholder="your@email.com" data-testid="input-email" className="wws-input h-[48px] text-[13px] text-white placeholder:text-white/25 border-0" {...field} value={field.value ?? ""} /></FormControl>
                             <FormMessage /></FormItem>
                         )} />
                       </div>
-                      <FormField control={form.control} name="phone" render={({ field }) => (
-                        <FormItem><FormLabel>{tx.formPhone} {!hasEmail ? <span className="text-red-500">*</span> : <span className="text-gray-400">(Optional)</span>}</FormLabel>
-                          <FormControl>
-                              <div className="flex gap-2 w-full" style={{ minWidth: 0 }}>
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField control={form.control} name="phone" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-[10px] uppercase tracking-[0.15em] text-white/40 font-semibold">{tx.formPhone} {!hasEmail ? <span className="text-brand-yellow/60">*</span> : <span className="text-white/20">(Optional)</span>}</FormLabel>
+                            <FormControl>
+                              <div className="wws-input flex items-center h-[48px] p-0 overflow-hidden">
                                 <Select value={field.value?.split(' ')[0] || "+91"} onValueChange={(code) => { const n = field.value?.split(' ').slice(1).join(' ') || ''; field.onChange(code + (n ? ' ' + n : '')); }}>
-                                  <SelectTrigger className="w-[90px] flex-shrink-0 text-sm" data-testid="select-country-code"><SelectValue /></SelectTrigger>
-                                  <SelectContent position="popper" className="z-[9999]">
-                                  <SelectItem value="+91">🇮🇳 +91</SelectItem>
-                                  <SelectItem value="+880">🇧🇩 +880</SelectItem>
-                                  <SelectItem value="+1">🇺🇸 +1</SelectItem>
-                                  <SelectItem value="+44">🇬🇧 +44</SelectItem>
-                                  <SelectItem value="+86">🇨🇳 +86</SelectItem>
-                                  <SelectItem value="+81">🇯🇵 +81</SelectItem>
-                                  <SelectItem value="+49">🇩🇪 +49</SelectItem>
-                                  <SelectItem value="+33">🇫🇷 +33</SelectItem>
-                                  <SelectItem value="+61">🇦🇺 +61</SelectItem>
-                                  <SelectItem value="+971">🇦🇪 +971</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <Input placeholder="Enter phone number" data-testid="input-phone" type="tel" value={field.value?.split(' ').slice(1).join(' ') || ''} onChange={(e) => { const n = e.target.value.replace(/[^0-9]/g, ''); const c = field.value?.split(' ')[0] || '+91'; field.onChange(c + (n ? ' ' + n : '')); }} onKeyPress={(e) => { if (!/[0-9]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'Tab') e.preventDefault(); }} className="flex-1 min-w-0" />
-                            </div>
-                          </FormControl>
-                          <FormMessage /></FormItem>
-                      )} />
-                      <FormField control={form.control} name="company" render={({ field }) => (
-                        <FormItem><FormLabel>{tx.formCompany} <span className="text-red-500">*</span></FormLabel>
-                          <FormControl><Input placeholder="Your Company or Brand" data-testid="input-company" {...field} value={field.value ?? ''} /></FormControl>
-                          <FormMessage /></FormItem>
-                      )} />
+                                  <SelectTrigger className="w-[88px] flex-shrink-0 text-[13px] text-white/70 border-0 bg-transparent h-full rounded-none focus:ring-0 focus:ring-offset-0" data-testid="select-country-code"><SelectValue /></SelectTrigger>
+                                  <SelectContent position="popper" className="z-[9990] bg-[#111]/95 backdrop-blur-2xl border-white/[0.08]">
+                                    <SelectItem value="+91">🇮🇳 +91</SelectItem>
+                                    <SelectItem value="+880">🇧🇩 +880</SelectItem>
+                                    <SelectItem value="+1">🇺🇸 +1</SelectItem>
+                                    <SelectItem value="+44">🇬🇧 +44</SelectItem>
+                                    <SelectItem value="+86">🇨🇳 +86</SelectItem>
+                                    <SelectItem value="+81">🇯🇵 +81</SelectItem>
+                                    <SelectItem value="+49">🇩🇪 +49</SelectItem>
+                                    <SelectItem value="+33">🇫🇷 +33</SelectItem>
+                                    <SelectItem value="+61">🇦🇺 +61</SelectItem>
+                                    <SelectItem value="+971">🇦🇪 +971</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <div className="w-px h-5 bg-white/[0.08] flex-shrink-0" />
+                                <Input placeholder="Phone number" data-testid="input-phone" type="tel" value={field.value?.split(' ').slice(1).join(' ') || ''} onChange={(e) => { const n = e.target.value.replace(/[^0-9]/g, ''); const c = field.value?.split(' ')[0] || '+91'; field.onChange(c + (n ? ' ' + n : '')); }} onKeyPress={(e) => { if (!/[0-9]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'Tab') e.preventDefault(); }} className="flex-1 min-w-0 border-0 bg-transparent h-full text-[13px] text-white placeholder:text-white/25 focus-visible:ring-0 focus-visible:ring-offset-0" />
+                              </div>
+                            </FormControl>
+                            <FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name="company" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-[10px] uppercase tracking-[0.15em] text-white/40 font-semibold">{tx.formCompany} <span className="text-brand-yellow/60">*</span></FormLabel>
+                            <FormControl><Input placeholder="Your Company or Brand" data-testid="input-company" className="wws-input h-[48px] text-[13px] text-white placeholder:text-white/25 border-0" {...field} value={field.value ?? ''} /></FormControl>
+                            <FormMessage /></FormItem>
+                        )} />
+                      </div>
                       <FormField control={form.control} name="message" render={({ field }) => (
-                        <FormItem><FormLabel>{tx.formMessage} <span className="text-gray-400">(Optional)</span></FormLabel>
-                          <FormControl><Textarea rows={4} className="min-h-[120px] resize-none text-base" placeholder="Tell us about your collaboration idea..." data-testid="textarea-message" {...field} value={field.value ?? ""} /></FormControl>
+                        <FormItem>
+                          <FormLabel className="text-[10px] uppercase tracking-[0.15em] text-white/40 font-semibold">{tx.formMessage} <span className="text-white/20">(Optional)</span></FormLabel>
+                          <FormControl><Textarea rows={3} className="wws-input min-h-[100px] resize-none text-[13px] text-white placeholder:text-white/25 border-0" placeholder="Tell us about your collaboration idea..." data-testid="textarea-message" {...field} value={field.value ?? ""} /></FormControl>
                           <FormMessage /></FormItem>
                       )} />
                       <MagneticButton
                         disabled={collaborationMutation.isPending || !isFormValid}
-                        className={`submit-btn-premium w-full py-4 rounded-2xl sm:rounded-full font-semibold text-base transition-all duration-300 no-rickshaw-sound overflow-hidden ${!isFormValid ? 'bg-gray-400 text-gray-200 cursor-not-allowed opacity-60' : 'bg-brand-red text-white hover:bg-red-600 hover:shadow-[0_0_20px_rgba(229,57,53,0.5)]'} ${collaborationMutation.isPending ? 'opacity-50' : ''}`}
+                        className={`wws-submit w-full h-12 rounded-xl font-semibold text-sm transition-all duration-300 no-rickshaw-sound overflow-hidden ${!isFormValid ? 'opacity-50 cursor-not-allowed' : ''} ${collaborationMutation.isPending ? 'opacity-50' : ''}`}
                         data-testid="button-submit-collaboration"
-                        strength={window.innerWidth < 768 ? 0 : (isFormValid ? 0.3 : 0)}
+                        strength={isFormValid ? 0.3 : 0}
                         onClick={() => isFormValid && form.handleSubmit(onSubmit)()}
                       >
-                        <Send className="mr-2 h-5 w-5" />
+                        <Send className="mr-2 h-4 w-4" />
                         {collaborationMutation.isPending ? "Sending..." : isFormValid ? tx.formSubmit : tx.formFill}
                       </MagneticButton>
                     </form>
@@ -864,6 +888,7 @@ const Home = () => {
               </motion.div>
             </section>
           </motion.div>
+          )}
         </main>
       </div>
 

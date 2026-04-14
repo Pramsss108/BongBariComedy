@@ -1,26 +1,5 @@
 /* Mobile-only overrides: keep desktop unchanged. */
 
-/* ======================================================
-   Collaboration Form: Force single-column below sm (640px)
-   Prevents Name/Email side-by-side on narrow phones.
-   ====================================================== */
-@media (max-width: 639px) {
-  [data-testid="collaboration-form"] .grid {
-    grid-template-columns: 1fr !important;
-  }
-
-  [data-testid="collaboration-form"] {
-    width: 100% !important;
-    overflow: hidden !important;
-  }
-
-  [data-testid="button-submit-collaboration"] {
-    width: 100% !important;
-    overflow: hidden !important;
-    transform: none !important;
-  }
-}
-
 @media (max-width: 768px) {
 
   /* ==================================================
@@ -38,10 +17,50 @@
    ================================================== */
   html {
     overflow-x: hidden !important;
+    background-color: #050505 !important;
+    overscroll-behavior-y: contain;
+    overscroll-behavior-x: none;
   }
 
   body {
     overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    /* Phase 9: Match html overscroll policy */
+    overscroll-behavior-x: none;
+  }
+
+  /* Phase 8: iOS Safari rubber-band defense — bounce inside dark #root */
+  #root {
+    min-height: 100dvh;
+    position: relative;
+    background-color: #050505;
+  }
+
+  /* Phase 21: iOS Safari — prevent long-press callout on dock icons */
+  nav button {
+    -webkit-touch-callout: none;
+  }
+
+  /* Hide injected Google Sign-In / gapi iframes that add scroll height outside #root */
+  body > iframe[id^="I0_"],
+  body > iframe[id^="I1_"] {
+    display: none !important;
+    height: 0 !important;
+    width: 0 !important;
+  }
+
+  /* Phase 23: Force dark background regardless of system light/dark mode */
+  @media (prefers-color-scheme: light) {
+    html, body, #root {
+      background-color: #050505 !important;
+      color-scheme: dark;
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    html, body, #root {
+      background-color: #050505 !important;
+      color-scheme: dark;
+    }
   }
 
   /* Prevent Bengali clipping and improve wrapping */
@@ -132,88 +151,11 @@
   }
 
   /* ==================================================
-   Hero & video scaling
+   Hero & video scaling — minimal, JSX handles layout
    ================================================== */
-  .hero-section {
-    /* Reduce top padding on mobile to bring buttons up */
-    padding-top: 80px !important;
-    min-height: auto !important;
-    /* Allow natural height */
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: flex-start !important;
-  }
-
   /* Force hide floating FAQ but KEEP Mobile Nav for Glass Pill */
   .floating-faq-button {
     display: none !important;
-  }
-
-  /* Text Contrast Fix & Typography Compliance */
-  .hero-section h1 {
-    /* Gradient Text per User Spec (Yellow/Red Warmth) */
-    /* Remove !important overrides handled by inline classes in home.tsx */
-    display: inline-block !important;
-    padding-bottom: 4px !important;
-  }
-
-  .hero-section p {
-    color: #475569 !important;
-    /* Slate-600 (Readable on Light) */
-    text-shadow: none !important;
-    font-size: 16px !important;
-    line-height: 1.5 !important;
-    opacity: 1 !important;
-    max-width: 90% !important;
-    margin: 0 auto !important;
-  }
-
-  /* BANGLA TEXT FIX */
-  .hero-section p.bangla-text {
-    line-height: 1.4 !important;
-    font-size: 15px !important;
-    margin-top: 4px !important;
-    margin-bottom: 8px !important;
-    color: #94a3b8 !important;
-    /* Lighter slate for contrast on dark bg */
-  }
-
-  /* HEADINGS SIZE FIX - Prevent "Small" titles */
-  section h2,
-  [data-testid="latest-videos-header"] h2,
-  [data-testid="loved-videos-header"] h2 {
-    font-size: 28px !important;
-    font-weight: 800 !important;
-    line-height: 1.2 !important;
-    letter-spacing: -0.02em !important;
-    padding-left: 12px !important;
-    /* Align with grid */
-    margin-bottom: 8px !important;
-    color: #fff !important;
-    /* We want light text on dark background from Stitch */
-  }
-
-  /* Mobile CTA Buttons - Simplified Layout */
-  .hero-section button {
-    /* Remove the forced width/max-width from previous overrides */
-    width: auto !important;
-    max-width: none !important;
-    margin-bottom: 0 !important;
-    /* Managed by container gap */
-  }
-
-  h3,
-  .text-xl {
-    font-size: 20px !important;
-    padding-left: 12px !important;
-  }
-
-  .hero-section .video-container,
-  .hero-section iframe,
-  .hero-section video {
-    width: 100% !important;
-    max-height: 40vh !important;
-    border-radius: 10px !important;
   }
 
   .youtube-short {
@@ -239,87 +181,7 @@
     font-size: 0.75rem !important;
   }
 
-  /* Removed forced white input backgrounds to restore dark theme form inputs */
-
-  /* Collaboration Form - "Normal" Light/Glass Style */
-  [data-testid="collaboration-form"] {
-    display: block !important;
-    background: transparent !important;
-    /* Let the React container handle the background */
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    border: none !important;
-    padding: 0 !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    position: relative !important;
-    z-index: 20 !important;
-    margin-bottom: 0 !important;
-  }
-
-  /* Prevent form card from overflowing on narrow phones */
-  [data-testid="collaboration-section"] {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    margin-bottom: 2rem !important;
-  }
-
-  [data-testid="collaboration-section"] > div {
-    overflow: hidden !important;
-  }
-
-  /* All form inputs must stay inside container */
-  [data-testid="collaboration-form"] input,
-  [data-testid="collaboration-form"] textarea,
-  [data-testid="collaboration-form"] select,
-  [data-testid="collaboration-form"] button {
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-  }
-
-  /* Fix phone input flex layout */
-  [data-testid="input-phone"] {
-    width: auto !important;
-    flex: 1 !important;
-    margin-bottom: 0 !important;
-  }
-
-  [data-testid="select-country-code"] {
-    min-height: 48px !important;
-    border-radius: 12px !important;
-    background: #f8fafc !important;
-  }
-
-  form label {
-    font-size: 13px !important;
-    font-weight: 700 !important;
-    color: #cbd5e1 !important;
-    /* Light text for dark form */
-    margin-bottom: 6px !important;
-    display: block !important;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  button[type="submit"] {
-    width: 100% !important;
-    border-radius: 12px !important;
-    font-weight: 800 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 1px !important;
-    padding: 18px !important;
-    background: linear-gradient(135deg, #eab308, #d97706) !important;
-    /* Yellow/Orange to match Bong motif */
-    color: white !important;
-    box-shadow: 0 4px 15px rgba(234, 179, 8, 0.3) !important;
-    margin-top: 1rem !important;
-  }
-
-  /* Removed duplicate collaboration form overrides */
-
-  [data-testid="collaboration-section"] {
-    padding-bottom: 20px !important;
-  }
+  /* Work With Us — let React component handle all form styling */
 
   /* ==================================================
    Community feed cards → single column
@@ -335,15 +197,14 @@
     margin: 0.5rem !important;
   }
 
-  /* ANTIGRAVITY GRID PROTECTION: Force 2-3 columns on mobile for Main Home Grids */
+  /* ANTIGRAVITY GRID PROTECTION: Force 2 columns on mobile for Main Home Grids */
   [data-testid="latest-videos-grid"],
   [data-testid="loved-videos-grid"] {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr) !important;
-    /* STRICT 2-COL */
-    gap: 12px !important;
-    padding-left: 16px !important;
-    padding-right: 16px !important;
+    gap: 10px !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
     width: 100% !important;
     box-sizing: border-box !important;
   }
@@ -352,114 +213,25 @@
   [data-testid="latest-videos-grid"]>div,
   [data-testid="loved-videos-grid"]>div {
     min-height: auto !important;
-    /* Allow growing */
     height: auto !important;
     background: transparent !important;
     box-shadow: none !important;
-    /* Let inner content handle shadow */
-  }
-
-  /* Titles inside Cards - STRICT COMPLIANCE with UX Standards */
-  [data-testid="youtube-short-title"],
-  .video-card h3 {
-    font-size: 16px !important;
-    /* Bumped from 14px -> 16px */
-    line-height: 1.35 !important;
-    font-weight: 600 !important;
-    padding: 4px 0 !important;
-    color: #1e293b !important;
-    /* Ensure high contrast */
   }
 
   /* Footer: handled by dedicated mobile JSX in footer.tsx */
 }
 
-/* ==================================================
-   Phase 35: Viewport height fix — svh/dvh fallback chain
-   Ensure sticky/pinned sections handle mobile browser chrome
-   ================================================== */
-@media (max-width: 768px) {
-  [data-testid="hero-section"] {
-    min-height: calc(100dvh - 76px); /* Account for glass dock height */
-  }
-}
+/* Phase 35: Hero — handled entirely by JSX now */
 
 /* ==================================================
-   Batch 2 Phase 1: Hero section — dock clearance
-   ================================================== */
-@media (max-width: 768px) {
-  [data-testid="hero-section"] {
-    padding-bottom: 1rem !important; /* Dock clearance handled by min-height calc */
-  }
-  /* Tighter hero title on mobile */
-  [data-testid="hero-section"] h1 {
-    font-size: 1.375rem !important;
-    line-height: 1.3 !important;
-  }
-  /* Reduce space between video and title */
-  [data-testid="hero-section"] .aspect-video {
-    margin-bottom: 0.5rem !important;
-  }
-}
-
-/* ==================================================
-   Phase 8 + Section gap tightening on mobile
-   ================================================== */
-@media (max-width: 768px) {
-  /* Bridge section between hero and content — compact */
-  .w-full.py-6 {
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
-  }
-  .w-full.py-6 h2 {
-    font-size: 1.125rem !important;
-    margin-bottom: 0.25rem !important;
-  }
-
-  /* Latest Comedy + Most Loved section padding */
-  [data-testid="latest-comedy-section"],
-  [data-testid="loved-comedy-section"] {
-    padding-top: 0.5rem !important;
-    padding-bottom: 1.5rem !important;
-    padding-left: 0.75rem !important;
-    padding-right: 0.75rem !important;
-  }
-
-  /* Video grids: tighter gap on mobile */
-  [data-testid="latest-videos-grid"],
-  [data-testid="loved-videos-grid"] {
-    gap: 0.625rem !important; /* 10px instead of 16px */
-  }
-
-  /* Collaboration section on homepage */
-  [data-testid="collaboration-section"] {
-    padding-bottom: 1rem !important;
-  }
-
-  /* Breathing spacer — reduce on mobile */
-  .w-full.py-2 {
-    padding-top: 0.25rem !important;
-    padding-bottom: 0.25rem !important;
-  }
-}
-
-/* ==================================================
-   Batch 1 Phase 4: Work With Us mobile compact
+   Batch B: Work With Us mobile ultra-compact
    ================================================== */
 @media (max-width: 639px) {
-  /* Reduce hero padding so form is visible sooner */
-  .min-h-\\[100dvh\\] {
-    padding-top: 64px !important;
-  }
-
-  /* Compact the hero text section */
-  .min-h-\\[100dvh\\] .text-center.mb-4 {
-    margin-bottom: 0.5rem !important;
-  }
-
-  /* Smaller hero title on mobile */
-  .min-h-\\[100dvh\\] h1 {
-    font-size: 1.375rem !important;
+  /* Ensure form inputs/buttons never overflow container */
+  .wws-input,
+  .wws-submit {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
 }
 
@@ -512,7 +284,7 @@
    Only minimal overrides needed here
    ================================================== */
 @media (max-width: 768px) {
-  /* Marquee: compact */
+  /* Marquee: compact + polished */
   .footer-marquee-wrap {
     padding-top: 0.25rem !important;
     padding-bottom: 0.25rem !important;
@@ -521,15 +293,47 @@
     font-size: 10px !important;
     letter-spacing: 0.1em !important;
   }
+  /* Tighter gaps on mobile for 10px text */
+  .footer-marquee {
+    gap: 1.5rem !important;
+  }
+  .footer-marquee > span {
+    gap: 1.5rem !important;
+  }
+  /* Slightly brighter/larger dot separators */
+  .footer-marquee > span > span:last-child {
+    width: 3px !important;
+    height: 3px !important;
+    background: rgba(255, 204, 0, 0.7) !important;
+  }
 }
 
+/* Phase 9: Section bottom clearance — handled by JSX pb-4 */
+
 /* ==================================================
-   Phase 9: Video grid bottom clearance on mobile
+   Performance: GPU compositing + touch optimization
    ================================================== */
 @media (max-width: 768px) {
-  [data-testid="latest-comedy-section"],
-  [data-testid="loved-comedy-section"] {
-    padding-bottom: 2rem !important;
+  /* GPU-accelerated card rendering */
+  [data-testid="latest-videos-grid"] > div,
+  [data-testid="loved-videos-grid"] > div {
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  /* Reduce motion complexity for low-end devices */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* Touch response — only on interactive elements, not body */
+  button, a, [role="button"] {
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
@@ -569,27 +373,10 @@
 
 /* ==================================================
    Phase 37: Form responsiveness guard
-   Tighter border-radius + reduced field stagger on mobile
    ================================================== */
 @media (max-width: 640px) {
-  [data-testid="collaboration-section"] .rounded-2xl,
-  [data-testid="collaboration-section"] .sm\\:rounded-\\[2\\.5rem\\] {
-    border-radius: 1.25rem !important;
-  }
-
-  [data-testid="select-country-code"] {
-    min-width: 90px !important;
-  }
-
-  /* Reduce form field stagger on mobile (Phase 23) */
-  .form-revealed [data-testid="collaboration-form"] > *:nth-child(1) { animation-delay: 0ms !important; }
-  .form-revealed [data-testid="collaboration-form"] > *:nth-child(2) { animation-delay: 50ms !important; }
-  .form-revealed [data-testid="collaboration-form"] > *:nth-child(3) { animation-delay: 100ms !important; }
-  .form-revealed [data-testid="collaboration-form"] > *:nth-child(4) { animation-delay: 150ms !important; }
-  .form-revealed [data-testid="collaboration-form"] > *:nth-child(5) { animation-delay: 200ms !important; }
-  .form-revealed [data-testid="collaboration-form"] > *:nth-child(6) { animation-delay: 250ms !important; }
-
-  .form-revealed [data-testid="button-submit-collaboration"] {
-    animation-delay: 300ms !important;
+  /* Soften card corners on narrow phones */
+  .rounded-2xl {
+    border-radius: 1rem !important;
   }
 }

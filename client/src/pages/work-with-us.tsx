@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import SEOHead from "@/components/seo-head";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
-import { Send, CheckCircle2, Phone, User, Building2, Mail, MessageSquare, ChevronDown, Sparkles, Zap, Palette, Share2 } from "lucide-react";
+import { Send, CheckCircle2, Phone, User, Building2, Mail, MessageSquare, ChevronDown, Zap, Palette, Share2, Handshake } from "lucide-react";
 import { useFunnySubmissionSound } from "@/hooks/useFunnySubmissionSound";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -69,10 +69,10 @@ function CountryCodeDropdown({ value, onChange }: { value: string; onChange: (v:
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="wws-input flex items-center gap-1.5 px-3 py-0 h-[44px] w-[90px] cursor-pointer select-none"
+        className="flex items-center gap-1.5 px-3 py-0 h-full w-[88px] cursor-pointer select-none bg-transparent border-none outline-none"
       >
         <span className="text-base leading-none">{selected.flag}</span>
-        <span className="text-[13px] text-white/80 font-medium">{selected.short}</span>
+        <span className="text-[13px] text-white/70 font-medium">{selected.short}</span>
         <ChevronDown className={`w-3 h-3 text-gray-500 ml-auto transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
       </button>
       <AnimatePresence>
@@ -82,10 +82,10 @@ function CountryCodeDropdown({ value, onChange }: { value: string; onChange: (v:
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="absolute top-full left-0 mt-1 w-56 rounded-xl bg-[#111]/95 backdrop-blur-2xl border border-white/[0.08] shadow-[0_16px_48px_rgba(0,0,0,0.6)] z-50 overflow-hidden"
+            className="absolute top-full left-0 mt-1 w-56 rounded-xl bg-[#111]/95 backdrop-blur-2xl border border-white/[0.08] shadow-[0_16px_48px_rgba(0,0,0,0.6)] z-[9990] overflow-hidden"
           >
             <div
-              className="max-h-56 overflow-y-auto overscroll-contain wws-scroll py-1"
+              className="max-h-[200px] overflow-y-auto overscroll-contain wws-scroll py-1"
               onWheel={e => e.stopPropagation()}
             >
               {countryCodes.map(code => (
@@ -125,12 +125,12 @@ function FloatingInput({ icon: Icon, label, ...props }: { icon: any; label: stri
   const hasValue = !!props.value;
   return (
     <div className="relative group">
-      <div className={`absolute -inset-[1px] rounded-xl opacity-0 ${focused ? 'opacity-100' : ''} bg-gradient-to-r from-brand-yellow/20 via-brand-yellow/5 to-brand-yellow/20 blur-[2px] transition-opacity duration-300`} />
-      <div className="wws-input relative flex items-center">
+      <div className={`absolute -inset-[1px] rounded-xl opacity-0 ${focused ? 'opacity-100' : ''} bg-gradient-to-r from-brand-yellow/20 via-brand-yellow/5 to-brand-yellow/20 blur-[2px] transition-opacity duration-300 pointer-events-none`} />
+      <div className="wws-input relative flex items-center h-[44px]">
         <Icon className={`w-4 h-4 flex-shrink-0 transition-colors duration-200 ${focused ? 'text-brand-yellow/70' : 'text-gray-600'}`} />
         <div className="flex-1 relative ml-3">
           <span className={`absolute left-0 transition-all duration-200 pointer-events-none ${
-            focused || hasValue ? 'text-[9px] -top-1.5 text-brand-yellow/60 font-semibold tracking-wider uppercase' : 'text-[13px] top-1/2 -translate-y-1/2 text-gray-500'
+            focused || hasValue ? 'text-[9px] -top-1.5 text-brand-yellow/60 font-semibold tracking-[0.15em] uppercase' : 'text-[13px] top-1/2 -translate-y-1/2 text-white/30'
           }`}>{label}</span>
           <input
             {...props}
@@ -198,45 +198,46 @@ const WorkWithUs = () => {
         canonical="/work-with-us"
       />
 
-      <div className="min-h-screen bg-[#050505] text-white relative">
+      <div className="min-h-screen bg-[#050505] text-white relative overflow-hidden">
         {/* Ambient background */}
-        <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute sm:fixed inset-0 pointer-events-none">
           <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-brand-yellow/[0.06] rounded-full blur-[140px]" />
-          <div className="absolute bottom-[-30%] right-[-10%] w-[45%] h-[50%] bg-violet-500/[0.04] rounded-full blur-[140px]" />
+          <div className="absolute top-[30%] sm:bottom-[-30%] sm:top-auto right-[-10%] w-[45%] h-[50%] bg-violet-500/[0.04] rounded-full blur-[140px]" />
         </div>
 
         {/* ═══ FIRST FOLD — Hero + Form in one viewport ═══ */}
-        <div className="min-h-[100dvh] flex flex-col relative z-10 pt-[72px] sm:pt-[80px]">
-          <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 max-w-5xl mx-auto w-full py-4 sm:py-6">
+        <div className="min-h-[100dvh] flex flex-col relative z-10 pt-[56px] sm:pt-[80px] pb-[100px] sm:pb-0">
+          <div className="flex-1 flex flex-col justify-center px-3 sm:px-6 max-w-5xl mx-auto w-full py-0 sm:py-6">
 
-            {/* Compact hero */}
+            {/* Compact hero — brand-style title on mobile */}
             <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="text-center mb-4 sm:mb-6"
+              initial={{ opacity: 0, scale: 0.92, filter: 'blur(10px)' }}
+              animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+              transition={{ type: 'spring', stiffness: 180, damping: 18, mass: 0.8 }}
+              className="text-center mb-1 sm:mb-6"
             >
-              <div className="flex items-center justify-center gap-2 mb-1">
+              <div className="hidden sm:flex items-center justify-center gap-2 mb-1">
                 <div className="h-px w-8 bg-gradient-to-r from-transparent to-brand-yellow/30" />
                 <span className="text-[10px] uppercase tracking-[0.2em] text-brand-yellow/50 font-semibold">Partnerships</span>
                 <div className="h-px w-8 bg-gradient-to-l from-transparent to-brand-yellow/30" />
               </div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
-                Work <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow via-amber-300 to-yellow-500">With Us</span>
+              <h1 className="footer-brand-text text-[clamp(1.4rem,6vw,2.5rem)] sm:text-3xl lg:text-4xl font-black tracking-tight leading-none">
+                Work With Us
               </h1>
-              <p className="text-[11px] sm:text-xs text-gray-500 mt-1">Partner with Bong Bari for brand integrations that feel natural</p>
+              <div className="mx-auto mt-1 h-[1.5px] w-12 sm:hidden rounded-full" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,204,0,0.4), transparent)' }} />
+              <p className="hidden sm:block text-xs text-gray-500 mt-1">Partner with Bong Bari for brand integrations that feel natural</p>
             </motion.div>
 
             {/* ── The Form Card ── */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+              initial={{ opacity: 0, y: 24, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ type: 'spring', stiffness: 180, damping: 22, mass: 0.8, delay: 0.1 }}
             >
               {/* Outer glow border */}
               <div className="relative rounded-2xl p-[1px] bg-gradient-to-br from-brand-yellow/30 via-brand-yellow/10 to-violet-500/20 shadow-[0_0_60px_-10px_rgba(244,196,48,0.15)]">
                 {/* Glass card */}
-                <div className="rounded-2xl bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/[0.04] px-4 sm:px-8 py-5 sm:py-7">
+                <div className="rounded-2xl bg-white/[0.03] backdrop-blur-2xl border border-white/[0.06] px-3 sm:px-8 py-1.5 sm:py-7">
 
                   <AnimatePresence mode="wait">
                     {isSubmitted ? (
@@ -260,22 +261,22 @@ const WorkWithUs = () => {
                     ) : (
                       <motion.div key="form">
                         {/* Title row */}
-                        <div className="flex items-center gap-3 mb-5">
-                          <div className="w-8 h-8 rounded-lg bg-brand-yellow/10 border border-brand-yellow/20 flex items-center justify-center flex-shrink-0">
-                            <Sparkles className="w-4 h-4 text-brand-yellow" />
+                        <div className="flex items-center gap-2.5 sm:gap-3 mb-2 sm:mb-5">
+                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-brand-yellow/10 border border-brand-yellow/20 flex items-center justify-center flex-shrink-0">
+                            <Handshake className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand-yellow" />
                           </div>
                           <div>
-                            <h2 className="text-base sm:text-lg font-bold text-white leading-tight">
+                            <h2 className="text-sm sm:text-lg font-bold text-white leading-tight">
                               Let's <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow to-amber-300">Collaborate</span>
                             </h2>
-                            <p className="text-[10px] text-gray-500">Fill in your details and we'll reach out</p>
+                            <p className="text-[9px] sm:text-[10px] text-white/40 tracking-wide">Fill in your details and we'll reach out</p>
                           </div>
                         </div>
 
                         <Form {...form}>
-                          <form onSubmit={form.handleSubmit(onSubmit)} autoComplete="off" className="space-y-3.5">
+                          <form onSubmit={form.handleSubmit(onSubmit)} autoComplete="off" className="space-y-2 sm:space-y-3.5">
                             {/* Row 1: Name + Company */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                               <FormField control={form.control} name="name" render={({ field }) => (
                                 <FormItem>
                                   <FormControl>
@@ -295,7 +296,7 @@ const WorkWithUs = () => {
                             </div>
 
                             {/* Row 2: Email + Phone (country code + number) */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                               <FormField control={form.control} name="email" render={({ field }) => (
                                 <FormItem>
                                   <FormControl>
@@ -305,23 +306,35 @@ const WorkWithUs = () => {
                                 </FormItem>
                               )} />
 
-                              {/* Phone: country dropdown + input */}
-                              <div className="flex gap-2">
-                                <FormField control={form.control} name="countryCode" render={({ field }) => (
-                                  <FormItem>
-                                    <FormControl>
-                                      <CountryCodeDropdown value={field.value} onChange={field.onChange} />
-                                    </FormControl>
-                                  </FormItem>
-                                )} />
-                                <FormField control={form.control} name="phoneNumber" render={({ field }) => (
-                                  <FormItem className="flex-1">
-                                    <FormControl>
-                                      <FloatingInput icon={Phone} label="Phone Number" data-testid="input-phone" {...field} />
-                                    </FormControl>
-                                    <FormMessage className="text-[11px] mt-1" />
-                                  </FormItem>
-                                )} />
+                              {/* Phone: unified wrapper — country code + input as one visual unit */}
+                              <div className="relative group">
+                                <div className="wws-input relative flex items-center h-[44px] p-0 overflow-hidden">
+                                  <FormField control={form.control} name="countryCode" render={({ field }) => (
+                                    <FormItem className="flex-shrink-0">
+                                      <FormControl>
+                                        <CountryCodeDropdown value={field.value} onChange={field.onChange} />
+                                      </FormControl>
+                                    </FormItem>
+                                  )} />
+                                  <div className="w-px h-5 bg-white/[0.08] flex-shrink-0" />
+                                  <FormField control={form.control} name="phoneNumber" render={({ field }) => (
+                                    <FormItem className="flex-1 min-w-0">
+                                      <FormControl>
+                                        <input
+                                          {...field}
+                                          type="tel"
+                                          placeholder="Phone Number"
+                                          autoComplete="new-password"
+                                          data-lpignore="true"
+                                          data-form-type="other"
+                                          data-testid="input-phone"
+                                          className="w-full h-full bg-transparent text-white text-[13px] outline-none px-3 placeholder:text-white/25 wws-autofill-fix"
+                                        />
+                                      </FormControl>
+                                      <FormMessage className="text-[11px] mt-1" />
+                                    </FormItem>
+                                  )} />
+                                </div>
                               </div>
                             </div>
 
@@ -330,18 +343,18 @@ const WorkWithUs = () => {
                               <FormItem>
                                 <FormControl>
                                   <div className="relative group">
-                                    <div className={`absolute -inset-[1px] rounded-xl opacity-0 ${focusedField === 'message' ? 'opacity-100' : ''} bg-gradient-to-r from-brand-yellow/20 via-brand-yellow/5 to-brand-yellow/20 blur-[2px] transition-opacity duration-300`} />
-                                    <div className="wws-input relative flex items-start pt-3">
+                                    <div className={`absolute -inset-[1px] rounded-xl opacity-0 ${focusedField === 'message' ? 'opacity-100' : ''} bg-gradient-to-r from-brand-yellow/20 via-brand-yellow/5 to-brand-yellow/20 blur-[2px] transition-opacity duration-300 pointer-events-none`} />
+                                    <div className="wws-input relative flex items-start pt-2 sm:pt-3 min-h-[40px] sm:min-h-[72px]">
                                       <MessageSquare className={`w-4 h-4 flex-shrink-0 mt-0.5 transition-colors duration-200 ${focusedField === 'message' ? 'text-brand-yellow/70' : 'text-gray-600'}`} />
                                       <textarea
                                         {...field}
-                                        rows={2}
+                                        rows={1}
                                         autoComplete="off"
                                         placeholder="Tell us about your collaboration idea..."
                                         data-testid="input-message"
                                         onFocus={() => setFocusedField('message')}
                                         onBlur={() => setFocusedField(null)}
-                                        className="flex-1 ml-3 bg-transparent text-white text-[13px] outline-none placeholder:text-gray-600 resize-none leading-relaxed"
+                                        className="flex-1 ml-3 bg-transparent text-white text-[13px] outline-none placeholder:text-white/25 resize-none leading-relaxed"
                                       />
                                     </div>
                                   </div>
@@ -350,13 +363,13 @@ const WorkWithUs = () => {
                               </FormItem>
                             )} />
 
-                            {/* Submit button */}
-                            <motion.div className="pt-1" whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}>
+                            {/* Submit button — premium gradient glow */}
+                            <motion.div className="pt-0 sm:pt-1" whileTap={{ scale: 0.97 }}>
                               <Button
                                 type="submit"
                                 disabled={submitCollaborationMutation.isPending}
                                 data-testid="button-submit"
-                                className="wws-submit w-full h-11 rounded-xl font-semibold text-sm"
+                                className="wws-submit w-full h-9 sm:h-12 rounded-xl font-semibold text-sm relative overflow-hidden"
                               >
                                 {submitCollaborationMutation.isPending ? (
                                   <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}>
@@ -365,7 +378,7 @@ const WorkWithUs = () => {
                                 ) : (
                                   <>
                                     <Send className="w-4 h-4 mr-2" />
-                                    Send Collaboration Request
+                                    Send Request
                                   </>
                                 )}
                               </Button>
@@ -382,7 +395,7 @@ const WorkWithUs = () => {
         </div>
 
         {/* ═══ BELOW FOLD — Why Work With Us cards ═══ */}
-        <section className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+        <section className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-20">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}

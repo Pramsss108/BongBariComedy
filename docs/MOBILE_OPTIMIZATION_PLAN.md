@@ -1,6 +1,6 @@
 # 📱 MOBILE OPTIMIZATION MASTER PLAN v2
 
-> **Status:** 🟢 BATCH A COMPLETE + Extra Fixes — Batch B next  
+> **Status:** 🟢 BATCH A+B COMPLETE — Batch C next  
 > **Priority:** CRITICAL — Desktop is fine, mobile is broken  
 > **Target:** Every page, every component, every pixel on phones (≤768px)  
 > **Rule:** NO batch moves to desktop. This plan is 100% mobile-only.  
@@ -13,7 +13,7 @@
 | Batch | Phases | Status | Commits |
 |-------|--------|--------|---------|
 | **A** | 1–12 | ✅ COMPLETE | `8c932f3a` (Batch A bulk), `7b50d2ee`, `e62173d9`, `2d3615fb`, `c647a372`, `7a4b0b39`, `361ff8aa`, `6956fbb7`, `cd17f4be`, `0fe05f45` |
-| **B** | 13–21 | ❌ Not Started | — |
+| **B** | 13–21 | ✅ COMPLETE | Ultra-premium form rebuild |
 | **C** | 22–27 | 🔄 Phase 23 done (lang toggle) | — |
 | **D** | 28–33 | ❌ Not Started | — |
 | **E** | 34–39 | ❌ Not Started | — |

@@ -110,10 +110,10 @@ function BrandReveal() {
   const subOpacity = useTransform(scrollYProgress, [0, 0.3, 0.42, 0.78, 1], device.isMobile ? [1, 1, 1, 1, 1] : [0, 0, 1, 1, 0.2]);
 
   return (
-    <div ref={ref} className="relative pt-3 pb-1 sm:pt-14 sm:pb-10 flex flex-col items-center justify-center text-center">
+    <div ref={ref} className="relative py-16 sm:pt-14 sm:pb-10 flex flex-col items-center justify-center text-center">
 
       <motion.h2
-        className="footer-brand-text relative z-10 text-[clamp(1.75rem,6vw,4rem)] sm:text-[clamp(2rem,7vw,4rem)] font-black leading-none"
+        className="footer-brand-text relative z-10 text-5xl sm:text-[clamp(2rem,7vw,4rem)] font-black tracking-tighter leading-none"
         style={{
           opacity: textOpacity,
           filter: filterStr,
@@ -134,7 +134,7 @@ function BrandReveal() {
 
       {/* Subtitle */}
       <motion.p
-        className="relative z-10 text-white/40 text-xs sm:text-sm mt-2 tracking-[0.35em] uppercase font-semibold"
+        className="relative z-10 text-white/40 text-xs sm:text-sm mt-4 tracking-[0.35em] uppercase font-semibold"
         style={{ opacity: subOpacity }}
       >
         Bengal&apos;s Comedy Brand
@@ -146,17 +146,17 @@ function BrandReveal() {
 export default function Footer() {
   const device = useDeviceTier();
 
-  /* ── Mobile footer: clean, compact, one-screen, premium ── */
+  /* ── Mobile footer: clean, compact, premium ── */
   if (device.isMobile) {
     return (
-      <footer className="mobile-footer relative mt-0 footer-root" style={{ paddingBottom: 'calc(60px + env(safe-area-inset-bottom, 0px))', background: '#050505' }}>
+      <footer className="mobile-footer relative footer-root mt-auto">
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none z-[1]" style={{ backgroundImage: "url(/noise.svg)", backgroundRepeat: "repeat" }} />
 
         {/* ── Brand Title ── */}
-        <div className="text-center pt-4 pb-2">
-          <h2 className="footer-brand-text text-[clamp(1.5rem,6vw,2.5rem)] font-black leading-none">BONG BARI</h2>
-          <div className="mx-auto mt-1.5 h-[1.5px] w-16 rounded-full" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,204,0,0.5), transparent)' }} />
-          <p className="text-white/35 text-[9px] mt-1 tracking-[0.3em] uppercase font-semibold">Bengal's Comedy Brand</p>
+        <div className="relative pt-10 pb-6 flex flex-col items-center justify-center text-center">
+          <h2 className="footer-brand-text font-black tracking-tight leading-none" style={{ fontSize: 'clamp(3rem, 14vw, 5rem)' }}>BONG BARI</h2>
+          <div className="mx-auto mt-3 h-[2px] w-24 rounded-full" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,204,0,0.5), transparent)' }} />
+          <p className="text-white/40 mt-2 tracking-[0.35em] uppercase font-semibold" style={{ fontSize: '10px' }}>Bengal&apos;s Comedy Brand</p>
         </div>
 
         {/* ── Marquee ── */}
@@ -165,14 +165,14 @@ export default function Footer() {
         {/* ── Grid: Brand info + Links ── */}
         <div className="relative z-[2] footer-grid-bg">
           <div className="h-[1px] bg-white/[0.04]" />
-          <div className="px-5 pt-4 pb-3">
+          <div className="px-5 pt-3 pb-2">
 
             {/* Logo + Name + Socials — single row */}
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-2.5">
               <div className="flex items-center gap-2.5">
                 <img src="/logo.png" alt="Bong Bari" className="w-8 h-8 rounded-lg ring-1 ring-white/[0.08]" loading="lazy" decoding="async" />
                 <div>
-                  <span className="text-white font-bold text-[13px] tracking-wide block leading-tight">Bong Bari</span>
+                  <span className="text-white font-bold tracking-wide block leading-tight" style={{ fontSize: '15px' }}>Bong Bari</span>
                   <span className="text-white/25 text-[8px] tracking-[0.15em] uppercase font-medium">Comedy Studio</span>
                 </div>
               </div>
@@ -192,16 +192,15 @@ export default function Footer() {
               </div>
             </div>
 
-            {/* Link Columns — 3-col */}
-            <div className="grid grid-cols-3 gap-3 mb-3">
+            {/* Link Columns — 3-col refined */}
+            <div className="grid grid-cols-3 gap-4 mb-3">
               {linkColumns.map((col) => (
                 <div key={col.title}>
-                  <h3 className="text-brand-yellow/80 text-[9px] font-bold uppercase tracking-[0.2em] mb-1.5">{col.title}</h3>
-                  <div className="w-4 h-[1.5px] bg-brand-yellow/25 rounded-full mb-2" />
+                  <h3 className="text-brand-yellow/60 uppercase tracking-widest mb-1.5 font-bold" style={{ fontSize: '13px' }}>{col.title}</h3>
                   <ul className="space-y-1">
                     {col.links.map((link) => (
                       <li key={link.href}>
-                        <Link href={link.href} className="text-white/45 text-[11px] hover:text-white transition-colors leading-snug block">
+                        <Link href={link.href} className="text-white/40 font-normal hover:text-white transition-colors leading-snug block" style={{ fontSize: '10px' }}>
                           {link.label}
                         </Link>
                       </li>
@@ -212,11 +211,11 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Separator — subtle white, no gold glow on mobile */}
+          {/* Separator */}
           <div className="h-[1px] w-full bg-white/[0.06]" />
 
-          {/* Copyright */}
-          <div className="px-5 py-2.5 flex flex-col items-center gap-1 text-[10px]">
+          {/* Copyright — safe zone: 140px+ ensures both lines sit above the floating dock pill */}
+          <div className="px-5 pt-2 flex flex-col items-center gap-0.5 text-[9px]" style={{ paddingBottom: 'calc(140px + env(safe-area-inset-bottom, 0px))' }}>
             <span className="text-white/25 text-center">© {new Date().getFullYear()} Bong Bari · Dopmaine (UDYAM-WB-14-0096694) · Abhijit Pramanik</span>
             <div className="flex items-center gap-4 text-white/25">
               <Link href="/privacy" className="hover:text-white/60 transition-colors">Privacy</Link>

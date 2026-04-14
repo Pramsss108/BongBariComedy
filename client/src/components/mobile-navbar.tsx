@@ -1,9 +1,9 @@
 import { Home, MessageCircle, X, Info, FileText, HelpCircle, Wrench, Bot } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useState, useRef, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValueEvent, useScroll } from "framer-motion";
 
-/* ─── Ultra-Premium Dock ─── iOS 18 / Apple Tab Bar level ─── */
+/* ─── Floating Glass Pill Dock ─── Arc Browser / iOS 18 style ─── */
 const MobileNavBar = () => {
     const [location] = useLocation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -12,7 +12,28 @@ const MobileNavBar = () => {
     );
     const menuRef = useRef<HTMLDivElement>(null);
     const toggleRef = useRef<HTMLButtonElement>(null);
-    const [activeIdx, setActiveIdx] = useState(-1); // for haptic-style press
+    const [pressedIdx, setPressedIdx] = useState(-1);
+
+    /* Phase 15: Hide-on-scroll — dock slides away when scrolling down */
+    const [dockVisible, setDockVisible] = useState(true);
+    const { scrollY } = useScroll();
+    const lastScrollY = useRef(0);
+    const scrollTimer = useRef<ReturnType<typeof setTimeout>>();
+
+    useMotionValueEvent(scrollY, "change", (latest) => {
+        const delta = latest - lastScrollY.current;
+        // Show on scroll up (delta < -5) or near top; hide on scroll down (delta > 8)
+        if (delta < -5 || latest < 50) {
+            setDockVisible(true);
+        } else if (delta > 8) {
+            setDockVisible(false);
+            setIsMenuOpen(false); // close menu when hiding
+        }
+        lastScrollY.current = latest;
+        // Always show dock after user stops scrolling
+        clearTimeout(scrollTimer.current);
+        scrollTimer.current = setTimeout(() => setDockVisible(true), 1200);
+    });
 
     const switchLang = (next: 'en' | 'bn') => {
         setLangState(next);
@@ -52,9 +73,12 @@ const MobileNavBar = () => {
         { icon: Wrench, label: "Tools", href: "/tools" },
     ];
 
+    /* Shared press handlers — Phase 12: touch-action manipulation */
+    const press = (i: number) => ({ onPointerDown: () => setPressedIdx(i), onPointerUp: () => setPressedIdx(-1), onPointerLeave: () => setPressedIdx(-1) });
+
     return (
         <>
-            {/* ─── Context Menu (slim iOS popup) ─── */}
+            {/* ─── Context Menu (slim iOS popup) ─── Phase 14: dynamic bottom calc ─── */}
             <AnimatePresence>
                 {isMenuOpen && (
                     <motion.div
@@ -63,8 +87,9 @@ const MobileNavBar = () => {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.92, y: 12 }}
                         transition={{ type: "spring", bounce: 0.2, duration: 0.25 }}
-                        className="fixed bottom-[72px] right-3 z-[10000] w-[156px] rounded-[14px] overflow-hidden"
+                        className="fixed right-4 z-[10000] w-[156px] rounded-[14px] overflow-hidden sm:hidden"
                         style={{
+                            bottom: 'calc(56px + env(safe-area-inset-bottom, 0px) + 10px)',
                             background: 'rgba(28,28,30,0.88)',
                             backdropFilter: 'blur(50px) saturate(2)',
                             WebkitBackdropFilter: 'blur(50px) saturate(2)',
@@ -98,120 +123,146 @@ const MobileNavBar = () => {
                 )}
             </AnimatePresence>
 
-            {/* ─── DOCK ─── ultra-premium floating tab bar ─── */}
-            <div
-                className="fixed bottom-0 left-0 right-0 z-[9999] sm:hidden pointer-events-none"
-                style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+            {/* ─── FLOATING GLASS PILL DOCK ─── Phase 15: hide-on-scroll ─── */}
+            <motion.div
+                className="fixed bottom-0 left-0 right-0 z-[9999] sm:hidden pointer-events-none flex justify-center"
+                style={{
+                    paddingBottom: 'calc(10px + env(safe-area-inset-bottom, 0px))',
+                    willChange: 'transform', /* Phase 24: GPU-accelerate dock slide */
+                }}
+                animate={{ y: dockVisible ? 0 : 80 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
             >
-                {/* Fade gradient — seamless merge with page content */}
-                <div className="absolute inset-x-0 bottom-0 h-24 pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent 0%, rgba(5,5,5,0.6) 40%, rgba(5,5,5,0.95) 70%, #050505 100%)' }} />
-                
                 <nav
-                    className="pointer-events-auto flex items-center justify-evenly w-full max-w-[400px] mx-auto relative px-2"
+                    className="pointer-events-auto flex items-center relative"
                     style={{
-                        height: '50px',
-                        willChange: 'transform',
-                        contain: 'layout style',
+                        height: '46px',
+                        borderRadius: '23px',
+                        padding: '0 6px',
+                        gap: '2px',
+                        /* Phase 22: Samsung Internet fallback — high opacity if blur unsupported */
+                        background: 'rgba(18,18,18,0.92)',
+                        backdropFilter: 'blur(40px) saturate(1.8)',
+                        WebkitBackdropFilter: 'blur(40px) saturate(1.8)',
+                        boxShadow: '0 4px 24px rgba(0,0,0,0.45), 0 0 0 0.5px rgba(255,255,255,0.06)',
+                        touchAction: 'manipulation', /* Phase 12: prevent 300ms tap delay */
+                        contain: 'layout style', /* Phase 24: isolate repaint to dock */
                     }}
                 >
-                    {/* Nav Items */}
+                    {/* Nav Items (Home, FAQ, Collab) — Phase 12: 54×46 touch targets */}
                     {navItems.map((item, i) => {
                         const active = isActive(item.href);
                         return (
                             <Link key={i} href={item.href}>
-                                <button
-                                    className="relative flex flex-col items-center justify-center outline-none flex-1 min-w-[48px] h-full select-none"
-                                    onPointerDown={() => setActiveIdx(i)}
-                                    onPointerUp={() => setActiveIdx(-1)}
-                                    onPointerLeave={() => setActiveIdx(-1)}
+                                <motion.button
+                                    className="relative flex flex-col items-center justify-center outline-none select-none w-[54px] h-[46px]"
+                                    style={{ touchAction: 'manipulation' }}
+                                    animate={{ scale: pressedIdx === i ? 0.82 : 1 }}
+                                    transition={{ type: 'spring', stiffness: 600, damping: 28 }}
+                                    {...press(i)}
                                 >
-                                    <motion.div
-                                        animate={{
-                                            scale: activeIdx === i ? 0.82 : active ? 1 : 0.95,
-                                            opacity: active ? 1 : 0.55
-                                        }}
-                                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                                        className="flex flex-col items-center"
-                                    >
-                                        <item.icon size={20} strokeWidth={active ? 2.4 : 1.7} className={active ? 'text-white' : 'text-white'} />
-                                        <span className={`text-[9px] mt-[2px] font-medium leading-none ${active ? 'text-white' : 'text-white'}`}>
-                                            {item.label}
-                                        </span>
-                                    </motion.div>
-                                    {/* Active dot */}
+                                    {/* Phase 13: radial glow behind active icon */}
                                     {active && (
-                                        <motion.div
-                                            layoutId="dock-dot"
-                                            className="absolute -bottom-[1px] w-[4px] h-[4px] rounded-full bg-white"
-                                            transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                                        <div
+                                            className="absolute inset-0 rounded-full pointer-events-none"
+                                            style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%)' }}
                                         />
                                     )}
-                                </button>
+                                    <item.icon
+                                        size={21}
+                                        strokeWidth={active ? 2.3 : 1.5}
+                                        className="transition-opacity duration-200"
+                                        style={{ opacity: active ? 1 : 0.4, color: 'white' }}
+                                    />
+                                    {active && (
+                                        <motion.div
+                                            layoutId="pill-dot"
+                                            className="absolute bottom-[2px] w-[4px] h-[4px] rounded-full bg-white"
+                                            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                                        />
+                                    )}
+                                </motion.button>
                             </Link>
                         );
                     })}
 
-                    {/* Bot */}
-                    <button
+                    {/* Thin separator */}
+                    <div className="w-[1px] h-[20px] bg-white/[0.08] mx-[2px]" />
+
+                    {/* Bot — Phase 12: 54×46 touch target */}
+                    <motion.button
+                        className="relative flex flex-col items-center justify-center outline-none select-none w-[54px] h-[46px]"
+                        style={{ touchAction: 'manipulation' }}
+                        animate={{ scale: pressedIdx === 3 ? 0.82 : 1 }}
+                        transition={{ type: 'spring', stiffness: 600, damping: 28 }}
                         onClick={() => window.dispatchEvent(new Event('toggle-chatbot'))}
-                        className="relative flex flex-col items-center justify-center outline-none flex-1 min-w-[48px] h-full select-none"
-                        onPointerDown={() => setActiveIdx(3)}
-                        onPointerUp={() => setActiveIdx(-1)}
-                        onPointerLeave={() => setActiveIdx(-1)}
+                        {...press(3)}
                     >
-                        <motion.div
-                            animate={{
-                                scale: activeIdx === 3 ? 0.82 : isBotOpen ? 1 : 0.95,
-                                opacity: isBotOpen ? 1 : 0.55
-                            }}
-                            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                            className="flex flex-col items-center"
-                        >
-                            <Bot size={20} strokeWidth={isBotOpen ? 2.4 : 1.7} />
-                            <span className={`text-[9px] mt-[2px] font-medium leading-none`}>Bot</span>
-                        </motion.div>
                         {isBotOpen && (
-                            <motion.div
-                                layoutId="dock-dot"
-                                className="absolute -bottom-[1px] w-[4px] h-[4px] rounded-full bg-white"
-                                transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                            <div
+                                className="absolute inset-0 rounded-full pointer-events-none"
+                                style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%)' }}
                             />
                         )}
-                    </button>
+                        <Bot
+                            size={21}
+                            strokeWidth={isBotOpen ? 2.3 : 1.5}
+                            className="transition-opacity duration-200"
+                            style={{ opacity: isBotOpen ? 1 : 0.4, color: 'white' }}
+                        />
+                        {isBotOpen && (
+                            <motion.div
+                                layoutId="pill-dot"
+                                className="absolute bottom-[2px] w-[4px] h-[4px] rounded-full bg-white"
+                                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                            />
+                        )}
+                    </motion.button>
 
-                    {/* Menu */}
-                    <button
+                    {/* More / Menu — Phase 12: 54×46 touch target */}
+                    <motion.button
                         ref={toggleRef}
+                        className="relative flex flex-col items-center justify-center outline-none select-none w-[54px] h-[46px]"
+                        style={{ touchAction: 'manipulation' }}
+                        animate={{ scale: pressedIdx === 4 ? 0.82 : 1 }}
+                        transition={{ type: 'spring', stiffness: 600, damping: 28 }}
                         onClick={() => setIsMenuOpen(p => !p)}
-                        className="relative flex flex-col items-center justify-center outline-none flex-1 min-w-[48px] h-full select-none"
-                        onPointerDown={() => setActiveIdx(4)}
-                        onPointerUp={() => setActiveIdx(-1)}
-                        onPointerLeave={() => setActiveIdx(-1)}
+                        {...press(4)}
                     >
-                        <motion.div
-                            animate={{
-                                scale: activeIdx === 4 ? 0.82 : isMenuOpen ? 1 : 0.95,
-                                opacity: isMenuOpen ? 1 : 0.55,
-                                rotate: isMenuOpen ? 45 : 0
-                            }}
-                            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                            className="flex flex-col items-center"
-                        >
-                            {isMenuOpen ? <X size={20} strokeWidth={2.4} /> : <GridIcon />}
-                            <span className={`text-[9px] mt-[2px] font-medium leading-none ${isMenuOpen ? '' : ''}`}>
-                                {isMenuOpen ? 'Close' : 'More'}
-                            </span>
-                        </motion.div>
-                    </button>
+                        {isMenuOpen && (
+                            <div
+                                className="absolute inset-0 rounded-full pointer-events-none"
+                                style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%)' }}
+                            />
+                        )}
+                        <AnimatePresence mode="wait">
+                            {isMenuOpen ? (
+                                <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}>
+                                    <X size={21} strokeWidth={2.3} style={{ color: 'white' }} />
+                                </motion.div>
+                            ) : (
+                                <motion.div key="grid" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.15 }}>
+                                    <GridIcon />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                        {isMenuOpen && (
+                            <motion.div
+                                layoutId="pill-dot"
+                                className="absolute bottom-[2px] w-[4px] h-[4px] rounded-full bg-white"
+                                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                            />
+                        )}
+                    </motion.button>
                 </nav>
-            </div>
+            </motion.div>
         </>
     );
 };
 
 /* Minimal 2×2 grid icon (SF Symbols style) */
 const GridIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.4 }}>
         <rect x="3" y="3" width="5.5" height="5.5" rx="1.5" />
         <rect x="11.5" y="3" width="5.5" height="5.5" rx="1.5" />
         <rect x="3" y="11.5" width="5.5" height="5.5" rx="1.5" />

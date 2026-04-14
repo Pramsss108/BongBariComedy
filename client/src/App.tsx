@@ -150,7 +150,7 @@ function Router() {
       {/* Phase 2: Scroll progress bar — visible on all pages */}
       <ScrollProgress />
       {location !== '/voice-hub' && location !== '/tools/downloader' && location !== '/tools/share' && location !== '/tools/pdf-ninja' && location !== '/tools/khisti' && !location.startsWith('/s/') && !location.startsWith('/p/') && !location.startsWith('/ngl') && <Navigation />}
-      <div className="min-h-screen bg-brand-yellow relative m-0 p-0">
+      <div className="min-h-screen bg-[#050505] relative m-0 p-0 flex flex-col">
         <Suspense fallback={null}>
           <GreetingConsent open={showGreeting} onDecision={handleDecision} />
         </Suspense>

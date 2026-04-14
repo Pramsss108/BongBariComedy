@@ -310,15 +310,12 @@ const WorkWithUs = () => {
                           >
                             <Handshake className="w-3 h-3 sm:w-4.5 sm:h-4.5 text-brand-yellow" />
                           </motion.div>
-                          <div>
-                            <h2 className="text-[14px] sm:text-lg font-bold text-white leading-none tracking-tight">
-                              Let's{' '}
-                              <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow to-amber-300 font-extrabold">
-                                Collaborate
-                              </span>
-                            </h2>
-                            <p className="text-[8px] sm:text-[10px] text-white/30 mt-0.5 tracking-[0.08em]">Drop your details · We'll handle the rest</p>
-                          </div>
+                          <h2 className="text-[14px] sm:text-lg font-bold text-white leading-none tracking-tight">
+                            Let's{' '}
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow to-amber-300 font-extrabold">
+                              Collaborate
+                            </span>
+                          </h2>
                         </motion.div>
 
                         <Form {...form}>

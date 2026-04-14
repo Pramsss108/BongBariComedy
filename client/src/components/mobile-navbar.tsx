@@ -1,4 +1,4 @@
-import { Home, PlaySquare, MessageCircle, Menu, X, Info, Briefcase, FileText, HelpCircle, Wrench, ChevronUp, Bug, Bot } from "lucide-react";
+import { Home, PlaySquare, MessageCircle, Menu, X, Info, Briefcase, FileText, HelpCircle, Wrench, ChevronUp, Bot } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -42,11 +42,6 @@ const MobileNavBar = () => {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const triggerDebug = () => {
-        window.dispatchEvent(new Event('toggle-debug'));
-        setIsMenuOpen(false);
-    };
-
     // Map the current path to the active state
     const isActive = (path: string) => location === path || (path === "/" && location === "");
 
@@ -76,63 +71,38 @@ const MobileNavBar = () => {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
                         transition={{ type: "spring", bounce: 0.3, duration: 0.3 }}
-                        className="fixed bottom-20 right-4 z-[10000] w-56 rounded-2xl overflow-hidden"
+                        className="fixed bottom-20 right-4 z-[10000] w-44 rounded-[14px] overflow-hidden"
                         style={{
-                            background: 'linear-gradient(135deg, rgba(17,17,19,0.97) 0%, rgba(10,10,12,0.98) 100%)',
-                            backdropFilter: 'blur(24px) saturate(1.8)',
-                            WebkitBackdropFilter: 'blur(24px) saturate(1.8)',
-                            boxShadow: '0 8px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.05)'
+                            background: 'rgba(28,28,30,0.92)',
+                            backdropFilter: 'blur(40px) saturate(1.9)',
+                            WebkitBackdropFilter: 'blur(40px) saturate(1.9)',
+                            boxShadow: '0 4px 24px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.08)'
                         }}
                     >
-                        {/* Top shine line */}
-                        <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-                        
-                        <div className="p-2.5 space-y-0.5">
-                            {/* Language Toggle — Premium Pill */}
-                            <div className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.04] mb-1">
-                                <span className="text-[10px] text-white/40 font-semibold uppercase tracking-[0.15em]">Language</span>
-                                <div className="relative flex items-center bg-black/70 rounded-full p-[2px] border border-white/[0.08] shadow-[inset_0_1px_3px_rgba(0,0,0,0.4)]">
+                        <div className="py-1">
+                            {/* Language Toggle — inline row */}
+                            <div className="flex items-center justify-between px-3 py-[7px]">
+                                <span className="text-[10px] text-white/35 font-medium uppercase tracking-[0.12em]">Lang</span>
+                                <div className="relative flex items-center bg-black/50 rounded-full p-[2px] border border-white/[0.06]">
                                     <div
-                                        className="absolute top-[2px] h-[calc(100%-4px)] w-[calc(50%-1px)] rounded-full bg-gradient-to-r from-brand-yellow/20 to-amber-500/15 border border-brand-yellow/30 shadow-[0_0_8px_rgba(255,200,0,0.15)] transition-all duration-300"
+                                        className="absolute top-[2px] h-[calc(100%-4px)] w-[calc(50%-1px)] rounded-full bg-brand-yellow/15 border border-brand-yellow/25 transition-all duration-300"
                                         style={{ left: lang === 'en' ? '2px' : 'calc(50%)' }}
                                     />
-                                    <button onClick={() => switchLang('en')} className={`relative z-10 px-3 py-1 text-[11px] font-bold rounded-full transition-colors duration-200 ${lang === 'en' ? 'text-brand-yellow drop-shadow-[0_0_4px_rgba(255,200,0,0.3)]' : 'text-white/30'}`}>
-                                        EN
-                                    </button>
-                                    <button onClick={() => switchLang('bn')} className={`relative z-10 px-3 py-1 text-[11px] font-bold rounded-full font-bengali transition-colors duration-200 ${lang === 'bn' ? 'text-brand-yellow drop-shadow-[0_0_4px_rgba(255,200,0,0.3)]' : 'text-white/30'}`}>
-                                        বাং
-                                    </button>
+                                    <button onClick={() => switchLang('en')} className={`relative z-10 px-2.5 py-0.5 text-[10px] font-bold rounded-full transition-colors ${lang === 'en' ? 'text-brand-yellow' : 'text-white/30'}`}>EN</button>
+                                    <button onClick={() => switchLang('bn')} className={`relative z-10 px-2.5 py-0.5 text-[10px] font-bold rounded-full font-bengali transition-colors ${lang === 'bn' ? 'text-brand-yellow' : 'text-white/30'}`}>বাং</button>
                                 </div>
                             </div>
 
-                            {/* Separator */}
-                            <div className="mx-2 h-[1px] bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
+                            <div className="mx-2.5 h-[0.5px] bg-white/[0.08]" />
 
                             {menuItems.map((item, idx) => (
                                 <Link key={idx} href={item.href} onClick={() => setIsMenuOpen(false)}>
-                                    <div className={`
-                                        flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
-                                        ${isActive(item.href)
-                                            ? "bg-brand-yellow/10 text-brand-yellow font-semibold shadow-[inset_0_0_12px_rgba(255,200,0,0.05)]"
-                                            : "text-white/70 hover:bg-white/[0.06] hover:text-white active:bg-white/10"}
-                                    `}>
-                                        <item.icon size={17} className={isActive(item.href) ? 'drop-shadow-[0_0_6px_rgba(255,200,0,0.4)]' : 'opacity-60'} />
-                                        <span className="text-[13px] tracking-wide">{item.label}</span>
-                                        {isActive(item.href) && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-yellow shadow-[0_0_6px_rgba(255,200,0,0.5)]" />}
+                                    <div className={`flex items-center gap-2.5 px-3 py-[9px] transition-colors ${isActive(item.href) ? "text-brand-yellow" : "text-white/80 active:bg-white/[0.08]"}`}>
+                                        <item.icon size={15} className={isActive(item.href) ? '' : 'opacity-50'} />
+                                        <span className="text-[13px]">{item.label}</span>
                                     </div>
                                 </Link>
                             ))}
-
-                            {/* Separator */}
-                            <div className="mx-2 h-[1px] bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
-
-                            {/* Debug Trigger Button */}
-                            <button onClick={triggerDebug} className="w-full">
-                                <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-white/30 hover:bg-white/[0.06] hover:text-white/50">
-                                    <Bug size={17} className="opacity-50" />
-                                    <span className="text-[13px] tracking-wide">Debug Grid</span>
-                                </div>
-                            </button>
                         </div>
                     </motion.div>
                 )}

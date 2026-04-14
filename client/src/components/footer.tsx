@@ -149,7 +149,7 @@ export default function Footer() {
   /* ── Mobile footer: clean, compact, one-screen, premium ── */
   if (device.isMobile) {
     return (
-      <footer className="mobile-footer relative mt-0 footer-root" style={{ paddingBottom: 'calc(4px + env(safe-area-inset-bottom, 0px))' }}>
+      <footer className="mobile-footer relative mt-0 footer-root" style={{ paddingBottom: 'calc(60px + env(safe-area-inset-bottom, 0px))', background: '#050505' }}>
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none z-[1]" style={{ backgroundImage: "url(/noise.svg)", backgroundRepeat: "repeat" }} />
 
         {/* ── Brand Title ── */}

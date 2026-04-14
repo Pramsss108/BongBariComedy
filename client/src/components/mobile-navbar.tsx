@@ -100,18 +100,16 @@ const MobileNavBar = () => {
 
             {/* ─── DOCK ─── ultra-premium floating tab bar ─── */}
             <div
-                className="fixed bottom-0 left-0 right-0 z-[9999] sm:hidden flex justify-center pointer-events-none"
-                style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)', background: '#0a0a0a' }}
+                className="fixed bottom-0 left-0 right-0 z-[9999] sm:hidden pointer-events-none"
+                style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
             >
+                {/* Fade gradient — seamless merge with page content */}
+                <div className="absolute inset-x-0 bottom-0 h-24 pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent 0%, rgba(5,5,5,0.6) 40%, rgba(5,5,5,0.95) 70%, #050505 100%)' }} />
+                
                 <nav
-                    className="pointer-events-auto flex items-center justify-evenly w-[92%] max-w-[380px] mb-[6px] relative"
+                    className="pointer-events-auto flex items-center justify-evenly w-full max-w-[400px] mx-auto relative px-2"
                     style={{
-                        height: '52px',
-                        borderRadius: '22px',
-                        background: 'rgba(22,22,24,0.75)',
-                        backdropFilter: 'blur(40px) saturate(1.8)',
-                        WebkitBackdropFilter: 'blur(40px) saturate(1.8)',
-                        boxShadow: '0 2px 20px rgba(0,0,0,0.45), inset 0 0.5px 0 rgba(255,255,255,0.06), 0 0 0 0.5px rgba(255,255,255,0.04)',
+                        height: '50px',
                         willChange: 'transform',
                         contain: 'layout style',
                     }}
@@ -122,15 +120,15 @@ const MobileNavBar = () => {
                         return (
                             <Link key={i} href={item.href}>
                                 <button
-                                    className="relative flex flex-col items-center justify-center outline-none w-[52px] h-full select-none"
+                                    className="relative flex flex-col items-center justify-center outline-none flex-1 min-w-[48px] h-full select-none"
                                     onPointerDown={() => setActiveIdx(i)}
                                     onPointerUp={() => setActiveIdx(-1)}
                                     onPointerLeave={() => setActiveIdx(-1)}
                                 >
                                     <motion.div
                                         animate={{
-                                            scale: activeIdx === i ? 0.82 : active ? 1 : 0.92,
-                                            opacity: active ? 1 : 0.45
+                                            scale: activeIdx === i ? 0.82 : active ? 1 : 0.95,
+                                            opacity: active ? 1 : 0.55
                                         }}
                                         transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                                         className="flex flex-col items-center"
@@ -156,15 +154,15 @@ const MobileNavBar = () => {
                     {/* Bot */}
                     <button
                         onClick={() => window.dispatchEvent(new Event('toggle-chatbot'))}
-                        className="relative flex flex-col items-center justify-center outline-none w-[52px] h-full select-none"
+                        className="relative flex flex-col items-center justify-center outline-none flex-1 min-w-[48px] h-full select-none"
                         onPointerDown={() => setActiveIdx(3)}
                         onPointerUp={() => setActiveIdx(-1)}
                         onPointerLeave={() => setActiveIdx(-1)}
                     >
                         <motion.div
                             animate={{
-                                scale: activeIdx === 3 ? 0.82 : isBotOpen ? 1 : 0.92,
-                                opacity: isBotOpen ? 1 : 0.45
+                                scale: activeIdx === 3 ? 0.82 : isBotOpen ? 1 : 0.95,
+                                opacity: isBotOpen ? 1 : 0.55
                             }}
                             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                             className="flex flex-col items-center"
@@ -185,15 +183,15 @@ const MobileNavBar = () => {
                     <button
                         ref={toggleRef}
                         onClick={() => setIsMenuOpen(p => !p)}
-                        className="relative flex flex-col items-center justify-center outline-none w-[52px] h-full select-none"
+                        className="relative flex flex-col items-center justify-center outline-none flex-1 min-w-[48px] h-full select-none"
                         onPointerDown={() => setActiveIdx(4)}
                         onPointerUp={() => setActiveIdx(-1)}
                         onPointerLeave={() => setActiveIdx(-1)}
                     >
                         <motion.div
                             animate={{
-                                scale: activeIdx === 4 ? 0.82 : isMenuOpen ? 1 : 0.92,
-                                opacity: isMenuOpen ? 1 : 0.45,
+                                scale: activeIdx === 4 ? 0.82 : isMenuOpen ? 1 : 0.95,
+                                opacity: isMenuOpen ? 1 : 0.55,
                                 rotate: isMenuOpen ? 45 : 0
                             }}
                             transition={{ type: 'spring', stiffness: 500, damping: 30 }}

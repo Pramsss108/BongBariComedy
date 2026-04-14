@@ -90,7 +90,7 @@ const Blog = () => {
         canonical="/blog"
       />
       
-      <div className="min-h-screen bg-[#050505] text-white relative">
+      <div className="min-h-screen bg-transparent text-white relative">
         {/* Premium Background Glow */}
         <div className="fixed inset-0 pointer-events-none">
           <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-brand-yellow/10 rounded-full blur-[120px]" />

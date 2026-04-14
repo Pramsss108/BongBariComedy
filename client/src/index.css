@@ -588,8 +588,13 @@ button:hover {
 
   body {
     color: hsl(var(--foreground));
-    background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(244,196,48,0.04) 0%, #050505 60%);
     background-color: #050505;
+    background-image:
+      radial-gradient(ellipse 90% 40% at 50% 0%, rgba(244,196,48,0.045) 0%, transparent 55%),
+      radial-gradient(ellipse 60% 30% at 80% 25%, rgba(139,92,246,0.025) 0%, transparent 55%),
+      radial-gradient(ellipse 70% 25% at 20% 55%, rgba(244,196,48,0.03) 0%, transparent 50%),
+      radial-gradient(ellipse 50% 30% at 75% 75%, rgba(139,92,246,0.02) 0%, transparent 50%),
+      radial-gradient(ellipse 80% 20% at 40% 100%, rgba(244,196,48,0.025) 0%, transparent 45%);
     /* Smooth scrolling optimizations */
     scroll-behavior: smooth;
     overflow-x: hidden;

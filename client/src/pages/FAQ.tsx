@@ -305,7 +305,7 @@ export default function FAQ() {
   };
 
   return (
-    <div className="bg-[#050505] text-white">
+    <div className="bg-transparent text-white">
 
       {/* Premium Language Toggle — fixed floating pill (matches homepage) */}
       <div className="fixed top-4 right-4 z-[100]">

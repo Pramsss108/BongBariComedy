@@ -29,7 +29,7 @@ const FreeTools = () => {
         keywords="free writing tools, AI text humanizer, bypass AI detection, free online tools, content tools"
         structuredData={FREE_TOOLS_SCHEMA}
       />
-      <div className="min-h-screen bg-[#050505] text-white relative overflow-hidden">
+      <div className="min-h-screen bg-transparent text-white relative overflow-hidden">
         {/* Premium Background Effects — absolute on mobile (clipped by overflow-hidden), fixed on desktop */}
         <div className="absolute sm:fixed inset-0 pointer-events-none z-0">
           <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[40%] bg-brand-yellow/[0.06] sm:bg-brand-yellow/10 rounded-full blur-[120px]" />

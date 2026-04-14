@@ -398,15 +398,18 @@ const Home = () => {
       </div>
 
       {/* Main Layout - "700 Years UX" - PREMIUM GLASS & MESH GRADIENT */}
-      <div className="home-content-wrapper min-h-screen bg-[#050505] relative selection:bg-brand-yellow selection:text-black font-sans overflow-x-hidden scroll-smooth">
+      <div className="home-content-wrapper min-h-screen bg-transparent relative selection:bg-brand-yellow selection:text-black font-sans overflow-x-hidden scroll-smooth">
 
         {/* Premium Background Glow — Phase 3: parallax depth on scroll
             Desktop: fixed full-viewport blobs with parallax
             Mobile: absolute blobs clipped inside content wrapper (no footer bleed) */}
         {device.isMobile ? (
           <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-            <div className="absolute top-[5%] left-[-15%] w-[60%] h-[40%] bg-brand-yellow/[0.06] rounded-full blur-[100px]" />
-            <div className="absolute top-[30%] right-[-15%] w-[50%] h-[35%] bg-indigo-500/[0.04] rounded-full blur-[100px]" />
+            <div className="absolute top-[3%] left-[-15%] w-[65%] h-[30%] bg-brand-yellow/[0.06] rounded-full blur-[100px]" />
+            <div className="absolute top-[25%] right-[-15%] w-[50%] h-[25%] bg-indigo-500/[0.04] rounded-full blur-[100px]" />
+            <div className="absolute top-[50%] left-[-10%] w-[55%] h-[20%] bg-brand-yellow/[0.04] rounded-full blur-[120px]" />
+            <div className="absolute top-[70%] right-[-10%] w-[45%] h-[20%] bg-violet-500/[0.03] rounded-full blur-[120px]" />
+            <div className="absolute top-[88%] left-[10%] w-[50%] h-[15%] bg-amber-500/[0.025] rounded-full blur-[100px]" />
           </div>
         ) : (
         <div className="fixed inset-0 pointer-events-none">

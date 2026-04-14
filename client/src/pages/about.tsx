@@ -17,7 +17,7 @@ const card = (delay: number, children: React.ReactNode, gradient = "from-brand-y
 
 const About = () => {
   return (
-    <div className="min-h-screen bg-[#050505] text-white relative overflow-hidden">
+    <div className="min-h-screen bg-transparent text-white relative overflow-hidden">
       <title>About Us — Bong Bari</title>
       <meta name="description" content="About Bong Bari — founded by Abhijit Pramanik, operated by Dopmaine (UDYAM-WB-14-0096694), Kolkata, India." />
 

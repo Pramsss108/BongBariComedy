@@ -198,7 +198,7 @@ const WorkWithUs = () => {
         canonical="/work-with-us"
       />
 
-      <div className="min-h-screen bg-[#050505] text-white relative overflow-hidden">
+      <div className="min-h-screen bg-transparent text-white relative overflow-hidden">
         {/* Ambient background */}
         <div className="absolute sm:fixed inset-0 pointer-events-none">
           <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[50%] bg-brand-yellow/[0.05] rounded-full blur-[160px]" />

@@ -85,10 +85,8 @@ const MobileNavBar = () => {
             </AnimatePresence>
 
             {/* FLOATING GLASS DOCK (Slim Blinkit Style - Wider & Thinner) */}
-            <div className="fixed bottom-0 left-0 right-0 z-[9999] sm:hidden flex flex-col items-center pointer-events-none" style={{ willChange: 'transform', transform: 'translateZ(0)', contain: 'layout', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-                {/* Gradient fade zone above dock — smooth content→dock transition */}
-                <div className="w-full h-6 bg-gradient-to-t from-[#0a0a0a] to-transparent pointer-events-none" />
-                <div className="w-[98%] max-w-[400px] pointer-events-auto mb-1">
+            <div className="fixed bottom-0 left-0 right-0 z-[9999] sm:hidden flex flex-col items-center pointer-events-none" style={{ willChange: 'transform', transform: 'translateZ(0)', contain: 'layout', paddingBottom: 'env(safe-area-inset-bottom, 0px)', background: 'linear-gradient(to top, #0a0a0a 60%, #0a0a0a 80%, transparent 100%)' }}>
+                <div className="w-[98%] max-w-[400px] pointer-events-auto mb-1 mt-3">
                     <div className="
                     flex justify-between items-center px-1
                     bg-[#111113]/95 backdrop-blur-xl

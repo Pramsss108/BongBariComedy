@@ -145,7 +145,7 @@ function BrandReveal() {
 
 export default function Footer() {
   return (
-    <footer className="relative mt-0 pb-36 sm:pb-6 footer-root">
+    <footer className="relative mt-0 pb-24 sm:pb-6 footer-root">
       {/* Noise */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none z-[1]" style={{ backgroundImage: "url(/noise.svg)", backgroundRepeat: "repeat" }} />
 
@@ -164,14 +164,14 @@ export default function Footer() {
 
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-12 sm:py-16">
           <motion.div
-            className="grid grid-cols-2 sm:grid-cols-12 gap-4 sm:gap-6"
+            className="grid grid-cols-1 sm:grid-cols-12 gap-4 sm:gap-6"
             initial="hidden"
             whileInView="visible"
             viewport={vp}
             variants={stagger}
           >
             {/* Brand Column */}
-            <motion.div variants={fadeUp} className="col-span-2 sm:col-span-5">
+            <motion.div variants={fadeUp} className="col-span-1 sm:col-span-5">
               <div className="flex items-center gap-3.5 mb-5">
                 <div className="relative">
                   <img src="/logo.png" alt="Bong Bari" className="w-11 h-11 rounded-xl ring-1 ring-white/[0.08]" loading="lazy" decoding="async" />
@@ -198,15 +198,16 @@ export default function Footer() {
                     className={`group flex items-center gap-2 px-3 py-2 rounded-full ring-1 ring-white/[0.08] bg-white/[0.03] text-white/50 hover:text-white hover:bg-white/[0.08] transition-all duration-300 min-h-[44px] ${s.ring} ${s.glow}`}
                   >
                     <s.icon className={`w-4 h-4 transition-colors duration-300 ${s.text}`} />
-                    <span className={`text-[11px] font-medium tracking-wide hidden sm:inline transition-colors duration-300 ${s.text}`}>{s.label}</span>
+                    <span className={`text-[11px] font-medium tracking-wide transition-colors duration-300 ${s.text}`}>{s.label}</span>
                   </motion.a>
                 ))}
               </motion.div>
             </motion.div>
 
-            {/* Link Columns */}
+            {/* Link Columns — wrapped in a flex row for mobile 3-col layout */}
+            <div className="col-span-1 sm:col-span-7 grid grid-cols-3 gap-4 sm:gap-6">
             {linkColumns.map((col, ci) => (
-              <motion.div key={col.title} variants={fadeUp} className={`col-span-1 sm:col-span-2 ${ci === 0 ? "sm:col-start-7" : ""}`}>
+              <motion.div key={col.title} variants={fadeUp}>
                 <h3 className="text-brand-yellow/90 text-xs sm:text-[11px] font-bold uppercase tracking-[0.25em] mb-1.5">{col.title}</h3>
                 <div className="w-6 h-[2px] bg-brand-yellow/30 rounded-full mb-5" />
                 <ul className="space-y-3">
@@ -221,6 +222,7 @@ export default function Footer() {
                 </ul>
               </motion.div>
             ))}
+            </div>
           </motion.div>
         </div>
 

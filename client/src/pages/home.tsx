@@ -402,8 +402,8 @@ const Home = () => {
           {/* Phase 5: Sticky pin wrapper — hero stays pinned on desktop/tablet while content scrolls over */}
           <div ref={heroRef} className={device.isMobile ? 'w-full' : 'relative w-full'} style={device.isMobile ? undefined : { height: '115vh' }}>
             <section
-              className={`w-full flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 pt-20 pb-6 relative ${device.isMobile ? '' : 'sticky top-0'}`}
-              style={{ minHeight: '100svh' }}
+              className={`w-full flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 pb-24 sm:pb-6 relative ${device.isMobile ? '' : 'sticky top-0'}`}
+              style={{ minHeight: device.isMobile ? 'calc(100dvh - 76px)' : '100svh' }}
               data-testid="hero-section"
             >
             <motion.div

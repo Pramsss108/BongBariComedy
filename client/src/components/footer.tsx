@@ -96,26 +96,24 @@ function MarqueeStrip() {
 /* ─── BONG BARI — scroll-linked scale + blur, NO glow divs, NO y movement ─── */
 function BrandReveal() {
   const ref = useRef<HTMLDivElement>(null);
+  const device = useDeviceTier();
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start end", "end start"],
   });
 
-  // NO scale, NO Y movement — only opacity + blur (zero clipping risk)
-  const textOpacity = useTransform(scrollYProgress, [0, 0.1, 0.25, 0.75, 0.92, 1], [0, 0.4, 1, 1, 0.6, 0.15]);
-  // Blur: starts blurry, clears up
-  const blurVal = useTransform(scrollYProgress, [0, 0.1, 0.28, 0.38], [10, 4, 1, 0]);
+  // On mobile: disable scroll animation (always show at full opacity/no blur)
+  const textOpacity = useTransform(scrollYProgress, [0, 0.1, 0.25, 0.75, 0.92, 1], device.isMobile ? [1, 1, 1, 1, 1, 1] : [0, 0.4, 1, 1, 0.6, 0.15]);
+  const blurVal = useTransform(scrollYProgress, [0, 0.1, 0.28, 0.38], device.isMobile ? [0, 0, 0, 0] : [10, 4, 1, 0]);
   const filterStr = useTransform(blurVal, (v) => `blur(${v}px)`);
-  // Underline
-  const lineWidth = useTransform(scrollYProgress, [0, 0.25, 0.5, 0.85, 1], ["0%", "40%", "65%", "40%", "0%"]);
-  // Subtitle (delayed)
-  const subOpacity = useTransform(scrollYProgress, [0, 0.3, 0.42, 0.78, 1], [0, 0, 1, 1, 0.2]);
+  const lineWidth = useTransform(scrollYProgress, [0, 0.25, 0.5, 0.85, 1], device.isMobile ? ["50%", "50%", "50%", "50%", "50%"] : ["0%", "40%", "65%", "40%", "0%"]);
+  const subOpacity = useTransform(scrollYProgress, [0, 0.3, 0.42, 0.78, 1], device.isMobile ? [1, 1, 1, 1, 1] : [0, 0, 1, 1, 0.2]);
 
   return (
-    <div ref={ref} className="relative pt-10 pb-8 sm:pt-14 sm:pb-10 flex flex-col items-center justify-center text-center">
+    <div ref={ref} className="relative pt-5 pb-3 sm:pt-14 sm:pb-10 flex flex-col items-center justify-center text-center">
 
       <motion.h2
-        className="footer-brand-text relative z-10 text-[clamp(2rem,7vw,4rem)] font-black leading-none"
+        className="footer-brand-text relative z-10 text-[clamp(1.75rem,6vw,4rem)] sm:text-[clamp(2rem,7vw,4rem)] font-black leading-none"
         style={{
           opacity: textOpacity,
           filter: filterStr,
@@ -147,7 +145,7 @@ function BrandReveal() {
 
 export default function Footer() {
   return (
-    <footer className="relative mt-0 pb-28 sm:pb-6 footer-root">
+    <footer className="relative mt-0 pb-36 sm:pb-6 footer-root">
       {/* Noise */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none z-[1]" style={{ backgroundImage: "url(/noise.svg)", backgroundRepeat: "repeat" }} />
 

@@ -58,7 +58,7 @@ const MobileNavBar = () => {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
                         transition={{ type: "spring", bounce: 0.3, duration: 0.3 }}
-                        className="fixed bottom-24 right-4 z-[10000] w-48 bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+                        className="fixed bottom-20 right-4 z-[10000] w-48 bg-[#111113]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
                     >
                         <div className="p-2 space-y-1">
                             {menuItems.map((item, idx) => (
@@ -85,15 +85,17 @@ const MobileNavBar = () => {
             </AnimatePresence>
 
             {/* FLOATING GLASS DOCK (Slim Blinkit Style - Wider & Thinner) */}
-            <div className="fixed bottom-4 left-0 right-0 z-[9999] sm:hidden flex justify-center pointer-events-none fade-in-up" style={{ willChange: 'transform', transform: 'translateZ(0)', contain: 'layout' }}>
-                <div className="w-[98%] max-w-[400px] pointer-events-auto">
+            <div className="fixed bottom-0 left-0 right-0 z-[9999] sm:hidden flex flex-col items-center pointer-events-none" style={{ willChange: 'transform', transform: 'translateZ(0)', contain: 'layout', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+                {/* Gradient fade zone above dock — smooth content→dock transition */}
+                <div className="w-full h-6 bg-gradient-to-t from-[#0a0a0a] to-transparent pointer-events-none" />
+                <div className="w-[98%] max-w-[400px] pointer-events-auto mb-1">
                     <div className="
                     flex justify-between items-center px-1
-                    bg-gray-900/60 backdrop-blur-3xl
-                    border border-white/15
+                    bg-[#111113]/95 backdrop-blur-xl
+                    border border-white/10
                     rounded-full
                     py-2
-                    shadow-[0_8px_32px_rgba(0,0,0,0.5)]
+                    shadow-[0_-2px_20px_rgba(0,0,0,0.6)]
                     relative
                     overflow-hidden
                 ">

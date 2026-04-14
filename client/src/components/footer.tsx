@@ -164,7 +164,7 @@ export default function Footer() {
 
         {/* ── Grid: Brand info + Links ── */}
         <div className="relative z-[2] footer-grid-bg">
-          <div className="footer-inner-glow-top" />
+          <div className="h-[1px] bg-white/[0.04]" />
           <div className="px-5 pt-4 pb-3">
 
             {/* Logo + Name + Socials — single row */}
@@ -212,8 +212,8 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Glow line */}
-          <div className="footer-glow-line h-[1.5px] w-full" />
+          {/* Separator — subtle white, no gold glow on mobile */}
+          <div className="h-[1px] w-full bg-white/[0.06]" />
 
           {/* Copyright */}
           <div className="px-5 py-2.5 flex flex-col items-center gap-1 text-[10px]">

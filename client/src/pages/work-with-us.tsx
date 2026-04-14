@@ -125,9 +125,9 @@ function FloatingInput({ icon: Icon, label, ...props }: { icon: any; label: stri
   const hasValue = !!props.value;
   return (
     <div className="relative group">
-      <div className={`absolute -inset-[1px] rounded-xl opacity-0 ${focused ? 'opacity-100' : ''} bg-gradient-to-r from-brand-yellow/20 via-brand-yellow/5 to-brand-yellow/20 blur-[2px] transition-opacity duration-300 pointer-events-none`} />
+      <div className={`absolute -inset-[1px] rounded-xl opacity-0 ${focused ? 'opacity-100' : ''} bg-gradient-to-r from-brand-yellow/25 via-brand-yellow/8 to-brand-yellow/25 blur-[3px] transition-opacity duration-300 pointer-events-none`} />
       <div className="wws-input relative flex items-center h-[36px] sm:h-[44px]">
-        <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 transition-colors duration-200 ${focused ? 'text-brand-yellow/70' : 'text-gray-600'}`} />
+        <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 transition-all duration-300 ${focused ? 'text-brand-yellow/80 drop-shadow-[0_0_4px_rgba(255,204,0,0.3)]' : 'text-gray-600'}`} />
         <div className="flex-1 relative ml-2 sm:ml-3">
           <span className={`absolute left-0 transition-all duration-200 pointer-events-none ${
             focused || hasValue ? 'text-[8px] sm:text-[9px] -top-1.5 text-brand-yellow/60 font-semibold tracking-[0.15em] uppercase' : 'text-[11px] sm:text-[13px] top-1/2 -translate-y-1/2 text-white/30'
@@ -201,8 +201,9 @@ const WorkWithUs = () => {
       <div className="min-h-screen bg-[#050505] text-white relative overflow-hidden">
         {/* Ambient background */}
         <div className="absolute sm:fixed inset-0 pointer-events-none">
-          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-brand-yellow/[0.06] rounded-full blur-[140px]" />
-          <div className="absolute top-[30%] sm:bottom-[-30%] sm:top-auto right-[-10%] w-[45%] h-[50%] bg-violet-500/[0.04] rounded-full blur-[140px]" />
+          <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[50%] bg-brand-yellow/[0.05] rounded-full blur-[160px]" />
+          <div className="absolute top-[30%] sm:bottom-[-30%] sm:top-auto right-[-10%] w-[50%] h-[50%] bg-violet-500/[0.035] rounded-full blur-[160px]" />
+          <div className="absolute bottom-[10%] left-[20%] w-[30%] h-[30%] bg-amber-500/[0.02] rounded-full blur-[120px]" />
         </div>
 
         {/* ═══ FIRST FOLD — Hero + Form in one viewport ═══ */}
@@ -259,9 +260,9 @@ const WorkWithUs = () => {
               transition={{ type: 'spring', stiffness: 140, damping: 20, mass: 0.8, delay: 0.2 }}
             >
               {/* Outer glow border */}
-              <div className="relative rounded-xl sm:rounded-2xl p-[1px] bg-gradient-to-br from-brand-yellow/30 via-brand-yellow/10 to-violet-500/20 shadow-[0_0_60px_-10px_rgba(244,196,48,0.15)]">
+              <div className="relative rounded-xl sm:rounded-2xl p-[1px] bg-gradient-to-br from-brand-yellow/25 via-white/[0.08] to-violet-500/15 shadow-[0_8px_40px_-8px_rgba(244,196,48,0.12),0_0_80px_-20px_rgba(139,92,246,0.08)]">
                 {/* Glass card */}
-                <div className="rounded-xl sm:rounded-2xl bg-white/[0.03] backdrop-blur-2xl border border-white/[0.06] px-2.5 sm:px-8 py-2 sm:py-7">
+                <div className="rounded-xl sm:rounded-2xl bg-gradient-to-b from-white/[0.04] to-white/[0.01] backdrop-blur-2xl border border-white/[0.06] px-3 sm:px-8 py-2.5 sm:py-7">
 
                   <AnimatePresence mode="wait">
                     {isSubmitted ? (
@@ -294,27 +295,43 @@ const WorkWithUs = () => {
                       </motion.div>
                     ) : (
                       <motion.div key="form">
-                        {/* Title row */}
+                        {/* Premium form header */}
                         <motion.div
                           initial={{ opacity: 0, x: -16 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: 0.3, type: 'spring', stiffness: 200, damping: 20 }}
-                          className="flex items-center gap-2 sm:gap-3 mb-1.5 sm:mb-5"
+                          className="mb-2 sm:mb-6"
                         >
-                          <motion.div
-                            initial={{ scale: 0, rotate: -90 }}
-                            animate={{ scale: 1, rotate: 0 }}
-                            transition={{ delay: 0.35, type: 'spring', stiffness: 300, damping: 18 }}
-                            className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-brand-yellow/10 border border-brand-yellow/20 flex items-center justify-center flex-shrink-0"
-                          >
-                            <Handshake className="w-3 h-3 sm:w-4 sm:h-4 text-brand-yellow" />
-                          </motion.div>
-                          <div>
-                            <h2 className="text-[13px] sm:text-lg font-bold text-white leading-tight">
-                              Let's <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow to-amber-300">Collaborate</span>
-                            </h2>
-                            <p className="text-[8px] sm:text-[10px] text-white/40 tracking-wide">Fill in your details and we'll reach out</p>
+                          {/* Top row: icon + title */}
+                          <div className="flex items-start gap-2.5 sm:gap-3.5">
+                            <motion.div
+                              initial={{ scale: 0, rotate: -90 }}
+                              animate={{ scale: 1, rotate: 0 }}
+                              transition={{ delay: 0.35, type: 'spring', stiffness: 300, damping: 18 }}
+                              className="w-7 h-7 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-brand-yellow/20 to-brand-yellow/5 border border-brand-yellow/20 flex items-center justify-center flex-shrink-0 shadow-[0_0_20px_-4px_rgba(255,204,0,0.15)]"
+                            >
+                              <Handshake className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-brand-yellow" />
+                            </motion.div>
+                            <div className="flex-1 min-w-0">
+                              <h2 className="text-[15px] sm:text-xl font-bold text-white leading-tight tracking-tight">
+                                Let's{' '}
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow via-amber-300 to-brand-yellow font-extrabold">
+                                  Collaborate
+                                </span>
+                              </h2>
+                              <p className="text-[9px] sm:text-[11px] text-white/35 mt-0.5 sm:mt-1 font-medium tracking-wide">
+                                Share your vision — we'll craft something extraordinary together
+                              </p>
+                            </div>
                           </div>
+                          {/* Subtle divider */}
+                          <motion.div
+                            initial={{ scaleX: 0 }}
+                            animate={{ scaleX: 1 }}
+                            transition={{ delay: 0.45, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                            className="mt-2 sm:mt-3 h-[1px] w-full origin-left"
+                            style={{ background: 'linear-gradient(90deg, rgba(255,204,0,0.15), rgba(255,255,255,0.04), transparent)' }}
+                          />
                         </motion.div>
 
                         <Form {...form}>
@@ -435,7 +452,7 @@ const WorkWithUs = () => {
                                 type="submit"
                                 disabled={submitCollaborationMutation.isPending}
                                 data-testid="button-submit"
-                                className="wws-submit w-full h-8 sm:h-12 rounded-xl font-semibold text-[13px] sm:text-sm relative overflow-hidden"
+                                className="wws-submit w-full h-9 sm:h-12 rounded-xl font-bold text-[13px] sm:text-sm relative overflow-hidden tracking-wide"
                               >
                                 {submitCollaborationMutation.isPending ? (
                                   <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}>

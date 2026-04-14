@@ -207,7 +207,7 @@ const WorkWithUs = () => {
         </div>
 
         {/* ═══ FIRST FOLD — Hero + Form in one viewport ═══ */}
-        <div className="min-h-[100dvh] flex flex-col relative z-10 pt-[56px] sm:pt-[80px] pb-[72px] sm:pb-0">
+        <div className="min-h-[100dvh] flex flex-col relative z-10 pt-[56px] sm:pt-[80px] pb-[76px] sm:pb-0">
           <div className="flex-1 flex flex-col justify-center px-2.5 sm:px-6 max-w-5xl mx-auto w-full py-0 sm:py-6">
 
             {/* Compact hero — brand-style title on mobile */}
@@ -262,7 +262,7 @@ const WorkWithUs = () => {
               {/* Outer glow border */}
               <div className="relative rounded-xl sm:rounded-2xl p-[1px] bg-gradient-to-br from-brand-yellow/25 via-white/[0.08] to-violet-500/15 shadow-[0_8px_40px_-8px_rgba(244,196,48,0.12),0_0_80px_-20px_rgba(139,92,246,0.08)]">
                 {/* Glass card */}
-                <div className="rounded-xl sm:rounded-2xl bg-gradient-to-b from-white/[0.04] to-white/[0.01] backdrop-blur-2xl border border-white/[0.06] px-3 sm:px-8 py-2.5 sm:py-7">
+                <div className="rounded-xl sm:rounded-2xl bg-gradient-to-b from-white/[0.04] to-white/[0.01] backdrop-blur-2xl border border-white/[0.06] px-2.5 sm:px-8 py-1.5 sm:py-7">
 
                   <AnimatePresence mode="wait">
                     {isSubmitted ? (
@@ -297,41 +297,28 @@ const WorkWithUs = () => {
                       <motion.div key="form">
                         {/* Premium form header */}
                         <motion.div
-                          initial={{ opacity: 0, x: -16 }}
+                          initial={{ opacity: 0, x: -12 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: 0.3, type: 'spring', stiffness: 200, damping: 20 }}
-                          className="mb-2 sm:mb-6"
+                          className="flex items-center gap-2 sm:gap-3 mb-1.5 sm:mb-5"
                         >
-                          {/* Top row: icon + title */}
-                          <div className="flex items-start gap-2.5 sm:gap-3.5">
-                            <motion.div
-                              initial={{ scale: 0, rotate: -90 }}
-                              animate={{ scale: 1, rotate: 0 }}
-                              transition={{ delay: 0.35, type: 'spring', stiffness: 300, damping: 18 }}
-                              className="w-7 h-7 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-brand-yellow/20 to-brand-yellow/5 border border-brand-yellow/20 flex items-center justify-center flex-shrink-0 shadow-[0_0_20px_-4px_rgba(255,204,0,0.15)]"
-                            >
-                              <Handshake className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-brand-yellow" />
-                            </motion.div>
-                            <div className="flex-1 min-w-0">
-                              <h2 className="text-[15px] sm:text-xl font-bold text-white leading-tight tracking-tight">
-                                Let's{' '}
-                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow via-amber-300 to-brand-yellow font-extrabold">
-                                  Collaborate
-                                </span>
-                              </h2>
-                              <p className="text-[9px] sm:text-[11px] text-white/35 mt-0.5 sm:mt-1 font-medium tracking-wide">
-                                Share your vision — we'll craft something extraordinary together
-                              </p>
-                            </div>
-                          </div>
-                          {/* Subtle divider */}
                           <motion.div
-                            initial={{ scaleX: 0 }}
-                            animate={{ scaleX: 1 }}
-                            transition={{ delay: 0.45, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                            className="mt-2 sm:mt-3 h-[1px] w-full origin-left"
-                            style={{ background: 'linear-gradient(90deg, rgba(255,204,0,0.15), rgba(255,255,255,0.04), transparent)' }}
-                          />
+                            initial={{ scale: 0, rotate: -90 }}
+                            animate={{ scale: 1, rotate: 0 }}
+                            transition={{ delay: 0.35, type: 'spring', stiffness: 300, damping: 18 }}
+                            className="w-6 h-6 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-gradient-to-br from-brand-yellow/15 to-brand-yellow/5 border border-brand-yellow/15 flex items-center justify-center flex-shrink-0"
+                          >
+                            <Handshake className="w-3 h-3 sm:w-4.5 sm:h-4.5 text-brand-yellow" />
+                          </motion.div>
+                          <div>
+                            <h2 className="text-[14px] sm:text-lg font-bold text-white leading-none tracking-tight">
+                              Let's{' '}
+                              <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow to-amber-300 font-extrabold">
+                                Collaborate
+                              </span>
+                            </h2>
+                            <p className="text-[8px] sm:text-[10px] text-white/30 mt-0.5 tracking-[0.08em]">Drop your details · We'll handle the rest</p>
+                          </div>
                         </motion.div>
 
                         <Form {...form}>

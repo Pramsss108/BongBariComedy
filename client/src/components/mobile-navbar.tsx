@@ -1,4 +1,4 @@
-import { Home, PlaySquare, MessageCircle, Menu, X, Info, Briefcase, FileText, HelpCircle, Wrench, ChevronUp, Bug } from "lucide-react";
+import { Home, PlaySquare, MessageCircle, Menu, X, Info, Briefcase, FileText, HelpCircle, Wrench, ChevronUp, Bug, Bot } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -6,8 +6,26 @@ import { motion, AnimatePresence } from "framer-motion";
 const MobileNavBar = () => {
     const [location] = useLocation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [lang, setLangState] = useState<'en' | 'bn'>(() =>
+        (typeof window !== 'undefined' && localStorage.getItem('bbc.lang') as 'en' | 'bn') || 'en'
+    );
     const menuRef = useRef<HTMLDivElement>(null);
     const toggleButtonRef = useRef<HTMLButtonElement>(null);
+
+    const switchLang = (next: 'en' | 'bn') => {
+        setLangState(next);
+        localStorage.setItem('bbc.lang', next);
+        window.dispatchEvent(new Event('lang-change'));
+    };
+
+    const [isBotOpen, setIsBotOpen] = useState(false);
+
+    // Listen for BongBot open/close to reflect active state in dock
+    useEffect(() => {
+        const handleBotToggle = () => setIsBotOpen(prev => !prev);
+        window.addEventListener('toggle-chatbot', handleBotToggle);
+        return () => window.removeEventListener('toggle-chatbot', handleBotToggle);
+    }, []);
 
     // Close menu when clicking outside
     useEffect(() => {
@@ -61,6 +79,23 @@ const MobileNavBar = () => {
                         className="fixed bottom-20 right-4 z-[10000] w-48 bg-[#111113]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
                     >
                         <div className="p-2 space-y-1">
+                            {/* Language Toggle — Premium Pill */}
+                            <div className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/[0.04] mb-1">
+                                <span className="text-[11px] text-white/50 font-semibold uppercase tracking-wider">Language</span>
+                                <div className="relative flex items-center bg-black/60 rounded-full p-[2px] border border-white/[0.08]">
+                                    <div
+                                        className="absolute top-[2px] h-[calc(100%-4px)] w-[calc(50%-1px)] rounded-full bg-gradient-to-r from-brand-yellow/15 to-amber-500/15 border border-brand-yellow/25 transition-all duration-300"
+                                        style={{ left: lang === 'en' ? '2px' : 'calc(50%)' }}
+                                    />
+                                    <button onClick={() => switchLang('en')} className={`relative z-10 px-3 py-1 text-[11px] font-bold rounded-full transition-colors duration-200 ${lang === 'en' ? 'text-brand-yellow' : 'text-white/35'}`}>
+                                        EN
+                                    </button>
+                                    <button onClick={() => switchLang('bn')} className={`relative z-10 px-3 py-1 text-[11px] font-bold rounded-full font-bengali transition-colors duration-200 ${lang === 'bn' ? 'text-brand-yellow' : 'text-white/35'}`}>
+                                        বাং
+                                    </button>
+                                </div>
+                            </div>
+
                             {menuItems.map((item, idx) => (
                                 <Link key={idx} href={item.href} onClick={() => setIsMenuOpen(false)}>
                                     <div className={`
@@ -122,6 +157,26 @@ const MobileNavBar = () => {
                                 </button>
                             </Link>
                         ))}
+
+                        {/* BONG BOT DOCK BUTTON */}
+                        <button
+                            onClick={() => window.dispatchEvent(new Event('toggle-chatbot'))}
+                            className="relative flex flex-col items-center justify-center group outline-none w-14"
+                        >
+                            <Bot
+                                className={`
+                                    w-5 h-5 transition-all duration-300 mb-0.5
+                                    ${isBotOpen
+                                        ? "text-brand-blue fill-brand-blue/20 scale-110 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]"
+                                        : "text-zinc-400 group-hover:text-zinc-200"
+                                    }
+                                `}
+                                strokeWidth={isBotOpen ? 2.5 : 2}
+                            />
+                            <span className={`text-[10px] sm:text-xs font-medium transition-all leading-tight ${isBotOpen ? "text-brand-blue" : "text-zinc-500"}`}>
+                                Bot
+                            </span>
+                        </button>
 
                         {/* MENU TOGGLE BUTTON (Slim) */}
                         <button

@@ -1,10 +1,31 @@
 # 📱 MOBILE OPTIMIZATION MASTER PLAN v2
 
-> **Status:** Planning Complete — Ready for Execution  
+> **Status:** 🟢 BATCH A COMPLETE + Extra Fixes — Batch B next  
 > **Priority:** CRITICAL — Desktop is fine, mobile is broken  
 > **Target:** Every page, every component, every pixel on phones (≤768px)  
 > **Rule:** NO batch moves to desktop. This plan is 100% mobile-only.  
 > **Approach:** HOME PAGE FIRST, then step-by-step to other pages.
+
+---
+
+## ✅ Completion Log
+
+| Batch | Phases | Status | Commits |
+|-------|--------|--------|---------|
+| **A** | 1–12 | ✅ COMPLETE | `8c932f3a` (Batch A bulk), `7b50d2ee`, `e62173d9`, `2d3615fb`, `c647a372`, `7a4b0b39`, `361ff8aa`, `6956fbb7`, `cd17f4be`, `0fe05f45` |
+| **B** | 13–21 | ❌ Not Started | — |
+| **C** | 22–27 | 🔄 Phase 23 done (lang toggle) | — |
+| **D** | 28–33 | ❌ Not Started | — |
+| **E** | 34–39 | ❌ Not Started | — |
+| **F** | 40–42 | 🔄 Phase 41 done (BongBot dock) | — |
+| **G** | 43–44 | ❌ Not Started | — |
+
+### Extra Fixes (beyond original plan):
+- ✅ **Footer complete rebuild** — separate mobile/desktop JSX render paths (no more CSS hacks)
+- ✅ **Yellow bleed fix** — solid `#0a0a0a` dock background, gold glow lines removed
+- ✅ **Footer scroll precision** — 4px paddingBottom, double safe-area padding removed
+- ✅ **Touch scroll fix** — reverted `overscroll-behavior-y: none` that broke scrolling
+- ✅ **Footer glow lines** — replaced gold animated gradients with subtle `bg-white/[0.06]` separators
 
 ---
 
@@ -35,7 +56,7 @@
 
 ---
 
-#### Phase 1: 🔴🔴 Hero CTA Buttons vs Glass Dock — First View Collision
+#### Phase 1: ✅ ~~Hero CTA Buttons vs Glass Dock — First View Collision~~
 **Problem:** On 425px (or any mobile), when the site loads, the hero section occupies `min-height: 100svh`. But the content inside (pt-20 + video + title + subtitle + CTA buttons + pb-6) pushes the "Bong Kahini" and "Subscribe" CTA buttons into the exact zone where the glass dock sits (`fixed bottom-4`, ~76px from viewport bottom). WITHOUT ANY SCROLL, the dock physically overlaps the CTA buttons. This is the #1 showstopper — users can't interact with the most important buttons on the site.  
 **Root Cause:** The hero section says "fill the entire viewport" (`100svh`) but doesn't account for the 76px dock zone at the bottom. The CTAs are positioned by natural flow at the bottom of the hero, which is exactly where the dock sits.  
 **Fix (Architectural):**  
@@ -50,7 +71,7 @@
 - Verify on 375px (iPhone SE), 390px (iPhone 14), and 425px that CTAs are fully visible and tappable above the dock  
 **Files:** `client/src/pages/home.tsx`, `client/src/mobile-overrides.css`
 
-#### Phase 2: 🔴🔴 Glass Dock — Make Opaque + Kill Bleed-Through
+#### Phase 2: ✅ ~~Glass Dock — Make Opaque + Kill Bleed-Through~~
 **Problem:** Glass dock at `bg-gray-900/60 backdrop-blur-3xl` is 60% transparent — footer text, brand reveal text, video cards all show through behind it. Looks terrible and unprofessional.  
 **Fix:**  
 - Change dock background from `bg-gray-900/60` to `bg-gray-900/95` (near-opaque)
@@ -59,7 +80,7 @@
 - The premium glass look is nice on iPad but on phones it just makes content bleed through  
 **File:** `client/src/components/mobile-navbar.tsx`
 
-#### Phase 3: 🔴 Bottom-of-Page Architecture — Kill the Empty Black Space
+#### Phase 3: ✅ ~~Bottom-of-Page Architecture — Kill the Empty Black Space~~
 **Problem:** When scrolling to the very bottom of the homepage, there's ugly empty black space visible below the glass dock. The page background (`bg-[#050505]`) ends, the footer's `pb-28` (112px) creates a gap, and the dock floats at `bottom-4` (16px from viewport edge) — leaving ~16px of dead black space below the dock, plus the gap between the last footer content and the dock. It looks like the page is "floating" and unfinished.  
 **Fix (Modern Architecture):**  
 - **Step 1:** Move the dock from `bottom-4` to `bottom-0` and add `pb-[env(safe-area-inset-bottom)]` to the dock itself so it sticks to the absolute bottom on all phones (incl. notched iPhones where the home indicator lives)
@@ -69,7 +90,7 @@
 - The result: dock looks "planted" at the bottom of the phone, no gap, no floating, no black void  
 **Files:** `client/src/components/mobile-navbar.tsx`, `client/src/mobile-overrides.css`, `client/src/components/footer.tsx`
 
-#### Phase 4: 🔴 Brand Reveal ("BONG BARI") — Must Complete Above Dock
+#### Phase 4: ✅ ~~Brand Reveal ("BONG BARI") — Must Complete Above Dock~~
 **Problem:** When scrolling to the footer area, the "BONG BARI" brand reveal + "Bengal's Comedy Brand" subtitle uses scroll-linked opacity/blur animations. On mobile, this animated section sits right where the dock covers it. The text gets partially hidden behind the dock, making the brand section look broken. The scroll-linked animation also means the text might never reach full opacity on mobile because the scroll range is too short.  
 **Fix (Architectural):**  
 - On mobile: disable the scroll-linked opacity/blur animation for Brand Reveal — just show it at full opacity when it enters viewport
@@ -85,7 +106,7 @@
   - All must be visible and not overlap  
 **Files:** `client/src/components/footer.tsx`, `client/src/mobile-overrides.css`
 
-#### Phase 5: Footer Bottom Clearance — Final Safety Padding
+#### Phase 5: ✅ ~~Footer Bottom Clearance — Final Safety Padding~~
 **Problem:** Footer has `pb-28 sm:pb-6` but even with 112px bottom padding, the dock covers the last ~76px. The Privacy/Terms links and copyright text sit right where the dock floats.  
 **Fix:**  
 - Increase `pb-28` to `pb-40` (160px) on mobile — gives 84px of clearance ABOVE the dock
@@ -93,7 +114,7 @@
 - Verify by scrolling to absolute bottom: copyright + Privacy/Terms links must be fully readable above the dock  
 **File:** `client/src/components/footer.tsx`
 
-#### Phase 6: Homepage — Safe Scroll Clearance for All Sections
+#### Phase 6: ✅ ~~Homepage — Safe Scroll Clearance for All Sections~~
 **Problem:** Different sections have their own bottom padding. When scrolling through them, the dock covers the transition between sections. Individual sections like "Latest Comedy" (`pb-10`) push their bottom content close to the dock.  
 **Fix:**  
 - Add `scroll-padding-bottom: 96px` on mobile in `mobile-overrides.css`
@@ -101,7 +122,7 @@
 - Also verify each section's individual bottom padding is adequate  
 **File:** `client/src/mobile-overrides.css`
 
-#### Phase 7: Global Dock Clearance — All Pages
+#### Phase 7: ✅ ~~Global Dock Clearance — All Pages~~
 **Problem:** Different pages have wildly different bottom padding:
 - Home: `pb-24` ✅, About: `pb-24` ✅, Blog: `pb-24` ✅, FAQ: `pb-24` ✅
 - Work-with-us: NO explicit bottom padding ❌
@@ -109,27 +130,27 @@
 **Fix:** One global CSS rule in mobile-overrides: force `min-h-screen` containers to have `padding-bottom: 100px` on mobile. Catches all pages at once.  
 **File:** `client/src/mobile-overrides.css`
 
-#### Phase 8: Bridge Section — Vertical Space Waste
+#### Phase 8: ✅ ~~Bridge Section — Vertical Space Waste~~
 **Problem:** "Discover Our World / Welcome to Our World" bridge uses `py-6` (48px total). Wastes vertical real estate on mobile.  
 **Fix:** Reduce to `py-2` on mobile, shrink heading, remove decorative line.  
 **File:** `client/src/mobile-overrides.css`
 
-#### Phase 9: Video Card Grid — Bottom Row Clearance
+#### Phase 9: ✅ ~~Video Card Grid — Bottom Row Clearance~~
 **Problem:** 2×2 grid bottom row partially hidden by dock.  
 **Fix:** Add `pb-4` extra to video section on mobile.  
 **File:** `client/src/mobile-overrides.css`
 
-#### Phase 10: Marquee Strip — Compact on Mobile
+#### Phase 10: ✅ ~~Marquee Strip — Compact on Mobile~~
 **Problem:** `py-5` + `text-[15px]` + `tracking-[0.3em]` + `gap-12` wastes space.  
 **Fix:** `py-2`, `text-[11px]`, tighter tracking, `gap-6`. Hide on <360px.  
 **File:** `client/src/mobile-overrides.css`
 
-#### Phase 11: Footer Link Grid — Single Column Stack
+#### Phase 11: ✅ ~~Footer Link Grid — Single Column Stack~~
 **Problem:** `grid-cols-2` makes two cramped columns for PAGES + LEGAL on mobile.  
 **Fix:** Use `grid-cols-1` on mobile so each section gets full width. Links stack naturally.  
 **File:** `client/src/components/footer.tsx`, `client/src/mobile-overrides.css`
 
-#### Phase 12: Footer — Reduce Grid Padding on Mobile
+#### Phase 12: ✅ ~~Footer — Reduce Grid Padding on Mobile~~
 **Problem:** Footer grid uses `py-12` (48px each) inside the grid container. Too much padding on phones.  
 **Fix:** Reduce to `py-6` on mobile. Tighten `gap-4` further to `gap-3` for link columns.  
 **File:** `client/src/mobile-overrides.css`
@@ -231,7 +252,7 @@
 **Fix:** Set explicit `--header-height: 56px` on mobile, `64px` on tablet, `70px` on desktop via CSS custom property media queries.  
 **File:** `client/src/mobile-overrides.css`
 
-#### Phase 23: Language Toggle — Visual Integration
+#### Phase 23: ✅ Language Toggle — Visual Integration (DONE — moved to dock menu + header integrated)
 **Problem:** The EN/বাং toggle pill floats in the header's right side. On mobile it looks disconnected and unrelated to the navigation. It competes with the user avatar/login button for space.  
 **Fix:**  
 - On mobile, move the language toggle INTO the expanded mobile menu (the popup at bottom-24)
@@ -400,7 +421,7 @@ Multiple elements can fight for the same layer.
 Replace all arbitrary z-index values with this scale. Remove the INT32_MAX values.  
 **Files:** ALL components with z-index
 
-#### Phase 41: BongBot — Mobile Positioning
+#### Phase 41: ✅ BongBot — Mobile Positioning (DONE — added as dock item)
 **Problem:** BongBot at `fixed bottom-20 right-4 z-50` (80px from bottom, 16px from right). The glass dock is at `fixed bottom-4 z-[9999]`. BongBot's trigger button appears right above the dock, which is fine, but the expanded chat panel (`maxHeight: 60vh`) may overlap awkwardly.  
 **Fix:**  
 - Change BongBot trigger to `bottom-24` on mobile (above dock + safe margin)  

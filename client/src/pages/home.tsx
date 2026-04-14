@@ -188,6 +188,16 @@ const Home = () => {
   });
   useEffect(() => { localStorage.setItem('bbc.lang', lang); }, [lang]);
 
+  // Sync language when changed from mobile dock menu
+  useEffect(() => {
+    const handleLangChange = () => {
+      const stored = localStorage.getItem('bbc.lang') as 'en' | 'bn';
+      if (stored && stored !== lang) setLang(stored);
+    };
+    window.addEventListener('lang-change', handleLangChange);
+    return () => window.removeEventListener('lang-change', handleLangChange);
+  }, [lang]);
+
   const tx = lang === 'en' ? {
     heroSubtitle: 'Funny stories from a Bengali household',
     bridgeLabel: 'Discover Our World',
@@ -371,8 +381,8 @@ const Home = () => {
     <>
       <SEOHead title="Bong Bari Comedy | Home" description="Authentic Bengali Family Comedy" />
 
-      {/* Premium Language Toggle — fixed floating pill */}
-      <div className="fixed top-4 right-4 z-[100]">
+      {/* Premium Language Toggle — fixed floating pill (desktop only — mobile uses dock menu) */}
+      <div className="hidden sm:block fixed top-4 right-4 z-[100]">
         <div className="lang-toggle-pill relative flex items-center bg-black/70 backdrop-blur-xl border border-white/[0.08] rounded-full p-[3px] shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
           <div
             className="lang-toggle-indicator absolute top-[3px] h-[calc(100%-6px)] w-[calc(50%-2px)] rounded-full bg-gradient-to-r from-brand-yellow/15 to-amber-500/15 border border-brand-yellow/25 transition-all duration-300"

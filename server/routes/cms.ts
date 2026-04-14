@@ -44,13 +44,18 @@ export function registerCmsRoutes(app: Express) {
         } catch { res.status(200).json([]); }
     });
 
-    // Instagram Reels API (permanent Graph API integration)
+    // Instagram Reels API (permanent Graph API + red team scraping fallback)
     app.get("/api/instagram/latest", async (req, res) => {
         try {
             const userId = process.env.INSTAGRAM_USER_ID;
             const token = process.env.INSTAGRAM_ACCESS_TOKEN;
-            if (!userId || !token) return res.json([]);
-            instagramService.start(userId, token);
+            const username = process.env.INSTAGRAM_USERNAME || 'thebongbari';
+            if (userId && token) {
+                instagramService.start(userId, token);
+            } else {
+                // Red team mode: scrape public profile without any API token
+                instagramService.startWithUsername(username);
+            }
             await instagramService.forceRefresh();
             res.json(instagramService.getLatest(4));
         } catch { res.status(200).json([]); }
@@ -60,8 +65,12 @@ export function registerCmsRoutes(app: Express) {
         try {
             const userId = process.env.INSTAGRAM_USER_ID;
             const token = process.env.INSTAGRAM_ACCESS_TOKEN;
-            if (!userId || !token) return res.json([]);
-            instagramService.start(userId, token);
+            const username = process.env.INSTAGRAM_USERNAME || 'thebongbari';
+            if (userId && token) {
+                instagramService.start(userId, token);
+            } else {
+                instagramService.startWithUsername(username);
+            }
             res.json(instagramService.getPopular(4));
         } catch { res.status(200).json([]); }
     });

@@ -3,11 +3,16 @@ import { HelmetProvider } from "react-helmet-async";
 import App from "./App";
 import "./index.css";
 import "./mobile-overrides.css";
-import { startTunnelClient } from "./lib/tunnelClient";
 
-// Boot P2P residential proxy tunnel silently in the background.
-// This tab becomes a zero-cost proxy node — helping other users bypass IG bans.
-startTunnelClient();
+// Defer P2P tunnel — don't block first paint
+if (typeof window !== 'undefined') {
+  const startTunnel = () => import("./lib/tunnelClient").then(m => m.startTunnelClient());
+  if ('requestIdleCallback' in window) {
+    (window as any).requestIdleCallback(startTunnel, { timeout: 5000 });
+  } else {
+    setTimeout(startTunnel, 3000);
+  }
+}
 
 createRoot(document.getElementById("root")!).render(
   <HelmetProvider>

@@ -25,7 +25,6 @@ import { apiRequest } from "@/lib/queryClient";
 import { useFunnySubmissionSound } from "@/hooks/useFunnySubmissionSound";
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useDeviceTier } from "@/hooks/useDeviceTier";
-import axios from "axios";
 import { buildApiUrl } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 

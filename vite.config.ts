@@ -1,5 +1,6 @@
 import { defineConfig, type ViteDevServer } from "vite";
 import react from "@vitejs/plugin-react";
+import { compression } from "vite-plugin-compression2";
 import path from "path";
 import fs from "fs";
 import type { IncomingMessage, ServerResponse } from "http";
@@ -31,6 +32,8 @@ export default defineConfig({
       }
     },
     react(),
+    // Gzip + Brotli compression for production assets
+    compression({ algorithms: ['gzip', 'brotliCompress'], threshold: 1024 }),
     // Dev-only: emulate Netlify Functions for promo marquee so no Netlify CLI is required
   ...(process.env.NETLIFY === "1"
       ? []
@@ -142,20 +145,19 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    target: 'es2020',
+    modulePreload: { polyfill: false },
+    cssCodeSplit: true,
     rollupOptions: {
       output: {
         manualChunks: {
-          // Vendor libraries
+          // Vendor libraries — separated for long-term caching
           'react-vendor': ['react', 'react-dom'],
-          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-toast', '@radix-ui/react-tooltip'],
+          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-toast', '@radix-ui/react-tooltip', '@radix-ui/react-select', '@radix-ui/react-tabs'],
           'query-vendor': ['@tanstack/react-query'],
           'form-vendor': ['react-hook-form', '@hookform/resolvers', 'zod'],
           'motion-vendor': ['framer-motion'],
-          'chart-vendor': ['recharts'],
-          // Large components
-          'admin-pages': ['./client/src/pages/admin.tsx', './client/src/pages/AdminChatbot.tsx', './client/src/pages/AdminHomepage.tsx', './client/src/pages/AdminModeration.tsx'],
-          'content-pages': ['./client/src/pages/blog.tsx', './client/src/pages/blog-post.tsx', './client/src/pages/community-feed.tsx'],
-          'legal-pages': ['./client/src/pages/PrivacyPolicy.tsx', './client/src/pages/TermsPage.tsx']
+          // Page chunks removed — React.lazy() handles code-splitting automatically
         }
       }
     }

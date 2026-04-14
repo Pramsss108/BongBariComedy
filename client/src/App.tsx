@@ -3,29 +3,25 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-import MagicalCursor from "@/components/MagicalCursor";
 import { useGlobalCursor } from "@/hooks/useGlobalCursor";
-import { useParallaxScroll } from "@/hooks/useParallaxScroll";
 import { ScrollProgress } from "@/components/scroll-progress";
 import { useDeviceTier } from "@/hooks/useDeviceTier";
-import { useRickshawSound } from "@/hooks/useRickshawSound";
-import { useMagicalHoverSounds } from "@/hooks/useMagicalHoverSounds";
-import { useSimpleCharmSound } from "@/hooks/useSimpleCharmSound";
-import { CharmSoundSelector } from "@/components/CharmSoundSelector";import { RelayConsentBanner } from '@/components/RelayConsentBanner';import { NglLangProvider } from '@/components/NglLang';
+import { RelayConsentBanner } from '@/components/RelayConsentBanner';import { NglLangProvider } from '@/components/NglLang';
 import { useState, useEffect, Suspense, lazy } from "react";
 import React from "react";
-import Home from "@/pages/home";
 import Navigation from "@/components/navigation";
 import MobileNavBar from "@/components/mobile-navbar";
 import { ensureAudioUnlocked } from "@/lib/audioUnlock";
-import GreetingConsent from "@/components/GreetingConsent";
 import { isAudioUnlocked, resumeAudioNow } from "@/lib/audioUnlock";
-import BongBot from "@/components/BongBot";
-// BongBotMascot retired — SVG BongBotHero replaces it (no Rive dep)
 import { useAuth } from "@/hooks/useAuth";
-import FloatingFAQButton from "@/components/FloatingFAQButton";
-import { DebugOverlay } from "@/components/DebugOverlay";
 import "@/lib/layout-sentry"; // Auto-registers window.runLayoutAudit
+
+// Lazy-load heavy components to reduce initial bundle
+const Home = lazy(() => import("@/pages/home"));
+const MagicalCursor = lazy(() => import("@/components/MagicalCursor"));
+const GreetingConsent = lazy(() => import("@/components/GreetingConsent"));
+const BongBot = lazy(() => import("@/components/BongBot"));
+const DebugOverlay = lazy(() => import("@/components/DebugOverlay").then(m => ({ default: m.DebugOverlay })));
 
 // Deploy note: trivial comment to force GitHub Pages rebuild (FORCE_PAGES_DEPLOY)
 
@@ -113,22 +109,6 @@ function Router() {
   // Initialize professional site-wide cursor effect
   useGlobalCursor();
 
-  // Initialize fast engaging parallax scroll effects
-  // useParallaxScroll();
-
-  // Initialize authentic Bengali rickshaw sound on taps (disabled when chatbot is open or logged in)
-  // useRickshawSound({ enabled: !isChatbotOpen && !isAuthenticated, volume: 0.3, cooldownMs: 200 });
-
-  // Initialize magical hover sounds to complement cursor effects (disabled when logged in)
-  // useMagicalHoverSounds({ enabled: !isAuthenticated, volume: 0.12 });
-
-  // Initialize custom charm sound that follows mouse movement (disabled when logged in)
-  // useSimpleCharmSound({
-  //   enabled: !isAuthenticated,
-  //   volume: 0.06,
-  //   audioFile: '/sounds/charm.mp3' // Your custom charm sound
-  // });
-
   // Ensure audio unlock listeners attached
   useEffect(() => { ensureAudioUnlocked(); }, []);
 
@@ -171,11 +151,17 @@ function Router() {
       <ScrollProgress />
       {location !== '/voice-hub' && location !== '/tools/downloader' && location !== '/tools/share' && location !== '/tools/pdf-ninja' && location !== '/tools/khisti' && !location.startsWith('/s/') && !location.startsWith('/p/') && !location.startsWith('/ngl') && <Navigation />}
       <div className="min-h-screen bg-brand-yellow relative m-0 p-0">
-        <GreetingConsent open={showGreeting} onDecision={handleDecision} />
+        <Suspense fallback={null}>
+          <GreetingConsent open={showGreeting} onDecision={handleDecision} />
+        </Suspense>
         {/* Custom belan cursor - hidden for logged-in users (normal cursor instead) */}
-        {!isAuthenticated && <MagicalCursor />}
+        {!isAuthenticated && <Suspense fallback={null}><MagicalCursor /></Suspense>}
         <Switch>
-          <Route path="/" component={Home} />
+          <Route path="/">
+            <Suspense fallback={<LoadingFallback />}>
+              <Home />
+            </Suspense>
+          </Route>
           <Route path="/about">
             <Suspense fallback={<LoadingFallback />}>
               <About />
@@ -340,18 +326,16 @@ function Router() {
         </Switch>
 
         {/* Professional Bong Bot - Triggered via Header on Mobile */}
-        <BongBot onOpenChange={setIsChatbotOpen} />
+        <Suspense fallback={null}>
+          <BongBot onOpenChange={setIsChatbotOpen} />
+        </Suspense>
 
-        {/* BongBotMascot retired — replaced by SVG BongBotHero */}
-
-        {/* Floating FAQ Button - REMOVED per cleanup request */}
-        {/* <FloatingFAQButton /> */}
 
         {/* Mobile Navigation Dock - Hidden on full-screen tool pages */}
         {location !== '/tools/humanizer' && location !== '/voice-hub' && location !== '/tools/downloader' && location !== '/tools/share' && location !== '/tools/pdf-ninja' && location !== '/tools/khisti' && location !== '/tools/free-tools-cta' && !location.startsWith('/tools/board/') && !location.startsWith('/s/') && !location.startsWith('/p/') && <MobileNavBar />}
 
         {/* Production Debug overlay - Available via Console/Hidden Trigger */}
-        <DebugOverlay />
+        <Suspense fallback={null}><DebugOverlay /></Suspense>
       </div>
     </>
   );

@@ -138,8 +138,8 @@ const MobileNavBar = () => {
                     style={{
                         height: '46px',
                         borderRadius: '23px',
-                        padding: '0 6px',
-                        gap: '2px',
+                        padding: '0 10px',
+                        gap: '4px',
                         /* Phase 22: Samsung Internet fallback — high opacity if blur unsupported */
                         background: 'rgba(18,18,18,0.92)',
                         backdropFilter: 'blur(40px) saturate(1.8)',
@@ -155,7 +155,7 @@ const MobileNavBar = () => {
                         return (
                             <Link key={i} href={item.href}>
                                 <motion.button
-                                    className="relative flex flex-col items-center justify-center outline-none select-none w-[54px] h-[46px]"
+                                    className="relative flex flex-col items-center justify-center outline-none select-none w-[58px] h-[46px]"
                                     style={{ touchAction: 'manipulation' }}
                                     animate={{ scale: pressedIdx === i ? 0.82 : 1 }}
                                     transition={{ type: 'spring', stiffness: 600, damping: 28 }}
@@ -165,19 +165,20 @@ const MobileNavBar = () => {
                                     {active && (
                                         <div
                                             className="absolute inset-0 rounded-full pointer-events-none"
-                                            style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%)' }}
+                                            style={{ background: 'radial-gradient(circle, rgba(244,196,48,0.12) 0%, transparent 70%)' }}
                                         />
                                     )}
                                     <item.icon
                                         size={21}
-                                        strokeWidth={active ? 2.3 : 1.5}
-                                        className="transition-opacity duration-200"
-                                        style={{ opacity: active ? 1 : 0.4, color: 'white' }}
+                                        strokeWidth={active ? 2.3 : 1.6}
+                                        className="transition-all duration-200"
+                                        style={{ opacity: active ? 1 : 0.6, color: active ? '#F4C430' : 'white' }}
                                     />
                                     {active && (
                                         <motion.div
                                             layoutId="pill-dot"
-                                            className="absolute bottom-[2px] w-[4px] h-[4px] rounded-full bg-white"
+                                            className="absolute bottom-[2px] w-[4px] h-[4px] rounded-full"
+                                            style={{ background: '#F4C430' }}
                                             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                                         />
                                     )}
@@ -191,7 +192,7 @@ const MobileNavBar = () => {
 
                     {/* Bot — Phase 12: 54×46 touch target */}
                     <motion.button
-                        className="relative flex flex-col items-center justify-center outline-none select-none w-[54px] h-[46px]"
+                        className="relative flex flex-col items-center justify-center outline-none select-none w-[58px] h-[46px]"
                         style={{ touchAction: 'manipulation' }}
                         animate={{ scale: pressedIdx === 3 ? 0.82 : 1 }}
                         transition={{ type: 'spring', stiffness: 600, damping: 28 }}
@@ -201,19 +202,20 @@ const MobileNavBar = () => {
                         {isBotOpen && (
                             <div
                                 className="absolute inset-0 rounded-full pointer-events-none"
-                                style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%)' }}
+                                style={{ background: 'radial-gradient(circle, rgba(244,196,48,0.12) 0%, transparent 70%)' }}
                             />
                         )}
                         <Bot
                             size={21}
-                            strokeWidth={isBotOpen ? 2.3 : 1.5}
-                            className="transition-opacity duration-200"
-                            style={{ opacity: isBotOpen ? 1 : 0.4, color: 'white' }}
+                            strokeWidth={isBotOpen ? 2.3 : 1.6}
+                            className="transition-all duration-200"
+                            style={{ opacity: isBotOpen ? 1 : 0.6, color: isBotOpen ? '#F4C430' : 'white' }}
                         />
                         {isBotOpen && (
                             <motion.div
                                 layoutId="pill-dot"
-                                className="absolute bottom-[2px] w-[4px] h-[4px] rounded-full bg-white"
+                                className="absolute bottom-[2px] w-[4px] h-[4px] rounded-full"
+                                style={{ background: '#F4C430' }}
                                 transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                             />
                         )}
@@ -222,7 +224,7 @@ const MobileNavBar = () => {
                     {/* More / Menu — Phase 12: 54×46 touch target */}
                     <motion.button
                         ref={toggleRef}
-                        className="relative flex flex-col items-center justify-center outline-none select-none w-[54px] h-[46px]"
+                        className="relative flex flex-col items-center justify-center outline-none select-none w-[58px] h-[46px]"
                         style={{ touchAction: 'manipulation' }}
                         animate={{ scale: pressedIdx === 4 ? 0.82 : 1 }}
                         transition={{ type: 'spring', stiffness: 600, damping: 28 }}
@@ -232,16 +234,16 @@ const MobileNavBar = () => {
                         {isMenuOpen && (
                             <div
                                 className="absolute inset-0 rounded-full pointer-events-none"
-                                style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%)' }}
+                                style={{ background: 'radial-gradient(circle, rgba(244,196,48,0.12) 0%, transparent 70%)' }}
                             />
                         )}
                         <AnimatePresence mode="wait">
                             {isMenuOpen ? (
                                 <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}>
-                                    <X size={21} strokeWidth={2.3} style={{ color: 'white' }} />
+                                    <X size={21} strokeWidth={2.3} style={{ color: '#F4C430' }} />
                                 </motion.div>
                             ) : (
-                                <motion.div key="grid" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.15 }}>
+                                <motion.div key="grid" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 0.6 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.15 }}>
                                     <GridIcon />
                                 </motion.div>
                             )}
@@ -249,7 +251,8 @@ const MobileNavBar = () => {
                         {isMenuOpen && (
                             <motion.div
                                 layoutId="pill-dot"
-                                className="absolute bottom-[2px] w-[4px] h-[4px] rounded-full bg-white"
+                                className="absolute bottom-[2px] w-[4px] h-[4px] rounded-full"
+                                style={{ background: '#F4C430' }}
                                 transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                             />
                         )}
@@ -262,7 +265,7 @@ const MobileNavBar = () => {
 
 /* Minimal 2×2 grid icon (SF Symbols style) */
 const GridIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.4 }}>
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="3" width="5.5" height="5.5" rx="1.5" />
         <rect x="11.5" y="3" width="5.5" height="5.5" rx="1.5" />
         <rect x="3" y="11.5" width="5.5" height="5.5" rx="1.5" />

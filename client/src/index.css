@@ -588,6 +588,7 @@ button:hover {
 
   body {
     color: hsl(var(--foreground));
+    background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(244,196,48,0.04) 0%, #050505 60%);
     background-color: #050505;
     /* Smooth scrolling optimizations */
     scroll-behavior: smooth;

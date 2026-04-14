@@ -183,8 +183,8 @@ const Home = () => {
 
   // --- Language toggle (EN / BN) ---
   const [lang, setLang] = useState<'en' | 'bn'>(() => {
-    if (typeof window === 'undefined') return 'bn';
-    return (localStorage.getItem('bbc.lang') as 'en' | 'bn') || 'bn';
+    if (typeof window === 'undefined') return 'en';
+    return (localStorage.getItem('bbc.lang') as 'en' | 'bn') || 'en';
   });
   useEffect(() => { localStorage.setItem('bbc.lang', lang); }, [lang]);
 

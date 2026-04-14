@@ -134,7 +134,9 @@ function FloatingInput({ icon: Icon, label, ...props }: { icon: any; label: stri
           }`}>{label}</span>
           <input
             {...props}
-            autoComplete="off"
+            autoComplete="new-password"
+            data-lpignore="true"
+            data-form-type="other"
             onFocus={e => { setFocused(true); props.onFocus?.(e); }}
             onBlur={e => { setFocused(false); props.onBlur?.(e); }}
             className="w-full bg-transparent text-white text-[13px] outline-none pt-2 pb-0.5 wws-autofill-fix"

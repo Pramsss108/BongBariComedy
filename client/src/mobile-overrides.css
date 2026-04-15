@@ -87,8 +87,9 @@
   }
 
   /* Fix Image aspect ratios on mobile - allow absolute positioning to work */
-  img:not(.absolute),
-  video:not(.absolute),
+  /* Exclude: absolute images, hero bg, pfp (needs h-full for circle), hero video */
+  img:not(.absolute):not(.hero-ken-burns):not(.rounded-full),
+  video:not(.absolute):not([class*="z-[2]"]),
   iframe:not(.absolute) {
     max-width: 100% !important;
     height: auto !important;
@@ -103,13 +104,24 @@
   }
 
   /* Force aspect-video to actually work on mobile (16/9) */
-  .aspect-video {
+  .aspect-video:not(.hero-cinema-container) {
     aspect-ratio: 16 / 9 !important;
     width: 100% !important;
     height: auto !important;
     min-height: 56.25vw !important;
     /* Fallback: Force vertical height based on viewport width */
     display: block !important;
+  }
+
+  /* Hero container: preserve flex layout + overflow hidden */
+  .hero-cinema-container.aspect-video {
+    aspect-ratio: 16 / 9 !important;
+    width: 100% !important;
+    height: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
   }
 
   /* ==================================================

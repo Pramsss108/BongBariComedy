@@ -3431,6 +3431,31 @@ section:nth-child(odd) {
   .card-tap-ripple { will-change: transform, opacity; }
   /* Tone down blur on mobile — 4px vs 8-14px saves ~40% GPU */
   [style*="backdrop-filter"] { backdrop-filter: blur(4px) !important; -webkit-backdrop-filter: blur(4px) !important; }
+
+  /* ═══ MOBILE: Disable heavy hero premium effects ═══ */
+  .hero-cinema-container {
+    animation: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+  /* Kill pseudo-element glow ring + gradient border on mobile */
+  .hero-cinema-container::before,
+  .hero-cinema-container::after {
+    display: none !important;
+  }
+  /* Kill shimmer sweep + vignette on mobile */
+  .hero-shimmer,
+  .hero-shimmer::after {
+    display: none !important;
+  }
+  .hero-vignette {
+    box-shadow: inset 0 0 20px 5px rgba(0, 0, 0, 0.2) !important;
+  }
+  /* Kill bokeh on mobile — saves GPU */
+  .hero-bokeh {
+    display: none !important;
+  }
 }
 
 /* Accessibility: honor system-level reduced motion */

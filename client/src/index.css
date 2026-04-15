@@ -2815,15 +2815,26 @@ section:nth-child(odd) {
   opacity: 0;
   overflow: visible;
   contain: layout style;
+  /* Hover headroom — prevents top clipping when card lifts on hover */
+  padding-top: 10px;
+  margin-top: -10px;
 }
 
 @keyframes yt-fadeInUp {
-  from { opacity: 0; transform: translateY(24px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  0%   { opacity: 0; transform: translateY(28px) scale(0.96); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+/* Desktop-only: cinematic deblur entrance (too expensive on mobile GPU) */
+@media (min-width: 769px) {
+  @keyframes yt-fadeInUp {
+    0%   { opacity: 0; transform: translateY(28px) scale(0.96); filter: blur(4px); }
+    60%  { opacity: 0.8; filter: blur(0); }
+    100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  }
 }
 
 /* ══════════════════════════════════════════════════════
-   ROTATING GOLD BORDER — Smooth single-beam with soft tail
+   ROTATING INSTAGRAM GRADIENT BORDER — Purple→Red→Orange beam
    ══════════════════════════════════════════════════════ */
 .yt-gold-border-wrap {
   position: relative;
@@ -2831,11 +2842,18 @@ section:nth-child(odd) {
   border-radius: 16px;
   background: #0a0a0a;
   overflow: hidden;
-  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-              box-shadow 0.45s ease;
+  /* CRITICAL: GPU layer + anti-aliasing for silky smooth edges */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  /* Smooth sub-pixel rendering on all edges */
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  isolation: isolate;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* The rotating gold beam — ultra-smooth tail with wide fade zones */
+/* The rotating IG gradient beam — purple → magenta → red → orange */
 .yt-gold-border-wrap::before {
   content: '';
   position: absolute;
@@ -2844,20 +2862,21 @@ section:nth-child(odd) {
     from 0deg,
     transparent 0%,
     transparent 15%,
-    rgba(139, 105, 20, 0.08) 18%,
-    rgba(139, 105, 20, 0.20) 22%,
-    rgba(184, 134, 11, 0.40) 26%,
-    #B8860B 30%,
-    #DAA520 34%,
-    #FFD700 37%,
-    #FFF8DC 40%,
-    #FFD700 43%,
-    #DAA520 46%,
-    #B8860B 50%,
-    rgba(184, 134, 11, 0.40) 54%,
-    rgba(139, 105, 20, 0.20) 58%,
-    rgba(139, 105, 20, 0.08) 62%,
-    transparent 66%,
+    rgba(131, 58, 180, 0.08) 18%,
+    rgba(131, 58, 180, 0.30) 22%,
+    #833AB4 26%,
+    #C13584 30%,
+    #E1306C 34%,
+    #FD1D1D 38%,
+    #F77737 42%,
+    #FCAF45 45%,
+    #F77737 48%,
+    #FD1D1D 51%,
+    #E1306C 54%,
+    #C13584 57%,
+    rgba(131, 58, 180, 0.30) 62%,
+    rgba(131, 58, 180, 0.08) 66%,
+    transparent 70%,
     transparent 100%
   );
   animation: yt-border-rotate 5s linear infinite;
@@ -2865,55 +2884,57 @@ section:nth-child(odd) {
   transform: translateZ(0);
 }
 
-/* Static gold ring — subtle always-visible border */
+/* Static IG ring — subtle always-visible border */
 .yt-gold-border-wrap::after {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: 16px;
-  border: 1.5px solid rgba(255, 204, 0, 0.15);
+  border: 1.5px solid rgba(225, 48, 108, 0.18);
   z-index: 0;
   pointer-events: none;
   transition: border-color 0.35s ease;
 }
 
-/* Hover — clean lift + golden aura (no 3D/perspective overhead) */
+/* Hover — Netflix-grade lift + IG magenta aura + smooth edge AA */
 .yt-card-container:hover .yt-gold-border-wrap {
-  transform: translateY(-6px) scale(1.01);
+  transform: translateY(-6px) scale(1.012) translateZ(0);
   box-shadow:
-    0 0 24px rgba(255, 204, 0, 0.14),
-    0 0 48px rgba(255, 204, 0, 0.04),
-    0 20px 50px -12px rgba(0, 0, 0, 0.55);
+    0 0 0 1px rgba(225, 48, 108, 0.06),
+    0 0 24px rgba(225, 48, 108, 0.18),
+    0 0 48px rgba(131, 58, 180, 0.08),
+    0 24px 56px -12px rgba(0, 0, 0, 0.6);
 }
 
-/* Hover — beam widens smoothly */
+/* Hover — beam widens smoothly + speeds up */
 .yt-card-container:hover .yt-gold-border-wrap::before {
   background: conic-gradient(
     from 0deg,
     transparent 0%,
-    transparent 10%,
-    rgba(139, 105, 20, 0.10) 14%,
-    rgba(139, 105, 20, 0.25) 18%,
-    rgba(184, 134, 11, 0.50) 22%,
-    #B8860B 26%,
-    #DAA520 31%,
-    #FFD700 35%,
-    #FFF8DC 40%,
-    #FFD700 45%,
-    #DAA520 49%,
-    #B8860B 54%,
-    rgba(184, 134, 11, 0.50) 58%,
-    rgba(139, 105, 20, 0.25) 62%,
-    rgba(139, 105, 20, 0.10) 66%,
-    transparent 70%,
+    transparent 8%,
+    rgba(131, 58, 180, 0.15) 12%,
+    rgba(131, 58, 180, 0.40) 16%,
+    #833AB4 20%,
+    #C13584 26%,
+    #E1306C 32%,
+    #FD1D1D 38%,
+    #F77737 44%,
+    #FCAF45 48%,
+    #F77737 52%,
+    #FD1D1D 56%,
+    #E1306C 60%,
+    #C13584 64%,
+    rgba(131, 58, 180, 0.40) 68%,
+    rgba(131, 58, 180, 0.15) 72%,
+    transparent 76%,
     transparent 100%
   );
   animation-duration: 3s;
 }
 
-/* Hover — ring brightens */
+/* Hover — ring brightens to IG pink */
 .yt-card-container:hover .yt-gold-border-wrap::after {
-  border-color: rgba(255, 204, 0, 0.40);
+  border-color: rgba(225, 48, 108, 0.45);
 }
 
 /* Playing — freeze */
@@ -2926,14 +2947,15 @@ section:nth-child(odd) {
   to   { transform: rotate(360deg) translateZ(0); }
 }
 
-/* Cinematic vignette — bottom gradient for readability */
+/* Cinematic vignette — Netflix-grade bottom gradient */
 .yt-vignette {
   background: linear-gradient(
     to top,
-    rgba(0, 0, 0, 0.95) 0%,
-    rgba(0, 0, 0, 0.70) 15%,
-    rgba(0, 0, 0, 0.25) 35%,
-    transparent 60%
+    rgba(0, 0, 0, 0.92) 0%,
+    rgba(0, 0, 0, 0.75) 12%,
+    rgba(0, 0, 0, 0.40) 28%,
+    rgba(0, 0, 0, 0.10) 45%,
+    transparent 65%
   );
 }
 
@@ -2946,27 +2968,32 @@ section:nth-child(odd) {
   );
 }
 
-/* Play button — clean glass, no idle animation */
+/* Play button — premium glass, Netflix-grade */
 .yt-glass-play {
-  background: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 2px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
-  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-              background 0.35s ease,
-              border-color 0.35s ease,
-              box-shadow 0.35s ease;
+  background: rgba(0, 0, 0, 0.30);
+  backdrop-filter: blur(16px) saturate(1.6);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    0 8px 24px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+              background 0.4s ease,
+              border-color 0.4s ease,
+              box-shadow 0.4s ease;
 }
 
-/* Play button hover — gold reveal */
+/* Play button hover — IG pink reveal, Netflix depth */
 .yt-card-container:hover .yt-glass-play {
-  background: rgba(255, 204, 0, 0.06);
-  border-color: rgba(255, 204, 0, 0.45);
+  background: rgba(225, 48, 108, 0.10);
+  border-color: rgba(225, 48, 108, 0.50);
   box-shadow:
-    0 0 20px rgba(255, 204, 0, 0.12),
-    0 4px 20px rgba(0, 0, 0, 0.4);
-  transform: scale(1.10);
+    0 0 0 1px rgba(225, 48, 108, 0.15),
+    0 0 24px rgba(225, 48, 108, 0.20),
+    0 8px 32px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transform: scale(1.08);
 }
 
 /* Play ring — only activates on hover */
@@ -2979,7 +3006,7 @@ section:nth-child(odd) {
   transition: all 0.4s ease;
 }
 .yt-card-container:hover .yt-play-ring {
-  border-color: rgba(255, 204, 0, 0.18);
+  border-color: rgba(225, 48, 108, 0.22);
   inset: -10px;
   animation: yt-play-pulse 1.8s ease-out infinite;
 }
@@ -3004,14 +3031,22 @@ section:nth-child(odd) {
   font-size: 13px;
   color: #000;
   background: linear-gradient(135deg, #FFD700, #FFC107, #FFD700);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
   opacity: 0;
   transform: scale(0);
   animation: badgePopIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s forwards;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.3s ease;
 }
 .yt-card-container:hover .yt-card-badge {
   opacity: 1;
-  transform: scale(1.1);
+  transform: scale(1.08);
+  box-shadow:
+    0 2px 12px rgba(225, 48, 108, 0.25),
+    0 4px 16px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30);
 }
 
 @keyframes badgePopIn {
@@ -3020,32 +3055,277 @@ section:nth-child(odd) {
   100% { opacity: 1; transform: scale(1); }
 }
 
-/* Shimmer sweep on hover */
+/* Shimmer sweep on hover — premium cinematic */
 .yt-shimmer {
   position: absolute;
   inset: 0;
   background: linear-gradient(
-    105deg,
-    transparent 38%,
-    rgba(255, 255, 255, 0.04) 44%,
-    rgba(255, 255, 255, 0.08) 50%,
-    rgba(255, 255, 255, 0.04) 56%,
-    transparent 62%
+    110deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.03) 42%,
+    rgba(255, 255, 255, 0.07) 48%,
+    rgba(255, 255, 255, 0.10) 50%,
+    rgba(255, 255, 255, 0.07) 52%,
+    rgba(255, 255, 255, 0.03) 58%,
+    transparent 65%
   );
-  background-size: 200% 100%;
+  background-size: 250% 100%;
   pointer-events: none;
   z-index: 5;
   border-radius: 10px;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.4s ease;
 }
 .yt-card-container:hover .yt-shimmer {
   opacity: 1;
-  animation: yt-shimmer-sweep 1.2s ease-out;
+  animation: yt-shimmer-sweep 1.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 @keyframes yt-shimmer-sweep {
-  from { background-position: 200% 0; }
-  to   { background-position: -200% 0; }
+  from { background-position: 250% 0; }
+  to   { background-position: -250% 0; }
+}
+
+/* ═══ Loading spinner for video buffering ═══ */
+@keyframes reel-spinner {
+  to { transform: rotate(360deg); }
+}
+.reel-loading-spinner {
+  width: 44px;
+  height: 44px;
+  border: 3px solid rgba(255,255,255,0.15);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: reel-spinner 0.7s linear infinite;
+}
+
+/* ═══ Batch 2: View badge animations ═══ */
+@keyframes view-badge-breathe {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+.view-badge-eye-pulse {
+  animation: view-badge-breathe 3s ease-in-out infinite;
+}
+
+@keyframes view-badge-enter {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.view-badge-animate {
+  animation: view-badge-enter 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* ═══ Batch 3: Profile picture IG ring ═══ */
+@keyframes pfp-ring-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.pfp-wrapper:hover .pfp-ring {
+  animation: pfp-ring-spin 3s linear infinite;
+}
+
+/* ═══ Batch 1: Ken Burns slow zoom+pan on hero blurred bg ═══ */
+@keyframes hero-ken-burns {
+  0%   { transform: scale(1.1) translate(0, 0); }
+  50%  { transform: scale(1.2) translate(-2%, 1%); }
+  100% { transform: scale(1.1) translate(0, 0); }
+}
+.hero-ken-burns {
+  animation: hero-ken-burns 20s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* ═══ Batch 1: Bokeh ambient floating dots ═══ */
+@keyframes hero-bokeh-float {
+  0%, 100% { transform: translateY(0) translateX(0); opacity: 0.6; }
+  25% { transform: translateY(-15px) translateX(8px); opacity: 1; }
+  50% { transform: translateY(-5px) translateX(-5px); opacity: 0.4; }
+  75% { transform: translateY(-20px) translateX(12px); opacity: 0.8; }
+}
+.hero-bokeh {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(1px);
+}
+.hero-bokeh-1 {
+  width: 12px; height: 12px;
+  left: 8%; top: 30%;
+  background: rgba(244,196,48,0.10);
+  animation: hero-bokeh-float 8s ease-in-out infinite;
+}
+.hero-bokeh-2 {
+  width: 18px; height: 18px;
+  right: 10%; top: 20%;
+  background: rgba(225,48,108,0.08);
+  animation: hero-bokeh-float 10s ease-in-out 1s infinite;
+}
+.hero-bokeh-3 {
+  width: 10px; height: 10px;
+  left: 14%; bottom: 25%;
+  background: rgba(244,196,48,0.08);
+  animation: hero-bokeh-float 12s ease-in-out 2s infinite;
+}
+.hero-bokeh-4 {
+  width: 14px; height: 14px;
+  right: 6%; bottom: 35%;
+  background: rgba(225,48,108,0.06);
+  animation: hero-bokeh-float 9s ease-in-out 3s infinite;
+}
+
+/* ═══ Batch 4: Video loading shimmer overlay ═══ */
+@keyframes reel-load-shimmer {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+.reel-shimmer-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 14;
+  pointer-events: none;
+  overflow: hidden;
+}
+.reel-shimmer-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255,255,255,0.06) 30%,
+    rgba(255,255,255,0.12) 50%,
+    rgba(255,255,255,0.06) 70%,
+    transparent 100%
+  );
+  animation: reel-load-shimmer 1.5s ease-in-out infinite;
+}
+
+/* ═══ Batch 4: Video fade-in reveal ═══ */
+@keyframes video-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.video-reveal {
+  animation: video-fade-in 0.25s ease-out forwards;
+}
+
+/* ═══ Batch 4: Tap ripple effect ═══ */
+@keyframes card-tap-ripple {
+  0%   { transform: scale(0); opacity: 0.35; }
+  100% { transform: scale(4); opacity: 0; }
+}
+.card-tap-ripple {
+  position: absolute;
+  width: 50px; height: 50px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  pointer-events: none;
+  z-index: 18;
+  animation: card-tap-ripple 0.5s ease-out forwards;
+}
+
+/* ═══ Batch 5 Phase 5.2: Sidebar icon hover micro-animations ═══ */
+@keyframes sidebar-heartbeat {
+  0%, 100% { transform: scale(1); }
+  15% { transform: scale(1.15); }
+  30% { transform: scale(1); }
+  45% { transform: scale(1.1); }
+  60% { transform: scale(1); }
+}
+.sidebar-heart:hover {
+  animation: sidebar-heartbeat 0.6s ease forwards;
+}
+.sidebar-comment:hover {
+  animation: sidebar-bounce 0.3s ease forwards;
+}
+@keyframes sidebar-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+.sidebar-share:hover {
+  transform: rotate(25deg) !important;
+}
+.sidebar-bookmark:hover {
+  transform: translateY(-2px) !important;
+}
+
+/* ═══ Batch 5 Phase 5.3: Card light-leak glow on hover (merged into main hover rule) ═══ */
+/* Hover box-shadow is now in the main .yt-card-container:hover .yt-gold-border-wrap rule above */
+
+/* Playing state — subtle IG pulse aura while video is active */
+.yt-card-container.is-playing .yt-gold-border-wrap {
+  box-shadow:
+    0 0 0 1px rgba(225, 48, 108, 0.10),
+    0 0 20px rgba(225, 48, 108, 0.12),
+    0 8px 32px -8px rgba(0, 0, 0, 0.5);
+}
+
+/* ═══ Batch 5 Phase 5.4: Caption gradient fade ═══ */
+.caption-fade {
+  -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+}
+
+/* ═══ PERFORMANCE OPTIMIZATIONS ═══ */
+
+/* GPU-accelerate reel cards for smooth scroll + hover relay */
+.yt-card-container {
+  content-visibility: auto;
+  contain-intrinsic-size: 280px 500px;
+  will-change: transform, opacity;
+  transition: filter 0.3s ease;
+}
+
+/* Reduce expensive backdrop-filter on mobile for buttery 60fps */
+@media (max-width: 768px) {
+  .reel-shimmer-overlay,
+  .card-tap-ripple { will-change: transform, opacity; }
+  /* Tone down blur on mobile — 4px vs 8-14px saves ~40% GPU */
+  [style*="backdrop-filter"] { backdrop-filter: blur(4px) !important; -webkit-backdrop-filter: blur(4px) !important; }
+}
+
+/* Accessibility: honor system-level reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .hero-ken-burns { animation: none !important; }
+  .hero-bokeh { animation: none !important; opacity: 0.04 !important; }
+  .view-badge-eye-pulse { animation: none !important; }
+  .view-badge-animate { animation: none !important; opacity: 1 !important; }
+  .video-reveal { animation: none !important; opacity: 1 !important; }
+  .card-tap-ripple { animation: none !important; }
+  .sidebar-heart:hover,
+  .sidebar-comment:hover,
+  .sidebar-share:hover,
+  .sidebar-bookmark:hover { animation: none !important; transform: none !important; }
+  .pfp-ring { animation: none !important; }
+  .yt-shimmer { animation: none !important; }
+  .reel-shimmer-overlay { animation: none !important; }
+}
+
+/* ═══ Hero cinematic side panels ═══ */
+.hero-reel-cinema {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+.hero-reel-cinema::before,
+.hero-reel-cinema::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 30%;
+  z-index: 2;
+  pointer-events: none;
+}
+.hero-reel-cinema::before {
+  left: 0;
+  background: linear-gradient(to right, rgba(5,5,5,0.98) 0%, rgba(5,5,5,0.7) 40%, transparent 100%);
+}
+.hero-reel-cinema::after {
+  right: 0;
+  background: linear-gradient(to left, rgba(5,5,5,0.98) 0%, rgba(5,5,5,0.7) 40%, transparent 100%);
 }
 
 /* Title slide-up on hover */

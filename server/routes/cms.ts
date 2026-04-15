@@ -44,16 +44,18 @@ export function registerCmsRoutes(app: Express) {
         } catch { res.status(200).json([]); }
     });
 
-    // Instagram Reels API (permanent Graph API + red team scraping fallback)
+    // Instagram Reels API
+    // Priority: Static JSON (Graph API scraper) → Graph API → Direct scraping
     app.get("/api/instagram/latest", async (req, res) => {
         try {
+            // Static JSON is loaded automatically by instagramService.refresh()
+            // Just ensure the service is running, then return data
             const userId = process.env.INSTAGRAM_USER_ID;
             const token = process.env.INSTAGRAM_ACCESS_TOKEN;
             const username = process.env.INSTAGRAM_USERNAME || 'thebongbari';
             if (userId && token) {
                 instagramService.start(userId, token);
             } else {
-                // Red team mode: scrape public profile without any API token
                 instagramService.startWithUsername(username);
             }
             await instagramService.forceRefresh();

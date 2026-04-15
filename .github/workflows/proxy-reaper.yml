@@ -1,4 +1,4 @@
-name: Proxy Reaper + Source Hunter (Self-Healing Pipeline)
+name: Proxy Reaper + Source Hunter (Hetzner Verified Pipeline)
 
 on:
   schedule:
@@ -13,13 +13,11 @@ on:
 
 jobs:
   harvest:
-    name: Reap proxies + hunt new sources
+    name: Reap proxies + verify via Hetzner
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
     env:
-      UPSTASH_REDIS_REST_URL:   ${{ secrets.UPSTASH_REDIS_REST_URL }}
-      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
       # Auto-injected by GH Actions — bumps GitHub API from 60 to 1000 req/hr
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -34,3 +32,11 @@ jobs:
 
       - name: Run Proxy Reaper + Source Hunter
         run: node scripts/proxy-reaper.mjs
+
+      - name: Commit verified proxies if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add client/public/data/verified-proxies.json scripts/proxy-sources.json
+          git diff --cached --quiet || git commit -m "chore(proxy): update verified proxies [skip ci]"
+          git push

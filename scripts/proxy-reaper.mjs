@@ -1,44 +1,52 @@
 #!/usr/bin/env node
 /**
- * PROXY REAPER + SOURCE HUNTER — Self-Healing Pipeline
+ * PROXY REAPER + SOURCE HUNTER — Hetzner Direct Pipeline
  * ============================================================
  * GitHub Actions job (runs every 4h):
  *
  *   Phase 0 — SOURCE HUNTER (self-healing source discovery)
- *     0a. Merge hardcoded SOURCES + dynamic Redis `proxy_sources:active`
+ *     0a. Use hardcoded SOURCES + local JSON tracking
  *     0b. After scraping, track per-source health (2-strike death rule)
  *     0c. If total active < MIN_SOURCES, hunt new sources:
  *         - Parse meta-aggregators (monosans config.toml, etc.)
  *         - GitHub Search API (repos updated <30 days)
  *         - Validate candidates (25+ unique IPs)
- *         - SADD to `proxy_sources:active`
  *
  *   Phase 1 — Scrape all merged sources concurrently
  *   Phase 2 — BGPView ASN filter: drop datacenter/cloud IPs
- *   Phase 3 — Push ISP/residential survivors to Upstash
+ *   Phase 3 — Send survivors to Hetzner VPS for platform verification
+ *   Phase 4 — Save verified proxies to static JSON (committed to git)
  *
- * Oracle VM deep verifier pulls from `proxies:candidates:ig`
- * every 30 min and runs real Instagram/platform verification.
+ * Architecture change (April 2025):
+ *   OLD: Push to Upstash Redis → Oracle VM pulls → deep verify
+ *   NEW: Send directly to Hetzner VPS → save verified to JSON
+ *   Reason: Oracle VM deprecated, Upstash Redis secrets removed
  *
  * Zero npm dependencies — pure Node.js ESM + native fetch().
  * Requires Node 18+ (ubuntu-latest in GH Actions ships Node 20+).
  * ============================================================
  */
 
-const UPSTASH_URL   = process.env.UPSTASH_REDIS_REST_URL;
-const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+import { createRequire } from 'module';
+import { fileURLToPath } from 'url';
+import path from 'path';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Hetzner VPS for proxy verification (replaces Upstash Redis + Oracle VM)
+const HETZNER_VPS = process.env.HETZNER_VERIFIER_URL || 'http://78.47.104.43:6000';
 const GITHUB_TOKEN  = process.env.GITHUB_TOKEN; // Injected by GH Actions automatically
 
-const CANDIDATES_KEY = 'proxies:candidates:ig';
-const CANDIDATES_TTL = 8 * 60 * 60; // 8 hours in seconds
+// Output path for verified proxies (same pattern as reels-data.json)
+const OUTPUT_DIR = path.join(__dirname, '..', 'client', 'public', 'data');
+const OUTPUT_FILE = path.join(OUTPUT_DIR, 'verified-proxies.json');
+
+// Source tracking file (replaces Redis sets for source health)
+const SOURCE_TRACKING_FILE = path.join(__dirname, '..', 'client', 'public', 'data', 'proxy-sources.json');
 
 // Source Hunter config
-const SOURCES_ACTIVE_KEY  = 'proxy_sources:active';   // SET — dynamic discovered URLs
-const SOURCES_DEAD_KEY    = 'proxy_sources:dead';      // SET — confirmed dead, never re-add
-const SOURCES_FAILURES_KEY = 'proxy_sources:failures'; // HASH — URL → consecutive fail count
 const MIN_SOURCES         = 48;  // Target: always maintain 48+ active sources
 const DEATH_STRIKES       = 2;   // Source dies after 2 consecutive failures
-const RESURRECTION_DAYS   = 7;   // Dead sources get a second chance after 7 days
 const MIN_PROXIES_VALID   = 25;  // New source must yield 25+ unique IPs to be accepted
 
 const MAX_SAMPLE     = 2000;  // IPs to feed into BGPView filter per run
@@ -127,75 +135,60 @@ const HARDCODED_SOURCES = [
   'https://raw.githubusercontent.com/UptimerBot/proxy-list/main/proxies/socks5.txt',
 ];
 
-// ── Upstash REST API Wrapper (zero deps) ────────────────────────────────────
+// ── Local JSON-based Source Tracking (replaces Upstash Redis) ────────────────
+import fs from 'fs';
 
-async function redis(command, ...args) {
-  if (!UPSTASH_URL || !UPSTASH_TOKEN) return null;
-  const url = `${UPSTASH_URL}/${[command, ...args].map(encodeURIComponent).join('/')}`;
+function loadSourceTracking() {
   try {
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${UPSTASH_TOKEN}` },
-    });
-    const json = await res.json();
-    return json.result;
-  } catch (err) {
-    console.warn(`[Redis] ${command} failed:`, err.message);
-    return null;
-  }
+    if (fs.existsSync(SOURCE_TRACKING_FILE)) {
+      return JSON.parse(fs.readFileSync(SOURCE_TRACKING_FILE, 'utf8'));
+    }
+  } catch {}
+  return { active: [], dead: [], failures: {} };
 }
 
-async function redisPipeline(commands) {
-  if (!UPSTASH_URL || !UPSTASH_TOKEN) return null;
-  const res = await fetch(`${UPSTASH_URL}/pipeline`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${UPSTASH_TOKEN}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(commands.map(c => ({ command: c }))),
-  });
-  return res.ok ? (await res.json()) : null;
+function saveSourceTracking(data) {
+  const dir = path.dirname(SOURCE_TRACKING_FILE);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(SOURCE_TRACKING_FILE, JSON.stringify(data, null, 2));
 }
 
-// ── Phase 0a: Merge hardcoded + dynamic Redis sources ───────────────────────
+// ── Phase 0a: Merge hardcoded + tracked dynamic sources ─────────────────────
 
 async function getMergedSources() {
+  const tracking = loadSourceTracking();
+  const deadSet = new Set(tracking.dead || []);
   const merged = new Set(HARDCODED_SOURCES);
 
-  // Pull dynamic sources from Redis
-  const dynamic = await redis('SMEMBERS', SOURCES_ACTIVE_KEY);
-  if (dynamic && Array.isArray(dynamic)) {
-    dynamic.forEach(url => merged.add(url));
-    console.log(`[Hunter] Merged ${HARDCODED_SOURCES.length} hardcoded + ${dynamic.length} dynamic = ${merged.size} total sources`);
-  } else {
-    console.log(`[Hunter] Using ${HARDCODED_SOURCES.length} hardcoded sources (no dynamic sources in Redis yet)`);
+  // Add dynamic sources (not dead)
+  for (const url of (tracking.active || [])) {
+    if (!deadSet.has(url)) merged.add(url);
   }
 
+  console.log(`[Hunter] Merged ${HARDCODED_SOURCES.length} hardcoded + ${(tracking.active || []).length} dynamic = ${merged.size} total sources`);
   return Array.from(merged);
 }
 
 // ── Phase 0b: Track source health (2-strike death rule) ─────────────────────
 
 async function evaluateSourceHealth(sourceUrl, success) {
-  if (!UPSTASH_URL) return; // Skip if no Redis
+  const tracking = loadSourceTracking();
 
   if (success) {
-    // Reset failure counter on success
-    await redis('HDEL', SOURCES_FAILURES_KEY, sourceUrl);
+    delete tracking.failures[sourceUrl];
+    saveSourceTracking(tracking);
     return;
   }
 
   // Increment failure count
-  const strikes = await redis('HINCRBY', SOURCES_FAILURES_KEY, sourceUrl, '1');
-  if (strikes >= DEATH_STRIKES) {
-    console.log(`[Hunter] ☠️ SOURCE DEAD (${strikes} strikes): ${sourceUrl}`);
-    // Remove from active, add to dead, clear failures
-    await redisPipeline([
-      ['SREM', SOURCES_ACTIVE_KEY, sourceUrl],
-      ['SADD', SOURCES_DEAD_KEY, sourceUrl],
-      ['HDEL', SOURCES_FAILURES_KEY, sourceUrl],
-    ]);
+  tracking.failures[sourceUrl] = (tracking.failures[sourceUrl] || 0) + 1;
+  if (tracking.failures[sourceUrl] >= DEATH_STRIKES) {
+    console.log(`[Hunter] ☠️ SOURCE DEAD (${tracking.failures[sourceUrl]} strikes): ${sourceUrl}`);
+    tracking.active = (tracking.active || []).filter(u => u !== sourceUrl);
+    if (!tracking.dead.includes(sourceUrl)) tracking.dead.push(sourceUrl);
+    delete tracking.failures[sourceUrl];
   }
+  saveSourceTracking(tracking);
 }
 
 // ── Phase 0c: Source Hunter — discover new source URLs ──────────────────────
@@ -271,13 +264,10 @@ async function searchGitHub() {
 
 async function validateCandidateSource(url) {
   try {
-    // Skip if already dead (permanent ban)
-    const isDead = await redis('SISMEMBER', SOURCES_DEAD_KEY, url);
-    if (isDead) return false;
-
-    // Skip if already active
-    const isActive = await redis('SISMEMBER', SOURCES_ACTIVE_KEY, url);
-    if (isActive) return false;
+    // Skip if already dead or active (using local JSON tracking)
+    const tracking = loadSourceTracking();
+    if (tracking.dead.includes(url)) return false;
+    if (tracking.active.includes(url)) return false;
 
     // Also skip if it's a hardcoded source
     if (HARDCODED_SOURCES.includes(url)) return false;
@@ -321,7 +311,11 @@ async function huntNewSources(currentCount) {
     validated++;
     const isValid = await validateCandidateSource(candidate);
     if (isValid) {
-      await redis('SADD', SOURCES_ACTIVE_KEY, candidate);
+      const tracking = loadSourceTracking();
+      if (!tracking.active.includes(candidate)) {
+        tracking.active.push(candidate);
+        saveSourceTracking(tracking);
+      }
       added++;
     }
 
@@ -341,14 +335,21 @@ async function huntNewSources(currentCount) {
 async function resurrectDeadSources() {
   // Every run, try to move ONE source from dead back to active for re-testing.
   // The 2-strike rule will quickly re-kill it if it's still dead.
-  const dead = await redis('SRANDMEMBER', SOURCES_DEAD_KEY);
-  if (dead) {
-    console.log(`[Hunter] 🔄 Resurrecting for re-test: ${dead}`);
-    await redisPipeline([
-      ['SREM', SOURCES_DEAD_KEY, dead],
-      ['SADD', SOURCES_ACTIVE_KEY, dead],
-    ]);
+  const tracking = loadSourceTracking();
+  if (tracking.dead.length === 0) return;
+
+  // Pick a random dead source
+  const idx = Math.floor(Math.random() * tracking.dead.length);
+  const dead = tracking.dead[idx];
+  console.log(`[Hunter] 🔄 Resurrecting for re-test: ${dead}`);
+  
+  tracking.dead.splice(idx, 1);
+  if (!tracking.active.includes(dead)) {
+    tracking.active.push(dead);
   }
+  // Reset failure count
+  delete tracking.failures[dead];
+  saveSourceTracking(tracking);
 }
 
 // ── ASN keyword blocklist (datacenter/cloud/CDN providers) ──────────────────
@@ -504,46 +505,186 @@ async function asnFilter(proxySet) {
   return survivors;
 }
 
-// ── Phase 3: Push to Upstash via REST pipeline ───────────────────────────────
+// ── Phase 3: Verify via Hetzner VPS + save to JSON ───────────────────────────
 
-async function pushToUpstash(proxies) {
-  if (!UPSTASH_URL || !UPSTASH_TOKEN) {
-    console.error('[Reaper] FATAL: Missing UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN env vars');
-    process.exit(1);
+/**
+ * Sends proxies to Hetzner VPS for platform verification (IG, YT, FB).
+ * Uses http module because port 6000 is restricted in fetch/undici.
+ * Returns array of verified proxy objects.
+ */
+async function verifyViaHetzner(proxies) {
+  // Health check first
+  console.log(`[Reaper] Checking Hetzner VPS health at ${HETZNER_VPS}...`);
+  
+  const healthOk = await httpGet(`${HETZNER_VPS}/health`, 5000).catch(() => null);
+  if (!healthOk) {
+    console.error('[Reaper] ❌ Hetzner VPS is unreachable. Cannot verify proxies.');
+    console.error(`[Reaper] URL: ${HETZNER_VPS}/health`);
+    return [];
   }
+  console.log('[Reaper] ✅ Hetzner VPS is healthy');
 
-  // Push in chunks to stay within Upstash pipeline limits
-  const CHUNK_SIZE = 500;
-  let totalPushed = 0;
+  // Format proxies as socks5:// or http:// URLs
+  const proxyUrls = proxies.map(p => {
+    // Raw ip:port — default to http://
+    if (!p.includes('://')) return `http://${p}`;
+    return p;
+  });
 
-  for (let i = 0; i < proxies.length; i += CHUNK_SIZE) {
-    const chunk = proxies.slice(i, i + CHUNK_SIZE);
+  // Send in batches of 500 to avoid timeout
+  const BATCH_SIZE = 500;
+  const allResults = [];
 
-    const pipeline = [
-      { command: ['SADD', CANDIDATES_KEY, ...chunk] },
-      // Refresh TTL to 8h on every write
-      { command: ['EXPIRE', CANDIDATES_KEY, String(CANDIDATES_TTL)] },
-    ];
+  for (let i = 0; i < proxyUrls.length; i += BATCH_SIZE) {
+    const batch = proxyUrls.slice(i, i + BATCH_SIZE);
+    const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+    const totalBatches = Math.ceil(proxyUrls.length / BATCH_SIZE);
+    console.log(`[Reaper] Verifying batch ${batchNum}/${totalBatches} (${batch.length} proxies)...`);
 
-    const res = await fetch(`${UPSTASH_URL}/pipeline`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${UPSTASH_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(pipeline),
-    });
+    try {
+      const body = JSON.stringify({
+        proxies: batch,
+        timeout_ms: 15000,
+        user_agents: [
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36',
+          'Mozilla/5.0 (Linux; Android 13; SM-G991B) AppleWebKit/537.36 Chrome/124.0.0.0 Mobile Safari/537.36',
+          'Instagram 275.0.0.27.98 Android (33/13; 420dpi; 1080x2400; samsung; SM-G991B)',
+        ],
+        delay_ms: 100,
+      });
 
-    if (!res.ok) {
-      const errBody = await res.text().catch(() => '');
-      console.error(`[Reaper] Upstash error (chunk ${Math.floor(i / CHUNK_SIZE) + 1}): HTTP ${res.status} — ${errBody}`);
-    } else {
-      totalPushed += chunk.length;
+      const timeoutMs = Math.max(120_000, batch.length * 30 + 30_000);
+      const result = await httpPost(`${HETZNER_VPS}/verify`, body, timeoutMs);
+
+      if (result && result.results) {
+        const verified = result.results.filter(r => r !== null);
+        console.log(`[Reaper] Batch ${batchNum}: ${verified.length}/${batch.length} verified`);
+        allResults.push(...verified);
+      }
+    } catch (err) {
+      console.error(`[Reaper] Batch ${batchNum} error: ${err.message}`);
     }
   }
 
-  console.log(`[Reaper] Pushed ${totalPushed}/${proxies.length} candidates to "${CANDIDATES_KEY}" (TTL 8h)`);
-  return totalPushed;
+  return allResults;
+}
+
+/**
+ * Save verified proxies to static JSON file (committed to git by GH Actions).
+ */
+function saveVerifiedProxies(results) {
+  const proxies = results.map(r => ({
+    url: r.url,
+    ig: !!r.ig,
+    yt: !!r.yt,
+    fb: !!r.fb,
+    latencyMs: r.latency_ms || 0,
+    verifiedAt: new Date().toISOString(),
+  }));
+
+  // Separate by platform
+  const igProxies = proxies.filter(p => p.ig).sort((a, b) => a.latencyMs - b.latencyMs);
+  const ytProxies = proxies.filter(p => p.yt).sort((a, b) => a.latencyMs - b.latencyMs);
+
+  const output = {
+    _meta: {
+      scrapedAt: new Date().toISOString(),
+      total: results.length,
+      igVerified: igProxies.length,
+      ytVerified: ytProxies.length,
+      version: 1,
+    },
+    ig: igProxies.slice(0, 100), // Keep top 100 by latency
+    yt: ytProxies.slice(0, 100),
+    all: proxies.slice(0, 200),
+  };
+
+  // Merge with existing (keep old proxies that are still valid)
+  try {
+    if (fs.existsSync(OUTPUT_FILE)) {
+      const existing = JSON.parse(fs.readFileSync(OUTPUT_FILE, 'utf8'));
+      const existingUrls = new Set(proxies.map(p => p.url));
+      
+      // Keep old proxies not in new batch (max 24h old)
+      const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+      const oldValid = (existing.all || []).filter(p => 
+        !existingUrls.has(p.url) && new Date(p.verifiedAt).getTime() > cutoff
+      );
+      
+      if (oldValid.length > 0) {
+        output.all = [...proxies, ...oldValid].slice(0, 300);
+        output.ig = [...igProxies, ...oldValid.filter(p => p.ig)].slice(0, 150);
+        output.yt = [...ytProxies, ...oldValid.filter(p => p.yt)].slice(0, 150);
+        output._meta.mergedOld = oldValid.length;
+      }
+    }
+  } catch {}
+
+  if (!fs.existsSync(OUTPUT_DIR)) {
+    fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+  }
+  fs.writeFileSync(OUTPUT_FILE, JSON.stringify(output, null, 2));
+  console.log(`[Reaper] 💾 Saved ${output._meta.total} proxies (${output._meta.igVerified} IG, ${output._meta.ytVerified} YT) to ${OUTPUT_FILE}`);
+  return output._meta;
+}
+
+// ── HTTP helpers (port 6000 is restricted in fetch/undici) ───────────────────
+
+import http from 'http';
+
+function httpGet(url, timeoutMs = 10000) {
+  return new Promise((resolve, reject) => {
+    const parsed = new URL(url);
+    const req = http.get({
+      hostname: parsed.hostname,
+      port: parsed.port || 80,
+      path: parsed.pathname + parsed.search,
+      timeout: timeoutMs,
+    }, (res) => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          resolve(data);
+        } else {
+          reject(new Error(`HTTP ${res.statusCode}`));
+        }
+      });
+    });
+    req.on('error', reject);
+    req.on('timeout', () => { req.destroy(); reject(new Error('timeout')); });
+  });
+}
+
+function httpPost(url, body, timeoutMs = 60000) {
+  return new Promise((resolve, reject) => {
+    const parsed = new URL(url);
+    const req = http.request({
+      hostname: parsed.hostname,
+      port: parsed.port || 80,
+      path: parsed.pathname + parsed.search,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body),
+      },
+      timeout: timeoutMs,
+    }, (res) => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(data));
+        } catch {
+          reject(new Error(`Invalid JSON from Hetzner: ${data.slice(0, 200)}`));
+        }
+      });
+    });
+    req.on('error', reject);
+    req.on('timeout', () => { req.destroy(); reject(new Error('timeout')); });
+    req.write(body);
+    req.end();
+  });
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────────
@@ -585,8 +726,12 @@ async function main() {
     return;
   }
 
-  // ── Phase 3: Push to Upstash ──
-  const pushed = await pushToUpstash(survivors);
+  // ── Phase 3: Verify via Hetzner + save JSON ──
+  const verifiedResults = await verifyViaHetzner(survivors);
+  let meta = { total: 0, igVerified: 0, ytVerified: 0 };
+  if (verifiedResults.length > 0) {
+    meta = saveVerifiedProxies(verifiedResults);
+  }
 
   const elapsed = Math.round((Date.now() - t0) / 1000);
   console.log('');
@@ -596,8 +741,8 @@ async function main() {
   console.log(`[Reaper]   Raw scraped:   ${rawProxies.size}`);
   console.log(`[Reaper]   Sampled:       ${Math.min(rawProxies.size, MAX_SAMPLE)}`);
   console.log(`[Reaper]   Survived ASN:  ${survivors.length}`);
-  console.log(`[Reaper]   Pushed Redis:  ${pushed}`);
-  console.log('[Reaper] Oracle VM verifier will deep-check these in the next 30-min window.');
+  console.log(`[Reaper]   Hetzner verified: ${verifiedResults.length} (IG: ${meta.igVerified}, YT: ${meta.ytVerified})`);
+  console.log(`[Reaper]   Saved to:      ${OUTPUT_FILE}`);
   console.log('[Reaper] ============================================================');
 }
 

@@ -12,13 +12,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import YouTubeShort from "@/components/youtube-short";
+import InstagramReel from "@/components/instagram-reel";
 import MobileNavBar from "@/components/mobile-navbar";
 import SEOHead from "@/components/seo-head";
 import Footer from "@/components/footer";
 // Removed PromoMarquee (promo API disabled)
 // Parallax removed for performance
-import { Youtube, Send, Home as HomeIcon, Users, TrendingUp, Smile, Edit3, Volume2, VolumeX, Play, Heart, Video, Eye, Handshake, Award, Flame } from "lucide-react";
+import { Instagram, Send, Home as HomeIcon, Users, TrendingUp, Smile, Edit3, Play, Heart, Video, Eye, Handshake, Award, Flame } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { insertCollaborationRequestSchema, type CollaborationRequest } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
@@ -28,11 +28,16 @@ import { useDeviceTier } from "@/hooks/useDeviceTier";
 import { buildApiUrl } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 
-interface YouTubeVideo {
-  videoId: string;
-  title: string;
+interface InstagramReelData {
+  reelId: string;
+  caption: string;
   thumbnail: string;
+  permalink: string;
   publishedAt: string;
+  likeCount: number;
+  commentCount: number;
+  viewCount: number;
+  videoUrl: string;
 }
 
 /** Phase 19: Magnetic cursor-following tilt card — desktop only */
@@ -126,59 +131,13 @@ const Home = () => {
   const [typewriterText, setTypewriterText] = useState("");
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [showCursor, setShowCursor] = useState(true);
-  // Mute state for hero video (autoplay allowed only when muted initially)
-  const [isMuted, setIsMuted] = useState(true); // start muted until user clicks Yes/No
-  // Key to force iframe remount when toggling mute for reliable param application
-  const [videoKey, setVideoKey] = useState(0);
-  // Ref to iframe for postMessage API control
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  // Has greeting decision occurred? (user entered site)
-  const [enteredSite, setEnteredSite] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    return !!localStorage.getItem('bbc.audioDecision');
-  });
+  const [heroPlaying, setHeroPlaying] = useState(true);
+  const [heroPaused, setHeroPaused] = useState(false);
+  const heroVideoRef = useRef<HTMLVideoElement>(null);
+  const [heroBuffering, setHeroBuffering] = useState(true);
 
-  // Listen for decision broadcast
-  useEffect(() => {
-    const handler = () => {
-      setEnteredSite(true);
-      const decision = localStorage.getItem('bbc.audioDecision');
-      if (decision === 'granted') {
-        setIsMuted(false);
-        setVideoKey(k => k + 1); // reload iframe with sound
-      } else {
-        setIsMuted(true); // keep muted
-        setVideoKey(k => k + 1);
-      }
-    };
-    window.addEventListener('bbc:audio-decision', handler);
-    return () => window.removeEventListener('bbc:audio-decision', handler);
-  }, []);
-  // After decision, try to set volume/play if unmuted
-  useEffect(() => {
-    if (!enteredSite) return; // don't run before entry
-    const attemptVolume = () => {
-      const iframe = iframeRef.current; if (!iframe) return;
-      try {
-        iframe.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [70] }), '*');
-        if (!isMuted) {
-          iframe.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
-          iframe.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
-        }
-      } catch { }
-    };
-    const timeouts = [450, 1100, 2100];
-    timeouts.forEach(t => setTimeout(attemptVolume, t));
-  }, [videoKey, isMuted, enteredSite]);
-
-  // Support overriding hero video via query (?heroVideo=ID) or env var
-  const heroVideoOverride = (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('heroVideo') : null)
-    || (import.meta as any).env?.VITE_HERO_LANDSCAPE_VIDEO_ID;
-
-  // Resolve YouTube Channel ID from URL (?channelId=) or Vite env (VITE_YOUTUBE_CHANNEL_ID)
-  const channelId = (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('channelId') : null)
-    || (import.meta as any).env?.VITE_YOUTUBE_CHANNEL_ID
-    || '';
+  // Instagram profile link
+  const igProfileUrl = 'https://instagram.com/thebongbari';
 
   // --- Phase B: Device tier + Hero scroll-linked cinematic ---
   const device = useDeviceTier();
@@ -224,8 +183,8 @@ const Home = () => {
     formMessage: 'Message',
     formSubmit: 'Send Message',
     formFill: 'Fill Name, Company & Contact Info *',
-    viewAll: 'View All on YouTube',
-    trustVideos: '500+ Videos',
+    viewAll: 'View All on Instagram',
+    trustVideos: '145+ Reels',
     trustViews: '1M+ Views',
     trustCreator: 'Top Creator',
   } : {
@@ -252,8 +211,8 @@ const Home = () => {
     formMessage: 'বার্তা',
     formSubmit: 'বার্তা পাঠান',
     formFill: 'নাম, কোম্পানি ও যোগাযোগ তথ্য দিন *',
-    viewAll: 'ইউটিউবে সব দেখুন',
-    trustVideos: '৫০০+ ভিডিও',
+    viewAll: 'ইনস্টাগ্রামে সব দেখুন',
+    trustVideos: '১৪৫+ রিলস',
     trustViews: '১০ লক্ষ+ ভিউ',
     trustCreator: 'শীর্ষ ক্রিয়েটর',
   };
@@ -306,35 +265,32 @@ const Home = () => {
 
 
 
-  const { data: latestVideos, isLoading: isLoadingLatest } = useQuery<YouTubeVideo[]>({
-    queryKey: [channelId ? `/api/youtube/latest?channelId=${encodeURIComponent(channelId)}` : '/api/youtube/latest'],
+  const { data: latestReels, isLoading: isLoadingLatest } = useQuery<InstagramReelData[]>({
+    queryKey: ['/api/instagram/latest'],
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });
 
-  const { data: popularVideos, isLoading: isLoadingPopular } = useQuery<YouTubeVideo[]>({
-    queryKey: [channelId ? `/api/youtube/popular?channelId=${encodeURIComponent(channelId)}` : '/api/youtube/popular'],
-    refetchInterval: 15 * 60 * 1000, // Refetch every 15 minutes (popular videos change less frequently)
+  const { data: popularReels, isLoading: isLoadingPopular } = useQuery<InstagramReelData[]>({
+    queryKey: ['/api/instagram/popular'],
+    refetchInterval: 15 * 60 * 1000, // Refetch every 15 minutes (popular changes less frequently)
   });
 
   /* --- FALLBACK DATA & VAR MAPPING --- */
   /* --- FALLBACK DATA & VAR MAPPING --- */
-  // Latest fallback — 4 different real BongBari shorts
-  const latestFallback: YouTubeVideo[] = [
-    { videoId: "JetnSt8yP74", title: "Ke Kise Kom? | Bong Bari", thumbnail: "https://i.ytimg.com/vi/JetnSt8yP74/hqdefault.jpg", publishedAt: "2024-01-01" },
-    { videoId: "C2r8L_Yfsss", title: "Bangla Comedy Short | Bong Bari", thumbnail: "https://i.ytimg.com/vi/C2r8L_Yfsss/hqdefault.jpg", publishedAt: "2024-01-02" },
-    { videoId: "K9_yPDdlcAI", title: "Funny Skit | Bong Bari", thumbnail: "https://i.ytimg.com/vi/K9_yPDdlcAI/hqdefault.jpg", publishedAt: "2024-01-03" },
-    { videoId: "XmDPpvMzWkI", title: "Laugh Riot | Bong Bari", thumbnail: "https://i.ytimg.com/vi/XmDPpvMzWkI/hqdefault.jpg", publishedAt: "2024-01-04" },
+  // Latest fallback — seed data when API not yet loaded
+  const latestFallback: InstagramReelData[] = [
+    { reelId: "seed_1", caption: "Bong Bari Comedy — Latest Reel", thumbnail: "", permalink: "https://instagram.com/thebongbari", publishedAt: new Date().toISOString(), likeCount: 0, commentCount: 0, viewCount: 0, videoUrl: "" },
   ];
-  // Popular fallback — 4 different videos (older viral ones)
-  const popularFallback: YouTubeVideo[] = [
-    { videoId: "bHoZ-JFAVcA", title: "Most Loved | Bong Bari", thumbnail: "https://i.ytimg.com/vi/bHoZ-JFAVcA/hqdefault.jpg", publishedAt: "2023-06-01" },
-    { videoId: "7kPy6y5sFWk", title: "Fan Favourite | Bong Bari", thumbnail: "https://i.ytimg.com/vi/7kPy6y5sFWk/hqdefault.jpg", publishedAt: "2023-06-02" },
-    { videoId: "VGwrZPbsAF8", title: "Viral Comedy | Bong Bari", thumbnail: "https://i.ytimg.com/vi/VGwrZPbsAF8/hqdefault.jpg", publishedAt: "2023-06-03" },
-    { videoId: "Dz27AZE8Bnk", title: "Weekend Vibes | Bong Bari", thumbnail: "https://i.ytimg.com/vi/Dz27AZE8Bnk/hqdefault.jpg", publishedAt: "2023-06-04" },
+  // Popular fallback
+  const popularFallback: InstagramReelData[] = [
+    { reelId: "seed_2", caption: "Most Loved Reel", thumbnail: "", permalink: "https://instagram.com/thebongbari", publishedAt: new Date().toISOString(), likeCount: 0, commentCount: 0, viewCount: 0, videoUrl: "" },
   ];
 
-  const latestVideoData = (latestVideos && latestVideos.length > 0) ? latestVideos : latestFallback;
-  const popularVideoData = (popularVideos && popularVideos.length > 0) ? popularVideos : popularFallback;
+  const latestReelData = (latestReels && latestReels.length > 0) ? latestReels : latestFallback;
+  // Popular: sort by viewCount descending so highest-view reels come first, keep ALL 4
+  const safePopularReelData = (popularReels && popularReels.length > 0)
+    ? [...popularReels].sort((a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0))
+    : popularFallback;
 
   /* --- LOGIC RESTORATION --- */
   const form = useForm<CollaborationRequest>({
@@ -376,8 +332,31 @@ const Home = () => {
     collaborationMutation.mutate(data);
   };
 
-  const landscapeId = heroVideoOverride || latestVideos?.[0]?.videoId || "JetnSt8yP74";
-  const isVideoLoading = isLoadingLatest && !heroVideoOverride;
+  // Hero uses the MOST VIRAL reel (Batch 1 Phase 1.1) — fallback to latest
+  const heroReel = (safePopularReelData[0]?.viewCount > 0 ? safePopularReelData[0] : latestReelData[0]);
+  const heroThumbnail = heroReel?.thumbnail || '';
+  const heroPermalink = heroReel?.permalink || igProfileUrl;
+  const heroShortcode = heroPermalink.match(/\/reel\/([^/]+)\//)?.[1] || '';
+
+  // Batch 1 Phase 1.5: Preload hero video for instant playback
+  useEffect(() => {
+    if (heroReel?.videoUrl) {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'video';
+      link.href = heroReel.videoUrl;
+      document.head.appendChild(link);
+      return () => { document.head.removeChild(link); };
+    }
+  }, [heroReel?.videoUrl]);
+
+  // Batch 4 Phase 4.4: Show "Tap to Watch" only if video hasn't started after 2s
+  const [showHeroCTA, setShowHeroCTA] = useState(false);
+  useEffect(() => {
+    if (heroPlaying && !heroBuffering) { setShowHeroCTA(false); return; }
+    const t = setTimeout(() => setShowHeroCTA(true), 2000);
+    return () => clearTimeout(t);
+  }, [heroPlaying, heroBuffering]);
 
   return (
     <>
@@ -435,42 +414,144 @@ const Home = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
               style={device.prefersReducedMotion ? undefined : { scale: heroVideoScale, opacity: heroVideoOpacity }}
-              className={`relative w-full max-w-xl md:max-w-2xl mx-auto rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.6)] border border-white/10 cursor-pointer ${device.isMobile ? 'mb-2' : 'mb-5'} aspect-video flex-shrink-0 transition-all duration-500 ${enteredSite ? 'ring-2 ring-brand-yellow/40 shadow-[0_0_30px_rgba(244,196,48,0.15)]' : 'hover:shadow-[0_0_40px_rgba(244,196,48,0.2)] hover:-translate-y-1'}`}
-              onClick={() => setEnteredSite(true)}
+              className={`relative w-full max-w-xl md:max-w-2xl mx-auto rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.6)] border border-white/10 cursor-pointer ${device.isMobile ? 'mb-2' : 'mb-5'} aspect-video flex-shrink-0 transition-all duration-500`}
+              onClick={() => {
+                if (heroPlaying && !heroPaused) {
+                  heroVideoRef.current?.pause();
+                  setHeroPaused(true);
+                } else if (heroPlaying && heroPaused) {
+                  heroVideoRef.current?.play();
+                  setHeroPaused(false);
+                } else if (!heroPlaying && heroReel?.videoUrl) {
+                  setHeroPlaying(true);
+                  setHeroPaused(false);
+                  setHeroBuffering(true);
+                } else if (!heroPlaying) {
+                  window.open(heroPermalink, '_blank', 'noopener,noreferrer');
+                }
+              }}
             >
-              {!enteredSite ? (
+              {/* Blurred background — Ken Burns slow zoom+pan animation (Batch 1 Phase 1.2) */}
+              <img src={heroThumbnail} alt="" aria-hidden="true" decoding="async"
+                className="absolute inset-0 w-full h-full object-cover blur-2xl brightness-[0.35] pointer-events-none hero-ken-burns" />
+              {/* Dark overlay on blurred bg */}
+              <div className="absolute inset-0 bg-black/40 pointer-events-none" />
+
+              {/* Batch 1 Phase 1.4: Bokeh ambient dots */}
+              <div className="absolute inset-0 pointer-events-none z-[1] overflow-hidden">
+                <div className="hero-bokeh hero-bokeh-1" />
+                <div className="hero-bokeh hero-bokeh-2" />
+                <div className="hero-bokeh hero-bokeh-3" />
+                <div className="hero-bokeh hero-bokeh-4" />
+              </div>
+
+              {heroPlaying && heroReel?.videoUrl ? (
                 <>
-                  <img src={`https://i.ytimg.com/vi/${landscapeId}/hqdefault.jpg`} alt="Featured Comedy" className="w-full h-full object-cover brightness-90" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent pointer-events-none" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="relative">
-                      <div className="absolute -inset-3 bg-red-600/30 rounded-full blur-xl animate-pulse" />
-                      <div className="relative w-14 h-14 md:w-16 md:h-16 bg-[#E53935] rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(229,57,53,0.6)]">
-                        <Play className="w-6 h-6 md:w-7 md:h-7 ml-1 text-white fill-white" />
+                  {/* Portrait video centered inside landscape container */}
+                  <video
+                    ref={heroVideoRef}
+                    src={heroReel.videoUrl}
+                    className="relative z-[2] h-full mx-auto object-contain"
+                    style={{ aspectRatio: '9/16' }}
+                    autoPlay muted loop playsInline poster={heroThumbnail} preload="auto"
+                    onCanPlay={() => setHeroBuffering(false)}
+                    onWaiting={() => setHeroBuffering(true)}
+                    onPlaying={() => setHeroBuffering(false)}
+                  />
+                  {/* Loading spinner */}
+                  {heroBuffering && (
+                    <div className="absolute inset-0 flex items-center justify-center z-[16] pointer-events-none">
+                      <div className="reel-loading-spinner" />
+                    </div>
+                  )}
+                  {/* Cinematic side gradients — premium opaque panels */}
+                  <div className="absolute inset-y-0 left-0 w-[28%] z-[3] pointer-events-none"
+                    style={{ background: 'linear-gradient(to right, rgba(5,5,5,0.95) 0%, rgba(5,5,5,0.6) 50%, transparent 100%)' }} />
+                  <div className="absolute inset-y-0 right-0 w-[28%] z-[3] pointer-events-none"
+                    style={{ background: 'linear-gradient(to left, rgba(5,5,5,0.95) 0%, rgba(5,5,5,0.6) 50%, transparent 100%)' }} />
+
+
+                  {/* Paused overlay */}
+                  {heroPaused && (
+                    <div className="absolute inset-0 bg-black/25 flex items-center justify-center z-10 pointer-events-none">
+                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center"
+                        style={{ background: 'linear-gradient(135deg, rgba(244,196,48,0.88) 0%, rgba(218,165,32,0.82) 100%)', boxShadow: '0 0 30px rgba(244,196,48,0.5)' }}>
+                        <Play className="w-8 h-8 md:w-10 md:h-10 fill-black text-black ml-1" />
                       </div>
                     </div>
-                  </div>
-                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-md text-[11px] font-semibold text-white/80 border border-white/10">
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />Tap to Watch
-                    </span>
+                  )}
+                  {/* Bottom gradient for stats readability */}
+                  <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none z-[4]" />
+                  {/* Hero stats — center-bottom, large + prominent (Batch 2) */}
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1 pointer-events-none">
+                    {heroReel?.viewCount != null && heroReel.viewCount > 0 && (
+                      <div className="flex items-center gap-2 px-4 py-1.5 rounded-full"
+                        style={{
+                          background: 'rgba(0,0,0,0.6)',
+                          backdropFilter: 'blur(14px)',
+                          border: '1px solid rgba(244,196,48,0.25)',
+                          boxShadow: '0 4px 20px rgba(0,0,0,0.5), 0 0 12px rgba(244,196,48,0.06)',
+                        }}>
+                        <Eye className="w-5 h-5 view-badge-eye-pulse" style={{ color: '#F4C430' }} />
+                        <span className="text-lg font-bold text-white tracking-wide">
+                          {heroReel.viewCount >= 1_000_000 ? (heroReel.viewCount / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M' : heroReel.viewCount >= 1000 ? (heroReel.viewCount / 1000).toFixed(1).replace(/\.0$/, '') + 'K' : heroReel.viewCount} views
+                        </span>
+                      </div>
+                    )}
+                    {heroReel?.likeCount != null && heroReel.likeCount > 0 && (
+                      <span className="flex items-center gap-1 text-sm font-medium text-white/70">
+                        <Heart className="w-3.5 h-3.5 text-white/60" />
+                        {heroReel.likeCount >= 1_000_000 ? (heroReel.likeCount / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M' : heroReel.likeCount >= 1000 ? (heroReel.likeCount / 1000).toFixed(1).replace(/\.0$/, '') + 'K' : heroReel.likeCount}
+                      </span>
+                    )}
                   </div>
                 </>
               ) : (
-                <iframe
-                  key={videoKey}
-                  ref={iframeRef}
-                  src={`https://www.youtube-nocookie.com/embed/${landscapeId}?rel=0&modestbranding=1&playsinline=1&autoplay=1&mute=${isMuted ? 1 : 0}&controls=1&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`}
-                  title="Featured Content"
-                  className="absolute inset-0 w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                />
-              )}
-              {enteredSite && (
-                <button onClick={(e) => { e.stopPropagation(); setIsMuted(m => !m); setVideoKey(k => k + 1); }} className="absolute bottom-3 right-3 z-20 bg-black/60 hover:bg-red-600 text-white p-2 rounded-full backdrop-blur-md transition-all border border-white/20 active:scale-95">
-                  {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
-                </button>
+                <>
+                  {/* Thumbnail centered as portrait inside landscape */}
+                  <img src={heroThumbnail} alt="Featured Comedy Reel"
+                    className="relative z-[2] h-full mx-auto object-contain" style={{ aspectRatio: '9/16' }} />
+                  {/* Side gradients */}
+                  <div className="absolute inset-y-0 left-0 w-[28%] z-[3] pointer-events-none"
+                    style={{ background: 'linear-gradient(to right, rgba(5,5,5,0.95) 0%, rgba(5,5,5,0.6) 50%, transparent 100%)' }} />
+                  <div className="absolute inset-y-0 right-0 w-[28%] z-[3] pointer-events-none"
+                    style={{ background: 'linear-gradient(to left, rgba(5,5,5,0.95) 0%, rgba(5,5,5,0.6) 50%, transparent 100%)' }} />
+
+
+
+                  <div className="absolute inset-0 z-[4] flex items-center justify-center">
+                    <div className="relative">
+                      <div className="absolute -inset-3 rounded-full blur-xl animate-pulse" style={{ background: 'radial-gradient(circle, rgba(225,48,108,0.3) 0%, transparent 70%)' }} />
+                      <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center"
+                        style={{ background: 'linear-gradient(135deg, rgba(244,196,48,0.9) 0%, rgba(218,165,32,0.85) 100%)', boxShadow: '0 0 24px rgba(244,196,48,0.5), 0 4px 16px rgba(0,0,0,0.4)' }}>
+                        <Play className="w-6 h-6 md:w-7 md:h-7 ml-1 fill-black text-black" />
+                      </div>
+                    </div>
+                  </div>
+                  {/* Batch 4 Phase 4.4: Show CTA only after delay */}
+                  {showHeroCTA && (
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-md text-[11px] font-semibold border border-white/15 text-white/90">
+                      <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#E1306C', boxShadow: '0 0 6px rgba(225,48,108,0.7)' }} />Tap to Watch
+                    </span>
+                  </div>
+                  )}
+                  {/* View count — center-bottom above "Tap to Watch" (Batch 2) */}
+                  {heroReel?.viewCount != null && heroReel.viewCount > 0 && (
+                    <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-4 py-1.5 rounded-full pointer-events-none"
+                      style={{
+                        background: 'rgba(0,0,0,0.6)',
+                        backdropFilter: 'blur(14px)',
+                        border: '1px solid rgba(244,196,48,0.25)',
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.5), 0 0 12px rgba(244,196,48,0.06)',
+                      }}>
+                      <Eye className="w-5 h-5 view-badge-eye-pulse" style={{ color: '#F4C430' }} />
+                      <span className="text-lg font-bold text-white tracking-wide">
+                        {heroReel.viewCount >= 1_000_000 ? (heroReel.viewCount / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M' : heroReel.viewCount >= 1000 ? (heroReel.viewCount / 1000).toFixed(1).replace(/\.0$/, '') + 'K' : heroReel.viewCount} views
+                      </span>
+                    </div>
+                  )}
+                </>
               )}
             </motion.div>
 
@@ -517,8 +598,8 @@ const Home = () => {
                 <button onClick={() => setLocation('/tools')} className={`flex items-center justify-center gap-2 ${device.isMobile ? 'px-4 py-2.5 text-xs' : 'px-5 py-3 text-sm'} rounded-full bg-[#1a1a2e]/80 hover:bg-[#1a1a2e] border border-white/15 text-white font-semibold backdrop-blur-md transition-all active:scale-95 hover:border-white/30 whitespace-nowrap`}>
                   <Flame className="w-4 h-4 text-[#F4C430]" />Bong Kahini
                 </button>
-                <button onClick={() => { const u = channelId ? `https://www.youtube.com/channel/${channelId}?sub_confirmation=1` : `https://www.youtube.com/@BongBari?sub_confirmation=1`; window.open(u, '_blank', 'noopener,noreferrer'); }} className={`flex items-center justify-center gap-2 ${device.isMobile ? 'px-4 py-2.5 text-xs' : 'px-5 py-3 text-sm'} rounded-full bg-[#E53935] hover:bg-[#c62828] text-white font-semibold shadow-[0_4px_20px_rgba(229,57,53,0.5)] transition-all active:scale-95 whitespace-nowrap`}>
-                  <Youtube className="w-5 h-5 fill-white" />Subscribe
+                <button onClick={() => window.open(igProfileUrl, '_blank', 'noopener,noreferrer')} className={`flex items-center justify-center gap-2 ${device.isMobile ? 'px-4 py-2.5 text-xs' : 'px-5 py-3 text-sm'} rounded-full bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white font-semibold shadow-[0_4px_20px_rgba(168,85,247,0.5)] transition-all active:scale-95 whitespace-nowrap`}>
+                  <Instagram className="w-5 h-5" />Follow
                 </button>
               </motion.div>
             </motion.div>
@@ -604,7 +685,7 @@ const Home = () => {
             >
               <motion.div className="flex justify-center mt-3">
                 <a
-                  href={channelId ? `https://www.youtube.com/channel/${channelId}` : `https://www.youtube.com/@BongBari`}
+                  href={igProfileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hidden sm:inline-flex items-center gap-1.5 text-[13px] text-white/40 hover:text-white/70 transition-colors duration-200"
@@ -622,14 +703,14 @@ const Home = () => {
               onViewportEnter={(entry) => { const el = (entry?.target ?? null) as HTMLElement | null; if (el) el.classList.add('grid-visible'); }}
             >
               {[0, 1, 2, 3].map((i) => {
-                const video = latestVideoData[i];
-                if (!video) return null;
+                const reel = latestReelData[i];
+                if (!reel) return null;
                 const cardY = device.isMobile ? 16 : device.isTablet ? 18 : 24;
                 // Phase 13: Scroll entrance tilt — desktop cards enter with subtle rotateX then spring flat
                 const scrollTilt = device.isDesktop && !device.prefersReducedMotion ? 4 : 0;
                 return (
                   <TiltCard
-                    key={video.videoId + i}
+                    key={reel.reelId + i}
                     variants={{
                       hidden: { opacity: 0, y: cardY, scale: device.isMobile ? 0.96 : 1, rotateX: scrollTilt },
                       visible: { opacity: 1, y: 0, scale: 1, rotateX: 0, transition: device.isMobile ? { duration: 0.3, ease: [0.22, 1, 0.36, 1] } : { duration: 0.55, ease: [0.22, 1, 0.36, 1] } }
@@ -637,7 +718,7 @@ const Home = () => {
                     tiltEnabled={device.isDesktop && !device.prefersReducedMotion}
                     style={device.isDesktop ? { perspective: 600 } : undefined}
                   >
-                    <YouTubeShort videoId={video.videoId} thumbnail={video.thumbnail} title={video.title} index={i} />
+                    <InstagramReel reelId={reel.reelId} caption={reel.caption} thumbnail={reel.thumbnail} permalink={reel.permalink} videoUrl={reel.videoUrl} likeCount={reel.likeCount} commentCount={reel.commentCount} viewCount={reel.viewCount} index={i} />
                   </TiltCard>
                 );
               })}
@@ -681,7 +762,7 @@ const Home = () => {
             >
               <motion.div className="flex justify-center mt-3">
                 <a
-                  href={channelId ? `https://www.youtube.com/channel/${channelId}/videos?view=0&sort=p` : `https://www.youtube.com/@BongBari/videos?view=0&sort=p`}
+                  href={igProfileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hidden sm:inline-flex items-center gap-1.5 text-[13px] text-white/40 hover:text-white/70 transition-colors duration-200"
@@ -699,14 +780,14 @@ const Home = () => {
               onViewportEnter={(entry) => { const el = (entry?.target ?? null) as HTMLElement | null; if (el) el.classList.add('grid-visible'); }}
             >
               {[0, 1, 2, 3].map((i) => {
-                const video = popularVideoData[i];
-                if (!video) return null;
+                const reel = safePopularReelData[i];
+                if (!reel) return null;
                 const cardY = device.isMobile ? 16 : device.isTablet ? 18 : 24;
                 // Phase 13: Scroll entrance tilt (reverse cascade — slight rotateX tilt on enter)
                 const scrollTilt = device.isDesktop && !device.prefersReducedMotion ? -3 : 0;
                 return (
                   <TiltCard
-                    key={video.videoId + i}
+                    key={reel.reelId + i}
                     variants={{
                       hidden: { opacity: 0, y: cardY, x: device.isMobile ? 0 : 15, scale: device.isMobile ? 0.96 : 1, rotateX: scrollTilt },
                       visible: { opacity: 1, y: 0, x: 0, scale: 1, rotateX: 0, transition: device.isMobile ? { duration: 0.3, ease: [0.22, 1, 0.36, 1] } : { duration: 0.55, ease: [0.22, 1, 0.36, 1] } }
@@ -714,7 +795,7 @@ const Home = () => {
                     tiltEnabled={device.isDesktop && !device.prefersReducedMotion}
                     style={device.isDesktop ? { perspective: 600 } : undefined}
                   >
-                    <YouTubeShort videoId={video.videoId} thumbnail={video.thumbnail} title={video.title} index={i} rank={i + 1} />
+                    <InstagramReel reelId={reel.reelId} caption={reel.caption} thumbnail={reel.thumbnail} permalink={reel.permalink} videoUrl={reel.videoUrl} likeCount={reel.likeCount} commentCount={reel.commentCount} viewCount={reel.viewCount} index={i} rank={i + 1} />
                   </TiltCard>
                 );
               })}

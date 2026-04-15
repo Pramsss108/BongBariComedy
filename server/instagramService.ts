@@ -1,5 +1,11 @@
 import https from 'https';
 import http from 'http';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export type ReelInfo = {
   reelId: string;
@@ -9,10 +15,29 @@ export type ReelInfo = {
   publishedAt: string;
   likeCount: number;
   commentCount: number;
+  viewCount: number;
+  videoUrl: string;
 };
 
-type DataSource = 'graph-api' | 'public-scrape' | 'none';
+type DataSource = 'static-json' | 'graph-api' | 'public-scrape' | 'none';
 
+/**
+ * Priority chain:
+ *   1. Static JSON (from GitHub Actions multi-tier scraper) — auto-updated daily
+ *   2. Graph API (if env vars exist)                        — official, real-time fallback
+ *   3. Direct scraping (DEAD)                               — all methods blocked by IG (Apr 2025)
+ *
+ * NOTE (April 2025 — exhaustive testing):
+ *   - ALL Picuki/Proxigram mirrors: dead (expired certs, DNS failures)
+ *   - IG v1 Private API: 429 even via residential ASOCKS proxy
+ *   - Instaloader: 403 even via residential proxy
+ *   - IG embed page: empty app shell, zero media data
+ *   - Instagram has locked ALL anonymous scraping completely
+ *   
+ * The GitHub Actions scraper (scripts/scrape-reels.cjs) supports:
+ *   Tier 1: Graph API (official, permanent, free)
+ *   Tier 2: RapidAPI (commercial free tier, 100-500 req/month)
+ */
 class InstagramService {
   private latest: ReelInfo[] = [];
   private popular: ReelInfo[] = [];
@@ -25,9 +50,20 @@ class InstagramService {
   private dataSource: DataSource = 'none';
   private readonly intervalMs = 2 * 60 * 1000; // 2 minutes
   private intervalRef: NodeJS.Timeout | null = null;
+  private staticJsonPath: string;
+
+  constructor() {
+    // In dev: client/public/data/reels-data.json
+    // In prod (built): dist/public/data/reels-data.json
+    this.staticJsonPath = path.join(__dirname, '..', 'client', 'public', 'data', 'reels-data.json');
+    const prodPath = path.join(__dirname, '..', 'dist', 'public', 'data', 'reels-data.json');
+    if (!fs.existsSync(this.staticJsonPath) && fs.existsSync(prodPath)) {
+      this.staticJsonPath = prodPath;
+    }
+  }
 
   /**
-   * Start with Graph API token (primary — permanent, official)
+   * Start with Graph API token (Phase 2 — official)
    */
   start(userId: string, accessToken: string) {
     this.userId = userId;
@@ -39,8 +75,7 @@ class InstagramService {
   }
 
   /**
-   * Start with just a username (fallback — public scraping, red team)
-   * Works without any API token for public accounts
+   * Start with just a username (emergency fallback)
    */
   startWithUsername(username: string) {
     this.username = username.replace(/^@/, '');
@@ -72,6 +107,7 @@ class InstagramService {
       username: this.username,
       dataSource: this.dataSource,
       tokenExpiresAt: this.tokenExpiresAt || null,
+      staticJsonExists: fs.existsSync(this.staticJsonPath),
     } as const;
   }
 
@@ -92,7 +128,17 @@ class InstagramService {
     if (now - this.lastUpdate < 30_000) return; // throttle 30s
     this.lastUpdate = now;
 
-    // Auto-refresh token if within 10 days of expiry
+    // ── Priority 1: Static JSON (Graph API scraper via GitHub Actions) ──
+    const staticReels = this.loadStaticJSON();
+    if (staticReels) {
+      this.latest = staticReels.latest;
+      this.popular = staticReels.popular;
+      this.dataSource = 'static-json';
+      console.log(`[InstagramService] Loaded ${staticReels.latest.length} latest + ${staticReels.popular.length} popular from static JSON`);
+      return; // Done — no need for API calls
+    }
+
+    // ── Priority 2: Graph API (Phase 2 — if token env vars exist) ──
     if (this.accessToken && this.tokenExpiresAt && now > this.tokenExpiresAt - (10 * 24 * 60 * 60 * 1000)) {
       await this.refreshToken().catch((err) => {
         console.error('[InstagramService] Token refresh failed:', err.message);
@@ -101,7 +147,6 @@ class InstagramService {
 
     let allReels: ReelInfo[] = [];
 
-    // Priority 1: Graph API (permanent, official)
     if (this.userId && this.accessToken) {
       try {
         const media = await this.fetchMediaFromGraphAPI();
@@ -110,11 +155,10 @@ class InstagramService {
         console.log(`[InstagramService] Fetched ${allReels.length} reels via Graph API`);
       } catch (err: any) {
         console.error('[InstagramService] Graph API failed:', err.message);
-        // Fall through to scraping
       }
     }
 
-    // Priority 2: Public profile scraping (red team fallback)
+    // ── Priority 3: Direct scraping (emergency only) ──
     if (allReels.length === 0 && this.username) {
       try {
         allReels = await this.scrapePublicProfile(this.username);
@@ -130,12 +174,10 @@ class InstagramService {
       return;
     }
 
-    // Latest: by timestamp descending (newest first)
     this.latest = [...allReels]
       .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
       .slice(0, 12);
 
-    // Popular: by engagement score descending (most viral first)
     this.popular = [...allReels]
       .sort((a, b) => {
         const scoreA = (a.likeCount || 0) + (a.commentCount || 0) * 3;
@@ -145,7 +187,50 @@ class InstagramService {
       .slice(0, 12);
   }
 
-  // ─── GRAPH API (Primary) ────────────────────────────────────
+  // ─── STATIC JSON (Primary — from GitHub Actions Graph API scraper) ──
+
+  private loadStaticJSON(): { latest: ReelInfo[]; popular: ReelInfo[] } | null {
+    try {
+      if (!fs.existsSync(this.staticJsonPath)) return null;
+      const raw = fs.readFileSync(this.staticJsonPath, 'utf-8');
+      const data = JSON.parse(raw);
+
+      // Validate expected shape
+      if (!data?.latest?.length && !data?.popular?.length) return null;
+
+      // Check staleness — if data is older than 3 days, fall through to live sources
+      const scrapedAt = data?._meta?.scrapedAt;
+      if (scrapedAt) {
+        const age = Date.now() - new Date(scrapedAt).getTime();
+        if (age > 3 * 24 * 60 * 60 * 1000) {
+          console.warn('[InstagramService] Static JSON is stale (>3 days), falling through to live sources');
+          return null;
+        }
+      }
+
+      const mapItem = (item: any): ReelInfo => ({
+        reelId: item.reelId || item.id || '',
+        caption: item.caption || 'Instagram Reel',
+        thumbnail: item.thumbnail || '',
+        permalink: item.permalink || item.url || '',
+        publishedAt: item.publishedAt || item.date || new Date().toISOString(),
+        likeCount: item.likeCount || item.likes || 0,
+        commentCount: item.commentCount || item.comments || 0,
+        viewCount: item.viewCount || item.play_count || 0,
+        videoUrl: item.videoUrl || '',
+      });
+
+      return {
+        latest: (data.latest || []).map(mapItem),
+        popular: (data.popular || []).map(mapItem),
+      };
+    } catch (err: any) {
+      console.error('[InstagramService] Failed to load static JSON:', err.message);
+      return null;
+    }
+  }
+
+  // ─── GRAPH API (Phase 2) ────────────────────────────────────
 
   private async fetchMediaFromGraphAPI(): Promise<any[]> {
     const fields = 'id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count';
@@ -165,25 +250,24 @@ class InstagramService {
       publishedAt: item.timestamp || new Date().toISOString(),
       likeCount: item.like_count || 0,
       commentCount: item.comments_count || 0,
+      viewCount: item.video_view_count || item.play_count || 0,
+      videoUrl: item.media_url || '',
     };
   };
 
-  // ─── PUBLIC SCRAPING (Red Team Fallback) ─────────────────────
+  // ─── DIRECT SCRAPING (Emergency Fallback) ────────────────────
 
   private async scrapePublicProfile(username: string): Promise<ReelInfo[]> {
-    // Strategy 1: Try the __a=1 JSON endpoint
     try {
       const reels = await this.scrapeViaProfileJSON(username);
       if (reels.length > 0) return reels;
     } catch { /* fall through */ }
 
-    // Strategy 2: Try HTML scraping with SharedData extraction
     try {
       const reels = await this.scrapeViaHTML(username);
       if (reels.length > 0) return reels;
     } catch { /* fall through */ }
 
-    // Strategy 3: Try the web API endpoint
     try {
       const reels = await this.scrapeViaWebAPI(username);
       if (reels.length > 0) return reels;
@@ -192,10 +276,6 @@ class InstagramService {
     return [];
   }
 
-  /**
-   * Strategy 1: Fetch profile JSON via /?__a=1&__d=dis
-   * Works for public profiles, returns _sharedData with recent media
-   */
   private async scrapeViaProfileJSON(username: string): Promise<ReelInfo[]> {
     const url = `https://www.instagram.com/${username}/?__a=1&__d=dis`;
     const html = await this.fetchTextWithHeaders(url, {
@@ -215,9 +295,6 @@ class InstagramService {
       .map((e: any) => this.mapScrapedNode(e.node, username));
   }
 
-  /**
-   * Strategy 2: Parse HTML page for window._sharedData or similar embedded JSON
-   */
   private async scrapeViaHTML(username: string): Promise<ReelInfo[]> {
     const url = `https://www.instagram.com/${username}/`;
     const html = await this.fetchTextWithHeaders(url, {
@@ -226,7 +303,6 @@ class InstagramService {
       'Accept-Language': 'en-US,en;q=0.5',
     });
 
-    // Try to find _sharedData JSON blob
     const sharedMatch = html.match(/window\._sharedData\s*=\s*(\{[\s\S]+?\});<\/script>/);
     if (sharedMatch) {
       try {
@@ -241,7 +317,6 @@ class InstagramService {
       } catch { /* parse error, fall through */ }
     }
 
-    // Try to find __additionalData or similar JSON blobs
     const additionalMatch = html.match(/window\.__additionalDataLoaded\s*\(\s*['"][^'"]+['"]\s*,\s*(\{[\s\S]+?\})\s*\)/);
     if (additionalMatch) {
       try {
@@ -256,7 +331,6 @@ class InstagramService {
       } catch { /* parse error, fall through */ }
     }
 
-    // Try finding xdt_api__v1 or similar modern IG payloads in preloaded data
     const preloadRe = /"xdt_api__v1__[^"]*":\s*(\{[^}]+\})/g;
     let preloadMatch: RegExpExecArray | null;
     while ((preloadMatch = preloadRe.exec(html)) !== null) {
@@ -264,7 +338,7 @@ class InstagramService {
         const payload = JSON.parse(preloadMatch[1]);
         if (payload?.items) {
           return payload.items
-            .filter((it: any) => it.media_type === 2) // 2 = video
+            .filter((it: any) => it.media_type === 2)
             .map((it: any) => this.mapScrapedItem(it, username));
         }
       } catch { continue; }
@@ -273,9 +347,6 @@ class InstagramService {
     return [];
   }
 
-  /**
-   * Strategy 3: Try the web API endpoint used by instagram.com's frontend
-   */
   private async scrapeViaWebAPI(username: string): Promise<ReelInfo[]> {
     const url = `https://i.instagram.com/api/v1/users/web_profile_info/?username=${username}`;
     const text = await this.fetchTextWithHeaders(url, {
@@ -294,9 +365,6 @@ class InstagramService {
       .map((e: any) => this.mapScrapedNode(e.node, username));
   }
 
-  /**
-   * Map a scraped GraphQL node to ReelInfo
-   */
   private mapScrapedNode(node: any, username: string): ReelInfo {
     const caption = node?.edge_media_to_caption?.edges?.[0]?.node?.text || '';
     const firstLine = caption.split('\n')[0].replace(/#\S+/g, '').trim().slice(0, 80) || 'Instagram Reel';
@@ -309,12 +377,11 @@ class InstagramService {
       publishedAt: node?.taken_at_timestamp ? new Date(node.taken_at_timestamp * 1000).toISOString() : new Date().toISOString(),
       likeCount: node?.edge_liked_by?.count || node?.edge_media_preview_like?.count || 0,
       commentCount: node?.edge_media_to_comment?.count || node?.edge_media_preview_comment?.count || 0,
+      viewCount: node?.video_view_count || 0,
+      videoUrl: node?.video_url || '',
     };
   }
 
-  /**
-   * Map a v1 API item to ReelInfo
-   */
   private mapScrapedItem(item: any, username: string): ReelInfo {
     const caption = item?.caption?.text || '';
     const firstLine = caption.split('\n')[0].replace(/#\S+/g, '').trim().slice(0, 80) || 'Instagram Reel';
@@ -327,15 +394,16 @@ class InstagramService {
       publishedAt: item?.taken_at ? new Date(item.taken_at * 1000).toISOString() : new Date().toISOString(),
       likeCount: item?.like_count || 0,
       commentCount: item?.comment_count || 0,
+      viewCount: item?.play_count || item?.video_view_count || 0,
+      videoUrl: item?.video_versions?.[0]?.url || '',
     };
   }
 
-  // ─── TOKEN REFRESH ───────────────────────────────────────────
+  // ─── TOKEN REFRESH (Phase 2) ─────────────────────────────────
 
   private async refreshToken(): Promise<void> {
     if (!this.accessToken) return;
 
-    // Try Instagram Login token refresh
     try {
       const url = `https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${this.accessToken}`;
       const data = await this.fetchJSON(url);
@@ -347,7 +415,6 @@ class InstagramService {
       }
     } catch { /* fall through to FB method */ }
 
-    // Try Facebook Login token exchange
     const appId = process.env.INSTAGRAM_APP_ID;
     const appSecret = process.env.INSTAGRAM_APP_SECRET;
     if (appId && appSecret) {
@@ -378,7 +445,6 @@ class InstagramService {
     return new Promise((resolve, reject) => {
       const lib = url.startsWith('https') ? https : http;
       const req = lib.get(url, { headers }, (r) => {
-        // Follow redirects (301, 302, 307, 308)
         if (r.statusCode && r.statusCode >= 300 && r.statusCode < 400 && r.headers.location) {
           this.fetchTextWithHeaders(r.headers.location, headers).then(resolve).catch(reject);
           return;

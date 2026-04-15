@@ -84,12 +84,10 @@ function SectionRevealTitle({ title, subtitle, accentColor = 'brand-yellow', bad
   children?: React.ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] });
   const textOpacity = useTransform(scrollYProgress, [0, 0.15, 0.35, 0.7, 0.85], [0, 0.5, 1, 1, 0.8]);
-  // Skip blur on mobile for perf — only opacity transition
-  const blurVal = useTransform(scrollYProgress, [0, 0.15, 0.3], isMobile ? [0, 0, 0] : [6, 2, 0]);
-  const filterStr = useTransform(blurVal, (v) => v > 0 ? `blur(${v}px)` : 'none');
+  // PERF: Removed scroll-linked filter:blur() — it triggers expensive repaints every frame.
+  // Opacity-only reveal is smooth and GPU-composited.
   const subOpacity = useTransform(scrollYProgress, [0.1, 0.3, 0.7, 0.85], [0, 1, 1, 0.6]);
 
   return (
@@ -107,7 +105,7 @@ function SectionRevealTitle({ title, subtitle, accentColor = 'brand-yellow', bad
       )}
       <motion.div
         className="text-center"
-        style={{ opacity: textOpacity, filter: filterStr }}
+        style={{ opacity: textOpacity }}
       >
         {title}
       </motion.div>
@@ -133,8 +131,10 @@ const Home = () => {
   const [showCursor, setShowCursor] = useState(true);
   const [heroPlaying, setHeroPlaying] = useState(true);
   const [heroPaused, setHeroPaused] = useState(false);
+  const [heroMuted, setHeroMuted] = useState(true);
   const heroVideoRef = useRef<HTMLVideoElement>(null);
   const [heroBuffering, setHeroBuffering] = useState(true);
+  const heroScrollPaused = useRef(false); // track if WE paused it due to scroll
 
   // Instagram profile link
   const igProfileUrl = 'https://instagram.com/thebongbari';
@@ -248,14 +248,9 @@ const Home = () => {
   const titleAuthenticY = useTransform(heroProgress, [0, 1], device.isMobile ? [0, 0] : device.isTablet ? [0, 8] : [0, 15]);
   const titleComedyY = useTransform(heroProgress, [0, 1], device.isMobile ? [0, 0] : device.isTablet ? [0, -8] : [0, -15]);
 
-  // Phase 26: Radial glow pulse (Work with Us section)
+  // Phase 26: Radial glow — static opacity (removed scroll-linked useScroll for perf)
   const workRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress: workProgress } = useScroll({ target: workRef, offset: ['start end', 'end start'] });
-  const radialGlowOpacity = useTransform(
-    workProgress,
-    [0, 0.3, 0.5, 0.7, 1],
-    device.isMobile ? [0.3, 0.3, 0.3, 0.3, 0.3] : device.isTablet ? [0.2, 0.25, 0.28, 0.25, 0.2] : [0.2, 0.3, 0.35, 0.3, 0.2]
-  );
+  const radialGlowOpacity = device.isMobile ? 0.3 : device.isTablet ? 0.25 : 0.3;
 
 
 
@@ -352,6 +347,52 @@ const Home = () => {
     return () => clearTimeout(t);
   }, [heroPlaying, heroBuffering]);
 
+  // Hero auto-play/pause on scroll — only plays when hero is visible
+  useEffect(() => {
+    const el = heroRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      const vid = heroVideoRef.current;
+      if (!vid) return;
+      if (entry.isIntersecting) {
+        // Hero is visible — resume if WE paused it
+        if (heroScrollPaused.current) {
+          vid.play().catch(() => {});
+          setHeroPaused(false);
+          heroScrollPaused.current = false;
+        }
+      } else {
+        // Hero scrolled away — pause it
+        if (!vid.paused && heroPlaying) {
+          vid.pause();
+          setHeroPaused(true);
+          heroScrollPaused.current = true;
+        }
+      }
+    }, { threshold: 0.15 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [heroPlaying]);
+
+  // Auto-unmute hero after first user interaction (click/touch anywhere)
+  useEffect(() => {
+    const tryUnmute = () => {
+      const vid = heroVideoRef.current;
+      if (vid && vid.muted) {
+        vid.muted = false;
+        setHeroMuted(false);
+      }
+      document.removeEventListener('click', tryUnmute);
+      document.removeEventListener('touchstart', tryUnmute);
+    };
+    document.addEventListener('click', tryUnmute, { once: true });
+    document.addEventListener('touchstart', tryUnmute, { once: true });
+    return () => {
+      document.removeEventListener('click', tryUnmute);
+      document.removeEventListener('touchstart', tryUnmute);
+    };
+  }, []);
+
   return (
     <>
       <SEOHead title="Bong Bari Comedy | Home" description="Authentic Bengali Family Comedy" />
@@ -388,8 +429,8 @@ const Home = () => {
           </div>
         ) : (
         <div className="fixed inset-0 pointer-events-none" style={{ contain: 'strict', zIndex: 0 }}>
-          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-brand-yellow/10 rounded-full blur-[80px] transform-gpu" />
-          <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/10 rounded-full blur-[80px] transform-gpu" />
+          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-brand-yellow/10 rounded-full blur-[50px] transform-gpu" />
+          <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/10 rounded-full blur-[50px] transform-gpu" />
         </div>
         )}
 
@@ -410,6 +451,7 @@ const Home = () => {
               style={device.prefersReducedMotion ? undefined : { scale: heroVideoScale, opacity: heroVideoOpacity }}
               className={`hero-cinema-container relative w-full max-w-xl md:max-w-2xl mx-auto rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.6)] cursor-pointer ${device.isMobile ? 'mb-2' : 'mb-5'} aspect-video flex-shrink-0`}
               onClick={() => {
+                heroScrollPaused.current = false; // user interaction overrides scroll-pause
                 if (heroPlaying && !heroPaused) {
                   heroVideoRef.current?.pause();
                   setHeroPaused(true);
@@ -451,7 +493,7 @@ const Home = () => {
                     src={heroReel.videoUrl}
                     className="relative z-[2] h-full mx-auto object-contain"
                     style={{ aspectRatio: '9/16' }}
-                    autoPlay muted loop playsInline poster={heroThumbnail} preload="auto"
+                    autoPlay muted={heroMuted} loop playsInline poster={heroThumbnail} preload="auto"
                     onCanPlay={() => setHeroBuffering(false)}
                     onWaiting={() => setHeroBuffering(true)}
                     onPlaying={() => setHeroBuffering(false)}
@@ -639,9 +681,9 @@ const Home = () => {
             )}
             <motion.h2
               className={`${device.isMobile ? 'text-lg' : 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl'} font-extrabold tracking-tight leading-tight`}
-              initial={{ opacity: 0, y: device.isMobile ? 20 : 10, filter: 'blur(8px)', scale: 0.9 }}
-              whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)', scale: 1 }}
-              viewport={{ margin: '-10px', once: false }}
+              initial={{ opacity: 0, y: device.isMobile ? 20 : 10, scale: 0.9 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              viewport={{ margin: '-10px', once: true }}
               transition={device.isMobile ? { type: 'spring', stiffness: 180, damping: 18, mass: 0.7 } : { duration: 0.5, delay: 0.1 }}
             >
               <span className="text-white">{tx.bridgeTitlePrefix} </span>
@@ -838,7 +880,7 @@ const Home = () => {
           ) : (
           <motion.div ref={workRef} className="py-10 w-full px-4 sm:px-6 lg:px-8 relative" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ margin: '-60px' }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}>
             <section className="max-w-4xl mx-auto relative pb-8" data-testid="collaboration-section">
-              <motion.div className="absolute inset-0 -z-10 bg-radial-glow" style={{ opacity: radialGlowOpacity }} />
+              <div className="absolute inset-0 -z-10 bg-radial-glow" style={{ opacity: radialGlowOpacity }} />
               <SectionRevealTitle
                 badge={tx.workBadge}
                 badgeIcon={Handshake}

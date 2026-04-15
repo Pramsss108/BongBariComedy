@@ -2880,8 +2880,16 @@ section:nth-child(odd) {
     transparent 100%
   );
   animation: yt-border-rotate 5s linear infinite;
+  /* PERF: Pause rotation by default — only spin when card is hovered.
+     Saves 8 simultaneous GPU-composited conic-gradient animations. */
+  animation-play-state: paused;
   z-index: 0;
   transform: translateZ(0);
+}
+
+/* Spin the border only on hover — smooth activation */
+.yt-card-container:hover .yt-gold-border-wrap::before {
+  animation-play-state: running;
 }
 
 /* Static IG ring — subtle always-visible border */
@@ -3252,7 +3260,7 @@ section:nth-child(odd) {
 .hero-cinema-container {
   --hero-border-angle: 0deg;
   animation: hero-cinematic-entrance 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-             hero-border-rotate 8s linear infinite;
+             hero-border-rotate 12s linear infinite;
   border: 1px solid transparent;
   background-clip: padding-box;
   position: relative;
@@ -3301,25 +3309,24 @@ section:nth-child(odd) {
   width: 12px; height: 12px;
   left: 8%; top: 30%;
   background: rgba(244,196,48,0.10);
-  animation: hero-bokeh-float 8s ease-in-out infinite;
+  animation: hero-bokeh-float 12s ease-in-out infinite;
 }
 .hero-bokeh-2 {
   width: 18px; height: 18px;
   right: 10%; top: 20%;
   background: rgba(225,48,108,0.08);
-  animation: hero-bokeh-float 10s ease-in-out 1s infinite;
+  animation: hero-bokeh-float 14s ease-in-out 1s infinite;
 }
+/* PERF: Reduced bokeh — 3 & 4 are static dots (no animation) to save GPU */
 .hero-bokeh-3 {
   width: 10px; height: 10px;
   left: 14%; bottom: 25%;
-  background: rgba(244,196,48,0.08);
-  animation: hero-bokeh-float 12s ease-in-out 2s infinite;
+  background: rgba(244,196,48,0.06);
 }
 .hero-bokeh-4 {
   width: 14px; height: 14px;
   right: 6%; bottom: 35%;
-  background: rgba(225,48,108,0.06);
-  animation: hero-bokeh-float 9s ease-in-out 3s infinite;
+  background: rgba(225,48,108,0.04);
 }
 
 /* ═══ Batch 4: Video loading shimmer overlay ═══ */
@@ -3423,6 +3430,28 @@ section:nth-child(odd) {
   contain-intrinsic-size: 280px 500px;
   contain: layout style;
   transition: filter 0.3s ease;
+}
+
+/* ═══ DESKTOP: 60fps scroll performance ═══ */
+@media (min-width: 769px) {
+  /* Promote hero to own compositor layer — isolate from content scroll */
+  .hero-cinema-container {
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+  /* Contain each grid section so scrolling doesn't trigger layout on siblings */
+  [data-testid="latest-comedy-section"],
+  [data-testid="loved-comedy-section"] {
+    contain: layout style paint;
+  }
+  /* Cards: only promote GPU layer on hover (not idle) to free VRAM */
+  .yt-gold-border-wrap {
+    will-change: auto;
+    backface-visibility: hidden;
+  }
+  .yt-card-container:hover .yt-gold-border-wrap {
+    will-change: transform, box-shadow;
+  }
 }
 
 /* Reduce expensive backdrop-filter on mobile for buttery 60fps */

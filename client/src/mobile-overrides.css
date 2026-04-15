@@ -233,6 +233,113 @@
   /* Footer: handled by dedicated mobile JSX in footer.tsx */
 }
 
+/* ==================================================
+   Mobile Card UI — prevent element clashing in 2-col grid
+   Cards are ~180px wide on phones — everything must shrink
+   ================================================== */
+@media (max-width: 768px) {
+  /* Sidebar icons: shrink from 36px → 28px, icons from 26px → 18px */
+  .yt-card-container .sidebar-heart,
+  .yt-card-container .sidebar-comment,
+  .yt-card-container .sidebar-share,
+  .yt-card-container .sidebar-bookmark {
+    width: 28px !important;
+    height: 28px !important;
+  }
+  .yt-card-container .sidebar-heart svg,
+  .yt-card-container .sidebar-comment svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+  .yt-card-container .sidebar-share svg,
+  .yt-card-container .sidebar-bookmark svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+  /* Sidebar like/comment counts — smaller */
+  .yt-card-container .sidebar-heart + span,
+  .yt-card-container .sidebar-comment + span {
+    font-size: 9px !important;
+  }
+  /* Sidebar gap tighter */
+  .yt-card-container .sidebar-heart,
+  .yt-card-container .sidebar-comment,
+  .yt-card-container .sidebar-share,
+  .yt-card-container .sidebar-bookmark {
+    margin-bottom: -2px;
+  }
+
+  /* Profile pic at bottom of sidebar: shrink */
+  .yt-card-container .pfp-wrapper .relative {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  /* View count badge: shrink text + padding */
+  .yt-card-container .view-badge-animate,
+  .yt-card-container [class*="view-badge"] {
+    padding: 2px 6px !important;
+    gap: 4px !important;
+  }
+  .yt-card-container .view-badge-animate span,
+  .yt-card-container [class*="view-badge"] span {
+    font-size: 10px !important;
+  }
+  .yt-card-container .view-badge-eye-pulse {
+    width: 12px !important;
+    height: 12px !important;
+  }
+
+  /* Rank badge: shrink */
+  .yt-card-container [class*="rounded-full"][class*="font-black"] {
+    width: 22px !important;
+    height: 22px !important;
+    font-size: 11px !important;
+  }
+
+  /* Play button: shrink on mobile cards */
+  .yt-card-container .absolute.inset-0 .w-14 {
+    width: 40px !important;
+    height: 40px !important;
+  }
+  .yt-card-container .absolute.inset-0 .w-14 svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  /* Caption area: tighter, smaller text, more room from sidebar */
+  .yt-card-container .caption-fade {
+    font-size: 9px !important;
+    line-height: 1.3 !important;
+    -webkit-line-clamp: 1 !important;
+  }
+  .yt-card-container p[class*="font-extrabold"] {
+    font-size: 9px !important;
+  }
+  /* Username verified badge: smaller */
+  .yt-card-container p[class*="font-extrabold"] svg {
+    width: 10px !important;
+    height: 10px !important;
+  }
+
+  /* IG gradient border: thinner on mobile */
+  .yt-gold-border-wrap {
+    padding: 2px !important;
+  }
+
+  /* Disable card hover effects on mobile (touch devices) */
+  .yt-card-container:hover .yt-gold-border-wrap {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Disable rotating border animation on mobile — saves significant GPU */
+  .yt-gold-border-wrap::before {
+    animation: none !important;
+    opacity: 0.3 !important;
+  }
+}
+
 /* Phase 35: Hero — handled entirely by JSX now */
 
 /* ==================================================

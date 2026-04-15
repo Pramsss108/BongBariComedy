@@ -74,7 +74,7 @@ function TiltCard({ children, variants, tiltEnabled, ...props }: {
   );
 }
 
-/** v4: Scroll-linked blur-to-sharp section title — like footer's BrandReveal */
+/** v5: Simple whileInView section title — NO useScroll/useTransform (60fps, crisp text) */
 function SectionRevealTitle({ title, subtitle, accentColor = 'brand-yellow', badge, badgeIcon: BadgeIcon, children }: {
   title: React.ReactNode;
   subtitle?: string;
@@ -83,19 +83,15 @@ function SectionRevealTitle({ title, subtitle, accentColor = 'brand-yellow', bad
   badgeIcon?: React.ComponentType<{ className?: string }>;
   children?: React.ReactNode;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] });
-  const textOpacity = useTransform(scrollYProgress, [0, 0.15, 0.35, 0.7, 0.85], [0, 0.5, 1, 1, 0.8]);
-  // PERF: Removed scroll-linked filter:blur() — it triggers expensive repaints every frame.
-  // Opacity-only reveal is smooth and GPU-composited.
-  const subOpacity = useTransform(scrollYProgress, [0.1, 0.3, 0.7, 0.85], [0, 1, 1, 0.6]);
-
   return (
-    <div ref={ref} className="relative mb-3 sm:mb-8">
+    <div className="relative mb-3 sm:mb-8">
       {badge && (
         <motion.div
           className="flex justify-center mb-2 sm:mb-3"
-          style={{ opacity: subOpacity }}
+          initial={{ opacity: 0, y: 8 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-20px' }}
+          transition={{ duration: 0.4 }}
         >
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-white/[0.05] border border-white/[0.08] text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.2em] text-white/60">
             {BadgeIcon && <BadgeIcon className="w-3 h-3" />}
@@ -105,14 +101,20 @@ function SectionRevealTitle({ title, subtitle, accentColor = 'brand-yellow', bad
       )}
       <motion.div
         className="text-center"
-        style={{ opacity: textOpacity }}
+        initial={{ opacity: 0, y: 12 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-20px' }}
+        transition={{ duration: 0.5, delay: 0.05 }}
       >
         {title}
       </motion.div>
       {subtitle && (
         <motion.p
           className={`text-center text-xs sm:text-sm sm:text-base mt-1 sm:mt-2 ${/[\u0980-\u09FF]/.test(subtitle) ? 'font-bengali bengali-subtitle-glow' : 'text-gray-400 tracking-wide'}`}
-          style={{ opacity: subOpacity }}
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true, margin: '-20px' }}
+          transition={{ duration: 0.4, delay: 0.1 }}
         >
           {subtitle}
         </motion.p>
@@ -218,37 +220,24 @@ const Home = () => {
   };
 
   const heroRef = useRef<HTMLDivElement>(null);
+
+  // PERF v5: Only use scroll transforms on desktop — mobile gets none (saves ~7 GPU transforms per frame)
   const { scrollYProgress: heroProgress } = useScroll({
     target: heroRef,
-    offset: ['start start', 'end start'], // 0 when hero top hits viewport top, 1 when hero bottom hits viewport top
+    offset: ['start start', 'end start'],
   });
 
-  // Phase 6: Video scale-down (desktop: scale 1→0.92, tablet: 1→0.95, mobile: opacity-only)
-  const heroVideoScale = useTransform(
-    heroProgress,
-    [0, 1],
-    device.isMobile ? [1, 1] : device.isTablet ? [1, 0.95] : [1, 0.92]
-  );
+  // Desktop-only scroll effects (mobile returns identity values — Framer Motion skips no-change computations)
+  const heroVideoScale = useTransform(heroProgress, [0, 1], device.isMobile ? [1, 1] : [1, 0.92]);
   const heroVideoOpacity = useTransform(heroProgress, [0, 0.8], [1, 0.6]);
-
-  // Phase 8: CTA fade-out on scroll (buttons sink below fold)
   const heroCTAOpacity = useTransform(heroProgress, [0, 0.5], [1, 0]);
-  const heroCTAY = useTransform(
-    heroProgress,
-    [0, 0.5],
-    device.isMobile ? [0, 10] : [0, 30]
-  );
-
-  // Phase 10: Blur transition zone opacity (desktop only)
+  const heroCTAY = useTransform(heroProgress, [0, 0.5], device.isMobile ? [0, 0] : [0, 30]);
   const blurZoneOpacity = useTransform(heroProgress, [0.6, 0.85, 1], [0, 1, 0]);
+  // Title parallax — very subtle, keep for desktop polish
+  const titleAuthenticY = useTransform(heroProgress, [0, 1], device.isMobile ? [0, 0] : [0, 15]);
+  const titleComedyY = useTransform(heroProgress, [0, 1], device.isMobile ? [0, 0] : [0, -15]);
 
-  // --- Phase D: Depth & Parallax ---
-
-  // Phase 7: Hero title parallax split (words separate on scroll)
-  const titleAuthenticY = useTransform(heroProgress, [0, 1], device.isMobile ? [0, 0] : device.isTablet ? [0, 8] : [0, 15]);
-  const titleComedyY = useTransform(heroProgress, [0, 1], device.isMobile ? [0, 0] : device.isTablet ? [0, -8] : [0, -15]);
-
-  // Phase 26: Radial glow — static opacity (removed scroll-linked useScroll for perf)
+  // Phase 26: Radial glow — static opacity (no scroll listener needed)
   const workRef = useRef<HTMLDivElement>(null);
   const radialGlowOpacity = device.isMobile ? 0.3 : device.isTablet ? 0.25 : 0.3;
 
@@ -420,12 +409,10 @@ const Home = () => {
             Desktop: fixed full-viewport blobs with parallax
             Mobile: absolute blobs clipped inside content wrapper (no footer bleed) */}
         {device.isMobile ? (
-          <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-            <div className="absolute top-[3%] left-[-15%] w-[65%] h-[30%] bg-brand-yellow/[0.06] rounded-full blur-[100px]" />
-            <div className="absolute top-[25%] right-[-15%] w-[50%] h-[25%] bg-indigo-500/[0.04] rounded-full blur-[100px]" />
-            <div className="absolute top-[50%] left-[-10%] w-[55%] h-[20%] bg-brand-yellow/[0.04] rounded-full blur-[120px]" />
-            <div className="absolute top-[70%] right-[-10%] w-[45%] h-[20%] bg-violet-500/[0.03] rounded-full blur-[120px]" />
-            <div className="absolute top-[88%] left-[10%] w-[50%] h-[15%] bg-amber-500/[0.025] rounded-full blur-[100px]" />
+          /* Mobile: 2 tiny static blobs — blur-[60px] is 10x cheaper than blur-[120px] */
+          <div className="absolute inset-0 pointer-events-none overflow-hidden z-0" style={{ contain: 'strict' }}>
+            <div className="absolute top-[5%] left-[-10%] w-[55%] h-[25%] bg-brand-yellow/[0.05] rounded-full blur-[60px]" />
+            <div className="absolute top-[40%] right-[-10%] w-[45%] h-[20%] bg-indigo-500/[0.03] rounded-full blur-[60px]" />
           </div>
         ) : (
         <div className="fixed inset-0 pointer-events-none" style={{ contain: 'strict', zIndex: 0 }}>
@@ -448,7 +435,7 @@ const Home = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-              style={device.prefersReducedMotion ? undefined : { scale: heroVideoScale, opacity: heroVideoOpacity }}
+              style={device.isMobile || device.prefersReducedMotion ? undefined : { scale: heroVideoScale, opacity: heroVideoOpacity }}
               className={`hero-cinema-container relative w-full max-w-xl md:max-w-2xl mx-auto rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.6)] cursor-pointer ${device.isMobile ? 'mb-2' : 'mb-5'} aspect-video flex-shrink-0`}
               onClick={() => {
                 heroScrollPaused.current = false; // user interaction overrides scroll-pause
@@ -597,7 +584,7 @@ const Home = () => {
 
             <motion.div className={`text-center ${device.isMobile ? 'space-y-1' : 'space-y-3'} w-full max-w-2xl mx-auto`} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}>
               <h1 className={`${device.isMobile ? 'text-xl' : 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl'} font-extrabold tracking-tight text-white leading-tight`}>
-                <motion.span className="inline-block" style={device.prefersReducedMotion ? undefined : { y: titleAuthenticY }}>Authentic</motion.span>{' '}
+                <motion.span className="inline-block" style={device.isMobile || device.prefersReducedMotion ? undefined : { y: titleAuthenticY }}>Authentic</motion.span>{' '}
                 <span className="relative inline-block pb-1">
                   <span className="text-[#F4C430] drop-shadow-[0_0_18px_rgba(244,196,48,0.22)]">Bengali</span>
                   {/* Animated SVG pen-stroke underline — draws itself on load */}
@@ -625,7 +612,7 @@ const Home = () => {
                     />
                   </svg>
                 </span>
-                {' '}<motion.span className="inline-block" style={device.prefersReducedMotion ? undefined : { y: titleComedyY }}>Comedy</motion.span>
+                {' '}<motion.span className="inline-block" style={device.isMobile || device.prefersReducedMotion ? undefined : { y: titleComedyY }}>Comedy</motion.span>
               </h1>
               <p className={`${device.isMobile ? 'text-xs' : 'text-sm sm:text-base md:text-lg'} font-medium ${lang === 'bn' ? 'font-bengali bengali-subtitle-glow' : 'text-gray-400'}`}>{tx.heroSubtitle}</p>
               <motion.div
@@ -633,7 +620,7 @@ const Home = () => {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                style={device.prefersReducedMotion ? undefined : { opacity: heroCTAOpacity, y: heroCTAY }}
+                style={device.isMobile || device.prefersReducedMotion ? undefined : { opacity: heroCTAOpacity, y: heroCTAY }}
               >
                 <button onClick={() => setLocation('/tools')} className={`flex items-center justify-center gap-2 ${device.isMobile ? 'px-4 py-2.5 text-xs' : 'px-5 py-3 text-sm'} rounded-full bg-[#1a1a2e]/80 hover:bg-[#1a1a2e] border border-white/15 text-white font-semibold backdrop-blur-md transition-all active:scale-95 hover:border-white/30 whitespace-nowrap`}>
                   <Flame className="w-4 h-4 text-[#F4C430]" />Bong Kahini
@@ -663,9 +650,9 @@ const Home = () => {
           {/* On mobile: pushed well below hero fold with parallax + staggered entrance */}
           <motion.div
             className={`w-full ${device.isMobile ? 'py-6' : 'py-6 md:py-10'} flex flex-col items-center justify-center text-center`}
-            initial={{ opacity: 0, y: device.isMobile ? 40 : 12, scale: device.isMobile ? 0.95 : 1 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            viewport={{ margin: device.isMobile ? '-10px' : '-30px', once: false }}
+            initial={{ opacity: 0, y: device.isMobile ? 40 : 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ margin: device.isMobile ? '-10px' : '-30px', once: true }}
             transition={device.isMobile ? { type: 'spring', stiffness: 200, damping: 20, mass: 0.8 } : { duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           >
             {!device.isMobile && (
@@ -704,7 +691,7 @@ const Home = () => {
             data-testid="latest-comedy-section"
             initial="hidden"
             whileInView="visible"
-            viewport={{ margin: device.isMobile ? '-10px' : '-60px', once: false }}
+            viewport={{ margin: device.isMobile ? '-10px' : '-60px', once: device.isMobile }}
             variants={{
               hidden: { opacity: 0 },
               visible: { opacity: 1, transition: { duration: device.isMobile ? 0.3 : 0.6, ease: [0.22, 1, 0.36, 1], staggerChildren: device.isMobile ? 0.04 : 0.1 } },
@@ -780,7 +767,7 @@ const Home = () => {
             data-testid="loved-comedy-section"
             initial="hidden"
             whileInView="visible"
-            viewport={{ margin: device.isMobile ? '-10px' : '-60px', once: false }}
+            viewport={{ margin: device.isMobile ? '-10px' : '-60px', once: device.isMobile }}
             variants={{
               hidden: { opacity: 0 },
               visible: { opacity: 1, transition: { duration: device.isMobile ? 0.3 : 0.6, ease: [0.22, 1, 0.36, 1], staggerChildren: device.isMobile ? 0.04 : 0.1 } },
@@ -858,7 +845,7 @@ const Home = () => {
               className="w-full px-4 py-1"
               initial={{ opacity: 0, y: 24, scale: 0.96 }}
               whileInView={{ opacity: 1, y: 0, scale: 1 }}
-              viewport={{ margin: '-10px', once: false }}
+              viewport={{ margin: '-10px', once: true }}
               transition={{ type: 'spring', stiffness: 280, damping: 22 }}
             >              <button
                 onClick={() => setLocation('/work-with-us')}

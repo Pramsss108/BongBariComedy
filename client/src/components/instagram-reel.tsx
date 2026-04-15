@@ -1,10 +1,10 @@
 import { Play, Pause, Heart, MessageCircle, Send, Bookmark, Volume2, VolumeX, Eye, Loader2 } from "lucide-react";
 import { useState, useRef, useCallback, useEffect, memo } from "react";
 
-// ── Profile pic — inlined as base64 to avoid path/CDN/deployment failures ──
-const PROFILE_PIC_B64 = 'data:image/jpeg;base64,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';
+// â”€â”€ Profile pic â€” inlined as base64 to avoid path/CDN/deployment failures â”€â”€
+const PROFILE_PIC_URL = '/data/profile-pic.jpg';
 
-// ── Single-player: only one reel plays at a time ──
+// â”€â”€ Single-player: only one reel plays at a time â”€â”€
 // Global event target shared by every InstagramReel instance
 const reelBus = new EventTarget();
 let _activeReelId: string | null = null;
@@ -24,7 +24,7 @@ interface InstagramReelProps {
 }
 
 const InstagramReel = memo(({ reelId, caption, thumbnail, permalink, videoUrl, likeCount, commentCount, viewCount, index = 0, rank }: InstagramReelProps) => {
-  // BULLETPROOF: Always have a displayable view count — estimate from likes if missing
+  // BULLETPROOF: Always have a displayable view count â€” estimate from likes if missing
   const displayViewCount = (viewCount && viewCount > 0)
     ? viewCount
     : (likeCount && likeCount > 0 ? Math.round(likeCount * 18) : 0);
@@ -154,7 +154,7 @@ const InstagramReel = memo(({ reelId, caption, thumbnail, permalink, videoUrl, l
             style={{ backfaceVisibility: 'hidden', WebkitMaskImage: '-webkit-radial-gradient(white, black)', transform: 'translateZ(0)' }}
             onClick={handleTap}
           >
-            {/* ── VIDEO — Batch 4 Phase 4.3: fade-in reveal ── */}
+            {/* â”€â”€ VIDEO â€” Batch 4 Phase 4.3: fade-in reveal â”€â”€ */}
             {playing && videoUrl && !videoError && (
               <video
                 ref={videoRef}
@@ -168,7 +168,7 @@ const InstagramReel = memo(({ reelId, caption, thumbnail, permalink, videoUrl, l
               />
             )}
 
-            {/* ── THUMBNAIL — stays visible during loading for crossfade ── */}
+            {/* â”€â”€ THUMBNAIL â€” stays visible during loading for crossfade â”€â”€ */}
             {(!playing || !videoReady || videoError) && (
               <img
                 src={thumbUrl} alt={caption || 'Instagram Reel'}
@@ -186,7 +186,7 @@ const InstagramReel = memo(({ reelId, caption, thumbnail, permalink, videoUrl, l
             {/* Bottom vignette */}
             <div className="absolute inset-x-0 bottom-0 h-[50%] bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none z-[2]" />
 
-            {/* ── RANK BADGE (top-left) ── */}
+            {/* â”€â”€ RANK BADGE (top-left) â”€â”€ */}
             {rank && (
               <div className="absolute top-2 left-2 z-[8] w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-black text-sm sm:text-base text-black"
                 style={{
@@ -197,7 +197,7 @@ const InstagramReel = memo(({ reelId, caption, thumbnail, permalink, videoUrl, l
               </div>
             )}
 
-            {/* ── VIEW COUNT — Batch 2: warm white + amber accent, animated entrance (BULLETPROOF: always shows for ranked/popular reels) ── */}
+            {/* â”€â”€ VIEW COUNT â€” Batch 2: warm white + amber accent, animated entrance (BULLETPROOF: always shows for ranked/popular reels) â”€â”€ */}
             {displayViewCount > 0 && (
               <div ref={viewBadgeRef}
                 className={`absolute top-2.5 z-[7] flex items-center gap-1.5 px-2.5 py-1 rounded-full ${isViewVisible ? 'view-badge-animate' : 'opacity-0'}`}
@@ -215,7 +215,7 @@ const InstagramReel = memo(({ reelId, caption, thumbnail, permalink, videoUrl, l
               </div>
             )}
 
-            {/* ── MUTE (top-right when playing, pushed down if view badge is top-right) ── */}
+            {/* â”€â”€ MUTE (top-right when playing, pushed down if view badge is top-right) â”€â”€ */}
             {playing && (
               <button
                 onClick={toggleMute}
@@ -232,7 +232,7 @@ const InstagramReel = memo(({ reelId, caption, thumbnail, permalink, videoUrl, l
               </button>
             )}
 
-            {/* ── LOADING — Batch 4 Phase 4.2: shimmer sweep over thumbnail ── */}
+            {/* â”€â”€ LOADING â€” Batch 4 Phase 4.2: shimmer sweep over thumbnail â”€â”€ */}
             {playing && buffering && (
               <>
                 <div className="reel-shimmer-overlay" />
@@ -245,16 +245,16 @@ const InstagramReel = memo(({ reelId, caption, thumbnail, permalink, videoUrl, l
             {/* Batch 4 Phase 4.1: Tap ripple */}
             {ripple && <div className="card-tap-ripple" style={{ left: ripple.x, top: ripple.y }} />}
 
-            {/* Batch 4 Phase 4.5: Error state — graceful fallback */}
+            {/* Batch 4 Phase 4.5: Error state â€” graceful fallback */}
             {videoError && (
               <a href={permalink} target="_blank" rel="noopener noreferrer"
                 className="absolute bottom-16 left-1/2 -translate-x-1/2 z-[17] text-[10px] font-medium text-white/70 hover:text-white underline transition-colors"
                 onClick={(e) => e.stopPropagation()}>
-                Watch on Instagram →
+                Watch on Instagram â†’
               </a>
             )}
 
-            {/* ── FLASH INDICATOR (play/pause) ── */}
+            {/* â”€â”€ FLASH INDICATOR (play/pause) â”€â”€ */}
             {showFlash && (
               <div className="absolute inset-0 flex items-center justify-center z-[15] pointer-events-none">
                 <div className="w-14 h-14 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center animate-ping"
@@ -264,7 +264,7 @@ const InstagramReel = memo(({ reelId, caption, thumbnail, permalink, videoUrl, l
               </div>
             )}
 
-            {/* ── INITIAL PLAY BUTTON (before first play) ── */}
+            {/* â”€â”€ INITIAL PLAY BUTTON (before first play) â”€â”€ */}
             {!playing && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[5]">
                 <div className="relative">
@@ -281,7 +281,7 @@ const InstagramReel = memo(({ reelId, caption, thumbnail, permalink, videoUrl, l
               </div>
             )}
 
-            {/* ── PAUSED OVERLAY ── */}
+            {/* â”€â”€ PAUSED OVERLAY â”€â”€ */}
             {playing && paused && !showFlash && !buffering && (
               <div className="absolute inset-0 bg-black/25 flex items-center justify-center z-[10] pointer-events-none">
                 <div className="w-16 h-16 rounded-full flex items-center justify-center"
@@ -294,11 +294,11 @@ const InstagramReel = memo(({ reelId, caption, thumbnail, permalink, videoUrl, l
               </div>
             )}
 
-            {/* ══════ RIGHT SIDEBAR — Instagram style ══════ */}
+            {/* â•â•â•â•â•â• RIGHT SIDEBAR â€” Instagram style â•â•â•â•â•â• */}
             <div className="absolute right-1 sm:right-1.5 bottom-14 sm:bottom-[68px] z-[10] flex flex-col items-center gap-3 sm:gap-3.5"
               onClick={(e) => e.stopPropagation()}>
 
-              {/* ♥ Heart / Likes — Batch 5.2 sidebar-heartbeat on hover */}
+              {/* â™¥ Heart / Likes â€” Batch 5.2 sidebar-heartbeat on hover */}
               <div className="flex flex-col items-center gap-0.5">
                 <button className="sidebar-heart group/btn w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center active:scale-125 transition-transform duration-150" aria-label="Like">
                   <Heart className="w-[26px] h-[26px] sm:w-7 sm:h-7 text-white group-hover/btn:text-red-400 transition-colors drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
@@ -311,7 +311,7 @@ const InstagramReel = memo(({ reelId, caption, thumbnail, permalink, videoUrl, l
                 )}
               </div>
 
-              {/* 💬 Comment — Batch 5.2 sidebar-bounce on hover */}
+              {/* ðŸ’¬ Comment â€” Batch 5.2 sidebar-bounce on hover */}
               <div className="flex flex-col items-center gap-0.5">
                 <button className="sidebar-comment group/btn w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center active:scale-125 transition-transform duration-150" aria-label="Comment">
                   <MessageCircle className="w-[26px] h-[26px] sm:w-7 sm:h-7 text-white group-hover/btn:text-blue-400 transition-colors drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
@@ -324,13 +324,13 @@ const InstagramReel = memo(({ reelId, caption, thumbnail, permalink, videoUrl, l
                 )}
               </div>
 
-              {/* ✈ Share — Batch 5.2 sidebar-share tilt on hover */}
+              {/* âœˆ Share â€” Batch 5.2 sidebar-share tilt on hover */}
               <button onClick={share}
                 className="sidebar-share group/btn w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center active:scale-125 transition-transform duration-150" aria-label="Share">
                 <Send className="w-[22px] h-[22px] sm:w-6 sm:h-6 text-white group-hover/btn:text-green-400 transition-colors drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)] rotate-[20deg]" />
               </button>
 
-              {/* 🔖 Bookmark — Batch 5.2 sidebar-bookmark pop on hover */}
+              {/* ðŸ”– Bookmark â€” Batch 5.2 sidebar-bookmark pop on hover */}
               <a href={permalink} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
                 className="sidebar-bookmark group/btn w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center active:scale-125 transition-transform duration-150" aria-label="Save">
                 <Bookmark className="w-[22px] h-[22px] sm:w-6 sm:h-6 text-white group-hover/btn:text-yellow-400 transition-colors drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
@@ -349,13 +349,13 @@ const InstagramReel = memo(({ reelId, caption, thumbnail, permalink, videoUrl, l
                     }} />
                   {/* Dark gap between ring and pic */}
                   <div className="absolute -inset-[1px] rounded-full bg-black" />
-                  {/* Profile pic: base64 inline → IG CDN → gradient fallback */}
-                  {pfpError < 2 ? (
+                  {/* Profile pic: local file → gradient fallback */}
+                  {pfpError < 1 ? (
                     <img
-                      src={pfpError === 0 ? PROFILE_PIC_B64 : `https://instagram.com/thebongbari/avatar`}
+                      src={PROFILE_PIC_URL}
                       alt="thebongbari"
                       className="relative w-full h-full rounded-full object-cover z-[1]"
-                      onError={() => setPfpError(prev => prev + 1)}
+                      onError={() => setPfpError(1)}
                     />
                   ) : (
                     <div className="relative w-full h-full rounded-full flex items-center justify-center z-[1]"
@@ -369,7 +369,7 @@ const InstagramReel = memo(({ reelId, caption, thumbnail, permalink, videoUrl, l
               </a>
             </div>
 
-            {/* ══════ BOTTOM — username + caption — Batch 5.4 typography upgrade ══════ */}
+            {/* â•â•â•â•â•â• BOTTOM â€” username + caption â€” Batch 5.4 typography upgrade â•â•â•â•â•â• */}
             <div className="absolute bottom-0 left-0 right-12 sm:right-14 z-[5] px-2.5 sm:px-3 pb-2.5 sm:pb-3 pointer-events-none">
               <p className="flex items-center gap-1 text-[11px] sm:text-xs font-extrabold text-white mb-0.5"
                 style={{ textShadow: '0 1px 6px rgba(0,0,0,1)' }}>

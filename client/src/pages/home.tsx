@@ -243,12 +243,6 @@ const Home = () => {
   const blurZoneOpacity = useTransform(heroProgress, [0.6, 0.85, 1], [0, 1, 0]);
 
   // --- Phase D: Depth & Parallax ---
-  // Phase 3: Background glow parallax (page-level scroll)
-  const { scrollYProgress: pageProgress } = useScroll();
-  const glowYellowY = useTransform(pageProgress, [0, 1], device.isMobile ? [0, 0] : device.isTablet ? [0, -60] : [0, -120]);
-  const glowIndigoY = useTransform(pageProgress, [0, 1], device.isMobile ? [0, 0] : device.isTablet ? [0, 60] : [0, 120]);
-
-
 
   // Phase 7: Hero title parallax split (words separate on scroll)
   const titleAuthenticY = useTransform(heroProgress, [0, 1], device.isMobile ? [0, 0] : device.isTablet ? [0, 8] : [0, 15]);
@@ -393,9 +387,9 @@ const Home = () => {
             <div className="absolute top-[88%] left-[10%] w-[50%] h-[15%] bg-amber-500/[0.025] rounded-full blur-[100px]" />
           </div>
         ) : (
-        <div className="fixed inset-0 pointer-events-none">
-          <motion.div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-brand-yellow/10 rounded-full blur-[80px]" style={{ y: glowYellowY, willChange: 'transform' }} />
-          <motion.div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/10 rounded-full blur-[80px]" style={{ y: glowIndigoY, willChange: 'transform' }} />
+        <div className="fixed inset-0 pointer-events-none" style={{ contain: 'strict', zIndex: 0 }}>
+          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-brand-yellow/10 rounded-full blur-[80px] transform-gpu" />
+          <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/10 rounded-full blur-[80px] transform-gpu" />
         </div>
         )}
 
@@ -414,7 +408,7 @@ const Home = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
               style={device.prefersReducedMotion ? undefined : { scale: heroVideoScale, opacity: heroVideoOpacity }}
-              className={`relative w-full max-w-xl md:max-w-2xl mx-auto rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.6)] border border-white/10 cursor-pointer ${device.isMobile ? 'mb-2' : 'mb-5'} aspect-video flex-shrink-0 transition-all duration-500`}
+              className={`hero-cinema-container relative w-full max-w-xl md:max-w-2xl mx-auto rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.6)] cursor-pointer ${device.isMobile ? 'mb-2' : 'mb-5'} aspect-video flex-shrink-0`}
               onClick={() => {
                 if (heroPlaying && !heroPaused) {
                   heroVideoRef.current?.pause();
@@ -444,6 +438,10 @@ const Home = () => {
                 <div className="hero-bokeh hero-bokeh-3" />
                 <div className="hero-bokeh hero-bokeh-4" />
               </div>
+
+              {/* Premium: Cinematic vignette + shimmer sweep */}
+              <div className="hero-vignette" />
+              <div className="hero-shimmer" />
 
               {heroPlaying && heroReel?.videoUrl ? (
                 <>

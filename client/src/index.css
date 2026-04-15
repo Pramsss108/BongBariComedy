@@ -3135,6 +3135,155 @@ section:nth-child(odd) {
   will-change: transform;
 }
 
+/* ═══ HERO PREMIUM — Netflix/Apple TV+ grade effects ═══ */
+
+/* Cinematic entrance: scale+blur → normal (like Netflix hero reveal) */
+@keyframes hero-cinematic-entrance {
+  0% {
+    transform: scale(1.03);
+    filter: blur(8px) brightness(0.7);
+    opacity: 0;
+  }
+  60% {
+    filter: blur(2px) brightness(0.9);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    filter: blur(0px) brightness(1);
+    opacity: 1;
+  }
+}
+.hero-cinema-container {
+  animation: hero-cinematic-entrance 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Ambient glow ring behind hero (colored halo — Apple TV+ style) */
+.hero-cinema-container::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from 0deg,
+    rgba(225, 48, 108, 0.15),
+    rgba(244, 196, 48, 0.12),
+    rgba(131, 58, 180, 0.10),
+    rgba(225, 48, 108, 0.15)
+  );
+  filter: blur(20px);
+  opacity: 0.6;
+  z-index: -1;
+  transition: opacity 0.5s ease, filter 0.5s ease;
+  pointer-events: none;
+}
+
+/* Shimmer sweep — traveling light across hero surface on load */
+@keyframes hero-shimmer-sweep {
+  0%   { transform: translateX(-100%) skewX(-15deg); }
+  100% { transform: translateX(200%) skewX(-15deg); }
+}
+.hero-shimmer {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+}
+.hero-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.04) 30%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.04) 70%,
+    transparent 100%
+  );
+  animation: hero-shimmer-sweep 3s cubic-bezier(0.4, 0, 0.2, 1) 1s 1 forwards;
+  opacity: 0.8;
+}
+
+/* Cinematic vignette — dark edges like film */
+.hero-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow: inset 0 0 60px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Desktop hover — depth shift + glow intensify (Netflix card hover) */
+@media (min-width: 768px) {
+  .hero-cinema-container {
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .hero-cinema-container:hover {
+    transform: scale(1.015) translateY(-2px);
+    box-shadow:
+      0 0 50px rgba(225, 48, 108, 0.15),
+      0 0 80px rgba(244, 196, 48, 0.08),
+      0 20px 60px -10px rgba(0, 0, 0, 0.7);
+  }
+  .hero-cinema-container:hover::before {
+    opacity: 1;
+    filter: blur(25px);
+  }
+}
+
+/* Animated gradient border (subtle on idle, vivid on hover) */
+@keyframes hero-border-rotate {
+  from { --hero-border-angle: 0deg; }
+  to   { --hero-border-angle: 360deg; }
+}
+@property --hero-border-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+.hero-cinema-container {
+  --hero-border-angle: 0deg;
+  animation: hero-cinematic-entrance 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+             hero-border-rotate 8s linear infinite;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  position: relative;
+}
+.hero-cinema-container::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--hero-border-angle),
+    rgba(244, 196, 48, 0.25),
+    rgba(225, 48, 108, 0.2),
+    rgba(131, 58, 180, 0.15),
+    rgba(244, 196, 48, 0.25)
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 6;
+  opacity: 0.5;
+  transition: opacity 0.5s ease;
+}
+@media (min-width: 768px) {
+  .hero-cinema-container:hover::after {
+    opacity: 1;
+  }
+}
+
 /* ═══ Batch 1: Bokeh ambient floating dots ═══ */
 @keyframes hero-bokeh-float {
   0%, 100% { transform: translateY(0) translateX(0); opacity: 0.6; }
@@ -3272,7 +3421,7 @@ section:nth-child(odd) {
 .yt-card-container {
   content-visibility: auto;
   contain-intrinsic-size: 280px 500px;
-  will-change: transform, opacity;
+  contain: layout style;
   transition: filter 0.3s ease;
 }
 
@@ -3288,6 +3437,8 @@ section:nth-child(odd) {
 @media (prefers-reduced-motion: reduce) {
   .hero-ken-burns { animation: none !important; }
   .hero-bokeh { animation: none !important; opacity: 0.04 !important; }
+  .hero-cinema-container { animation: none !important; opacity: 1 !important; filter: none !important; }
+  .hero-shimmer::after { animation: none !important; opacity: 0 !important; }
   .view-badge-eye-pulse { animation: none !important; }
   .view-badge-animate { animation: none !important; opacity: 1 !important; }
   .video-reveal { animation: none !important; opacity: 1 !important; }

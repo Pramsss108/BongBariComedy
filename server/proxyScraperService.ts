@@ -6,9 +6,10 @@ import { HttpsProxyAgent } from 'https-proxy-agent';
 import { callRustVerify, callHetznerVerify, callLocalPcVerify } from './rustVerifier';
 import { calculateProxyScore, adaptBatchSize, getBatchDelay, sleep as stealthSleep, getRandomProfile, detectBanSignal } from './stealthEngine';
 
-// Lazy-load geoip-lite so the server doesn't crash if the package is missing
-let _geoip: typeof import('geoip-lite') | null = null;
-const geoip = { lookup: (ip: string) => { try { return (_geoip ??= require('geoip-lite'))?.lookup?.(ip) ?? null; } catch { return null; } } };
+// Lazy-load geoip-lite so the server doesn't crash if the package is missing (OOMs Oracle micro VM)
+let _geoipModule: any = null;
+const _geoipReady = import('geoip-lite').then(m => { _geoipModule = m.default || m; }).catch(() => {});
+const geoip = { lookup: (ip: string) => { try { return _geoipModule?.lookup?.(ip) ?? null; } catch { return null; } } };
 
 /**
  * ============================================================

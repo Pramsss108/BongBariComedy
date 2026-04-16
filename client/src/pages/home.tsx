@@ -23,9 +23,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { insertCollaborationRequestSchema, type CollaborationRequest } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useFunnySubmissionSound } from "@/hooks/useFunnySubmissionSound";
-import { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { useDeviceTier } from "@/hooks/useDeviceTier";
-import { buildApiUrl } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 
 interface InstagramReelData {
@@ -274,32 +273,44 @@ const Home = () => {
 
 
 
-  const { data: latestReels, isLoading: isLoadingLatest } = useQuery<InstagramReelData[]>({
-    queryKey: ['/api/instagram/latest'],
-    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+  // ── BULLETPROOF REELS: Static JSON only ──────────────────────
+  // Data source: /data/reels-data.json (auto-updated daily by GitHub Actions)
+  // Zero Oracle dependency. Zero backend needed. Zero maintenance.
+  const fetchReelsFromStaticJSON = useCallback(async (): Promise<{ latest: InstagramReelData[]; popular: InstagramReelData[] }> => {
+    const res = await fetch('/data/reels-data.json');
+    if (!res.ok) return { latest: [], popular: [] };
+    const json = await res.json();
+
+    const mapReel = (item: any): InstagramReelData => ({
+      reelId: item.reelId || item.id || '',
+      caption: item.caption || '',
+      thumbnail: item.thumbnail || '',
+      permalink: item.permalink || item.url || '',
+      publishedAt: item.publishedAt || item.date || new Date().toISOString(),
+      likeCount: item.likeCount || item.likes || 0,
+      commentCount: item.commentCount || item.comments || 0,
+      viewCount: item.viewCount || item.play_count || 0,
+      videoUrl: item.videoUrl || '',
+    });
+
+    const latest = (json?.latest || []).map(mapReel);
+    const popular = (json?.popular || []).map(mapReel);
+    return { latest, popular };
+  }, []);
+
+  const { data: reelsData } = useQuery({
+    queryKey: ['reels-static-json'],
+    queryFn: fetchReelsFromStaticJSON,
+    staleTime: 10 * 60 * 1000,    // fresh for 10 min (data only changes daily)
+    refetchInterval: 30 * 60 * 1000, // re-check every 30 min
+    retry: 2,
   });
 
-  const { data: popularReels, isLoading: isLoadingPopular } = useQuery<InstagramReelData[]>({
-    queryKey: ['/api/instagram/popular'],
-    refetchInterval: 15 * 60 * 1000, // Refetch every 15 minutes (popular changes less frequently)
-  });
-
-  /* --- FALLBACK DATA & VAR MAPPING --- */
-  /* --- FALLBACK DATA & VAR MAPPING --- */
-  // Latest fallback — seed data when API not yet loaded
-  const latestFallback: InstagramReelData[] = [
-    { reelId: "seed_1", caption: "Bong Bari Comedy — Latest Reel", thumbnail: "", permalink: "https://instagram.com/thebongbari", publishedAt: new Date().toISOString(), likeCount: 0, commentCount: 0, viewCount: 0, videoUrl: "" },
-  ];
-  // Popular fallback
-  const popularFallback: InstagramReelData[] = [
-    { reelId: "seed_2", caption: "Most Loved Reel", thumbnail: "", permalink: "https://instagram.com/thebongbari", publishedAt: new Date().toISOString(), likeCount: 0, commentCount: 0, viewCount: 0, videoUrl: "" },
-  ];
-
-  const latestReelData = (latestReels && latestReels.length > 0) ? latestReels : latestFallback;
-  // Popular: sort by viewCount descending so highest-view reels come first, keep ALL 4
-  const safePopularReelData = (popularReels && popularReels.length > 0)
-    ? [...popularReels].sort((a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0))
-    : popularFallback;
+  /* --- REEL DATA (zero Oracle, zero hardcoded) --- */
+  const latestReelData = reelsData?.latest?.slice(0, 4) ?? [];
+  const safePopularReelData = reelsData?.popular?.length
+    ? [...reelsData.popular].sort((a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0)).slice(0, 4)
+    : [];
 
   /* --- LOGIC RESTORATION --- */
   const form = useForm<CollaborationRequest>({

@@ -3,9 +3,12 @@ import * as path from 'path';
 import { ProxyKitchen } from './proxyService';
 import { SocksProxyAgent } from 'socks-proxy-agent';
 import { HttpsProxyAgent } from 'https-proxy-agent';
-import geoip from 'geoip-lite';
 import { callRustVerify, callHetznerVerify, callLocalPcVerify } from './rustVerifier';
 import { calculateProxyScore, adaptBatchSize, getBatchDelay, sleep as stealthSleep, getRandomProfile, detectBanSignal } from './stealthEngine';
+
+// Lazy-load geoip-lite so the server doesn't crash if the package is missing
+let _geoip: typeof import('geoip-lite') | null = null;
+const geoip = { lookup: (ip: string) => { try { return (_geoip ??= require('geoip-lite'))?.lookup?.(ip) ?? null; } catch { return null; } } };
 
 /**
  * ============================================================

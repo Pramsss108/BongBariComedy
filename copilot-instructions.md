@@ -9,18 +9,36 @@ Purpose: Make AI agents productive fast by documenting how this repo is organize
 - Replit is banned (legacy/ex-platform). Do not add any Replit scripts, SDKs, or plugins. If you see any Replit banner/scripts, remove them.
 - Do not introduce Netlify/Vercel changes unless explicitly requested; our SPA routing relies on the GitHub Pages `404.html` strategy.
 
-### **Backend Infrastructure (Oracle Cloud — March 2026)** ✅
-- **VM**: Oracle Cloud Always Free, `VM.Standard.E2.1.Micro` (1 OCPU, 1GB RAM, 30GB disk)
-- **OS**: Oracle Linux 9.7 (uses `dnf`, user `opc`)
-- **IP**: `158.101.175.37` (Frankfurt, Germany)
+### **Backend Infrastructure (Oracle Cloud — April 2026)** ✅
+- **VM**: Oracle Cloud Always Free, `VM.Standard.E2.1.Micro` (1 OCPU, **503MB RAM**, 30GB disk)
+- **OS**: Oracle Linux 9.7 (user `opc`)
+- **IP**: `158.101.175.37` (Frankfurt, Germany, AD-2)
 - **Region**: eu-frankfurt-1
-- **SSH Key**: Stored locally at `Cloud oracle free vps/ssh-key-2026-03-29.key` (NEVER push — gitignored)
 - **SSH Access**: `ssh -i "C:\Users\guita\.ssh\oracle_bongbari2" opc@158.101.175.37`
-- **Auto-Deploy**: GitHub Actions job `deploy-backend` in `.github/workflows/deploy.yml` — SSHes into VM, pulls code, rebuilds, restarts PM2. Triggered on server/* changes or commit message containing `FORCE_ORACLE_DEPLOY`.
-- **Process Manager**: PM2 (`pm2 start dist/index.js --name bongbari`)
-- **Reverse Proxy**: Nginx (port 80 → localhost:5000)
+- **Auto-Deploy**: GitHub Actions job `deploy-backend` in `.github/workflows/deploy.yml` — SSHes into VM, SCPs bundle, restarts PM2. Triggered on server/* changes or `FORCE_ORACLE_DEPLOY`.
+- **Process Manager**: PM2 — `bongbari` (port 5000) + `bongbari-proxy` (port 8080). Auto-starts on boot via systemd.
 - **Server Path**: `~/bongbari/` on the VM
-- **Cost**: $0.00 forever (Oracle Always Free tier — 2 VMs per account, permanent, not trial)
+- **Cost**: $0.00 forever (Oracle Always Free tier)
+
+### 🚨 **VM SAFETY GUARDRAILS (PERMANENT — April 2026)**
+**This VM has only 503MB RAM. Safety scripts are installed permanently on the VM to prevent OOM crashes.**
+
+#### What's installed on the VM (agents: DO NOT remove these):
+- **`safe-npm`** — Wrapper around `npm` that **blocks dangerous packages** (firebase-admin, geoip-lite, xlsx, puppeteer, sharp, etc.) and checks available memory before any install. Aliased so `npm install` automatically uses `safe-npm`.
+- **`safe-dnf`** — Blocks ALL `dnf`/`yum` usage (even `dnf install nano` can OOM the VM).
+- **`vm-doctor`** — Health check script: shows RAM/swap/disk, PM2 status, API health, top memory users. Run it anytime.
+- **MOTD banner** — Warning message shown on every SSH login.
+- **Node.js 256MB cap** — `NODE_OPTIONS=--max-old-space-size=256` set globally in `/etc/profile.d/`.
+- **VM_RULES.md** — Full documentation at `~/bongbari/VM_RULES.md` on the VM.
+- **~3GB swap** — `/.swapfile` (950MB) + `/swapfile2` (2GB), both persisted in `/etc/fstab`.
+
+#### Rules for AI agents working on this VM:
+1. **NEVER run `dnf`** — use binary tarballs or SCP pre-built files instead
+2. **NEVER `npm install` heavy packages** — the `safe-npm` wrapper will block them, but don't try to bypass it
+3. **Use `server-package.json`** (17 minimal deps) for VM deploys, NOT the full project `package.json`
+4. **Heavy packages are STUBBED** on the VM (load without error, throw if called): firebase-admin, @gradio/client, wink-nlp, xlsx, ffmpeg-static, youtube-po-token-generator, vite, vite-plugin-compression2, @vitejs/plugin-react
+5. **Always run `vm-doctor`** after any changes to verify the VM is healthy
+6. **If VM freezes**: `npm run vm:reboot`, wait 2-3 min, PM2 auto-restarts
 
 ## 🎯 **Site Features & Integrations (October 2025)**
 ### **Enhanced Legal Pages** ✅

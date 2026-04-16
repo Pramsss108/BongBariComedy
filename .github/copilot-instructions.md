@@ -11,10 +11,21 @@ This is non-negotiable. The user is a vibe coder — servers must always be live
 
 ## Platform policy (read first)
 - Frontend hosting: GitHub Pages (canonical domain: `www.bongbari.com`).
-- Backend: **Oracle Cloud Always Free VM** (`158.101.175.37`, Oracle Linux 9, user `opc`). Auto-deployed via GitHub Actions on push to `main`.
+- Backend: **Oracle Cloud Always Free VM** (`158.101.175.37`, Oracle Linux 9, user `opc`, **503MB RAM**). Auto-deployed via GitHub Actions on push to `main`.
 - **Render is BANNED** (pipeline minutes exhausted, unreliable free tier). Do not add Render configs, buildpacks, or references. Replace any Render URLs with Oracle backend URL.
 - Replit is banned (legacy/ex-platform). Do not add any Replit scripts, SDKs, or plugins. If you see any Replit banner/scripts, remove them.
 - Do not introduce Netlify/Vercel changes unless explicitly requested; our SPA routing relies on the GitHub Pages `404.html` strategy.
+
+### 🚨 **Oracle VM Safety Rules (MANDATORY — read before ANY VM work)**
+The backend VM has only **503MB RAM**. Permanent safety scripts are installed on the VM. **Do NOT bypass or remove them.**
+- **`safe-npm`**: Blocks dangerous packages (firebase-admin, geoip-lite, xlsx, puppeteer, sharp, etc.) and checks memory before install. `npm` is aliased to `safe-npm` on the VM.
+- **`safe-dnf`**: Blocks ALL dnf/yum usage. Even `dnf install nano` will OOM the VM.
+- **`vm-doctor`**: Run this after ANY VM changes to verify health.
+- **Node.js is capped at 256MB** via `NODE_OPTIONS=--max-old-space-size=256`.
+- **Heavy packages are STUBBED** (no-op modules): firebase-admin, @gradio/client, wink-nlp, xlsx, ffmpeg-static, youtube-po-token-generator, vite, vite-plugin-compression2, @vitejs/plugin-react.
+- **Use `server-package.json`** for VM deploys (17 minimal deps), NOT the full project `package.json`.
+- **NEVER run `dnf install` or `npm ci` with full deps** — instant OOM crash.
+- Full rules on VM: `~/bongbari/VM_RULES.md`. Safety install script: `scripts/vm-safety-install.sh`.
 
 ## 🎯 **Site Features & Integrations (October 2025)**
 ### **Enhanced Legal Pages** ✅

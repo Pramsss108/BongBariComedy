@@ -14,7 +14,7 @@
     "*://*.twitter.com/*",
     "*://*.x.com/*",
     "wss://api.bongbari.com/*",
-    "wss://79.76.110.66/*"
+    "wss://158.101.175.37/*"
   ],
 
   "background": {
@@ -28,6 +28,6 @@
   },
 
   "content_security_policy": {
-    "extension_pages": "default-src 'self'; script-src 'self'; connect-src wss://api.bongbari.com wss://79.76.110.66 *://*.instagram.com *://*.tiktok.com *://*.twitter.com *://*.x.com"
+    "extension_pages": "default-src 'self'; script-src 'self'; connect-src wss://api.bongbari.com wss://158.101.175.37 *://*.instagram.com *://*.tiktok.com *://*.twitter.com *://*.x.com"
   }
 }

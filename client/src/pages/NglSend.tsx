@@ -326,7 +326,7 @@ export default function NglSend() {
         title={`Send @${username} anonymous messages — Bong NGL`}
         description={profile?.prompt ? `${profile.prompt} — tap to send anonymously 👀` : "Send an anonymous message — they won't know who sent it! 👀"}
         url={`https://www.bongbari.com/ngl/q/${username}`}
-        image={`http://79.76.110.66:5000/api/ngl/og/${encodeURIComponent(username)}/image`}
+        image={`http://158.101.175.37:5000/api/ngl/og/${encodeURIComponent(username)}/image`}
       />
       <div className="h-dvh w-full overflow-hidden relative" style={{ background: themeBg, paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
         

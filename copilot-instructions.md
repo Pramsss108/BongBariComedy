@@ -4,7 +4,7 @@ Purpose: Make AI agents productive fast by documenting how this repo is organize
 
 ## Platform policy (read first)
 - Frontend hosting: GitHub Pages (canonical domain: `www.bongbari.com`).
-- Backend: **Oracle Cloud Always Free VM** (`79.76.110.66`, Oracle Linux 9, user `opc`). Auto-deployed via GitHub Actions on push to `main`.
+- Backend: **Oracle Cloud Always Free VM** (`158.101.175.37`, Oracle Linux 9, user `opc`). Auto-deployed via GitHub Actions on push to `main`.
 - **Render is BANNED** (pipeline minutes exhausted, unreliable free tier). Do not add Render configs, buildpacks, or references. If you see any Render URLs in client code, replace them with the Oracle backend URL.
 - Replit is banned (legacy/ex-platform). Do not add any Replit scripts, SDKs, or plugins. If you see any Replit banner/scripts, remove them.
 - Do not introduce Netlify/Vercel changes unless explicitly requested; our SPA routing relies on the GitHub Pages `404.html` strategy.
@@ -12,10 +12,10 @@ Purpose: Make AI agents productive fast by documenting how this repo is organize
 ### **Backend Infrastructure (Oracle Cloud — March 2026)** ✅
 - **VM**: Oracle Cloud Always Free, `VM.Standard.E2.1.Micro` (1 OCPU, 1GB RAM, 30GB disk)
 - **OS**: Oracle Linux 9.7 (uses `dnf`, user `opc`)
-- **IP**: `79.76.110.66` (Frankfurt, Germany)
+- **IP**: `158.101.175.37` (Frankfurt, Germany)
 - **Region**: eu-frankfurt-1
 - **SSH Key**: Stored locally at `Cloud oracle free vps/ssh-key-2026-03-29.key` (NEVER push — gitignored)
-- **SSH Access**: `ssh -i "C:\Users\guita\.ssh\oracle_bongbari2" opc@79.76.110.66`
+- **SSH Access**: `ssh -i "C:\Users\guita\.ssh\oracle_bongbari2" opc@158.101.175.37`
 - **Auto-Deploy**: GitHub Actions job `deploy-backend` in `.github/workflows/deploy.yml` — SSHes into VM, pulls code, rebuilds, restarts PM2. Triggered on server/* changes or commit message containing `FORCE_ORACLE_DEPLOY`.
 - **Process Manager**: PM2 (`pm2 start dist/index.js --name bongbari`)
 - **Reverse Proxy**: Nginx (port 80 → localhost:5000)
@@ -46,7 +46,7 @@ Purpose: Make AI agents productive fast by documenting how this repo is organize
 - **Primary Domain**: `www.bongbari.com` (CNAME configured)
 - **SSL Certificate**: Auto-enabled via GitHub Pages
 - **CDN**: Global content delivery through GitHub's infrastructure
-- **Backend API**: `79.76.110.66:5000` (Oracle Cloud VM) for dynamic features
+- **Backend API**: `158.101.175.37:5000` (Oracle Cloud VM) for dynamic features
 - **Build System**: Vite with dual template system (client/index.html for production builds)
 
 ## Responsive CSS Workflow (Non-coder Friendly)
@@ -105,7 +105,7 @@ Then open `http://localhost:5173`.
 - After restore, you can run locally and verify before committing.
 
 ## Architecture
-- Server: Express (TS, ESM) in `server/`, all API under `/api/*`. Dev injects Vite middleware; prod serves `dist/public/` (see `server/vite.ts`). Backend hosted on Oracle Cloud VM `http://79.76.110.66:5000` (will be `https://api.bongbari.com` after Cloudflare proxy).
+- Server: Express (TS, ESM) in `server/`, all API under `/api/*`. Dev injects Vite middleware; prod serves `dist/public/` (see `server/vite.ts`). Backend hosted on Oracle Cloud VM `http://158.101.175.37:5000` (will be `https://api.bongbari.com` after Cloudflare proxy).
 - Data: Drizzle ORM with Neon Postgres when `DATABASE_URL` exists; otherwise `MemStorage` stubs. Shared schema/types in `shared/` (`shared/schema.ts`). SQLite schemas exist for local utilities, but **SQLite is not used for app data; all features require Neon/Postgres**.
 - Vite aliases: `@` → `client/src`, `@shared` → `shared`, `@assets` → `attached_assets`.
 ## Dev / Build / Test
@@ -149,7 +149,7 @@ Then open `http://localhost:5173`.
 - Dev: `client/.env` must contain `VITE_API_BASE=http://localhost:5000`.
 - Server decides redirect URI by `process.env.NODE_ENV?.trim() === 'production'`:
   - Dev → `http://localhost:5000/api/auth/google/callback`
-  - Prod → `https://api.bongbari.com/api/auth/google/callback` (or `http://79.76.110.66:5000/api/auth/google/callback`)
+  - Prod → `https://api.bongbari.com/api/auth/google/callback` (or `http://158.101.175.37:5000/api/auth/google/callback`)
 - Google Cloud Console must include:
   - JavaScript origins: `https://www.bongbari.com`, `http://localhost:5173` (optionally `http://localhost:5000`)
   - Redirect URIs: `https://api.bongbari.com/api/auth/google/callback`, `http://localhost:5000/api/auth/google/callback`

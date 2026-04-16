@@ -50,8 +50,8 @@
     "vm:stop": "node scripts/oci-vm.mjs stop",
     "vm:start": "node scripts/oci-vm.mjs start",
     "vm:reboot": "node scripts/oci-vm.mjs reboot",
-    "vm:ssh": "ssh -i C:\\Users\\guita\\.ssh\\oracle_bongbari2 opc@79.76.110.66",
-    "vm:setup-proxy": "ssh -i C:\\Users\\guita\\.ssh\\oracle_bongbari2 opc@79.76.110.66 < scripts/setup-proxy-engine.sh"
+    "vm:ssh": "ssh -i C:\\Users\\guita\\.ssh\\oracle_bongbari2 opc@158.101.175.37",
+    "vm:setup-proxy": "ssh -i C:\\Users\\guita\\.ssh\\oracle_bongbari2 opc@158.101.175.37 < scripts/setup-proxy-engine.sh"
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",

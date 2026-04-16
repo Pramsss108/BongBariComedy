@@ -1019,7 +1019,7 @@ export function registerNglRoutes(app: any) {
       const desc = (user as any)?.ogDescription || `Tap to send an anonymous message 👀 — ${prompt}`;
       const url = `https://www.bongbari.com/ngl/q/${username}`;
       // Phase 30: Dynamic OG image per user (served from same backend)
-      const imgUrl = `http://79.76.110.66:5000/api/ngl/og/${encodeURIComponent(username)}/image`;
+      const imgUrl = `http://158.101.175.37:5000/api/ngl/og/${encodeURIComponent(username)}/image`;
 
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.send(`<!DOCTYPE html>

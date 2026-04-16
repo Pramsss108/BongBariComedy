@@ -32,7 +32,7 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ── Config ────────────────────────────────────────────────────
-const API_BASE          = getArg('api') || process.env.BEAST_API_BASE || 'http://79.76.110.66:5000';
+const API_BASE          = getArg('api') || process.env.BEAST_API_BASE || 'http://158.101.175.37:5000';
 const BEAST_SECRET      = process.env.BEAST_MODE_SECRET || 'beastmode'; // must match server default
 const RUST_PORT         = parseInt(getArg('rust-port') || '9876', 10);
 const RUST_URL          = `http://127.0.0.1:${RUST_PORT}`;

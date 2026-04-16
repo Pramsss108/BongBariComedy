@@ -16,7 +16,7 @@ jobs:
         run: curl -s https://dpc-mmstts.hf.space > /dev/null
 
       - name: Ping Oracle Backend (Downloader + API — health check)
-        run: curl -sf http://79.76.110.66:5000/api/version > /dev/null || echo "Oracle VM not responding"
+        run: curl -sf http://158.101.175.37:5000/api/version > /dev/null || echo "Oracle VM not responding"
 
       - name: Log Status
         run: echo "Pinged Hugging Face Spaces + Oracle backend successfully."

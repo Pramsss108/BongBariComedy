@@ -14,7 +14,7 @@ import { execSync } from 'child_process';
 import { homedir } from 'os';
 import { join } from 'path';
 
-const INSTANCE_OCID = 'ocid1.instance.oc1.eu-frankfurt-1.antheljtcpds64acqycvfjywq5ozziit55gt3a7z7epzgvl5fbfqhwk6prrq';
+const INSTANCE_OCID = 'ocid1.instance.oc1.eu-frankfurt-1.antheljtcpds64ac4dxkfqsooti3fkdwsyhjhwxx6satfcmit5oylvgrsnka';
 const OCI = join(homedir(), 'bin', 'oci.exe');
 
 const cmd = process.argv[2]?.toLowerCase();
@@ -39,7 +39,7 @@ function getStatus() {
   console.log(`  Region: ${data['region']}`);
   console.log(`  Shape: ${data['shape']}`);
   console.log(`  Created: ${data['time-created']}`);
-  console.log(`  IP: 79.76.110.66\n`);
+  console.log(`  IP: 158.101.175.37\n`);
 }
 
 function doAction(action) {

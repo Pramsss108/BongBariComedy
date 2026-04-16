@@ -21,7 +21,7 @@
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 const TUNNEL_URL = 'wss://api.bongbari.com/ws/tunnel?type=ext';
-const FALLBACK_URL = 'wss://79.76.110.66:5000/ws/tunnel?type=ext';
+const FALLBACK_URL = 'wss://158.101.175.37:5000/ws/tunnel?type=ext';
 
 const ALLOWED_HOSTS = [
   'instagram.com',

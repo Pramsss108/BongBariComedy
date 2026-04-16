@@ -78,13 +78,20 @@ const Navigation = () => {
     <>
       <motion.header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled || isMobileMenuOpen
-          ? "border-b border-white/10 shadow-lg"
-          : "border-b border-transparent"
+          ? "border-b border-white/[0.08] shadow-lg"
+          : "border-b border-white/[0.04]"
           }`}
         style={{
-          // Always show glass on mobile for visibility, transparent-to-glass on desktop
-          background: (scrolled || isMobileMenuOpen || window.innerWidth < 768) ? "var(--glass-bg)" : "transparent",
-          backdropFilter: (scrolled || isMobileMenuOpen || window.innerWidth < 768) ? "var(--glass-blur)" : "none",
+          // Always show subtle glass — intensifies on scroll for premium depth
+          background: (scrolled || isMobileMenuOpen)
+            ? "rgba(10, 10, 10, 0.65)"
+            : (window.innerWidth < 768) ? "rgba(10, 10, 10, 0.55)" : "rgba(10, 10, 10, 0.25)",
+          backdropFilter: (scrolled || isMobileMenuOpen)
+            ? "blur(20px) saturate(1.4)"
+            : (window.innerWidth < 768) ? "blur(16px) saturate(1.2)" : "blur(12px) saturate(1.1)",
+          WebkitBackdropFilter: (scrolled || isMobileMenuOpen)
+            ? "blur(20px) saturate(1.4)"
+            : (window.innerWidth < 768) ? "blur(16px) saturate(1.2)" : "blur(12px) saturate(1.1)",
           height: "var(--header-height, 70px)"
         }}
         initial={{ y: -100 }}

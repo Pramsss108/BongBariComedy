@@ -196,6 +196,31 @@ Then open `http://localhost:5173`.
 
 
 ## Hero/CTA Desktop Sizing & Section Rules (Zero-Mismatch)
+
+## 🔒 PERFORMANCE RULES — LOCKED (April 2026, 60 FPS Achieved)
+
+**These optimizations are PROVEN and LOCKED. Do NOT undo them.**
+
+See `docs/PERF_LOCKED_AND_CINEMATIC_PHASES.md` for the full record.
+
+### What Was Fixed (Do NOT Revert):
+- **No `filter: blur()` in animations** — hero entrance uses `opacity + scale` only (no Gaussian blur on first paint)
+- **No `backdrop-filter`** on form card or footer grid (replaced with solid bg)
+- **No scroll-linked blur** on BrandReveal (replaced with `whileInView once:true` spring)
+- **No velocity springs** in MarqueeStrip (removed `useScroll/useVelocity/useSpring`)
+- **`will-change: transform` only on elements that animate** — stripped from h1/h2/h3/button/section
+- **`content-visibility: auto`** on `.footer-root` (defers all footer work until near viewport)
+- **`once: true`** on ALL `whileInView` animations (no re-trigger on scroll-up)
+- **No `.bg-gradient-to-r` infinite animation** (was repainting every gradient element)
+- **No CSS `animation` on `.yt-card-container`** (Framer Motion handles entrance)
+
+### Rules for ALL Future Changes:
+1. **Only animate `transform` and `opacity`** — these are compositor-only (GPU, zero main-thread cost)
+2. **NEVER add `filter`, `backdrop-filter`, or `box-shadow` to any animation/transition**
+3. **Every `whileInView` must have `once: true`** unless explicitly approved
+4. **No new `will-change` on static elements** — only on elements actively animating
+5. **Test after every change** — if FPS drops below 60, revert immediately
+6. **If user says "feels slower/laggy"** → revert the last phase, don't try to fix the fix
 - On desktop, the hero video container (`.mobile-video-container`) must use:
   - `max-width: 520px` at `min-width: 768px` (tablet)
   - `max-width: 600px` at `min-width: 1024px` (desktop)

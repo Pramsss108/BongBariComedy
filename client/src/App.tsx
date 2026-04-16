@@ -3,7 +3,6 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-import { useGlobalCursor } from "@/hooks/useGlobalCursor";
 import { ScrollProgress } from "@/components/scroll-progress";
 import { useDeviceTier } from "@/hooks/useDeviceTier";
 import { RelayConsentBanner } from '@/components/RelayConsentBanner';import { NglLangProvider } from '@/components/NglLang';
@@ -18,7 +17,6 @@ import "@/lib/layout-sentry"; // Auto-registers window.runLayoutAudit
 
 // Lazy-load heavy components to reduce initial bundle
 const Home = lazy(() => import("@/pages/home"));
-const MagicalCursor = lazy(() => import("@/components/MagicalCursor"));
 const GreetingConsent = lazy(() => import("@/components/GreetingConsent"));
 const BongBot = lazy(() => import("@/components/BongBot"));
 const DebugOverlay = lazy(() => import("@/components/DebugOverlay").then(m => ({ default: m.DebugOverlay })));
@@ -106,9 +104,6 @@ function Router() {
 
   // Show greeting immediately when pending (no click gating)
 
-  // Initialize professional site-wide cursor effect
-  useGlobalCursor();
-
   // Ensure audio unlock listeners attached
   useEffect(() => { ensureAudioUnlocked(); }, []);
 
@@ -154,8 +149,7 @@ function Router() {
         <Suspense fallback={null}>
           <GreetingConsent open={showGreeting} onDecision={handleDecision} />
         </Suspense>
-        {/* Custom belan cursor - hidden for logged-in users (normal cursor instead) */}
-        {!isAuthenticated && <Suspense fallback={null}><MagicalCursor /></Suspense>}
+
         <Switch>
           <Route path="/">
             <Suspense fallback={<LoadingFallback />}>

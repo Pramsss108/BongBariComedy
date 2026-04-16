@@ -52,6 +52,15 @@ function TiltCard({ children, variants, tiltEnabled, ...props }: {
   const rotateY = useMotionValue(0);
   const springX = useSpring(rotateX, { stiffness: 300, damping: 30 });
   const springY = useSpring(rotateY, { stiffness: 300, damping: 30 });
+  // Cache bounding rect — update on resize + mouseenter ONLY (no scroll listener = no forced reflow per frame)
+  const cachedRect = useRef<DOMRect | null>(null);
+  useEffect(() => {
+    if (!tiltEnabled) return;
+    const updateRect = () => { cachedRect.current = ref.current?.getBoundingClientRect() ?? null; };
+    updateRect();
+    window.addEventListener('resize', updateRect);
+    return () => { window.removeEventListener('resize', updateRect); };
+  }, [tiltEnabled]);
 
   return (
     <motion.div
@@ -59,7 +68,7 @@ function TiltCard({ children, variants, tiltEnabled, ...props }: {
       variants={variants}
       style={tiltEnabled ? { perspective: 800, rotateX: springX, rotateY: springY } : undefined}
       onMouseMove={tiltEnabled ? (e: React.MouseEvent) => {
-        const rect = ref.current?.getBoundingClientRect();
+        const rect = cachedRect.current;
         if (!rect) return;
         const cx = (e.clientX - rect.left) / rect.width - 0.5;
         const cy = (e.clientY - rect.top) / rect.height - 0.5;
@@ -67,6 +76,7 @@ function TiltCard({ children, variants, tiltEnabled, ...props }: {
         rotateY.set(cx * 8);
       } : undefined}
       onMouseLeave={tiltEnabled ? () => { rotateX.set(0); rotateY.set(0); } : undefined}
+      onMouseEnter={tiltEnabled ? () => { cachedRect.current = ref.current?.getBoundingClientRect() ?? null; } : undefined}
       {...props}
     >
       {children}
@@ -74,7 +84,7 @@ function TiltCard({ children, variants, tiltEnabled, ...props }: {
   );
 }
 
-/** v5: Simple whileInView section title — NO useScroll/useTransform (60fps, crisp text) */
+/** v7: Premium section title — cinematic enter/exit on scroll (compositor-only) */
 function SectionRevealTitle({ title, subtitle, accentColor = 'brand-yellow', badge, badgeIcon: BadgeIcon, children }: {
   title: React.ReactNode;
   subtitle?: string;
@@ -83,15 +93,19 @@ function SectionRevealTitle({ title, subtitle, accentColor = 'brand-yellow', bad
   badgeIcon?: React.ComponentType<{ className?: string }>;
   children?: React.ReactNode;
 }) {
+  const enterExit = { duration: 0.45, ease: [0.22, 1, 0.36, 1] as const };
   return (
     <div className="relative mb-3 sm:mb-8">
       {badge && (
         <motion.div
           className="flex justify-center mb-2 sm:mb-3"
-          initial={{ opacity: 0, y: 8 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-20px' }}
-          transition={{ duration: 0.4 }}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ margin: '-15%' }}
+          variants={{
+            hidden: { opacity: 0, y: 10, scale: 0.85 },
+            visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 400, damping: 25 } },
+          }}
         >
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-white/[0.05] border border-white/[0.08] text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.2em] text-white/60">
             {BadgeIcon && <BadgeIcon className="w-3 h-3" />}
@@ -101,20 +115,36 @@ function SectionRevealTitle({ title, subtitle, accentColor = 'brand-yellow', bad
       )}
       <motion.div
         className="text-center"
-        initial={{ opacity: 0, y: 12 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-20px' }}
-        transition={{ duration: 0.5, delay: 0.05 }}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ margin: '-10%' }}
+        variants={{
+          hidden: { opacity: 0, y: 20, scale: 0.92 },
+          visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 200, damping: 22, mass: 0.8 } },
+        }}
       >
         {title}
       </motion.div>
+      <motion.div
+        className="mx-auto mt-2 sm:mt-3 h-[1.5px] w-12 sm:w-16 bg-gradient-to-r from-transparent via-brand-yellow/40 to-transparent"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ margin: '-10%' }}
+        variants={{
+          hidden: { scaleX: 0, opacity: 0 },
+          visible: { scaleX: 1, opacity: 1, transition: enterExit },
+        }}
+      />
       {subtitle && (
         <motion.p
           className={`text-center text-xs sm:text-sm sm:text-base mt-1 sm:mt-2 ${/[\u0980-\u09FF]/.test(subtitle) ? 'font-bengali bengali-subtitle-glow' : 'text-gray-400 tracking-wide'}`}
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true, margin: '-20px' }}
-          transition={{ duration: 0.4, delay: 0.1 }}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ margin: '-10%' }}
+          variants={{
+            hidden: { opacity: 0, y: 6 },
+            visible: { opacity: 1, y: 0, transition: { ...enterExit, delay: 0.1 } },
+          }}
         >
           {subtitle}
         </motion.p>
@@ -136,6 +166,7 @@ const Home = () => {
   const [heroMuted, setHeroMuted] = useState(true);
   const heroVideoRef = useRef<HTMLVideoElement>(null);
   const [heroBuffering, setHeroBuffering] = useState(true);
+  const heroProgressRef = useRef<HTMLDivElement>(null);
   const heroScrollPaused = useRef(false); // track if WE paused it due to scroll
 
   // Instagram profile link
@@ -382,9 +413,67 @@ const Home = () => {
     };
   }, []);
 
+  // Phase 6: Scroll progress bar (single useScroll — compositor-only scaleX)
+  const { scrollYProgress: pageProgress } = useScroll();
+  const smoothProgress = useSpring(pageProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
+
+  // ═══ Autonomous Aurora — dreamy floating gradient nebula ═══
+  // PERF: 3 child divs with baked radial-gradient backgrounds (no filter:blur)
+  // Movement via transform:translate3d (pure compositor — zero layout/paint cost)
+  // Throttled to 30fps (aurora barely moves — 60fps is waste), pauses when tab hidden
+  const auroraRef1 = useRef<HTMLDivElement>(null);
+  const auroraRef2 = useRef<HTMLDivElement>(null);
+  const auroraRef3 = useRef<HTMLDivElement>(null);
+  const auroraRaf = useRef<number>(0);
+
+  useEffect(() => {
+    if (device.isMobile) return;
+
+    let t = 0;
+    let last = 0;
+    let paused = false;
+
+    const animate = (now: number) => {
+      auroraRaf.current = requestAnimationFrame(animate);
+      if (paused) return;
+      // Throttle to ~30fps — aurora is slow, doesn't need 60
+      if (now - last < 33) return;
+      last = now;
+
+      t += 0.002;
+
+      const el1 = auroraRef1.current;
+      const el2 = auroraRef2.current;
+      const el3 = auroraRef3.current;
+      if (!el1 || !el2 || !el3) return;
+
+      el1.style.transform = `translate3d(${Math.sin(t * 0.7) * 18 + Math.cos(t * 0.3) * 8}%,${Math.cos(t * 0.5) * 14 + Math.sin(t * 0.9) * 6}%,0)`;
+      el2.style.transform = `translate3d(${Math.cos(t * 0.6) * 22 + Math.sin(t * 0.4) * 5}%,${Math.sin(t * 0.8) * 16 + Math.cos(t * 0.25) * 9}%,0)`;
+      el3.style.transform = `translate3d(${Math.sin(t * 0.4) * 15 + Math.cos(t * 0.7) * 10}%,${Math.cos(t * 0.3) * 12 + Math.sin(t * 0.6) * 8}%,0)`;
+    };
+
+    // Pause when tab hidden — zero CPU when not visible
+    const onVisibility = () => { paused = document.hidden; };
+    document.addEventListener('visibilitychange', onVisibility);
+
+    auroraRaf.current = requestAnimationFrame(animate);
+    return () => {
+      cancelAnimationFrame(auroraRaf.current);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [device.isMobile]);
+
   return (
     <>
       <SEOHead title="Bong Bari Comedy | Home" description="Authentic Bengali Family Comedy" />
+
+      {/* Phase 6: Scroll progress indicator — thin gold bar, fixed top */}
+      {!device.isMobile && (
+        <motion.div
+          className="fixed top-0 left-0 right-0 h-[2px] z-[200] origin-left bg-gradient-to-r from-brand-yellow via-amber-400 to-yellow-500"
+          style={{ scaleX: smoothProgress }}
+        />
+      )}
 
       {/* Premium Language Toggle — fixed floating pill (desktop only — mobile uses dock menu) */}
       <div className="hidden sm:block fixed top-4 right-4 z-[100]">
@@ -405,20 +494,45 @@ const Home = () => {
       {/* Main Layout - "700 Years UX" - PREMIUM GLASS & MESH GRADIENT */}
       <div className="home-content-wrapper min-h-screen bg-transparent relative selection:bg-brand-yellow selection:text-black font-sans overflow-x-hidden scroll-smooth">
 
-        {/* Premium Background Glow — Phase 3: parallax depth on scroll
-            Desktop: fixed full-viewport blobs with parallax
-            Mobile: absolute blobs clipped inside content wrapper (no footer bleed) */}
+        {/* ═══ Autonomous Aurora — dreamy floating nebula that drifts on its own ═══
+            PERF: 3 orbs use radial-gradient (naturally soft — no filter:blur needed)
+            Movement via transform:translate3d (compositor-only — zero layout/paint)
+            Each orb = 100vw×100vh so they overlap and blend like Northern Lights */}
         {device.isMobile ? (
-          /* Mobile: 2 tiny static blobs — blur-[60px] is 10x cheaper than blur-[120px] */
           <div className="absolute inset-0 pointer-events-none overflow-hidden z-0" style={{ contain: 'strict' }}>
             <div className="absolute top-[5%] left-[-10%] w-[55%] h-[25%] bg-brand-yellow/[0.05] rounded-full blur-[60px]" />
             <div className="absolute top-[40%] right-[-10%] w-[45%] h-[20%] bg-indigo-500/[0.03] rounded-full blur-[60px]" />
           </div>
         ) : (
-        <div className="fixed inset-0 pointer-events-none" style={{ contain: 'strict', zIndex: 0 }}>
-          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-brand-yellow/10 rounded-full blur-[50px] transform-gpu" />
-          <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/10 rounded-full blur-[50px] transform-gpu" />
-        </div>
+          <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ contain: 'strict', zIndex: 0 }}>
+            {/* Orb 1: Warm golden aurora — large, ultra-soft */}
+            <div
+              ref={auroraRef1}
+              className="absolute will-change-transform"
+              style={{
+                top: '-25%', left: '-20%', width: '140%', height: '140%',
+                backgroundImage: 'radial-gradient(ellipse 50% 45% at 35% 35%, rgba(244,196,48,0.13) 0%, rgba(244,196,48,0.04) 40%, transparent 70%)',
+              }}
+            />
+            {/* Orb 2: Deep violet nebula — drifts opposite */}
+            <div
+              ref={auroraRef2}
+              className="absolute will-change-transform"
+              style={{
+                top: '-20%', left: '-15%', width: '130%', height: '130%',
+                backgroundImage: 'radial-gradient(ellipse 45% 50% at 65% 60%, rgba(131,58,180,0.10) 0%, rgba(99,102,241,0.03) 45%, transparent 70%)',
+              }}
+            />
+            {/* Orb 3: Rose warmth — lazy figure-eight */}
+            <div
+              ref={auroraRef3}
+              className="absolute will-change-transform"
+              style={{
+                top: '-15%', left: '-25%', width: '150%', height: '130%',
+                backgroundImage: 'radial-gradient(ellipse 55% 40% at 50% 50%, rgba(225,48,108,0.07) 0%, rgba(239,68,68,0.02) 40%, transparent 65%)',
+              }}
+            />
+          </div>
         )}
 
         <main className="relative z-10 w-full flex flex-col items-center">
@@ -484,6 +598,12 @@ const Home = () => {
                     onCanPlay={() => setHeroBuffering(false)}
                     onWaiting={() => setHeroBuffering(true)}
                     onPlaying={() => setHeroBuffering(false)}
+                    onTimeUpdate={() => {
+                      const v = heroVideoRef.current;
+                      if (v && v.duration && heroProgressRef.current) {
+                        heroProgressRef.current.style.width = `${(v.currentTime / v.duration) * 100}%`;
+                      }
+                    }}
                   />
                   {/* Loading spinner */}
                   {heroBuffering && (
@@ -531,6 +651,14 @@ const Home = () => {
                         {heroReel.likeCount >= 1_000_000 ? (heroReel.likeCount / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M' : heroReel.likeCount >= 1000 ? (heroReel.likeCount / 1000).toFixed(1).replace(/\.0$/, '') + 'K' : heroReel.likeCount}
                       </span>
                     )}
+                  </div>
+                  {/* Hero video progress bar — premium gold at bottom edge */}
+                  <div className="absolute bottom-0 left-0 right-0 h-[3px] z-[25] pointer-events-none bg-white/[0.08]">
+                    <div
+                      ref={heroProgressRef}
+                      className="h-full bg-gradient-to-r from-brand-yellow to-amber-400 origin-left transition-[width] duration-150 ease-linear"
+                      style={{ width: '0%' }}
+                    />
                   </div>
                 </>
               ) : (
@@ -650,38 +778,50 @@ const Home = () => {
           {/* On mobile: pushed well below hero fold with parallax + staggered entrance */}
           <motion.div
             className={`w-full ${device.isMobile ? 'py-6' : 'py-6 md:py-10'} flex flex-col items-center justify-center text-center`}
-            initial={{ opacity: 0, y: device.isMobile ? 40 : 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ margin: device.isMobile ? '-10px' : '-30px', once: true }}
-            transition={device.isMobile ? { type: 'spring', stiffness: 200, damping: 20, mass: 0.8 } : { duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ margin: '-10%' }}
+            variants={{
+              hidden: { opacity: 0, y: device.isMobile ? 40 : 50 },
+              visible: { opacity: 1, y: 0, transition: device.isMobile ? { type: 'spring', stiffness: 200, damping: 20, mass: 0.8 } : { type: 'spring', stiffness: 120, damping: 20, mass: 1 } },
+            }}
           >
             {!device.isMobile && (
               <motion.p
                 className="text-[11px] sm:text-xs uppercase tracking-[0.4em] text-white/30 font-semibold mb-3"
-                initial={{ opacity: 0, y: 8 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ margin: '-20px' }}
-                transition={{ duration: 0.5, delay: 0.1 }}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ margin: '-10%' }}
+                variants={{
+                  hidden: { opacity: 0, y: 14 },
+                  visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 150, damping: 18, delay: 0.1 } },
+                }}
               >
                 {tx.bridgeLabel}
               </motion.p>
             )}
             <motion.h2
               className={`${device.isMobile ? 'text-lg' : 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl'} font-extrabold tracking-tight leading-tight`}
-              initial={{ opacity: 0, y: device.isMobile ? 20 : 10, scale: 0.9 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1 }}
-              viewport={{ margin: '-10px', once: true }}
-              transition={device.isMobile ? { type: 'spring', stiffness: 180, damping: 18, mass: 0.7 } : { duration: 0.5, delay: 0.1 }}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ margin: '-10%' }}
+              variants={{
+                hidden: { opacity: 0, y: device.isMobile ? 20 : 30, scale: 0.82 },
+                visible: { opacity: 1, y: 0, scale: 1, transition: device.isMobile ? { type: 'spring', stiffness: 180, damping: 18, mass: 0.7 } : { type: 'spring', stiffness: 100, damping: 18, mass: 0.9, delay: 0.12 } },
+              }}
             >
               <span className="text-white">{tx.bridgeTitlePrefix} </span>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow via-amber-400 to-yellow-500">{tx.bridgeTitleAccent}</span>
             </motion.h2>
             <motion.div
               className={`${device.isMobile ? 'w-10 mt-2' : 'w-16 mt-4'} h-[2px] bg-gradient-to-r from-transparent via-brand-yellow/50 to-transparent`}
-              initial={{ scaleX: 0 }}
-              whileInView={{ scaleX: 1 }}
-              viewport={{ margin: '-20px' }}
-              transition={{ duration: 0.5, delay: 0.2 }}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ margin: '-10%' }}
+              variants={{
+                hidden: { scaleX: 0, opacity: 0 },
+                visible: { scaleX: 1, opacity: 1, transition: { duration: 0.6, delay: 0.25 } },
+              }}
             />
           </motion.div>
 
@@ -691,7 +831,7 @@ const Home = () => {
             data-testid="latest-comedy-section"
             initial="hidden"
             whileInView="visible"
-            viewport={{ margin: device.isMobile ? '-10px' : '-60px', once: device.isMobile }}
+            viewport={{ margin: '-10%' }}
             variants={{
               hidden: { opacity: 0 },
               visible: { opacity: 1, transition: { duration: device.isMobile ? 0.3 : 0.6, ease: [0.22, 1, 0.36, 1], staggerChildren: device.isMobile ? 0.04 : 0.1 } },
@@ -752,12 +892,24 @@ const Home = () => {
             </motion.div>
           </motion.section>
 
-          {/* v4 Phase 5: Breathing spacer between Latest & Most Loved */}
+          {/* Phase 8: Animated section divider — Latest → Most Loved */}
           <div className="w-full max-w-7xl mx-auto px-6 md:px-12 py-1 sm:py-2">
             <div className="flex items-center gap-4">
-              <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
-              <div className="w-1 h-1 rounded-full bg-brand-yellow/30" />
-              <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
+              <motion.div
+                className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-white/[0.06] to-transparent origin-right"
+                initial="hidden" whileInView="visible" viewport={{ margin: '-10%' }}
+                variants={{ hidden: { scaleX: 0, opacity: 0 }, visible: { scaleX: 1, opacity: 1, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } } }}
+              />
+              <motion.div
+                className="w-1 h-1 rounded-full bg-brand-yellow/30"
+                initial="hidden" whileInView="visible" viewport={{ margin: '-10%' }}
+                variants={{ hidden: { scale: 0, opacity: 0 }, visible: { scale: 1, opacity: 1, transition: { duration: 0.3, delay: 0.3 } } }}
+              />
+              <motion.div
+                className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-white/[0.06] to-transparent origin-left"
+                initial="hidden" whileInView="visible" viewport={{ margin: '-10%' }}
+                variants={{ hidden: { scaleX: 0, opacity: 0 }, visible: { scaleX: 1, opacity: 1, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } } }}
+              />
             </div>
           </div>
 
@@ -767,7 +919,7 @@ const Home = () => {
             data-testid="loved-comedy-section"
             initial="hidden"
             whileInView="visible"
-            viewport={{ margin: device.isMobile ? '-10px' : '-60px', once: device.isMobile }}
+            viewport={{ margin: '-10%' }}
             variants={{
               hidden: { opacity: 0 },
               visible: { opacity: 1, transition: { duration: device.isMobile ? 0.3 : 0.6, ease: [0.22, 1, 0.36, 1], staggerChildren: device.isMobile ? 0.04 : 0.1 } },
@@ -829,12 +981,24 @@ const Home = () => {
             </motion.div>
           </motion.section>
 
-          {/* v4 Phase 5: Breathing spacer between Most Loved & Work with Us */}
+          {/* Phase 8: Animated section divider — lines expand from center, dot fades in */}
           <div className="w-full max-w-7xl mx-auto px-6 md:px-12 py-1 sm:py-2">
             <div className="flex items-center gap-4">
-              <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
-              <div className="w-1 h-1 rounded-full bg-rose-400/30" />
-              <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
+              <motion.div
+                className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-white/[0.06] to-transparent origin-right"
+                initial="hidden" whileInView="visible" viewport={{ margin: '-10%' }}
+                variants={{ hidden: { scaleX: 0, opacity: 0 }, visible: { scaleX: 1, opacity: 1, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } } }}
+              />
+              <motion.div
+                className="w-1 h-1 rounded-full bg-rose-400/30"
+                initial="hidden" whileInView="visible" viewport={{ margin: '-10%' }}
+                variants={{ hidden: { scale: 0, opacity: 0 }, visible: { scale: 1, opacity: 1, transition: { duration: 0.3, delay: 0.3 } } }}
+              />
+              <motion.div
+                className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-white/[0.06] to-transparent origin-left"
+                initial="hidden" whileInView="visible" viewport={{ margin: '-10%' }}
+                variants={{ hidden: { scaleX: 0, opacity: 0 }, visible: { scaleX: 1, opacity: 1, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } } }}
+              />
             </div>
           </div>
 
@@ -845,7 +1009,7 @@ const Home = () => {
               className="w-full px-4 py-1"
               initial={{ opacity: 0, y: 24, scale: 0.96 }}
               whileInView={{ opacity: 1, y: 0, scale: 1 }}
-              viewport={{ margin: '-10px', once: true }}
+              viewport={{ margin: '-10%' }}
               transition={{ type: 'spring', stiffness: 280, damping: 22 }}
             >              <button
                 onClick={() => setLocation('/work-with-us')}
@@ -865,7 +1029,7 @@ const Home = () => {
               </button>
             </motion.div>
           ) : (
-          <motion.div ref={workRef} className="py-10 w-full px-4 sm:px-6 lg:px-8 relative" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ margin: '-60px' }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}>
+          <motion.div ref={workRef} className="py-4 w-full px-4 sm:px-6 lg:px-8 relative" initial="hidden" whileInView="visible" viewport={{ margin: '-10%' }} variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } } }}>
             <section className="max-w-4xl mx-auto relative pb-8" data-testid="collaboration-section">
               <div className="absolute inset-0 -z-10 bg-radial-glow" style={{ opacity: radialGlowOpacity }} />
               <SectionRevealTitle
@@ -884,7 +1048,7 @@ const Home = () => {
                   className="flex flex-wrap justify-center gap-4 sm:gap-6 mt-5"
                   initial="hidden"
                   whileInView="visible"
-                  viewport={{}}
+                  viewport={{ margin: '-10%' }}
                   variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.1 } } }}
                 >
                   {[
@@ -909,18 +1073,18 @@ const Home = () => {
                   className="mt-4 text-center text-gray-400 max-w-lg mx-auto text-sm leading-relaxed"
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
-                  viewport={{}}
+                  viewport={{ margin: '-10%' }}
                   transition={{ duration: 0.5, delay: 0.3 }}
                 >
                   {tx.workDescription}
                 </motion.p>
               </SectionRevealTitle>
-              /* Desktop: Full form card */
+              {/* Desktop: Full form card */}
               <motion.div
-                className="form-shimmer-card relative overflow-hidden rounded-[2.5rem] bg-white/[0.03] shadow-2xl border border-white/[0.07] text-white backdrop-blur-2xl"
+                className="form-shimmer-card relative overflow-hidden rounded-[2.5rem] bg-[#0c0c0c]/95 shadow-2xl border border-white/[0.07] text-white"
                 initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                viewport={{ margin: '-10%' }}
                 transition={{ duration: 0.6, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
                 whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}
                 onViewportEnter={(entry) => {

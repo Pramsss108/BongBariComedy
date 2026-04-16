@@ -38,6 +38,7 @@ const InstagramReel = memo(({ reelId, caption, thumbnail, permalink, videoUrl, l
   const [showFlash, setShowFlash] = useState<'play' | 'pause' | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const flashTimer = useRef<ReturnType<typeof setTimeout>>();
+  const progressRef = useRef<HTMLDivElement>(null);
   // Batch 2: View badge entrance + count-up
   const viewBadgeRef = useRef<HTMLDivElement>(null);
   const [isViewVisible, setIsViewVisible] = useState(false);
@@ -80,7 +81,7 @@ const InstagramReel = memo(({ reelId, caption, thumbnail, permalink, videoUrl, l
     if (!videoUrl) { window.open(permalink, '_blank', 'noopener,noreferrer'); return; }
     if (playing && !paused) { videoRef.current?.pause(); setPaused(true); flash('pause'); }
     else if (playing && paused) { videoRef.current?.play().catch(() => {}); setPaused(false); flash('play'); }
-    else { notifyPlay(reelId); setPlaying(true); setPaused(false); setBuffering(true); setVideoReady(false); }
+    else { notifyPlay(reelId); setPlaying(true); setPaused(false); setBuffering(true); setVideoReady(false); if (progressRef.current) progressRef.current.style.width = '0%'; }
   }, [videoUrl, permalink, playing, paused, flash]);
 
   useEffect(() => { if (playing && !paused && videoRef.current) videoRef.current.play().catch(() => {}); }, [playing, paused]);
@@ -163,8 +164,19 @@ const InstagramReel = memo(({ reelId, caption, thumbnail, permalink, videoUrl, l
                 autoPlay muted={muted} loop playsInline poster={thumbUrl} preload="metadata"
                 onCanPlay={() => { setBuffering(false); setVideoReady(true); }}
                 onWaiting={() => setBuffering(true)}
-                onPlaying={() => { setBuffering(false); setVideoReady(true); }}
+                onPlaying={() => {
+                  setBuffering(false); setVideoReady(true);
+                  // Auto-unmute after playback starts (user gesture already captured by click)
+                  const v = videoRef.current;
+                  if (v && v.muted) { v.muted = false; setMuted(false); }
+                }}
                 onError={() => { setVideoError(true); setPlaying(false); setBuffering(false); }}
+                onTimeUpdate={() => {
+                  const v = videoRef.current;
+                  if (v && v.duration && progressRef.current) {
+                    progressRef.current.style.width = `${(v.currentTime / v.duration) * 100}%`;
+                  }
+                }}
               />
             )}
 
@@ -185,6 +197,17 @@ const InstagramReel = memo(({ reelId, caption, thumbnail, permalink, videoUrl, l
             <div className="absolute inset-x-0 top-0 h-[30%] bg-gradient-to-b from-black/60 to-transparent pointer-events-none z-[2]" />
             {/* Bottom vignette */}
             <div className="absolute inset-x-0 bottom-0 h-[50%] bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none z-[2]" />
+
+            {/* Video progress bar — thin gold line at bottom */}
+            {playing && videoReady && (
+              <div className="absolute bottom-0 left-0 right-0 h-[3px] z-[25] pointer-events-none bg-white/[0.08]">
+                <div
+                  ref={progressRef}
+                  className="h-full bg-gradient-to-r from-brand-yellow to-amber-400 origin-left transition-[width] duration-150 ease-linear"
+                  style={{ width: '0%' }}
+                />
+              </div>
+            )}
 
             {/* â”€â”€ RANK BADGE (top-left) â”€â”€ */}
             {rank && (

@@ -1,7 +1,6 @@
 import { Youtube, Instagram, Facebook, Mail, MapPin, ArrowUpRight } from "lucide-react";
 import { Link } from "wouter";
-import { motion, useScroll, useTransform, useVelocity, useSpring } from "framer-motion";
-import { useRef } from "react";
+import { motion } from "framer-motion";
 import { useDeviceTier } from "@/hooks/useDeviceTier";
 
 /* ─── Data ─── */
@@ -42,7 +41,7 @@ const socials = [
 ];
 
 /* ─── Scroll variants ─── */
-const vp = { once: false, margin: "-40px" as const, amount: 0.12 as const };
+const vp = { margin: "-10%" as const, amount: 0.12 as const };
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -62,12 +61,6 @@ const scalePop = {
 /* ─── Marquee ─── */
 function MarqueeStrip() {
   const items = [...marqueeWords, ...marqueeWords, ...marqueeWords];
-  const device = useDeviceTier();
-  // Phase 30: Scroll velocity sync — marquee shifts with scroll momentum (desktop/tablet)
-  const { scrollY } = useScroll();
-  const scrollVelocity = useVelocity(scrollY);
-  const smoothVelocity = useSpring(scrollVelocity, { damping: 50, stiffness: 200 });
-  const velocityX = useTransform(smoothVelocity, [-3000, 0, 3000], [-20, 0, 20]);
 
   return (
     <motion.div
@@ -79,7 +72,7 @@ function MarqueeStrip() {
     >
       <div className="absolute left-0 top-0 bottom-0 w-24 z-10 bg-gradient-to-r from-[#080808] to-transparent pointer-events-none" />
       <div className="absolute right-0 top-0 bottom-0 w-24 z-10 bg-gradient-to-l from-[#080808] to-transparent pointer-events-none" />
-      <motion.div style={!device.isMobile ? { x: velocityX } : undefined}>
+      <div>
         <div className="footer-marquee flex items-center gap-12 whitespace-nowrap">
           {items.map((word, i) => (
             <span key={i} className="flex items-center gap-12 text-[15px] font-bold uppercase tracking-[0.3em]">
@@ -88,46 +81,33 @@ function MarqueeStrip() {
             </span>
           ))}
         </div>
-      </motion.div>
+      </div>
     </motion.div>
   );
 }
 
-/* ─── BONG BARI — scroll-linked scale + blur, NO glow divs, NO y movement ─── */
+/* ─── BONG BARI — premium reveal, compositor-only (no scroll-linked blur) ─── */
 function BrandReveal() {
-  const ref = useRef<HTMLDivElement>(null);
-  const device = useDeviceTier();
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start end", "end start"],
-  });
-
-  // On mobile: disable scroll animation (always show at full opacity/no blur)
-  const textOpacity = useTransform(scrollYProgress, [0, 0.1, 0.25, 0.75, 0.92, 1], device.isMobile ? [1, 1, 1, 1, 1, 1] : [0, 0.4, 1, 1, 0.6, 0.15]);
-  const blurVal = useTransform(scrollYProgress, [0, 0.1, 0.28, 0.38], device.isMobile ? [0, 0, 0, 0] : [10, 4, 1, 0]);
-  const filterStr = useTransform(blurVal, (v) => `blur(${v}px)`);
-  const lineWidth = useTransform(scrollYProgress, [0, 0.25, 0.5, 0.85, 1], device.isMobile ? ["50%", "50%", "50%", "50%", "50%"] : ["0%", "40%", "65%", "40%", "0%"]);
-  const subOpacity = useTransform(scrollYProgress, [0, 0.3, 0.42, 0.78, 1], device.isMobile ? [1, 1, 1, 1, 1] : [0, 0, 1, 1, 0.2]);
-
   return (
-    <div ref={ref} className="relative py-16 sm:pt-14 sm:pb-10 flex flex-col items-center justify-center text-center">
-
-      <motion.h2
-        className="footer-brand-text relative z-10 text-5xl sm:text-[clamp(2rem,7vw,4rem)] font-black tracking-tighter leading-none"
-        style={{
-          opacity: textOpacity,
-          filter: filterStr,
-        }}
-      >
+    <motion.div
+      initial={{ opacity: 0, scale: 0.92 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ amount: 0.3 }}
+      transition={{ type: 'spring', stiffness: 180, damping: 22, mass: 0.8 }}
+      className="relative py-16 sm:pt-14 sm:pb-10 flex flex-col items-center justify-center text-center"
+    >
+      <h2 className="footer-brand-text relative z-10 text-5xl sm:text-[clamp(2rem,7vw,4rem)] font-black tracking-tighter leading-none">
         BONG BARI
-      </motion.h2>
+      </h2>
 
       {/* Underline */}
       <motion.div
         className="relative z-10 h-[2px] mt-3 rounded-full"
+        initial={{ width: "0%" }}
+        whileInView={{ width: "50%" }}
+        viewport={{ amount: 0.3 }}
+        transition={{ duration: 0.8, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
         style={{
-          width: lineWidth,
-          opacity: textOpacity,
           background: "linear-gradient(90deg, transparent, rgba(255,204,0,0.5), transparent)",
         }}
       />
@@ -135,11 +115,14 @@ function BrandReveal() {
       {/* Subtitle */}
       <motion.p
         className="relative z-10 text-white/40 text-xs sm:text-sm mt-4 tracking-[0.35em] uppercase font-semibold"
-        style={{ opacity: subOpacity }}
+        initial={{ opacity: 0, y: 8 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{}}
+        transition={{ duration: 0.5, delay: 0.25 }}
       >
         Bengal&apos;s Comedy Brand
       </motion.p>
-    </div>
+    </motion.div>
   );
 }
 

@@ -67,7 +67,7 @@ export default function NglUpgradeModal({ open, onClose, username, secretKey, on
       });
       if (!orderRes.ok) {
         const body = await orderRes.json().catch(() => ({}));
-        if (body?.code === 'PAYMENT_DISABLED') {
+        if (body?.code === 'PAYMENT_DISABLED' || orderRes.status === 404) {
           setErrKind('info');
           setErr(lang === 'bn' ? 'পেমেন্ট শীঘ্রই চালু হবে — একডিনের মধ্যেই।' : 'Payment goes live in a day — hang tight.');
         } else {

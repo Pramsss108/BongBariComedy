@@ -1239,19 +1239,26 @@ export default function NglDashboard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-black text-white text-[17px] leading-none tracking-tight">@{username}</p>
-                    <div className="flex items-center gap-1.5 mt-1">
+                    <div className="flex items-center gap-1.5 mt-1.5">
                       {isPremium ? (
-                        <span className="text-[7px] font-extrabold text-white bg-gradient-to-r from-violet-500 to-fuchsia-500 px-1.5 py-[1.5px] rounded-full tracking-wide">✓ PRO</span>
+                        <span className="relative overflow-hidden text-[9px] font-extrabold text-white bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 px-2 py-[3px] rounded-full tracking-[0.05em] shadow-sm shadow-fuchsia-500/30">
+                          <span className="relative z-10">✓ PRO</span>
+                          <motion.span
+                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                            animate={{ x: ['-120%', '220%'] }}
+                            transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut', repeatDelay: 2 }}
+                          />
+                        </span>
                       ) : (
                         <button
                           onClick={() => { gEvent('ngl_pro_cta_click', { source: 'header' }); setShowUpgrade(true); }}
-                          className="text-[7px] font-extrabold text-fuchsia-200 bg-white/[0.05] hover:bg-white/[0.1] border border-fuchsia-400/20 px-1.5 py-[1.5px] rounded-full tracking-wide transition-all"
+                          className="group relative overflow-hidden text-[9px] font-extrabold text-fuchsia-100 bg-gradient-to-r from-fuchsia-500/15 to-violet-500/15 hover:from-fuchsia-500/25 hover:to-violet-500/25 border border-fuchsia-400/25 px-2 py-[3px] rounded-full tracking-[0.04em] transition-all"
                         >
-                          💎 {t('pro.upgradeCta').replace('💎 ', '')}
+                          <span className="relative z-10">💎 {lang === 'bn' ? 'PRO ₹98/মাস' : 'PRO ₹98/mo'}</span>
                         </button>
                       )}
-                      {streakDays > 0 && <span className="text-[7px] font-extrabold text-amber-300 bg-amber-500/15 px-1.5 py-[1.5px] rounded-full">🔥 {streakDays}d</span>}
-                      {messages.length > 0 && <span className="text-[7px] font-extrabold text-white/30 bg-white/[0.05] px-1.5 py-[1.5px] rounded-full">{messages.length} {lang === 'bn' ? 'বার্তা' : 'msgs'}</span>}
+                      {streakDays > 0 && <span className="text-[9px] font-extrabold text-amber-300 bg-amber-500/15 px-2 py-[3px] rounded-full">🔥 {streakDays}d</span>}
+                      {messages.length > 0 && <span className="text-[9px] font-extrabold text-white/40 bg-white/[0.05] px-2 py-[3px] rounded-full">{messages.length} {lang === 'bn' ? 'বার্তা' : 'msgs'}</span>}
                     </div>
                   </div>
                   {/* Native share icon — small, top right */}
@@ -1301,8 +1308,9 @@ export default function NglDashboard() {
                         </motion.div>
                       ) : (
                         <motion.div key={prompt} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                          <p className="text-white/30 text-[10px] font-bold uppercase tracking-[0.14em] mb-2">
-                            {lang === 'bn' ? '👀 মানুষ যা দেখবে' : '👀 What people see'}
+                          <p className="flex items-center gap-1.5 text-white/35 text-[9.5px] font-bold uppercase tracking-[0.18em] mb-2.5">
+                            <span className="inline-block w-1 h-1 rounded-full bg-fuchsia-400/70"></span>
+                            {lang === 'bn' ? 'মানুষ যা দেখবে' : 'What people see'}
                           </p>
                           <p
                             className="font-semibold text-white/90 text-[18px] sm:text-[22px] leading-snug cursor-pointer select-none hover:text-white transition-colors focus-visible:outline-2 focus-visible:outline-white/20 focus-visible:outline-offset-2 rounded-lg"
@@ -1395,25 +1403,38 @@ export default function NglDashboard() {
                   </motion.div>
                 )}
 
-                {/* ═══ SHARE: Link row — flat inline, no container ═══ */}
-                <motion.div
+                {/* ═══ SHARE: Premium link pill with handle + copy ═══ */}
+                <motion.button
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.3, delay: 0.14 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={handleCopy}
-                  className="flex items-center gap-2 px-1 py-0.5 cursor-pointer group"
+                  className={`w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl border transition-all duration-300 ${copied ? 'bg-emerald-500/10 border-emerald-400/30' : 'bg-white/[0.03] border-white/[0.06] hover:bg-white/[0.06] hover:border-white/[0.12]'}`}
                 >
-                  <p className={`flex-1 text-[13px] font-mono truncate transition-colors duration-300 select-none ${copied ? 'text-emerald-400' : 'text-white/30 group-hover:text-white/50'}`}>
-                    {shareLink.replace(/^https?:\/\/(www\.)?/, '')}
-                  </p>
-                  <span className={`flex-shrink-0 transition-all duration-300 ${copied ? 'text-emerald-400 scale-110' : 'text-white/20 group-hover:text-white/40'}`}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`w-3.5 h-3.5 flex-shrink-0 transition-colors ${copied ? 'text-emerald-400' : 'text-white/30'}`}>
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                  </svg>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className={`text-[12.5px] font-mono truncate select-none transition-colors ${copied ? 'text-emerald-300' : 'text-white/50'}`}>
+                      bongbari.com<span className="text-white/30">/ngl/q/</span><span className={copied ? 'text-emerald-200 font-bold' : 'text-white/80 font-bold'}>{username}</span>
+                    </p>
+                  </div>
+                  <span className={`flex-shrink-0 transition-all duration-300 text-[10px] font-extrabold tracking-wide ${copied ? 'text-emerald-400' : 'text-white/40'}`}>
                     {copied ? (
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><polyline points="20 6 9 17 4 12"/></svg>
+                      <span className="flex items-center gap-1">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        {lang === 'bn' ? 'হয়েছে' : 'COPIED'}
+                      </span>
                     ) : (
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <span className="flex items-center gap-1">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        {lang === 'bn' ? 'কপি' : 'COPY'}
+                      </span>
                     )}
                   </span>
-                </motion.div>
+                </motion.button>
 
                 {/* ═══ SHARE CARDS: 4 premium icon buttons ═══ */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -1510,39 +1531,76 @@ export default function NglDashboard() {
                 {loading ? (
                   <InboxShimmer />
                 ) : messages.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-14 text-center">
+                  <div className="flex flex-col items-center justify-center py-10 text-center">
+                    {/* Premium icon — glass mailbox */}
                     <motion.div
-                      initial={{ scale: 0, rotate: -10 }}
-                      animate={{ scale: 1, rotate: 0 }}
-                      transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                      className="text-5xl mb-4"
+                      initial={{ scale: 0.6, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: 'spring', stiffness: 180, damping: 18 }}
+                      className="relative mb-5"
                     >
-                      📭
+                      <div className="w-[72px] h-[72px] rounded-3xl flex items-center justify-center"
+                        style={{ background: 'linear-gradient(140deg, rgba(168,85,247,0.16) 0%, rgba(236,72,153,0.10) 60%, rgba(255,255,255,0.03) 100%)', boxShadow: '0 6px 30px rgba(168,85,247,0.18), inset 0 1px 0 rgba(255,255,255,0.08)' }}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 text-white/70">
+                          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                          <polyline points="22,6 12,13 2,6"/>
+                        </svg>
+                      </div>
+                      <motion.div
+                        animate={{ scale: [1, 1.35, 1], opacity: [0.5, 0, 0.5] }}
+                        transition={{ duration: 2.4, repeat: Infinity, ease: 'easeOut' }}
+                        className="absolute inset-0 rounded-3xl border border-fuchsia-400/30"
+                      />
                     </motion.div>
-                    <p className="text-white font-extrabold text-lg mb-1">{t('dash.emptyTitle')}</p>
-                    <p className="text-white/30 text-[11px] mb-2 max-w-[240px] leading-relaxed">{t('dash.emptySubtitle')}</p>
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.5 }}
-                      className="text-white/15 text-[10px] mb-6 max-w-[200px]"
-                    >
-                      {lang === 'bn' ? '💡 তোর লিংক শেয়ার করো — বন্ধুরা anonymous message পাঠাবে!' : '💡 Share your link — friends will send anonymous messages!'}
-                    </motion.p>
+
+                    <p className="text-white font-extrabold text-[17px] tracking-tight">{t('dash.emptyTitle')}</p>
+                    <p className="text-white/35 text-[12px] mt-1.5 max-w-[260px] leading-relaxed">{t('dash.emptySubtitle')}</p>
+
+                    {/* ═══ PREMIUM "How it works" rail — 3 steps ═══ */}
+                    <div className="w-full max-w-[360px] mt-7 mb-6">
+                      <p className="text-white/25 text-[9px] font-bold uppercase tracking-[0.18em] mb-3">{t('empty.how')}</p>
+                      <div className="flex flex-col gap-2">
+                        {[
+                          { n: '1', t: t('empty.step1t'), d: t('empty.step1d') },
+                          { n: '2', t: t('empty.step2t'), d: t('empty.step2d') },
+                          { n: '3', t: t('empty.step3t'), d: t('empty.step3d') },
+                        ].map((s, i) => (
+                          <motion.div
+                            key={s.n}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.25 + i * 0.08, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                            className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl"
+                            style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.015) 100%)', border: '1px solid rgba(255,255,255,0.05)' }}
+                          >
+                            <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-black text-white flex-shrink-0"
+                              style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.5), rgba(236,72,153,0.5))', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15)' }}>
+                              {s.n}
+                            </div>
+                            <div className="flex-1 text-left min-w-0">
+                              <p className="text-white/85 text-[12px] font-bold leading-tight">{s.t}</p>
+                              <p className="text-white/35 text-[10.5px] mt-0.5 leading-tight">{s.d}</p>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+
                     <div className="flex gap-2">
                       <motion.button
                         whileTap={{ scale: 0.95 }}
                         onClick={handleCopy}
-                        className={`bg-gradient-to-r ${NGL_THEMES[theme]?.accent || NGL_THEMES.default.accent} text-white font-extrabold px-5 py-3 rounded-full text-[12px] shadow-lg`}
+                        className={`bg-gradient-to-r ${NGL_THEMES[theme]?.accent || NGL_THEMES.default.accent} text-white font-extrabold px-6 py-3 rounded-full text-[12px] shadow-lg shadow-fuchsia-500/20`}
                       >
                         {copied ? t('dash.copied') : t('dash.copyLink')}
                       </motion.button>
                       <motion.button
                         whileTap={{ scale: 0.95 }}
                         onClick={() => { setShareModalScreen('picker'); setShowShareModal(true); }}
-                        className="bg-white/[0.08] text-white/60 font-bold px-4 py-3 rounded-full text-[12px] border border-white/[0.06] hover:bg-white/[0.12]"
+                        aria-label="Share"
+                        className="bg-white/[0.06] text-white/60 font-bold px-4 py-3 rounded-full text-[12px] border border-white/[0.06] hover:bg-white/[0.10] transition-all"
                       >
-                        📤
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
                       </motion.button>
                     </div>
                   </div>

@@ -226,6 +226,16 @@ const translations: Record<string, Record<Lang, string>> = {
   'pro.securedBy': { bn: 'Razorpay দ্বারা সুরক্ষিত • UPI, Card, Netbanking', en: 'Secured by Razorpay • UPI, Cards, Netbanking' },
   'pro.activated': { bn: '🎉 PRO চালু হয়ে গেছে!', en: '🎉 Welcome to PRO!' },
 
+  // Premium empty-inbox "How it works" rail (3 steps)
+  'empty.how': { bn: 'কিভাবে কাজ করে', en: 'How it works' },
+  'empty.step1t': { bn: 'তোর link শেয়ার করো', en: 'Share your link' },
+  'empty.step1d': { bn: 'Story, bio, group — যেখানে খুশি', en: 'Story, bio, group — anywhere' },
+  'empty.step2t': { bn: 'anonymous message পাবে', en: 'Receive anonymous DMs' },
+  'empty.step2d': { bn: 'কে পাঠিয়েছে — কেউ জানবে না', en: 'Nobody knows who sent it' },
+  'empty.step3t': { bn: 'পড়ো, react করো, shareও', en: 'Read, react, or share back' },
+  'empty.step3d': { bn: 'Story card বানাও এক tap-এ', en: 'Make a story card in 1 tap' },
+  'empty.cta': { bn: 'Link কপি করে শুরু করো', en: 'Copy link to get started' },
+
   // Dashboard — Themes (Phase 28)
   'dash.chooseTheme': { bn: '🎨 থিম বাছো', en: '🎨 Choose Theme' },
   // Dashboard — Photos (Phase 29)

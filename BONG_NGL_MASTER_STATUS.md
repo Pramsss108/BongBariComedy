@@ -128,7 +128,7 @@
 | C4 | **Anonymous polls** — you create a poll (e.g. "Rate my vibe? 🔥💀😂🫣"), people vote anonymously | VIRAL. Nobody else has this. | High |
 | C5 | **AI reply suggestions** — when you read a message, AI suggests 3 things you could reply in real life | Makes every message feel actionable | Medium |
 | C6 | **Landing page live stats** — "🔥 12,847 anonymous messages sent!" counter on the home page | Social proof = more signups | Small |
-| C7 | **Hindi / Hinglish language** — add a 3rd language toggle | Massive audience expansion (Hindi speakers = 600M people) | Medium |
+| C7 | ~~Hindi / Hinglish language~~ — **DROPPED** | We stay Bengali + English only. Hindi dilutes the Bong brand. | — |
 | C8 | **Message search** — search your inbox by keyword | Quality of life for power users | Medium |
 | C9 | **Report/Block system** — "Report this message" button → auto-flag repeat bad actors | Platform safety at scale | High |
 | C10 | **Data export** — "Download all my messages" as a file | Trust + GDPR compliance if we ever expand to EU | Medium |
@@ -363,7 +363,7 @@ These are FREE. Always. Non-negotiable.
 | 45 | Analytics dashboard per user | ❌ NOT DONE |
 | 46 | Web push notifications | ❌ NOT DONE |
 | 47 | Report/block system | ❌ NOT DONE |
-| 48 | Hindi/Hinglish language | ❌ NOT DONE |
+| 48 | ~~Hindi/Hinglish language~~ (dropped — BN+EN only) | ❌ DROPPED |
 | 49 | Message search | ❌ NOT DONE |
 | 50 | Data export (PDF/CSV) | ❌ NOT DONE |
 | 51 | Bengali 100% translation coverage | ✅ DONE |
@@ -393,7 +393,7 @@ These are FREE. Always. Non-negotiable.
 | Platform (PWA, push, pagination) | 2/4 | 2 |
 | Premium / monetisation | 0/5 | 5 |
 | Safety (filter, block, report) | 2/3 | 1 |
-| Language (Bengali 100%, Hindi) | 1/2 | 1 |
+| Language (Bengali 100% + English) | 2/2 | 0 |
 | QA (tests, bundle, typecheck) | 3/4 | 1 |
 
 **TOTAL: ~46 things done ✅ | ~14 things to go ❌**
@@ -419,7 +419,7 @@ These are FREE. Always. Non-negotiable.
 
 ---
 
-## Changelog � Group C Slice + PRO Foundation (this session)
+## Changelog � Group C Slice + PRO Foundation (this session)
 
 ### ? Group C (precision slice, NO hallucinations)
 - **C1 PWA:** Full manifest + service worker (scope=/, shortcuts to Dashboard & Create, static-asset cache, push-notification handler scaffold). Registered in main.tsx PROD only.
@@ -436,9 +436,9 @@ These are FREE. Always. Non-negotiable.
 - **Translations:** 14 new bilingual keys covering search, export, sound, PRO.
 
 ### ?? New Docs
-- `docs/NGL_PAYMENT_INTEGRATION_PLAN.md` � Razorpay integration plan (routes, env vars, verify signature flow, go-live checklist, rollback strategy). PLAN ONLY � no live keys wired.
-- `docs/NGL_PRODUCTION_DEPLOY_CHECKLIST.md` � step-by-step checklist for C15 production deploys with post-deploy verification and rollback.
+- `docs/NGL_PAYMENT_INTEGRATION_PLAN.md` � Razorpay integration plan (routes, env vars, verify signature flow, go-live checklist, rollback strategy). PLAN ONLY � no live keys wired.
+- `docs/NGL_PRODUCTION_DEPLOY_CHECKLIST.md` � step-by-step checklist for C15 production deploys with post-deploy verification and rollback.
 
 ### ? Explicitly Deferred (no fake code)
-C2 Web Push (needs VAPID), C4 Polls (new data model), C5 AI reply, C7 Hindi (would require ~200 fabricated strings), C9 Report moderation queue, C11 Scheduled prompts, C12 Analytics dashboard, C13 Manual cross-browser test, C14 Expanded integration tests, Live Razorpay wiring.
+C2 Web Push (needs VAPID), C4 Polls (new data model), C5 AI reply, C7 Hindi (dropped — BN+EN only), C9 Report moderation queue, C11 Scheduled prompts, C12 Analytics dashboard, C13 Manual cross-browser test, C14 Expanded integration tests.
 

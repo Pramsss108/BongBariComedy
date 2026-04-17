@@ -1381,6 +1381,16 @@ export function registerNglRoutes(app: any) {
         return res.status(400).json({ message: `Invalid theme. Choose from: ${NGL_THEMES.join(', ')}` });
       }
 
+      // Part 3: PRO-only themes — require active premium
+      const PRO_ONLY = ['neon', 'rosegold', 'midnight'];
+      if (PRO_ONLY.includes(theme)) {
+        const isPremium = (user as any).isPremium === 1
+          && (!(user as any).premiumUntil || new Date((user as any).premiumUntil).getTime() > Date.now());
+        if (!isPremium) {
+          return res.status(403).json({ code: 'PRO_REQUIRED', message: 'This theme is for Bong PRO users only.' });
+        }
+      }
+
       if (USE_PG) {
         await pgDb!.update(nglUsers).set({ theme }).where(eq(nglUsers.username, username));
       } else {
@@ -1664,6 +1674,187 @@ export function registerNglRoutes(app: any) {
     } catch (err: any) {
       console.error('[NGL] phone status error:', err);
       res.status(500).json({ message: 'Server error' });
+    }
+  });
+
+  // ════════════════════════════════════════════════════════════
+  // Part 3 (PRO): Razorpay Payment Integration
+  // Zero-dep: uses built-in fetch + crypto HMAC. No SDK needed.
+  // Env required: RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET
+  // Optional:     RAZORPAY_WEBHOOK_SECRET
+  // ════════════════════════════════════════════════════════════
+
+  const PRO_PLANS = {
+    monthly: { amount: 9800, days: 30, label: 'Bong PRO — Monthly' },   // ₹98.00
+    yearly:  { amount: 68300, days: 365, label: 'Bong PRO — Yearly' },  // ₹683.00
+  } as const;
+  type PlanKey = keyof typeof PRO_PLANS;
+
+  // Light rate limit: max 5 order creations per user per 10 min (prevents abuse)
+  const payOrderMap = new Map<string, number[]>();
+
+  // ── POST /payment/create-order ── (auth required)
+  router.post('/payment/create-order', async (req: any, res) => {
+    try {
+      const keyId = process.env.RAZORPAY_KEY_ID;
+      const keySecret = process.env.RAZORPAY_KEY_SECRET;
+      if (!keyId || !keySecret) {
+        return res.status(503).json({ code: 'PAYMENT_DISABLED', message: 'Payment temporarily unavailable' });
+      }
+
+      const { username, plan } = req.body || {};
+      const authKey = getAuthKey(req);
+      if (!username || !authKey) return res.status(400).json({ message: 'username + auth required' });
+
+      const cleanUser = String(username).trim().toLowerCase();
+      const user = await dbGetUser(cleanUser);
+      if (!user) return res.status(404).json({ message: 'User not found' });
+      if (hashKey(authKey) !== user.secretKeyHash) {
+        return res.status(403).json({ message: 'Invalid secret key' });
+      }
+
+      const planKey = (plan === 'yearly' ? 'yearly' : 'monthly') as PlanKey;
+      const planDef = PRO_PLANS[planKey];
+
+      // Abuse guard: 5 order creations per 10 min per user
+      const now = Date.now();
+      const bucket = (payOrderMap.get(cleanUser) || []).filter(t => now - t < 10 * 60_000);
+      if (bucket.length >= 5) {
+        return res.status(429).json({ message: 'Too many attempts. Try again in a few minutes.' });
+      }
+      bucket.push(now);
+      payOrderMap.set(cleanUser, bucket);
+
+      // Create order via Razorpay REST (Basic auth = KEY_ID:KEY_SECRET)
+      const receipt = `bong_${cleanUser.slice(0, 20)}_${now}`.slice(0, 40);
+      const rzRes = await fetch('https://api.razorpay.com/v1/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Basic ' + Buffer.from(`${keyId}:${keySecret}`).toString('base64'),
+        },
+        body: JSON.stringify({
+          amount: planDef.amount,
+          currency: 'INR',
+          receipt,
+          notes: { username: cleanUser, plan: planKey },
+        }),
+      });
+      if (!rzRes.ok) {
+        const errTxt = await rzRes.text().catch(() => '');
+        console.error('[NGL/pay] create-order failed:', rzRes.status, errTxt);
+        return res.status(502).json({ message: 'Razorpay order creation failed' });
+      }
+      const order = await rzRes.json() as any;
+
+      res.json({
+        orderId: order.id,
+        amount: planDef.amount,
+        currency: 'INR',
+        keyId,
+        plan: planKey,
+        planLabel: planDef.label,
+      });
+    } catch (err: any) {
+      console.error('[NGL/pay] create-order error:', err);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
+  // ── POST /payment/verify ── (auth required, marks user PRO on success)
+  router.post('/payment/verify', async (req: any, res) => {
+    try {
+      const keySecret = process.env.RAZORPAY_KEY_SECRET;
+      if (!keySecret) {
+        return res.status(503).json({ code: 'PAYMENT_DISABLED', message: 'Payment temporarily unavailable' });
+      }
+
+      const { username, razorpay_order_id, razorpay_payment_id, razorpay_signature, plan } = req.body || {};
+      const authKey = getAuthKey(req);
+      if (!username || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !authKey) {
+        return res.status(400).json({ message: 'Missing verification fields' });
+      }
+
+      const cleanUser = String(username).trim().toLowerCase();
+      const user = await dbGetUser(cleanUser);
+      if (!user) return res.status(404).json({ message: 'User not found' });
+      if (hashKey(authKey) !== user.secretKeyHash) {
+        return res.status(403).json({ message: 'Invalid secret key' });
+      }
+
+      // HMAC SHA256 verification: body = `order_id|payment_id`, secret = KEY_SECRET
+      const expected = crypto
+        .createHmac('sha256', keySecret)
+        .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+        .digest('hex');
+
+      if (expected !== razorpay_signature) {
+        console.warn('[NGL/pay] Signature mismatch for', cleanUser);
+        return res.status(400).json({ code: 'BAD_SIGNATURE', message: 'Payment verification failed' });
+      }
+
+      const planKey = (plan === 'yearly' ? 'yearly' : 'monthly') as PlanKey;
+      const planDef = PRO_PLANS[planKey];
+      const now = Date.now();
+      // Extend from current premiumUntil if still active, else from now
+      const currentUntil = (user as any).premiumUntil ? new Date((user as any).premiumUntil).getTime() : 0;
+      const base = currentUntil > now ? currentUntil : now;
+      const premiumUntil = new Date(base + planDef.days * 24 * 60 * 60 * 1000);
+
+      if (USE_PG) {
+        await pgDb!
+          .update(nglUsers)
+          .set({ isPremium: 1, premiumUntil } as any)
+          .where(eq(nglUsers.username, cleanUser));
+      } else {
+        const u = memUsers.get(cleanUser) as any;
+        if (u) { u.isPremium = 1; u.premiumUntil = premiumUntil; }
+      }
+
+      console.log(`[NGL/pay] ✓ PRO activated for @${cleanUser} (${planKey}) until ${premiumUntil.toISOString()}`);
+      res.json({
+        success: true,
+        isPremium: 1,
+        premiumUntil: premiumUntil.toISOString(),
+        plan: planKey,
+      });
+    } catch (err: any) {
+      console.error('[NGL/pay] verify error:', err);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
+  // ── POST /payment/webhook ── (Razorpay → us; no user auth, signed by webhook secret)
+  router.post('/payment/webhook', async (req: any, res) => {
+    try {
+      const whSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+      if (!whSecret) {
+        // If not configured, acknowledge to avoid Razorpay retries — but don't process
+        return res.status(200).json({ received: true, processed: false, reason: 'webhook_secret_missing' });
+      }
+
+      const signature = req.headers['x-razorpay-signature'] as string | undefined;
+      const rawBody = JSON.stringify(req.body || {}); // express.json leaves body as object; this recomputes canonical
+      const expected = crypto.createHmac('sha256', whSecret).update(rawBody).digest('hex');
+
+      if (!signature || expected !== signature) {
+        console.warn('[NGL/pay] webhook signature mismatch');
+        return res.status(400).json({ received: false, error: 'bad_signature' });
+      }
+
+      const event = req.body?.event as string | undefined;
+      const notes = req.body?.payload?.payment?.entity?.notes || req.body?.payload?.order?.entity?.notes || {};
+      const username = typeof notes.username === 'string' ? notes.username.trim().toLowerCase() : null;
+
+      console.log(`[NGL/pay] webhook event=${event} user=${username || '?'}`);
+      // Best-effort: on payment.captured we could also mark PRO, but /verify is the source of truth.
+      // Keep this endpoint as observability + future renewal support.
+
+      res.status(200).json({ received: true, event });
+    } catch (err: any) {
+      console.error('[NGL/pay] webhook error:', err);
+      // Always 200 to prevent Razorpay retry storms; log the error
+      res.status(200).json({ received: true, processed: false });
     }
   });
 

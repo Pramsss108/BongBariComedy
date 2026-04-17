@@ -210,6 +210,21 @@ const translations: Record<string, Record<Lang, string>> = {
   'pro.upgradeCta': { bn: '💎 Bong PRO — ₹98/month', en: '💎 Get Bong PRO — ₹98/month' },
   'pro.upgradeSoon': { bn: 'PRO খুব শিগ্রই আসছে!', en: 'PRO launching soon!' },
   'pro.pinLimitPro': { bn: 'PRO তে ১০টা পর্যন্ত pin করতে পারবে', en: 'PRO users can pin up to 10 messages' },
+  // Upgrade modal
+  'pro.modalTitle': { bn: 'Bong PRO এ upgrade করো', en: 'Upgrade to Bong PRO' },
+  'pro.modalSubtitle': { bn: 'সব feature। একবারই। cancel করতে পারবে যেকোনো সময়।', en: 'Everything unlocked. Cancel anytime.' },
+  'pro.f1': { bn: '🔍 Deep sender reveal — city, ISP, device সব', en: '🔍 Deep sender reveal — city, ISP, device & more' },
+  'pro.f2': { bn: '✓ Verified PRO badge তোমার profile এ', en: '✓ Verified PRO badge on your profile' },
+  'pro.f3': { bn: '🛡️ AI troll shield — খারাপ message auto block', en: '🛡️ AI troll shield — auto-block abuse' },
+  'pro.f4': { bn: '📌 ১০টা পর্যন্ত message pin + archive', en: '📌 Pin up to 10 messages + unlimited archive' },
+  'pro.f5': { bn: '🎨 ৩টা exclusive PRO theme (Neon, Rose Gold, Midnight)', en: '🎨 3 exclusive PRO themes (Neon, Rose Gold, Midnight)' },
+  'pro.f6': { bn: '💎 First access — সব নতুন feature আগে পাবে', en: '💎 Early access to every new feature' },
+  'pro.monthly': { bn: 'মাসিক', en: 'Monthly' },
+  'pro.yearly': { bn: 'বাৎসরিক', en: 'Yearly' },
+  'pro.save2mo': { bn: '২ মাস ফ্রি', en: '2 MONTHS FREE' },
+  'pro.upgradeBtn': { bn: 'Upgrade', en: 'Upgrade' },
+  'pro.securedBy': { bn: 'Razorpay দ্বারা সুরক্ষিত • UPI, Card, Netbanking', en: 'Secured by Razorpay • UPI, Cards, Netbanking' },
+  'pro.activated': { bn: '🎉 PRO চালু হয়ে গেছে!', en: '🎉 Welcome to PRO!' },
 
   // Dashboard — Themes (Phase 28)
   'dash.chooseTheme': { bn: '🎨 থিম বাছো', en: '🎨 Choose Theme' },

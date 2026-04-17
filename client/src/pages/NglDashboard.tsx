@@ -7,6 +7,7 @@ import { useNglLang, LangToggle, FloatingHelp, InboxShimmer } from '@/components
 import ShareModal from '@/components/ShareModal';
 import QRCode from 'qrcode';
 import { sfxNewMessage, sfxDicePop, sfxTap, getNglMuted, setNglMuted } from '@/lib/nglSfx';
+import NglUpgradeModal from '@/components/NglUpgradeModal';
 
 interface NglMessage {
   id: string;
@@ -195,6 +196,9 @@ export default function NglDashboard() {
 
   // Part 3: Premium flag (loaded from server profile)
   const [isPremium, setIsPremium] = useState<boolean>(false);
+  // Part 3: Upgrade modal + post-upgrade celebration
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [upgradeToast, setUpgradeToast] = useState(false);
 
   // Dynamically resolve base URL whether in dev (localhost) or prod
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://www.bongbari.com';
@@ -1240,7 +1244,7 @@ export default function NglDashboard() {
                         <span className="text-[7px] font-extrabold text-white bg-gradient-to-r from-violet-500 to-fuchsia-500 px-1.5 py-[1.5px] rounded-full tracking-wide">✓ PRO</span>
                       ) : (
                         <button
-                          onClick={() => { gEvent('ngl_pro_cta_click', { source: 'header' }); alert(t('pro.upgradeSoon')); }}
+                          onClick={() => { gEvent('ngl_pro_cta_click', { source: 'header' }); setShowUpgrade(true); }}
                           className="text-[7px] font-extrabold text-fuchsia-200 bg-white/[0.05] hover:bg-white/[0.1] border border-fuchsia-400/20 px-1.5 py-[1.5px] rounded-full tracking-wide transition-all"
                         >
                           💎 {t('pro.upgradeCta').replace('💎 ', '')}
@@ -1682,7 +1686,7 @@ export default function NglDashboard() {
                             {/* Part 3 PRO FOMO: locked deep-reveal card (shown only to free users with sender data) */}
                             {!isPremium && hasHints && (
                               <button
-                                onClick={() => { gEvent('ngl_pro_cta_click', { source: 'message_card' }); alert(t('pro.upgradeSoon')); }}
+                                onClick={() => { gEvent('ngl_pro_cta_click', { source: 'message_card' }); setShowUpgrade(true); }}
                                 className="mt-2 w-full text-left bg-gradient-to-r from-fuchsia-500/10 via-violet-500/10 to-indigo-500/10 border border-fuchsia-400/20 rounded-xl px-3 py-2 hover:from-fuchsia-500/15 hover:via-violet-500/15 hover:to-indigo-500/15 transition-all group/pro"
                                 aria-label={t('pro.lockedCity')}
                               >
@@ -2022,6 +2026,35 @@ export default function NglDashboard() {
           storyPreviewUrl={storyPreview}
           initialScreen={shareModalScreen}
         />
+
+        {/* ── Part 3: PRO Upgrade Modal ── */}
+        <NglUpgradeModal
+          open={showUpgrade}
+          onClose={() => setShowUpgrade(false)}
+          username={username}
+          secretKey={secretKey}
+          onSuccess={(_premiumUntil) => {
+            setIsPremium(true);
+            setShowUpgrade(false);
+            setUpgradeToast(true);
+            gEvent('ngl_pro_activated');
+            setTimeout(() => setUpgradeToast(false), 4000);
+          }}
+        />
+
+        {/* PRO activated toast */}
+        <AnimatePresence>
+          {upgradeToast && (
+            <motion.div
+              initial={{ opacity: 0, y: -20, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.9 }}
+              className="fixed top-6 left-1/2 -translate-x-1/2 z-[250] bg-gradient-to-r from-fuchsia-500 via-violet-500 to-indigo-500 text-white font-black px-5 py-3 rounded-2xl shadow-2xl shadow-fuchsia-500/50 text-[14px]"
+            >
+              {t('pro.activated')}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* ═══ Phone Verification Modal — Ultra-Compact Premium ═══ */}
         <AnimatePresence>

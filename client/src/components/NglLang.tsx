@@ -164,6 +164,31 @@ const translations: Record<string, Record<Lang, string>> = {
   'dash.retry': { bn: 'আবার চেষ্টা করো', en: 'Tap to retry' },
   'dash.retrying': { bn: 'আবার চেষ্টা হচ্ছে', en: 'Retrying' },
 
+  // A1/A2: Shimmer loaders + bilingual error messages
+  'dash.loadingInbox': { bn: 'তোর inbox লোড হচ্ছে...', en: 'Loading your inbox...' },
+  'dash.loadingProfile': { bn: 'প্রোফাইল লোড হচ্ছে...', en: 'Loading profile...' },
+  'dash.connectionError': { bn: 'Connection error — আবার চেষ্টা করো', en: 'Connection error — try again' },
+  'dash.wrongKeyError': { bn: 'ভুল key — আবার login করো', en: 'Wrong key — try logging in again' },
+  'dash.serverError': { bn: 'সার্ভার সমস্যা — একটু পরে আবার চেষ্টা করো', en: 'Server error — please try again later' },
+  'dash.genericError': { bn: 'কিছু একটা ভুল হয়েছে — আবার চেষ্টা করো', en: 'Something went wrong — please try again' },
+  'dash.networkError': { bn: 'Internet সমস্যা — connection চেক করো', en: 'Network error — check your connection' },
+
+  // B3: Pin button
+  'dash.pin': { bn: 'Pin করো', en: 'Pin' },
+  'dash.unpin': { bn: 'Unpin করো', en: 'Unpin' },
+  'dash.pinned': { bn: '📌 Pinned', en: '📌 Pinned' },
+  'dash.pinLimitReached': { bn: '৩টার বেশি pin করা যাবে না — আগে একটা unpin করো', en: 'Max 3 pinned. Unpin one first.' },
+
+  // B2: Block sender
+  'dash.block': { bn: 'Sender Block করো', en: 'Block Sender' },
+  'dash.blockConfirm': { bn: 'এই sender block করবে? একই device থেকে আর message আসবে না।', en: 'Block this sender? They won\'t be able to message you again from the same device.' },
+  'dash.blocked': { bn: '✓ Block করা হয়েছে', en: '✓ Sender blocked' },
+
+  // B4: Pagination
+  'dash.loadMore': { bn: 'আরো message দেখো', en: 'Load more messages' },
+  'dash.loadingMore': { bn: 'লোড হচ্ছে...', en: 'Loading more...' },
+  'dash.noMoreMessages': { bn: 'সব message দেখানো হয়েছে', en: 'All messages shown' },
+
   // Dashboard — Themes (Phase 28)
   'dash.chooseTheme': { bn: '🎨 থিম বাছো', en: '🎨 Choose Theme' },
   // Dashboard — Photos (Phase 29)
@@ -246,6 +271,44 @@ export function NglLangProvider({ children }: { children: ReactNode }) {
 
 export function useNglLang() {
   return useContext(LangContext);
+}
+
+// ─── A3: Reusable shimmer (skeleton) loaders ───
+// Use these for inbox/profile loading states instead of a plain spinner.
+export function ShimmerBar({ className = '', width = '100%', height = '12px' }: { className?: string; width?: string; height?: string }) {
+  return (
+    <div
+      aria-hidden
+      className={`animate-pulse bg-gradient-to-r from-white/[0.04] via-white/[0.12] to-white/[0.04] rounded-md ${className}`}
+      style={{ width, height, backgroundSize: '200% 100%' }}
+    />
+  );
+}
+
+export function InboxShimmer() {
+  // 3 skeleton message cards while loading
+  return (
+    <div className="flex flex-col gap-3 py-3" role="status" aria-live="polite">
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 flex flex-col gap-2"
+        >
+          <div className="flex items-center gap-2">
+            <ShimmerBar width="24px" height="24px" className="!rounded-full" />
+            <ShimmerBar width={`${40 + i * 15}%`} height="10px" />
+          </div>
+          <ShimmerBar width="92%" height="14px" />
+          <ShimmerBar width={`${55 + i * 10}%`} height="14px" />
+          <div className="flex gap-2 mt-1">
+            <ShimmerBar width="60px" height="18px" className="!rounded-full" />
+            <ShimmerBar width="60px" height="18px" className="!rounded-full" />
+          </div>
+        </div>
+      ))}
+      <span className="sr-only">Loading messages</span>
+    </div>
+  );
 }
 
 // ─── Compact toggle button component ───

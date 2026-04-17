@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import crypto from 'crypto';
 import { pgDb } from '../db.pg';
-import { nglUsers, nglMessages } from '../../shared/schema';
-import { eq, desc, sql } from 'drizzle-orm';
+import { nglUsers, nglMessages, nglBlockedFingerprints } from '../../shared/schema';
+import { eq, desc, sql, and } from 'drizzle-orm';
 import { generateOtp, hashOtp, verifyOtp, otpExpiryDate, validatePhone, maskPhone, MAX_OTP_ATTEMPTS } from '../lib/otp';
 import { sendWhatsAppOtp, devLogOtp } from '../lib/whatsapp';
+import { containsBlockedWord } from '../lib/ngl-blocked-words';
 
 // ──────────────────────────────────────────────────────────
 // Phase 1: Data types & storage (Postgres primary, in-memory fallback)
@@ -54,12 +55,16 @@ interface NglMessageMem {
   senderDarkMode: string | null;
   senderReferrer: string | null;
   senderLocalTime: string | null;
+  senderFingerprint: string | null;
+  pinned: number;
   createdAt: number;
 }
 
 // In-memory fallback stores (only used when DATABASE_URL is not set)
 const memUsers = new Map<string, NglUserMem>();
 const memMessages: NglMessageMem[] = [];
+// B2: in-memory blocked fingerprints fallback — Map<username, Set<fingerprintHash>>
+const memBlockedFingerprints = new Map<string, Set<string>>();
 const MAX_USERS = 2000;
 const MAX_MESSAGES = 10000;
 const MAX_MSG_PER_USER = 500;
@@ -73,6 +78,34 @@ const otpAttemptMap = new Map<string, number>(); // brute-force lockout: track v
 const CREATE_COOLDOWN = 30_000;
 const SEND_COOLDOWN = 8_000;
 const OTP_COOLDOWN = 60_000; // 1 min between OTP requests per user
+
+// B5: Periodic rate-limit map cleanup.
+// Prevents unbounded memory growth on Oracle VM (503MB RAM total).
+// Every 5 minutes, prune entries older than 1 hour.
+const RATE_MAP_TTL = 60 * 60 * 1000; // 1 hour
+const RATE_MAP_SWEEP = 5 * 60 * 1000; // 5 min
+function pruneRateMap(m: Map<string, number>, ttl: number) {
+  const now = Date.now();
+  m.forEach((ts, k) => {
+    if (now - ts > ttl) m.delete(k);
+  });
+}
+setInterval(() => {
+  pruneRateMap(createRateMap, RATE_MAP_TTL);
+  pruneRateMap(sendRateMap, RATE_MAP_TTL);
+  pruneRateMap(otpRateMap, RATE_MAP_TTL);
+  // otpAttemptMap entries self-clear on success/lockout; prune conservatively
+  if (otpAttemptMap.size > 500) otpAttemptMap.clear();
+}, RATE_MAP_SWEEP).unref?.();
+
+// B2: Compute a per-sender fingerprint from IP + User-Agent.
+// Hashed so the raw IP is never stored. Collisions are acceptable
+// since the feature is a soft-block; determined attackers can rotate.
+function computeSenderFingerprint(ip: string, ua: string): string {
+  const clean = (ip || 'unknown').replace(/^::ffff:/, '');
+  const raw = `${clean}|${ua || ''}`;
+  return crypto.createHash('sha256').update(raw).digest('hex');
+}
 
 const PROMPTS_BN = [
   'আমার সম্পর্কে anonymous কিছু বলো 👀',
@@ -342,11 +375,24 @@ async function dbUpdateOg(username: string, ogTitle: string | null, ogDescriptio
   }
 }
 
-async function dbGetMessages(username: string) {
+async function dbGetMessages(username: string, limit?: number, offset?: number) {
+  // B3: pinned messages always show first (pinned desc), then newest first.
+  // B4: optional pagination via limit/offset.
+  const lim = typeof limit === 'number' && limit > 0 && limit <= 200 ? limit : undefined;
+  const off = typeof offset === 'number' && offset > 0 ? offset : 0;
   if (USE_PG) {
-    return pgDb!.select().from(nglMessages).where(eq(nglMessages.recipientUsername, username)).orderBy(desc(nglMessages.createdAt));
+    let q = pgDb!.select().from(nglMessages)
+      .where(eq(nglMessages.recipientUsername, username))
+      .orderBy(desc(nglMessages.pinned), desc(nglMessages.createdAt)) as any;
+    if (lim !== undefined) q = q.limit(lim);
+    if (off > 0) q = q.offset(off);
+    return q;
   }
-  return memMessages.filter(m => m.recipientUsername === username).sort((a, b) => b.createdAt - a.createdAt);
+  const all = memMessages
+    .filter(m => m.recipientUsername === username)
+    .sort((a, b) => (b.pinned - a.pinned) || (b.createdAt - a.createdAt));
+  if (lim !== undefined) return all.slice(off, off + lim);
+  return all.slice(off);
 }
 
 // Phase 40: Extended hint payload
@@ -366,6 +412,7 @@ interface SenderHints {
   senderDarkMode: string | null;
   senderReferrer: string | null;
   senderLocalTime: string | null;
+  senderFingerprint: string | null;
 }
 
 async function dbInsertMessage(id: string, recipientUsername: string, text: string, emoji: string, hints: SenderHints) {
@@ -382,6 +429,7 @@ async function dbInsertMessage(id: string, recipientUsername: string, text: stri
       senderConnectionType: hints.senderConnectionType, senderBatteryLevel: hints.senderBatteryLevel,
       senderDarkMode: hints.senderDarkMode, senderReferrer: hints.senderReferrer,
       senderLocalTime: hints.senderLocalTime,
+      senderFingerprint: hints.senderFingerprint,
     });
 
     // Streak update: read current user streak state
@@ -416,6 +464,8 @@ async function dbInsertMessage(id: string, recipientUsername: string, text: stri
       senderConnectionType: hints.senderConnectionType, senderBatteryLevel: hints.senderBatteryLevel,
       senderDarkMode: hints.senderDarkMode, senderReferrer: hints.senderReferrer,
       senderLocalTime: hints.senderLocalTime,
+      senderFingerprint: hints.senderFingerprint,
+      pinned: 0,
     });
     const u = memUsers.get(recipientUsername);
     if (u) {
@@ -472,6 +522,75 @@ async function dbUserMsgCount(username: string): Promise<number> {
     return Number(rows[0]?.count || 0);
   }
   return memMessages.filter(m => m.recipientUsername === username).length;
+}
+
+// B3: Pin / unpin helpers. Max 3 pinned per user.
+async function dbCountPinned(username: string): Promise<number> {
+  if (USE_PG) {
+    const rows = await pgDb!.select({ count: sql<number>`count(*)` }).from(nglMessages)
+      .where(and(eq(nglMessages.recipientUsername, username), sql`${nglMessages.pinned} > 0`));
+    return Number(rows[0]?.count || 0);
+  }
+  return memMessages.filter(m => m.recipientUsername === username && m.pinned > 0).length;
+}
+
+async function dbSetPinned(username: string, msgId: string, pinned: number): Promise<boolean> {
+  if (USE_PG) {
+    const r: any = await pgDb!.update(nglMessages).set({ pinned })
+      .where(and(eq(nglMessages.id, msgId), eq(nglMessages.recipientUsername, username)));
+    return true;
+  }
+  const m = memMessages.find(x => x.id === msgId && x.recipientUsername === username);
+  if (!m) return false;
+  m.pinned = pinned;
+  return true;
+}
+
+// B2: Blocked fingerprint helpers.
+async function dbIsFingerprintBlocked(username: string, fingerprint: string): Promise<boolean> {
+  if (!fingerprint) return false;
+  if (USE_PG) {
+    const rows = await pgDb!.select({ id: nglBlockedFingerprints.id })
+      .from(nglBlockedFingerprints)
+      .where(and(
+        eq(nglBlockedFingerprints.recipientUsername, username),
+        eq(nglBlockedFingerprints.fingerprintHash, fingerprint),
+      ))
+      .limit(1);
+    return rows.length > 0;
+  }
+  return memBlockedFingerprints.get(username)?.has(fingerprint) || false;
+}
+
+async function dbBlockFingerprint(username: string, fingerprint: string): Promise<void> {
+  if (!fingerprint) return;
+  if (USE_PG) {
+    const id = `b_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    // Ignore duplicates: check first (cheap) then insert
+    const already = await dbIsFingerprintBlocked(username, fingerprint);
+    if (already) return;
+    await pgDb!.insert(nglBlockedFingerprints).values({
+      id, recipientUsername: username, fingerprintHash: fingerprint,
+    });
+  } else {
+    let set = memBlockedFingerprints.get(username);
+    if (!set) { set = new Set(); memBlockedFingerprints.set(username, set); }
+    set.add(fingerprint);
+  }
+}
+
+// Fetch a single message by id+username (used by block-sender to find fingerprint)
+async function dbGetMessageById(username: string, msgId: string): Promise<{ id: string; senderFingerprint: string | null } | null> {
+  if (USE_PG) {
+    const rows = await pgDb!.select({ id: nglMessages.id, senderFingerprint: nglMessages.senderFingerprint })
+      .from(nglMessages)
+      .where(and(eq(nglMessages.id, msgId), eq(nglMessages.recipientUsername, username)))
+      .limit(1);
+    return rows[0] || null;
+  }
+  const m = memMessages.find(x => x.id === msgId && x.recipientUsername === username);
+  if (!m) return null;
+  return { id: m.id, senderFingerprint: m.senderFingerprint };
 }
 
 // ──────────────────────────────────────────────────────────
@@ -682,6 +801,23 @@ export function registerNglRoutes(app: any) {
       const text = sanitizeText(rawText);
       if (text.length < 1) return res.status(400).json({ message: 'Message too short' });
 
+      // B1: Profanity / hate-speech filter. Soft rejection — returns 200 so sender
+      // can't tell which words trigger the filter (prevents bypass probing).
+      if (containsBlockedWord(text)) {
+        sendRateMap.set(ip, Date.now());
+        return res.status(200).json({ ok: true, message: 'Sent! 🔥', filtered: true, fakeCount: 150 + Math.floor(Math.random() * 250) });
+      }
+
+      // B2: Fingerprint-based block check. Compute fingerprint from IP+UA and
+      // check if recipient has blocked this sender. Silent-drop (200) so the
+      // blocked sender can't tell they've been blocked (prevents harassment loop).
+      const uaForFp = (req.headers['user-agent'] || '') as string;
+      const fingerprint = computeSenderFingerprint(ip, uaForFp);
+      if (await dbIsFingerprintBlocked(username, fingerprint)) {
+        sendRateMap.set(ip, Date.now());
+        return res.status(200).json({ ok: true, message: 'Sent! 🔥', filtered: true, fakeCount: 150 + Math.floor(Math.random() * 250) });
+      }
+
       const userMsgCount = await dbUserMsgCount(username);
       if (userMsgCount >= MAX_MSG_PER_USER) {
         return res.status(503).json({ message: "This user's inbox is full!" });
@@ -718,6 +854,7 @@ export function registerNglRoutes(app: any) {
           : geo.city,
         senderRegion: geo.region, senderCountry: geo.country, senderIsp: geo.isp,
         senderScreenRes, senderConnectionType, senderBatteryLevel, senderDarkMode, senderReferrer, senderLocalTime,
+        senderFingerprint: fingerprint,
       };
 
       await dbInsertMessage(msgId, username, text, emoji, hints);
@@ -743,7 +880,14 @@ export function registerNglRoutes(app: any) {
         return res.status(403).json({ message: 'Invalid secret key — access denied' });
       }
 
-      const userMessages = await dbGetMessages(username);
+      // B4: Optional pagination — ?limit=20&offset=0
+      const limitParam = Number(req.query.limit);
+      const offsetParam = Number(req.query.offset);
+      const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 200) : undefined;
+      const offset = Number.isFinite(offsetParam) && offsetParam > 0 ? offsetParam : 0;
+
+      const userMessages = await dbGetMessages(username, limit, offset);
+      const totalCount = await dbUserMsgCount(username);
 
       res.json({
         ok: true,
@@ -751,6 +895,8 @@ export function registerNglRoutes(app: any) {
         prompt: user.prompt,
         messageCount: user.messageCount,
         messages: userMessages,
+        totalCount,
+        hasMore: limit !== undefined ? (offset + (userMessages as any[]).length) < totalCount : false,
         streakDays: (user as any).streakDays || 0,
         createdAt: user.createdAt,
       });
@@ -778,6 +924,75 @@ export function registerNglRoutes(app: any) {
 
       res.json({ ok: true, remaining: Math.max(0, user.messageCount - 1) });
     } catch (err: any) {
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
+  // ── PUT /u/:username/message/:id/pin — Toggle pin (B3) ──
+  // Max 3 pinned messages per user. Pinned value = Date.now() (for ordering).
+  router.put('/u/:username/message/:id/pin', async (req: any, res) => {
+    try {
+      const username = (req.params.username || '').trim().toLowerCase();
+      const msgId = req.params.id;
+      const key = getAuthKey(req);
+
+      const user = await dbGetUser(username);
+      if (!user) return res.status(404).json({ message: 'User not found' });
+      if (!key || hashKey(key) !== user.secretKeyHash) {
+        return res.status(403).json({ message: 'Invalid secret key' });
+      }
+
+      const msg = await dbGetMessageById(username, msgId);
+      if (!msg) return res.status(404).json({ message: 'Message not found' });
+
+      const { pinned: wantPinned } = req.body || {};
+      const shouldPin = wantPinned === true || wantPinned === 1;
+
+      if (shouldPin) {
+        const pinnedCount = await dbCountPinned(username);
+        if (pinnedCount >= 3) {
+          return res.status(400).json({ message: 'Max 3 pinned messages. Unpin one first.', code: 'MAX_PINS' });
+        }
+        await dbSetPinned(username, msgId, Date.now());
+        res.json({ ok: true, pinned: true });
+      } else {
+        await dbSetPinned(username, msgId, 0);
+        res.json({ ok: true, pinned: false });
+      }
+    } catch (err: any) {
+      console.error('[NGL] pin error:', err);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
+  // ── POST /u/:username/message/:id/block — Block sender by fingerprint (B2) ──
+  // Recipient can block the sender of a specific message. The sender's
+  // fingerprint (hash of their IP+UA at send time) is added to the
+  // recipient's blocklist. Future sends matching that fingerprint are
+  // silently dropped (see /send route).
+  router.post('/u/:username/message/:id/block', async (req: any, res) => {
+    try {
+      const username = (req.params.username || '').trim().toLowerCase();
+      const msgId = req.params.id;
+      const key = getAuthKey(req);
+
+      const user = await dbGetUser(username);
+      if (!user) return res.status(404).json({ message: 'User not found' });
+      if (!key || hashKey(key) !== user.secretKeyHash) {
+        return res.status(403).json({ message: 'Invalid secret key' });
+      }
+
+      const msg = await dbGetMessageById(username, msgId);
+      if (!msg) return res.status(404).json({ message: 'Message not found' });
+      if (!msg.senderFingerprint) {
+        // Legacy message (stored before fingerprint column existed)
+        return res.status(400).json({ message: 'Cannot block this message (no fingerprint data)', code: 'NO_FINGERPRINT' });
+      }
+
+      await dbBlockFingerprint(username, msg.senderFingerprint);
+      res.json({ ok: true, blocked: true });
+    } catch (err: any) {
+      console.error('[NGL] block-sender error:', err);
       res.status(500).json({ message: 'Server error' });
     }
   });

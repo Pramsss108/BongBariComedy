@@ -480,8 +480,23 @@ export const nglMessages = pgTable("ngl_messages", {
   senderDarkMode: varchar("sender_dark_mode", { length: 10 }),
   senderReferrer: varchar("sender_referrer", { length: 200 }),
   senderLocalTime: varchar("sender_local_time", { length: 30 }),
+  // B2: hashed sender fingerprint (sha256 of IP + UA) — used for block-sender feature
+  senderFingerprint: varchar("sender_fingerprint", { length: 64 }),
+  // B3: message pinning (0 = unpinned, 1+ = pinned; higher number = pinned more recently)
+  pinned: integer("pinned").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// B2: Blocked sender fingerprints per-user. Recipient can block a sender
+// whose fingerprint is computed from their IP+UA. Future sends matching
+// that fingerprint are rejected silently.
+export const nglBlockedFingerprints = pgTable("ngl_blocked_fingerprints", {
+  id: varchar("id", { length: 60 }).primaryKey(),
+  recipientUsername: varchar("recipient_username", { length: 20 }).notNull().references(() => nglUsers.username, { onDelete: "cascade" }),
+  fingerprintHash: varchar("fingerprint_hash", { length: 64 }).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 export type NglUser = typeof nglUsers.$inferSelect;
 export type NglMessage = typeof nglMessages.$inferSelect;
+export type NglBlockedFingerprint = typeof nglBlockedFingerprints.$inferSelect;

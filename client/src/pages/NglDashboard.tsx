@@ -3,7 +3,7 @@ import { useRoute, useLocation, Link } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SEOHead } from '@/components/SEOHead';
 import { buildApiUrl } from '@/lib/queryClient';
-import { useNglLang, LangToggle, FloatingHelp } from '@/components/NglLang';
+import { useNglLang, LangToggle, FloatingHelp, InboxShimmer } from '@/components/NglLang';
 import ShareModal from '@/components/ShareModal';
 import QRCode from 'qrcode';
 
@@ -28,6 +28,8 @@ interface NglMessage {
   senderDarkMode: string | null;
   senderReferrer: string | null;
   senderLocalTime: string | null;
+  // B3: Message pinning — 0 = not pinned, >0 = pinned (higher = newer pin)
+  pinned?: number;
   createdAt: string;
 }
 
@@ -172,6 +174,10 @@ export default function NglDashboard() {
   const [phoneOtpCooldown, setPhoneOtpCooldown] = useState(0);
   const phoneOtpCooldownRef = useRef<ReturnType<typeof setInterval>>();
 
+  // B4: Inbox pagination state
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+
   // Dynamically resolve base URL whether in dev (localhost) or prod
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://www.bongbari.com';
   const shareLink = `${baseUrl}/ngl/q/${username}`;
@@ -180,10 +186,18 @@ export default function NglDashboard() {
     `আমাকে anonymous message পাঠাও 👀 কে পাঠিয়েছে জানা যাবে না 🤫\n\n${shareLink}`,
     `সত্যি কথা বলো, আমি জানবো না কে বলেছে 🔥\n\n${shareLink}`,
     `তোর সাহস থাকলে anonymous-এ বল 😏\n\n${shareLink}`,
+    // A4: 3 more BN templates — professional / fun / mysterious vibes
+    `মনে যা আছে বলে ফেল — নাম লাগবে না 💭 100% secret 🔒\n\n${shareLink}`,
+    `আমাকে 3 শব্দে describe কর ✨ কেউ জানবে না তুই বলেছিস 🙊\n\n${shareLink}`,
+    `আমার সম্পর্কে honest opinion দে — hide করা থাকবে 🫣\n\n${shareLink}`,
   ] : [
     `Send me anonymous messages 👀 You'll remain hidden 🤫\n\n${shareLink}`,
     `Tell me the truth, I won't know who said it 🔥\n\n${shareLink}`,
     `If you dare, say it anonymously 😏\n\n${shareLink}`,
+    // A4: 3 more EN templates — professional / fun / mysterious vibes
+    `Say what's on your mind — no name needed 💭 100% secret 🔒\n\n${shareLink}`,
+    `Describe me in 3 words ✨ Nobody will know it's you 🙊\n\n${shareLink}`,
+    `Drop your honest opinion about me — stays anonymous 🫣\n\n${shareLink}`,
   ];
 
   // Auth check
@@ -279,6 +293,7 @@ export default function NglDashboard() {
         const msgs = data.messages || [];
         setMessages(msgs);
         setError('');
+        setHasMore(!!data.hasMore);
         if (msgs.length > 0 && !confettiDone.current && prevMsgCountRef.current === 0) {
           confettiDone.current = true;
           if (containerRef.current) fireConfetti(containerRef.current);
@@ -288,7 +303,7 @@ export default function NglDashboard() {
         }
         prevMsgCountRef.current = msgs.length;
       } else if (res.status === 403) {
-        setError('Wrong key — try logging in again');
+        setError('ERR_WRONG_KEY');
         localStorage.removeItem('bong_ngl');
       }
     } catch {
@@ -296,11 +311,11 @@ export default function NglDashboard() {
       if (retry < 3) {
         const delay = Math.pow(2, retry + 1) * 1000;
         setLoading(false);
-        setError('Retrying...');
+        setError('ERR_RETRYING');
         setTimeout(() => { setError(''); setLoading(true); loadInbox(retry + 1); }, delay);
         return;
       } else {
-        if (navigator.onLine) setError('Connection error');
+        if (navigator.onLine) setError('ERR_CONNECTION');
       }
     }
     setLoading(false);
@@ -356,6 +371,84 @@ export default function NglDashboard() {
       });
       setMessages(prev => prev.filter(m => m.id !== id));
     } catch {}
+  };
+
+  // B3: Pin / unpin a message. Optimistic UI — reverts on server failure.
+  const handleTogglePin = async (id: string) => {
+    const current = messages.find(m => m.id === id);
+    if (!current) return;
+    const nextPinned = !(current.pinned && current.pinned > 0);
+
+    // Enforce max-3 client-side too (server also enforces)
+    if (nextPinned) {
+      const currentPinned = messages.filter(m => m.pinned && m.pinned > 0).length;
+      if (currentPinned >= 3) {
+        alert(t('dash.pinLimitReached'));
+        return;
+      }
+    }
+
+    // Optimistic update
+    setMessages(prev => prev.map(m => m.id === id ? { ...m, pinned: nextPinned ? Date.now() : 0 } : m));
+    try {
+      const res = await fetch(buildApiUrl(`/api/ngl/u/${encodeURIComponent(username)}/message/${id}/pin`), {
+        method: 'PUT',
+        headers: { 'X-NGL-Key': secretKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pinned: nextPinned }),
+      });
+      if (!res.ok) throw new Error('pin failed');
+      gEvent('ngl_pin_message', { state: nextPinned ? 'on' : 'off' });
+    } catch {
+      // Revert
+      setMessages(prev => prev.map(m => m.id === id ? { ...m, pinned: current.pinned || 0 } : m));
+    }
+  };
+
+  // B2: Block the sender of a specific message by fingerprint.
+  const handleBlockSender = async (id: string) => {
+    if (!confirm(t('dash.blockConfirm'))) return;
+    try {
+      const res = await fetch(buildApiUrl(`/api/ngl/u/${encodeURIComponent(username)}/message/${id}/block`), {
+        method: 'POST',
+        headers: { 'X-NGL-Key': secretKey, 'Content-Type': 'application/json' },
+      });
+      if (res.ok) {
+        gEvent('ngl_block_sender');
+        alert(t('dash.blocked'));
+        // Also remove the offending message from inbox
+        handleDelete(id);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(data?.message || t('dash.genericError'));
+      }
+    } catch {
+      alert(t('dash.networkError'));
+    }
+  };
+
+  // B4: Pagination handler (state declared earlier)
+  const handleLoadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const offset = messages.length;
+      const res = await fetch(
+        buildApiUrl(`/api/ngl/u/${encodeURIComponent(username)}/inbox?limit=20&offset=${offset}`),
+        { headers: { 'X-NGL-Key': secretKey } },
+      );
+      if (res.ok) {
+        const data = await res.json();
+        const more = (data.messages || []) as NglMessage[];
+        setMessages(prev => {
+          const seen = new Set(prev.map(m => m.id));
+          return [...prev, ...more.filter(m => !seen.has(m.id))];
+        });
+        setHasMore(!!data.hasMore);
+      }
+    } catch {
+      setError('ERR_NETWORK');
+    }
+    setLoadingMore(false);
   };
 
   const handleDice = async () => {
@@ -1310,9 +1403,16 @@ export default function NglDashboard() {
                 {(error || isOffline) && error !== '' && (
                   <div className="text-center mb-3 bg-red-500/10 rounded-2xl py-2.5 px-4 border border-red-500/10">
                     <p className="text-red-300 text-[11px] font-semibold">
-                      {isOffline ? '📡 ' + t('dash.offline') : error}
+                      {isOffline
+                        ? '📡 ' + t('dash.offline')
+                        : error === 'ERR_WRONG_KEY' ? t('dash.wrongKeyError')
+                        : error === 'ERR_RETRYING' ? t('dash.retrying') + '...'
+                        : error === 'ERR_CONNECTION' ? t('dash.connectionError')
+                        : error === 'ERR_NETWORK' ? t('dash.networkError')
+                        : error === 'ERR_SERVER' ? t('dash.serverError')
+                        : error}
                     </p>
-                    {!isOffline && error && error !== 'Wrong key — try logging in again' && (
+                    {!isOffline && error && error !== 'ERR_WRONG_KEY' && (
                       <button
                         onClick={() => { setError(''); setLoading(true); loadInbox(); }}
                         className="mt-1.5 bg-white/10 text-white text-[10px] font-bold px-3 py-1 rounded-full hover:bg-white/20 transition-colors"
@@ -1324,10 +1424,7 @@ export default function NglDashboard() {
                 )}
 
                 {loading ? (
-                  <div className="flex flex-col items-center justify-center py-16 gap-3">
-                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="w-7 h-7 border-2 border-white/15 border-t-white/60 rounded-full" />
-                    <p className="text-white/25 text-[11px] font-medium">Loading...</p>
-                  </div>
+                  <InboxShimmer />
                 ) : messages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-14 text-center">
                     <motion.div
@@ -1514,9 +1611,33 @@ export default function NglDashboard() {
                               {msg.reaction && (
                                 <motion.span key={msg.reaction} initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-xs">{msg.reaction}</motion.span>
                               )}
+                              {msg.pinned && msg.pinned > 0 && (
+                                <span className="inline-flex items-center gap-0.5 bg-amber-500/10 text-amber-300/80 text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-amber-400/15">
+                                  📌 {t('dash.pinned')}
+                                </span>
+                              )}
                               <div className="flex-1" />
+                              {/* B3: Pin toggle */}
+                              <button
+                                onClick={() => handleTogglePin(msg.id)}
+                                aria-label={msg.pinned && msg.pinned > 0 ? t('dash.unpin') : t('dash.pin')}
+                                title={msg.pinned && msg.pinned > 0 ? t('dash.unpin') : t('dash.pin')}
+                                className={`transition-all text-[11px] hover:scale-110 active:scale-90 opacity-0 group-hover:opacity-100 sm:opacity-60 sm:hover:opacity-100 ${msg.pinned && msg.pinned > 0 ? 'text-amber-400/80' : 'text-white/15 hover:text-amber-400/60'}`}
+                              >
+                                📌
+                              </button>
+                              {/* B2: Block sender */}
+                              <button
+                                onClick={() => handleBlockSender(msg.id)}
+                                aria-label={t('dash.block')}
+                                title={t('dash.block')}
+                                className="text-white/10 hover:text-orange-400/60 transition-all text-[10px] hover:scale-110 active:scale-90 opacity-0 group-hover:opacity-100 sm:opacity-100"
+                              >
+                                🚫
+                              </button>
                               <button
                                 onClick={() => handleDelete(msg.id)}
+                                aria-label={t('dash.deleteHint')}
                                 className="text-white/10 hover:text-red-400/50 transition-all text-[10px] hover:scale-110 active:scale-90 opacity-0 group-hover:opacity-100 sm:opacity-100"
                               >
                                 🗑️
@@ -1552,9 +1673,19 @@ export default function NglDashboard() {
                       </motion.div>
                     )})}
                     <div className="text-center pt-2 pb-4">
-                      <button onClick={handleCopy} className="text-white/20 text-[10px] font-semibold hover:text-white/40 transition-colors">
-                        {copied ? t('dash.copied') : t('dash.moreMsg')}
-                      </button>
+                      {hasMore ? (
+                        <button
+                          onClick={handleLoadMore}
+                          disabled={loadingMore}
+                          className="bg-white/[0.06] hover:bg-white/[0.1] text-white/60 text-[11px] font-semibold px-4 py-2 rounded-full border border-white/[0.06] transition-colors disabled:opacity-50"
+                        >
+                          {loadingMore ? t('dash.loadingMore') : `↓ ${t('dash.loadMore')}`}
+                        </button>
+                      ) : (
+                        <button onClick={handleCopy} className="text-white/20 text-[10px] font-semibold hover:text-white/40 transition-colors">
+                          {copied ? t('dash.copied') : t('dash.moreMsg')}
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}

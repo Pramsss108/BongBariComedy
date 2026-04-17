@@ -51,7 +51,11 @@
     "vm:start": "node scripts/oci-vm.mjs start",
     "vm:reboot": "node scripts/oci-vm.mjs reboot",
     "vm:ssh": "ssh -i C:\\Users\\guita\\.ssh\\oracle_bongbari2 opc@158.101.175.37",
-    "vm:setup-proxy": "ssh -i C:\\Users\\guita\\.ssh\\oracle_bongbari2 opc@158.101.175.37 < scripts/setup-proxy-engine.sh"
+    "vm:setup-proxy": "ssh -i C:\\Users\\guita\\.ssh\\oracle_bongbari2 opc@158.101.175.37 < scripts/setup-proxy-engine.sh",
+    "dns:list": "node scripts/cf-dns.cjs list",
+    "dns:update": "node scripts/cf-dns.cjs update",
+    "dns:delete": "node scripts/cf-dns.cjs delete",
+    "dns:fix-api": "node scripts/cf-dns.cjs update api 158.101.175.37"
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",

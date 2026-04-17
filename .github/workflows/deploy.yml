@@ -171,12 +171,7 @@ jobs:
         if: steps.decide.outputs.skip == 'false'
         run: |
           npm ci
-          npx esbuild server/index.ts \
-            --platform=node \
-            --packages=external \
-            --bundle \
-            --format=esm \
-            --outdir=dist
+          node build-server.mjs
           echo "✅ Server bundle built: $(wc -c < dist/index.js) bytes"
 
       - name: Deploy to Oracle Cloud VM (SCP + restart)
@@ -229,23 +224,26 @@ jobs:
             scp $SSH_OPTS server/proxy-engine/proxies.txt opc@"$ORACLE_HOST":~/bongbari/server/proxy-engine/proxies.txt
           fi
 
-          # Sync package files
-          scp $SSH_OPTS package.json package-lock.json opc@"$ORACLE_HOST":~/bongbari/
+          # Sync server-package.json as package.json (minimal 17 deps — safe for 503MB VM)
+          scp $SSH_OPTS server-package.json opc@"$ORACLE_HOST":~/bongbari/package.json
           echo "✅ All files uploaded"
           echo "::endgroup::"
 
-          # SSH in: npm ci + install runtime deps + restart PM2
+          # SSH in: safe npm install (server-package.json only) + restart PM2
           echo "::group::Install & restart"
           ssh $SSH_OPTS opc@"$ORACLE_HOST" '
             set -e
             export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+            export NODE_OPTIONS="--max-old-space-size=256"
             echo "=== BongBari Oracle Deploy ==="
             cd ~/bongbari
-            npm ci --omit=dev 2>&1 | tail -5
-            npm install --no-save drizzle-orm xml2js @upstash/redis 2>&1 | tail -3
+
+            # Safe install with minimal server deps only (server-package.json)
+            npm install --no-package-lock --omit=dev 2>&1 | tail -5
 
             # Main Express server
-            pm2 restart bongbari || pm2 start dist/index.js --name bongbari
+            pm2 delete bongbari 2>/dev/null || true
+            pm2 start dist/index.js --name bongbari --node-args="--max-old-space-size=256"
 
             # CORS Proxy Engine (port 8080)
             pm2 restart bongbari-proxy || pm2 start server/proxy-engine/server.mjs --name bongbari-proxy

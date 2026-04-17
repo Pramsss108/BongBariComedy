@@ -1150,7 +1150,7 @@ export default function NglDashboard() {
         <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
 
         {/* ── Top bar ── glass minimal with gradient underline */}
-        <div className="w-full flex items-center justify-between px-4 sm:px-6 pt-3 pb-2 flex-shrink-0 max-w-2xl relative">
+        <div className="w-full flex items-center justify-between px-4 sm:px-6 pt-2 pb-1.5 flex-shrink-0 max-w-2xl relative">
           <Link href="/tools" className="text-white/40 text-[11px] font-bold hover:text-white transition-colors flex items-center gap-1">
             <span className="text-[13px]">←</span> Back
           </Link>
@@ -1173,7 +1173,7 @@ export default function NglDashboard() {
         {/* Stats integrated into profile card — no separate strip */}
 
         {/* ── Tab bar ── compact pill style */}
-        <div className="flex w-full max-w-2xl px-4 sm:px-6 mb-1.5 flex-shrink-0">
+        <div className="flex w-full max-w-2xl px-4 sm:px-6 mb-1 flex-shrink-0">
           <div className="flex w-full bg-white/[0.04] rounded-xl p-0.5 border border-white/[0.06]">
             <button
               onClick={() => { gEvent('ngl_tab_switch', { tab: 'play' }); setTab('play'); }}
@@ -1211,7 +1211,7 @@ export default function NglDashboard() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
-                className="flex flex-col gap-4"
+                className="flex flex-col gap-3 pt-1"
               >
                 {/* ═══ HERO: Compact identity ═══ */}
                 <motion.div
@@ -1359,30 +1359,34 @@ export default function NglDashboard() {
                   </div>
                 </motion.div>
 
-                {/* ═══ PHONE VERIFY: Prominent row ═══ */}
+                {/* ═══ PHONE VERIFY: Slim premium pill ═══ */}
                 {phoneStatus !== 'loading' && phoneStatus !== 'verified' && (phoneStatus === 'unverified' || phoneStatus === 'none') && (
                   <motion.button
-                    initial={{ opacity: 0, y: 8 }}
+                    initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.35, delay: 0.1 }}
-                    whileTap={{ scale: 0.97 }}
+                    transition={{ duration: 0.3, delay: 0.08 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => { localStorage.setItem('ngl_otp_seen', '1'); setPhoneShowForm(true); setPhoneOtpStatus('idle'); setPhoneOtpDigits(['', '', '', '', '', '']); setPhoneOtpError(''); setPhoneInputError(''); setPhoneInput(''); }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-red-500/[0.08] border border-red-500/[0.15] hover:bg-red-500/[0.12] transition-all group"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-gradient-to-r from-amber-500/[0.08] to-rose-500/[0.08] border border-amber-500/[0.18] hover:from-amber-500/[0.12] hover:to-rose-500/[0.12] transition-all group"
                   >
                     <motion.div
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ duration: 1, repeat: Infinity, repeatDelay: 3 }}
-                      className="w-8 h-8 rounded-xl bg-red-500/20 flex items-center justify-center flex-shrink-0"
+                      animate={{ scale: [1, 1.15, 1] }}
+                      transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 4 }}
+                      className="w-[22px] h-[22px] rounded-lg bg-amber-400/15 flex items-center justify-center flex-shrink-0"
                     >
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-red-400">
-                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 text-amber-300">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3M8 22h8"/>
                       </svg>
                     </motion.div>
-                    <div className="flex-1 text-left">
-                      <p className="text-[12px] font-bold text-red-300">{lang === 'bn' ? 'ফোন ভেরিফাই করো' : 'Verify your phone'}</p>
-                      <p className="text-[10px] text-red-400/50">{lang === 'bn' ? 'বেনামী বার্তা পেতে' : 'Required for anonymous messages'}</p>
+                    <div className="flex-1 text-left min-w-0">
+                      <p className="text-[11.5px] font-bold text-amber-100 leading-tight">{lang === 'bn' ? 'WhatsApp verify করো' : 'Verify WhatsApp'}</p>
+                      <p className="text-[9.5px] text-amber-200/50 leading-tight mt-[1px]">{lang === 'bn' ? 'একবার মাত্র — ১ মিনিটের কাজ' : 'One-time • takes 1 minute'}</p>
                     </div>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-red-400/40 group-hover:text-red-400/60 transition-colors flex-shrink-0">
+                    <span className="text-[9px] font-extrabold text-amber-200/80 bg-amber-400/10 px-1.5 py-[2px] rounded-md border border-amber-400/20 flex-shrink-0">
+                      {lang === 'bn' ? 'শুরু' : 'START'}
+                    </span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 text-amber-300/50 group-hover:text-amber-300 group-hover:translate-x-0.5 transition-all flex-shrink-0">
                       <polyline points="9 18 15 12 9 6"/>
                     </svg>
                   </motion.button>

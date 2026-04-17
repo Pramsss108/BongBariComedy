@@ -391,7 +391,7 @@ function IgTutorial({ step, shareLink, lang, username, storyPreviewUrl, expanded
               animate={{ opacity: [0.8, 1, 0.8] }}
               transition={{ duration: 2, repeat: Infinity }}
             >
-              {bn ? '👇 "Your Stories" ট্যাপ করো' : '👇 Tap "Your stories" to post!'}
+              {bn ? '“Your Stories” ট্যাপ করো' : 'Tap “Your stories” to post'}
             </motion.span>
           </div>
           <div className="flex items-center gap-1">
@@ -494,18 +494,18 @@ function IgTutorial({ step, shareLink, lang, username, storyPreviewUrl, expanded
 
 const IG_STEPS = {
   bn: [
-    { title: 'Story camera খোলো', desc: 'Instagram → তোর profile pic ট্যাপ করো, অথবা + → Story' },
-    { title: 'Sticker icon ট্যাপ করো', desc: 'উপরে toolbar-এ □😊 square sticker icon' },
-    { title: '🔗 LINK ট্যাপ করো', desc: 'Sticker tray-তে "Link" বাছো' },
-    { title: 'URL paste করো → Done', desc: 'তোর link আগেই copy আছে 📋 — paste করে Done চাপো' },
-    { title: '🎯 Link pill রাখো & পোস্ট!', desc: '☝️ Link pill টা টেনে story photo-র উপর রাখো — এটাই তোর clickable link! তারপর "Your stories" ট্যাপ করো' },
+    { title: 'Story camera খোলো', desc: 'Instagram → প্রোফাইল pic-এ ট্যাপ, বা + → Story' },
+    { title: 'Sticker icon-এ ট্যাপ করো', desc: 'Top toolbar-এ স্ক্বেয়ার sticker icon' },
+    { title: 'Link sticker বাছো', desc: 'Tray-তে “Link” খুঁজে ট্যাপ করো' },
+    { title: 'Link paste করে Done', desc: 'Link আগেই copy আছে — শুধু paste করে Done' },
+    { title: 'Story-তে পোস্ট করো', desc: 'Link pill photo-র উপর রাখো → “Your stories” ট্যাপ' },
   ],
   en: [
     { title: 'Open Story camera', desc: 'Tap your profile pic at top-left, or + → Story' },
-    { title: 'Tap the sticker icon', desc: 'Square sticker icon □😊 in top toolbar' },
-    { title: 'Tap "Link"', desc: 'Find the Link sticker in the tray' },
-    { title: 'Paste URL → tap Done', desc: 'Your link is already copied 📋 — paste and tap Done' },
-    { title: '🎯 Place your clickable link!', desc: '☝️ Drag the link pill onto your story — this becomes your clickable link! Then tap "Your stories"' },
+    { title: 'Tap the sticker icon', desc: 'Square sticker icon in the top toolbar' },
+    { title: 'Pick the Link sticker', desc: 'Find “Link” in the tray and tap it' },
+    { title: 'Paste link, tap Done', desc: 'Your link is already copied — paste and hit Done' },
+    { title: 'Post to your story', desc: 'Drop the link pill on your photo → tap “Your stories”' },
   ],
 };
 
@@ -1717,27 +1717,27 @@ function FbTutorial({ step, shareLink, lang, username, storyPreviewUrl }: { step
   );
 }
 
-// ── Phase 16: Rewritten FB_STEPS — emoji + action verbs + noob-friendly paths ──
+// ── Phase 16: Cleaner FB_STEPS — no emoji noise, tight copy ──
 const FB_STEPS = {
   bn: [
-    { title: '☰ IG ↔ FB সংযুক্ত করো', desc: '☰ Menu → ⚙️ Settings → 🔗 Account Center → "Facebook" ট্যাপ করে অ্যাকাউন্ট link করো' },
-    { title: '📸 Story শুরু করো', desc: 'Instagram খোলো → তোর প্রোফাইল pic-এ (+) ট্যাপ করো → নতুন Story শুরু হবে' },
-    { title: '😊 Sticker বাটন চাপো', desc: 'উপরের toolbar-এ □😊 (চারকোনা smiley) sticker icon-এ ট্যাপ করো' },
-    { title: '🔗 LINK স্টিকার বেছে নাও', desc: 'Sticker tray-তে 🔗 LINK খুঁজে বের করো → ট্যাপ করো' },
-    { title: '📋 Link পেস্ট করো → Done', desc: 'তোর NGL link auto-copy আছে — URL বক্সে paste করো → ✅ Done চাপো' },
-    { title: '👆 "Your Stories" ধরে রাখো', desc: '"Your Stories" বাটনে 2 সেকেন্ড আঙুল ধরে রাখো — share menu ভেসে আসবে!' },
-    { title: '✅ Facebook Story টিক দাও', desc: '"Facebook Story" row-তে ✅ চেকমার্ক দাও → নীল Share বাটনে ট্যাপ করো' },
-    { title: '🎉 দুই জায়গায় লাইভ!', desc: '🥳 তোর NGL story এখন Instagram + Facebook দুটোতেই live! বন্ধুরা দুই দিক থেকে দেখবে' },
+    { title: 'IG ↔ FB সংযুক্ত করো', desc: 'Menu → Settings → Account Center → "Facebook" — অ্যাকাউন্ট link করো' },
+    { title: 'Story শুরু করো', desc: 'Instagram খোলো → প্রোফাইল pic-এ (+) → Story camera' },
+    { title: 'Sticker বাটন', desc: 'Top toolbar-এ sticker icon ট্যাপ করো' },
+    { title: 'Link sticker বাছো', desc: 'Tray-তে "Link" খুঁজে ট্যাপ করো' },
+    { title: 'Paste → Done', desc: 'Link auto-copy আছে — paste করে Done' },
+    { title: '"Your Stories" ধরে রাখো', desc: '২ সেকেন্ড press & hold — share menu আসবে' },
+    { title: 'Facebook Story টিক দাও', desc: 'চেকমার্ক → Share বাটন' },
+    { title: 'দুই জায়গায় লাইভ', desc: 'Instagram + Facebook — দুটোতেই visible' },
   ],
   en: [
-    { title: '☰ Link IG ↔ Facebook', desc: '☰ Menu → ⚙️ Settings → 🔗 Account Center → Tap "Facebook" to connect your accounts' },
-    { title: '📸 Start a Story', desc: 'Open Instagram → Tap your profile pic (+) at top-left → A new Story camera opens' },
-    { title: '😊 Tap Sticker Button', desc: 'Top toolbar → Tap the □😊 sticker icon (square smiley face)' },
-    { title: '🔗 Pick the LINK Sticker', desc: 'In the sticker tray, find 🔗 LINK → Tap it' },
-    { title: '📋 Paste Your Link → Done', desc: 'Your NGL link is auto-copied — paste into the URL box → Tap ✅ Done' },
-    { title: '👆 Hold "Your Stories"', desc: 'Press & hold "Your Stories" button for 2 sec — a share menu pops up!' },
-    { title: '✅ Check Facebook Story', desc: 'Tick ✅ the "Facebook Story" row → Tap the blue Share button' },
-    { title: '🎉 Live on Both!', desc: '🥳 Your NGL story is now live on Instagram AND Facebook! Friends see it from both' },
+    { title: 'Link IG ↔ Facebook', desc: 'Menu → Settings → Account Center → Tap "Facebook"' },
+    { title: 'Start a Story', desc: 'Open Instagram → Tap your profile pic (+) at top-left' },
+    { title: 'Tap sticker button', desc: 'Square sticker icon in the top toolbar' },
+    { title: 'Pick the Link sticker', desc: 'Find "Link" in the tray and tap it' },
+    { title: 'Paste link, tap Done', desc: 'Your link is already copied — paste and confirm' },
+    { title: 'Hold "Your Stories"', desc: 'Press & hold for 2 seconds to open the share menu' },
+    { title: 'Check Facebook Story', desc: 'Tick the row, then tap Share' },
+    { title: 'Live on both', desc: 'Your story is now on Instagram and Facebook' },
   ],
 };
 // ══════════════════════════════════════════════

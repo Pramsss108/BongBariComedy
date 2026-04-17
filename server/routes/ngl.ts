@@ -108,29 +108,29 @@ function computeSenderFingerprint(ip: string, ua: string): string {
 }
 
 const PROMPTS_BN = [
-  'আমার সম্পর্কে anonymous কিছু বলো 👀',
-  'তোর crush কে? বলে ফেল, জানা যাবে না 🤫',
-  'আমাকে একটা খিস্তি দে 🔥',
+  'আমার সম্পর্কে anonymous কিছু বলো',
+  'তোর crush কে? বলে ফেল, জানা যাবে না',
+  'আমার সম্পর্কে honest opinion দে',
   'আমার সাথে তোর সবচেয়ে মজার memory কি?',
-  'secretly তুই আমাকে কেমন ভাবিস? 🤔',
-  'আমাকে 1-10 এ rate কর, honest হ 🫣',
-  'তোর ফোনে আমার নাম কি দিয়ে save করা? 📱',
-  'আমার সবচেয়ে annoying habit কোনটা? 😂',
-  'তুই কি কখনো আমাকে নিয়ে gossip করেছিস? 🫢',
-  'আমাকে 3 শব্দে describe কর 💀',
+  'secretly তুই আমাকে কেমন ভাবিস?',
+  'আমাকে 1-10 এ rate কর, honest হ',
+  'তোর ফোনে আমার নাম কি দিয়ে save করা?',
+  'আমার সবচেয়ে annoying habit কোনটা?',
+  'তুই কি কখনো আমাকে নিয়ে gossip করেছিস?',
+  'আমাকে 3 শব্দে describe কর',
 ];
 
 const PROMPTS_EN = [
-  'send me anonymous messages! 💌',
-  'say your mind without getting caught 🤫',
-  '3 words — describe me 💀',
-  'tell me a secret 🔥',
-  'be honest, what do you think about me? 👀',
+  'send me an anonymous message',
+  'say what you really think — stay hidden',
+  'three words — describe me',
+  'tell me a secret',
+  'be honest, what do you think of me?',
   'one thing you always wanted to tell me',
-  'rate me 1-10, be honest 🫣',
-  'what\'s your first impression of me? 🤔',
-  'what\'s the nicest thing about me?',
-  'if you could change one thing about me, what would it be? 😂',
+  'rate me 1-10, no filter',
+  "what's your first impression of me?",
+  "what's the nicest thing about me?",
+  'if you could change one thing about me, what would it be?',
 ];
 
 const MSG_EMOJIS = ['💌', '🔥', '👀', '💀', '😂', '🤫', '💣', '🎭', '👻', '🐍', '💩', '❤️', '🤔', '😈', '🍿'];
@@ -1143,11 +1143,11 @@ export function registerNglRoutes(app: any) {
     if (groqKey) {
       try {
         const sysPrompt = lang === 'en'
-          ? 'You generate ONE short creative anonymous message prompt in English for an NGL-style app. Casual Gen-Z vibe. Max 15 words. Return ONLY the prompt text, nothing else. No quotes around it.'
-          : 'You generate ONE short creative anonymous message prompt for a Bengali NGL-style app. Mix Bengali and English casually like Gen-Z. Max 15 words. Return ONLY the prompt text, nothing else. No quotes around it.';
+          ? 'You generate ONE short creative anonymous message prompt in English for an NGL-style app. Casual Gen-Z vibe. Max 15 words. Return ONLY the prompt text, nothing else. No quotes around it. NO emojis at all — premium text only.'
+          : 'You generate ONE short creative anonymous message prompt for a Bengali NGL-style app. Mix Bengali and English casually like Gen-Z. Max 15 words. Return ONLY the prompt text, nothing else. No quotes around it. NO emojis at all — premium text only.';
         const userPrompt = lang === 'en'
-          ? 'Give me a fresh unique anonymous question prompt in English. Examples: "be honest, rate me 1-10 🫣", "what\'s your first impression of me? 🤔", "3 words — describe me 💀", "tell me something you\'ve never told me", "one word to describe me? 🔥"'
-          : 'Give me a fresh unique anonymous question prompt. Examples: "তোর crush কে? বলে ফেল 🤫", "be honest, rate me 1-10", "আমার সম্পর্কে একটা lie বলো 👀", "secretly তুই আমাকে কেমন ভাবিস?", "one word to describe me? 🔥"';
+          ? 'Give me a fresh unique anonymous question prompt in English, no emojis. Examples: "be honest, rate me 1-10", "what is your first impression of me?", "three words — describe me", "tell me something you have never told me", "one word to describe me?"'
+          : 'Give me a fresh unique anonymous question prompt, no emojis. Examples: "তোর crush কে? বলে ফেল", "be honest, rate me 1-10", "আমার সম্পর্কে একটা lie বলো", "secretly তুই আমাকে কেমন ভাবিস?", "one word to describe me?"';
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 6000);
         const aiRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {

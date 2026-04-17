@@ -42,11 +42,13 @@ export default function NglUpgradeModal({ open, onClose, username, secretKey, on
   const [plan, setPlan] = useState<Plan>('yearly');
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [errKind, setErrKind] = useState<'error' | 'info'>('error');
 
   if (!open) return null;
 
   const handleUpgrade = async () => {
     setErr(null);
+    setErrKind('error');
     setLoading(true);
     try {
       // 1. Ensure Razorpay checkout loaded
@@ -66,7 +68,8 @@ export default function NglUpgradeModal({ open, onClose, username, secretKey, on
       if (!orderRes.ok) {
         const body = await orderRes.json().catch(() => ({}));
         if (body?.code === 'PAYMENT_DISABLED') {
-          setErr(lang === 'bn' ? 'পেমেন্ট শীঘ্রই চালু হবে।' : 'Payment coming soon.');
+          setErrKind('info');
+          setErr(lang === 'bn' ? 'পেমেন্ট শীঘ্রই চালু হবে — একডিনের মধ্যেই।' : 'Payment goes live in a day — hang tight.');
         } else {
           setErr(body?.message || (lang === 'bn' ? 'অর্ডার তৈরি হয়নি।' : 'Order creation failed.'));
         }
@@ -200,9 +203,9 @@ export default function NglUpgradeModal({ open, onClose, username, secretKey, on
             </button>
           </div>
 
-          {/* Error */}
+          {/* Inline status — info (coming soon) or error */}
           {err && (
-            <div className="mb-3 bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2 text-red-300 text-[12px] font-semibold">
+            <div className={`mb-3 rounded-xl px-3 py-2 text-[12px] font-semibold ${errKind === 'info' ? 'bg-white/[0.04] border border-white/10 text-white/60' : 'bg-red-500/10 border border-red-500/30 text-red-300'}`}>
               {err}
             </div>
           )}

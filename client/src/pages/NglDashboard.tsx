@@ -8,6 +8,9 @@ import ShareModal from '@/components/ShareModal';
 import QRCode from 'qrcode';
 import { sfxNewMessage, sfxDicePop, sfxTap, getNglMuted, setNglMuted } from '@/lib/nglSfx';
 import NglUpgradeModal from '@/components/NglUpgradeModal';
+import { NglWelcomeTour } from '@/components/NglWelcomeTour';
+import { haptic } from '@/lib/useHaptic';
+import { PullToRefresh } from '@/components/PullToRefresh';
 
 interface NglMessage {
   id: string;
@@ -50,28 +53,28 @@ const NGL_THEMES: Record<string, { bg: string; accent: string; label: string; em
   midnight: { bg: 'linear-gradient(135deg, #000000 0%, #1e1b4b 50%, #000000 100%)', accent: 'from-slate-700 via-indigo-900 to-black', label: 'Midnight', emoji: '🌑', pro: true },
 };
 
-// ── 20 Bilingual Prompt Phrases (Bengali + English) ──
+// ── 20 Bilingual Prompt Phrases — premium copy, no emojis ──
 const PROMPT_POOL: { bn: string; en: string }[] = [
-  { bn: 'আমার সম্পর্কে anonymous কিছু বলো 👀', en: 'send me anonymous messages! 👀' },
-  { bn: 'আমাকে ৩ শব্দে বর্ণনা করো ✨', en: 'describe me in 3 words ✨' },
-  { bn: 'আমার সম্পর্কে তোর honest opinion কি? 🤔', en: "what's your honest opinion about me? 🤔" },
-  { bn: 'আমার সাথে তোর সবচেয়ে ভালো memory কি? 💭', en: 'what is your best memory with me? 💭' },
-  { bn: 'আমাকে প্রথম দেখেই কি মনে হয়েছিল? 👋', en: 'what did you think when you first met me? 👋' },
-  { bn: 'তুই কখনো আমার কাছে কি লুকিয়ে রেখেছিস? 🤫', en: 'are you hiding something from me? 🤫' },
-  { bn: 'আমাকে একটা dare দে! 🔥', en: 'give me a dare! 🔥' },
-  { bn: 'আমার সবচেয়ে annoying habit কি? 😅', en: 'what is my most annoying habit? 😅' },
-  { bn: 'তুই আমার জায়গায় থাকলে কি করতিস? 🤷', en: 'what would you do if you were me? 🤷' },
-  { bn: 'আমাকে নিয়ে একটা confession করো 💬', en: 'confess something about me 💬' },
-  { bn: 'তুই কি আমাকে trust করিস? 🔒', en: 'do you trust me? 🔒' },
-  { bn: 'Never have I ever... আমাকে catch করো 🙈', en: 'never have I ever... catch me 🙈' },
-  { bn: 'আমার life-এ কি change করা উচিত? 💡', en: 'what should I change in my life? 💡' },
-  { bn: 'তোর মনে আমার বিশেষ জায়গা আছে? 💜', en: 'do I have a special place in your heart? 💜' },
-  { bn: 'আমার best quality কি? আর worst? ⚖️', en: 'what is my best and worst quality? ⚖️' },
-  { bn: 'তুই আমাকে কোন গান দিয়ে describe করবি? 🎵', en: 'describe me with a song 🎵' },
-  { bn: 'আমার জীবনে তুই কেন important? 🌟', en: 'why are you important in my life? 🌟' },
-  { bn: 'rate me 1-10 honestly — কোনো ভান নয়! 📊', en: 'rate me 1-10 honestly — no cap! 📊' },
-  { bn: 'আমাকে একটা কথা বলো যেটা তুই কখনো বলিসনি 🗝️', en: 'tell me something you never told me 🗝️' },
-  { bn: 'যদি আমি কাল disappear হয়ে যাই — কি করবি? 😢', en: 'if I disappear tomorrow — what would you do? 😢' },
+  { bn: 'আমার সম্পর্কে anonymous কিছু বলো', en: 'send me an anonymous message' },
+  { bn: 'আমাকে তিন শব্দে বর্ণনা করো', en: 'describe me in three words' },
+  { bn: 'আমার সম্পর্কে তোর honest opinion কি?', en: "what's your honest opinion of me?" },
+  { bn: 'আমার সাথে তোর সবচেয়ে ভালো memory কি?', en: 'what is your favourite memory with me?' },
+  { bn: 'আমাকে প্রথম দেখে কি মনে হয়েছিল?', en: 'what did you think when you first met me?' },
+  { bn: 'তুই কখনো আমার কাছে কিছু লুকিয়েছিস?', en: 'are you hiding something from me?' },
+  { bn: 'আমাকে একটা dare দে', en: 'give me a dare' },
+  { bn: 'আমার সবচেয়ে annoying habit কোনটা?', en: 'what is my most annoying habit?' },
+  { bn: 'তুই আমার জায়গায় থাকলে কি করতিস?', en: 'what would you do if you were me?' },
+  { bn: 'আমাকে নিয়ে একটা confession কর', en: 'confess something about me' },
+  { bn: 'তুই কি আমাকে trust করিস?', en: 'do you really trust me?' },
+  { bn: 'Never have I ever — আমাকে catch কর', en: 'never have I ever — catch me' },
+  { bn: 'আমার life-এ কি change করা উচিত?', en: 'what should I change in my life?' },
+  { bn: 'তোর মনে আমার বিশেষ জায়গা আছে?', en: 'do I hold a special place in your life?' },
+  { bn: 'আমার best quality আর worst — দুটোই বল', en: 'my best and worst quality — tell both' },
+  { bn: 'তুই আমাকে কোন গান দিয়ে describe করবি?', en: 'describe me with a song' },
+  { bn: 'আমার জীবনে তুই কেন important?', en: 'why do I matter in your life?' },
+  { bn: 'rate me 1-10 honestly — কোনো ভান নয়', en: 'rate me 1-10 honestly — no filter' },
+  { bn: 'আমাকে একটা কথা বল যেটা কখনো বলিসনি', en: 'tell me something you never told me' },
+  { bn: 'যদি আমি কাল disappear হয়ে যাই — কি করবি?', en: 'if I disappear tomorrow, what would you do?' },
 ];
 
 const REACTION_EMOJIS = ['❤️', '😂', '🔥', '💀', '🫣'];
@@ -142,6 +145,19 @@ export default function NglDashboard() {
   const [streakDays, setStreakDays] = useState(0);
   const [reactingId, setReactingId] = useState<string | null>(null);
   const [hintRevealId, setHintRevealId] = useState<string | null>(null);
+  // Reveal-to-read: messages start blurred; tap to reveal (persists across reloads).
+  const [revealedIds, setRevealedIds] = useState<Set<string>>(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('bng_ngl_revealed_v1') || '[]')); } catch { return new Set(); }
+  });
+  const revealMessage = (id: string) => {
+    setRevealedIds(prev => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev); next.add(id);
+      try { localStorage.setItem('bng_ngl_revealed_v1', JSON.stringify(Array.from(next).slice(-500))); } catch {}
+      haptic('tap');
+      return next;
+    });
+  };
   const [storyPreview, setStoryPreview] = useState<string | null>(null);
   const [showStoryCardModal, setShowStoryCardModal] = useState(false);
   const [storyColorIdx, setStoryColorIdx] = useState(0);
@@ -355,6 +371,7 @@ export default function NglDashboard() {
 
   const handleCopy = async () => {
     gEvent('ngl_copy_link');
+    haptic('tap');
     let ok = false;
     try { await navigator.clipboard.writeText(shareLink); ok = true; } catch {
       try {
@@ -364,10 +381,11 @@ export default function NglDashboard() {
         document.body.removeChild(el);
       } catch {}
     }
-    if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000); }
+    if (ok) { haptic('success'); setCopied(true); setTimeout(() => setCopied(false), 2000); }
   };
 
   const handleShare = async () => {
+    haptic('tap');
     const text = SHARE_TEMPLATES[Math.floor(Math.random() * SHARE_TEMPLATES.length)];
     if (navigator.share) {
       try { await navigator.share({ title: 'Bong NGL', text, url: shareLink }); } catch {}
@@ -390,6 +408,7 @@ export default function NglDashboard() {
   };
 
   const handleDelete = async (id: string) => {
+    haptic('warn');
     try {
       await fetch(buildApiUrl(`/api/ngl/u/${encodeURIComponent(username)}/message/${id}`), {
         method: 'DELETE',
@@ -526,30 +545,29 @@ export default function NglDashboard() {
 
   const handleDice = async () => {
     gEvent('ngl_prompt_shuffle');
+    haptic('tap');
     setDiceLoading(true);
     sfxDicePop();
-    // Pick a random prompt from local pool (instant) — avoid repeating current
     const pool = PROMPT_POOL.filter(p => p[lang as 'bn' | 'en'] !== prompt);
     const pick = pool[Math.floor(Math.random() * pool.length)][lang as 'bn' | 'en'];
+    let nextPrompt = pick;
     try {
-      // Try AI endpoint first
       const res = await fetch(buildApiUrl(`/api/ngl/prompts/random?lang=${lang}`));
-      const data = await res.json();
-      if (data.prompt) {
-        await savePrompt(data.prompt);
-      } else {
-        // Fallback to local pool
-        await savePrompt(pick);
+      if (res.ok) {
+        const data = await res.json().catch(() => ({} as any));
+        if (data?.prompt && typeof data.prompt === 'string') nextPrompt = data.prompt;
       }
     } catch {
-      // Offline fallback — use local pool instantly
-      await savePrompt(pick);
+      // offline — keep local pick
     }
-    // Visual feedback
+    // Optimistic UI update so the button always feels alive, even if PUT fails.
+    setPrompt(nextPrompt);
     setDiceFlash(true);
     setDiceToast(true);
     setTimeout(() => setDiceFlash(false), 1200);
     setTimeout(() => setDiceToast(false), 2500);
+    // Persist in background (non-blocking); ignore failure.
+    savePrompt(nextPrompt).catch(() => {});
     setDiceLoading(false);
   };
 
@@ -1176,14 +1194,15 @@ export default function NglDashboard() {
         <div className="flex w-full max-w-2xl px-4 sm:px-6 mb-1 flex-shrink-0">
           <div className="flex w-full bg-white/[0.04] rounded-xl p-0.5 border border-white/[0.06]">
             <button
-              onClick={() => { gEvent('ngl_tab_switch', { tab: 'play' }); setTab('play'); }}
+              onClick={() => { gEvent('ngl_tab_switch', { tab: 'play' }); haptic('tap'); setTab('play'); }}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[12px] font-extrabold rounded-lg transition-all duration-300 ${tab === 'play' ? `bg-gradient-to-r ${NGL_THEMES[theme]?.accent || NGL_THEMES.default.accent} text-white shadow-lg` : 'text-white/30 hover:text-white/50'}`}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
               {lang === 'bn' ? 'হোম' : 'Home'}
             </button>
             <button
-              onClick={() => { gEvent('ngl_tab_switch', { tab: 'inbox' }); setTab('inbox'); setNewMsgCount(0); }}
+              onClick={() => { gEvent('ngl_tab_switch', { tab: 'inbox' }); haptic('tap'); setTab('inbox'); setNewMsgCount(0); }}
+              data-tour="inbox-tab"
               className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[12px] font-extrabold rounded-lg transition-all duration-300 relative ${tab === 'inbox' ? `bg-gradient-to-r ${NGL_THEMES[theme]?.accent || NGL_THEMES.default.accent} text-white shadow-lg` : 'text-white/30 hover:text-white/50'}`}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
@@ -1211,7 +1230,7 @@ export default function NglDashboard() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
-                className="flex flex-col gap-3 pt-1"
+                className="flex flex-col gap-2.5 pt-1"
               >
                 {/* ═══ HERO: Compact identity ═══ */}
                 <motion.div
@@ -1254,10 +1273,10 @@ export default function NglDashboard() {
                           onClick={() => { gEvent('ngl_pro_cta_click', { source: 'header' }); setShowUpgrade(true); }}
                           className="group relative overflow-hidden text-[9px] font-extrabold text-fuchsia-100 bg-gradient-to-r from-fuchsia-500/15 to-violet-500/15 hover:from-fuchsia-500/25 hover:to-violet-500/25 border border-fuchsia-400/25 px-2 py-[3px] rounded-full tracking-[0.04em] transition-all"
                         >
-                          <span className="relative z-10">💎 {lang === 'bn' ? 'PRO ₹98/মাস' : 'PRO ₹98/mo'}</span>
+                          <span className="relative z-10">{lang === 'bn' ? 'PRO ₹98/মাস' : 'PRO ₹98/mo'}</span>
                         </button>
                       )}
-                      {streakDays > 0 && <span className="text-[9px] font-extrabold text-amber-300 bg-amber-500/15 px-2 py-[3px] rounded-full">🔥 {streakDays}d</span>}
+                      {streakDays > 0 && <span className="text-[9px] font-extrabold text-amber-300 bg-amber-500/15 px-2 py-[3px] rounded-full">{streakDays}d streak</span>}
                       {messages.length > 0 && <span className="text-[9px] font-extrabold text-white/40 bg-white/[0.05] px-2 py-[3px] rounded-full">{messages.length} {lang === 'bn' ? 'বার্তা' : 'msgs'}</span>}
                     </div>
                   </div>
@@ -1281,13 +1300,14 @@ export default function NglDashboard() {
                   initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.45, delay: 0.06, ease: [0.16, 1, 0.3, 1] }}
+                  data-tour="prompt"
                   className={`relative rounded-3xl overflow-hidden transition-all duration-500 ${diceFlash ? 'ring-1 ring-emerald-400/20' : ''}`}
                   style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.035) 0%, rgba(0,0,0,0.12) 100%)', boxShadow: '0 2px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)' }}
                 >
                   {/* Accent bar — left edge */}
                   <div className={`absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b ${NGL_THEMES[theme]?.accent || NGL_THEMES.default.accent} opacity-60`} />
 
-                  <div className="p-5 pl-6 sm:p-6 sm:pl-7">
+                  <div className="p-4 pl-5 sm:p-5 sm:pl-6">
                     <AnimatePresence mode="wait">
                       {editingPrompt ? (
                         <motion.div key="edit" initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
@@ -1313,7 +1333,7 @@ export default function NglDashboard() {
                             {lang === 'bn' ? 'মানুষ যা দেখবে' : 'What people see'}
                           </p>
                           <p
-                            className="font-semibold text-white/90 text-[18px] sm:text-[22px] leading-snug cursor-pointer select-none hover:text-white transition-colors focus-visible:outline-2 focus-visible:outline-white/20 focus-visible:outline-offset-2 rounded-lg"
+                            className="font-semibold text-white/90 text-[17px] sm:text-[19px] leading-snug cursor-pointer select-none hover:text-white transition-colors focus-visible:outline-2 focus-visible:outline-white/20 focus-visible:outline-offset-2 rounded-lg"
                             role="button"
                             tabIndex={0}
                             onKeyDown={(e) => { if (e.key === 'Enter') { setEditingPrompt(true); setPromptDraft(decodeEntities(prompt)); } }}
@@ -1414,6 +1434,7 @@ export default function NglDashboard() {
                   transition={{ duration: 0.3, delay: 0.14 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleCopy}
+                  data-tour="share-link"
                   className={`w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl border transition-all duration-300 ${copied ? 'bg-emerald-500/10 border-emerald-400/30' : 'bg-white/[0.03] border-white/[0.06] hover:bg-white/[0.06] hover:border-white/[0.12]'}`}
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`w-3.5 h-3.5 flex-shrink-0 transition-colors ${copied ? 'text-emerald-400' : 'text-white/30'}`}>
@@ -1456,7 +1477,7 @@ export default function NglDashboard() {
                       whileTap={{ scale: 0.88 }}
                       whileHover={{ scale: 1.04 }}
                       onClick={item.action}
-                      className={`flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-gradient-to-b ${item.color} border hover:brightness-125 active:brightness-150 transition-all focus-visible:outline-2 focus-visible:outline-white/20 focus-visible:outline-offset-2`}
+                      className={`flex flex-col items-center gap-1.5 py-2.5 rounded-2xl bg-gradient-to-b ${item.color} border hover:brightness-125 active:brightness-150 transition-all focus-visible:outline-2 focus-visible:outline-white/20 focus-visible:outline-offset-2`}
                     >
                       <span className="w-6 h-6 flex items-center justify-center">{item.renderIcon()}</span>
                       <span className="text-[10px] sm:text-[9px] font-bold text-white/50 leading-none">{item.label}</span>
@@ -1495,7 +1516,7 @@ export default function NglDashboard() {
                       exit={{ opacity: 0, y: -8, scale: 0.9 }}
                       className="bg-emerald-500/15 text-emerald-300 text-[11px] font-bold px-4 py-1.5 rounded-full border border-emerald-400/15 text-center"
                     >
-                      ✨ {t('dash.newPrompt')}
+                      {t('dash.newPrompt')}
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -1509,6 +1530,7 @@ export default function NglDashboard() {
                 exit={{ opacity: 0, x: -20 }}
                 className="pb-2"
               >
+                <PullToRefresh onRefresh={async () => { haptic('success'); await loadInbox(); }} lang={lang} />
                 {(error || isOffline) && error !== '' && (
                   <div className="text-center mb-3 bg-red-500/10 rounded-2xl py-2.5 px-4 border border-red-500/10">
                     <p className="text-red-300 text-[11px] font-semibold">
@@ -1560,37 +1582,7 @@ export default function NglDashboard() {
                     <p className="text-white font-extrabold text-[17px] tracking-tight">{t('dash.emptyTitle')}</p>
                     <p className="text-white/35 text-[12px] mt-1.5 max-w-[260px] leading-relaxed">{t('dash.emptySubtitle')}</p>
 
-                    {/* ═══ PREMIUM "How it works" rail — 3 steps ═══ */}
-                    <div className="w-full max-w-[360px] mt-7 mb-6">
-                      <p className="text-white/25 text-[9px] font-bold uppercase tracking-[0.18em] mb-3">{t('empty.how')}</p>
-                      <div className="flex flex-col gap-2">
-                        {[
-                          { n: '1', t: t('empty.step1t'), d: t('empty.step1d') },
-                          { n: '2', t: t('empty.step2t'), d: t('empty.step2d') },
-                          { n: '3', t: t('empty.step3t'), d: t('empty.step3d') },
-                        ].map((s, i) => (
-                          <motion.div
-                            key={s.n}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.25 + i * 0.08, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                            className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl"
-                            style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.015) 100%)', border: '1px solid rgba(255,255,255,0.05)' }}
-                          >
-                            <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-black text-white flex-shrink-0"
-                              style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.5), rgba(236,72,153,0.5))', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15)' }}>
-                              {s.n}
-                            </div>
-                            <div className="flex-1 text-left min-w-0">
-                              <p className="text-white/85 text-[12px] font-bold leading-tight">{s.t}</p>
-                              <p className="text-white/35 text-[10.5px] mt-0.5 leading-tight">{s.d}</p>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 mt-6">
                       <motion.button
                         whileTap={{ scale: 0.95 }}
                         onClick={handleCopy}
@@ -1612,7 +1604,7 @@ export default function NglDashboard() {
                   <div className="flex flex-col gap-3">
                     <div className="flex items-center justify-between mb-1 px-1 gap-2">
                       <p className="text-white/40 text-[11px] font-bold whitespace-nowrap">
-                        📬 {messages.length} {t('dash.msgCount')}
+                        {messages.length} {t('dash.msgCount')}
                       </p>
                       <div className="flex items-center gap-1.5">
                         {/* C3: Sound toggle */}
@@ -1620,9 +1612,13 @@ export default function NglDashboard() {
                           onClick={toggleMute}
                           aria-label={muted ? t('dash.soundOff') : t('dash.soundOn')}
                           title={muted ? t('dash.soundOff') : t('dash.soundOn')}
-                          className="text-white/40 hover:text-white/80 text-[12px] w-7 h-7 rounded-full bg-white/[0.04] hover:bg-white/[0.08] transition-all flex items-center justify-center"
+                          className="text-white/40 hover:text-white/80 w-7 h-7 rounded-full bg-white/[0.04] hover:bg-white/[0.08] transition-all flex items-center justify-center"
                         >
-                          {muted ? '🔇' : '🔊'}
+                          {muted ? (
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+                          ) : (
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                          )}
                         </button>
                         {/* C10: Data export */}
                         <button
@@ -1712,7 +1708,34 @@ export default function NglDashboard() {
                             </button>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-white text-[15px] font-semibold leading-[1.65] break-words mb-2">{decodeEntities(msg.text)}</p>
+                            {(() => {
+                              const isRevealed2 = revealedIds.has(msg.id);
+                              return (
+                                <div className="relative mb-2">
+                                  <p
+                                    className={`text-white text-[15px] font-semibold leading-[1.65] break-words transition-[filter,transform] duration-500 ease-out ${isRevealed2 ? '' : 'blur-[7px] select-none'} ${isRevealed2 ? '' : 'cursor-pointer'}`}
+                                    style={isRevealed2 ? undefined : { transform: 'scale(0.985)' }}
+                                    onClick={() => { if (!isRevealed2) revealMessage(msg.id); }}
+                                  >
+                                    {decodeEntities(msg.text)}
+                                  </p>
+                                  {!isRevealed2 && (
+                                    <button
+                                      onClick={() => revealMessage(msg.id)}
+                                      aria-label={lang === 'bn' ? 'ট্যাপ করে দেখো' : 'Tap to reveal'}
+                                      className="absolute inset-0 flex items-center justify-center rounded-lg group/rev"
+                                    >
+                                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/55 backdrop-blur-sm border border-white/15 text-white/85 text-[11px] font-extrabold tracking-wide group-hover/rev:bg-black/70 transition-all">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+                                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                                        </svg>
+                                        {lang === 'bn' ? 'ট্যাপ করে দেখো' : 'Tap to reveal'}
+                                      </span>
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })()}
 
                             {/* Subtle hint pills — NGL-style but better */}
                             {hasHints && (
@@ -2103,6 +2126,9 @@ export default function NglDashboard() {
             setTimeout(() => setUpgradeToast(false), 4000);
           }}
         />
+
+        {/* ── First-login Welcome Tour (3 coach marks) ── */}
+        <NglWelcomeTour />
 
         {/* PRO activated toast */}
         <AnimatePresence>

@@ -64,7 +64,7 @@ export default function NglSend() {
   const username = params?.username || '';
   const { t, lang } = useNglLang();
 
-  const [profile, setProfile] = useState<{ username: string; prompt: string; createdAt: string; theme?: string; photo?: string | null } | null>(null);
+  const [profile, setProfile] = useState<{ username: string; prompt: string; createdAt: string; theme?: string; photo?: string | null; isPremium?: number }  | null>(null);
 
   // Theme definitions (same as dashboard)
   const NGL_THEMES: Record<string, { bg: string; accent: string }> = {
@@ -75,6 +75,10 @@ export default function NglSend() {
     purple: { bg: 'linear-gradient(135deg, #8b5cf6 0%, #a855f7 50%, #d946ef 100%)', accent: 'from-violet-500 via-purple-400 to-fuchsia-400' },
     gold: { bg: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 50%, #dc2626 100%)', accent: 'from-amber-500 via-orange-400 to-red-400' },
     dark: { bg: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%)', accent: 'from-indigo-400 via-violet-300 to-blue-400' },
+    // PRO exclusive themes (mirror dashboard)
+    neon: { bg: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 40%, #8b5cf6 100%)', accent: 'from-cyan-400 via-blue-500 to-purple-500' },
+    rosegold: { bg: 'linear-gradient(135deg, #fb7185 0%, #f9a8d4 50%, #fbbf24 100%)', accent: 'from-rose-400 via-pink-300 to-amber-300' },
+    midnight: { bg: 'linear-gradient(135deg, #000000 0%, #1e1b4b 50%, #000000 100%)', accent: 'from-slate-700 via-indigo-900 to-black' },
   };
 
   const themeBg = NGL_THEMES[profile?.theme || 'default']?.bg || NGL_THEMES.default.bg;

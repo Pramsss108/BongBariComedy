@@ -1,1 +1,37 @@
-{"name":"Bong Bari - Bengali Comedy Channel","short_name":"Bong Bari","icons":[{"src":"/android-chrome-192x192.png","sizes":"192x192","type":"image/png"},{"src":"/android-chrome-512x512.png","sizes":"512x512","type":"image/png"}],"theme_color":"#FFCC00","background_color":"#FFCC00","display":"standalone"}
+{
+  "name": "Bong Bari — Bengali Comedy & NGL",
+  "short_name": "Bong Bari",
+  "description": "Bengali comedy channel + anonymous messaging (Bong NGL). Free alternative to NGL.link with deeper sender hints.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#FFCC00",
+  "background_color": "#0a0618",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["social", "entertainment", "lifestyle"],
+  "icons": [
+    { "src": "/favicon-192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/favicon-192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/favicon-32x32.png", "sizes": "32x32", "type": "image/png" },
+    { "src": "/favicon-16x16.png", "sizes": "16x16", "type": "image/png" }
+  ],
+  "shortcuts": [
+    {
+      "name": "My NGL Inbox",
+      "short_name": "Inbox",
+      "description": "Open your anonymous messages dashboard",
+      "url": "/ngl/dashboard",
+      "icons": [{ "src": "/favicon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Create NGL Link",
+      "short_name": "Create",
+      "description": "Create your anonymous message link",
+      "url": "/ngl/create",
+      "icons": [{ "src": "/favicon-192x192.png", "sizes": "192x192" }]
+    }
+  ]
+}

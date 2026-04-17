@@ -189,6 +189,28 @@ const translations: Record<string, Record<Lang, string>> = {
   'dash.loadingMore': { bn: 'লোড হচ্ছে...', en: 'Loading more...' },
   'dash.noMoreMessages': { bn: 'সব message দেখানো হয়েছে', en: 'All messages shown' },
 
+  // C8: Inbox search
+  'dash.search': { bn: 'খোঁজো...', en: 'Search...' },
+  'dash.searchResults': { bn: 'ফলাফল', en: 'results' },
+  'dash.noSearchResults': { bn: 'কিছু পাওয়া যায়নি', en: 'No matches found' },
+  'dash.clearSearch': { bn: 'সার্চ ক্লিয়ার করো', en: 'Clear search' },
+
+  // C10: Data export
+  'dash.export': { bn: '⬇️ সব ডাউনলোড', en: '⬇️ Export all' },
+  'dash.exporting': { bn: 'তৈরি হচ্ছে...', en: 'Preparing...' },
+  'dash.exported': { bn: '✓ ডাউনলোড শুরু হয়েছে', en: '✓ Download started' },
+
+  // C3: Sound toggle
+  'dash.soundOn': { bn: '🔊 সাউন্ড চালু', en: '🔊 Sound on' },
+  'dash.soundOff': { bn: '🔇 সাউন্ড বন্ধ', en: '🔇 Sound off' },
+
+  // Part 3: PRO / Premium
+  'pro.badge': { bn: 'PRO', en: 'PRO' },
+  'pro.lockedCity': { bn: '🔒 City, ISP + আরো ৫ details — PRO unlock', en: '🔒 City, ISP + 5 more details — Unlock with PRO' },
+  'pro.upgradeCta': { bn: '💎 Bong PRO — ₹98/month', en: '💎 Get Bong PRO — ₹98/month' },
+  'pro.upgradeSoon': { bn: 'PRO খুব শিগ্রই আসছে!', en: 'PRO launching soon!' },
+  'pro.pinLimitPro': { bn: 'PRO তে ১০টা পর্যন্ত pin করতে পারবে', en: 'PRO users can pin up to 10 messages' },
+
   // Dashboard — Themes (Phase 28)
   'dash.chooseTheme': { bn: '🎨 থিম বাছো', en: '🎨 Choose Theme' },
   // Dashboard — Photos (Phase 29)

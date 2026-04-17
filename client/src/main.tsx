@@ -12,6 +12,14 @@ if (typeof window !== 'undefined') {
   } else {
     setTimeout(startTunnel, 3000);
   }
+
+  // C1: Register PWA service worker (passive — doesn't cache SPA shell, only static assets).
+  // Guarded: only in production to avoid interfering with Vite dev HMR.
+  if ('serviceWorker' in navigator && import.meta.env.PROD) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => { /* non-fatal */ });
+    });
+  }
 }
 
 createRoot(document.getElementById("root")!).render(

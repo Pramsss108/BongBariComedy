@@ -455,6 +455,9 @@ export const nglUsers = pgTable("ngl_users", {
   // Phase 40: Custom OG meta for link previews
   ogTitle: varchar("og_title", { length: 200 }),
   ogDescription: varchar("og_description", { length: 500 }),
+  // Part 3 (Premium): Bong PRO flag + expiry (epoch ms). If isPremium=1 and premiumUntil > now, user is PRO.
+  isPremium: integer("is_premium").notNull().default(0),
+  premiumUntil: timestamp("premium_until"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

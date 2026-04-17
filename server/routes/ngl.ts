@@ -312,7 +312,7 @@ async function geolocateIp(ip: string): Promise<GeoResult> {
 }
 
 // Valid NGL themes
-const NGL_THEMES = ['default', 'pink', 'blue', 'green', 'purple', 'gold', 'dark'] as const;
+const NGL_THEMES = ['default', 'pink', 'blue', 'green', 'purple', 'gold', 'dark', 'neon', 'rosegold', 'midnight'] as const;
 const MAX_PHOTO_SIZE = 150_000; // 150KB base64
 
 // Phase 30: Theme → gradient stops for SVG OG cards
@@ -773,6 +773,10 @@ export function registerNglRoutes(app: any) {
         streakDays: (user as any).streakDays || 0,
         ogTitle: (user as any).ogTitle || null,
         ogDescription: (user as any).ogDescription || null,
+        // Part 3 (Premium): expose PRO status so dashboard + send page can render badge + gating
+        isPremium: (user as any).isPremium === 1
+          && (!(user as any).premiumUntil || new Date((user as any).premiumUntil).getTime() > Date.now())
+          ? 1 : 0,
         createdAt: user.createdAt,
       });
     } catch (err: any) {

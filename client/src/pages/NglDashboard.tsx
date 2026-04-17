@@ -6,6 +6,7 @@ import { buildApiUrl } from '@/lib/queryClient';
 import { useNglLang, LangToggle, FloatingHelp, InboxShimmer } from '@/components/NglLang';
 import ShareModal from '@/components/ShareModal';
 import QRCode from 'qrcode';
+import { sfxNewMessage, sfxDicePop, sfxTap, getNglMuted, setNglMuted } from '@/lib/nglSfx';
 
 interface NglMessage {
   id: string;
@@ -34,7 +35,7 @@ interface NglMessage {
 }
 
 // Theme gradient definitions
-const NGL_THEMES: Record<string, { bg: string; accent: string; label: string; emoji: string }> = {
+const NGL_THEMES: Record<string, { bg: string; accent: string; label: string; emoji: string; pro?: boolean }> = {
   default: { bg: 'linear-gradient(135deg, #667eea 0%, #f8477a 30%, #ee6b3b 60%, #f4843e 100%)', accent: 'from-pink-500 via-orange-400 to-yellow-400', label: 'OG', emoji: '🔥' },
   pink: { bg: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 50%, #fb923c 100%)', accent: 'from-pink-500 via-rose-400 to-orange-400', label: 'Rose', emoji: '💗' },
   blue: { bg: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%)', accent: 'from-blue-500 via-indigo-400 to-violet-400', label: 'Ocean', emoji: '🌊' },
@@ -42,6 +43,10 @@ const NGL_THEMES: Record<string, { bg: string; accent: string; label: string; em
   purple: { bg: 'linear-gradient(135deg, #8b5cf6 0%, #a855f7 50%, #d946ef 100%)', accent: 'from-violet-500 via-purple-400 to-fuchsia-400', label: 'Galaxy', emoji: '🔮' },
   gold: { bg: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 50%, #dc2626 100%)', accent: 'from-amber-500 via-orange-400 to-red-400', label: 'Gold', emoji: '👑' },
   dark: { bg: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%)', accent: 'from-indigo-400 via-violet-300 to-blue-400', label: 'Dark', emoji: '🖤' },
+  // Part 3 (PRO): Exclusive themes gated by isPremium
+  neon: { bg: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 40%, #8b5cf6 100%)', accent: 'from-cyan-400 via-blue-500 to-purple-500', label: 'Neon', emoji: '⚡', pro: true },
+  rosegold: { bg: 'linear-gradient(135deg, #fb7185 0%, #f9a8d4 50%, #fbbf24 100%)', accent: 'from-rose-400 via-pink-300 to-amber-300', label: 'Rose Gold', emoji: '🌹', pro: true },
+  midnight: { bg: 'linear-gradient(135deg, #000000 0%, #1e1b4b 50%, #000000 100%)', accent: 'from-slate-700 via-indigo-900 to-black', label: 'Midnight', emoji: '🌑', pro: true },
 };
 
 // ── 20 Bilingual Prompt Phrases (Bengali + English) ──
@@ -178,6 +183,19 @@ export default function NglDashboard() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
 
+  // C8: Inbox search
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // C10: Export state
+  const [exporting, setExporting] = useState(false);
+  const [exported, setExported] = useState(false);
+
+  // C3: Sound mute toggle (hydrates from localStorage)
+  const [muted, setMuted] = useState<boolean>(() => getNglMuted());
+
+  // Part 3: Premium flag (loaded from server profile)
+  const [isPremium, setIsPremium] = useState<boolean>(false);
+
   // Dynamically resolve base URL whether in dev (localhost) or prod
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://www.bongbari.com';
   const shareLink = `${baseUrl}/ngl/q/${username}`;
@@ -234,6 +252,8 @@ export default function NglDashboard() {
           if (d.streakDays) setStreakDays(d.streakDays);
           if (d.ogTitle) setOgTitle(d.ogTitle);
           if (d.ogDescription) setOgDescription(d.ogDescription);
+          // Part 3: Premium flag (0/1 from backend; treat undefined as 0)
+          setIsPremium(!!d.isPremium);
         }
       })
       .catch(() => {});
@@ -300,6 +320,8 @@ export default function NglDashboard() {
         }
         if (msgs.length > prevMsgCountRef.current && prevMsgCountRef.current > 0) {
           setNewMsgCount(prev => prev + (msgs.length - prevMsgCountRef.current));
+          // C3: soft ping on new messages (respects mute + reduced-motion)
+          sfxNewMessage();
         }
         prevMsgCountRef.current = msgs.length;
       } else if (res.status === 403) {
@@ -451,9 +473,57 @@ export default function NglDashboard() {
     setLoadingMore(false);
   };
 
+  // C10: Export inbox as JSON download (client-side, uses loaded messages)
+  const handleExport = async () => {
+    if (exporting) return;
+    gEvent('ngl_export_data');
+    setExporting(true);
+    try {
+      // Fetch full inbox (up to 200) — then build JSON blob
+      const res = await fetch(
+        buildApiUrl(`/api/ngl/u/${encodeURIComponent(username)}/inbox?limit=200&offset=0`),
+        { headers: { 'X-NGL-Key': secretKey } },
+      );
+      let allMessages: NglMessage[] = messages;
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.messages)) allMessages = data.messages;
+      }
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        username,
+        totalMessages: allMessages.length,
+        messages: allMessages,
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `bong-ngl-${username}-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      setExported(true);
+      setTimeout(() => setExported(false), 2500);
+    } catch {
+      // silent failure — button re-enables
+    }
+    setExporting(false);
+  };
+
+  // C3: Toggle sound on/off
+  const toggleMute = () => {
+    const next = !muted;
+    setMuted(next);
+    setNglMuted(next);
+    if (!next) sfxTap(); // audible confirmation when turning ON
+  };
+
   const handleDice = async () => {
     gEvent('ngl_prompt_shuffle');
     setDiceLoading(true);
+    sfxDicePop();
     // Pick a random prompt from local pool (instant) — avoid repeating current
     const pool = PROMPT_POOL.filter(p => p[lang as 'bn' | 'en'] !== prompt);
     const pick = pool[Math.floor(Math.random() * pool.length)][lang as 'bn' | 'en'];
@@ -923,6 +993,7 @@ export default function NglDashboard() {
   // Phase 27: React to a message
   const handleReact = async (msgId: string, reaction: string | null) => {
     gEvent('ngl_reaction', { reaction: reaction || 'remove' });
+    sfxTap();
     try {
       const currentMsg = messages.find(m => m.id === msgId);
       const newReaction = currentMsg?.reaction === reaction ? null : reaction;
@@ -1165,7 +1236,16 @@ export default function NglDashboard() {
                   <div className="flex-1 min-w-0">
                     <p className="font-black text-white text-[17px] leading-none tracking-tight">@{username}</p>
                     <div className="flex items-center gap-1.5 mt-1">
-                      <span className="text-[7px] font-extrabold text-white bg-gradient-to-r from-violet-500 to-fuchsia-500 px-1.5 py-[1.5px] rounded-full tracking-wide">PRO</span>
+                      {isPremium ? (
+                        <span className="text-[7px] font-extrabold text-white bg-gradient-to-r from-violet-500 to-fuchsia-500 px-1.5 py-[1.5px] rounded-full tracking-wide">✓ PRO</span>
+                      ) : (
+                        <button
+                          onClick={() => { gEvent('ngl_pro_cta_click', { source: 'header' }); alert(t('pro.upgradeSoon')); }}
+                          className="text-[7px] font-extrabold text-fuchsia-200 bg-white/[0.05] hover:bg-white/[0.1] border border-fuchsia-400/20 px-1.5 py-[1.5px] rounded-full tracking-wide transition-all"
+                        >
+                          💎 {t('pro.upgradeCta').replace('💎 ', '')}
+                        </button>
+                      )}
                       {streakDays > 0 && <span className="text-[7px] font-extrabold text-amber-300 bg-amber-500/15 px-1.5 py-[1.5px] rounded-full">🔥 {streakDays}d</span>}
                       {messages.length > 0 && <span className="text-[7px] font-extrabold text-white/30 bg-white/[0.05] px-1.5 py-[1.5px] rounded-full">{messages.length} {lang === 'bn' ? 'বার্তা' : 'msgs'}</span>}
                     </div>
@@ -1464,13 +1544,72 @@ export default function NglDashboard() {
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3">
-                    <div className="flex items-center justify-between mb-1 px-1">
-                      <p className="text-white/40 text-[11px] font-bold">
+                    <div className="flex items-center justify-between mb-1 px-1 gap-2">
+                      <p className="text-white/40 text-[11px] font-bold whitespace-nowrap">
                         📬 {messages.length} {t('dash.msgCount')}
                       </p>
-                      <p className="text-white/15 text-[9px]">{t('dash.deleteHint')}</p>
+                      <div className="flex items-center gap-1.5">
+                        {/* C3: Sound toggle */}
+                        <button
+                          onClick={toggleMute}
+                          aria-label={muted ? t('dash.soundOff') : t('dash.soundOn')}
+                          title={muted ? t('dash.soundOff') : t('dash.soundOn')}
+                          className="text-white/40 hover:text-white/80 text-[12px] w-7 h-7 rounded-full bg-white/[0.04] hover:bg-white/[0.08] transition-all flex items-center justify-center"
+                        >
+                          {muted ? '🔇' : '🔊'}
+                        </button>
+                        {/* C10: Data export */}
+                        <button
+                          onClick={handleExport}
+                          disabled={exporting || messages.length === 0}
+                          aria-label={t('dash.export')}
+                          title={t('dash.export')}
+                          className="text-white/40 hover:text-white/80 text-[10px] font-semibold px-2.5 h-7 rounded-full bg-white/[0.04] hover:bg-white/[0.08] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          {exporting ? t('dash.exporting') : exported ? t('dash.exported') : t('dash.export')}
+                        </button>
+                      </div>
                     </div>
-                    {messages.map((msg, i) => {
+                    {/* C8: Search bar */}
+                    {messages.length > 3 && (
+                      <div className="relative mb-1">
+                        <input
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder={t('dash.search')}
+                          aria-label={t('dash.search')}
+                          className="w-full bg-white/[0.04] border border-white/[0.05] rounded-2xl px-4 py-2 text-white text-[13px] placeholder:text-white/25 focus:outline-none focus:border-white/15 focus:bg-white/[0.06] transition-all"
+                        />
+                        {searchQuery && (
+                          <button
+                            onClick={() => setSearchQuery('')}
+                            aria-label={t('dash.clearSearch')}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 text-[14px] w-5 h-5 rounded-full flex items-center justify-center"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    {(() => {
+                      const q = searchQuery.trim().toLowerCase();
+                      const filtered = q
+                        ? messages.filter(m => (m.text || '').toLowerCase().includes(q))
+                        : messages;
+                      if (q && filtered.length === 0) {
+                        return (
+                          <div className="text-center py-8 text-white/30 text-[12px] font-medium">
+                            {t('dash.noSearchResults')}
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
+                    {(searchQuery.trim()
+                      ? messages.filter(m => (m.text || '').toLowerCase().includes(searchQuery.trim().toLowerCase()))
+                      : messages
+                    ).map((msg, i) => {
                       const hasHints = msg.senderLang || msg.senderDevice || msg.senderCity || msg.senderCountry;
                       const isRevealed = hintRevealId === msg.id;
                       // Build specific location string: "Dum Dum, Kolkata" or "Kolkata, West Bengal" or "India"
@@ -1537,6 +1676,23 @@ export default function NglDashboard() {
                                 className="mt-1.5 text-white/25 hover:text-white/40 text-[10px] font-medium transition-colors"
                               >
                                 {isRevealed ? '− less' : '+ more'}
+                              </button>
+                            )}
+
+                            {/* Part 3 PRO FOMO: locked deep-reveal card (shown only to free users with sender data) */}
+                            {!isPremium && hasHints && (
+                              <button
+                                onClick={() => { gEvent('ngl_pro_cta_click', { source: 'message_card' }); alert(t('pro.upgradeSoon')); }}
+                                className="mt-2 w-full text-left bg-gradient-to-r from-fuchsia-500/10 via-violet-500/10 to-indigo-500/10 border border-fuchsia-400/20 rounded-xl px-3 py-2 hover:from-fuchsia-500/15 hover:via-violet-500/15 hover:to-indigo-500/15 transition-all group/pro"
+                                aria-label={t('pro.lockedCity')}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[11px]">🔒</span>
+                                  <span className="text-fuchsia-200/80 text-[10px] font-semibold flex-1 truncate">
+                                    {t('pro.lockedCity')}
+                                  </span>
+                                  <span className="text-fuchsia-300/60 text-[9px] font-bold group-hover/pro:text-fuchsia-300 transition-colors">→</span>
+                                </div>
                               </button>
                             )}
 

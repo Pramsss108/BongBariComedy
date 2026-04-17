@@ -1824,6 +1824,87 @@ export function registerNglRoutes(app: any) {
     }
   });
 
+  // ── POST /payment/dev-grant ── (TESTING ONLY: grant PRO without paying)
+  // Protected by NGL_DEV_GRANT_SECRET env var. Lets you & whitelisted users
+  // test the full PRO experience without real payment.
+  router.post('/payment/dev-grant', async (req: any, res) => {
+    try {
+      const devSecret = process.env.NGL_DEV_GRANT_SECRET;
+      if (!devSecret) {
+        return res.status(503).json({ message: 'Dev grant not configured' });
+      }
+      const provided = (req.headers['x-dev-grant'] as string) || (req.body?.devSecret as string) || '';
+      if (provided !== devSecret) {
+        return res.status(403).json({ message: 'Invalid dev grant secret' });
+      }
+      const { username, plan, days } = req.body || {};
+      if (!username) return res.status(400).json({ message: 'username required' });
+
+      const cleanUser = String(username).trim().toLowerCase();
+      const user = await dbGetUser(cleanUser);
+      if (!user) return res.status(404).json({ message: 'User not found' });
+
+      const planKey = (plan === 'yearly' ? 'yearly' : 'monthly') as PlanKey;
+      const planDef = PRO_PLANS[planKey];
+      const grantDays = Number.isFinite(Number(days)) && Number(days) > 0 ? Number(days) : planDef.days;
+
+      const currentUntil = (user as any).premiumUntil ? new Date((user as any).premiumUntil).getTime() : 0;
+      const base = currentUntil > Date.now() ? currentUntil : Date.now();
+      const premiumUntil = new Date(base + grantDays * 24 * 60 * 60 * 1000);
+
+      if (USE_PG) {
+        await pgDb!.update(nglUsers)
+          .set({ isPremium: 1, premiumUntil } as any)
+          .where(eq(nglUsers.username, cleanUser));
+      } else {
+        const u = memUsers.get(cleanUser) as any;
+        if (u) { u.isPremium = 1; u.premiumUntil = premiumUntil; }
+      }
+
+      console.log(`[NGL/pay] DEV GRANT: PRO activated for @${cleanUser} (${grantDays}d)`);
+      res.json({
+        success: true,
+        isPremium: 1,
+        premiumUntil: premiumUntil.toISOString(),
+        plan: planKey,
+        days: grantDays,
+        mode: 'dev-grant',
+      });
+    } catch (err: any) {
+      console.error('[NGL/pay] dev-grant error:', err);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
+  // ── POST /payment/dev-revoke ── (TESTING ONLY: remove PRO from a user)
+  router.post('/payment/dev-revoke', async (req: any, res) => {
+    try {
+      const devSecret = process.env.NGL_DEV_GRANT_SECRET;
+      if (!devSecret) return res.status(503).json({ message: 'Dev grant not configured' });
+      const provided = (req.headers['x-dev-grant'] as string) || (req.body?.devSecret as string) || '';
+      if (provided !== devSecret) return res.status(403).json({ message: 'Invalid dev grant secret' });
+
+      const { username } = req.body || {};
+      if (!username) return res.status(400).json({ message: 'username required' });
+      const cleanUser = String(username).trim().toLowerCase();
+
+      if (USE_PG) {
+        await pgDb!.update(nglUsers)
+          .set({ isPremium: 0, premiumUntil: null } as any)
+          .where(eq(nglUsers.username, cleanUser));
+      } else {
+        const u = memUsers.get(cleanUser) as any;
+        if (u) { u.isPremium = 0; u.premiumUntil = null; }
+      }
+
+      console.log(`[NGL/pay] DEV REVOKE: PRO removed for @${cleanUser}`);
+      res.json({ success: true, mode: 'dev-revoke' });
+    } catch (err: any) {
+      console.error('[NGL/pay] dev-revoke error:', err);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
   // ── POST /payment/webhook ── (Razorpay → us; no user auth, signed by webhook secret)
   router.post('/payment/webhook', async (req: any, res) => {
     try {

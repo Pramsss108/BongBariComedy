@@ -28,6 +28,7 @@ export default {read,readFile,write,writeFile,utils};`,
 export const handle_file=(f)=>f;
 export default {Client,handle_file};`,
   'wink-nlp': `export default ()=>({readDoc:()=>({sentences:()=>({out:()=>[]}),tokens:()=>({out:()=>[]})}),its:{},as:{}});`,
+  'wink-eng-lite-web-model': `export default {};`,
   'ffmpeg-static': `export default null;`,
   'youtube-po-token-generator': `export const generate=async()=>({visitorData:'',poToken:''});
 export default {generate};`,

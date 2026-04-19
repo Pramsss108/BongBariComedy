@@ -11,21 +11,24 @@ This is non-negotiable. The user is a vibe coder — servers must always be live
 
 ## Platform policy (read first)
 - Frontend hosting: GitHub Pages (canonical domain: `www.bongbari.com`).
-- Backend: **Oracle Cloud Always Free VM** (`158.101.175.37`, Oracle Linux 9, user `opc`, **503MB RAM**). Auto-deployed via GitHub Actions on push to `main`.
-- **Render is BANNED** (pipeline minutes exhausted, unreliable free tier). Do not add Render configs, buildpacks, or references. Replace any Render URLs with Oracle backend URL.
+- Backend: **Hetzner VPS** (`78.47.104.43`, Ubuntu, user `root`, **3.8GB RAM**). Auto-deployed via GitHub Actions on push to `main`. SSH key: `C:\Users\guita\.ssh\hetzner_bongbari`. App at `/opt/bongbari/`, managed by PM2.
+- Backend API URL (production): `https://api.bongbari.com` (Cloudflare proxied → 78.47.104.43:5000 via Origin Rule "API Port 5000")
+- Oracle Cloud VM (`158.101.175.37`) is DEAD/BACKUP — do NOT use it as primary. It crashed April 2026 and migration to Hetzner completed.
+- **Render is BANNED** (pipeline minutes exhausted, unreliable free tier). Do not add Render configs, buildpacks, or references. Replace any Render URLs with Hetzner backend URL.
 - Replit is banned (legacy/ex-platform). Do not add any Replit scripts, SDKs, or plugins. If you see any Replit banner/scripts, remove them.
 - Do not introduce Netlify/Vercel changes unless explicitly requested; our SPA routing relies on the GitHub Pages `404.html` strategy.
 
-### 🚨 **Oracle VM Safety Rules (MANDATORY — read before ANY VM work)**
-The backend VM has only **503MB RAM**. Permanent safety scripts are installed on the VM. **Do NOT bypass or remove them.**
-- **`safe-npm`**: Blocks dangerous packages (firebase-admin, geoip-lite, xlsx, puppeteer, sharp, etc.) and checks memory before install. `npm` is aliased to `safe-npm` on the VM.
-- **`safe-dnf`**: Blocks ALL dnf/yum usage. Even `dnf install nano` will OOM the VM.
-- **`vm-doctor`**: Run this after ANY VM changes to verify health.
-- **Node.js is capped at 256MB** via `NODE_OPTIONS=--max-old-space-size=256`.
-- **Heavy packages are STUBBED** (no-op modules): firebase-admin, @gradio/client, wink-nlp, xlsx, ffmpeg-static, youtube-po-token-generator, vite, vite-plugin-compression2, @vitejs/plugin-react.
-- **Use `server-package.json`** for VM deploys (17 minimal deps), NOT the full project `package.json`.
-- **NEVER run `dnf install` or `npm ci` with full deps** — instant OOM crash.
-- Full rules on VM: `~/bongbari/VM_RULES.md`. Safety install script: `scripts/vm-safety-install.sh`.
+### 🚨 **Hetzner VPS Rules (MANDATORY)**
+The backend VM is Hetzner VPS (`78.47.104.43`, Ubuntu, 3.8GB RAM, root user).
+- **App directory**: `/opt/bongbari/` — PM2 process named `bongbari`, runs `index.js`
+- **Deploy**: SCP `dist/index.js` + `server-package.json` (as `package.json`) + `.env` → `npm install --omit=dev` → `pm2 restart bongbari`
+- **No memory limits**: 3.8GB RAM — Node.js does NOT need `--max-old-space-size` cap
+- **PM2 save**: Always run `pm2 save` after restart to survive reboots
+- **Caddy**: Running on ports 80/443, reverse proxies external traffic to :5000
+- **Build**: Use `server-package.json` (minimal deps) and `node build-server.mjs` — NOT the full `package.json`
+- **Port 5000**: App listens on this port; Cloudflare Origin Rule rewrites to 5000
+- **SSH**: `ssh -i C:\Users\guita\.ssh\hetzner_bongbari root@78.47.104.43`
+- **GitHub Actions secret needed**: `HETZNER_HOST=78.47.104.43`, `HETZNER_SSH_KEY=<private key>`, `HETZNER_ENV=<.env contents>`
 
 ## 🎯 **Site Features & Integrations (October 2025)**
 ### **Enhanced Legal Pages** ✅

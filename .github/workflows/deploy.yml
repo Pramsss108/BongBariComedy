@@ -127,7 +127,7 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-  # ── Oracle Cloud backend auto-deploy ────────────────────
+  # ── Hetzner VPS backend auto-deploy (PRIMARY) ────────────────────
   deploy-backend:
     runs-on: ubuntu-latest
     # No dependency on 'build' — runs in parallel with frontend deploy
@@ -146,17 +146,19 @@ jobs:
             shared/**
             package.json
             package-lock.json
+            build-server.mjs
+            server-package.json
             tsconfig*.json
 
       - name: Decide skip
         id: decide
         run: |
-          FORCE_OVERRIDE="${{ contains(github.event.head_commit.message, 'FORCE_ORACLE_DEPLOY') }}"
+          FORCE_OVERRIDE="${{ contains(github.event.head_commit.message, 'FORCE_BACKEND_DEPLOY') || contains(github.event.head_commit.message, 'FORCE_ORACLE_DEPLOY') }}"
           if [ "${{ steps.changes.outputs.any_changed }}" = "false" ] && [ "$FORCE_OVERRIDE" != "true" ]; then
-            echo "No server changes; skipping Oracle deploy"
+            echo "No server changes; skipping Hetzner deploy"
             echo "skip=true" >> $GITHUB_OUTPUT
           else
-            echo "Server changes detected — deploying to Oracle"
+            echo "Server changes detected — deploying to Hetzner"
             echo "skip=false" >> $GITHUB_OUTPUT
           fi
 
@@ -174,84 +176,66 @@ jobs:
           node build-server.mjs
           echo "✅ Server bundle built: $(wc -c < dist/index.js) bytes"
 
-      - name: Deploy to Oracle Cloud VM (SCP + restart)
+      - name: Deploy to Hetzner VPS (SCP + restart)
         if: steps.decide.outputs.skip == 'false'
         env:
-          ORACLE_HOST: ${{ secrets.ORACLE_HOST }}
-          ORACLE_SSH_KEY: ${{ secrets.ORACLE_SSH_KEY }}
-          ORACLE_ENV: ${{ secrets.ORACLE_ENV }}
+          HETZNER_HOST: ${{ secrets.HETZNER_HOST }}
+          HETZNER_SSH_KEY: ${{ secrets.HETZNER_SSH_KEY }}
+          HETZNER_ENV: ${{ secrets.HETZNER_ENV }}
         run: |
-          if [ -z "$ORACLE_SSH_KEY" ] || [ -z "$ORACLE_HOST" ]; then
-            echo "⚠️  ORACLE_SSH_KEY or ORACLE_HOST secrets not configured — skipping Oracle deploy"
+          if [ -z "$HETZNER_SSH_KEY" ] || [ -z "$HETZNER_HOST" ]; then
+            echo "⚠️  HETZNER_SSH_KEY or HETZNER_HOST secrets not configured — skipping Hetzner deploy"
             echo "Add them at: GitHub repo → Settings → Secrets and variables → Actions"
+            echo "  HETZNER_HOST=78.47.104.43"
+            echo "  HETZNER_SSH_KEY=<contents of C:\\Users\\guita\\.ssh\\hetzner_bongbari>"
             exit 0
           fi
-          echo "$ORACLE_SSH_KEY" > /tmp/oracle_key
-          chmod 600 /tmp/oracle_key
+          echo "$HETZNER_SSH_KEY" > /tmp/hetzner_key
+          chmod 600 /tmp/hetzner_key
           mkdir -p ~/.ssh
 
-          SSH_OPTS="-i /tmp/oracle_key -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ServerAliveInterval=15 -o ServerAliveCountMax=3"
+          SSH_OPTS="-i /tmp/hetzner_key -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ServerAliveInterval=15 -o ServerAliveCountMax=3"
 
           echo "::group::SSH keyscan"
-          ssh-keyscan -T 10 -H "$ORACLE_HOST" >> ~/.ssh/known_hosts 2>&1 || echo "keyscan warning (non-fatal)"
+          ssh-keyscan -T 10 -H "$HETZNER_HOST" >> ~/.ssh/known_hosts 2>&1 || echo "keyscan warning (non-fatal)"
           echo "::endgroup::"
 
-          # Verify key format
           echo "Key fingerprint:"
-          ssh-keygen -l -f /tmp/oracle_key 2>&1 || { echo "❌ Invalid SSH key format"; exit 1; }
+          ssh-keygen -l -f /tmp/hetzner_key 2>&1 || { echo "❌ Invalid SSH key format"; exit 1; }
 
           # Write .env from secret (if configured)
           echo "::group::Sync .env"
-          if [ -n "$ORACLE_ENV" ]; then
-            echo "$ORACLE_ENV" > /tmp/oracle_env
-            scp $SSH_OPTS /tmp/oracle_env opc@"$ORACLE_HOST":~/bongbari/.env
-            rm -f /tmp/oracle_env
-            echo "✅ .env synced to Oracle"
+          if [ -n "$HETZNER_ENV" ]; then
+            echo "$HETZNER_ENV" > /tmp/hetzner_env
+            scp $SSH_OPTS /tmp/hetzner_env root@"$HETZNER_HOST":/opt/bongbari/.env
+            rm -f /tmp/hetzner_env
+            echo "✅ .env synced to Hetzner"
           else
-            echo "⚠️  ORACLE_ENV secret not set — .env not updated"
+            echo "⚠️  HETZNER_ENV secret not set — .env not updated on server"
           fi
           echo "::endgroup::"
 
-          # Copy the pre-built bundle to VM
+          # Upload the pre-built bundle
           echo "::group::Upload files"
-          scp $SSH_OPTS dist/index.js opc@"$ORACLE_HOST":~/bongbari/dist/index.js
-          echo "✅ Bundle uploaded"
-
-          # Copy the proxy engine
-          ssh $SSH_OPTS opc@"$ORACLE_HOST" 'mkdir -p ~/bongbari/server/proxy-engine'
-          scp $SSH_OPTS server/proxy-engine/server.mjs opc@"$ORACLE_HOST":~/bongbari/server/proxy-engine/server.mjs
-          if [ -f server/proxy-engine/proxies.txt ]; then
-            scp $SSH_OPTS server/proxy-engine/proxies.txt opc@"$ORACLE_HOST":~/bongbari/server/proxy-engine/proxies.txt
-          fi
-
-          # Sync server-package.json as package.json (minimal 17 deps — safe for 503MB VM)
-          scp $SSH_OPTS server-package.json opc@"$ORACLE_HOST":~/bongbari/package.json
-          echo "✅ All files uploaded"
+          scp $SSH_OPTS dist/index.js root@"$HETZNER_HOST":/opt/bongbari/index.js
+          scp $SSH_OPTS server-package.json root@"$HETZNER_HOST":/opt/bongbari/package.json
+          echo "✅ Bundle + package.json uploaded"
           echo "::endgroup::"
 
-          # SSH in: safe npm install (server-package.json only) + restart PM2
+          # SSH in: npm install (minimal deps) + pm2 restart
           echo "::group::Install & restart"
-          ssh $SSH_OPTS opc@"$ORACLE_HOST" '
+          ssh $SSH_OPTS root@"$HETZNER_HOST" '
             set -e
-            export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-            export NODE_OPTIONS="--max-old-space-size=256"
-            echo "=== BongBari Oracle Deploy ==="
-            cd ~/bongbari
-
-            # Safe install with minimal server deps only (server-package.json)
-            npm install --no-package-lock --omit=dev 2>&1 | tail -5
-
-            # Main Express server
-            pm2 delete bongbari 2>/dev/null || true
-            pm2 start dist/index.js --name bongbari --node-args="--max-old-space-size=256"
-
-            # CORS Proxy Engine (port 8080)
-            pm2 restart bongbari-proxy || pm2 start server/proxy-engine/server.mjs --name bongbari-proxy
-
+            echo "=== BongBari Hetzner Deploy ==="
+            cd /opt/bongbari
+            npm install --omit=dev --no-audit --no-fund 2>&1 | tail -5
+            pm2 restart bongbari --update-env
             pm2 save
+            sleep 3
+            curl -sf http://localhost:5000/api/version && echo "✅ Health check passed" || echo "⚠️ Health check failed — check pm2 logs"
             echo "=== Deploy complete ==="
             pm2 list
           '
           echo "::endgroup::"
-          rm -f /tmp/oracle_key
-          echo "✅ Oracle backend deployed successfully"
+          rm -f /tmp/hetzner_key
+          echo "✅ Hetzner backend deployed successfully"

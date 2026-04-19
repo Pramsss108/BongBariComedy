@@ -1,90 +1,61 @@
-# Full Agentic Control Plan (Hetzner + Cloudflare + VS Code)
+# Full Agentic Control Plan
 
-This guide is for non-coders. Follow once, then future agents can run almost everything automatically.
+## Step 1: Open required pages
+1. Open Cloudflare API Tokens: [https://dash.cloudflare.com/profile/api-tokens](https://dash.cloudflare.com/profile/api-tokens)
+2. Open GitHub repo secrets: [https://github.com/Pramsss108/BongBariComedy/settings/secrets/actions](https://github.com/Pramsss108/BongBariComedy/settings/secrets/actions)
+3. Open GitHub Actions list: [https://github.com/Pramsss108/BongBariComedy/actions](https://github.com/Pramsss108/BongBariComedy/actions)
+4. Open Cloudflare DNS: [https://dash.cloudflare.com/?to=/:account/:zone/dns/records](https://dash.cloudflare.com/?to=/:account/:zone/dns/records)
 
-## What You Already Finished
-- Backend primary is Hetzner: 78.47.104.43
-- Cloudflare `api` DNS now points to Hetzner
-- `api` record is Proxied ON (correct)
-- GitHub auto-deploy to Hetzner is configured
-- GitHub secrets already set:
-  - HETZNER_HOST
-  - HETZNER_SSH_KEY
-  - HETZNER_ENV
+## Step 2: Create Cloudflare token
+1. On API Tokens page click Create Token.
+2. Choose Edit zone DNS template.
+3. Set permissions:
+   - Zone Read
+   - Zone DNS Edit
+4. Set zone scope to bongbari.com only.
+5. Create token.
+6. Copy token.
 
-## One-Time Setup Left (Critical)
-You must add Cloudflare API token secret so agents can switch DNS automatically.
+## Step 3: Save token in GitHub
+1. Open Actions secrets page: [https://github.com/Pramsss108/BongBariComedy/settings/secrets/actions](https://github.com/Pramsss108/BongBariComedy/settings/secrets/actions)
+2. Click New repository secret.
+3. Name: CLOUDFLARE_API_TOKEN
+4. Secret value: paste token from Step 2.
+5. Click Add secret.
 
-### Step 1: Create Cloudflare API Token
-1. Open Cloudflare dashboard -> My Profile -> API Tokens.
-2. Click Create Token.
-3. Use template: Edit zone DNS.
-4. Permissions:
-   - Zone:Read
-   - Zone DNS:Edit
-5. Zone resources:
-   - Include -> Specific zone -> bongbari.com
-6. Create Token and copy token value.
-
-### Step 2: Save Token in GitHub Secrets
-1. Open GitHub repo -> Settings -> Secrets and variables -> Actions.
-2. New repository secret:
-   - Name: CLOUDFLARE_API_TOKEN
-   - Value: (paste token)
-3. Save.
-
-After this, routing can be switched from GitHub Actions in one click.
-
-## One-Click DNS Switch (Already Added)
-Workflow name:
-- Cloudflare DNS Switch + Health Check
-
-How to run:
-1. GitHub -> Actions -> Cloudflare DNS Switch + Health Check.
+## Step 4: Run one-click DNS switch workflow
+1. Open workflow page: [https://github.com/Pramsss108/BongBariComedy/actions/workflows/cloudflare-dns-switch.yml](https://github.com/Pramsss108/BongBariComedy/actions/workflows/cloudflare-dns-switch.yml)
 2. Click Run workflow.
-3. Choose target_backend:
-   - hetzner (normal)
-   - oracle (emergency rollback)
-   - custom (manual IP)
-4. Run.
+3. Select branch: main.
+4. Set target_backend:
+   - hetzner for normal production
+   - oracle for rollback
+   - custom for manual IP
+5. Leave api hostname as api.bongbari.com.
+6. Click Run workflow.
 
-What it does automatically:
-- Updates `api.bongbari.com` A record in Cloudflare
-- Forces proxied ON and TTL Auto
-- Runs health check on `https://api.bongbari.com/api/version`
-- Fails if unhealthy
+## Step 5: Verify DNS + health
+1. Open workflow runs: [https://github.com/Pramsss108/BongBariComedy/actions/workflows/cloudflare-dns-switch.yml](https://github.com/Pramsss108/BongBariComedy/actions/workflows/cloudflare-dns-switch.yml)
+2. Open latest run.
+3. Confirm green status.
+4. Open API health URL: [https://api.bongbari.com/api/version](https://api.bongbari.com/api/version)
+5. Confirm response contains healthy.
 
-## Daily Zero-Code Ops (Safe Commands)
-For future agents, this is the normal pattern:
-1. Code change -> push to main.
-2. GitHub deploy workflow ships backend to Hetzner.
-3. If routing needs switch, run Cloudflare DNS workflow.
-4. Verify endpoint returns healthy JSON.
+## Step 6: Standard deploy flow (no manual server work)
+1. Push code to main.
+2. Open deploy workflow: [https://github.com/Pramsss108/BongBariComedy/actions/workflows/deploy.yml](https://github.com/Pramsss108/BongBariComedy/actions/workflows/deploy.yml)
+3. Confirm run is green.
+4. Re-check API health: [https://api.bongbari.com/api/version](https://api.bongbari.com/api/version)
 
-## Emergency Rollback (No Coding)
-If production breaks:
-1. Run Cloudflare DNS workflow.
-2. Set target_backend = oracle (or custom IP).
-3. Run and wait for health check.
-4. Once stable, investigate safely.
+## Step 7: Emergency rollback flow
+1. Open DNS switch workflow: [https://github.com/Pramsss108/BongBariComedy/actions/workflows/cloudflare-dns-switch.yml](https://github.com/Pramsss108/BongBariComedy/actions/workflows/cloudflare-dns-switch.yml)
+2. Click Run workflow.
+3. Set target_backend to oracle or custom.
+4. Run workflow.
+5. Check API health: [https://api.bongbari.com/api/version](https://api.bongbari.com/api/version)
 
-## Security Rules (Must Keep)
-- Never share token/private key in chat screenshots.
-- Keep Cloudflare token scope limited to bongbari.com only.
-- Keep `api` as Proxied ON.
-- Never edit CNAME unless domain migration is intentional.
-
-## VS Code Full Agentic Capability Checklist
-To allow agents to do almost everything inside VS Code:
-- GitHub CLI logged in (`gh auth status`)
-- SSH key exists for Hetzner and works
-- GitHub repo secrets configured (including CLOUDFLARE_API_TOKEN)
-- Cloudflare token with Zone DNS edit permission
-- Dev servers run with `npm run dev:live`
-
-## Quick Verification (2 minutes)
-1. Open `https://api.bongbari.com/api/version`
-2. Confirm response includes `healthy`
-3. Confirm app features using API are working
-
-If all 3 pass, you are fully agentic-ready.
+## Step 8: Fixed rules to keep
+1. Keep DNS record api -> 78.47.104.43 with proxied enabled.
+2. Keep API origin port rewrite rule disabled.
+3. Do not change CNAME unless you intentionally migrate domain.
+4. Keep secrets in GitHub Actions only.

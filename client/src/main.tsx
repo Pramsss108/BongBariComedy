@@ -13,11 +13,12 @@ if (typeof window !== 'undefined') {
     setTimeout(startTunnel, 3000);
   }
 
-  // C1: Register PWA service worker (passive — doesn't cache SPA shell, only static assets).
-  // Guarded: only in production to avoid interfering with Vite dev HMR.
+  // Unregister old service workers in production to avoid stale-cache white screens.
   if ('serviceWorker' in navigator && import.meta.env.PROD) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').catch(() => { /* non-fatal */ });
+      navigator.serviceWorker.getRegistrations()
+        .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+        .catch(() => { /* non-fatal */ });
     });
   }
 }

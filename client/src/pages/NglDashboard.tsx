@@ -8,7 +8,6 @@ import ShareModal from '@/components/ShareModal';
 import QRCode from 'qrcode';
 import { sfxNewMessage, sfxDicePop, sfxTap, getNglMuted, setNglMuted } from '@/lib/nglSfx';
 import NglUpgradeModal from '@/components/NglUpgradeModal';
-import { NglWelcomeTour } from '@/components/NglWelcomeTour';
 import { haptic } from '@/lib/useHaptic';
 import { PullToRefresh } from '@/components/PullToRefresh';
 
@@ -77,7 +76,7 @@ const PROMPT_POOL: { bn: string; en: string }[] = [
   { bn: 'যদি আমি কাল disappear হয়ে যাই — কি করবি?', en: 'if I disappear tomorrow, what would you do?' },
 ];
 
-const REACTION_EMOJIS = ['❤️', '😂', '🔥', '💀', '🫣'];
+const REACTION_CHOICES = ['like', 'insight', 'boost', 'focus', 'star'];
 
 // Decode HTML entities from legacy data stored in DB (e.g. &#x27; → ')
 function decodeEntities(str: string): string {
@@ -178,14 +177,18 @@ export default function NglDashboard() {
   const [ogSaved, setOgSaved] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareModalScreen, setShareModalScreen] = useState<'picker' | 'whatsapp' | 'ig-guide' | 'wa-status-guide' | 'fb-guide'>('picker');
+  const [verifiedPhoneForPayment, setVerifiedPhoneForPayment] = useState('');
   const prevMsgCountRef = useRef(0);
   const confettiDone = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   // ── Phone verification state (Phase B) ──
-  const [phoneStatus, setPhoneStatus] = useState<'loading' | 'none' | 'unverified' | 'verified'>('loading');
+  const [phoneStatus, setPhoneStatus] = useState<'loading' | 'none' | 'otp_sent' | 'verified'>('loading');
   const [phoneMasked, setPhoneMasked] = useState('');
+  const [phoneLastVerifiedAt, setPhoneLastVerifiedAt] = useState<string | null>(null);
+  const [phoneLastRemovedAt, setPhoneLastRemovedAt] = useState<string | null>(null);
+  const [phoneDevOtpMode, setPhoneDevOtpMode] = useState(false);
   const [phoneShowForm, setPhoneShowForm] = useState(false);
   const [phoneInput, setPhoneInput] = useState('');
   const [phoneInputError, setPhoneInputError] = useState('');
@@ -279,20 +282,24 @@ export default function NglDashboard() {
       .catch(() => {});
     // Load phone verification status
     if (secretKey) {
-      fetch(buildApiUrl(`/api/ngl/u/${encodeURIComponent(username)}/phone`), {
+      fetch(`${buildApiUrl(`/api/ngl/u/${encodeURIComponent(username)}/phone`)}?_=${Date.now()}`, {
+        cache: 'no-store',
         headers: { 'X-NGL-Key': secretKey },
       })
         .then(r => r.ok ? r.json() : null)
         .then(d => {
           if (!d) { setPhoneStatus('none'); return; }
-          if (d.verified) {
-            setPhoneStatus('verified');
-            setPhoneMasked(d.phone || '');
-          } else if (d.phone) {
-            setPhoneStatus('unverified');
-            setPhoneMasked(d.phone || '');
+          const backendState = d.state as 'none' | 'otp_sent' | 'verified' | undefined;
+          const nextState = backendState || 'none';
+          setPhoneStatus(nextState);
+          setPhoneMasked(d.phone || '');
+          setPhoneDevOtpMode(!!d.devOtpMode);
+          setPhoneLastVerifiedAt(d.lastVerifiedAt || null);
+          setPhoneLastRemovedAt(d.lastRemovedAt || null);
+          if (nextState === 'verified') {
+            setVerifiedPhoneForPayment((d.phoneRaw || '').replace(/\D/g, '').slice(-10));
           } else {
-            setPhoneStatus('none');
+            setVerifiedPhoneForPayment('');
           }
         })
         .catch(() => setPhoneStatus('none'));
@@ -644,10 +651,13 @@ export default function NglDashboard() {
       const data = await res.json();
       if (res.ok && data.ok) {
         setPhoneOtpStatus('sent');
+        setPhoneStatus('otp_sent');
         setPhoneMasked(data.phone || `+91 ${phone.slice(0, 5)}•••••`);
+        setPhoneDevOtpMode(!!data.devOtpMode);
         startPhoneCooldown(60);
       } else if (res.status === 429) {
         setPhoneOtpStatus('sent');
+        setPhoneStatus('otp_sent');
         const waitMatch = (data.message || '').match(/(\d+)s/);
         startPhoneCooldown(waitMatch ? parseInt(waitMatch[1]) : 30);
         setPhoneMasked(`+91 ${phone.slice(0, 5)}•••••`);
@@ -662,12 +672,35 @@ export default function NglDashboard() {
   };
 
   const handlePhoneSendOtp = () => {
-    if (!isValidPhone(phoneInput)) {
-      setPhoneInputError(t('dash.phoneInvalid'));
-      return;
-    }
-    setPhoneInputError('');
-    sendPhoneOtp(phoneInput);
+    // Hidden dev shortcut: if a valid secret code is entered in phone field,
+    // backend unlocks test mode silently with no UI hint.
+    (async () => {
+      try {
+        const unlockRes = await fetch(buildApiUrl('/api/ngl/dev/unlock-test-mode'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, key: secretKey, code: phoneInput }),
+        });
+        if (unlockRes.ok) {
+          const unlockData = await unlockRes.json().catch(() => null);
+          localStorage.setItem('ngl_test_mode', '1');
+          if (unlockData?.testToken) localStorage.setItem('ngl_test_token', String(unlockData.testToken));
+          setPhoneInput('');
+          setPhoneInputError('');
+          setPhoneShowForm(false);
+          return;
+        }
+      } catch {
+        // Silent by design; fallback to normal OTP flow.
+      }
+
+      if (!isValidPhone(phoneInput)) {
+        setPhoneInputError(t('dash.phoneInvalid'));
+        return;
+      }
+      setPhoneInputError('');
+      sendPhoneOtp(phoneInput);
+    })();
   };
 
   const handlePhoneResend = () => {
@@ -675,6 +708,30 @@ export default function NglDashboard() {
     setPhoneOtpDigits(['', '', '', '', '', '']);
     setPhoneOtpError('');
     sendPhoneOtp(phoneInput);
+  };
+
+  const handlePhoneReset = async () => {
+    try {
+      const res = await fetch(buildApiUrl('/api/ngl/otp/reset'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, key: secretKey }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        setError(lang === 'bn' ? 'নম্বর মুছতে ব্যর্থ' : 'Failed to remove phone. Try again.');
+        return;
+      }
+      setPhoneStatus('none');
+      setPhoneMasked('');
+      setPhoneOtpStatus('idle');
+      setPhoneInput('');
+      setPhoneLastVerifiedAt(null);
+      setPhoneLastRemovedAt(data?.lastRemovedAt || new Date().toISOString());
+      setVerifiedPhoneForPayment('');
+    } catch {
+      setError(lang === 'bn' ? 'নম্বর মুছতে ব্যর্থ' : 'Failed to remove phone. Try again.');
+    }
   };
 
   const handlePhoneVerifyOtp = async () => {
@@ -692,7 +749,9 @@ export default function NglDashboard() {
       if (res.ok && data.ok) {
         setPhoneOtpStatus('verified');
         setPhoneStatus('verified');
+        setPhoneLastVerifiedAt(data.lastVerifiedAt || new Date().toISOString());
         setPhoneShowForm(false);
+        setVerifiedPhoneForPayment(phoneInput.replace(/\D/g, '').slice(-10));
         // Reset after animation
         setTimeout(() => { setPhoneOtpStatus('idle'); setPhoneOtpDigits(['', '', '', '', '', '']); }, 1500);
       } else {
@@ -1380,7 +1439,7 @@ export default function NglDashboard() {
                 </motion.div>
 
                 {/* ═══ PHONE VERIFY: Slim premium pill ═══ */}
-                {phoneStatus !== 'loading' && phoneStatus !== 'verified' && (phoneStatus === 'unverified' || phoneStatus === 'none') && (
+                {phoneStatus !== 'loading' && phoneStatus !== 'verified' && (phoneStatus === 'otp_sent' || phoneStatus === 'none') && (
                   <motion.button
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -1401,7 +1460,7 @@ export default function NglDashboard() {
                     </motion.div>
                     <div className="flex-1 text-left min-w-0">
                       <p className="text-[11.5px] font-bold text-amber-100 leading-tight">{lang === 'bn' ? 'WhatsApp verify করো' : 'Verify WhatsApp'}</p>
-                      <p className="text-[9.5px] text-amber-200/50 leading-tight mt-[1px]">{lang === 'bn' ? 'একবার মাত্র — ১ মিনিটের কাজ' : 'One-time • takes 1 minute'}</p>
+                      <p className="text-[9.5px] text-amber-200/50 leading-tight mt-[1px]">{phoneStatus === 'otp_sent' ? (lang === 'bn' ? 'Pending verification' : 'Pending verification') : (lang === 'bn' ? 'Not added' : 'Not added')}</p>
                     </div>
                     <span className="text-[9px] font-extrabold text-amber-200/80 bg-amber-400/10 px-1.5 py-[2px] rounded-md border border-amber-400/20 flex-shrink-0">
                       {lang === 'bn' ? 'শুরু' : 'START'}
@@ -1416,16 +1475,51 @@ export default function NglDashboard() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.3, delay: 0.1 }}
-                    onClick={() => { localStorage.setItem('ngl_otp_seen', '1'); setPhoneShowForm(true); setPhoneOtpStatus('idle'); setPhoneOtpDigits(['', '', '', '', '', '']); setPhoneOtpError(''); setPhoneInputError(''); }}
-                    className="flex items-center gap-2 px-2 py-1 cursor-pointer group"
+                    className="flex items-center gap-2 px-2 py-1"
                   >
+                    <button
+                      type="button"
+                      onClick={() => { localStorage.setItem('ngl_otp_seen', '1'); setPhoneShowForm(true); setPhoneOtpStatus('idle'); setPhoneOtpDigits(['', '', '', '', '', '']); setPhoneOtpError(''); setPhoneInputError(''); }}
+                      className="flex items-center gap-2 cursor-pointer group"
+                    >
                     <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5 flex-shrink-0">
                       <circle cx="12" cy="12" r="10" fill="#10b981" opacity="0.2"/>
                       <path d="M8 12l3 3 5-5" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                     <span className="text-[11px] font-mono text-emerald-400/60 group-hover:text-emerald-400/80 transition-colors">{phoneMasked}</span>
+                    <span className="text-[9px] text-emerald-300/70">{lang === 'bn' ? 'Verified' : 'Verified'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handlePhoneReset}
+                      className="ml-1 text-[9px] font-bold text-rose-300/70 hover:text-rose-200 transition-colors"
+                    >
+                      {lang === 'bn' ? 'Remove' : 'Remove'}
+                    </button>
                   </motion.div>
                 )}
+
+                <div className="text-[10px] text-white/35 mt-1.5">
+                  <span>{lang === 'bn' ? 'Phone status' : 'Phone status'}: </span>
+                  <span className="font-semibold text-white/60">
+                    {phoneStatus === 'verified' ? 'Verified' : phoneStatus === 'otp_sent' ? 'Pending verification' : 'Not added'}
+                  </span>
+                  {phoneDevOtpMode && (
+                    <span className="ml-2 inline-flex items-center rounded-md border border-amber-300/30 bg-amber-300/10 px-1.5 py-[1px] text-[9px] font-bold text-amber-200">
+                      Test OTP mode
+                    </span>
+                  )}
+                  {phoneLastVerifiedAt && (
+                    <span className="ml-2 text-white/45">
+                      {lang === 'bn' ? 'Last verified:' : 'Last verified:'} {new Date(phoneLastVerifiedAt).toLocaleString()}
+                    </span>
+                  )}
+                  {phoneStatus === 'none' && phoneLastRemovedAt && (
+                    <span className="ml-2 text-white/45">
+                      {lang === 'bn' ? 'Last removed:' : 'Last removed:'} {new Date(phoneLastRemovedAt).toLocaleString()}
+                    </span>
+                  )}
+                </div>
 
                 {/* ═══ SHARE: Premium link pill with handle + copy ═══ */}
                 <motion.button
@@ -1699,12 +1793,18 @@ export default function NglDashboard() {
                         <div className="p-4 sm:p-5 pl-5">
                         <div className="flex items-start gap-3">
                           <div className="flex flex-col items-center gap-1 flex-shrink-0 pt-0.5">
-                            <span className="text-xl">{msg.emoji || '💬'}</span>
+                            <span className="w-5 h-5 text-white/35">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                                <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H6l-3 3v-6.5A8.5 8.5 0 1 1 21 11.5z" />
+                              </svg>
+                            </span>
                             <button
                               onClick={() => setReactingId(reactingId === msg.id ? null : msg.id)}
                               className="text-white/20 hover:text-pink-400/60 transition-all text-sm hover:scale-110 active:scale-90 mt-1"
                             >
-                              {msg.reaction || '🤍'}
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                                <path d="M12 21s-7-4.4-9.2-8.2C1 9.4 2.5 6 6 6c2 0 3.3 1 4 2 0.7-1 2-2 4-2 3.5 0 5 3.4 3.2 6.8C19 16.6 12 21 12 21z" />
+                              </svg>
                             </button>
                           </div>
                           <div className="flex-1 min-w-0">
@@ -1742,17 +1842,17 @@ export default function NglDashboard() {
                               <div className="flex flex-wrap items-center gap-1.5 mt-2">
                                 {locationStr && (
                                   <span className="inline-flex items-center gap-1 bg-white/[0.06] text-white/50 text-[10px] font-medium px-2 py-0.5 rounded-full">
-                                    📍 {locationStr}
+                                    Loc: {locationStr}
                                   </span>
                                 )}
                                 {msg.senderDevice && (
                                   <span className="inline-flex items-center gap-1 bg-white/[0.06] text-white/50 text-[10px] font-medium px-2 py-0.5 rounded-full">
-                                    {['iPhone','iPad','Samsung','Xiaomi','OPPO','Vivo','OnePlus','Realme','Google Pixel','Huawei','Nokia','Motorola','Android'].includes(msg.senderDevice) ? '📱' : '💻'} {msg.senderDevice}
+                                    Device: {msg.senderDevice}
                                   </span>
                                 )}
                                 {msg.senderLang && (
                                   <span className="inline-flex items-center gap-1 bg-white/[0.06] text-white/50 text-[10px] font-medium px-2 py-0.5 rounded-full">
-                                    🗣️ {msg.senderLang}
+                                    Lang: {msg.senderLang}
                                   </span>
                                 )}
                               </div>
@@ -1776,7 +1876,12 @@ export default function NglDashboard() {
                                 aria-label={t('pro.lockedCity')}
                               >
                                 <div className="flex items-center gap-2">
-                                  <span className="text-[11px]">🔒</span>
+                                  <span className="w-3.5 h-3.5 text-fuchsia-300/80">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+                                      <rect x="4" y="11" width="16" height="10" rx="2" />
+                                      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                                    </svg>
+                                  </span>
                                   <span className="text-fuchsia-200/80 text-[10px] font-semibold flex-1 truncate">
                                     {t('pro.lockedCity')}
                                   </span>
@@ -1798,52 +1903,52 @@ export default function NglDashboard() {
                                   <div className="mt-2 flex flex-wrap gap-1.5">
                                     {msg.senderRegion && msg.senderCountry && (
                                       <span className="inline-flex items-center gap-1 bg-white/[0.04] text-white/40 text-[9px] font-medium px-2 py-0.5 rounded-full">
-                                        🌍 {msg.senderRegion}, {msg.senderCountry}
+                                        Region: {msg.senderRegion}, {msg.senderCountry}
                                       </span>
                                     )}
                                     {msg.senderOs && (
                                       <span className="inline-flex items-center gap-1 bg-white/[0.04] text-white/40 text-[9px] font-medium px-2 py-0.5 rounded-full">
-                                        ⚙️ {msg.senderOs}
+                                        OS: {msg.senderOs}
                                       </span>
                                     )}
                                     {msg.senderBrowser && (
                                       <span className="inline-flex items-center gap-1 bg-white/[0.04] text-white/40 text-[9px] font-medium px-2 py-0.5 rounded-full">
-                                        🌐 {msg.senderBrowser}
+                                        Browser: {msg.senderBrowser}
                                       </span>
                                     )}
                                     {msg.senderIsp && (
                                       <span className="inline-flex items-center gap-1 bg-white/[0.04] text-white/40 text-[9px] font-medium px-2 py-0.5 rounded-full">
-                                        📡 {msg.senderIsp}
+                                        ISP: {msg.senderIsp}
                                       </span>
                                     )}
                                     {msg.senderConnectionType && (
                                       <span className="inline-flex items-center gap-1 bg-white/[0.04] text-white/40 text-[9px] font-medium px-2 py-0.5 rounded-full">
-                                        📶 {msg.senderConnectionType}
+                                        Net: {msg.senderConnectionType}
                                       </span>
                                     )}
                                     {msg.senderLocalTime && (
                                       <span className="inline-flex items-center gap-1 bg-white/[0.04] text-white/40 text-[9px] font-medium px-2 py-0.5 rounded-full">
-                                        ⏰ {msg.senderLocalTime}
+                                        Time: {msg.senderLocalTime}
                                       </span>
                                     )}
                                     {msg.senderScreenRes && (
                                       <span className="inline-flex items-center gap-1 bg-white/[0.04] text-white/40 text-[9px] font-medium px-2 py-0.5 rounded-full">
-                                        📐 {msg.senderScreenRes}
+                                        Res: {msg.senderScreenRes}
                                       </span>
                                     )}
                                     {msg.senderReferrer && (
                                       <span className="inline-flex items-center gap-1 bg-white/[0.04] text-white/40 text-[9px] font-medium px-2 py-0.5 rounded-full">
-                                        🔗 via {msg.senderReferrer}
+                                        Ref: {msg.senderReferrer}
                                       </span>
                                     )}
                                     {msg.senderBatteryLevel && (
                                       <span className="inline-flex items-center gap-1 bg-white/[0.04] text-white/40 text-[9px] font-medium px-2 py-0.5 rounded-full">
-                                        🔋 {msg.senderBatteryLevel}
+                                        Battery: {msg.senderBatteryLevel}
                                       </span>
                                     )}
                                     {msg.senderDarkMode && (
                                       <span className="inline-flex items-center gap-1 bg-white/[0.04] text-white/40 text-[9px] font-medium px-2 py-0.5 rounded-full">
-                                        {msg.senderDarkMode === 'Dark' ? '🌙' : '☀️'} {msg.senderDarkMode}
+                                        Mode: {msg.senderDarkMode}
                                       </span>
                                     )}
                                   </div>
@@ -1854,11 +1959,11 @@ export default function NglDashboard() {
                             <div className="flex items-center gap-2 mt-2.5 pt-2 border-t border-white/[0.04]">
                               <p className="text-white/20 text-[10px] font-medium">{timeAgo(msg.createdAt)}</p>
                               {msg.reaction && (
-                                <motion.span key={msg.reaction} initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-xs">{msg.reaction}</motion.span>
+                                <motion.span key={msg.reaction} initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-[9px] uppercase tracking-wide text-white/45 bg-white/[0.05] px-1.5 py-0.5 rounded-full border border-white/[0.06]">{msg.reaction}</motion.span>
                               )}
                               {msg.pinned && msg.pinned > 0 && (
                                 <span className="inline-flex items-center gap-0.5 bg-amber-500/10 text-amber-300/80 text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-amber-400/15">
-                                  📌 {t('dash.pinned')}
+                                  {t('dash.pinned')}
                                 </span>
                               )}
                               <div className="flex-1" />
@@ -1869,7 +1974,9 @@ export default function NglDashboard() {
                                 title={msg.pinned && msg.pinned > 0 ? t('dash.unpin') : t('dash.pin')}
                                 className={`transition-all text-[11px] hover:scale-110 active:scale-90 opacity-0 group-hover:opacity-100 sm:opacity-60 sm:hover:opacity-100 ${msg.pinned && msg.pinned > 0 ? 'text-amber-400/80' : 'text-white/15 hover:text-amber-400/60'}`}
                               >
-                                📌
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+                                  <path d="M16 3v8l4 4-4 4-4-4V3z" />
+                                </svg>
                               </button>
                               {/* B2: Block sender */}
                               <button
@@ -1878,14 +1985,21 @@ export default function NglDashboard() {
                                 title={t('dash.block')}
                                 className="text-white/10 hover:text-orange-400/60 transition-all text-[10px] hover:scale-110 active:scale-90 opacity-0 group-hover:opacity-100 sm:opacity-100"
                               >
-                                🚫
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="w-3.5 h-3.5">
+                                  <circle cx="12" cy="12" r="9" />
+                                  <path d="M7 7l10 10" />
+                                </svg>
                               </button>
                               <button
                                 onClick={() => handleDelete(msg.id)}
                                 aria-label={t('dash.deleteHint')}
                                 className="text-white/10 hover:text-red-400/50 transition-all text-[10px] hover:scale-110 active:scale-90 opacity-0 group-hover:opacity-100 sm:opacity-100"
                               >
-                                🗑️
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+                                  <path d="M3 6h18" />
+                                  <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                  <path d="M19 6l-1 14H6L5 6" />
+                                </svg>
                               </button>
                             </div>
                           </div>
@@ -1899,13 +2013,13 @@ export default function NglDashboard() {
                               exit={{ opacity: 0, y: -5, scale: 0.9 }}
                               className="flex gap-1 mt-2 justify-center bg-[#161222] rounded-full py-1.5 px-2 mx-4 mb-3 border border-white/[0.06]"
                             >
-                              {REACTION_EMOJIS.map(emoji => (
+                              {REACTION_CHOICES.map(reactionKey => (
                                 <button
-                                  key={emoji}
-                                  onClick={() => handleReact(msg.id, emoji)}
-                                  className={`text-lg hover:scale-125 active:scale-90 transition-transform px-1 py-0.5 rounded-full ${msg.reaction === emoji ? 'bg-white/10 scale-110' : ''}`}
+                                  key={reactionKey}
+                                  onClick={() => handleReact(msg.id, reactionKey)}
+                                  className={`text-[9px] uppercase tracking-wide hover:scale-105 active:scale-95 transition-transform px-2 py-1 rounded-full border ${msg.reaction === reactionKey ? 'bg-white/10 border-white/20 text-white/80' : 'border-white/[0.06] text-white/40 hover:text-white/65'}`}
                                 >
-                                  {emoji}
+                                  {reactionKey}
                                 </button>
                               ))}
                               {msg.reaction && (
@@ -2037,15 +2151,19 @@ export default function NglDashboard() {
                 onClick={e => e.stopPropagation()}
               >
                 <div className="bg-[#12091e]/95 backdrop-blur-2xl rounded-3xl p-4 sm:p-6 border border-violet-500/10 shadow-2xl">
-                  {/* Sad emoji */}
+                  {/* Farewell icon */}
                   <div className="flex justify-center mb-3">
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1, rotate: [0, -5, 5, 0] }}
                       transition={{ delay: 0.2, type: 'spring' }}
-                      className="text-5xl"
+                      className="w-12 h-12 rounded-full border border-white/15 bg-white/[0.04] flex items-center justify-center text-white/60"
                     >
-                      😢
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+                        <path d="M4 7h16" />
+                        <path d="M9 7V5a3 3 0 0 1 6 0v2" />
+                        <path d="M6 7l1 12h10l1-12" />
+                      </svg>
                     </motion.div>
                   </div>
 
@@ -2118,6 +2236,7 @@ export default function NglDashboard() {
           onClose={() => setShowUpgrade(false)}
           username={username}
           secretKey={secretKey}
+          verifiedPhone={verifiedPhoneForPayment}
           onSuccess={(_premiumUntil) => {
             setIsPremium(true);
             setShowUpgrade(false);
@@ -2126,9 +2245,6 @@ export default function NglDashboard() {
             setTimeout(() => setUpgradeToast(false), 4000);
           }}
         />
-
-        {/* ── First-login Welcome Tour (3 coach marks) ── */}
-        <NglWelcomeTour />
 
         {/* PRO activated toast */}
         <AnimatePresence>
@@ -2210,7 +2326,7 @@ export default function NglDashboard() {
                       {/* Actions row */}
                       <div className="flex gap-2">
                         <button
-                          onClick={() => { setPhoneStatus('none'); setPhoneOtpStatus('idle'); setPhoneInput(''); }}
+                          onClick={handlePhoneReset}
                           className="flex-1 flex items-center justify-center gap-1.5 text-[10px] font-bold text-white/30 hover:text-white/55 py-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.04] transition-all"
                         >
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>

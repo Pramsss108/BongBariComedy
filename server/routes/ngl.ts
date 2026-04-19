@@ -4,7 +4,7 @@ import { pgDb } from '../db.pg';
 import { nglUsers, nglMessages, nglBlockedFingerprints } from '../../shared/schema';
 import { eq, desc, sql, and } from 'drizzle-orm';
 import { generateOtp, hashOtp, verifyOtp, otpExpiryDate, validatePhone, maskPhone, MAX_OTP_ATTEMPTS } from '../lib/otp';
-import { sendWhatsAppOtp, devLogOtp } from '../lib/whatsapp';
+import { sendWhatsAppOtp, sendWhatsAppText, devLogOtp } from '../lib/whatsapp';
 import { containsBlockedWord } from '../lib/ngl-blocked-words';
 
 // ──────────────────────────────────────────────────────────
@@ -28,10 +28,13 @@ interface NglUserMem {
   phoneVerified: number;
   otpHash: string | null;
   otpExpiry: number | null; // epoch ms
+  phoneVerifiedAt: number | null;
   // Phase 40: Custom OG meta
   ogTitle: string | null;
   ogDescription: string | null;
   createdAt: number;
+  premiumSource?: 'none' | 'live_payment' | 'test_payment' | 'dev_grant' | 'manual_admin';
+  premiumTxnId?: string | null;
 }
 
 interface NglMessageMem {
@@ -75,9 +78,240 @@ const createRateMap = new Map<string, number>();
 const sendRateMap = new Map<string, number>();
 const otpRateMap = new Map<string, number>();
 const otpAttemptMap = new Map<string, number>(); // brute-force lockout: track verify attempts per user
+const pendingPhoneMap = new Map<string, string>(); // pending phone lives here until OTP is verified
+const phoneLastResetAtMap = new Map<string, string>();
+let lastDevCodeSentDayStamp = '';
 const CREATE_COOLDOWN = 30_000;
 const SEND_COOLDOWN = 8_000;
 const OTP_COOLDOWN = 60_000; // 1 min between OTP requests per user
+
+type PhoneVerificationState = 'none' | 'otp_sent' | 'verified';
+
+type NglAuditEventType =
+  | 'otp_send'
+  | 'otp_verify_success'
+  | 'otp_verify_failed'
+  | 'otp_reset'
+  | 'otp_cleanup_stale'
+  | 'premium_activated'
+  | 'premium_revoked'
+  | 'dev_grant_attempt'
+  | 'dev_grant_denied';
+
+interface NglAuditEvent {
+  at: number;
+  type: NglAuditEventType;
+  username: string;
+  ip?: string;
+  source?: string;
+  details?: Record<string, any>;
+}
+
+const NGL_AUDIT_MAX = 2000;
+const nglAuditLog: NglAuditEvent[] = [];
+
+function appendNglAudit(event: NglAuditEvent) {
+  nglAuditLog.push(event);
+  if (nglAuditLog.length > NGL_AUDIT_MAX) nglAuditLog.splice(0, nglAuditLog.length - NGL_AUDIT_MAX);
+  console.log('[NGL/audit]', JSON.stringify(event));
+}
+
+function timingSafeEqualHex(a: string, b: string): boolean {
+  const aBuf = Buffer.from(a || '', 'utf8');
+  const bBuf = Buffer.from(b || '', 'utf8');
+  if (aBuf.length !== bBuf.length) return false;
+  return crypto.timingSafeEqual(aBuf, bBuf);
+}
+
+function getForwardedIp(req: any): string {
+  const ff = req.headers['x-forwarded-for'];
+  if (typeof ff === 'string' && ff.trim()) {
+    return ff.split(',')[0]!.trim();
+  }
+  return getIp(req);
+}
+
+function getPhoneVerificationStateFromUser(user: any): PhoneVerificationState {
+  const hasPhone = !!user?.phone;
+  const verified = user?.phoneVerified === 1;
+  const expiryRaw = user?.otpExpiry;
+  const expiryTs = expiryRaw ? new Date(expiryRaw).getTime() : 0;
+  const otpPending = !!user?.otpHash && Number.isFinite(expiryTs) && expiryTs > Date.now();
+  if (verified && hasPhone) return 'verified';
+  if (otpPending) return 'otp_sent';
+  return 'none';
+}
+
+const devGrantRateMap = new Map<string, number[]>();
+
+function getDevGrantBucket(key: string, now: number): number[] {
+  const bucket = (devGrantRateMap.get(key) || []).filter((t) => now - t < 10 * 60_000);
+  devGrantRateMap.set(key, bucket);
+  return bucket;
+}
+
+function isDevGrantEnabledNow(): boolean {
+  const enabled = String(process.env.NGL_ENABLE_DEV_GRANT || '').trim().toLowerCase() === 'true';
+  return process.env.NODE_ENV !== 'production' || enabled;
+}
+
+function isIpAllowlisted(ip: string): boolean {
+  const allowlistRaw = String(process.env.NGL_DEV_GRANT_IP_ALLOWLIST || '').trim();
+  if (!allowlistRaw) return process.env.NODE_ENV !== 'production';
+  const allowlist = allowlistRaw.split(',').map((x) => x.trim()).filter(Boolean);
+  return allowlist.includes(ip);
+}
+
+function verifyDevGrantSignature(req: any, username: string, devSecret: string): boolean {
+  const tsHeader = String(req.headers['x-dev-grant-ts'] || '').trim();
+  const sigHeader = String(req.headers['x-dev-grant-signature'] || '').trim().toLowerCase();
+  if (!tsHeader || !sigHeader) return false;
+  const tsNum = Number(tsHeader);
+  if (!Number.isFinite(tsNum)) return false;
+  if (Math.abs(Date.now() - tsNum) > 5 * 60_000) return false;
+  const base = `${req.method}|${req.path}|${username}|${tsHeader}`;
+  const expected = crypto.createHmac('sha256', devSecret).update(base).digest('hex');
+  return timingSafeEqualHex(expected, sigHeader);
+}
+
+function isTestModeEnabled(): boolean {
+  return String(process.env.NGL_TEST_MODE || '').trim().toLowerCase() === 'true';
+}
+
+function getDevCodeTimeZone(): string {
+  return String(process.env.NGL_DEV_CODE_TZ || 'Asia/Kolkata').trim() || 'Asia/Kolkata';
+}
+
+function getDayStampForDevCode(date = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: getDevCodeTimeZone(),
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);
+}
+
+function getTimePartsForDevCode(date = new Date()): { hour: number; minute: number } {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: getDevCodeTimeZone(),
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(date);
+  const hour = Number(parts.find((p) => p.type === 'hour')?.value || '0');
+  const minute = Number(parts.find((p) => p.type === 'minute')?.value || '0');
+  return { hour, minute };
+}
+
+function getDailyDevCodeSchedule(): { hour: number; minute: number } {
+  const hh = Number(String(process.env.NGL_DEV_CODE_HOUR || '11').trim());
+  const mm = Number(String(process.env.NGL_DEV_CODE_MINUTE || '0').trim());
+  const hour = Number.isFinite(hh) && hh >= 0 && hh <= 23 ? hh : 11;
+  const minute = Number.isFinite(mm) && mm >= 0 && mm <= 59 ? mm : 0;
+  return { hour, minute };
+}
+
+function getDevCodeSeed(): string {
+  return String(process.env.NGL_DEV_CODE_SEED || process.env.NGL_TEST_TOKEN_SECRET || '').trim();
+}
+
+function generateDailyDevCode(dayStamp = getDayStampForDevCode()): string | null {
+  const seed = getDevCodeSeed();
+  if (!seed) return null;
+  const digest = crypto.createHmac('sha256', seed).update(`ngl_dev_code|${dayStamp}`).digest();
+  const n = digest.readUInt32BE(0) % 1_000_000;
+  return String(n).padStart(6, '0');
+}
+
+function isCurrentDailyDevCode(inputCode: string): boolean {
+  const expected = generateDailyDevCode();
+  if (!expected) return false;
+  const provided = String(inputCode || '').replace(/\D/g, '');
+  if (provided.length !== expected.length) return false;
+  return timingSafeEqualHex(provided, expected);
+}
+
+async function notifyDailyDevCodeIfNeeded(force = false) {
+  if (!isTestModeEnabled()) return;
+  const dayStamp = getDayStampForDevCode();
+  if (!force) {
+    const now = getTimePartsForDevCode();
+    const schedule = getDailyDevCodeSchedule();
+    if (now.hour !== schedule.hour || now.minute !== schedule.minute) return;
+    if (dayStamp === lastDevCodeSentDayStamp) return;
+  }
+
+  const code = generateDailyDevCode(dayStamp);
+  if (!code) return;
+
+  const to = String(process.env.NGL_DEV_CODE_WHATSAPP || '918777849865').replace(/\D/g, '');
+  if (!to) return;
+
+  const message = `Bong NGL dev secret code (${dayStamp}): ${code}\nPrevious day code is now invalid.`;
+  let sent = await sendWhatsAppText(to, message);
+  if (!sent.ok) {
+    // Fallback to template route for better cold-delivery reliability.
+    sent = await sendWhatsAppOtp(to, code);
+  }
+  if (sent.ok) {
+    lastDevCodeSentDayStamp = dayStamp;
+    console.log('[NGL/dev] Daily secret code sent to WhatsApp:', to, 'day:', dayStamp);
+  } else {
+    console.warn('[NGL/dev] Failed to send daily secret code:', sent.error || 'unknown error');
+  }
+}
+
+function parseAllowlistedTestUsers(): Set<string> {
+  return new Set(
+    String(process.env.NGL_TEST_ALLOWLIST || '')
+      .split(',')
+      .map((x) => x.trim().toLowerCase())
+      .filter(Boolean),
+  );
+}
+
+function verifyTestToken(req: any, username: string): boolean {
+  const token = String(req.headers['x-ngl-test-token'] || req.body?.testToken || '').trim();
+  if (!token) return false;
+  const secret = String(process.env.NGL_TEST_TOKEN_SECRET || '').trim();
+  if (!secret) return false;
+  const parts = token.split('.');
+  if (parts.length !== 2) return false;
+  const [payloadB64, sig] = parts;
+  const expected = crypto.createHmac('sha256', secret).update(payloadB64).digest('hex');
+  if (!timingSafeEqualHex(expected, String(sig || '').toLowerCase())) return false;
+  let payload: any;
+  try {
+    payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf8'));
+  } catch {
+    return false;
+  }
+  const exp = Number(payload?.exp || 0);
+  if (!Number.isFinite(exp) || exp <= Date.now()) return false;
+  if (String(payload?.username || '').trim().toLowerCase() !== username) return false;
+  if (String(payload?.scope || '') !== 'premium:test') return false;
+  return true;
+}
+
+function createTestToken(username: string, ttlMs = 60 * 60 * 1000): string | null {
+  const secret = String(process.env.NGL_TEST_TOKEN_SECRET || '').trim();
+  if (!secret) return null;
+  const payload = {
+    username,
+    scope: 'premium:test',
+    exp: Date.now() + Math.max(60_000, ttlMs),
+    nonce: crypto.randomBytes(8).toString('hex'),
+  };
+  const payloadB64 = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
+  const sig = crypto.createHmac('sha256', secret).update(payloadB64).digest('hex');
+  return `${payloadB64}.${sig}`;
+}
+
+function isAuthorizedTestUser(req: any, username: string): boolean {
+  if (!isTestModeEnabled()) return false;
+  if (verifyTestToken(req, username)) return true;
+  return parseAllowlistedTestUsers().has(username);
+}
 
 // B5: Periodic rate-limit map cleanup.
 // Prevents unbounded memory growth on Oracle VM (503MB RAM total).
@@ -97,6 +331,16 @@ setInterval(() => {
   // otpAttemptMap entries self-clear on success/lockout; prune conservatively
   if (otpAttemptMap.size > 500) otpAttemptMap.clear();
 }, RATE_MAP_SWEEP).unref?.();
+
+// Daily cryptographic dev code rotation + WhatsApp push.
+setTimeout(() => {
+  // Immediate send on boot so today's code reaches WhatsApp right after restart/deploy.
+  void notifyDailyDevCodeIfNeeded(true);
+}, 2_000).unref?.();
+setInterval(() => {
+  // Scheduled daily send at configured hour/minute in configured timezone.
+  void notifyDailyDevCodeIfNeeded(false);
+}, 60_000).unref?.();
 
 // B2: Compute a per-sender fingerprint from IP + User-Agent.
 // Hashed so the raw IP is never stored. Collisions are acceptable
@@ -353,7 +597,27 @@ async function dbCreateUser(username: string, prompt: string, secretKeyHash: str
   if (USE_PG) {
     await pgDb!.insert(nglUsers).values({ username, prompt, secretKeyHash, pinHash, theme: 'default', messageCount: 0, streakDays: 0 });
   } else {
-    memUsers.set(username, { username, prompt, secretKeyHash, pinHash, theme: 'default', photo: null, messageCount: 0, streakDays: 0, lastMessageDay: null, phone: null, phoneVerified: 0, otpHash: null, otpExpiry: null, ogTitle: null, ogDescription: null, createdAt: Date.now() });
+    memUsers.set(username, {
+      username,
+      prompt,
+      secretKeyHash,
+      pinHash,
+      theme: 'default',
+      photo: null,
+      messageCount: 0,
+      streakDays: 0,
+      lastMessageDay: null,
+      phone: null,
+      phoneVerified: 0,
+      otpHash: null,
+      otpExpiry: null,
+      phoneVerifiedAt: null,
+      ogTitle: null,
+      ogDescription: null,
+      createdAt: Date.now(),
+      premiumSource: 'none',
+      premiumTxnId: null,
+    });
   }
 }
 
@@ -616,7 +880,7 @@ export function registerNglRoutes(app: any) {
         return res.status(429).json({ message: `ধীরে! ${wait}s অপেক্ষা করো।` });
       }
 
-      const { username: rawUsername, prompt: rawPrompt, pin: rawPin, phone: rawPhone } = req.body || {};
+      const { username: rawUsername, prompt: rawPrompt, pin: rawPin } = req.body || {};
       const usernameError = validateUsername(rawUsername);
       if (usernameError) return res.status(400).json({ message: usernameError });
 
@@ -639,13 +903,6 @@ export function registerNglRoutes(app: any) {
         pinHash = hashKey(cleanPin);
       }
 
-      // Validate phone if provided (10-digit Indian number)
-      let cleanPhone: string | null = null;
-      if (rawPhone && typeof rawPhone === 'string' && rawPhone.trim().length > 0) {
-        cleanPhone = validatePhone(rawPhone.trim());
-        // Don't block account creation for invalid phone — just skip it
-      }
-
       const secretKey = generateSecretKey();
       const secretKeyHash = hashKey(secretKey);
       const prompt = rawPrompt && typeof rawPrompt === 'string' && rawPrompt.trim().length >= 3
@@ -653,16 +910,6 @@ export function registerNglRoutes(app: any) {
         : PROMPTS_BN[0];
 
       await dbCreateUser(username, prompt, secretKeyHash, pinHash);
-
-      // Save phone if provided (separate update to avoid breaking existing dbCreateUser)
-      if (cleanPhone) {
-        if (USE_PG) {
-          await pgDb!.update(nglUsers).set({ phone: cleanPhone }).where(eq(nglUsers.username, username));
-        } else {
-          const u = memUsers.get(username);
-          if (u) u.phone = cleanPhone;
-        }
-      }
 
       createRateMap.set(ip, Date.now());
 
@@ -1486,6 +1733,7 @@ export function registerNglRoutes(app: any) {
       }
 
       const cleanUser = (username as string).trim().toLowerCase();
+      const reqIp = getForwardedIp(req);
       const user = await dbGetUser(cleanUser);
       if (!user) return res.status(404).json({ message: 'User not found' });
 
@@ -1513,21 +1761,25 @@ export function registerNglRoutes(app: any) {
       const hash = hashOtp(otp);
       const expiry = otpExpiryDate();
 
-      // Save OTP hash + phone + expiry to DB
+      // Save OTP hash + expiry to DB. Keep phone in pending map until verified.
       if (USE_PG) {
         await pgDb!.update(nglUsers).set({
-          phone: cleanPhone,
+          phone: null,
+          phoneVerified: 0,
           otpHash: hash,
           otpExpiry: expiry,
         }).where(eq(nglUsers.username, cleanUser));
       } else {
         const u = memUsers.get(cleanUser);
         if (u) {
-          u.phone = cleanPhone;
+          u.phone = null;
+          u.phoneVerified = 0;
+          u.phoneVerifiedAt = null;
           u.otpHash = hash;
           u.otpExpiry = expiry.getTime();
         }
       }
+      pendingPhoneMap.set(cleanUser, cleanPhone);
 
       // Update rate limiter BEFORE delivery (prevent spam even if delivery fails)
       otpRateMap.set(cleanUser, now);
@@ -1546,10 +1798,21 @@ export function registerNglRoutes(app: any) {
         return res.status(502).json({ message: result.error || 'Failed to send OTP' });
       }
 
+      appendNglAudit({
+        at: Date.now(),
+        type: 'otp_send',
+        username: cleanUser,
+        ip: reqIp,
+        source: process.env.META_WABA_TOKEN ? 'whatsapp' : 'dev_otp_mode',
+        details: { phoneMasked: maskPhone(cleanPhone) },
+      });
+
       res.json({
         ok: true,
         phone: maskPhone(cleanPhone),
         expiresIn: 300, // seconds
+        state: 'otp_sent' as PhoneVerificationState,
+        devOtpMode: !process.env.META_WABA_TOKEN,
       });
     } catch (err: any) {
       console.error('[NGL] OTP send error:', err);
@@ -1568,6 +1831,7 @@ export function registerNglRoutes(app: any) {
 
       const cleanUser = (username as string).trim().toLowerCase();
       const cleanOtp = (otp as string).trim();
+      const reqIp = getForwardedIp(req);
 
       if (!/^\d{6}$/.test(cleanOtp)) {
         return res.status(400).json({ message: 'OTP must be 6 digits' });
@@ -1603,9 +1867,18 @@ export function registerNglRoutes(app: any) {
         // Increment attempt counter on wrong code
         otpAttemptMap.set(cleanUser, attempts + 1);
 
+        appendNglAudit({
+          at: Date.now(),
+          type: 'otp_verify_failed',
+          username: cleanUser,
+          ip: reqIp,
+          details: { reason: check.reason, attemptsAfter: attempts + 1 },
+        });
+
         // If lockout triggered (expired or too many attempts), clear OTP from DB
         if (check.lockout) {
           otpAttemptMap.delete(cleanUser);
+          pendingPhoneMap.delete(cleanUser);
           if (USE_PG) {
             await pgDb!.update(nglUsers).set({ otpHash: null, otpExpiry: null })
               .where(eq(nglUsers.username, cleanUser));
@@ -1624,9 +1897,14 @@ export function registerNglRoutes(app: any) {
 
       // ✅ Success — mark phone as verified, clear OTP + attempts
       otpAttemptMap.delete(cleanUser);
+      const pendingPhone = pendingPhoneMap.get(cleanUser) || null;
+      if (!pendingPhone) {
+        return res.status(400).json({ message: 'Verification session expired. Request OTP again.' });
+      }
 
       if (USE_PG) {
         await pgDb!.update(nglUsers).set({
+          phone: pendingPhone,
           phoneVerified: 1,
           otpHash: null,
           otpExpiry: null,
@@ -1634,16 +1912,28 @@ export function registerNglRoutes(app: any) {
       } else {
         const u = memUsers.get(cleanUser);
         if (u) {
+          u.phone = pendingPhone;
           u.phoneVerified = 1;
           u.otpHash = null;
           u.otpExpiry = null;
+          u.phoneVerifiedAt = Date.now();
         }
       }
+      pendingPhoneMap.delete(cleanUser);
+
+      appendNglAudit({
+        at: Date.now(),
+        type: 'otp_verify_success',
+        username: cleanUser,
+        ip: reqIp,
+      });
 
       res.json({
         ok: true,
-        phone: maskPhone((user as any).phone),
+        phone: maskPhone(pendingPhone),
         verified: true,
+        state: 'verified' as PhoneVerificationState,
+        lastVerifiedAt: new Date().toISOString(),
       });
     } catch (err: any) {
       console.error('[NGL] OTP verify error:', err);
@@ -1651,9 +1941,63 @@ export function registerNglRoutes(app: any) {
     }
   });
 
+  // ── POST /otp/reset — Clear phone + verification state for account owner ──
+  // Body: { username, key }
+  router.post('/otp/reset', async (req: any, res) => {
+    try {
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+      const { username, key } = req.body || {};
+      if (!username || !key) {
+        return res.status(400).json({ message: 'username and key are required' });
+      }
+
+      const cleanUser = (username as string).trim().toLowerCase();
+      const reqIp = getForwardedIp(req);
+      const user = await dbGetUser(cleanUser);
+      if (!user) return res.status(404).json({ message: 'User not found' });
+
+      if (hashKey(key) !== user.secretKeyHash) {
+        return res.status(403).json({ message: 'Invalid secret key' });
+      }
+
+      if (USE_PG) {
+        await pgDb!.update(nglUsers).set({
+          phone: null,
+          phoneVerified: 0,
+          otpHash: null,
+          otpExpiry: null,
+        }).where(eq(nglUsers.username, cleanUser));
+      } else {
+        const u = memUsers.get(cleanUser);
+        if (u) {
+          u.phone = null;
+          u.phoneVerified = 0;
+          u.otpHash = null;
+          u.otpExpiry = null;
+          u.phoneVerifiedAt = null;
+        }
+      }
+      pendingPhoneMap.delete(cleanUser);
+      const removedAt = new Date().toISOString();
+      phoneLastResetAtMap.set(cleanUser, removedAt);
+
+      appendNglAudit({ at: Date.now(), type: 'otp_reset', username: cleanUser, ip: reqIp });
+
+      res.json({ ok: true, state: 'none' as PhoneVerificationState, verified: false, phone: null, phoneRaw: null, lastRemovedAt: removedAt });
+    } catch (err: any) {
+      console.error('[NGL] OTP reset error:', err);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
   // ── GET /u/:username/phone — Check phone verification status ──
   router.get('/u/:username/phone', async (req: any, res) => {
     try {
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
       const username = (req.params.username || '').trim().toLowerCase();
       const key = getAuthKey(req);
 
@@ -1664,12 +2008,64 @@ export function registerNglRoutes(app: any) {
         return res.status(403).json({ message: 'Invalid secret key' });
       }
 
-      const phone = (user as any).phone || null;
-      const verified = (user as any).phoneVerified === 1;
+      // Stale cleanup policy: pending OTP older than expiry is removed.
+      const otpExpiryRaw = (user as any).otpExpiry;
+      const otpExpiryTs = otpExpiryRaw ? new Date(otpExpiryRaw).getTime() : 0;
+      const otpLooksStale = !!(user as any).otpHash && Number.isFinite(otpExpiryTs) && otpExpiryTs > 0 && otpExpiryTs <= Date.now();
+      if (otpLooksStale) {
+        pendingPhoneMap.delete(username);
+        if (USE_PG) {
+          await pgDb!
+            .update(nglUsers)
+            .set({ otpHash: null, otpExpiry: null } as any)
+            .where(eq(nglUsers.username, username));
+        } else {
+          const u = memUsers.get(username);
+          if (u) {
+            u.otpHash = null;
+            u.otpExpiry = null;
+          }
+        }
+        appendNglAudit({ at: Date.now(), type: 'otp_cleanup_stale', username });
+      }
+
+      const refreshedUser = otpLooksStale ? await dbGetUser(username) : user;
+
+      const phone = (refreshedUser as any)?.phone || null;
+      const pendingPhone = pendingPhoneMap.get(username) || null;
+      const verifiedFlag = (refreshedUser as any)?.phoneVerified === 1;
+      if (verifiedFlag && !phone) {
+        if (USE_PG) {
+          await pgDb!
+            .update(nglUsers)
+            .set({ phoneVerified: 0 } as any)
+            .where(eq(nglUsers.username, username));
+        } else {
+          const u = memUsers.get(username);
+          if (u) u.phoneVerified = 0;
+        }
+      }
+
+      const state = getPhoneVerificationStateFromUser(
+        verifiedFlag && !phone ? { ...(refreshedUser as any), phoneVerified: 0 } : refreshedUser,
+      );
+      const verified = state === 'verified';
+      const phoneVerifiedAt = !USE_PG
+        ? (() => {
+            const u = memUsers.get(username);
+            return u?.phoneVerifiedAt ? new Date(u.phoneVerifiedAt).toISOString() : null;
+          })()
+        : null;
+      const phoneLastRemovedAt = phoneLastResetAtMap.get(username) || null;
 
       res.json({
-        phone: phone ? maskPhone(phone) : null,
+        phone: state === 'verified' && phone ? maskPhone(phone) : (state === 'otp_sent' && pendingPhone ? maskPhone(pendingPhone) : null),
+        phoneRaw: state === 'verified' && phone ? String(phone) : null,
         verified,
+        state,
+        lastVerifiedAt: phoneVerifiedAt,
+        lastRemovedAt: phoneLastRemovedAt,
+        devOtpMode: !process.env.META_WABA_TOKEN,
       });
     } catch (err: any) {
       console.error('[NGL] phone status error:', err);
@@ -1688,10 +2084,37 @@ export function registerNglRoutes(app: any) {
     monthly: { amount: 9800, days: 30, label: 'Bong PRO — Monthly' },   // ₹98.00
     yearly:  { amount: 68300, days: 365, label: 'Bong PRO — Yearly' },  // ₹683.00
   } as const;
+  const TEST_PLANS = {
+    test1: { amount: 100, hours: Number(process.env.NGL_TEST_PREMIUM_HOURS || 24), label: 'Bong PRO Test — Rs 1' },
+  } as const;
   type PlanKey = keyof typeof PRO_PLANS;
+  type TestPlanKey = keyof typeof TEST_PLANS;
 
   // Light rate limit: max 5 order creations per user per 10 min (prevents abuse)
   const payOrderMap = new Map<string, number[]>();
+  const processedPaymentIds = new Set<string>();
+
+  // Hidden dev unlock from dashboard phone input (no UI hints).
+  // Body: { username, key, code }
+  router.post('/dev/unlock-test-mode', async (req: any, res) => {
+    try {
+      const { username, key, code } = req.body || {};
+      if (!username || !key || !code) return res.status(400).json({ message: 'Invalid request' });
+
+      const cleanUser = String(username).trim().toLowerCase();
+      const user = await dbGetUser(cleanUser);
+      if (!user) return res.status(404).json({ message: 'Not found' });
+      if (hashKey(String(key)) !== user.secretKeyHash) return res.status(403).json({ message: 'Forbidden' });
+
+      if (!isCurrentDailyDevCode(String(code))) return res.status(404).json({ message: 'Not found' });
+
+      const token = createTestToken(cleanUser, 2 * 60 * 60 * 1000);
+      res.json({ ok: true, testMode: true, ...(token ? { testToken: token } : {}) });
+    } catch (err: any) {
+      console.error('[NGL/dev] unlock-test-mode error:', err);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
 
   // ── POST /payment/create-order ── (auth required)
   router.post('/payment/create-order', async (req: any, res) => {
@@ -1714,7 +2137,18 @@ export function registerNglRoutes(app: any) {
       }
 
       const planKey = (plan === 'yearly' ? 'yearly' : 'monthly') as PlanKey;
-      const planDef = PRO_PLANS[planKey];
+      const wantsTestMode = req.body?.mode === 'test' || String(req.body?.plan || '').toLowerCase() === 'test1';
+      const isTester = wantsTestMode && isAuthorizedTestUser(req, cleanUser);
+      if (wantsTestMode && !isTester) {
+        return res.status(403).json({ message: 'Test payment mode is not authorized for this account' });
+      }
+
+      const mode: 'live' | 'test' = isTester ? 'test' : 'live';
+      const testPlanKey: TestPlanKey = 'test1';
+      const livePlanDef = PRO_PLANS[planKey];
+      const testPlanDef = TEST_PLANS[testPlanKey];
+      const chargeAmount = mode === 'test' ? testPlanDef.amount : livePlanDef.amount;
+      const chargeLabel = mode === 'test' ? testPlanDef.label : livePlanDef.label;
 
       // Abuse guard: 5 order creations per 10 min per user
       const now = Date.now();
@@ -1734,10 +2168,15 @@ export function registerNglRoutes(app: any) {
           Authorization: 'Basic ' + Buffer.from(`${keyId}:${keySecret}`).toString('base64'),
         },
         body: JSON.stringify({
-          amount: planDef.amount,
+          amount: chargeAmount,
           currency: 'INR',
           receipt,
-          notes: { username: cleanUser, plan: planKey },
+          notes: {
+            username: cleanUser,
+            plan: mode === 'test' ? testPlanKey : planKey,
+            mode,
+            metricTag: mode === 'test' ? 'ngl_test_payment' : 'ngl_live_payment',
+          },
         }),
       });
       if (!rzRes.ok) {
@@ -1749,11 +2188,13 @@ export function registerNglRoutes(app: any) {
 
       res.json({
         orderId: order.id,
-        amount: planDef.amount,
+        amount: chargeAmount,
         currency: 'INR',
         keyId,
-        plan: planKey,
-        planLabel: planDef.label,
+        plan: mode === 'test' ? testPlanKey : planKey,
+        planLabel: chargeLabel,
+        mode,
+        metricTag: mode === 'test' ? 'ngl_test_payment' : 'ngl_live_payment',
       });
     } catch (err: any) {
       console.error('[NGL/pay] create-order error:', err);
@@ -1776,6 +2217,7 @@ export function registerNglRoutes(app: any) {
       }
 
       const cleanUser = String(username).trim().toLowerCase();
+      const reqIp = getForwardedIp(req);
       const user = await dbGetUser(cleanUser);
       if (!user) return res.status(404).json({ message: 'User not found' });
       if (hashKey(authKey) !== user.secretKeyHash) {
@@ -1793,13 +2235,27 @@ export function registerNglRoutes(app: any) {
         return res.status(400).json({ code: 'BAD_SIGNATURE', message: 'Payment verification failed' });
       }
 
+      if (processedPaymentIds.has(String(razorpay_payment_id))) {
+        return res.status(409).json({ code: 'DUPLICATE_PAYMENT', message: 'Payment already processed' });
+      }
+
+      const wantsTestMode = String(plan || '').toLowerCase() === 'test1' || String(req.body?.mode || '') === 'test';
+      const isTester = wantsTestMode && isAuthorizedTestUser(req, cleanUser);
+      if (wantsTestMode && !isTester) {
+        return res.status(403).json({ message: 'Test payment verify blocked: unauthorized tester' });
+      }
+
+      const mode: 'live_payment' | 'test_payment' = isTester ? 'test_payment' : 'live_payment';
       const planKey = (plan === 'yearly' ? 'yearly' : 'monthly') as PlanKey;
       const planDef = PRO_PLANS[planKey];
+      const testPlanDef = TEST_PLANS.test1;
       const now = Date.now();
       // Extend from current premiumUntil if still active, else from now
       const currentUntil = (user as any).premiumUntil ? new Date((user as any).premiumUntil).getTime() : 0;
       const base = currentUntil > now ? currentUntil : now;
-      const premiumUntil = new Date(base + planDef.days * 24 * 60 * 60 * 1000);
+      const premiumUntil = mode === 'test_payment'
+        ? new Date(now + Math.max(1, testPlanDef.hours) * 60 * 60 * 1000)
+        : new Date(base + planDef.days * 24 * 60 * 60 * 1000);
 
       if (USE_PG) {
         await pgDb!
@@ -1808,15 +2264,37 @@ export function registerNglRoutes(app: any) {
           .where(eq(nglUsers.username, cleanUser));
       } else {
         const u = memUsers.get(cleanUser) as any;
-        if (u) { u.isPremium = 1; u.premiumUntil = premiumUntil; }
+        if (u) {
+          u.isPremium = 1;
+          u.premiumUntil = premiumUntil;
+          u.premiumSource = mode;
+          u.premiumTxnId = String(razorpay_payment_id);
+        }
       }
 
-      console.log(`[NGL/pay] ✓ PRO activated for @${cleanUser} (${planKey}) until ${premiumUntil.toISOString()}`);
+      processedPaymentIds.add(String(razorpay_payment_id));
+
+      appendNglAudit({
+        at: Date.now(),
+        type: 'premium_activated',
+        username: cleanUser,
+        ip: reqIp,
+        source: mode,
+        details: {
+          plan,
+          razorpay_order_id,
+          razorpay_payment_id,
+          premiumUntil: premiumUntil.toISOString(),
+        },
+      });
+
+      console.log(`[NGL/pay] ✓ PRO activated for @${cleanUser} (${mode}) until ${premiumUntil.toISOString()}`);
       res.json({
         success: true,
         isPremium: 1,
         premiumUntil: premiumUntil.toISOString(),
-        plan: planKey,
+        plan: mode === 'test_payment' ? 'test1' : planKey,
+        source: mode,
       });
     } catch (err: any) {
       console.error('[NGL/pay] verify error:', err);
@@ -1830,13 +2308,39 @@ export function registerNglRoutes(app: any) {
   router.post('/payment/dev-grant', async (req: any, res) => {
     try {
       const devSecret = process.env.NGL_DEV_GRANT_SECRET;
+      const reqIp = getForwardedIp(req);
+      const usernameRaw = String(req.body?.username || '').trim().toLowerCase();
+      appendNglAudit({ at: Date.now(), type: 'dev_grant_attempt', username: usernameRaw || 'unknown', ip: reqIp, source: 'dev_grant' });
+
+      if (!isDevGrantEnabledNow()) {
+        appendNglAudit({ at: Date.now(), type: 'dev_grant_denied', username: usernameRaw || 'unknown', ip: reqIp, source: 'disabled' });
+        return res.status(403).json({ message: 'Dev grant endpoint disabled' });
+      }
+
       if (!devSecret) {
         return res.status(503).json({ message: 'Dev grant not configured' });
       }
-      const provided = (req.headers['x-dev-grant'] as string) || (req.body?.devSecret as string) || '';
-      if (provided !== devSecret) {
-        return res.status(403).json({ message: 'Invalid dev grant secret' });
+
+      const bucketByIp = getDevGrantBucket(`ip:${reqIp}`, Date.now());
+      if (bucketByIp.length >= 20) {
+        appendNglAudit({ at: Date.now(), type: 'dev_grant_denied', username: usernameRaw || 'unknown', ip: reqIp, source: 'rate_limit_ip' });
+        return res.status(429).json({ message: 'Too many dev grant requests from this IP' });
       }
+      bucketByIp.push(Date.now());
+
+      if (!isIpAllowlisted(reqIp)) {
+        appendNglAudit({ at: Date.now(), type: 'dev_grant_denied', username: usernameRaw || 'unknown', ip: reqIp, source: 'ip_not_allowlisted' });
+        return res.status(403).json({ message: 'IP not allowlisted for dev grant' });
+      }
+
+      const providedLegacy = (req.headers['x-dev-grant'] as string) || (req.body?.devSecret as string) || '';
+      const hasValidSignature = verifyDevGrantSignature(req, usernameRaw || 'unknown', devSecret);
+      const allowLegacySecret = process.env.NODE_ENV !== 'production' && providedLegacy === devSecret;
+      if (!hasValidSignature && !allowLegacySecret) {
+        appendNglAudit({ at: Date.now(), type: 'dev_grant_denied', username: usernameRaw || 'unknown', ip: reqIp, source: 'signature_invalid' });
+        return res.status(403).json({ message: 'Invalid dev grant signature' });
+      }
+
       const { username, plan, days } = req.body || {};
       if (!username) return res.status(400).json({ message: 'username required' });
 
@@ -1858,8 +2362,28 @@ export function registerNglRoutes(app: any) {
           .where(eq(nglUsers.username, cleanUser));
       } else {
         const u = memUsers.get(cleanUser) as any;
-        if (u) { u.isPremium = 1; u.premiumUntil = premiumUntil; }
+        if (u) {
+          u.isPremium = 1;
+          u.premiumUntil = premiumUntil;
+          u.premiumSource = 'dev_grant';
+          u.premiumTxnId = `dev_grant_${Date.now()}`;
+        }
       }
+
+      const userBucket = getDevGrantBucket(`user:${cleanUser}`, Date.now());
+      userBucket.push(Date.now());
+      if (userBucket.length >= 8) {
+        console.error(`[NGL/ALERT] Unusual dev grant volume for @${cleanUser}: ${userBucket.length} in 10m`);
+      }
+
+      appendNglAudit({
+        at: Date.now(),
+        type: 'premium_activated',
+        username: cleanUser,
+        ip: reqIp,
+        source: 'dev_grant',
+        details: { days: grantDays, premiumUntil: premiumUntil.toISOString() },
+      });
 
       console.log(`[NGL/pay] DEV GRANT: PRO activated for @${cleanUser} (${grantDays}d)`);
       res.json({
@@ -1880,9 +2404,20 @@ export function registerNglRoutes(app: any) {
   router.post('/payment/dev-revoke', async (req: any, res) => {
     try {
       const devSecret = process.env.NGL_DEV_GRANT_SECRET;
+      const reqIp = getForwardedIp(req);
+      const usernameRaw = String(req.body?.username || '').trim().toLowerCase();
+      if (!isDevGrantEnabledNow()) return res.status(403).json({ message: 'Dev grant endpoint disabled' });
       if (!devSecret) return res.status(503).json({ message: 'Dev grant not configured' });
-      const provided = (req.headers['x-dev-grant'] as string) || (req.body?.devSecret as string) || '';
-      if (provided !== devSecret) return res.status(403).json({ message: 'Invalid dev grant secret' });
+
+      if (!isIpAllowlisted(reqIp)) {
+        appendNglAudit({ at: Date.now(), type: 'dev_grant_denied', username: usernameRaw || 'unknown', ip: reqIp, source: 'ip_not_allowlisted' });
+        return res.status(403).json({ message: 'IP not allowlisted for dev revoke' });
+      }
+
+      const providedLegacy = (req.headers['x-dev-grant'] as string) || (req.body?.devSecret as string) || '';
+      const hasValidSignature = verifyDevGrantSignature(req, usernameRaw || 'unknown', devSecret);
+      const allowLegacySecret = process.env.NODE_ENV !== 'production' && providedLegacy === devSecret;
+      if (!hasValidSignature && !allowLegacySecret) return res.status(403).json({ message: 'Invalid dev revoke signature' });
 
       const { username } = req.body || {};
       if (!username) return res.status(400).json({ message: 'username required' });
@@ -1894,8 +2429,15 @@ export function registerNglRoutes(app: any) {
           .where(eq(nglUsers.username, cleanUser));
       } else {
         const u = memUsers.get(cleanUser) as any;
-        if (u) { u.isPremium = 0; u.premiumUntil = null; }
+        if (u) {
+          u.isPremium = 0;
+          u.premiumUntil = null;
+          u.premiumSource = 'none';
+          u.premiumTxnId = null;
+        }
       }
+
+      appendNglAudit({ at: Date.now(), type: 'premium_revoked', username: cleanUser, ip: reqIp, source: 'dev_grant' });
 
       console.log(`[NGL/pay] DEV REVOKE: PRO removed for @${cleanUser}`);
       res.json({ success: true, mode: 'dev-revoke' });

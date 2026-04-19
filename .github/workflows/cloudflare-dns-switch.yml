@@ -1,0 +1,157 @@
+name: Cloudflare DNS Switch + Health Check
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_backend:
+        description: "Where api.bongbari.com should point"
+        required: true
+        default: "hetzner"
+        type: choice
+        options:
+          - hetzner
+          - oracle
+          - custom
+      custom_ip:
+        description: "Used only when target_backend=custom"
+        required: false
+        default: ""
+        type: string
+      api_hostname:
+        description: "DNS record to update"
+        required: true
+        default: "api.bongbari.com"
+        type: string
+      zone_name:
+        description: "Cloudflare zone"
+        required: true
+        default: "bongbari.com"
+        type: string
+      verify_path:
+        description: "Health check path"
+        required: true
+        default: "/api/version"
+        type: string
+      expected_substring:
+        description: "Expected text in health response"
+        required: true
+        default: "healthy"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  switch-and-verify:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      TARGET_BACKEND: ${{ github.event.inputs.target_backend }}
+      CUSTOM_IP: ${{ github.event.inputs.custom_ip }}
+      API_HOSTNAME: ${{ github.event.inputs.api_hostname }}
+      ZONE_NAME: ${{ github.event.inputs.zone_name }}
+      VERIFY_PATH: ${{ github.event.inputs.verify_path }}
+      EXPECTED_SUBSTRING: ${{ github.event.inputs.expected_substring }}
+    steps:
+      - name: Validate required secret
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "❌ Missing GitHub secret: CLOUDFLARE_API_TOKEN"
+            echo "Create it at: Repo -> Settings -> Secrets and variables -> Actions"
+            echo "Token perms: Zone DNS:Edit, Zone:Read (zone: bongbari.com only)"
+            exit 1
+          fi
+
+      - name: Resolve target IP
+        run: |
+          set -e
+          case "$TARGET_BACKEND" in
+            hetzner) TARGET_IP="78.47.104.43" ;;
+            oracle) TARGET_IP="158.101.175.37" ;;
+            custom)
+              if [ -z "$CUSTOM_IP" ]; then
+                echo "❌ custom backend selected but custom_ip is empty"
+                exit 1
+              fi
+              TARGET_IP="$CUSTOM_IP"
+              ;;
+            *)
+              echo "❌ Invalid target_backend: $TARGET_BACKEND"
+              exit 1
+              ;;
+          esac
+          echo "TARGET_IP=$TARGET_IP" >> "$GITHUB_ENV"
+          echo "Using target: $TARGET_BACKEND -> $TARGET_IP"
+
+      - name: Update Cloudflare A record
+        run: |
+          set -euo pipefail
+
+          CF_API="https://api.cloudflare.com/client/v4"
+          AUTH_HEADER="Authorization: Bearer $CLOUDFLARE_API_TOKEN"
+
+          echo "Finding zone id for $ZONE_NAME..."
+          ZONE_JSON=$(curl -sS -H "$AUTH_HEADER" "$CF_API/zones?name=$ZONE_NAME")
+          echo "$ZONE_JSON" | jq -e '.success == true' >/dev/null
+          ZONE_ID=$(echo "$ZONE_JSON" | jq -r '.result[0].id')
+          if [ -z "$ZONE_ID" ] || [ "$ZONE_ID" = "null" ]; then
+            echo "❌ Zone not found: $ZONE_NAME"
+            exit 1
+          fi
+
+          echo "Finding DNS record for $API_HOSTNAME..."
+          REC_JSON=$(curl -sS -H "$AUTH_HEADER" "$CF_API/zones/$ZONE_ID/dns_records?type=A&name=$API_HOSTNAME")
+          echo "$REC_JSON" | jq -e '.success == true' >/dev/null
+          REC_ID=$(echo "$REC_JSON" | jq -r '.result[0].id // empty')
+
+          if [ -n "$REC_ID" ]; then
+            echo "Updating existing record ($REC_ID)"
+            curl -sS -X PUT \
+              -H "$AUTH_HEADER" \
+              -H "Content-Type: application/json" \
+              "$CF_API/zones/$ZONE_ID/dns_records/$REC_ID" \
+              --data "{\"type\":\"A\",\"name\":\"$API_HOSTNAME\",\"content\":\"$TARGET_IP\",\"ttl\":1,\"proxied\":true}" \
+              | jq -e '.success == true' >/dev/null
+          else
+            echo "Creating new record"
+            curl -sS -X POST \
+              -H "$AUTH_HEADER" \
+              -H "Content-Type: application/json" \
+              "$CF_API/zones/$ZONE_ID/dns_records" \
+              --data "{\"type\":\"A\",\"name\":\"$API_HOSTNAME\",\"content\":\"$TARGET_IP\",\"ttl\":1,\"proxied\":true}" \
+              | jq -e '.success == true' >/dev/null
+          fi
+
+          echo "✅ DNS switched: $API_HOSTNAME -> $TARGET_IP (proxied=true, ttl=auto)"
+
+      - name: Health check after DNS switch
+        run: |
+          set -e
+          URL="https://$API_HOSTNAME$VERIFY_PATH"
+          echo "Checking: $URL"
+
+          PASS=0
+          for i in $(seq 1 18); do
+            BODY=$(curl -sS --max-time 20 "$URL" || true)
+            if echo "$BODY" | grep -qi "$EXPECTED_SUBSTRING"; then
+              echo "✅ Health check passed on attempt $i"
+              echo "$BODY"
+              PASS=1
+              break
+            fi
+            echo "Attempt $i/18 not ready yet, retrying in 10s..."
+            sleep 10
+          done
+
+          if [ "$PASS" -ne 1 ]; then
+            echo "❌ Health check failed after DNS switch"
+            echo "Last response:"
+            echo "$BODY"
+            exit 1
+          fi
+
+      - name: Final summary
+        run: |
+          echo "Deployment routing switch complete."
+          echo "Record: $API_HOSTNAME -> $TARGET_IP"
+          echo "Verified endpoint: https://$API_HOSTNAME$VERIFY_PATH"

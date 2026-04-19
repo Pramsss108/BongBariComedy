@@ -248,16 +248,29 @@ async function notifyDailyDevCodeIfNeeded(force = false) {
   if (!to) return;
 
   const message = `Bong NGL dev secret code (${dayStamp}): ${code}\nPrevious day code is now invalid.`;
-  let sent = await sendWhatsAppText(to, message);
-  if (!sent.ok) {
-    // Fallback to template route for better cold-delivery reliability.
-    sent = await sendWhatsAppOtp(to, code);
-  }
-  if (sent.ok) {
+  // Dual-channel delivery: try direct text and template each run.
+  // This avoids false negatives where one accepted channel doesn't surface on device.
+  const textResult = await sendWhatsAppText(to, message);
+  const templateResult = await sendWhatsAppOtp(to, code);
+  const sentOk = textResult.ok || templateResult.ok;
+
+  if (sentOk) {
     lastDevCodeSentDayStamp = dayStamp;
-    console.log('[NGL/dev] Daily secret code sent to WhatsApp:', to, 'day:', dayStamp);
+    console.log(
+      '[NGL/dev] Daily secret code sent to WhatsApp:',
+      to,
+      'day:',
+      dayStamp,
+      'textOk:',
+      textResult.ok,
+      'templateOk:',
+      templateResult.ok,
+    );
   } else {
-    console.warn('[NGL/dev] Failed to send daily secret code:', sent.error || 'unknown error');
+    console.warn(
+      '[NGL/dev] Failed to send daily secret code:',
+      `text=${textResult.error || 'unknown error'} | template=${templateResult.error || 'unknown error'}`,
+    );
   }
 }
 

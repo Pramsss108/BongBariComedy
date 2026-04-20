@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-bright": "#393844",
+                    "surface-variant": "#34343f",
+                    "on-tertiary": "#32302a",
+                    "on-secondary": "#472a03",
+                    "on-secondary-container": "#dfaf7e",
+                    "on-primary": "#3d2e00",
+                    "on-error-container": "#ffdad6",
+                    "primary-fixed-dim": "#f0c12c",
+                    "surface-container-lowest": "#0d0d17",
+                    "primary": "#ffe3a1",
+                    "primary-container": "#f4c430",
+                    "on-tertiary-fixed-variant": "#494740",
+                    "surface-container": "#1f1f29",
+                    "surface": "#12121d",
+                    "inverse-surface": "#e4e1f0",
+                    "on-secondary-fixed": "#2c1700",
+                    "secondary-container": "#64421a",
+                    "outline-variant": "rgba(212,165,116,0.15)",
+                    "on-primary-fixed": "#241a00",
+                    "secondary-fixed": "#ffdcbc",
+                    "on-tertiary-container": "#57554d",
+                    "on-surface-variant": "#d1c5ad",
+                    "tertiary-fixed-dim": "#cac6bd",
+                    "surface-tint": "#f0c12c",
+                    "outline": "#9a907a",
+                    "error": "#ffb4ab",
+                    "surface-container-highest": "#34343f",
+                    "background": "#12121d",
+                    "on-tertiary-fixed": "#1d1c16",
+                    "error-container": "#93000a",
+                    "on-surface": "#e4e1f0",
+                    "on-error": "#690005",
+                    "surface-dim": "#12121d",
+                    "secondary-fixed-dim": "#efbd8a",
+                    "secondary": "#efbd8a",
+                    "on-secondary-fixed-variant": "#614018",
+                    "primary-fixed": "#ffdf90",
+                    "on-primary-fixed-variant": "#584400",
+                    "surface-container-high": "#292934",
+                    "inverse-on-surface": "#302f3b",
+                    "tertiary-container": "#cecac0",
+                    "inverse-primary": "#755b00",
+                    "surface-container-low": "#1b1b25",
+                    "on-primary-container": "#695200",
+                    "tertiary-fixed": "#e7e2d8",
+                    "tertiary": "#ebe6dc",
+                    "on-background": "#e4e1f0"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background: radial-gradient(circle at center, #1a1a24 0%, #050508 100%);
+            color: #f5f0e6;
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-panel {
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 0.5px solid rgba(212,165,116,0.15);
+        }
+        .gold-gradient-bg {
+            background: linear-gradient(45deg, #fef3c7, #f4c430, #b8860b, #f4c430, #fef3c7);
+        }
+        .gold-text-gradient {
+            background: linear-gradient(45deg, #fef3c7, #f4c430, #b8860b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .ambient-gold-shadow {
+            box-shadow: 0 20px 40px rgba(184, 134, 11, 0.08);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center overflow-hidden">
+<!-- TopAppBar -->
+<header class="w-full flex justify-between items-center px-6 py-4 z-50">
+<button class="w-10 h-10 flex items-center justify-center rounded-full glass-panel active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-on-surface">arrow_back</span>
+</button>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full border-2 border-primary-container overflow-hidden flex items-center justify-center bg-surface-container">
+<span class="font-headline font-bold text-lg text-primary">T</span>
+</div>
+<span class="font-headline font-bold tracking-tight text-on-surface">@the_sovereign</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-3 py-1.5 rounded-full glass-panel text-xs font-semibold text-primary uppercase tracking-widest">EN</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full glass-panel text-error active:scale-95 transition-transform">
+<span class="material-symbols-outlined">logout</span>
+</button>
+</div>
+</header>
+<main class="w-full max-w-md px-6 flex flex-col gap-5 flex-1 pb-8">
+<!-- Tab Switcher -->
+<div class="glass-panel rounded-full p-1 flex items-center gap-1">
+<button class="flex-1 py-2.5 rounded-full gold-gradient-bg text-on-primary-fixed font-bold text-sm">Home</button>
+<button class="flex-1 py-2.5 rounded-full text-on-surface-variant font-medium text-sm">Inbox</button>
+</div>
+<!-- PRO Hero Card -->
+<div class="relative group">
+<div class="absolute -inset-0.5 gold-gradient-bg rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-1000"></div>
+<div class="relative glass-panel rounded-2xl p-5 flex items-center justify-between overflow-hidden ambient-gold-shadow">
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 rounded-full gold-gradient-bg p-0.5">
+<div class="w-full h-full rounded-full bg-surface-container flex items-center justify-center">
+<span class="font-headline font-extrabold text-2xl gold-text-gradient">T</span>
+</div>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h2 class="font-headline font-bold text-lg text-on-surface">@the_sovereign</h2>
+<span class="text-[10px] gold-gradient-bg text-on-primary-fixed font-black px-1.5 py-0.5 rounded-sm uppercase tracking-tighter">PRO</span>
+</div>
+<p class="text-sm text-[rgba(212,165,116,0.6)]">Membership Active</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-xs text-[rgba(212,165,116,0.6)] font-medium">Billed Monthly</p>
+<p class="text-xl font-headline font-black text-primary">₹99<span class="text-xs">/mo</span></p>
+</div>
+</div>
+</div>
+<!-- "What people see" Card -->
+<div class="glass-panel rounded-2xl p-6 flex flex-col gap-4 ambient-gold-shadow">
+<div class="flex justify-between items-center">
+<span class="text-[10px] uppercase font-bold tracking-[0.2em] text-[rgba(212,165,116,0.6)]">Public Display</span>
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">visibility</span>
+</div>
+<p class="font-headline text-2xl font-semibold leading-tight text-on-surface">Send me anonymous questions about our investment portfolio!</p>
+<div class="flex gap-2 mt-2">
+<button class="flex-1 py-3 rounded-full glass-panel flex items-center justify-center gap-2 text-sm font-semibold active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-sm">shuffle</span> Shuffle
+                </button>
+<button class="flex-1 py-3 rounded-full glass-panel flex items-center justify-center gap-2 text-sm font-semibold active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-sm">edit</span> Edit Text
+                </button>
+</div>
+</div>
+<!-- Verify WhatsApp -->
+<div class="glass-panel rounded-2xl p-4 flex flex-col gap-3">
+<label class="text-[10px] uppercase font-bold tracking-widest text-[rgba(212,165,116,0.6)] ml-2">Verify Secure Channel</label>
+<div class="flex items-center gap-2">
+<div class="flex-1 relative">
+<input class="w-full bg-surface-container-highest border-none rounded-full py-3.5 pl-5 pr-12 text-on-surface focus:ring-1 focus:ring-primary-container text-sm placeholder:opacity-30" placeholder="+91 98765 43210" type="text"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-primary-container">
+<span class="material-symbols-outlined">mic</span>
+</button>
+</div>
+<button class="gold-gradient-bg text-on-primary-fixed px-6 py-3.5 rounded-full font-bold text-sm shadow-lg active:scale-95 transition-transform">Submit</button>
+</div>
+<div class="flex items-center gap-2 ml-2">
+<div class="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></div>
+<p class="text-[10px] text-on-surface-variant/60 font-medium">System encrypted &amp; ready for encrypted delivery.</p>
+</div>
+</div>
+<!-- Link Bar -->
+<div class="glass-panel rounded-full p-2 flex items-center justify-between ambient-gold-shadow">
+<span class="ml-4 text-xs font-medium text-on-surface-variant font-mono">bongbari.com/ngl/q/the_sovereign</span>
+<button class="gold-gradient-bg text-on-primary-fixed px-5 py-2 rounded-full font-black text-xs uppercase tracking-widest active:scale-95 transition-transform">Copy</button>
+</div>
+<!-- Share Grid -->
+<div class="grid grid-cols-2 gap-3 mb-4">
+<!-- WhatsApp -->
+<div class="glass-panel rounded-2xl p-4 flex flex-col items-center gap-3 active:scale-95 transition-transform cursor-pointer group">
+<div class="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+<img alt="WhatsApp" class="w-6 h-6" data-alt="Official WhatsApp logo with green color palette for social sharing button" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAi3iSg1vDUHvqspjzX0wdFlTo7QB7d_B5itJ0yG38pNh-vz1J6xLrQ4d3diTfH3wbie8cseoE4lRIYjSmqHqSBzJ4BQ8XZxVGDlmnEWRBRWA5dEpTJ3dd-Nue5xLlOLIMc0GfJRPwTmFTYbzgLJo-IflnyFRYNkYr13fhiaN4_7G0Mh_KZL4g-AAYvTKxzZ3Q03swBM_n5TLBmqicpI-30LFxSf26nCU5IRjlpU69vhZh74UJYttu5eYouI1j9aNW1j-1KQ28CpMqm"/>
+</div>
+<span class="text-xs font-bold uppercase tracking-widest text-emerald-400">WhatsApp</span>
+</div>
+<!-- IG Story -->
+<div class="glass-panel rounded-2xl p-4 flex flex-col items-center gap-3 active:scale-95 transition-transform cursor-pointer group">
+<div class="w-12 h-12 rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+<img alt="IG Story" class="w-6 h-6 brightness-0 invert" data-alt="Instagram story icon on a vibrant gradient background for social media sharing" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjPpOLUR6ktuFq7iiQ8euafHk97FW-KE9q0E_987oiHCWCD_T1_G0lakjaCqDpS0D2UmqtJvFOnrfQOzSaSlOdrW2ShSJ3nzO7mL1qq8J5Z8RAzzz-Za9nWMx3amNsVoUSaZs5wL8c2arJh8E14kXkdxAzhtFjN1hd-FtXWtbPr03n1m-xRbfTEuHMMrxsjqk7dE8tJB6aDFAdxEvq6flVwbj9fbnXNGUV49MgM7EYLSIreX5qZH-ugg28jg1NZI-H4NNK6WQOUTBK"/>
+</div>
+<span class="text-xs font-bold uppercase tracking-widest text-pink-400">IG Story</span>
+</div>
+<!-- Story Card -->
+<div class="glass-panel rounded-2xl p-4 flex flex-col items-center gap-3 active:scale-95 transition-transform cursor-pointer group">
+<div class="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-indigo-400 text-3xl">style</span>
+</div>
+<span class="text-xs font-bold uppercase tracking-widest text-indigo-400">Story Card</span>
+</div>
+<!-- More -->
+<div class="glass-panel rounded-2xl p-4 flex flex-col items-center gap-3 active:scale-95 transition-transform cursor-pointer group">
+<div class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-on-surface text-3xl">more_horiz</span>
+</div>
+<span class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">More</span>
+</div>
+</div>
+</main>
+<!-- SideNavBar (Hidden on small viewports but defined for structure) -->
+<aside class="hidden md:flex fixed left-0 h-full w-72 border-r-[0.5px] border-[#d4a574]/15 bg-[#0a0a14] flex-col py-10 gap-2">
+<div class="px-8 mb-8">
+<h1 class="text-2xl font-bold tracking-widest text-[#ffe3a1] uppercase font-headline">BONG BARI</h1>
+</div>
+<nav class="flex flex-col gap-2">
+<div class="bg-gradient-to-r from-[#fef3c7] via-[#f4c430] to-[#b8860b] text-[#0d0d17] rounded-full mx-4 px-8 py-3 shadow-[0_0_15px_rgba(244,196,48,0.3)] cursor-pointer flex items-center gap-3">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-medium">Overview</span>
+</div>
+<div class="text-[#f5f0e6]/40 hover:text-[#f5f0e6] hover:bg-white/5 transition-all px-8 py-3 cursor-pointer flex items-center gap-3">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-medium">Assets</span>
+</div>
+<div class="text-[#f5f0e6]/40 hover:text-[#f5f0e6] hover:bg-white/5 transition-all px-8 py-3 cursor-pointer flex items-center gap-3">
+<span class="material-symbols-outlined">query_stats</span>
+<span class="font-medium">Analytics</span>
+</div>
+<div class="text-[#f5f0e6]/40 hover:text-[#f5f0e6] hover:bg-white/5 transition-all px-8 py-3 cursor-pointer flex items-center gap-3">
+<span class="material-symbols-outlined">verified_user</span>
+<span class="font-medium">Verification</span>
+</div>
+<div class="text-[#f5f0e6]/40 hover:text-[#f5f0e6] hover:bg-white/5 transition-all px-8 py-3 cursor-pointer flex items-center gap-3">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-medium">Settings</span>
+</div>
+</nav>
+<div class="mt-auto px-6">
+<div class="glass-panel p-4 rounded-2xl flex flex-col gap-3">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full gold-gradient-bg p-0.5">
+<div class="w-full h-full rounded-full bg-surface-container overflow-hidden">
+<img alt="Elite Tier" class="w-full h-full object-cover" data-alt="Close up portrait of a successful modern professional in a high-end luxury minimalist office setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqlpHvUpwRhpYsXW3-blncbdgtXi60X1e7tocn9bkPDzO5oOshTHY5j5gCNjb--QtHm9I_BTz_LXS_diDalltnA_3Cc0rJv9JMEQdGTzBc_9BJYnPv6iPKbewUcgvL4zbXj5YNIG2pwMWSjpp_0Y_nOzcl1Ly8WDUQ_qOemH_yTsTaYS6B9q62NIqBMzmHch_4OgAyZxfjHtH-ivsJmd2P65WscRDaVoQn5t3HpP7ojYfxFy0xJzCUeZQBI6-pYqWxywjsu_8Vpg0e"/>
+</div>
+</div>
+<div>
+<p class="text-xs font-bold text-primary uppercase">The Sovereign</p>
+<p class="text-[10px] text-on-surface-variant">Elite Tier</p>
+</div>
+</div>
+<button class="w-full py-2 rounded-full gold-gradient-bg text-[#0d0d17] font-bold text-[10px] uppercase tracking-widest">Upgrade to Gold</button>
+</div>
+</div>
+</aside>
+</body></html>

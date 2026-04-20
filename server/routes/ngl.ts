@@ -247,11 +247,12 @@ async function notifyDailyDevCodeIfNeeded(force = false) {
   const to = String(process.env.NGL_DEV_CODE_WHATSAPP || '918777849865').replace(/\D/g, '');
   if (!to) return;
 
-  const message = `Bong NGL dev secret code (${dayStamp}): ${code}\nPrevious day code is now invalid.`;
+  const message = `BongBari developer digits (${dayStamp}): ${code}\nYesterday's digits are now expired.`;
   // Dual-channel delivery: try direct text and template each run.
   // This avoids false negatives where one accepted channel doesn't surface on device.
   const textResult = await sendWhatsAppText(to, message);
-  const templateResult = await sendWhatsAppOtp(to, code);
+  // Pass descriptive string so template message shows context, not just a bare number.
+  const templateResult = await sendWhatsAppOtp(to, `Dev-${code}`);
   const sentOk = textResult.ok || templateResult.ok;
 
   if (sentOk) {

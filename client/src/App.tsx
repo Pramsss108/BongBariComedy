@@ -54,6 +54,7 @@ const NglLanding = lazy(() => import("./pages/NglLanding"));
 const NglCreate = lazy(() => import("./pages/NglCreate"));
 const NglSend = lazy(() => import("./pages/NglSend"));
 const NglDashboard = lazy(() => import("./pages/NglDashboard"));
+const NglStitchPreview = lazy(() => import("./pages/NglStitchPreview"));
 
 // Firebase Protected Route Wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -233,6 +234,12 @@ function Router() {
               <NglDashboard />
             </Suspense>
             </NglLangProvider>
+          </Route>
+
+          <Route path="/ngl/stitch-preview">
+            <Suspense fallback={<LoadingFallback />}>
+              <NglStitchPreview />
+            </Suspense>
           </Route>
 
           <Route path="/s/:code">

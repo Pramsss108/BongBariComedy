@@ -219,6 +219,9 @@ export default function NglDashboard() {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [upgradeToast, setUpgradeToast] = useState(false);
 
+  // Phone removal loading state — disables UI until backend confirms full delete
+  const [phoneRemoving, setPhoneRemoving] = useState(false);
+
   // Dynamically resolve base URL whether in dev (localhost) or prod
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://www.bongbari.com';
   const shareLink = `${baseUrl}/ngl/q/${username}`;
@@ -711,6 +714,8 @@ export default function NglDashboard() {
   };
 
   const handlePhoneReset = async () => {
+    if (phoneRemoving) return;
+    setPhoneRemoving(true);
     try {
       const res = await fetch(buildApiUrl('/api/ngl/otp/reset'), {
         method: 'POST',
@@ -722,15 +727,41 @@ export default function NglDashboard() {
         setError(lang === 'bn' ? 'নম্বর মুছতে ব্যর্থ' : 'Failed to remove phone. Try again.');
         return;
       }
+      // Re-fetch authoritative state from backend to confirm delete fully persisted
+      try {
+        const verifyRes = await fetch(`${buildApiUrl(`/api/ngl/u/${encodeURIComponent(username)}/phone`)}?_=${Date.now()}`, {
+          cache: 'no-store',
+          headers: { 'X-NGL-Key': secretKey },
+        });
+        const verifyData = verifyRes.ok ? await verifyRes.json().catch(() => null) : null;
+        if (verifyData && verifyData.state && verifyData.state !== 'none') {
+          // Backend still has the phone — abort UI clear, surface error
+          setError(lang === 'bn' ? 'সার্ভার থেকে মুছতে দেরি হচ্ছে। আবার চেষ্টা করো।' : 'Server delete still pending. Please try again.');
+          return;
+        }
+      } catch { /* network hiccup — fall through and clear local state */ }
+      // Full clean — reset every phone-related piece of UI state
       setPhoneStatus('none');
       setPhoneMasked('');
       setPhoneOtpStatus('idle');
+      setPhoneOtpDigits(['', '', '', '', '', '']);
+      setPhoneOtpError('');
       setPhoneInput('');
+      setPhoneInputError('');
+      setPhoneShowForm(false);
       setPhoneLastVerifiedAt(null);
       setPhoneLastRemovedAt(data?.lastRemovedAt || new Date().toISOString());
+      setPhoneDevOtpMode(false);
       setVerifiedPhoneForPayment('');
+      // Also clear any stashed test-mode flags so PRO/test surfaces reset
+      try {
+        localStorage.removeItem('ngl_test_mode');
+        localStorage.removeItem('ngl_test_token');
+      } catch { /* ignore */ }
     } catch {
       setError(lang === 'bn' ? 'নম্বর মুছতে ব্যর্থ' : 'Failed to remove phone. Try again.');
+    } finally {
+      setPhoneRemoving(false);
     }
   };
 
@@ -1492,9 +1523,13 @@ export default function NglDashboard() {
                     <button
                       type="button"
                       onClick={handlePhoneReset}
-                      className="ml-1 text-[9px] font-bold text-rose-300/70 hover:text-rose-200 transition-colors"
+                      disabled={phoneRemoving}
+                      className="ml-1 text-[9px] font-bold text-rose-300/70 hover:text-rose-200 transition-colors disabled:opacity-50 disabled:cursor-wait inline-flex items-center gap-1"
                     >
-                      {lang === 'bn' ? 'Remove' : 'Remove'}
+                      {phoneRemoving && (
+                        <svg className="w-2.5 h-2.5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25"/><path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>
+                      )}
+                      {phoneRemoving ? (lang === 'bn' ? 'মুছছি...' : 'Removing…') : (lang === 'bn' ? 'Remove' : 'Remove')}
                     </button>
                   </motion.div>
                 )}
@@ -2327,10 +2362,15 @@ export default function NglDashboard() {
                       <div className="flex gap-2">
                         <button
                           onClick={handlePhoneReset}
-                          className="flex-1 flex items-center justify-center gap-1.5 text-[10px] font-bold text-white/30 hover:text-white/55 py-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.04] transition-all"
+                          disabled={phoneRemoving}
+                          className="flex-1 flex items-center justify-center gap-1.5 text-[10px] font-bold text-white/30 hover:text-white/55 py-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.04] transition-all disabled:opacity-50 disabled:cursor-wait"
                         >
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
-                          {lang === 'bn' ? 'নম্বর বদলাও' : 'Change number'}
+                          {phoneRemoving ? (
+                            <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25"/><path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>
+                          ) : (
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+                          )}
+                          {phoneRemoving ? (lang === 'bn' ? 'মুছছি…' : 'Removing…') : (lang === 'bn' ? 'নম্বর বদলাও' : 'Change number')}
                         </button>
                         <button
                           onClick={() => { setPhoneShowForm(false); setPhoneOtpStatus('idle'); }}

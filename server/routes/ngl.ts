@@ -1024,6 +1024,38 @@ export function registerNglRoutes(app: any) {
       const user = await dbGetUser(username);
       if (!user) return res.status(404).json({ message: 'User not found', exists: false });
 
+      // Part 3 (Premium): STRICT gating. PRO requires BOTH is_premium=1 AND premium_until in the future.
+      // A NULL premium_until is NOT valid \u2014 it indicates a stale/legacy/leaked grant and must be ignored.
+      const dbPremium = (user as any).isPremium === 1;
+      const premiumUntilTs = (user as any).premiumUntil ? new Date((user as any).premiumUntil).getTime() : 0;
+      const premiumActive = dbPremium && premiumUntilTs > Date.now();
+
+      // Self-heal: if DB still says is_premium=1 but window expired (or premium_until is null),
+      // revoke it so future reads + client UI stay clean.
+      if (dbPremium && !premiumActive) {
+        try {
+          if (USE_PG) {
+            await pgDb!
+              .update(nglUsers)
+              .set({ isPremium: 0, premiumUntil: null } as any)
+              .where(eq(nglUsers.username, username));
+          } else {
+            const u = memUsers.get(username) as any;
+            if (u) { u.isPremium = 0; u.premiumUntil = null; }
+          }
+          appendNglAudit({
+            at: Date.now(),
+            type: 'premium_revoked',
+            username,
+            ip: getForwardedIp(req as any),
+            source: premiumUntilTs === 0 ? 'null_until_auto_revoke' : 'expired_auto_revoke',
+            details: { previousUntil: (user as any).premiumUntil || null },
+          });
+        } catch (e: any) {
+          console.warn('[NGL/u] auto-revoke failed for', username, e?.message);
+        }
+      }
+
       res.json({
         exists: true,
         username: user.username,
@@ -1034,10 +1066,8 @@ export function registerNglRoutes(app: any) {
         streakDays: (user as any).streakDays || 0,
         ogTitle: (user as any).ogTitle || null,
         ogDescription: (user as any).ogDescription || null,
-        // Part 3 (Premium): expose PRO status so dashboard + send page can render badge + gating
-        isPremium: (user as any).isPremium === 1
-          && (!(user as any).premiumUntil || new Date((user as any).premiumUntil).getTime() > Date.now())
-          ? 1 : 0,
+        isPremium: premiumActive ? 1 : 0,
+        premiumUntil: premiumActive ? (user as any).premiumUntil : null,
         createdAt: user.createdAt,
       });
     } catch (err: any) {
@@ -1642,11 +1672,11 @@ export function registerNglRoutes(app: any) {
         return res.status(400).json({ message: `Invalid theme. Choose from: ${NGL_THEMES.join(', ')}` });
       }
 
-      // Part 3: PRO-only themes — require active premium
+      // Part 3: PRO-only themes \u2014 require active premium (STRICT: must have premium_until in future)
       const PRO_ONLY = ['neon', 'rosegold', 'midnight'];
       if (PRO_ONLY.includes(theme)) {
-        const isPremium = (user as any).isPremium === 1
-          && (!(user as any).premiumUntil || new Date((user as any).premiumUntil).getTime() > Date.now());
+        const premiumUntilTs = (user as any).premiumUntil ? new Date((user as any).premiumUntil).getTime() : 0;
+        const isPremium = (user as any).isPremium === 1 && premiumUntilTs > Date.now();
         if (!isPremium) {
           return res.status(403).json({ code: 'PRO_REQUIRED', message: 'This theme is for Bong PRO users only.' });
         }

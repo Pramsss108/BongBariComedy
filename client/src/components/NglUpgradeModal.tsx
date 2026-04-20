@@ -17,6 +17,7 @@ interface Props {
   onClose: () => void;
   username: string;
   secretKey: string;
+  verifiedPhone?: string;
   onSuccess: (premiumUntil: string) => void;
 }
 
@@ -37,9 +38,16 @@ function loadRazorpay(): Promise<boolean> {
   return rzScriptPromise;
 }
 
-export default function NglUpgradeModal({ open, onClose, username, secretKey, onSuccess }: Props) {
+export default function NglUpgradeModal({ open, onClose, username, secretKey, verifiedPhone = '', onSuccess }: Props) {
   const { t, lang } = useNglLang();
   const [plan, setPlan] = useState<Plan>('yearly');
+  const [testModeRequested] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('ngl_test_mode') === '1';
+    } catch {
+      return false;
+    }
+  });
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [errKind, setErrKind] = useState<'error' | 'info'>('error');
@@ -60,10 +68,26 @@ export default function NglUpgradeModal({ open, onClose, username, secretKey, on
       }
 
       // 2. Create order on our server
+      const testToken = (() => {
+        try {
+          return localStorage.getItem('ngl_test_token') || '';
+        } catch {
+          return '';
+        }
+      })();
+      const requestedPlan = testModeRequested ? 'test1' : plan;
       const orderRes = await fetch(buildApiUrl('/api/ngl/payment/create-order'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-NGL-Key': secretKey },
-        body: JSON.stringify({ username, plan }),
+        headers: {
+          'Content-Type': 'application/json',
+          'X-NGL-Key': secretKey,
+          ...(testToken ? { 'X-NGL-Test-Token': testToken } : {}),
+        },
+        body: JSON.stringify({
+          username,
+          plan: requestedPlan,
+          ...(testModeRequested ? { mode: 'test', testToken } : {}),
+        }),
       });
       if (!orderRes.ok) {
         const body = await orderRes.json().catch(() => ({}));
@@ -79,6 +103,7 @@ export default function NglUpgradeModal({ open, onClose, username, secretKey, on
       const order = await orderRes.json();
 
       // 3. Open Razorpay checkout
+      const normalizedPhone = verifiedPhone.replace(/\D/g, '').slice(-10);
       const rzp = new window.Razorpay({
         key: order.keyId,
         amount: order.amount,
@@ -87,19 +112,31 @@ export default function NglUpgradeModal({ open, onClose, username, secretKey, on
         description: order.planLabel,
         order_id: order.orderId,
         theme: { color: '#a855f7' },
-        prefill: { name: `@${username}` },
+        prefill: {
+          name: `@${username}`,
+          ...(normalizedPhone ? { contact: normalizedPhone } : {}),
+        },
+        readonly: {
+          ...(normalizedPhone ? { contact: true } : {}),
+        },
         handler: async (response: any) => {
           // 4. Verify on server
           try {
             const vRes = await fetch(buildApiUrl('/api/ngl/payment/verify'), {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'X-NGL-Key': secretKey },
+              headers: {
+                'Content-Type': 'application/json',
+                'X-NGL-Key': secretKey,
+                ...(testToken ? { 'X-NGL-Test-Token': testToken } : {}),
+              },
               body: JSON.stringify({
                 username,
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
-                plan,
+                plan: order.plan || requestedPlan,
+                mode: order.mode,
+                ...(testModeRequested ? { testToken } : {}),
               }),
             });
             if (!vRes.ok) {
@@ -153,7 +190,10 @@ export default function NglUpgradeModal({ open, onClose, username, secretKey, on
           <div className="flex items-start justify-between mb-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-black text-white bg-gradient-to-r from-fuchsia-500 to-violet-500 px-2 py-[2px] rounded-full tracking-wider">✨ BONG PRO</span>
+                <span className="text-[10px] font-black text-white bg-gradient-to-r from-fuchsia-500 to-violet-500 px-2 py-[2px] rounded-full tracking-wider">BONG PRO</span>
+                {testModeRequested && (
+                  <span className="text-[10px] font-black text-amber-100 bg-amber-500/20 border border-amber-300/40 px-2 py-[2px] rounded-full tracking-wider">TEST OTP MODE</span>
+                )}
               </div>
               <h2 className="text-white font-black text-[22px] leading-tight">{t('pro.modalTitle')}</h2>
               <p className="text-white/50 text-[12px] mt-1">{t('pro.modalSubtitle')}</p>
@@ -163,22 +203,72 @@ export default function NglUpgradeModal({ open, onClose, username, secretKey, on
               aria-label="Close"
               className="text-white/40 hover:text-white/80 w-8 h-8 rounded-full bg-white/[0.05] hover:bg-white/[0.1] transition-all flex items-center justify-center text-[14px] shrink-0"
             >
-              ✕
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" className="w-4 h-4">
+                <path d="M6 6l12 12" />
+                <path d="M18 6l-12 12" />
+              </svg>
             </button>
           </div>
 
           {/* Features */}
           <ul className="space-y-2 mb-5 bg-white/[0.03] rounded-2xl p-3.5 border border-white/[0.05]">
             {[
-              { icon: '🔍', k: 'pro.f1' },
-              { icon: '✓', k: 'pro.f2' },
-              { icon: '🛡️', k: 'pro.f3' },
-              { icon: '📌', k: 'pro.f4' },
-              { icon: '🎨', k: 'pro.f5' },
-              { icon: '💎', k: 'pro.f6' },
+              {
+                k: 'pro.f1',
+                icon: (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-fuchsia-300">
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="M20 20l-3-3" />
+                  </svg>
+                ),
+              },
+              {
+                k: 'pro.f2',
+                icon: (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-emerald-300">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                ),
+              },
+              {
+                k: 'pro.f3',
+                icon: (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-cyan-300">
+                    <path d="M12 3l7 3v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6l7-3z" />
+                  </svg>
+                ),
+              },
+              {
+                k: 'pro.f4',
+                icon: (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-amber-300">
+                    <path d="M16 3v8l4 4-4 4-4-4V3z" />
+                  </svg>
+                ),
+              },
+              {
+                k: 'pro.f5',
+                icon: (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-rose-300">
+                    <circle cx="13.5" cy="6.5" r="2.5" />
+                    <circle cx="6.5" cy="12.5" r="2.5" />
+                    <circle cx="17.5" cy="16.5" r="2.5" />
+                    <path d="M8.6 11l3-2" />
+                    <path d="M15.6 8.6l1.3 5.1" />
+                  </svg>
+                ),
+              },
+              {
+                k: 'pro.f6',
+                icon: (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-sky-300">
+                    <path d="M12 3l6 6-6 12-6-12 6-6z" />
+                  </svg>
+                ),
+              },
             ].map(f => (
               <li key={f.k} className="flex items-start gap-2.5 text-white/85 text-[12.5px] leading-snug">
-                <span className="shrink-0 text-[14px] mt-[1px]">{f.icon}</span>
+                <span className="shrink-0 mt-[1px]">{f.icon}</span>
                 <span>{t(f.k)}</span>
               </li>
             ))}
@@ -203,6 +293,12 @@ export default function NglUpgradeModal({ open, onClose, username, secretKey, on
             </button>
           </div>
 
+          {testModeRequested && (
+            <div className="mb-3 rounded-xl px-3 py-2 text-[12px] font-semibold bg-amber-500/10 border border-amber-400/30 text-amber-100">
+              Test payment active: Rs 1 test flow (separate from live billing).
+            </div>
+          )}
+
           {/* Inline status — info (coming soon) or error */}
           {err && (
             <div className={`mb-3 rounded-xl px-3 py-2 text-[12px] font-semibold ${errKind === 'info' ? 'bg-white/[0.04] border border-white/10 text-white/60' : 'bg-red-500/10 border border-red-500/30 text-red-300'}`}>
@@ -218,7 +314,7 @@ export default function NglUpgradeModal({ open, onClose, username, secretKey, on
           >
             {loading
               ? (lang === 'bn' ? 'অপেক্ষা করো…' : 'Please wait…')
-              : `${t('pro.upgradeBtn')} — ₹${plan === 'yearly' ? '683' : '98'}`}
+              : `${t('pro.upgradeBtn')} — ₹${testModeRequested ? '1' : (plan === 'yearly' ? '683' : '98')}`}
           </button>
 
           <p className="text-center text-white/30 text-[10px] mt-3 leading-relaxed">

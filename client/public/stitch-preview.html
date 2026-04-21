@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>User Dashboard - NGL Clone</title>
+<!-- Tailwind CSS CDN with plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Font Awesome for icons -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'dashboard-bg': '#121212',
+            'card-bg': 'rgba(255, 255, 255, 0.05)',
+            'card-border': 'rgba(255, 255, 255, 0.1)',
+            'gold-primary': '#D4AF37',
+          },
+          backgroundImage: {
+            'gold-gradient': 'linear-gradient(135deg, #F9D423 0%, #D4AF37 100%)',
+            'glass-shine': 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.05) 100%)',
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-glassmorphism">
+    .glass-card {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .glossy-effect::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(
+        to bottom right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0) 45%,
+        rgba(255, 255, 255, 0.03) 50%,
+        rgba(255, 255, 255, 0) 55%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      transform: rotate(30deg);
+      pointer-events: none;
+    }
+
+    .btn-gold {
+      background: linear-gradient(180deg, #F8DB82 0%, #CFA144 100%);
+      color: #1A1A1A;
+      font-weight: 600;
+      box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3), inset 0 1px 1px rgba(255,255,255,0.5);
+      border: 1px solid rgba(255,215,0,0.3);
+      transition: transform 0.2s ease;
+    }
+    
+    .btn-gold:hover {
+      transform: scale(1.02);
+    }
+
+    .gold-glow {
+      box-shadow: 0 0 25px rgba(212, 175, 55, 0.4);
+    }
+
+    .pro-ribbon {
+      background: linear-gradient(180deg, #F8DB82 0%, #CFA144 100%);
+      box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3), inset 0 1px 1px rgba(255,255,255,0.4);
+    }
+
+    .bottom-glow-green { box-shadow: inset 0 -30px 40px -20px rgba(34, 197, 94, 0.25); }
+    .bottom-glow-pink { box-shadow: inset 0 -30px 40px -20px rgba(236, 72, 153, 0.25); }
+    .bottom-glow-purple { box-shadow: inset 0 -30px 40px -20px rgba(168, 85, 247, 0.25); }
+    .bottom-glow-blue { box-shadow: inset 0 -30px 40px -20px rgba(59, 130, 246, 0.25); }
+  </style>
+<style data-purpose="typography">
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0f0f0f;
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 flex flex-col items-center">
+<!-- BEGIN: TopHeader -->
+<header class="w-full max-w-5xl flex items-center justify-between mb-8" data-purpose="main-navigation">
+<!-- Back Button -->
+<button class="flex items-center gap-2 px-4 py-2 rounded-full glass-card text-sm font-medium">
+<i class="fa-solid fa-arrow-left"></i> Back
+    </button>
+<!-- Center Navigation Tabs -->
+<div class="flex items-center gap-1 p-1 rounded-full glass-card" data-purpose="view-selector">
+<button class="flex items-center gap-2 px-6 py-2 rounded-full btn-gold text-sm gold-glow">
+<i class="fa-solid fa-house"></i> Home
+      </button>
+<button class="flex items-center gap-2 px-6 py-2 rounded-full text-sm text-gray-400 hover:text-white transition-colors">
+<i class="fa-solid fa-inbox"></i> Inbox
+      </button>
+</div>
+<!-- User Section -->
+<div class="flex items-center gap-3" data-purpose="user-menu">
+<div class="hidden md:flex items-center gap-2 px-3 py-1 rounded-full glass-card text-xs cursor-pointer">
+        EN <i class="fa-solid fa-chevron-down text-[10px]"></i>
+</div>
+<button class="text-sm text-gray-400 hover:text-white">Logout</button>
+<div class="flex items-center gap-2">
+<span class="text-sm text-gray-400">@pramsss108</span>
+<div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold border border-gray-600">P</div>
+</div>
+</div>
+</header>
+<!-- END: TopHeader -->
+<!-- BEGIN: MainContent -->
+<main class="w-full max-w-4xl flex flex-col items-center gap-8">
+<!-- BEGIN: ProFeatureCard -->
+<section class="w-full max-w-xl glass-card rounded-3xl py-4 px-6 flex items-center justify-between relative overflow-hidden glossy-effect" data-purpose="subscription-status">
+<!-- Pro Ribbon -->
+<div class="absolute left-0 top-1/2 -translate-y-1/2 flex items-center">
+<div class="pro-ribbon px-6 py-4 rounded-r-xl shadow-lg">
+<span class="text-[#1a1a1a] font-black text-2xl tracking-tighter italic">PRO</span>
+</div>
+</div>
+<!-- Center User Info -->
+<div class="flex flex-col items-center ml-24">
+<div class="w-16 h-16 rounded-full glass-card border-2 border-white/20 flex items-center justify-center text-2xl font-bold mb-2">
+          P
+        </div>
+<span class="text-sm text-gray-400">@pramsss108</span>
+</div>
+<!-- Price Info -->
+<div class="text-right">
+<div class="text-4xl font-black italic tracking-tighter">PRO</div>
+<div class="text-2xl font-bold text-gold-primary">₹98<span class="text-sm font-normal text-gray-400">/mo</span></div>
+</div>
+</section>
+<!-- END: ProFeatureCard -->
+<!-- BEGIN: GridContent -->
+<div class="w-full grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Left: Anonymous Question Card -->
+<section class="glass-card rounded-[2.5rem] p-8 flex flex-col items-center justify-between min-h-[280px]" style="border: 1px solid rgba(212, 175, 55, 0.15);">
+<div class="w-full text-left">
+<span class="text-xs text-gray-400 font-medium">What people see</span>
+</div>
+<div class="text-center flex-1 flex items-center justify-center">
+<h2 class="text-2xl md:text-3xl font-bold leading-relaxed">
+            আমার সম্পর্কে anonymous <br/> কিছু বলো 👀
+          </h2>
+</div>
+<div class="flex gap-3 w-full justify-center">
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-xl glass-card text-[11px] hover:bg-white/10 transition-all">
+<i class="fa-solid fa-shuffle text-gold-primary"></i> AI Shuffle
+          </button>
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-xl glass-card text-[11px] hover:bg-white/10 transition-all">
+<i class="fa-solid fa-pen text-gold-primary"></i> Edit
+          </button>
+</div>
+</section>
+<!-- Right: Actions Column -->
+<div class="flex flex-col gap-6">
+<!-- WhatsApp Verify Card -->
+<div class="glass-card rounded-3xl p-5 flex items-center justify-between glossy-effect">
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-gold-primary">Verify WhatsApp</span>
+<span class="text-xs text-gray-500">Not added</span>
+</div>
+<button class="btn-gold px-6 py-2 rounded-xl text-xs uppercase tracking-wider shadow-lg">Start</button>
+</div>
+<!-- Link Share Card -->
+<div class="glass-card rounded-3xl p-6 flex flex-col gap-4">
+<span class="text-xs font-medium text-gray-400">Shareable link</span>
+<div class="flex items-center gap-2 bg-black/40 border border-white/10 rounded-2xl p-1 pl-4">
+<span class="text-xs text-gray-300 truncate">bongbari.com/ngl/q/pramsss108</span>
+<button class="btn-gold px-4 py-2 rounded-xl text-[10px] uppercase font-bold ml-auto">Copy</button>
+</div>
+</div>
+</div>
+</div>
+<!-- END: GridContent -->
+<!-- BEGIN: QuickActionsFooter -->
+<section class="w-full grid grid-cols-2 md:grid-cols-4 gap-4 mt-4" data-purpose="social-sharing">
+<!-- WhatsApp -->
+<button class="glass-card rounded-3xl p-5 flex flex-col items-center gap-3 group bottom-glow-green">
+<div class="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center text-green-500 text-2xl group-hover:shadow-[0_0_20px_rgba(34,197,94,0.4)] transition-all">
+<i class="fa-brands fa-whatsapp"></i>
+</div>
+<span class="text-sm font-medium">WhatsApp</span>
+</button>
+<!-- IG Story -->
+<button class="glass-card rounded-3xl p-5 flex flex-col items-center gap-3 group bottom-glow-pink">
+<div class="w-12 h-12 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-500 text-2xl group-hover:shadow-[0_0_20px_rgba(236,72,153,0.4)] transition-all">
+<i class="fa-brands fa-instagram"></i>
+</div>
+<span class="text-sm font-medium">IG Story</span>
+</button>
+<!-- Story Card -->
+<button class="glass-card rounded-3xl p-5 flex flex-col items-center gap-3 group bottom-glow-purple">
+<div class="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 text-2xl group-hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all">
+<i class="fa-solid fa-clone"></i>
+</div>
+<span class="text-sm font-medium">Story Card</span>
+</button>
+<!-- More -->
+<button class="glass-card rounded-3xl p-5 flex flex-col items-center gap-3 group bottom-glow-blue">
+<div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-2xl group-hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] transition-all">
+<i class="fa-solid fa-ellipsis"></i>
+</div>
+<span class="text-sm font-medium">More</span>
+</button>
+</section>
+<!-- END: QuickActionsFooter -->
+</main>
+<!-- END: MainContent -->
+<!-- Delete Icon (Floating bottom right) -->
+<div class="fixed bottom-6 right-6">
+<button class="w-10 h-10 rounded-lg glass-card flex items-center justify-center text-red-500/60 hover:text-red-500 transition-colors">
+<i class="fa-solid fa-trash-can"></i>
+</button>
+</div>
+</body></html>

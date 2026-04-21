@@ -1162,9 +1162,7 @@ a:focus-visible {
 }
 
 /* Professional Custom Cursor */
-* {
-  cursor: none !important;
-}
+/* * { cursor: none !important; } (disabled for dev so cursor is visible) */
 
 /* Professional arrow cursor for admin users doing serious work */
 body.admin-logged-in *,
@@ -1229,9 +1227,7 @@ nav a,
 [data-testid*="link"],
 [data-testid*="card"],
 .clickable,
-.interactive {
-  cursor: none !important;
-}
+/* .interactive { cursor: none !important; } */
 
 /* Viral 2025 Advanced Button Effects - Only for CTA buttons */
 .magnetic-button,
@@ -3942,3 +3938,5 @@ section:nth-child(odd) {
     z-index: 5;
   }
 }
+
+

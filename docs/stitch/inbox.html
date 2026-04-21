@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Bong Bari - Inbox</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-highest": "#34343f",
+                        "secondary": "#efbd8a",
+                        "on-tertiary-container": "#57554d",
+                        "on-tertiary-fixed-variant": "#494740",
+                        "tertiary-container": "#cecac0",
+                        "secondary-fixed": "#ffdcbc",
+                        "tertiary-fixed-dim": "#cac6bd",
+                        "on-secondary-fixed-variant": "#614018",
+                        "outline-variant": "rgba(78, 70, 52, 0.15)",
+                        "on-primary-fixed": "#241a00",
+                        "outline": "#9a907a",
+                        "tertiary": "#ebe6dc",
+                        "on-primary": "#3d2e00",
+                        "surface-bright": "#393844",
+                        "error-container": "#93000a",
+                        "inverse-surface": "#e4e1f0",
+                        "on-tertiary": "#32302a",
+                        "secondary-fixed-dim": "#efbd8a",
+                        "on-surface-variant": "#d1c5ad",
+                        "surface-container-low": "#1b1b25",
+                        "on-tertiary-fixed": "#1d1c16",
+                        "surface-variant": "#34343f",
+                        "on-secondary-container": "#dfaf7e",
+                        "tertiary-fixed": "#e7e2d8",
+                        "inverse-primary": "#755b00",
+                        "on-error": "#690005",
+                        "primary-fixed": "#ffdf90",
+                        "on-secondary": "#472a03",
+                        "surface-container-high": "#292934",
+                        "primary": "#ffe3a1",
+                        "surface": "#12121d",
+                        "inverse-on-surface": "#302f3b",
+                        "background": "#12121d",
+                        "surface-container-lowest": "#0d0d17",
+                        "on-primary-container": "#695200",
+                        "primary-fixed-dim": "#f0c12c",
+                        "surface-tint": "#f0c12c",
+                        "error": "#ffb4ab",
+                        "on-secondary-fixed": "#2c1700",
+                        "surface-dim": "#12121d",
+                        "on-error-container": "#ffdad6",
+                        "surface-container": "#1f1f29",
+                        "on-primary-fixed-variant": "#584400",
+                        "on-background": "#e4e1f0",
+                        "primary-container": "#f4c430",
+                        "secondary-container": "#64421a",
+                        "on-surface": "#e4e1f0"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body min-h-screen flex flex-col md:flex-row antialiased">
+<!-- TopAppBar (Web) -->
+<nav class="hidden md:flex fixed top-0 left-0 w-full z-50 justify-between items-center px-6 py-4 max-w-full bg-transparent backdrop-blur-xl bg-opacity-15 border-b border-[#34343f]/15 shadow-sm">
+<div class="flex items-center gap-4">
+<span class="text-xl font-bold tracking-tight text-[#e4e1f0] font-headline">Bong Bari</span>
+</div>
+<div class="flex gap-2">
+<a class="text-[#e4e1f0] opacity-70 hover:opacity-100 font-medium px-6 py-1.5 font-label hover:bg-[#34343f] hover:scale-105 transition-all duration-300 rounded-full" href="#">Home</a>
+<a class="bg-gradient-to-r from-[#fef3c7] via-[#f4c430] to-[#b8860b] text-[#12121d] font-bold rounded-full px-6 py-1.5 shadow-[0px_0px_15px_rgba(244,196,48,0.3)] font-label scale-95 transition-transform duration-150" href="#">Inbox</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface hover:text-primary transition-colors hover:scale-105 duration-300">
+<span class="material-symbols-outlined">language</span>
+</button>
+<button class="text-on-surface hover:text-primary transition-colors hover:scale-105 duration-300">
+<span class="material-symbols-outlined">logout</span>
+</button>
+<img alt="User profile avatar" class="w-10 h-10 rounded-full object-cover border border-outline-variant/15 hover:scale-105 transition-transform duration-300 cursor-pointer" data-alt="close-up portrait of young woman with dark hair in warm studio lighting, professional headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhVDNTC898JY-mAdlENc2FyCLc0Q7KzRbdM1Iar8wrm60qhJOC-p72vdcmURJqT_9zqV161Y39K2oLVeZ1MLDoM1U8TbxwNJXpK9IKIZvR1Xmt9cQj5jYtanq5UMtW5VAI0z0ei5FW41wRU1g5vKNHZwiDPMkT3P3h2_79w2U4lQptbgQqdtTnqKKteEhtrn_HJ9v5GkSWd9OfQ3-BBoyoi_K4JUhRfIzZTuZMLAvi474LOHg4XBXxyPJ3a-5eztPmqSGXAe8Zw0IR"/>
+</div>
+</nav>
+<!-- SideNavBar (Web Alternative if appropriate, hiding based on prompt for Inbox page to focus on canvas, but typically structural) -->
+<!-- Assuming Top Navigation serves as the main anchor for this layout based on prompt -->
+<!-- Main Content Canvas -->
+<main class="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-32 md:pt-32 md:pb-12 flex flex-col gap-8">
+<!-- Header & Search -->
+<header class="flex flex-col gap-6">
+<div>
+<h1 class="text-3xl font-bold font-headline text-on-surface">Inbox</h1>
+<p class="text-sm font-body text-on-surface-variant mt-1">Review your latest communications securely.</p>
+</div>
+<div class="relative w-full group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-on-surface-variant group-focus-within:text-primary transition-colors">search</span>
+</div>
+<input class="w-full bg-surface-container-highest border-0 rounded-full py-4 pl-12 pr-4 text-on-surface placeholder-on-surface-variant focus:ring-2 focus:ring-primary focus:outline-none transition-all duration-300 shadow-sm font-body text-sm" placeholder="Search messages, locations, or devices..." type="text"/>
+</div>
+</header>
+<!-- Message List -->
+<section class="flex flex-col gap-4">
+<!-- Message Card 1 (Blurred/Hidden) -->
+<article class="bg-surface-container-low rounded-lg p-6 border border-outline-variant relative overflow-hidden group shadow-sm hover:bg-surface-variant transition-colors duration-300">
+<div class="flex justify-between items-start mb-4 relative z-10">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+<span class="text-xs font-bold text-on-surface font-label uppercase tracking-wider">New Lead</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="text-xs font-label text-on-surface-variant">2m ago</span>
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">keep</span>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-lg">more_horiz</span>
+</button>
+</div>
+</div>
+<div class="relative mb-6">
+<div class="blur-md select-none opacity-50">
+<p class="text-lg font-body text-on-surface line-clamp-2">Hi Bong Bari team, I'm interested in booking the entire venue for a private event next month. Could you provide a quote for 50 guests including catering?</p>
+</div>
+<div class="absolute inset-0 flex items-center justify-center">
+<button class="flex items-center gap-2 bg-surface-container-highest/80 backdrop-blur-md border border-outline-variant px-4 py-2 rounded-full text-sm font-label text-on-surface hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm">visibility_off</span>
+                            Tap to reveal
+                        </button>
+</div>
+</div>
+<div class="flex flex-wrap items-center justify-between gap-4 mt-auto border-t border-outline-variant pt-4 relative z-10">
+<div class="flex gap-2">
+<button class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-primary shadow-[0px_0px_10px_rgba(244,196,48,0.2)] border border-primary/20 hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">favorite</span>
+</button>
+<button class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:scale-110 transition-all">
+<span class="material-symbols-outlined text-sm">lightbulb</span>
+</button>
+<button class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:scale-110 transition-all">
+<span class="material-symbols-outlined text-sm">rocket_launch</span>
+</button>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="px-2.5 py-1 rounded-full bg-surface-container-highest text-[10px] font-label text-on-surface flex items-center gap-1 border border-outline-variant">
+                            🇮🇳 India
+                        </span>
+<span class="px-2.5 py-1 rounded-full bg-surface-container-highest text-[10px] font-label text-on-surface flex items-center gap-1 border border-outline-variant">
+                            Mobile
+                        </span>
+<span class="px-2.5 py-1 rounded-full bg-surface-container-highest text-[10px] font-label text-on-surface flex items-center gap-1 border border-outline-variant">
+                            Chrome
+                        </span>
+<span class="px-2.5 py-1 rounded-full bg-surface-container-highest text-[10px] font-label text-on-surface flex items-center gap-1 border border-outline-variant">
+                            Jio
+                        </span>
+<span class="px-3 py-1 rounded-full bg-gradient-to-r from-[#fef3c7]/20 via-[#f4c430]/20 to-[#b8860b]/20 border border-primary/30 text-[10px] font-bold font-label text-primary flex items-center gap-1 shadow-[0px_0px_8px_rgba(244,196,48,0.1)]">
+<span class="material-symbols-outlined text-[10px]">lock</span>
+                            13 more — PRO
+                        </span>
+</div>
+</div>
+</article>
+<!-- Message Card 2 (Revealed) -->
+<article class="bg-surface-container-low rounded-lg p-6 border border-outline-variant shadow-sm hover:bg-surface-variant transition-colors duration-300">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<img alt="Sender avatar" class="w-8 h-8 rounded-full object-cover" data-alt="close-up portrait of smiling young man with short dark hair outdoors, shallow depth of field" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxgM6UCqsisaYSMe9lmW2Q99KvFjIK_RfrhOup9AXcpWe6mjHqXo8ZpXeprcBgJbaHeXocPLgswbZgW9Da9QrutVHHiJSWXjtMEHvjgi5P55wbSDIe1OaJDuRmfU2u6kKWkqMJ4vJ0pvqqUssxA43O4C2hu-0riB8SEJnGV3Jzw1FGUKpqYRGOC8QfN-OXAlZynneVRoexkxjwExFqWseJDx0mmuWWhGoX-Bvo2lfEzyZJ700TBGqiQLBdkurb-A5US5M1oMDNfe3D"/>
+<span class="text-sm font-semibold text-on-surface font-body">Rahul S.</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="text-xs font-label text-on-surface-variant">1h ago</span>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-lg">more_horiz</span>
+</button>
+</div>
+</div>
+<div class="mb-6">
+<p class="text-base font-body text-on-surface leading-relaxed">Absolutely stunning location! We visited yesterday and were blown away by the attention to detail. Could you share the availability for the first week of November?</p>
+</div>
+<div class="flex flex-wrap items-center justify-between gap-4 border-t border-outline-variant pt-4">
+<div class="flex gap-2">
+<button class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:scale-110 transition-all">
+<span class="material-symbols-outlined text-sm">favorite</span>
+</button>
+<button class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:scale-110 transition-all">
+<span class="material-symbols-outlined text-sm">reply</span>
+</button>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="px-2.5 py-1 rounded-full bg-surface-container-highest text-[10px] font-label text-on-surface flex items-center gap-1 border border-outline-variant">
+                            🇬🇧 UK
+                        </span>
+<span class="px-2.5 py-1 rounded-full bg-surface-container-highest text-[10px] font-label text-on-surface flex items-center gap-1 border border-outline-variant">
+                            Desktop
+                        </span>
+<span class="px-2.5 py-1 rounded-full bg-surface-container-highest text-[10px] font-label text-on-surface flex items-center gap-1 border border-outline-variant">
+                            Safari
+                        </span>
+</div>
+</div>
+</article>
+<!-- Additional filler cards for aesthetic volume -->
+<article class="bg-surface-container-low rounded-lg p-6 border border-outline-variant shadow-sm hover:bg-surface-variant transition-colors duration-300 opacity-80">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface font-bold text-xs">AK</div>
+<span class="text-sm font-semibold text-on-surface font-body">Anjali K.</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="text-xs font-label text-on-surface-variant">Yesterday</span>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-lg">more_horiz</span>
+</button>
+</div>
+</div>
+<div class="mb-4">
+<p class="text-base font-body text-on-surface-variant line-clamp-1">Following up on the invoice #BB-2024-89...</p>
+</div>
+</article>
+<article class="bg-surface-container-low rounded-lg p-6 border border-outline-variant shadow-sm hover:bg-surface-variant transition-colors duration-300 opacity-60">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface font-bold text-xs">M</div>
+<span class="text-sm font-semibold text-on-surface font-body">Marketing Team</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="text-xs font-label text-on-surface-variant">Oct 12</span>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-lg">more_horiz</span>
+</button>
+</div>
+</div>
+<div class="mb-4">
+<p class="text-base font-body text-on-surface-variant line-clamp-1">Weekly social media performance report is ready.</p>
+</div>
+</article>
+</section>
+<!-- Footer Action -->
+<div class="flex justify-center mt-8">
+<button class="flex items-center gap-2 bg-gradient-to-r from-[#fef3c7] via-[#f4c430] to-[#b8860b] text-[#12121d] font-bold rounded-full px-8 py-3 shadow-[0px_0px_20px_rgba(244,196,48,0.25)] font-label hover:scale-105 active:scale-95 transition-all duration-300">
+<span class="material-symbols-outlined">download</span>
+                Export Inbox
+            </button>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="md:hidden fixed bottom-0 w-full bg-surface-container-low/90 backdrop-blur-xl border-t border-outline-variant/15 z-50 pb-safe">
+<div class="flex justify-around items-center h-16">
+<a class="flex flex-col items-center justify-center w-full h-full text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-xl mb-1">home</span>
+<span class="text-[10px] font-label font-medium">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full text-primary relative" href="#">
+<div class="absolute top-0 w-8 h-1 bg-primary rounded-b-full"></div>
+<span class="material-symbols-outlined text-xl mb-1" style="font-variation-settings: 'FILL' 1;">mail</span>
+<span class="text-[10px] font-label font-bold">Inbox</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-xl mb-1">person</span>
+<span class="text-[10px] font-label font-medium">Profile</span>
+</a>
+</div>
+</nav>
+</body></html>

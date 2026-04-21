@@ -7,33 +7,33 @@ import { useNglLang, LangToggle, FloatingHelp } from '@/components/NglLang';
 
 // Bilingual default prompts for send page
 const SEND_DEFAULTS = {
-  bn: 'আমার সম্পর্কে anonymous কিছু বলো 👀',
-  en: 'send me anonymous messages! 👀',
+  bn: 'আমার সম্পর্কে anonymous কিছু বলো',
+  en: 'send me an anonymous message',
 };
 
 // ─── Bilingual prompt pairs (criss-cross translation) ───
-// Maps Bengali ↔ English so toggling language shows the equivalent prompt
+// Must match PROMPT_POOL in NglDashboard.tsx exactly (no emojis — premium copy)
 const PROMPT_PAIRS: [string, string][] = [
-  ['আমার সম্পর্কে anonymous কিছু বলো 👀', 'send me anonymous messages! 👀'],
-  ['আমাকে ৩ শব্দে বর্ণনা করো ✨', 'describe me in 3 words ✨'],
-  ['আমার সম্পর্কে তোর honest opinion কি? 🤔', "what's your honest opinion about me? 🤔"],
-  ['আমার সাথে তোর সবচেয়ে ভালো memory কি? 💭', 'what is your best memory with me? 💭'],
-  ['আমাকে প্রথম দেখেই কি মনে হয়েছিল? 👋', 'what did you think when you first met me? 👋'],
-  ['তুই কখনো আমার কাছে কি লুকিয়ে রেখেছিস? 🤫', 'are you hiding something from me? 🤫'],
-  ['আমাকে একটা dare দে! 🔥', 'give me a dare! 🔥'],
-  ['আমার সবচেয়ে annoying habit কি? 😅', 'what is my most annoying habit? 😅'],
-  ['তুই আমার জায়গায় থাকলে কি করতিস? 🤷', 'what would you do if you were me? 🤷'],
-  ['আমাকে নিয়ে একটা confession করো 💬', 'confess something about me 💬'],
-  ['তুই কি আমাকে trust করিস? 🔒', 'do you trust me? 🔒'],
-  ['Never have I ever... আমাকে catch করো 🙈', 'never have I ever... catch me 🙈'],
-  ['আমার life-এ কি change করা উচিত? 💡', 'what should I change in my life? 💡'],
-  ['তোর মনে আমার বিশেষ জায়গা আছে? 💜', 'do I have a special place in your heart? 💜'],
-  ['আমার best quality কি? আর worst? ⚖️', 'what is my best and worst quality? ⚖️'],
-  ['তুই আমাকে কোন গান দিয়ে describe করবি? 🎵', 'describe me with a song 🎵'],
-  ['আমার জীবনে তুই কেন important? 🌟', 'why are you important in my life? 🌟'],
-  ['rate me 1-10 honestly — কোনো ভান নয়! 📊', 'rate me 1-10 honestly — no cap! 📊'],
-  ['আমাকে একটা কথা বলো যেটা তুই কখনো বলিসনি 🗝️', 'tell me something you never told me 🗝️'],
-  ['যদি আমি কাল disappear হয়ে যাই — কি করবি? 😢', 'if I disappear tomorrow — what would you do? 😢'],
+  ['আমার সম্পর্কে anonymous কিছু বলো', 'send me an anonymous message'],
+  ['আমাকে তিন শব্দে বর্ণনা করো', 'describe me in three words'],
+  ['আমার সম্পর্কে তোর honest opinion কি?', "what's your honest opinion of me?"],
+  ['আমার সাথে তোর সবচেয়ে ভালো memory কি?', 'what is your favourite memory with me?'],
+  ['আমাকে প্রথম দেখে কি মনে হয়েছিল?', 'what did you think when you first met me?'],
+  ['তুই কখনো আমার কাছে কিছু লুকিয়েছিস?', 'are you hiding something from me?'],
+  ['আমাকে একটা dare দে', 'give me a dare'],
+  ['আমার সবচেয়ে annoying habit কোনটা?', 'what is my most annoying habit?'],
+  ['তুই আমার জায়গায় থাকলে কি করতিস?', 'what would you do if you were me?'],
+  ['আমাকে নিয়ে একটা confession কর', 'confess something about me'],
+  ['তুই কি আমাকে trust করিস?', 'do you really trust me?'],
+  ['Never have I ever — আমাকে catch কর', 'never have I ever — catch me'],
+  ['আমার life-এ কি change করা উচিত?', 'what should I change in my life?'],
+  ['তোর মনে আমার বিশেষ জায়গা আছে?', 'do I hold a special place in your life?'],
+  ['আমার best quality আর worst — দুটোই বল', 'my best and worst quality — tell both'],
+  ['তুই আমাকে কোন গান দিয়ে describe করবি?', 'describe me with a song'],
+  ['আমার জীবনে তুই কেন important?', 'why do I matter in your life?'],
+  ['rate me 1-10 honestly — কোনো ভান নয়', 'rate me 1-10 honestly — no filter'],
+  ['আমাকে একটা কথা বল যেটা কখনো বলিসনি', 'tell me something you never told me'],
+  ['যদি আমি কাল disappear হয়ে যাই — কি করবি?', 'if I disappear tomorrow, what would you do?'],
 ];
 
 // Build lookup maps for O(1) translation
@@ -68,17 +68,18 @@ export default function NglSend() {
 
   // Theme definitions (same as dashboard)
   const NGL_THEMES: Record<string, { bg: string; accent: string }> = {
-    default: { bg: 'linear-gradient(135deg, #667eea 0%, #f8477a 30%, #ee6b3b 60%, #f4843e 100%)', accent: 'from-pink-500 via-orange-400 to-yellow-400' },
-    pink: { bg: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 50%, #fb923c 100%)', accent: 'from-pink-500 via-rose-400 to-orange-400' },
-    blue: { bg: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%)', accent: 'from-blue-500 via-indigo-400 to-violet-400' },
-    green: { bg: 'linear-gradient(135deg, #10b981 0%, #14b8a6 50%, #06b6d4 100%)', accent: 'from-emerald-500 via-teal-400 to-cyan-400' },
-    purple: { bg: 'linear-gradient(135deg, #8b5cf6 0%, #a855f7 50%, #d946ef 100%)', accent: 'from-violet-500 via-purple-400 to-fuchsia-400' },
-    gold: { bg: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 50%, #dc2626 100%)', accent: 'from-amber-500 via-orange-400 to-red-400' },
-    dark: { bg: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%)', accent: 'from-indigo-400 via-violet-300 to-blue-400' },
-    // PRO exclusive themes (mirror dashboard)
-    neon: { bg: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 40%, #8b5cf6 100%)', accent: 'from-cyan-400 via-blue-500 to-purple-500' },
-    rosegold: { bg: 'linear-gradient(135deg, #fb7185 0%, #f9a8d4 50%, #fbbf24 100%)', accent: 'from-rose-400 via-pink-300 to-amber-300' },
-    midnight: { bg: 'linear-gradient(135deg, #000000 0%, #1e1b4b 50%, #000000 100%)', accent: 'from-slate-700 via-indigo-900 to-black' },
+    // FREE
+    default: { bg: 'linear-gradient(135deg, #6b7280 0%, #9ca3af 50%, #6b7280 100%)', accent: 'from-gray-500 via-gray-400 to-gray-500' },
+    blush:   { bg: 'linear-gradient(135deg, #f9a8d4 0%, #f472b6 50%, #f9a8d4 100%)', accent: 'from-pink-300 via-pink-400 to-pink-300' },
+    sky:     { bg: 'linear-gradient(135deg, #7dd3fc 0%, #38bdf8 50%, #7dd3fc 100%)', accent: 'from-sky-300 via-sky-400 to-sky-300' },
+    sage:    { bg: 'linear-gradient(135deg, #86efac 0%, #4ade80 50%, #86efac 100%)', accent: 'from-green-300 via-green-400 to-green-300' },
+    // PRO
+    aurora:    { bg: 'linear-gradient(135deg, #06b6d4 0%, #10b981 20%, #8b5cf6 50%, #ec4899 80%, #f43f5e 100%)', accent: 'from-cyan-400 via-violet-500 to-pink-500' },
+    sunset:    { bg: 'linear-gradient(135deg, #fbbf24 0%, #f97316 25%, #ef4444 50%, #db2777 75%, #7c3aed 100%)', accent: 'from-amber-400 via-red-500 to-violet-600' },
+    cherry:    { bg: 'linear-gradient(135deg, #fce7f3 0%, #fbcfe8 20%, #f9a8d4 45%, #ec4899 75%, #be185d 100%)', accent: 'from-pink-200 via-pink-400 to-pink-700' },
+    neon:      { bg: 'linear-gradient(135deg, #0ff0fc 0%, #7c3aed 30%, #f43f5e 60%, #fbbf24 100%)', accent: 'from-cyan-300 via-violet-600 to-rose-500' },
+    midnight:  { bg: 'linear-gradient(135deg, #020617 0%, #0f172a 25%, #1e1b4b 50%, #312e81 75%, #020617 100%)', accent: 'from-slate-900 via-indigo-900 to-slate-900' },
+    velvet:    { bg: 'linear-gradient(135deg, #fda4af 0%, #e11d48 30%, #9f1239 60%, #fbbf24 100%)', accent: 'from-rose-300 via-rose-700 to-amber-400' },
   };
 
   const themeBg = NGL_THEMES[profile?.theme || 'default']?.bg || NGL_THEMES.default.bg;
@@ -88,6 +89,7 @@ export default function NglSend() {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
+  const [displayPrompt, setDisplayPrompt] = useState('');
 
   useEffect(() => {
     if (!username) return;
@@ -96,6 +98,35 @@ export default function NglSend() {
       .then(d => setProfile(d))
       .catch(() => setNotFound(true));
   }, [username]);
+
+  // Translate prompt when profile loads or lang changes
+  useEffect(() => {
+    if (!profile?.prompt) {
+      setDisplayPrompt(SEND_DEFAULTS[lang as 'bn' | 'en'] || SEND_DEFAULTS.en);
+      return;
+    }
+    // 1) Try instant pool translation
+    const poolResult = translatePrompt(profile.prompt, lang as 'bn' | 'en');
+    if (poolResult !== profile.prompt) {
+      setDisplayPrompt(poolResult);
+      return;
+    }
+    // If lang matches prompt language (pool had no match but it's the original), show as-is
+    setDisplayPrompt(profile.prompt);
+    // 2) For non-pool prompts, try server AI translation in background
+    fetch(buildApiUrl('/api/ngl/prompts/translate'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: profile.prompt, to: lang }),
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.translated && typeof data.translated === 'string' && data.translated !== profile.prompt) {
+          setDisplayPrompt(data.translated);
+        }
+      })
+      .catch(() => {}); // offline — keep original
+  }, [profile?.prompt, lang]);
 
   const handleSend = async () => {
     if (!message.trim() || sending) return;
@@ -358,12 +389,12 @@ export default function NglSend() {
           >
             {/* Premium glass card */}
             <div className="bg-white/95 backdrop-blur-2xl rounded-[32px] p-6 sm:p-8 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] border border-white/40 relative overflow-hidden group">
-              {/* Animated top gradient wire */}
+              {/* Animated top gradient wire — uses theme */}
               <motion.div 
                 animate={{ backgroundPosition: ['0% 0%', '100% 0%'] }}
                 transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
                 className="absolute top-0 left-0 right-0 h-1.5 opacity-80"
-                style={{ background: `linear-gradient(90deg, transparent, rgba(236,72,153,0.8), rgba(249,115,22,0.8), transparent)`, backgroundSize: '200% 100%' }}
+                style={{ background: themeBg, backgroundSize: '200% 100%' }}
               />
 
               {/* Profile header */}
@@ -371,7 +402,7 @@ export default function NglSend() {
                 <div className="relative flex-shrink-0">
                   <motion.div
                     className="absolute inset-[-3px] rounded-full opacity-80"
-                    style={{ background: 'conic-gradient(from 0deg, #ec4899, #f97316, #fbbf24, #10b981, #3b82f6, #ec4899)' }}
+                    style={{ background: themeBg }}
                     animate={{ rotate: 360 }}
                     transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
                   />
@@ -379,7 +410,7 @@ export default function NglSend() {
                   {profile?.photo ? (
                     <img src={profile.photo} alt={username} className="relative z-10 w-[52px] h-[52px] rounded-full object-cover shadow-sm ring-2 ring-white" />
                   ) : (
-                    <div className="relative z-10 w-[52px] h-[52px] rounded-full bg-gradient-to-br from-pink-500 to-orange-500 flex items-center justify-center text-white font-black text-xl shadow-sm ring-2 ring-white">
+                    <div className="relative z-10 w-[52px] h-[52px] rounded-full flex items-center justify-center text-white font-black text-xl shadow-sm ring-2 ring-white" style={{ background: themeBg }}>
                       {username[0]?.toUpperCase() || '?'}
                     </div>
                   )}
@@ -395,11 +426,7 @@ export default function NglSend() {
 
               {/* Prompt — criss-cross translates when user toggles lang */}
               <p className="font-extrabold text-gray-900 text-xl sm:text-2xl mb-5 leading-snug">
-                {decodeEntities(
-                  profile?.prompt
-                    ? translatePrompt(profile.prompt, lang as 'bn' | 'en')
-                    : SEND_DEFAULTS[lang as 'bn' | 'en'] || SEND_DEFAULTS.en
-                )}
+                {decodeEntities(displayPrompt)}
               </p>
 
               {/* Textarea — premium focused */}
@@ -444,7 +471,7 @@ export default function NglSend() {
               >
                 {message.trim() && !sending && (
                   <>
-                    <div className="absolute inset-0 bg-gray-900" />
+                    <div className="absolute inset-0" style={{ background: themeBg }} />
                     <motion.div
                       className="absolute inset-0 opacity-20"
                       style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)' }}

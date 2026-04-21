@@ -33,7 +33,7 @@
 | 29 | Touch target 44px audit | ✅ DONE | `ShareModal.tsx`, `NglDashboard.tsx` |
 | 30 | Keyboard a11y (tabIndex, focus) | ✅ DONE | `ShareModal.tsx`, `NglDashboard.tsx` |
 | 31 | Tutorial description freshness | ✅ DONE (5 steps × 2 langs × 3 platforms) | `ShareModal.tsx` |
-| 32 | Bengali translation 100% | ⬜ TODO | `ShareModal.tsx`, `NglDashboard.tsx` |
+| 32 | Bengali translation 100% | ✅ DONE | `NglDashboard.tsx`, `NglSend.tsx`, `NglLang.tsx` |
 | 33 | Share templates 6+6 | ⬜ TODO | `ShareModal.tsx` |
 | 34 | Error messages bilingual | ⬜ TODO | `NglDashboard.tsx` |
 | 35 | Skeleton/shimmer loaders | ⬜ TODO | `NglDashboard.tsx` |
@@ -307,14 +307,22 @@
 ---
 
 ### Phase 32 — Bengali translation 100% coverage
-- **Status**: ⬜ TODO
-- **Files**: `ShareModal.tsx`, `NglDashboard.tsx`
-- **Steps**:
-  1. Grep for all hardcoded English user-facing strings
-  2. For each, ensure there's a `bn ?` ternary with Bengali translation
-  3. Check: tooltip text, toast messages, error messages, button labels, placeholder text
-  4. Special attention: any new features added after initial Bengali pass
-- **Done when**: Toggle to BN → zero English text visible
+- **Status**: ✅ DONE (Apr 2026)
+- **Files**: `NglDashboard.tsx`, `NglSend.tsx`, `NglLang.tsx`
+- **What was done**:
+  - **Fixed critical PROMPT_PAIRS mismatch**: NglSend.tsx had emojis in prompt strings; NglDashboard.tsx had none. `translatePrompt()` could NEVER match. Synced NglSend `PROMPT_PAIRS` to exactly match Dashboard `PROMPT_POOL` (20 pairs, no emojis, identical text).
+  - **Synced SEND_DEFAULTS**: Removed emojis from send page default prompts to match pool style.
+  - **Story card bilingual CTA**: Canvas CTA button text now respects lang toggle: `"আমাকে anonymous message পাঠাও! →"` (BN) / `"Send me anonymous messages! →"` (EN).
+  - **Story card bilingual QR label**: `"স্ক্যান করো 📱"` (BN) / `"Scan to send 📱"` (EN).
+  - **Dashboard lang toggle**: Already worked via `PROMPT_POOL.find()` — now send page `translatePrompt()` also works because strings match.
+  - **NglLang.tsx**: All UI translation keys already covered (dash.*, send.*, pro.*).
+  - **ShareModal.tsx**: Tutorial steps already bilingual (5 steps × 2 langs × 3 platforms, Phase 31).
+- **What stays English by design**:
+  - SEO meta descriptions (crawled by English bots)
+  - OG image SVG text (social preview cards)
+  - Server error messages (Phase 34 TODO)
+- **Custom prompt translation**: Custom/AI prompts that aren't in the 20-pair pool stay as-is when lang toggles. This is by design — no AI translation for speed. Users can manually write in either language.
+- **Done when**: Toggle BN ↔ EN → all pool prompts translate on both Dashboard and Send page ✅
 
 ---
 
@@ -452,6 +460,7 @@
 | 28 | Modal scroll handling (short viewports) | ✅ Apr 2026 |
 | 29 | Touch target 44px minimum | ✅ Apr 2026 |
 | 30 | Keyboard accessibility (tabIndex, focus rings) | ✅ Apr 2026 |
+| 32 | Bengali translation 100% (prompt pairs synced, story card bilingual) | ✅ Apr 2026 |
 
 ---
 

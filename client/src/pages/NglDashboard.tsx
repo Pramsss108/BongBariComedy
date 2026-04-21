@@ -39,17 +39,18 @@ interface NglMessage {
 
 // Theme gradient definitions
 const NGL_THEMES: Record<string, { bg: string; accent: string; label: string; emoji: string; pro?: boolean }> = {
-  default: { bg: 'linear-gradient(135deg, #667eea 0%, #f8477a 30%, #ee6b3b 60%, #f4843e 100%)', accent: 'from-pink-500 via-orange-400 to-yellow-400', label: 'OG', emoji: '🔥' },
-  pink: { bg: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 50%, #fb923c 100%)', accent: 'from-pink-500 via-rose-400 to-orange-400', label: 'Rose', emoji: '💗' },
-  blue: { bg: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%)', accent: 'from-blue-500 via-indigo-400 to-violet-400', label: 'Ocean', emoji: '🌊' },
-  green: { bg: 'linear-gradient(135deg, #10b981 0%, #14b8a6 50%, #06b6d4 100%)', accent: 'from-emerald-500 via-teal-400 to-cyan-400', label: 'Mint', emoji: '🌿' },
-  purple: { bg: 'linear-gradient(135deg, #8b5cf6 0%, #a855f7 50%, #d946ef 100%)', accent: 'from-violet-500 via-purple-400 to-fuchsia-400', label: 'Galaxy', emoji: '🔮' },
-  gold: { bg: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 50%, #dc2626 100%)', accent: 'from-amber-500 via-orange-400 to-red-400', label: 'Gold', emoji: '👑' },
-  dark: { bg: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%)', accent: 'from-indigo-400 via-violet-300 to-blue-400', label: 'Dark', emoji: '🖤' },
-  // Part 3 (PRO): Exclusive themes gated by isPremium
-  neon: { bg: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 40%, #8b5cf6 100%)', accent: 'from-cyan-400 via-blue-500 to-purple-500', label: 'Neon', emoji: '⚡', pro: true },
-  rosegold: { bg: 'linear-gradient(135deg, #fb7185 0%, #f9a8d4 50%, #fbbf24 100%)', accent: 'from-rose-400 via-pink-300 to-amber-300', label: 'Rose Gold', emoji: '🌹', pro: true },
-  midnight: { bg: 'linear-gradient(135deg, #000000 0%, #1e1b4b 50%, #000000 100%)', accent: 'from-slate-700 via-indigo-900 to-black', label: 'Midnight', emoji: '🌑', pro: true },
+  // ── FREE: Clean, single-tone, functional — no wow factor ──
+  default: { bg: 'linear-gradient(135deg, #6b7280 0%, #9ca3af 50%, #6b7280 100%)', accent: 'from-gray-500 via-gray-400 to-gray-500', label: 'Basic', emoji: '⬜' },
+  blush:   { bg: 'linear-gradient(135deg, #f9a8d4 0%, #f472b6 50%, #f9a8d4 100%)', accent: 'from-pink-300 via-pink-400 to-pink-300', label: 'Blush', emoji: '🩷' },
+  sky:     { bg: 'linear-gradient(135deg, #7dd3fc 0%, #38bdf8 50%, #7dd3fc 100%)', accent: 'from-sky-300 via-sky-400 to-sky-300', label: 'Sky', emoji: '☁️' },
+  sage:    { bg: 'linear-gradient(135deg, #86efac 0%, #4ade80 50%, #86efac 100%)', accent: 'from-green-300 via-green-400 to-green-300', label: 'Sage', emoji: '🍃' },
+  // ── PRO: Multi-stop, complex, jaw-dropping — aspirational ──
+  aurora:    { bg: 'linear-gradient(135deg, #06b6d4 0%, #10b981 20%, #8b5cf6 50%, #ec4899 80%, #f43f5e 100%)', accent: 'from-cyan-400 via-violet-500 to-pink-500', label: 'Aurora', emoji: '🌌', pro: true },
+  sunset:    { bg: 'linear-gradient(135deg, #fbbf24 0%, #f97316 25%, #ef4444 50%, #db2777 75%, #7c3aed 100%)', accent: 'from-amber-400 via-red-500 to-violet-600', label: 'Sunset', emoji: '🌅', pro: true },
+  cherry:    { bg: 'linear-gradient(135deg, #fce7f3 0%, #fbcfe8 20%, #f9a8d4 45%, #ec4899 75%, #be185d 100%)', accent: 'from-pink-200 via-pink-400 to-pink-700', label: 'Cherry', emoji: '🌸', pro: true },
+  neon:      { bg: 'linear-gradient(135deg, #0ff0fc 0%, #7c3aed 30%, #f43f5e 60%, #fbbf24 100%)', accent: 'from-cyan-300 via-violet-600 to-rose-500', label: 'Neon', emoji: '⚡', pro: true },
+  midnight:  { bg: 'linear-gradient(135deg, #020617 0%, #0f172a 25%, #1e1b4b 50%, #312e81 75%, #020617 100%)', accent: 'from-slate-900 via-indigo-900 to-slate-900', label: 'Midnight', emoji: '🌑', pro: true },
+  velvet:    { bg: 'linear-gradient(135deg, #fda4af 0%, #e11d48 30%, #9f1239 60%, #fbbf24 100%)', accent: 'from-rose-300 via-rose-700 to-amber-400', label: 'Velvet', emoji: '🥀', pro: true },
 };
 
 // ── 20 Bilingual Prompt Phrases — premium copy, no emojis ──
@@ -167,7 +168,6 @@ export default function NglDashboard() {
   const [storyTextDraft, setStoryTextDraft] = useState('');
   const [storySharing, setStorySharing] = useState(false);
   const [storyToast, setStoryToast] = useState<string | null>(null);
-  const [storyScreen, setStoryScreen] = useState<'preview' | 'customize'>('preview');
   const [ogTitle, setOgTitle] = useState<string | null>(null);
   const [ogDescription, setOgDescription] = useState<string | null>(null);
   const [ogEditing, setOgEditing] = useState(false);
@@ -180,6 +180,11 @@ export default function NglDashboard() {
   const [verifiedPhoneForPayment, setVerifiedPhoneForPayment] = useState('');
   const prevMsgCountRef = useRef(0);
   const confettiDone = useRef(false);
+  // Inbox polling refs — production-grade silent background fetches
+  const isInitialLoadRef = useRef(true);
+  const lastFetchAtRef = useRef(0);
+  const consecutiveFailsRef = useRef(0);
+  const inFlightAbortRef = useRef<AbortController | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
@@ -218,6 +223,7 @@ export default function NglDashboard() {
   // Part 3: Upgrade modal + post-upgrade celebration
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [upgradeToast, setUpgradeToast] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   // Phone removal loading state — disables UI until backend confirms full delete
   const [phoneRemoving, setPhoneRemoving] = useState(false);
@@ -311,38 +317,69 @@ export default function NglDashboard() {
 
   // Sync prompt language: translate prompt when language toggles
   useEffect(() => {
-    // Always try to translate if the current prompt is in the pool (even server-saved ones)
+    // 1) If prompt is in the hardcoded pool → instant O(1) swap (no AI needed)
     const match = PROMPT_POOL.find(p => p.bn === prompt || p.en === prompt);
     if (match) {
       setPrompt(match[lang as 'bn' | 'en']);
-    } else if (!hasServerPrompt) {
-      // Only randomize if it's not a custom server prompt
-      setPrompt(getRandomPrompt(lang as 'bn' | 'en'));
+      return;
     }
-    // Custom prompts that aren't in the pool stay as-is
+    // 2) Non-pool prompt (AI-generated or custom) → translate via server AI
+    //    Show a temporary "..." indicator, then replace with real translation
+    const originalPrompt = prompt;
+    fetch(buildApiUrl('/api/ngl/prompts/translate'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: originalPrompt, to: lang }),
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.translated && typeof data.translated === 'string' && data.translated !== originalPrompt) {
+          setPrompt(data.translated);
+          savePrompt(data.translated).catch(() => {});
+        }
+      })
+      .catch(() => {}); // offline — keep original prompt as-is
   }, [lang]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Online/offline detection
   useEffect(() => {
-    const goOnline = () => { setIsOffline(false); setError(''); loadInbox(); };
+    const goOnline = () => { setIsOffline(false); setError(''); loadInbox({ manual: true }); };
     const goOffline = () => setIsOffline(true);
     window.addEventListener('online', goOnline);
     window.addEventListener('offline', goOffline);
     return () => { window.removeEventListener('online', goOnline); window.removeEventListener('offline', goOffline); };
   }, []);
 
-  // Load inbox with silent auto-retry
-  const loadInbox = useCallback(async (retry = 0) => {
+  // Load inbox — production-grade: distinguishes initial/manual vs background polls
+  // Background polls are SILENT (no shimmer, no error UI, no retry chain) to prevent
+  // the "automatically refreshing" feel when backend hiccups.
+  const loadInbox = useCallback(async (opts: { manual?: boolean; retry?: number } = {}) => {
+    const { manual = false, retry = 0 } = opts;
     if (!secretKey || !username) return;
+    const isInitial = isInitialLoadRef.current;
+    const isForeground = manual || isInitial;
+
+    // Throttle background polls — never hammer backend
+    if (!isForeground && Date.now() - lastFetchAtRef.current < 5000) return;
+    lastFetchAtRef.current = Date.now();
+
+    // Cancel any in-flight request before starting a new one
+    if (inFlightAbortRef.current) inFlightAbortRef.current.abort();
+    const ac = new AbortController();
+    inFlightAbortRef.current = ac;
+
     try {
       const res = await fetch(buildApiUrl(`/api/ngl/u/${encodeURIComponent(username)}/inbox`), {
         headers: { 'X-NGL-Key': secretKey },
+        signal: ac.signal,
+        cache: 'no-store',
       });
       if (res.ok) {
         const data = await res.json();
         const msgs = data.messages || [];
         setMessages(msgs);
         setError('');
+        consecutiveFailsRef.current = 0;
         setHasMore(!!data.hasMore);
         if (msgs.length > 0 && !confettiDone.current && prevMsgCountRef.current === 0) {
           confettiDone.current = true;
@@ -350,34 +387,73 @@ export default function NglDashboard() {
         }
         if (msgs.length > prevMsgCountRef.current && prevMsgCountRef.current > 0) {
           setNewMsgCount(prev => prev + (msgs.length - prevMsgCountRef.current));
-          // C3: soft ping on new messages (respects mute + reduced-motion)
           sfxNewMessage();
         }
         prevMsgCountRef.current = msgs.length;
       } else if (res.status === 403) {
         setError('ERR_WRONG_KEY');
         localStorage.removeItem('bong_ngl');
+      } else if (isForeground) {
+        setError('ERR_SERVER');
       }
-    } catch {
-      // Auto-retry with user feedback
+    } catch (e: any) {
+      // Aborted — ignore silently
+      if (e?.name === 'AbortError') return;
+      consecutiveFailsRef.current += 1;
+      // Background polls: silent fail, no UI flicker
+      if (!isForeground) {
+        if (isForeground) setLoading(false);
+        return;
+      }
+      // Foreground (initial / manual): retry with exponential backoff up to 3x
       if (retry < 3) {
         const delay = Math.pow(2, retry + 1) * 1000;
-        setLoading(false);
         setError('ERR_RETRYING');
-        setTimeout(() => { setError(''); setLoading(true); loadInbox(retry + 1); }, delay);
+        setTimeout(() => { setError(''); loadInbox({ manual: true, retry: retry + 1 }); }, delay);
         return;
-      } else {
-        if (navigator.onLine) setError('ERR_CONNECTION');
       }
+      // Final fallback — only show connection error after retries exhausted
+      if (navigator.onLine) setError('ERR_CONNECTION');
+      else setIsOffline(true);
+    } finally {
+      if (isForeground) setLoading(false);
+      isInitialLoadRef.current = false;
     }
-    setLoading(false);
   }, [secretKey, username]);
 
+  // Polling — only when Inbox tab is active, tab visible, online, no modals open
   useEffect(() => {
-    loadInbox();
-    const interval = setInterval(loadInbox, 10000);
-    return () => clearInterval(interval);
-  }, [loadInbox]);
+    // Always do initial fetch once
+    if (isInitialLoadRef.current) loadInbox({ manual: true });
+
+    // Skip polling when not actively viewing inbox or any blocking modal is open
+    const blocked = tab !== 'inbox' || isOffline || phoneShowForm || showSettings || showShareModal || showUpgrade || showThemePicker;
+    if (blocked) return;
+
+    let interval: ReturnType<typeof setInterval> | null = null;
+    const startPolling = () => {
+      if (interval) clearInterval(interval);
+      interval = setInterval(() => {
+        if (document.visibilityState === 'visible') loadInbox();
+      }, 30000); // 30s — Instagram/Twitter parity
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        // Refetch on tab focus if last fetch is stale (>15s)
+        if (Date.now() - lastFetchAtRef.current > 15000) loadInbox();
+        startPolling();
+      } else if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+    if (document.visibilityState === 'visible') startPolling();
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      if (interval) clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [loadInbox, tab, isOffline, phoneShowForm, showSettings, showShareModal, showUpgrade, showThemePicker]);
 
   const handleCopy = async () => {
     gEvent('ngl_copy_link');
@@ -828,16 +904,16 @@ export default function NglDashboard() {
 
   const handleLogout = () => { localStorage.removeItem('bong_ngl'); navigate('/ngl'); };
 
-  // ── Story Card Color Palettes ──
-  const STORY_PALETTES = [
-    { label: '🔥 Theme', colors: null }, // uses current theme
-    { label: '🌸 Rose', colors: ['#ec4899', '#f43f5e', '#fb923c'] },
-    { label: '🌊 Ocean', colors: ['#0ea5e9', '#6366f1', '#8b5cf6'] },
-    { label: '🌿 Mint', colors: ['#10b981', '#14b8a6', '#06b6d4'] },
-    { label: '👑 Gold', colors: ['#f59e0b', '#ef4444', '#dc2626'] },
-    { label: '🖤 Dark', colors: ['#1e1b4b', '#312e81', '#0f172a'] },
-    { label: '🦄 Neon', colors: ['#d946ef', '#8b5cf6', '#06b6d4'] },
-    { label: '🍊 Sunset', colors: ['#f97316', '#ef4444', '#ec4899'] },
+  // ── Story Card Color Palettes (3 free + 5 PRO) ──
+  const STORY_PALETTES: Array<{ label: string; colors: string[] | null; pro?: boolean }> = [
+    { label: '🎨 Theme', colors: null },                                                    // FREE — uses current theme
+    { label: '🌸 Cherry', colors: ['#fce7f3', '#f9a8d4', '#ec4899', '#be185d'] },           // FREE
+    { label: '☁️ Minimal', colors: ['#e5e7eb', '#9ca3af', '#4b5563', '#1f2937'] },          // FREE
+    { label: '🌌 Aurora', colors: ['#06b6d4', '#10b981', '#8b5cf6', '#ec4899'], pro: true },
+    { label: '🌅 Sunset', colors: ['#fbbf24', '#f97316', '#ef4444', '#7c3aed'], pro: true },
+    { label: '⚡ Neon', colors: ['#0ff0fc', '#7c3aed', '#f43f5e', '#fbbf24'], pro: true },
+    { label: '🌑 Midnight', colors: ['#020617', '#0f172a', '#1e1b4b', '#312e81'], pro: true },
+    { label: '🥀 Velvet', colors: ['#fda4af', '#e11d48', '#9f1239', '#fbbf24'], pro: true },
   ];
 
   // Phase 31+32: Generate Story Card with embedded QR code — returns data URL
@@ -857,27 +933,52 @@ export default function NglDashboard() {
       gradientColors = palette.colors;
     }
 
-    // Detect brightness of palette → pick contrasting text color
-    const hexBrightness = (hex: string) => {
+    // Contrast-safe text system: pick true opposite text color for max readability.
+    const hexToRgb = (hex: string) => {
       const r = parseInt(hex.slice(1, 3), 16);
       const g = parseInt(hex.slice(3, 5), 16);
       const b = parseInt(hex.slice(5, 7), 16);
-      return (r * 299 + g * 587 + b * 114) / 1000;
+      return { r, g, b };
     };
-    const avgBrightness = gradientColors.reduce((sum, c) => sum + hexBrightness(c), 0) / gradientColors.length;
-    const isLight = avgBrightness > 140;
-    const textMain = isLight ? '#1a1a2e' : '#ffffff';
-    const textSoft = isLight ? 'rgba(26,26,46,0.65)' : 'rgba(255,255,255,0.85)';
-    const textMuted = isLight ? 'rgba(26,26,46,0.45)' : 'rgba(255,255,255,0.5)';
-    const textFaint = isLight ? 'rgba(26,26,46,0.30)' : 'rgba(255,255,255,0.3)';
-    const glassCard = isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)';
-    const glassStroke = isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.2)';
-    const avatarBg = isLight ? 'rgba(0,0,0,0.10)' : 'rgba(255,255,255,0.25)';
-    const ctaBg = isLight ? '#1a1a2e' : '#ffffff';
-    const ctaText = isLight ? '#ffffff' : '#1a1a2e';
-    const qrDark = isLight ? '#1a1a2e' : '#1a1a2e';
-    const qrLight = isLight ? '#ffffff' : '#ffffff';
-    const qrContainerBg = isLight ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.95)';
+    const relativeLuminance = (hex: string) => {
+      const { r, g, b } = hexToRgb(hex);
+      const toLinear = (v: number) => {
+        const s = v / 255;
+        return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+      };
+      const R = toLinear(r);
+      const G = toLinear(g);
+      const B = toLinear(b);
+      return 0.2126 * R + 0.7152 * G + 0.0722 * B;
+    };
+    const contrastRatio = (a: string, b: string) => {
+      const L1 = relativeLuminance(a);
+      const L2 = relativeLuminance(b);
+      const light = Math.max(L1, L2);
+      const dark = Math.min(L1, L2);
+      return (light + 0.05) / (dark + 0.05);
+    };
+    const avgRgb = gradientColors.reduce((acc, hex) => {
+      const { r, g, b } = hexToRgb(hex);
+      return { r: acc.r + r, g: acc.g + g, b: acc.b + b };
+    }, { r: 0, g: 0, b: 0 });
+    const bgSample = `#${Math.round(avgRgb.r / gradientColors.length).toString(16).padStart(2, '0')}${Math.round(avgRgb.g / gradientColors.length).toString(16).padStart(2, '0')}${Math.round(avgRgb.b / gradientColors.length).toString(16).padStart(2, '0')}`;
+    const contrastOnWhite = contrastRatio(bgSample, '#ffffff');
+    const contrastOnDark = contrastRatio(bgSample, '#0b1020');
+    const useDarkText = contrastOnDark >= contrastOnWhite;
+
+    const textMain = useDarkText ? '#0b1020' : '#ffffff';
+    const textSoft = useDarkText ? 'rgba(11,16,32,0.92)' : 'rgba(255,255,255,0.96)';
+    const textMuted = useDarkText ? 'rgba(11,16,32,0.82)' : 'rgba(255,255,255,0.86)';
+    const textFaint = useDarkText ? 'rgba(11,16,32,0.72)' : 'rgba(255,255,255,0.76)';
+    const glassCard = useDarkText ? 'rgba(255,255,255,0.34)' : 'rgba(7,10,20,0.30)';
+    const glassStroke = useDarkText ? 'rgba(0,0,0,0.14)' : 'rgba(255,255,255,0.30)';
+    const avatarBg = useDarkText ? 'rgba(255,255,255,0.50)' : 'rgba(255,255,255,0.22)';
+    const ctaBg = useDarkText ? '#0b1020' : '#ffffff';
+    const ctaText = useDarkText ? '#ffffff' : '#0b1020';
+    const qrDark = '#0b1020';
+    const qrLight = '#ffffff';
+    const qrContainerBg = 'rgba(255,255,255,0.96)';
 
     // Background gradient
     const bgGrad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
@@ -886,7 +987,7 @@ export default function NglDashboard() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Subtle pattern dots for depth
-    ctx.fillStyle = isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.03)';
+    ctx.fillStyle = useDarkText ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.03)';
     for (let px = 0; px < canvas.width; px += 40) {
       for (let py = 0; py < canvas.height; py += 40) {
         ctx.beginPath();
@@ -919,10 +1020,13 @@ export default function NglDashboard() {
     ctx.font = '900 56px system-ui, sans-serif';
     ctx.fillStyle = textMain;
     ctx.textAlign = 'center';
+    ctx.shadowColor = useDarkText ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)';
+    ctx.shadowBlur = 10;
     ctx.fillText(`@${username}`, 540, 550);
+    ctx.shadowBlur = 0;
 
     // PRO badge
-    ctx.fillStyle = isLight ? '#6d28d9' : '#8b5cf6';
+    ctx.fillStyle = useDarkText ? '#5b21b6' : '#a78bfa';
     ctx.beginPath();
     ctx.roundRect(490, 570, 100, 36, 18);
     ctx.fill();
@@ -930,18 +1034,62 @@ export default function NglDashboard() {
     ctx.font = '800 18px system-ui, sans-serif';
     ctx.fillText('PRO', 540, 595);
 
-    // Prompt
-    ctx.fillStyle = textSoft;
-    ctx.font = '600 36px system-ui, sans-serif';
-    const rawPrompt = opts?.customPrompt ?? prompt;
-    const promptText = decodeEntities(rawPrompt).slice(0, 60) + (rawPrompt.length > 60 ? '...' : '');
-    ctx.fillText(`"${promptText}"`, 540, 680);
+    // Prompt — BIG, bold, auto-wrapped for max readability (NGL/Sendit-style)
+    const rawPrompt = (opts?.customPrompt ?? prompt) || '';
+    const promptText = decodeEntities(rawPrompt).trim().slice(0, 140);
+    // Word-wrap helper that picks the largest font-size that fits within maxLines
+    const wrapText = (text: string, maxWidth: number, maxLines: number, startSize: number, minSize: number) => {
+      let size = startSize;
+      while (size >= minSize) {
+        ctx.font = `900 ${size}px system-ui, -apple-system, "Segoe UI", sans-serif`;
+        const words = text.split(/\s+/);
+        const lines: string[] = [];
+        let current = '';
+        for (const w of words) {
+          const test = current ? `${current} ${w}` : w;
+          if (ctx.measureText(test).width <= maxWidth) {
+            current = test;
+          } else {
+            if (current) lines.push(current);
+            current = w;
+          }
+        }
+        if (current) lines.push(current);
+        if (lines.length <= maxLines) return { lines, size };
+        size -= 4;
+      }
+      // Fallback at min size with ellipsis on last line
+      ctx.font = `900 ${minSize}px system-ui, -apple-system, "Segoe UI", sans-serif`;
+      const words = text.split(/\s+/);
+      const lines: string[] = [];
+      let current = '';
+      for (const w of words) {
+        const test = current ? `${current} ${w}` : w;
+        if (ctx.measureText(test).width <= maxWidth) current = test;
+        else { if (current) lines.push(current); current = w; if (lines.length === maxLines) break; }
+      }
+      if (lines.length < maxLines && current) lines.push(current);
+      if (lines.length === maxLines) lines[maxLines - 1] = lines[maxLines - 1].replace(/\s\S*$/, '') + '…';
+      return { lines, size: minSize };
+    };
 
-    // Messages count (only show if > 0)
-    if (messages.length > 0) {
+    const wrapped = wrapText(`“${promptText}”`, 820, 3, 58, 36);
+    ctx.fillStyle = textMain;
+    ctx.shadowColor = useDarkText ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.55)';
+    ctx.shadowBlur = 10;
+    const lineHeight = Math.round(wrapped.size * 1.18);
+    const totalHeight = wrapped.lines.length * lineHeight;
+    const blockTop = 670 + (160 - totalHeight) / 2; // vertically center inside reserved 160px zone
+    wrapped.lines.forEach((line, i) => {
+      ctx.fillText(line, 540, blockTop + i * lineHeight + wrapped.size * 0.85);
+    });
+    ctx.shadowBlur = 0;
+
+    // Messages count (only show if > 0 AND there's room — single line space)
+    if (messages.length > 0 && wrapped.lines.length === 1) {
       ctx.fillStyle = textMuted;
-      ctx.font = '600 28px system-ui, sans-serif';
-      ctx.fillText(`🔥 ${messages.length} messages received`, 540, 760);
+      ctx.font = '600 26px system-ui, sans-serif';
+      ctx.fillText(`🔥 ${messages.length} messages received`, 540, 800);
     }
 
     // CTA button
@@ -951,7 +1099,7 @@ export default function NglDashboard() {
     ctx.fill();
     ctx.fillStyle = ctaText;
     ctx.font = '800 30px system-ui, sans-serif';
-    ctx.fillText('Send me anonymous messages! →', 540, 900);
+    ctx.fillText(lang === 'bn' ? 'আমাকে anonymous message পাঠাও! →' : 'Send me anonymous messages! →', 540, 900);
 
     // ── QR code embedded (if enabled) ──
     const qrEnabled = opts?.showQR !== false;
@@ -976,7 +1124,7 @@ export default function NglDashboard() {
       // "Scan to send" label under QR
       ctx.fillStyle = textMuted;
       ctx.font = '600 24px system-ui, sans-serif';
-      ctx.fillText('Scan to send 📱', 540, 1380);
+      ctx.fillText(lang === 'bn' ? 'স্ক্যান করো 📱' : 'Scan to send 📱', 540, 1380);
     }
 
     // Link below QR (or centered if no QR)
@@ -1001,27 +1149,41 @@ export default function NglDashboard() {
     setStoryCustomPrompt(null);
     setStoryShowQR(true);
     setStoryEditingText(false);
-    const dataUrl = await buildStoryCanvas(storyColorIdx, { showQR: true });
-    setStoryPreview(dataUrl);
-    setShowStoryCardModal(true);
-    setGeneratingCard(false);
+    try {
+      const dataUrl = await buildStoryCanvas(storyColorIdx, { showQR: true });
+      setStoryPreview(dataUrl);
+      setShowStoryCardModal(true);
+    } catch {
+      showStoryToast(lang === 'bn' ? 'Story card তৈরি করা গেল না' : 'Could not generate story card');
+    } finally {
+      setGeneratingCard(false);
+    }
   };
 
   // Silently generate story card image (no modal) — for tutorial preview
   const generateCardSilently = async () => {
     if (storyPreview) return; // already generated
-    const dataUrl = await buildStoryCanvas(storyColorIdx, { showQR: true });
-    setStoryPreview(dataUrl);
+    try {
+      const dataUrl = await buildStoryCanvas(storyColorIdx, { showQR: true });
+      setStoryPreview(dataUrl);
+    } catch {
+      // Non-blocking warmup; ignore failures silently.
+    }
   };
 
   const regenerateCard = async (paletteIdx?: number, opts?: { customPrompt?: string; showQR?: boolean }) => {
     setGeneratingCard(true);
-    await new Promise(r => setTimeout(r, 50));
-    const idx = paletteIdx ?? storyColorIdx;
-    const o = opts ?? storyOpts();
-    const dataUrl = await buildStoryCanvas(idx, o);
-    setStoryPreview(dataUrl);
-    setGeneratingCard(false);
+    try {
+      await new Promise(r => setTimeout(r, 50));
+      const idx = paletteIdx ?? storyColorIdx;
+      const o = opts ?? storyOpts();
+      const dataUrl = await buildStoryCanvas(idx, o);
+      setStoryPreview(dataUrl);
+    } catch {
+      showStoryToast(lang === 'bn' ? 'Story card আপডেট করা গেল না' : 'Could not update story card');
+    } finally {
+      setGeneratingCard(false);
+    }
   };
 
   const changeStoryColor = async (idx: number) => {
@@ -1045,13 +1207,47 @@ export default function NglDashboard() {
 
   const showStoryToast = (msg: string, ms = 2500) => { setStoryToast(msg); setTimeout(() => setStoryToast(null), ms); };
 
-  const downloadStoryCard = () => {
+  const downloadStoryCard = async () => {
     if (!storyPreview) return;
-    const a = document.createElement('a');
-    a.href = storyPreview;
-    a.download = `bong-ngl-${username}-story.png`;
-    a.click();
-    showStoryToast(lang === 'bn' ? '⬇️ Card download হয়েছে!' : '⬇️ Card downloaded!');
+    const filename = `bong-ngl-${username}-story.png`;
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    const isIOS = /iPad|iPhone|iPod/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
+    try {
+      // Convert dataURL → Blob (better quality, supports Web Share + saves correctly on iOS)
+      const res = await fetch(storyPreview);
+      const blob = await res.blob();
+      const file = new File([blob], filename, { type: 'image/png' });
+
+      // iOS Safari: anchor download is unreliable → prefer Web Share so user can "Save Image"
+      if (isIOS && navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: 'Bong NGL Story Card' });
+          showStoryToast(lang === 'bn' ? '✓ Save করা হয়েছে!' : '✓ Saved!');
+          return;
+        } catch { /* user cancelled — fall through to blob URL */ }
+      }
+
+      // Standard path: blob URL + revoke (works on all desktops + Android)
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      showStoryToast(lang === 'bn' ? '⬇️ Download হয়েছে!' : '⬇️ Downloaded!');
+    } catch {
+      // Last-resort fallback: open in new tab so user can long-press / right-click → save
+      try {
+        const w = window.open();
+        if (w) { w.document.write(`<img src="${storyPreview}" style="max-width:100%" alt="story"/>`); }
+        showStoryToast(lang === 'bn' ? '👇 Image hold করে Save করো' : '👇 Long-press image to save');
+      } catch {
+        showStoryToast(lang === 'bn' ? 'Download fail হলো' : 'Download failed');
+      }
+    }
   };
 
   const shareStoryCard = async () => {
@@ -1262,19 +1458,20 @@ export default function NglDashboard() {
           <Link href="/tools" className="text-white/40 text-[11px] font-bold hover:text-white transition-colors flex items-center gap-1">
             <span className="text-[13px]">←</span> Back
           </Link>
+          <div className="flex-1" />
           <div className="flex items-center gap-2">
-            {photo ? (
-              <img src={photo} alt={username} className="w-6 h-6 rounded-full object-cover ring-1.5 ring-white/20" />
-            ) : (
-              <div className="w-6 h-6 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white text-[10px] font-black">
-                {username[0]?.toUpperCase()}
-              </div>
-            )}
-            <p className="text-white/80 font-bold text-[11px]">@{username}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <LangToggle />
-            <button onClick={handleLogout} className="text-white/40 text-[11px] font-bold hover:text-white/70 transition-colors">{t('dash.logout')}</button>
+            <button onClick={() => setShowSettings(true)} className="relative text-white/50 hover:text-white/90 hover:bg-white/[0.04] rounded-lg transition-all p-1.5" aria-label="Settings">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]">
+                <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+              {phoneStatus !== 'verified' && phoneStatus !== 'loading' && (
+                <motion.span
+                  animate={{ scale: [1, 1.3, 1], opacity: [0.8, 1, 0.8] }}
+                  transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 1.5 }}
+                  className="absolute top-0.5 right-0.5 w-[7px] h-[7px] rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.7)]"
+                />
+              )}
+            </button>
           </div>
         </div>
 
@@ -1345,45 +1542,62 @@ export default function NglDashboard() {
                     {photo && (
                       <button onClick={(e) => { e.stopPropagation(); handleRemovePhoto(); }} className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#0a0a14] border border-white/10 flex items-center justify-center text-white/30 hover:text-red-400/60 transition-colors text-[8px] min-w-[44px] min-h-[44px] -m-[10px]">✕</button>
                     )}
+                    {phoneStatus === 'verified' && (
+                      <span className="absolute -top-0.5 -right-0.5 w-[10px] h-[10px] rounded-full bg-emerald-400 border-2 border-[#0a0a14] shadow-sm shadow-emerald-400/40" />
+                    )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-black text-white text-[17px] leading-none tracking-tight">@{username}</p>
-                    <div className="flex items-center gap-1.5 mt-1.5">
-                      {isPremium ? (
-                        <span className="relative overflow-hidden text-[9px] font-extrabold text-white bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 px-2 py-[3px] rounded-full tracking-[0.05em] shadow-sm shadow-fuchsia-500/30">
-                          <span className="relative z-10">✓ PRO</span>
-                          <motion.span
-                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                            animate={{ x: ['-120%', '220%'] }}
-                            transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut', repeatDelay: 2 }}
-                          />
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() => { gEvent('ngl_pro_cta_click', { source: 'header' }); setShowUpgrade(true); }}
-                          className="group relative overflow-hidden text-[9px] font-extrabold text-fuchsia-100 bg-gradient-to-r from-fuchsia-500/15 to-violet-500/15 hover:from-fuchsia-500/25 hover:to-violet-500/25 border border-fuchsia-400/25 px-2 py-[3px] rounded-full tracking-[0.04em] transition-all"
-                        >
-                          <span className="relative z-10">{lang === 'bn' ? 'PRO ₹98/মাস' : 'PRO ₹98/mo'}</span>
-                        </button>
-                      )}
-                      {streakDays > 0 && <span className="text-[9px] font-extrabold text-amber-300 bg-amber-500/15 px-2 py-[3px] rounded-full">{streakDays}d streak</span>}
-                      {messages.length > 0 && <span className="text-[9px] font-extrabold text-white/40 bg-white/[0.05] px-2 py-[3px] rounded-full">{messages.length} {lang === 'bn' ? 'বার্তা' : 'msgs'}</span>}
-                    </div>
+                  <div className="flex-1 min-w-0 flex items-center gap-1.5">
+                    <p className="font-black text-white text-[17px] leading-none tracking-tight truncate">@{username}</p>
+                    {isPremium && (
+                      <span className="text-[10px] font-black italic tracking-tight bg-gradient-to-r from-violet-400 via-fuchsia-400 to-pink-400 bg-clip-text text-transparent select-none flex-shrink-0">✓ PRO</span>
+                    )}
                   </div>
-                  {/* Native share icon — small, top right */}
+                  {/* Crown CTA — free users only, draws eye to upgrade */}
+                  {!isPremium && (
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => { gEvent('ngl_pro_cta_click', { source: 'crown' }); setShowUpgrade(true); }}
+                      className="relative flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden bg-gradient-to-br from-violet-500 via-fuchsia-500 to-pink-500 shadow-md shadow-fuchsia-500/30 hover:shadow-fuchsia-500/50 transition-shadow"
+                      title={lang === 'bn' ? 'PRO তে আপগ্রেড — ₹98/মাস' : 'Upgrade to PRO — ₹98/mo'}
+                    >
+                      <svg viewBox="0 0 24 24" fill="white" className="w-[15px] h-[15px] relative z-10 drop-shadow-sm">
+                        <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm0 3h14v2H5z"/>
+                      </svg>
+                      <motion.span
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                        animate={{ x: ['-120%', '220%'] }}
+                        transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut', repeatDelay: 2.5 }}
+                      />
+                    </motion.button>
+                  )}
                   <motion.button
                     whileTap={{ scale: 0.9 }}
                     onClick={handleShare}
-                    className="w-9 h-9 rounded-xl flex items-center justify-center text-base transition-all bg-white/[0.04] hover:bg-white/[0.08]"
+                    className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-colors text-white/30 hover:text-white/60 hover:bg-white/[0.05]"
                     title={lang === 'bn' ? 'শেয়ার করো' : 'Share'}
                   >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-[16px] h-[16px] text-white/40">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-[15px] h-[15px]">
                       <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
                       <polyline points="16 6 12 2 8 6"/>
                       <line x1="12" y1="2" x2="12" y2="15"/>
                     </svg>
                   </motion.button>
                 </motion.div>
+
+                {/* Stats strip — minimal, only if present */}
+                {(streakDays > 0 || messages.length > 0) && (
+                  <div className="flex items-center justify-center gap-2 px-1 -mt-1">
+                    {streakDays > 0 && (
+                      <span className="text-[10px] font-bold text-amber-300/70 inline-flex items-center gap-1">
+                        <span>🔥</span>{streakDays}d
+                      </span>
+                    )}
+                    {streakDays > 0 && messages.length > 0 && <span className="text-white/15 text-[10px]">·</span>}
+                    {messages.length > 0 && (
+                      <span className="text-[10px] font-bold text-white/30">{messages.length} {lang === 'bn' ? 'বার্তা' : 'msgs'}</span>
+                    )}
+                  </div>
+                )}
 
                 {/* ═══ PROMPT: What people see — THE STAR of the page ═══ */}
                 <motion.div
@@ -1469,126 +1683,41 @@ export default function NglDashboard() {
                   </div>
                 </motion.div>
 
-                {/* ═══ PHONE VERIFY: Slim premium pill ═══ */}
-                {phoneStatus !== 'loading' && phoneStatus !== 'verified' && (phoneStatus === 'otp_sent' || phoneStatus === 'none') && (
-                  <motion.button
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.08 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => { localStorage.setItem('ngl_otp_seen', '1'); setPhoneShowForm(true); setPhoneOtpStatus('idle'); setPhoneOtpDigits(['', '', '', '', '', '']); setPhoneOtpError(''); setPhoneInputError(''); setPhoneInput(''); }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-gradient-to-r from-amber-500/[0.08] to-rose-500/[0.08] border border-amber-500/[0.18] hover:from-amber-500/[0.12] hover:to-rose-500/[0.12] transition-all group"
-                  >
-                    <motion.div
-                      animate={{ scale: [1, 1.15, 1] }}
-                      transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 4 }}
-                      className="w-[22px] h-[22px] rounded-lg bg-amber-400/15 flex items-center justify-center flex-shrink-0"
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 text-amber-300">
-                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
-                        <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3M8 22h8"/>
-                      </svg>
-                    </motion.div>
-                    <div className="flex-1 text-left min-w-0">
-                      <p className="text-[11.5px] font-bold text-amber-100 leading-tight">{lang === 'bn' ? 'WhatsApp verify করো' : 'Verify WhatsApp'}</p>
-                      <p className="text-[9.5px] text-amber-200/50 leading-tight mt-[1px]">{phoneStatus === 'otp_sent' ? (lang === 'bn' ? 'Pending verification' : 'Pending verification') : (lang === 'bn' ? 'Not added' : 'Not added')}</p>
-                    </div>
-                    <span className="text-[9px] font-extrabold text-amber-200/80 bg-amber-400/10 px-1.5 py-[2px] rounded-md border border-amber-400/20 flex-shrink-0">
-                      {lang === 'bn' ? 'শুরু' : 'START'}
-                    </span>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 text-amber-300/50 group-hover:text-amber-300 group-hover:translate-x-0.5 transition-all flex-shrink-0">
-                      <polyline points="9 18 15 12 9 6"/>
-                    </svg>
-                  </motion.button>
-                )}
-                {phoneStatus === 'verified' && phoneMasked && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3, delay: 0.1 }}
-                    className="flex items-center gap-2 px-2 py-1"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => { localStorage.setItem('ngl_otp_seen', '1'); setPhoneShowForm(true); setPhoneOtpStatus('idle'); setPhoneOtpDigits(['', '', '', '', '', '']); setPhoneOtpError(''); setPhoneInputError(''); }}
-                      className="flex items-center gap-2 cursor-pointer group"
-                    >
-                    <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5 flex-shrink-0">
-                      <circle cx="12" cy="12" r="10" fill="#10b981" opacity="0.2"/>
-                      <path d="M8 12l3 3 5-5" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    <span className="text-[11px] font-mono text-emerald-400/60 group-hover:text-emerald-400/80 transition-colors">{phoneMasked}</span>
-                    <span className="text-[9px] text-emerald-300/70">{lang === 'bn' ? 'Verified' : 'Verified'}</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handlePhoneReset}
-                      disabled={phoneRemoving}
-                      className="ml-1 text-[9px] font-bold text-rose-300/70 hover:text-rose-200 transition-colors disabled:opacity-50 disabled:cursor-wait inline-flex items-center gap-1"
-                    >
-                      {phoneRemoving && (
-                        <svg className="w-2.5 h-2.5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25"/><path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>
-                      )}
-                      {phoneRemoving ? (lang === 'bn' ? 'মুছছি...' : 'Removing…') : (lang === 'bn' ? 'Remove' : 'Remove')}
-                    </button>
-                  </motion.div>
-                )}
-
-                <div className="text-[10px] text-white/35 mt-1.5">
-                  <span>{lang === 'bn' ? 'Phone status' : 'Phone status'}: </span>
-                  <span className="font-semibold text-white/60">
-                    {phoneStatus === 'verified' ? 'Verified' : phoneStatus === 'otp_sent' ? 'Pending verification' : 'Not added'}
-                  </span>
-                  {phoneDevOtpMode && (
-                    <span className="ml-2 inline-flex items-center rounded-md border border-amber-300/30 bg-amber-300/10 px-1.5 py-[1px] text-[9px] font-bold text-amber-200">
-                      Test OTP mode
-                    </span>
-                  )}
-                  {phoneLastVerifiedAt && (
-                    <span className="ml-2 text-white/45">
-                      {lang === 'bn' ? 'Last verified:' : 'Last verified:'} {new Date(phoneLastVerifiedAt).toLocaleString()}
-                    </span>
-                  )}
-                  {phoneStatus === 'none' && phoneLastRemovedAt && (
-                    <span className="ml-2 text-white/45">
-                      {lang === 'bn' ? 'Last removed:' : 'Last removed:'} {new Date(phoneLastRemovedAt).toLocaleString()}
-                    </span>
-                  )}
-                </div>
-
                 {/* ═══ SHARE: Premium link pill with handle + copy ═══ */}
-                <motion.button
+                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.3, delay: 0.14 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleCopy}
                   data-tour="share-link"
-                  className={`w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl border transition-all duration-300 ${copied ? 'bg-emerald-500/10 border-emerald-400/30' : 'bg-white/[0.03] border-white/[0.06] hover:bg-white/[0.06] hover:border-white/[0.12]'}`}
+                  className={`w-full flex items-center rounded-xl overflow-hidden transition-all duration-300 h-[38px] ${copied ? 'ring-1 ring-emerald-400/30' : ''}`}
+                  style={{ background: copied ? 'rgba(16,185,129,0.08)' : 'rgba(255,255,255,0.04)' }}
                 >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`w-3.5 h-3.5 flex-shrink-0 transition-colors ${copied ? 'text-emerald-400' : 'text-white/30'}`}>
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-                  </svg>
-                  <div className="flex-1 min-w-0 text-left">
-                    <p className={`text-[12.5px] font-mono truncate select-none transition-colors ${copied ? 'text-emerald-300' : 'text-white/50'}`}>
-                      bongbari.com<span className="text-white/30">/ngl/q/</span><span className={copied ? 'text-emerald-200 font-bold' : 'text-white/80 font-bold'}>{username}</span>
-                    </p>
+                  <div className="flex-1 min-w-0 flex items-center gap-2 px-3 h-full">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`w-3.5 h-3.5 flex-shrink-0 ${copied ? 'text-emerald-400' : 'text-white/25'}`}>
+                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                    </svg>
+                    <span className={`text-[12px] font-mono truncate select-none ${copied ? 'text-emerald-300' : 'text-white/50'}`}>
+                      bongbari.com<span className="text-white/25">/ngl/q/</span><span className={copied ? 'text-emerald-200 font-bold' : 'text-white font-bold'}>{username}</span>
+                    </span>
                   </div>
-                  <span className={`flex-shrink-0 transition-all duration-300 text-[10px] font-extrabold tracking-wide ${copied ? 'text-emerald-400' : 'text-white/40'}`}>
+                  <button
+                    onClick={handleCopy}
+                    className={`flex-shrink-0 h-full flex items-center px-3.5 text-[10px] font-extrabold tracking-wider cursor-pointer transition-all duration-200 ${copied ? 'bg-emerald-500/20 text-emerald-300' : 'bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 text-white hover:from-violet-400 hover:via-fuchsia-400 hover:to-pink-400 hover:shadow-[0_0_16px_rgba(217,70,239,0.5)] active:scale-95'}`}
+                  >
                     {copied ? (
                       <span className="flex items-center gap-1">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><polyline points="20 6 9 17 4 12"/></svg>
                         {lang === 'bn' ? 'হয়েছে' : 'COPIED'}
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <span className="flex items-center gap-1.5">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                         {lang === 'bn' ? 'কপি' : 'COPY'}
                       </span>
                     )}
-                  </span>
-                </motion.button>
+                  </button>
+                </motion.div>
 
                 {/* ═══ SHARE CARDS: 4 premium icon buttons ═══ */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -1614,28 +1743,6 @@ export default function NglDashboard() {
                   ))}
                 </div>
 
-                {/* ═══ UTILITY: Ghost strip ═══ */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.4, delay: 0.52 }}
-                  className="flex items-center justify-end px-1"
-                >
-                  <button
-                    onClick={() => { setDeleteStep(1); setBanishConfirm(''); }}
-                    className="w-11 h-11 rounded-xl flex items-center justify-center text-white/[0.08] hover:text-red-400/40 hover:bg-red-500/8 active:bg-red-500/15 transition-all flex-shrink-0 group"
-                    title={t('dash.banish')}
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" className="w-[18px] h-[18px]" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 6h18"/>
-                      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                      <path d="M19 6l-.867 12.142A2 2 0 0 1 16.138 20H7.862a2 2 0 0 1-1.995-1.858L5 6"/>
-                      <line x1="10" y1="11" x2="10" y2="17"/>
-                      <line x1="14" y1="11" x2="14" y2="17"/>
-                    </svg>
-                  </button>
-                </motion.div>
-
                 {/* Dice toast */}
                 <AnimatePresence>
                   {diceToast && (
@@ -1659,7 +1766,7 @@ export default function NglDashboard() {
                 exit={{ opacity: 0, x: -20 }}
                 className="pb-2"
               >
-                <PullToRefresh onRefresh={async () => { haptic('success'); await loadInbox(); }} lang={lang} />
+                <PullToRefresh onRefresh={async () => { haptic('success'); await loadInbox({ manual: true }); }} lang={lang} />
                 {(error || isOffline) && error !== '' && (
                   <div className="text-center mb-3 bg-red-500/10 rounded-2xl py-2.5 px-4 border border-red-500/10">
                     <p className="text-red-300 text-[11px] font-semibold">
@@ -1674,7 +1781,7 @@ export default function NglDashboard() {
                     </p>
                     {!isOffline && error && error !== 'ERR_WRONG_KEY' && (
                       <button
-                        onClick={() => { setError(''); setLoading(true); loadInbox(); }}
+                        onClick={() => { setError(''); setLoading(true); loadInbox({ manual: true }); }}
                         className="mt-1.5 bg-white/10 text-white text-[10px] font-bold px-3 py-1 rounded-full hover:bg-white/20 transition-colors"
                       >
                         🔄 {t('dash.retry')}
@@ -2295,6 +2402,288 @@ export default function NglDashboard() {
           )}
         </AnimatePresence>
 
+        {/* ═══ Settings Modal — Premium centered glass (Linear/Notion-grade) ═══ */}
+        <AnimatePresence>
+          {showSettings && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4"
+              onClick={() => setShowSettings(false)}
+            >
+              {/* Backdrop */}
+              <div className="absolute inset-0 bg-black/60" />
+
+              {/* Modal */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 20 }}
+                transition={{ type: 'spring', damping: 26, stiffness: 320 }}
+                onClick={(e) => e.stopPropagation()}
+                className="relative w-full sm:max-w-[360px] rounded-t-2xl sm:rounded-2xl overflow-hidden"
+                style={{
+                  background: 'linear-gradient(180deg, #141020 0%, #0c0a16 100%)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.06)',
+                }}
+              >
+                {/* Subtle gradient top border accent */}
+                <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.3), rgba(236,72,153,0.3), transparent)' }} />
+                {/* Mobile drag handle */}
+                <div className="sm:hidden flex justify-center pt-2 pb-0">
+                  <div className="w-9 h-[3px] rounded-full bg-white/12" />
+                </div>
+
+                {/* Header — clean title only, no avatar */}
+                <div className="flex items-center justify-between px-5 pt-3 sm:pt-4 pb-2.5">
+                  <h2 className="text-[15px] font-extrabold text-white tracking-tight leading-none">{lang === 'bn' ? 'সেটিংস' : 'Settings'}</h2>
+                  <button onClick={() => setShowSettings(false)} className="w-7 h-7 rounded-full flex items-center justify-center text-white/35 hover:text-white/70 hover:bg-white/[0.06] transition-all" aria-label="Close">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
+
+                {/* ─── Group 1: Main settings (iOS grouped card) ─── */}
+                <div className="mx-3 mb-2 rounded-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.028)', border: '0.5px solid rgba(255,255,255,0.04)' }}>
+
+                  {/* WhatsApp */}
+                  <button
+                    onClick={() => { setShowSettings(false); setTimeout(() => { localStorage.setItem('ngl_otp_seen', '1'); setPhoneShowForm(true); setPhoneOtpStatus('idle'); setPhoneOtpDigits(['', '', '', '', '', '']); setPhoneOtpError(''); setPhoneInputError(''); setPhoneInput(''); }, 200); }}
+                    className="w-full flex items-center gap-2.5 pl-3 pr-3 h-[44px] hover:bg-white/[0.025] active:bg-white/[0.04] transition-all text-left group"
+                  >
+                    <div className={`w-[26px] h-[26px] rounded-[7px] flex items-center justify-center flex-shrink-0 ${phoneStatus === 'verified' ? 'bg-emerald-500/15' : 'bg-amber-500/15'}`}>
+                      <svg viewBox="0 0 24 24" fill="currentColor" className={`w-[14px] h-[14px] ${phoneStatus === 'verified' ? 'text-emerald-400' : 'text-amber-300'}`}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    </div>
+                    <span className="text-[13px] font-semibold text-white/90 flex-1">WhatsApp</span>
+                    <span className="text-[11px] text-white/30 mr-1">
+                      {phoneStatus === 'verified' && phoneMasked ? phoneMasked : phoneStatus === 'otp_sent' ? 'Pending' : (lang === 'bn' ? 'যাচাই' : 'Verify')}
+                    </span>
+                    {phoneStatus !== 'verified' && <span className="w-[6px] h-[6px] rounded-full bg-amber-400 flex-shrink-0 mr-0.5" />}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-[10px] h-[10px] text-white/20 flex-shrink-0"><polyline points="9 18 15 12 9 6"/></svg>
+                  </button>
+
+                  {/* Inset divider */}
+                  <div className="h-px bg-white/[0.04] ml-12" />
+
+                  {/* Theme */}
+                  <button onClick={() => { setShowSettings(false); setTimeout(() => setShowThemePicker(true), 200); }} className="w-full flex items-center gap-2.5 pl-3 pr-3 h-[44px] hover:bg-white/[0.025] transition-all text-left group">
+                    <div className="w-[26px] h-[26px] rounded-[7px] bg-violet-500/15 flex items-center justify-center flex-shrink-0">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-[14px] h-[14px] text-violet-300"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="21.17" y1="8" x2="12" y2="8"/><line x1="3.95" y1="6.06" x2="8.54" y2="14"/><line x1="10.88" y1="21.94" x2="15.46" y2="14"/></svg>
+                    </div>
+                    <span className="text-[13px] font-semibold text-white/90 flex-1">{lang === 'bn' ? 'থিম' : 'Theme'}</span>
+                    <div className="w-[18px] h-[18px] rounded-full flex-shrink-0 mr-1 ring-1 ring-white/10" style={{ background: NGL_THEMES[theme]?.bg || NGL_THEMES.default.bg }} />
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-[10px] h-[10px] text-white/20 flex-shrink-0"><polyline points="9 18 15 12 9 6"/></svg>
+                  </button>
+
+                  {/* Inset divider */}
+                  <div className="h-px bg-white/[0.04] ml-12" />
+
+                  {/* Sound */}
+                  <button onClick={toggleMute} className="w-full flex items-center gap-2.5 pl-3 pr-3 h-[44px] hover:bg-white/[0.025] transition-all text-left">
+                    <div className="w-[26px] h-[26px] rounded-[7px] bg-sky-500/15 flex items-center justify-center flex-shrink-0">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`w-[14px] h-[14px] ${muted ? 'text-sky-300/40' : 'text-sky-300'}`}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>{muted ? <><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></> : <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>}</svg>
+                    </div>
+                    <span className="text-[13px] font-semibold text-white/90 flex-1">{lang === 'bn' ? 'শব্দ' : 'Sound'}</span>
+                    <div className={`relative w-[36px] h-[20px] rounded-full transition-colors duration-200 ${muted ? 'bg-white/10' : 'bg-emerald-500'}`}>
+                      <motion.div
+                        animate={{ x: muted ? 2 : 18 }}
+                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                        className="absolute top-[2px] w-[16px] h-[16px] rounded-full bg-white shadow-sm"
+                      />
+                    </div>
+                  </button>
+
+                  {/* Inset divider */}
+                  <div className="h-px bg-white/[0.04] ml-12" />
+
+                  {/* Language */}
+                  <div className="w-full flex items-center gap-2.5 pl-3 pr-3 h-[44px]">
+                    <div className="w-[26px] h-[26px] rounded-[7px] bg-indigo-500/15 flex items-center justify-center flex-shrink-0">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-[14px] h-[14px] text-indigo-300"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    </div>
+                    <span className="text-[13px] font-semibold text-white/90 flex-1">{lang === 'bn' ? 'ভাষা' : 'Language'}</span>
+                    <LangToggle />
+                  </div>
+                </div>
+
+                {/* ─── Upgrade CTA (only if not premium) ─── */}
+                {!isPremium && (
+                  <button onClick={() => { setShowSettings(false); setTimeout(() => setShowUpgrade(true), 200); }} className="mx-3 mb-2 w-[calc(100%-24px)] h-[40px] rounded-xl text-[12px] font-bold text-white flex items-center justify-center gap-1.5 transition-all hover:brightness-110 active:scale-[0.98]" style={{ background: 'linear-gradient(135deg, #8b5cf6, #d946ef, #ec4899)' }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-[14px] h-[14px]"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    {lang === 'bn' ? 'প্রো তে আপগ্রেড করো' : 'Upgrade to Pro'}
+                  </button>
+                )}
+
+                {/* ─── Group 2: Account / Danger (iOS grouped card) ─── */}
+                <div className="mx-3 mb-2 rounded-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.028)', border: '0.5px solid rgba(255,255,255,0.04)' }}>
+
+                  {/* Logout */}
+                  <button onClick={() => { setShowSettings(false); handleLogout(); }} className="w-full flex items-center gap-2.5 pl-3 pr-3 h-[44px] hover:bg-white/[0.025] transition-all text-left group">
+                    <div className="w-[26px] h-[26px] rounded-[7px] bg-red-500/12 flex items-center justify-center flex-shrink-0">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-[14px] h-[14px] text-red-400"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    </div>
+                    <span className="text-[13px] font-semibold text-red-400/80 flex-1">{t('dash.logout')}</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-[10px] h-[10px] text-white/15 flex-shrink-0"><polyline points="9 18 15 12 9 6"/></svg>
+                  </button>
+
+                  {/* Inset divider */}
+                  <div className="h-px bg-white/[0.04] ml-12" />
+
+                  {/* Delete profile */}
+                  <button onClick={() => { setShowSettings(false); setDeleteStep(1); setBanishConfirm(''); }} className="w-full flex items-center gap-2.5 pl-3 pr-3 h-[44px] hover:bg-red-500/[0.025] transition-all text-left group">
+                    <div className="w-[26px] h-[26px] rounded-[7px] bg-white/[0.03] flex items-center justify-center flex-shrink-0 group-hover:bg-red-500/10 transition-colors">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-[14px] h-[14px] text-white/20 group-hover:text-red-400/60 transition-colors">
+                        <path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-.867 12.142A2 2 0 0 1 16.138 20H7.862a2 2 0 0 1-1.995-1.858L5 6"/>
+                      </svg>
+                    </div>
+                    <span className="text-[13px] font-semibold text-white/25 group-hover:text-red-400/60 transition-colors flex-1">{lang === 'bn' ? 'প্রোফাইল মুছো' : 'Delete profile'}</span>
+                  </button>
+                </div>
+
+                {/* Footer */}
+                <p className="text-center text-[9px] text-white/12 font-medium py-2 tracking-wide">BongBari NGL</p>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ═══ Theme Picker Modal ═══ */}
+        <AnimatePresence>
+          {showThemePicker && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4"
+              onClick={() => setShowThemePicker(false)}
+            >
+              <div className="absolute inset-0 bg-black/60" />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 20 }}
+                transition={{ type: 'spring', damping: 26, stiffness: 320 }}
+                onClick={(e) => e.stopPropagation()}
+                className="relative w-full sm:max-w-[360px] rounded-t-2xl sm:rounded-2xl overflow-hidden"
+                style={{
+                  background: 'linear-gradient(180deg, #141020 0%, #0c0a16 100%)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.06)',
+                }}
+              >
+                <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.3), rgba(236,72,153,0.3), transparent)' }} />
+                <div className="sm:hidden flex justify-center pt-2 pb-0">
+                  <div className="w-9 h-[3px] rounded-full bg-white/12" />
+                </div>
+
+                <div className="flex items-center justify-between px-5 pt-3 sm:pt-4 pb-2">
+                  <h2 className="text-[15px] font-extrabold text-white tracking-tight leading-none">{lang === 'bn' ? 'থিম বাছো' : 'Choose Theme'}</h2>
+                  <button onClick={() => setShowThemePicker(false)} className="w-7 h-7 rounded-full flex items-center justify-center text-white/35 hover:text-white/70 hover:bg-white/[0.06] transition-colors" aria-label="Close">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
+
+                {/* FREE section label */}
+                <div className="px-5 pb-1.5">
+                  <span className="text-[9px] font-bold text-white/25 uppercase tracking-[0.15em]">Free</span>
+                </div>
+
+                {/* Free themes grid */}
+                <div className="px-4 pb-3 grid grid-cols-4 gap-2">
+                  {Object.entries(NGL_THEMES).filter(([, t]) => !t.pro).map(([key, t]) => {
+                    const isActive = key === theme;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => handleSetTheme(key)}
+                        className={`relative flex flex-col items-center gap-1 py-2 rounded-xl transition-colors ${isActive ? 'bg-white/[0.08] ring-1 ring-white/20' : 'hover:bg-white/[0.04]'}`}
+                      >
+                        <div
+                          className={`w-10 h-10 rounded-xl ring-2 transition-all ${isActive ? 'ring-white/60 scale-105' : 'ring-white/[0.06]'}`}
+                          style={{ background: t.bg }}
+                        />
+                        <span className="text-[10px] font-semibold text-white/50">{t.emoji} {t.label}</span>
+                        {isActive && (
+                          <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-2.5 h-2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* PRO divider */}
+                <div className="mx-4 flex items-center gap-2 pb-1.5">
+                  <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.25), rgba(236,72,153,0.25), transparent)' }} />
+                  <span className="text-[9px] font-bold uppercase tracking-[0.15em] flex items-center gap-1" style={{ background: 'linear-gradient(90deg, #a78bfa, #f472b6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="url(#proGrad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-2.5 h-2.5"><defs><linearGradient id="proGrad"><stop offset="0%" stopColor="#a78bfa"/><stop offset="100%" stopColor="#f472b6"/></linearGradient></defs><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    PRO Exclusive
+                  </span>
+                  <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(236,72,153,0.25), rgba(139,92,246,0.25), transparent)' }} />
+                </div>
+
+                {/* PRO themes grid — bigger cards, more visual impact */}
+                <div className="px-4 pb-3 grid grid-cols-3 gap-2.5">
+                  {Object.entries(NGL_THEMES).filter(([, t]) => t.pro).map(([key, t]) => {
+                    const isLocked = !isPremium;
+                    const isActive = key === theme;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => {
+                          if (isLocked) {
+                            setShowThemePicker(false);
+                            setTimeout(() => setShowUpgrade(true), 200);
+                          } else {
+                            handleSetTheme(key);
+                          }
+                        }}
+                        className={`relative flex flex-col items-center gap-1.5 py-2.5 rounded-xl transition-colors ${isActive ? 'bg-white/[0.08] ring-1 ring-white/20' : 'hover:bg-white/[0.04]'}`}
+                      >
+                        <div className="relative">
+                          <div
+                            className={`w-[52px] h-[52px] rounded-xl ring-2 transition-all ${isActive ? 'ring-white/60 scale-105' : 'ring-white/[0.08]'} ${isLocked ? 'opacity-70' : ''}`}
+                            style={{ background: t.bg }}
+                          />
+                          {isLocked && (
+                            <div className="absolute inset-0 rounded-xl flex items-center justify-center bg-black/30">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-white/70">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-[10px] font-semibold text-white/60">{t.emoji} {t.label}</span>
+                        {isActive && (
+                          <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-2.5 h-2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Unlock CTA for non-premium */}
+                {!isPremium && (
+                  <div className="px-4 pb-3">
+                    <button onClick={() => { setShowThemePicker(false); setTimeout(() => setShowUpgrade(true), 200); }} className="w-full h-[34px] rounded-xl text-[11px] font-bold text-white flex items-center justify-center gap-1.5 transition-colors hover:brightness-110 active:scale-[0.98]" style={{ background: 'linear-gradient(135deg, #8b5cf6, #d946ef, #ec4899)' }}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                      {lang === 'bn' ? 'PRO থিম আনলক করো' : 'Unlock PRO Themes'}
+                    </button>
+                  </div>
+                )}
+
+                {settingTheme && (
+                  <div className="text-center text-[10px] text-white/30 pb-2 font-medium">{lang === 'bn' ? 'সেভ হচ্ছে…' : 'Saving…'}</div>
+                )}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* ═══ Phone Verification Modal — Ultra-Compact Premium ═══ */}
         <AnimatePresence>
           {phoneShowForm && (
@@ -2480,309 +2869,233 @@ export default function NglDashboard() {
           )}
         </AnimatePresence>
 
-        {/* ── Story Card Preview Modal (Phase 3) — 2-screen flow ── */}
+        {/* ── Story Card Modal (Premium single-panel architecture) ── */}
         <AnimatePresence>
           {storyPreview && showStoryCardModal && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-              onClick={() => { setShowStoryCardModal(false); setStoryPreview(null); setStoryEditingText(false); setStoryScreen('preview'); }}
+              className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+              onClick={() => { setShowStoryCardModal(false); setStoryPreview(null); setStoryEditingText(false); }}
             >
-              <div className="absolute inset-0 bg-black/70 backdrop-blur-2xl" />
+              <div className="absolute inset-0 bg-black/80 backdrop-blur-2xl" />
               <motion.div
-                initial={{ scale: 0.85, opacity: 0, y: 20 }}
+                initial={{ scale: 0.92, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.85, opacity: 0, y: 20 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                className="relative z-10 flex flex-col items-center gap-2 w-full max-w-[300px]"
+                exit={{ scale: 0.92, opacity: 0, y: 20 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+                className="relative z-10 w-full max-w-[360px] sm:max-w-[600px] my-auto"
                 onClick={e => e.stopPropagation()}
               >
-                {/* Header */}
-                <div className="w-full flex items-center justify-between">
-                  {storyScreen === 'customize' ? (
-                    <button onClick={() => setStoryScreen('preview')} className="text-white/60 text-[11px] font-bold hover:text-white/90 transition-all flex items-center gap-1">
-                      ← {lang === 'bn' ? 'Preview' : 'Back'}
-                    </button>
-                  ) : (
-                    <h3 className="text-white/80 text-[12px] font-bold">📸 {lang === 'bn' ? 'তোর Story Card' : 'Your Story Card'}</h3>
-                  )}
-                  <button
-                    onClick={() => { setShowStoryCardModal(false); setStoryPreview(null); setStoryEditingText(false); setOgEditing(false); setStoryScreen('preview'); }}
-                    className="w-7 h-7 rounded-full bg-white/[0.08] backdrop-blur-md flex items-center justify-center text-white/50 text-[11px] font-bold hover:bg-white/15 hover:text-white transition-all border border-white/[0.06]"
-                  >✕</button>
-                </div>
+                {/* Premium frame — slim modern */}
+                <div className="relative rounded-[24px] border border-white/[0.08] bg-[#0d0d10]/95 backdrop-blur-2xl shadow-[0_40px_100px_-20px_rgba(0,0,0,0.85)] overflow-hidden">
+                  {/* Ambient gradient glow */}
+                  <div aria-hidden className="pointer-events-none absolute -top-16 -right-16 w-56 h-56 rounded-full bg-gradient-to-br from-pink-500/15 via-rose-500/8 to-transparent blur-3xl" />
+                  <div aria-hidden className="pointer-events-none absolute -bottom-20 -left-16 w-60 h-60 rounded-full bg-gradient-to-tr from-indigo-500/12 via-blue-500/6 to-transparent blur-3xl" />
 
-                {/* Toast */}
-                <AnimatePresence>
-                  {storyToast && (
-                    <motion.div initial={{ opacity: 0, y: -6, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6, scale: 0.9 }}
-                      className="w-full bg-emerald-500/15 text-emerald-300 text-[10px] font-bold px-4 py-2 rounded-xl border border-emerald-400/15 text-center">
-                      {storyToast}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                  {/* Header — compact */}
+                  <div className="relative flex items-center justify-between px-4 py-2.5 border-b border-white/[0.06]">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-gradient-to-br from-pink-500 to-orange-400 flex items-center justify-center text-[11px] shadow-md shadow-pink-500/40">📸</span>
+                      <h3 className="text-white text-[13px] font-extrabold tracking-tight">
+                        {lang === 'bn' ? 'তোর Story Card' : 'Your Story Card'}
+                      </h3>
+                    </div>
+                    <button
+                      onClick={() => { setShowStoryCardModal(false); setStoryPreview(null); setStoryEditingText(false); }}
+                      aria-label="Close"
+                      className="w-7 h-7 rounded-full bg-white/[0.06] flex items-center justify-center text-white/60 text-xs font-bold hover:bg-white/[0.14] hover:text-white transition-all border border-white/[0.06]"
+                    >✕</button>
+                  </div>
 
-                {/* ═══════ SCREEN 1: Preview + Actions ═══════ */}
-                {storyScreen === 'preview' && (
-                  <>
-                    {/* Preview card — large and clean */}
-                    <div className="relative w-full max-h-[70vh] rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border border-white/[0.06]">
-                      <img
-                        src={storyPreview}
-                        alt="Story card"
-                        className={`w-full h-auto transition-opacity duration-200 ${generatingCard ? 'opacity-40' : 'opacity-100'}`}
-                        style={{ aspectRatio: '9/16' }}
-                      />
-                      {generatingCard && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <motion.span animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }} className="text-2xl">✨</motion.span>
-                        </div>
-                      )}
+                  {/* Toast */}
+                  <AnimatePresence>
+                    {storyToast && (
+                      <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                        className="relative mx-4 mt-2.5 bg-emerald-500/15 text-emerald-300 text-[10.5px] font-bold px-3 py-1.5 rounded-lg border border-emerald-400/20 text-center">
+                        {storyToast}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Body — slim grid */}
+                  <div className="relative grid grid-cols-1 sm:grid-cols-[220px_minmax(0,1fr)] gap-4 p-4">
+                    {/* ── Preview ── */}
+                    <div className="flex items-start justify-center sm:justify-start">
+                      <div className="relative w-full max-w-[220px] rounded-xl overflow-hidden shadow-[0_16px_40px_-10px_rgba(0,0,0,0.6)] border border-white/[0.08] ring-1 ring-white/[0.04]">
+                        <img
+                          src={storyPreview}
+                          alt="Story card preview"
+                          className={`w-full h-auto transition-opacity duration-200 ${generatingCard ? 'opacity-40' : 'opacity-100'}`}
+                          style={{ aspectRatio: '9/16' }}
+                        />
+                        {generatingCard && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+                            <motion.span animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }} className="text-2xl">✨</motion.span>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Action buttons */}
-                    {isMobileDevice ? (
-                      <div className="w-full flex flex-col gap-1.5">
-                        <button
-                          onClick={shareStoryCard}
-                          disabled={generatingCard || storySharing}
-                          className="w-full bg-gradient-to-r from-pink-500 to-orange-400 text-white font-extrabold py-3 rounded-2xl text-[12px] hover:brightness-110 transition-all shadow-lg active:scale-[0.97] flex items-center justify-center gap-1.5 disabled:opacity-50"
-                        >
-                          {storySharing ? '⏳' : '📤'} {lang === 'bn' ? 'Story-তে Share করো' : 'Share to Story'}
-                        </button>
-                        <div className="w-full grid grid-cols-3 gap-1.5">
+                    {/* ── Controls ── */}
+                    <div className="flex flex-col gap-3 min-w-0">
+                      {/* Theme — with PRO locks */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-white/50 text-[9.5px] font-extrabold uppercase tracking-[0.16em]">{lang === 'bn' ? '🎨 থিম' : '🎨 Theme'}</p>
+                          <span className="text-white/35 text-[10px] font-bold flex items-center gap-1">
+                            {STORY_PALETTES[storyColorIdx]?.pro && !isPremium && (
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-2.5 h-2.5 text-amber-400"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                            )}
+                            {STORY_PALETTES[storyColorIdx]?.label}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {STORY_PALETTES.map((p, i) => {
+                            const dotColors = p.colors || (NGL_THEMES[theme]?.bg.match(/#[a-fA-F0-9]{6}/g) || ['#667eea', '#f8477a']);
+                            const active = storyColorIdx === i;
+                            const locked = !!p.pro && !isPremium;
+                            return (
+                              <button
+                                key={i}
+                                onClick={() => {
+                                  if (locked) {
+                                    gEvent('ngl_pro_cta_click', { source: 'story_palette' });
+                                    setShowStoryCardModal(false);
+                                    setTimeout(() => setShowUpgrade(true), 180);
+                                    return;
+                                  }
+                                  changeStoryColor(i);
+                                }}
+                                disabled={generatingCard}
+                                title={locked ? `${p.label} (PRO)` : p.label}
+                                aria-label={locked ? `${p.label} — PRO only` : p.label}
+                                className={`relative w-8 h-8 rounded-full transition-all active:scale-90 ${
+                                  active
+                                    ? 'ring-2 ring-white ring-offset-2 ring-offset-[#0d0d10] scale-110 shadow-lg shadow-black/50'
+                                    : 'ring-1 ring-white/15 hover:ring-white/40 hover:scale-110'
+                                } ${locked ? 'opacity-70' : ''}`}
+                                style={{ background: `linear-gradient(135deg, ${dotColors[0]}, ${dotColors[Math.floor(dotColors.length / 2)] || dotColors[0]}, ${dotColors[dotColors.length - 1]})` }}
+                              >
+                                {active && !locked && (
+                                  <span className="absolute inset-0 flex items-center justify-center text-white text-[10px] font-extrabold drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">✓</span>
+                                )}
+                                {locked && (
+                                  <span className="absolute inset-0 flex items-center justify-center bg-black/35 rounded-full">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]">
+                                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                    </svg>
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {!isPremium && (
+                          <button
+                            onClick={() => { gEvent('ngl_pro_cta_click', { source: 'story_unlock' }); setShowStoryCardModal(false); setTimeout(() => setShowUpgrade(true), 180); }}
+                            className="mt-2 w-full h-7 rounded-lg text-[10px] font-extrabold text-white flex items-center justify-center gap-1 transition-all hover:brightness-110 active:scale-[0.98]"
+                            style={{ background: 'linear-gradient(135deg, #8b5cf6, #d946ef, #ec4899)' }}
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-2.5 h-2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                            {lang === 'bn' ? '5টি PRO থিম আনলক করো' : 'Unlock 5 PRO themes'}
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Customize — slim toggles */}
+                      <div>
+                        <p className="text-white/50 text-[9.5px] font-extrabold uppercase tracking-[0.16em] mb-2">{lang === 'bn' ? '✨ কাস্টমাইজ' : '✨ Customize'}</p>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <button
+                            onClick={() => { setStoryEditingText(!storyEditingText); setStoryTextDraft(storyCustomPrompt ?? decodeEntities(prompt)); }}
+                            className={`flex items-center justify-center gap-1 py-2 rounded-lg text-[10.5px] font-extrabold transition-all border ${
+                              storyEditingText ? 'bg-white/[0.16] text-white border-white/25 shadow-inner' : 'bg-white/[0.05] text-white/65 border-white/[0.08] hover:bg-white/[0.10] hover:text-white'
+                            }`}
+                          >
+                            ✏️ {lang === 'bn' ? 'Text' : 'Edit Text'}
+                          </button>
+                          <button
+                            onClick={toggleStoryQR}
+                            disabled={generatingCard}
+                            className={`flex items-center justify-center gap-1 py-2 rounded-lg text-[10.5px] font-extrabold transition-all border ${
+                              storyShowQR ? 'bg-white/[0.16] text-white border-white/25 shadow-inner' : 'bg-white/[0.05] text-white/65 border-white/[0.08] hover:bg-white/[0.10] hover:text-white'
+                            }`}
+                          >
+                            {storyShowQR ? '🔳 QR On' : '▫️ QR Off'}
+                          </button>
+                        </div>
+
+                        {/* Inline text editor with char counter */}
+                        <AnimatePresence>
+                          {storyEditingText && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0, marginTop: 0 }} animate={{ height: 'auto', opacity: 1, marginTop: 6 }} exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="relative">
+                                <textarea
+                                  value={storyTextDraft}
+                                  onChange={e => setStoryTextDraft(e.target.value.slice(0, 140))}
+                                  maxLength={140}
+                                  rows={2}
+                                  placeholder={lang === 'bn' ? 'নতুন প্রশ্ন লেখো (max 140)…' : 'Type new question (max 140)…'}
+                                  className="w-full bg-white/[0.06] text-white text-[11.5px] leading-snug px-3 py-2 pr-14 rounded-lg border border-white/[0.10] outline-none focus:border-white/30 placeholder:text-white/25 resize-none"
+                                  autoFocus
+                                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveStoryText(); } }}
+                                />
+                                <div className={`absolute bottom-1.5 right-12 text-[9px] font-bold ${storyTextDraft.length > 120 ? 'text-amber-400' : 'text-white/30'}`}>
+                                  {storyTextDraft.length}/140
+                                </div>
+                                <button
+                                  onClick={saveStoryText}
+                                  disabled={generatingCard || !storyTextDraft.trim()}
+                                  className="absolute bottom-1.5 right-1.5 w-9 h-7 bg-emerald-500/30 text-emerald-200 font-extrabold text-xs rounded-md border border-emerald-500/40 hover:bg-emerald-500/50 transition-all disabled:opacity-30 active:scale-95 flex items-center justify-center"
+                                  aria-label="Apply"
+                                >✓</button>
+                              </div>
+                              <p className="text-white/30 text-[9px] mt-1 px-0.5">{lang === 'bn' ? 'ছোট প্রশ্ন = বড় সুন্দর text। Auto line-break হবে।' : 'Shorter = bigger text. Auto line-break.'}</p>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      {/* Spacer */}
+                      <div className="flex-1 min-h-[4px]" />
+
+                      {/* Action buttons — docked */}
+                      <div className="flex flex-col gap-1.5 pt-0.5">
+                        {isMobileDevice && (
+                          <button
+                            onClick={shareStoryCard}
+                            disabled={generatingCard || storySharing}
+                            className="w-full bg-gradient-to-r from-pink-500 via-rose-500 to-orange-400 text-white font-extrabold py-2.5 rounded-xl text-[12px] hover:brightness-110 transition-all shadow-md shadow-pink-500/30 active:scale-[0.98] flex items-center justify-center gap-1.5 disabled:opacity-50"
+                          >
+                            {storySharing ? '⏳' : '📤'} {lang === 'bn' ? 'Story-তে Share' : 'Share to Story'}
+                          </button>
+                        )}
+                        <div className="grid grid-cols-2 gap-1.5">
                           <button
                             onClick={downloadStoryCard}
-                            className="bg-white/[0.06] text-white/50 font-bold py-2 rounded-xl text-[10px] hover:bg-white/[0.1] transition-all border border-white/[0.06] active:scale-[0.97] flex items-center justify-center gap-1"
+                            disabled={generatingCard}
+                            className="bg-gradient-to-br from-white to-white/90 text-black font-extrabold py-2.5 rounded-xl text-[11.5px] hover:brightness-95 transition-all shadow-md shadow-white/10 active:scale-[0.98] flex items-center justify-center gap-1.5 disabled:opacity-50"
                           >
-                            ⬇️ Download
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            {lang === 'bn' ? 'Download' : 'Download'}
                           </button>
                           <button
                             onClick={copyLinkFromStory}
-                            className="bg-white/[0.06] text-white/50 font-bold py-2 rounded-xl text-[10px] hover:bg-white/[0.1] transition-all border border-white/[0.06] active:scale-[0.97] flex items-center justify-center gap-1"
+                            className="bg-white/[0.08] text-white font-extrabold py-2.5 rounded-xl text-[11.5px] hover:bg-white/[0.16] transition-all border border-white/[0.10] active:scale-[0.98] flex items-center justify-center gap-1.5"
                           >
-                            📋 Link
-                          </button>
-                          <button
-                            onClick={() => setStoryScreen('customize')}
-                            className="bg-white/[0.06] text-white/50 font-bold py-2 rounded-xl text-[10px] hover:bg-white/[0.1] transition-all border border-white/[0.06] active:scale-[0.97] flex items-center justify-center gap-1"
-                          >
-                            ✨ Edit
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                            {lang === 'bn' ? 'Link কপি' : 'Copy Link'}
                           </button>
                         </div>
                       </div>
-                    ) : (
-                      <div className="w-full flex flex-col gap-1.5">
-                        <div className="w-full grid grid-cols-2 gap-1.5">
-                          <button
-                            onClick={downloadStoryCard}
-                            className="bg-white/[0.1] backdrop-blur-xl text-white font-extrabold py-3 rounded-2xl text-[11px] hover:bg-white/[0.15] transition-all border border-white/[0.08] active:scale-[0.97] flex items-center justify-center gap-1.5"
-                          >
-                            ⬇️ Download
-                          </button>
-                          <button
-                            onClick={() => setStoryScreen('customize')}
-                            className="bg-white/[0.1] backdrop-blur-xl text-white font-extrabold py-3 rounded-2xl text-[11px] hover:bg-white/[0.15] transition-all border border-white/[0.08] active:scale-[0.97] flex items-center justify-center gap-1.5"
-                          >
-                            ✨ Customize
-                          </button>
-                        </div>
-                        <button
-                          onClick={copyLinkFromStory}
-                          className="w-full bg-white/[0.04] text-white/40 font-bold py-2 rounded-xl text-[9px] hover:bg-white/[0.08] transition-all border border-white/[0.04] active:scale-[0.97] flex items-center justify-center gap-1"
-                        >
-                          📋 {lang === 'bn' ? 'Link কপি করো' : 'Copy Link'}
-                        </button>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {/* ═══════ SCREEN 2: Customize ═══════ */}
-                {storyScreen === 'customize' && (
-                  <>
-                    {/* Small preview thumbnail */}
-                    <div className="relative w-full max-h-[25vh] rounded-xl overflow-hidden shadow-lg border border-white/[0.06]">
-                      <img
-                        src={storyPreview}
-                        alt="Story card"
-                        className={`w-full h-full object-cover object-top transition-opacity duration-200 ${generatingCard ? 'opacity-40' : 'opacity-100'}`}
-                        style={{ aspectRatio: '9/16' }}
-                      />
-                      {generatingCard && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <motion.span animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }} className="text-xl">✨</motion.span>
-                        </div>
-                      )}
                     </div>
-
-                    {/* ── Edit Text + QR toggle ── */}
-                    <div className="w-full flex gap-1.5">
-                      <button
-                        onClick={() => { setStoryEditingText(!storyEditingText); setStoryTextDraft(storyCustomPrompt ?? decodeEntities(prompt)); }}
-                        className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-xl text-[10px] font-bold transition-all border ${
-                          storyEditingText ? 'bg-white/15 text-white border-white/20' : 'bg-white/[0.05] text-white/40 border-white/[0.06] hover:bg-white/[0.08]'
-                        }`}
-                      >
-                        ✏️ {lang === 'bn' ? 'Text বদলাও' : 'Edit Text'}
-                      </button>
-                      <button
-                        onClick={toggleStoryQR}
-                        disabled={generatingCard}
-                        className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-xl text-[10px] font-bold transition-all border ${
-                          storyShowQR ? 'bg-white/15 text-white border-white/20' : 'bg-white/[0.05] text-white/40 border-white/[0.06] hover:bg-white/[0.08]'
-                        }`}
-                      >
-                        {storyShowQR ? '🔳 QR On' : '▫️ QR Off'}
-                      </button>
-                    </div>
-
-                    {/* ── Inline text editor ── */}
-                    <AnimatePresence>
-                      {storyEditingText && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                          className="w-full overflow-hidden"
-                        >
-                          <div className="flex gap-1.5">
-                            <input
-                              type="text"
-                              value={storyTextDraft}
-                              onChange={e => setStoryTextDraft(e.target.value)}
-                              maxLength={60}
-                              placeholder={lang === 'bn' ? 'নতুন text লেখো...' : 'Type new text...'}
-                              className="flex-1 bg-white/[0.06] text-white text-[11px] px-3 py-2 rounded-xl border border-white/[0.08] outline-none focus:border-white/20 placeholder:text-white/20"
-                              autoFocus
-                              onKeyDown={e => e.key === 'Enter' && saveStoryText()}
-                            />
-                            <button
-                              onClick={saveStoryText}
-                              disabled={generatingCard || !storyTextDraft.trim()}
-                              className="px-3 py-2 bg-emerald-500/20 text-emerald-400 font-bold text-[10px] rounded-xl border border-emerald-500/15 hover:bg-emerald-500/30 transition-all disabled:opacity-30 active:scale-[0.97]"
-                            >✓</button>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    {/* ── Theme palette ── */}
-                    <div className="w-full">
-                      <p className="text-white/30 text-[9px] font-bold mb-1.5">{lang === 'bn' ? '🎨 Theme বাছো' : '🎨 Pick a theme'}</p>
-                      <div className="flex flex-wrap gap-1.5 justify-center">
-                        {STORY_PALETTES.map((p, i) => {
-                          const dotColors = p.colors || (NGL_THEMES[theme]?.bg.match(/#[a-fA-F0-9]{6}/g) || ['#667eea', '#f8477a']);
-                          return (
-                            <button
-                              key={i}
-                              onClick={() => changeStoryColor(i)}
-                              disabled={generatingCard}
-                              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] font-bold transition-all border min-h-[44px] ${
-                                storyColorIdx === i
-                                  ? 'bg-white/15 text-white border-white/20'
-                                  : 'bg-white/[0.04] text-white/35 border-white/[0.04] hover:bg-white/[0.08] hover:text-white/50'
-                              }`}
-                            >
-                              <span
-                                className="w-3 h-3 rounded-full flex-shrink-0"
-                                style={{ background: `linear-gradient(135deg, ${dotColors[0]}, ${dotColors[dotColors.length - 1]})` }}
-                              />
-                              {p.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* ── Chat Preview / OG editing ── */}
-                    <div className="w-full">
-                      <button
-                        onClick={() => { setOgEditing(!ogEditing); setOgTitleDraft(ogTitle || ''); setOgDescDraft(ogDescription || ''); }}
-                        className="w-full flex items-center justify-between py-1.5 text-white/30 hover:text-white/50 transition-all"
-                      >
-                        <span className="text-[10px] font-bold">💬 {lang === 'bn' ? 'Chat Preview কাস্টমাইজ করো' : 'Customize Chat Preview'}</span>
-                        <span className="text-[10px]">{ogEditing ? '▲' : '▼'}</span>
-                      </button>
-                      <AnimatePresence>
-                        {ogEditing && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="space-y-2.5 pb-2">
-                              <p className="text-white/20 text-[9px] leading-relaxed">
-                                {lang === 'bn'
-                                  ? 'WhatsApp/Telegram-এ link paste করলে যে preview দেখায় সেটা customize করো'
-                                  : 'Customize the preview that appears when your link is pasted in WhatsApp/Telegram'}
-                              </p>
-
-                              {/* Live OG Chat Bubble Preview */}
-                              <div className="bg-white/[0.04] rounded-2xl p-3 border border-white/[0.05]">
-                                <p className="text-white/25 text-[8px] font-bold uppercase tracking-wider mb-2">
-                                  💬 {lang === 'bn' ? 'Chat-এ এমন দেখাবে:' : 'Preview in chat:'}
-                                </p>
-                                <div className="flex items-start gap-2">
-                                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-pink-500 to-orange-400 flex-shrink-0 flex items-center justify-center mt-0.5">
-                                    <span className="text-white text-[8px] font-bold">B</span>
-                                  </div>
-                                  <div className="flex-1 bg-white/[0.06] rounded-xl rounded-tl-sm overflow-hidden border border-white/[0.04]">
-                                    <div className="bg-white/[0.04] px-2.5 py-1.5 border-b border-white/[0.04]">
-                                      <p className="text-white/70 text-[10px] font-bold truncate">{ogTitleDraft || `Send @${username} anonymous messages!`}</p>
-                                      <p className="text-white/35 text-[8px] mt-0.5 line-clamp-2">{ogDescDraft || (lang === 'bn' ? 'Tap to send an anonymous message 👀' : 'Tap to send an anonymous message 👀')}</p>
-                                    </div>
-                                    <p className="text-white/20 text-[7px] px-2.5 py-1 font-mono truncate">{shareLink.replace('https://', '').replace('http://', '').split('/').slice(0, 2).join('/')}</p>
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div>
-                                <label className="text-white/30 text-[9px] font-bold block mb-1">Title</label>
-                                <input
-                                  type="text"
-                                  value={ogTitleDraft}
-                                  onChange={e => setOgTitleDraft(e.target.value)}
-                                  maxLength={200}
-                                  placeholder={`Send @${username} anonymous messages!`}
-                                  className="w-full bg-white/[0.06] text-white text-[11px] px-3 py-2 rounded-xl border border-white/[0.08] outline-none focus:border-white/20 placeholder:text-white/15"
-                                />
-                              </div>
-                              <div>
-                                <label className="text-white/30 text-[9px] font-bold block mb-1">Description</label>
-                                <input
-                                  type="text"
-                                  value={ogDescDraft}
-                                  onChange={e => setOgDescDraft(e.target.value)}
-                                  maxLength={500}
-                                  placeholder={lang === 'bn' ? 'Tap to send an anonymous message 👀' : 'Tap to send an anonymous message 👀'}
-                                  className="w-full bg-white/[0.06] text-white text-[11px] px-3 py-2 rounded-xl border border-white/[0.08] outline-none focus:border-white/20 placeholder:text-white/15"
-                                />
-                              </div>
-                              <div className="flex gap-1.5">
-                                <button
-                                  onClick={async () => { await saveOgMeta(); showStoryToast(lang === 'bn' ? '✓ Chat preview save হয়েছে!' : '✓ Chat preview saved!'); }}
-                                  disabled={ogSaving}
-                                  className="flex-1 bg-emerald-500/15 text-emerald-400 font-bold py-2 rounded-xl text-[10px] border border-emerald-500/10 hover:bg-emerald-500/25 transition-all disabled:opacity-40 active:scale-[0.97]"
-                                >
-                                  {ogSaving ? '⏳' : ogSaved ? '✓ Saved!' : (lang === 'bn' ? '💾 Save করো' : '💾 Save')}
-                                </button>
-                                <button
-                                  onClick={() => { setOgTitleDraft(''); setOgDescDraft(''); }}
-                                  className="px-3 py-2 bg-white/[0.04] text-white/30 font-bold rounded-xl text-[10px] border border-white/[0.04] hover:bg-white/[0.08] transition-all active:scale-[0.97]"
-                                >
-                                  Reset
-                                </button>
-                              </div>
-                              <p className="text-white/15 text-[8px] text-center">
-                                {lang === 'bn' ? '⏱ Chat preview update হতে ২৪ ঘণ্টা পর্যন্ত লাগতে পারে' : '⏱ Chat preview changes may take up to 24h to appear'}
-                              </p>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  </>
-                )}
+                  </div>
+                </div>
 
               </motion.div>
             </motion.div>

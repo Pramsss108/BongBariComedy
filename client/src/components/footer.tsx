@@ -199,7 +199,7 @@ export default function Footer() {
 
           {/* Copyright — safe zone: 140px+ ensures both lines sit above the floating dock pill */}
           <div className="px-5 pt-2 flex flex-col items-center gap-0.5 text-[9px]" style={{ paddingBottom: 'calc(140px + env(safe-area-inset-bottom, 0px))' }}>
-            <span className="text-white/25 text-center">© {new Date().getFullYear()} Bong Bari · Dopmaine (UDYAM-WB-14-0096694) · Abhijit Pramanik</span>
+            <span className="text-white/25 text-center">© {new Date().getFullYear()} Bong Bari · GSTIN: 19FWUPP1487B1ZW · Abhijit Pramanik</span>
             <div className="flex items-center gap-4 text-white/25">
               <Link href="/privacy" className="hover:text-white/60 transition-colors">Privacy</Link>
               <Link href="/terms" className="hover:text-white/60 transition-colors">Terms</Link>
@@ -303,7 +303,7 @@ export default function Footer() {
           viewport={vp}
           transition={{ duration: 0.6 }}
         >
-          <span className="text-white/30">© {new Date().getFullYear()} Bong Bari · Dopmaine (UDYAM-WB-14-0096694) · Abhijit Pramanik</span>
+          <span className="text-white/30">© {new Date().getFullYear()} Bong Bari · GSTIN: 19FWUPP1487B1ZW · Abhijit Pramanik</span>
           <div className="flex items-center gap-5 text-white/30">
             <Link href="/privacy" className="hover:text-white/70 transition-colors duration-200">Privacy</Link>
             <Link href="/terms" className="hover:text-white/70 transition-colors duration-200">Terms</Link>

@@ -28,7 +28,7 @@ export default function TermsPage() {
           position: "relative"
         }}>
         <title>Terms and Conditions — Bong Bari</title>
-        <meta name="description" content="Terms for using Bong Bari website and content under Dopmaine (UDYAM-WB-14-0096694)." />
+        <meta name="description" content="Terms for using Bong Bari website and content. GST Registered: 19FWUPP1487B1ZW." />
         <link rel="canonical" href="https://www.bongbari.com/terms" />
 
         {/* Fixed Header */}
@@ -114,14 +114,14 @@ export default function TermsPage() {
 
         <section style={{ marginBottom: "0.05rem" }}>
           <h2 style={{ fontSize: "1.75rem", fontWeight: 600, color: "#1565c0", marginBottom: "0.05rem", marginTop: "0.05rem" }}>About These Terms and Conditions</h2>
-          <p style={{ lineHeight: 1.4, color: "#333", marginBottom: "0.05rem" }}>These Terms and Conditions ("Terms") govern your use of the website <a href="https://www.bongbari.com" style={{ color: "#1565c0", textDecoration: "underline" }}>www.bongbari.com</a>, and all related digital platforms operated under the brand Bong Bari, a creative and entertainment initiative by Dopmaine (UDYAM-WB-14-0096694), based in Kolkata, West Bengal, India.</p>
+          <p style={{ lineHeight: 1.4, color: "#333", marginBottom: "0.05rem" }}>These Terms and Conditions ("Terms") govern your use of the website <a href="https://www.bongbari.com" style={{ color: "#1565c0", textDecoration: "underline" }}>www.bongbari.com</a>, and all related digital platforms operated under the brand Bong Bari, a GST-registered digital media entity (GSTIN: 19FWUPP1487B1ZW) under proprietor Abhijit Pramanik, based in Kolkata, West Bengal, India.</p>
           <p style={{ lineHeight: 1.4, color: "#333" }}>By accessing, browsing, or engaging with our site, social media, or services, you agree to these Terms. If you do not agree, please discontinue using our platforms immediately.</p>
         </section>
 
         <section style={{ marginBottom: "0.05rem" }}>
           <h2 style={{ fontSize: "1.75rem", fontWeight: 600, color: "#1565c0", marginBottom: "0.05rem", marginTop: "0.05rem" }}>1. Legal Identity</h2>
-          <p style={{ lineHeight: 1.4, color: "#333", marginBottom: "0.05rem" }}>Bong Bari operates as a creative content and production brand under Dopmaine, a registered Indian company engaged in digital services, content production, and marketing collaborations.</p>
-          <p style={{ lineHeight: 1.4, color: "#333" }}>All references to "we," "our," or "us" in these Terms refer to Bong Bari and Dopmaine collectively.</p>
+          <p style={{ lineHeight: 1.4, color: "#333", marginBottom: "0.05rem" }}>Bong Bari is a GST-registered digital media and content production brand under sole proprietor Abhijit Pramanik (GSTIN: 19FWUPP1487B1ZW), engaged in digital services, content production, and marketing collaborations.</p>
+          <p style={{ lineHeight: 1.4, color: "#333" }}>All references to "we," "our," or "us" in these Terms refer to Bong Bari and its proprietor collectively.</p>
         </section>
 
         <section style={{ marginBottom: "0.05rem" }}>
@@ -138,7 +138,7 @@ export default function TermsPage() {
 
         <section style={{ marginBottom: "0.05rem" }}>
           <h2 style={{ fontSize: "1.75rem", fontWeight: 600, color: "#1565c0", marginBottom: "0.05rem", marginTop: "0.05rem" }}>4. Intellectual Property Rights</h2>
-          <p style={{ lineHeight: 1.4, color: "#333", marginBottom: "0.05rem" }}>All content, including videos, text, images, scripts, audio, and design elements available on Bong Bari's platforms, are the intellectual property of Dopmaine or its respective content creators, unless otherwise stated.</p>
+          <p style={{ lineHeight: 1.4, color: "#333", marginBottom: "0.05rem" }}>All content, including videos, text, images, scripts, audio, and design elements available on Bong Bari's platforms, are the intellectual property of Bong Bari or its respective content creators, unless otherwise stated.</p>
           <h3 style={{ fontSize: "1.25rem", fontWeight: 600, color: "#1976d2", marginBottom: "0.05rem", marginTop: "0.05rem" }}>4.1 Restrictions</h3>
           <p style={{ lineHeight: 1.4, color: "#333", marginBottom: "0.05rem" }}>You may not:</p>
           <ul style={{ lineHeight: 1.4, color: "#333", marginBottom: "0.05rem", paddingLeft: "2rem", listStyleType: "disc", listStylePosition: "outside" }}>
@@ -155,7 +155,7 @@ export default function TermsPage() {
           <p style={{ lineHeight: 1.4, color: "#333", marginBottom: "0.05rem" }}>If you submit a story, script, idea, collaboration proposal, or media material through our website or email (<a href="mailto:team@bongbari.com" style={{ color: "#1565c0", textDecoration: "underline" }}>team@bongbari.com</a>), you agree that:</p>
           <ul style={{ lineHeight: 1.4, color: "#333", marginBottom: "0.05rem", paddingLeft: "2rem", listStyleType: "disc", listStylePosition: "outside" }}>
             <li style={{ marginBottom: "0.05rem" }}>your submission is voluntary and non-confidential;</li>
-            <li style={{ marginBottom: "0.05rem" }}>you grant Bong Bari and Dopmaine a non-exclusive, royalty-free, worldwide right to use, adapt, or publish the material;</li>
+            <li style={{ marginBottom: "0.05rem" }}>you grant Bong Bari a non-exclusive, royalty-free, worldwide right to use, adapt, or publish the material;</li>
             <li style={{ marginBottom: "0.05rem" }}>you represent that you own or have rights to all submitted materials; and</li>
             <li style={{ marginBottom: "0.05rem" }}>you waive any claims to future compensation unless a formal contract is signed.</li>
           </ul>
@@ -166,7 +166,7 @@ export default function TermsPage() {
           <h2 style={{ fontSize: "1.75rem", fontWeight: 600, color: "#1565c0", marginBottom: "0.05rem", marginTop: "0.05rem" }}>6. Collaborations and Brand Deals</h2>
           <p style={{ lineHeight: 1.4, color: "#333", marginBottom: "0.05rem" }}>Any brand, company, or agency entering into a collaboration or sponsorship with Bong Bari must sign a separate agreement detailing deliverables, timelines, and payment terms.</p>
           <p style={{ lineHeight: 1.4, color: "#333", marginBottom: "0.05rem" }}>Verbal discussions or email exchanges alone do not constitute a binding agreement.</p>
-          <p style={{ lineHeight: 1.4, color: "#333" }}>All payments and deliverables are managed through Dopmaine, which acts as the legal contracting entity.</p>
+          <p style={{ lineHeight: 1.4, color: "#333" }}>All payments and deliverables are managed through Bong Bari, which acts as the legal contracting entity.</p>
         </section>
 
         <section style={{ marginBottom: "0.05rem" }}>
@@ -183,7 +183,7 @@ export default function TermsPage() {
 
         <section style={{ marginBottom: "0.05rem" }}>
           <h2 style={{ fontSize: "1.75rem", fontWeight: 600, color: "#1565c0", marginBottom: "0.05rem", marginTop: "0.05rem" }}>8. Limitation of Liability</h2>
-          <p style={{ lineHeight: 1.4, color: "#333", marginBottom: "0.05rem" }}>To the fullest extent permitted by law, Bong Bari and Dopmaine are not liable for:</p>
+          <p style={{ lineHeight: 1.4, color: "#333", marginBottom: "0.05rem" }}>To the fullest extent permitted by law, Bong Bari is not liable for:</p>
           <ul style={{ lineHeight: 1.4, color: "#333", marginBottom: "0.05rem", paddingLeft: "2rem", listStyleType: "disc", listStylePosition: "outside" }}>
             <li style={{ marginBottom: "0.05rem" }}>any direct, indirect, incidental, or consequential damages resulting from your use or inability to use our site or content;</li>
             <li style={{ marginBottom: "0.05rem" }}>losses caused by unauthorized access, data breaches, or third-party actions beyond our control;</li>
@@ -211,7 +211,7 @@ export default function TermsPage() {
           <ul style={{ lineHeight: 1.4, color: "#333", marginBottom: "0.05rem", paddingLeft: "2rem", listStyleType: "disc", listStylePosition: "outside" }}>
             <li style={{ marginBottom: "0.05rem" }}>you violate these Terms;</li>
             <li style={{ marginBottom: "0.05rem" }}>you engage in fraudulent or harmful activities; or</li>
-            <li style={{ marginBottom: "0.05rem" }}>we believe your actions may harm Bong Bari, Dopmaine, or other users.</li>
+            <li style={{ marginBottom: "0.05rem" }}>we believe your actions may harm Bong Bari or other users.</li>
           </ul>
           <p style={{ lineHeight: 1.4, color: "#333" }}>In such cases, we are not obligated to provide advance notice or compensation.</p>
         </section>
@@ -226,12 +226,12 @@ export default function TermsPage() {
         <section style={{ marginBottom: "0.05rem" }}>
           <h2 style={{ fontSize: "1.75rem", fontWeight: 600, color: "#1565c0", marginBottom: "0.05rem", marginTop: "0.05rem" }}>13. Governing Law and Jurisdiction</h2>
           <p style={{ lineHeight: 1.4, color: "#333", marginBottom: "0.05rem" }}>These Terms are governed by the laws of India.</p>
-          <p style={{ lineHeight: 1.4, color: "#333" }}>Any disputes arising from or related to Bong Bari or Dopmaine's operations shall fall under the exclusive jurisdiction of the courts located in Kolkata, West Bengal.</p>
+          <p style={{ lineHeight: 1.4, color: "#333" }}>Any disputes arising from or related to Bong Bari's operations shall fall under the exclusive jurisdiction of the courts located in Kolkata, West Bengal.</p>
         </section>
 
         <section style={{ marginBottom: "0.05rem" }}>
           <h2 style={{ fontSize: "1.75rem", fontWeight: 600, color: "#1565c0", marginBottom: "0.05rem", marginTop: "0.05rem" }}>14. Indemnification</h2>
-          <p style={{ lineHeight: 1.4, color: "#333" }}>You agree to indemnify and hold harmless Bong Bari, Dopmaine, and their directors, employees, or affiliates from any claims, losses, damages, or expenses resulting from your violation of these Terms or misuse of our website and services.</p>
+          <p style={{ lineHeight: 1.4, color: "#333" }}>You agree to indemnify and hold harmless Bong Bari and its directors, employees, or affiliates from any claims, losses, damages, or expenses resulting from your violation of these Terms or misuse of our website and services.</p>
         </section>
 
         <section style={{ marginBottom: "0.05rem" }}>
@@ -242,13 +242,13 @@ export default function TermsPage() {
         <section style={{ marginBottom: "0.05rem" }}>
           <h2 style={{ fontSize: "1.75rem", fontWeight: 600, color: "#1565c0", marginBottom: "0.05rem", marginTop: "0.05rem" }}>16. Contact Information</h2>
           <div style={{ lineHeight: 1.4, color: "#333" }}>
-            <p style={{ marginBottom: "0.05rem" }}><strong>Bong Bari — Operated by Dopmaine</strong></p>
+            <p style={{ marginBottom: "0.05rem" }}><strong>Bong Bari</strong></p>
             <p style={{ marginBottom: "0.05rem" }}>Proprietor: <strong>Abhijit Pramanik</strong></p>
-            <p style={{ marginBottom: "0.05rem" }}>UDYAM Registration: UDYAM-WB-14-0096694</p>
+            <p style={{ marginBottom: "0.05rem" }}>GSTIN: 19FWUPP1487B1ZW</p>
             <p style={{ marginBottom: "0.05rem" }}>Email: <a href="mailto:team@bongbari.com" style={{ color: "#1565c0", textDecoration: "underline" }}>team@bongbari.com</a></p>
             <p style={{ marginBottom: "0.05rem" }}>Phone / WhatsApp: <a href="https://wa.me/919875319691" style={{ color: "#1565c0", textDecoration: "underline" }}>+91 98753 19691</a></p>
             <p style={{ marginBottom: "0.05rem" }}>Website: <a href="https://www.bongbari.com" style={{ color: "#1565c0", textDecoration: "underline" }}>www.bongbari.com</a></p>
-            <p>Address: 222, Laxmi Narayan Rd, Vivekanand Pally, Dum Dum Cantonment, Kolkata 700065, West Bengal, India</p>
+            <p>Address: 222, Pramanik House, Dumur Baba Gali, North Dum Dum, Kolkata — 700065, West Bengal, India</p>
           </div>
         </section>
 
@@ -293,7 +293,7 @@ export default function TermsPage() {
           border: "1px solid #e9ecef",
           fontFamily: "system-ui, -apple-system, sans-serif"
         }}>
-        <p style={{ margin: "0 0 0.75rem 0", fontWeight: 500, color: "#333" }}>© 2025 Bong Bari | Proprietor: Abhijit Pramanik | Operated by Dopmaine (UDYAM-WB-14-0096694)</p>
+        <p style={{ margin: "0 0 0.75rem 0", fontWeight: 500, color: "#333" }}>© {new Date().getFullYear()} Bong Bari | Proprietor: Abhijit Pramanik | GSTIN: 19FWUPP1487B1ZW</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: "0.5rem", marginTop: "0.05rem" }}>
           <a href="/" style={{ color: "#1565c0", textDecoration: "none", padding: "0.25rem", borderRadius: "0.25rem", transition: "background-color 0.2s" }}>Home</a>
           <a href="/privacy" style={{ color: "#1565c0", textDecoration: "none", padding: "0.25rem", borderRadius: "0.25rem", transition: "background-color 0.2s" }}>Privacy Policy</a>

@@ -1820,13 +1820,16 @@ export default function ShareModal({ isOpen, onClose, shareLink, username, theme
 
   // Phase 16: Theme-aware accent colors for decorative elements
   const THEME_ACCENTS: Record<string, { gradient: string; shadow: string }> = {
-    default: { gradient: 'from-pink-500 via-orange-400 to-yellow-400', shadow: 'shadow-pink-500/20' },
-    pink: { gradient: 'from-pink-500 via-rose-400 to-orange-400', shadow: 'shadow-pink-500/20' },
-    blue: { gradient: 'from-blue-500 via-indigo-400 to-violet-400', shadow: 'shadow-blue-500/20' },
-    green: { gradient: 'from-emerald-500 via-teal-400 to-cyan-400', shadow: 'shadow-emerald-500/20' },
-    purple: { gradient: 'from-violet-500 via-purple-400 to-fuchsia-400', shadow: 'shadow-violet-500/20' },
-    gold: { gradient: 'from-amber-500 via-orange-400 to-red-400', shadow: 'shadow-amber-500/20' },
-    dark: { gradient: 'from-indigo-400 via-violet-300 to-blue-400', shadow: 'shadow-indigo-500/20' },
+    default:  { gradient: 'from-gray-500 via-gray-400 to-gray-500', shadow: 'shadow-gray-500/20' },
+    blush:    { gradient: 'from-pink-300 via-pink-400 to-pink-300', shadow: 'shadow-pink-400/20' },
+    sky:      { gradient: 'from-sky-300 via-sky-400 to-sky-300', shadow: 'shadow-sky-400/20' },
+    sage:     { gradient: 'from-green-300 via-green-400 to-green-300', shadow: 'shadow-green-400/20' },
+    aurora:   { gradient: 'from-cyan-400 via-violet-500 to-pink-500', shadow: 'shadow-violet-500/20' },
+    sunset:   { gradient: 'from-amber-400 via-red-500 to-violet-600', shadow: 'shadow-red-500/20' },
+    cherry:   { gradient: 'from-pink-200 via-pink-400 to-pink-700', shadow: 'shadow-pink-500/20' },
+    neon:     { gradient: 'from-cyan-300 via-violet-600 to-rose-500', shadow: 'shadow-violet-500/20' },
+    midnight: { gradient: 'from-slate-900 via-indigo-900 to-slate-900', shadow: 'shadow-indigo-500/20' },
+    velvet:   { gradient: 'from-rose-300 via-rose-700 to-amber-400', shadow: 'shadow-rose-500/20' },
   };
   const themeAccent = THEME_ACCENTS[theme] || THEME_ACCENTS.default;
 

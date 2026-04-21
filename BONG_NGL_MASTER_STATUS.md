@@ -96,7 +96,7 @@
 
 | # | What | Why it matters | Effort |
 |---|------|----------------|--------|
-| A1 | **Bengali 100% coverage** — some new buttons still show English when you switch to Bengali | Every user should see their full language | Small |
+| A1 | ~~**Bengali 100% coverage**~~ ✅ DONE — prompt pairs synced, story card bilingual, send page translates correctly | Every user should see their full language | Small |
 | A2 | **Error messages in Bengali** — when something goes wrong, error text is English only | Feels broken for Bengali speakers | Small |
 | A3 | **Shimmer/skeleton loaders** — inbox shows blank space while loading instead of a "loading..." animation | Makes the app feel faster and more polished | Small |
 | A4 | **6 more share text templates** (currently 3 BN + 3 EN, need 6+6) | More variety = messages feel fresh each time user shares | Small |

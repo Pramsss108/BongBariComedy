@@ -19,7 +19,7 @@ const About = () => {
   return (
     <div className="min-h-screen bg-transparent text-white relative overflow-hidden">
       <title>About Us — Bong Bari</title>
-      <meta name="description" content="About Bong Bari — founded by Abhijit Pramanik, operated by Dopmaine (UDYAM-WB-14-0096694), Kolkata, India." />
+      <meta name="description" content="About Bong Bari — founded by Abhijit Pramanik, GST Registered (GSTIN: 19FWUPP1487B1ZW), Kolkata, India." />
 
       {/* Premium Background Glow — absolute on mobile (clipped by overflow-hidden), fixed on desktop */}
       <div className="absolute sm:fixed inset-0 pointer-events-none z-0">
@@ -81,9 +81,9 @@ const About = () => {
                   <h2 className="text-xl font-bold text-white">Business Entity</h2>
                 </div>
                 <ul className="space-y-2 text-gray-300 text-sm">
-                  <li><span className="text-gray-500">Legal Name:</span> <span className="text-white font-medium">Dopmaine</span></li>
+                  <li><span className="text-gray-500">Trade Name:</span> <span className="text-white font-medium">Bong Bari</span></li>
                   <li><span className="text-gray-500">Proprietor:</span> <span className="text-white font-medium">Abhijit Pramanik</span></li>
-                  <li><span className="text-gray-500">UDYAM:</span> <span className="text-white font-medium">WB-14-0096694</span></li>
+                  <li><span className="text-gray-500">GSTIN:</span> <span className="text-white font-medium">19FWUPP1487B1ZW</span></li>
                   <li><span className="text-gray-500">Type:</span> Sole Proprietorship — Digital Media</li>
                   <li><span className="text-gray-500">Founded:</span> 2024</li>
                 </ul>

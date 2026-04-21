@@ -169,157 +169,177 @@ export default function NglUpgradeModal({ open, onClose, username, secretKey, ve
     }
   };
 
+  const priceDisplay = testModeRequested ? '1' : (plan === 'yearly' ? '683' : '98');
+
   return (
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4"
+        className="fixed inset-0 z-[200] bg-black/70 flex items-end sm:items-center justify-center p-0 sm:p-4"
         onClick={onClose}
       >
+        {/* Shimmer keyframe — compositor-only (transform) */}
+        <style>{`@keyframes pro-shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}`}</style>
+
         <motion.div
-          initial={{ opacity: 0, y: 40, scale: 0.96 }}
+          initial={{ opacity: 0, y: 40, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 40, scale: 0.96 }}
-          transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+          exit={{ opacity: 0, y: 40, scale: 0.95 }}
+          transition={{ type: 'spring', stiffness: 340, damping: 30 }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-[420px] bg-gradient-to-b from-[#1a1332] via-[#120a28] to-[#0a0618] border border-fuchsia-400/25 rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 shadow-[0_-20px_60px_-10px_rgba(168,85,247,0.4)] max-h-[95vh] overflow-y-auto"
+          className="relative w-full max-w-[340px] sm:max-w-[400px] rounded-t-2xl sm:rounded-2xl overflow-hidden my-4 sm:my-8"
+          style={{
+            background: 'linear-gradient(180deg, #1a1040 0%, #0f0b24 40%, #080614 100%)',
+            boxShadow: '0 12px 48px rgba(0,0,0,0.7), 0 0 0 0.5px rgba(255,255,255,0.06), 0 0 60px rgba(139,92,246,0.06)',
+          }}
         >
-          {/* Header */}
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-black text-white bg-gradient-to-r from-fuchsia-500 to-violet-500 px-2 py-[2px] rounded-full tracking-wider">BONG PRO</span>
-                {testModeRequested && (
-                  <span className="text-[10px] font-black text-amber-100 bg-amber-500/20 border border-amber-300/40 px-2 py-[2px] rounded-full tracking-wider">TEST OTP MODE</span>
-                )}
-              </div>
-              <h2 className="text-white font-black text-[22px] leading-tight">{t('pro.modalTitle')}</h2>
-              <p className="text-white/50 text-[12px] mt-1">{t('pro.modalSubtitle')}</p>
-            </div>
-            <button
-              onClick={onClose}
-              aria-label="Close"
-              className="text-white/40 hover:text-white/80 w-8 h-8 rounded-full bg-white/[0.05] hover:bg-white/[0.1] transition-all flex items-center justify-center text-[14px] shrink-0"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" className="w-4 h-4">
-                <path d="M6 6l12 12" />
-                <path d="M18 6l-12 12" />
-              </svg>
-            </button>
+          {/* Top gradient accent */}
+          <div className="h-[2px]" style={{ background: 'linear-gradient(90deg, #f59e0b, #ec4899, #d946ef, #a855f7, #6366f1)' }} />
+
+          {/* Mobile drag handle */}
+          <div className="sm:hidden flex justify-center pt-1.5">
+            <div className="w-8 h-[3px] rounded-full bg-white/10" />
           </div>
 
-          {/* Features */}
-          <ul className="space-y-2 mb-5 bg-white/[0.03] rounded-2xl p-3.5 border border-white/[0.05]">
-            {[
-              {
-                k: 'pro.f1',
-                icon: (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-fuchsia-300">
-                    <circle cx="11" cy="11" r="7" />
-                    <path d="M20 20l-3-3" />
-                  </svg>
-                ),
-              },
-              {
-                k: 'pro.f2',
-                icon: (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-emerald-300">
-                    <path d="M20 6L9 17l-5-5" />
-                  </svg>
-                ),
-              },
-              {
-                k: 'pro.f3',
-                icon: (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-cyan-300">
-                    <path d="M12 3l7 3v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6l7-3z" />
-                  </svg>
-                ),
-              },
-              {
-                k: 'pro.f4',
-                icon: (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-amber-300">
-                    <path d="M16 3v8l4 4-4 4-4-4V3z" />
-                  </svg>
-                ),
-              },
-              {
-                k: 'pro.f5',
-                icon: (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-rose-300">
-                    <circle cx="13.5" cy="6.5" r="2.5" />
-                    <circle cx="6.5" cy="12.5" r="2.5" />
-                    <circle cx="17.5" cy="16.5" r="2.5" />
-                    <path d="M8.6 11l3-2" />
-                    <path d="M15.6 8.6l1.3 5.1" />
-                  </svg>
-                ),
-              },
-              {
-                k: 'pro.f6',
-                icon: (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-sky-300">
-                    <path d="M12 3l6 6-6 12-6-12 6-6z" />
-                  </svg>
-                ),
-              },
-            ].map(f => (
-              <li key={f.k} className="flex items-start gap-2.5 text-white/85 text-[12.5px] leading-snug">
-                <span className="shrink-0 mt-[1px]">{f.icon}</span>
-                <span>{t(f.k)}</span>
-              </li>
-            ))}
-          </ul>
-
-          {/* Plan toggle */}
-          <div className="grid grid-cols-2 gap-2 mb-4">
-            <button
-              onClick={() => setPlan('monthly')}
-              className={`relative rounded-2xl p-3 text-left transition-all border-2 ${plan === 'monthly' ? 'border-fuchsia-400 bg-fuchsia-500/10' : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.05]'}`}
-            >
-              <p className="text-white/60 text-[10px] font-bold uppercase tracking-wider mb-0.5">{t('pro.monthly')}</p>
-              <p className="text-white font-black text-[20px] leading-none">₹98<span className="text-white/40 text-[11px] font-semibold">/mo</span></p>
-            </button>
-            <button
-              onClick={() => setPlan('yearly')}
-              className={`relative rounded-2xl p-3 text-left transition-all border-2 ${plan === 'yearly' ? 'border-fuchsia-400 bg-fuchsia-500/10' : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.05]'}`}
-            >
-              <span className="absolute -top-2 right-2 text-[8px] font-black text-white bg-gradient-to-r from-amber-500 to-rose-500 px-1.5 py-[1px] rounded-full">{t('pro.save2mo')}</span>
-              <p className="text-white/60 text-[10px] font-bold uppercase tracking-wider mb-0.5">{t('pro.yearly')}</p>
-              <p className="text-white font-black text-[20px] leading-none">₹683<span className="text-white/40 text-[11px] font-semibold">/yr</span></p>
-            </button>
-          </div>
-
-          {testModeRequested && (
-            <div className="mb-3 rounded-xl px-3 py-2 text-[12px] font-semibold bg-amber-500/10 border border-amber-400/30 text-amber-100">
-              Test payment active: Rs 1 test flow (separate from live billing).
-            </div>
-          )}
-
-          {/* Inline status — info (coming soon) or error */}
-          {err && (
-            <div className={`mb-3 rounded-xl px-3 py-2 text-[12px] font-semibold ${errKind === 'info' ? 'bg-white/[0.04] border border-white/10 text-white/60' : 'bg-red-500/10 border border-red-500/30 text-red-300'}`}>
-              {err}
-            </div>
-          )}
-
-          {/* CTA */}
+          {/* Close button — absolute top-right */}
           <button
-            onClick={handleUpgrade}
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-fuchsia-500 via-violet-500 to-indigo-500 text-white font-black text-[15px] py-3.5 rounded-2xl shadow-lg shadow-fuchsia-500/30 hover:shadow-fuchsia-500/50 disabled:opacity-60 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+            onClick={onClose}
+            aria-label="Close"
+            className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 w-7 h-7 rounded-full flex items-center justify-center text-white/25 hover:text-white/50 hover:bg-white/[0.06] transition-colors z-10"
           >
-            {loading
-              ? (lang === 'bn' ? 'অপেক্ষা করো…' : 'Please wait…')
-              : `${t('pro.upgradeBtn')} — ₹${testModeRequested ? '1' : (plan === 'yearly' ? '683' : '98')}`}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="w-3.5 h-3.5"><path d="M6 6l12 12"/><path d="M18 6l-12 12"/></svg>
           </button>
 
-          <p className="text-center text-white/30 text-[10px] mt-3 leading-relaxed">
-            {t('pro.securedBy')}
-          </p>
+          <div className="px-4 pt-3 pb-3.5 sm:px-5 sm:pt-4 sm:pb-4">
+            {/* ★ Compact star + header inline */}
+            <div className="text-center mb-2.5 sm:mb-3">
+              <div className="flex justify-center mb-1.5 relative">
+                <div className="absolute w-16 h-16 rounded-full -top-2" style={{ background: 'radial-gradient(circle, rgba(168,85,247,0.15) 0%, transparent 70%)' }} />
+                <svg viewBox="0 0 24 24" className="w-8 h-8 sm:w-9 sm:h-9 relative">
+                  <defs>
+                    <linearGradient id="pro-star-grad" x1="2" y1="2" x2="22" y2="22">
+                      <stop offset="0%" stopColor="#fbbf24" />
+                      <stop offset="45%" stopColor="#f59e0b" />
+                      <stop offset="100%" stopColor="#d946ef" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="url(#pro-star-grad)" />
+                </svg>
+              </div>
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <span className="text-[8px] sm:text-[9px] font-black text-white bg-gradient-to-r from-fuchsia-500 via-violet-500 to-purple-600 px-2 py-[2px] rounded-full tracking-[0.1em] uppercase" style={{ boxShadow: '0 2px 10px rgba(168,85,247,0.2)' }}>
+                  BONG PRO
+                </span>
+                {testModeRequested && (
+                  <span className="text-[8px] sm:text-[9px] font-black text-amber-200 bg-amber-500/15 border border-amber-400/25 px-1.5 py-[2px] rounded-full tracking-wider">TEST</span>
+                )}
+              </div>
+              <h2 className="text-white font-black text-[17px] sm:text-[20px] leading-[1.15] tracking-tight" style={{ textWrap: 'balance' }}>{t('pro.modalTitle')}</h2>
+              <p className="text-white/45 text-[11px] sm:text-[12px] mt-0.5 font-medium">{t('pro.modalSubtitle')}</p>
+            </div>
+
+            {/* Feature list — compact rows */}
+            <div className="rounded-xl overflow-hidden mb-2.5 sm:mb-3" style={{ background: 'rgba(255,255,255,0.025)', border: '0.5px solid rgba(255,255,255,0.06)' }}>
+              {[
+                { k: 'pro.f1', color: 'bg-fuchsia-500/15', iconColor: 'text-fuchsia-300', icon: <><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></> },
+                { k: 'pro.f2', color: 'bg-emerald-500/15', iconColor: 'text-emerald-300', icon: <path d="M20 6L9 17l-5-5"/> },
+                { k: 'pro.f3', color: 'bg-cyan-500/15', iconColor: 'text-cyan-300', icon: <path d="M12 3l7 3v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6l7-3z"/> },
+                { k: 'pro.f4', color: 'bg-amber-500/15', iconColor: 'text-amber-300', icon: <><path d="M12 2v6"/><path d="M8 6h8l-4 14-4-14z"/></> },
+                { k: 'pro.f5', color: 'bg-rose-500/15', iconColor: 'text-rose-300', icon: <><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="6" cy="13" r="2.5"/><circle cx="18" cy="16" r="2.5"/><path d="M8.6 11.5l3-2.5"/><path d="M15.5 8.5l2 5"/></> },
+                { k: 'pro.f6', color: 'bg-violet-500/15', iconColor: 'text-violet-300', icon: <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/> },
+              ].map((f, i, arr) => (
+                <div key={f.k}>
+                  <div className="flex items-center gap-2.5 px-3 h-[34px] sm:h-[38px]">
+                    <div className={`w-[22px] h-[22px] sm:w-[24px] sm:h-[24px] rounded-[6px] ${f.color} flex items-center justify-center flex-shrink-0`}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`w-[11px] h-[11px] sm:w-[13px] sm:h-[13px] ${f.iconColor}`}>{f.icon}</svg>
+                    </div>
+                    <span className="text-[11px] sm:text-[12.5px] text-white/80 font-medium leading-snug">{t(f.k)}</span>
+                  </div>
+                  {i < arr.length - 1 && <div className="h-px bg-white/[0.04] ml-[38px] sm:ml-[42px]" />}
+                </div>
+              ))}
+            </div>
+
+            {/* Plan cards — compact */}
+            <div className="grid grid-cols-2 gap-2 sm:gap-2.5 mb-2.5 items-start">
+              <button
+                onClick={() => setPlan('monthly')}
+                className={`rounded-xl px-3 py-2.5 text-left transition-colors border ${plan === 'monthly' ? 'border-violet-400/50 bg-violet-500/[0.08]' : 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]'}`}
+              >
+                <p className="text-white/45 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.1em] mb-1">{t('pro.monthly')}</p>
+                <p className="text-white font-black text-[20px] sm:text-[22px] leading-none tracking-tight" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  ₹98<span className="text-white/30 text-[10px] sm:text-[11px] font-semibold">/mo</span>
+                </p>
+              </button>
+
+              <button
+                onClick={() => setPlan('yearly')}
+                className={`relative rounded-xl px-3 py-2.5 text-left transition-colors border ${plan === 'yearly' ? 'border-fuchsia-400/60 bg-gradient-to-br from-fuchsia-500/[0.1] to-violet-500/[0.05]' : 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]'}`}
+                style={plan === 'yearly' ? { boxShadow: '0 0 20px rgba(217,70,239,0.12), inset 0 0 20px rgba(139,92,246,0.05)' } : {}}
+              >
+                <span
+                  className="absolute -top-2 right-2 text-[7px] sm:text-[8px] font-black text-white px-1.5 py-[2px] rounded-full tracking-wide"
+                  style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)', boxShadow: '0 2px 8px rgba(245,158,11,0.3)' }}
+                >
+                  {t('pro.save2mo')}
+                </span>
+                <p className="text-white/45 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.1em] mb-1">{t('pro.yearly')}</p>
+                <p className="text-white font-black text-[20px] sm:text-[22px] leading-none tracking-tight" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  ₹683<span className="text-white/30 text-[10px] sm:text-[11px] font-semibold">/yr</span>
+                </p>
+                <p className="text-white/20 text-[10px] mt-1 line-through font-medium">₹1,176/yr</p>
+              </button>
+            </div>
+
+            {testModeRequested && (
+              <div className="mb-2.5 rounded-lg px-2.5 py-1.5 text-[10px] sm:text-[11px] font-semibold bg-amber-500/10 border border-amber-400/20 text-amber-200">
+                Test mode: ₹1 test flow
+              </div>
+            )}
+
+            {err && (
+              <div className={`mb-2.5 rounded-lg px-2.5 py-1.5 text-[10px] sm:text-[11px] font-semibold ${errKind === 'info' ? 'bg-white/[0.03] border border-white/[0.06] text-white/50' : 'bg-red-500/8 border border-red-500/20 text-red-300'}`}>
+                {err}
+              </div>
+            )}
+
+            {/* CTA with shimmer sweep */}
+            <button
+              onClick={handleUpgrade}
+              disabled={loading}
+              className="relative w-full text-white font-black text-[14px] sm:text-[15px] py-3 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] overflow-hidden"
+              style={{
+                background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 25%, #c026d3 55%, #d946ef 80%, #ec4899 100%)',
+                boxShadow: '0 4px 20px rgba(168,85,247,0.3)',
+                transition: 'transform 150ms, opacity 150ms',
+              }}
+            >
+              <span className="relative z-10">
+                {loading
+                  ? (lang === 'bn' ? 'অপেক্ষা করো…' : 'Please wait…')
+                  : `${t('pro.upgradeBtn')} — ₹${priceDisplay}`}
+              </span>
+              {!loading && (
+                <div
+                  className="absolute inset-0 opacity-20 pointer-events-none"
+                  style={{
+                    background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.6) 50%, transparent 100%)',
+                    animation: 'pro-shimmer 3s ease-in-out 1s infinite',
+                  }}
+                />
+              )}
+            </button>
+
+            {/* Trust footer */}
+            <div className="flex items-center justify-center gap-1 mt-2.5 whitespace-nowrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 flex-shrink-0 text-white/20" aria-hidden="true">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <span className="text-white/25 text-[9px] sm:text-[10px] font-medium tracking-wide">{t('pro.securedBy')}</span>
+            </div>
+          </div>
         </motion.div>
       </motion.div>
     </AnimatePresence>

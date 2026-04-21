@@ -570,18 +570,21 @@ async function geolocateIp(ip: string): Promise<GeoResult> {
 }
 
 // Valid NGL themes
-const NGL_THEMES = ['default', 'pink', 'blue', 'green', 'purple', 'gold', 'dark', 'neon', 'rosegold', 'midnight'] as const;
+const NGL_THEMES = ['default', 'blush', 'sky', 'sage', 'aurora', 'sunset', 'cherry', 'neon', 'midnight', 'velvet'] as const;
 const MAX_PHOTO_SIZE = 150_000; // 150KB base64
 
 // Phase 30: Theme → gradient stops for SVG OG cards
 const THEME_GRADIENTS: Record<string, { stops: string[]; angle: number }> = {
-  default: { stops: ['#667eea', '#f8477a', '#ee6b3b', '#f4843e'], angle: 135 },
-  pink:    { stops: ['#ec4899', '#f43f5e', '#fb923c'], angle: 135 },
-  blue:    { stops: ['#3b82f6', '#6366f1', '#8b5cf6'], angle: 135 },
-  green:   { stops: ['#10b981', '#14b8a6', '#06b6d4'], angle: 135 },
-  purple:  { stops: ['#8b5cf6', '#a855f7', '#d946ef'], angle: 135 },
-  gold:    { stops: ['#f59e0b', '#ef4444', '#dc2626'], angle: 135 },
-  dark:    { stops: ['#1e1b4b', '#312e81', '#1e1b4b'], angle: 135 },
+  default:  { stops: ['#6b7280', '#9ca3af', '#6b7280'], angle: 135 },
+  blush:    { stops: ['#f9a8d4', '#f472b6', '#f9a8d4'], angle: 135 },
+  sky:      { stops: ['#7dd3fc', '#38bdf8', '#7dd3fc'], angle: 135 },
+  sage:     { stops: ['#86efac', '#4ade80', '#86efac'], angle: 135 },
+  aurora:   { stops: ['#06b6d4', '#10b981', '#8b5cf6', '#ec4899', '#f43f5e'], angle: 135 },
+  sunset:   { stops: ['#fbbf24', '#f97316', '#ef4444', '#db2777', '#7c3aed'], angle: 135 },
+  cherry:   { stops: ['#fce7f3', '#fbcfe8', '#f9a8d4', '#ec4899', '#be185d'], angle: 135 },
+  neon:     { stops: ['#0ff0fc', '#7c3aed', '#f43f5e', '#fbbf24'], angle: 135 },
+  midnight: { stops: ['#020617', '#0f172a', '#1e1b4b', '#312e81', '#020617'], angle: 135 },
+  velvet:   { stops: ['#fda4af', '#e11d48', '#9f1239', '#fbbf24'], angle: 135 },
 };
 
 // Extract key from X-NGL-Key header (preferred) or ?key= query param (backward compat)
@@ -1373,6 +1376,52 @@ export function registerNglRoutes(app: any) {
     } catch (err: any) {
       res.status(500).json({ message: 'Server error' });
     }
+  });
+
+  // ── POST /prompts/translate — translate prompt text between Bengali ↔ English ──
+  router.post('/prompts/translate', async (req: any, res) => {
+    const { text, to } = req.body || {};
+    if (!text || typeof text !== 'string' || text.trim().length < 3) {
+      return res.status(400).json({ message: 'Text must be at least 3 characters' });
+    }
+    const targetLang = to === 'en' ? 'en' : 'bn';
+    const groqKey = process.env.GROQ_API_KEY;
+    if (!groqKey) {
+      return res.json({ translated: text.trim(), source: 'unchanged' });
+    }
+    try {
+      const sysPrompt = targetLang === 'en'
+        ? 'You translate anonymous message prompts from Bengali/Benglish to natural English. Keep the same meaning, tone, and vibe. Casual Gen-Z style. Max 20 words. Return ONLY the translated text. No quotes. No emojis.'
+        : 'You translate anonymous message prompts from English to Bengali/Benglish (mix Bengali + English naturally like Gen-Z). Keep the same meaning, tone, and vibe. Max 20 words. Return ONLY the translated text. No quotes. No emojis.';
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 6000);
+      const aiRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${groqKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            { role: 'system', content: sysPrompt },
+            { role: 'user', content: `Translate this to ${targetLang === 'en' ? 'English' : 'Bengali/Benglish'}: "${text.trim()}"` }
+          ],
+          temperature: 0.3,
+          max_tokens: 60,
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      if (aiRes.ok) {
+        const data = await aiRes.json() as any;
+        const translated = (data?.choices?.[0]?.message?.content || '').trim().replace(/^["']|["']$/g, '');
+        if (translated && translated.length >= 3 && translated.length <= 200) {
+          return res.json({ translated: sanitizeText(translated), source: 'ai' });
+        }
+      }
+    } catch { /* fall through */ }
+    res.json({ translated: text.trim(), source: 'unchanged' });
   });
 
   // ── POST /prompts/enhance — AI polish/grammar fix for user prompt text ──

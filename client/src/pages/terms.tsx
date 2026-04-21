@@ -7,15 +7,15 @@ export default function TermsPage() {
     <main style={{ maxWidth: 700, margin: "0 auto", padding: "2rem 1rem", fontFamily: "inherit" }}>
       <head>
         <title>Terms and Conditions — Bong Bari</title>
-        <meta name="description" content="Read the terms for using Bong Bari’s website and digital content, managed by Dopmaine (UDYAM-WB-14-0096694)." />
+        <meta name="description" content="Read the terms for using Bong Bari's website and digital content. GST Registered: 19FWUPP1487B1ZW." />
         <link rel="canonical" href="https://www.bongbari.com/terms" />
       </head>
       <h1 style={{ fontSize: "2rem", fontWeight: 700, marginBottom: "0.5rem" }}>Terms and Conditions — Bong Bari</h1>
       <div style={{ fontSize: "0.95rem", color: "#555", marginBottom: "1.5rem" }}>Last updated: {LAST_UPDATED}</div>
 
       <section>
-        <h2>About Bong Bari and Dopmaine</h2>
-        <p>Bong Bari is a digital media and content production company managed by Dopmaine (UDYAM-WB-14-0096694), based in Kolkata, West Bengal, India. We create Bengali comedy videos, posts, and digital experiences for our audience.</p>
+        <h2>About Bong Bari</h2>
+        <p>Bong Bari is a GST-registered digital media and content production brand under proprietor Abhijit Pramanik (GSTIN: 19FWUPP1487B1ZW), based in Kolkata, West Bengal, India. We create Bengali comedy videos, posts, and digital experiences for our audience.</p>
       </section>
 
       <section>
@@ -39,7 +39,7 @@ export default function TermsPage() {
 
       <section>
         <h2>Intellectual Property Rights</h2>
-        <p>All videos, posts, scripts, and images on Bong Bari are owned by Dopmaine unless otherwise stated. You may not reproduce, distribute, or use our content for commercial purposes without written permission.</p>
+        <p>All videos, posts, scripts, and images on Bong Bari are owned by Bong Bari unless otherwise stated. You may not reproduce, distribute, or use our content for commercial purposes without written permission.</p>
       </section>
 
       <section>
@@ -54,7 +54,7 @@ export default function TermsPage() {
 
       <section>
         <h2>Disclaimer of Liability</h2>
-        <p>Bong Bari and Dopmaine make every effort to provide accurate and entertaining content. However, we do not guarantee completeness, reliability, or suitability for any purpose. Use our website and content at your own risk.</p>
+        <p>Bong Bari makes every effort to provide accurate and entertaining content. However, we do not guarantee completeness, reliability, or suitability for any purpose. Use our website and content at your own risk.</p>
       </section>
 
       <section>

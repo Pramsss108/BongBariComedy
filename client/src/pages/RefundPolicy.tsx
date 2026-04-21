@@ -28,7 +28,7 @@ export default function RefundPolicy() {
           position: "relative"
         }}>
         <title>Refund &amp; Cancellation Policy — Bong Bari</title>
-        <meta name="description" content="Refund, cancellation and return policy for Bong Bari digital services under Dopmaine (UDYAM-WB-14-0096694)." />
+        <meta name="description" content="Refund, cancellation and return policy for Bong Bari digital services (GSTIN: 19FWUPP1487B1ZW)." />
         <link rel="canonical" href="https://www.bongbari.com/refund" />
 
         {/* Fixed Header */}
@@ -97,7 +97,7 @@ export default function RefundPolicy() {
           {/* ── Section 1 ── */}
           <h2 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#1a237e", marginTop: "0.5rem" }}>1. Introduction</h2>
           <p style={{ color: "#374151", lineHeight: 1.65, fontSize: "0.95rem", marginTop: "0.25rem" }}>
-            This Refund &amp; Cancellation Policy applies to all paid services, digital products, subscriptions, and transactions offered through <strong>Bong Bari</strong> (www.bongbari.com), operated by <strong>Dopmaine</strong> (UDYAM Registration: WB-14-0096694), with its registered office in Kolkata, West Bengal, India.
+            This Refund &amp; Cancellation Policy applies to all paid services, digital products, subscriptions, and transactions offered through <strong>Bong Bari</strong> (www.bongbari.com), a GST-registered entity under proprietor <strong>Abhijit Pramanik</strong> (GSTIN: 19FWUPP1487B1ZW), with its registered office in Kolkata, West Bengal, India.
           </p>
           <p style={{ color: "#374151", lineHeight: 1.65, fontSize: "0.95rem" }}>
             By making a purchase or payment on our platform, you acknowledge that you have read, understood, and agree to this policy. This policy complies with the Consumer Protection Act, 2019, the Information Technology Act, 2000, and applicable RBI guidelines for digital payments.
@@ -261,12 +261,12 @@ export default function RefundPolicy() {
             For refund requests, billing questions, or any payment-related concerns:
           </p>
           <ul style={{ color: "#374151", lineHeight: 1.65, fontSize: "0.95rem", paddingLeft: "1.5rem" }}>
-            <li><strong>Business Name:</strong> Dopmaine</li>
+            <li><strong>Business Name:</strong> Bong Bari</li>
             <li><strong>Proprietor:</strong> Abhijit Pramanik</li>
-            <li><strong>UDYAM Registration:</strong> WB-14-0096694</li>
-            <li><strong>Email:</strong> <a href="mailto:bongbari@gmail.com" style={{ color: "#2563eb" }}>bongbari@gmail.com</a></li>
+            <li><strong>GSTIN:</strong> 19FWUPP1487B1ZW</li>
+            <li><strong>Email:</strong> <a href="mailto:team@bongbari.com" style={{ color: "#2563eb" }}>team@bongbari.com</a></li>
             <li><strong>Website:</strong> <a href="https://www.bongbari.com" style={{ color: "#2563eb" }}>www.bongbari.com</a></li>
-            <li><strong>Address:</strong> 222, Laxmi Narayan Rd, Vivekanand Pally, Dum Dum Cantonment, Kolkata 700065, West Bengal, India</li>
+            <li><strong>Address:</strong> 222, Pramanik House, Dumur Baba Gali, North Dum Dum, Kolkata — 700065, West Bengal, India</li>
           </ul>
 
           {/* Bottom spacer */}
@@ -290,7 +290,7 @@ export default function RefundPolicy() {
         <a href="/privacy" style={{ color: "#2563eb", textDecoration: "none" }}>Privacy Policy</a>
         {" · "}
         <a href="/terms" style={{ color: "#2563eb", textDecoration: "none" }}>Terms &amp; Conditions</a>
-        <div style={{ marginTop: "0.5rem" }}>© {new Date().getFullYear()} Dopmaine (Bong Bari) | Proprietor: Abhijit Pramanik. All rights reserved.</div>
+        <div style={{ marginTop: "0.5rem" }}>© {new Date().getFullYear()} Bong Bari | Proprietor: Abhijit Pramanik | GSTIN: 19FWUPP1487B1ZW. All rights reserved.</div>
       </div>
     </>
   );

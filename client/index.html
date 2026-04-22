@@ -267,6 +267,21 @@
       var params = new URLSearchParams(window.location.search);
       var retries = parseInt(params.get(RETRY_KEY) || '0', 10);
 
+      // ── SECRET DEV PREVIEW ──────────────────────────────────────────
+      // Add ?__bb_preview=down to any URL to instantly see the down page.
+      // e.g. https://www.bongbari.com?__bb_preview=down
+      // Nobody can guess this — keep the param name private.
+      if (params.get('__bb_preview') === 'down') {
+        // Wait for DOM to be ready, then show overlay
+        window.addEventListener('DOMContentLoaded', function () {
+          // Slight delay so the page renders first (looks more realistic)
+          setTimeout(function () {
+            showDownPage('🛠️ Dev Preview — Down Page Test<br><small style="font-size:11px;color:#666">This is what users see during an outage.</small>');
+          }, 400);
+        });
+      }
+      // ────────────────────────────────────────────────────────────────
+
       function cacheBust() {
         var p = new URLSearchParams(window.location.search);
         p.set(RETRY_KEY, retries + 1);

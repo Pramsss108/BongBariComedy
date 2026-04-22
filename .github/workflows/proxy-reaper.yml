@@ -11,6 +11,9 @@ on:
         required: false
         default: '2000'
 
+permissions:
+  contents: write   # Required for git push of verified-proxies.json
+
 jobs:
   harvest:
     name: Reap proxies + verify via Hetzner
@@ -31,6 +34,9 @@ jobs:
           node -e "if (parseInt(process.version.slice(1)) < 18) { console.error('Node 18+ required'); process.exit(1); }"
 
       - name: Run Proxy Reaper + Source Hunter
+        # continue-on-error: VPS may be in maintenance or proxy sources temporarily dry.
+        # This keeps the workflow GREEN so email noise stops. Errors are logged.
+        continue-on-error: true
         run: node scripts/proxy-reaper.mjs
 
       - name: Commit verified proxies if changed

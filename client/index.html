@@ -248,6 +248,102 @@
   </style>
   <!-- Build version stamp (update this string when deploying to bust caches deterministically) -->
   
+  <!-- ═══════════════════════════════════════════════════════
+       WHITE SCREEN WATCHDOG — Phase 1 of Zero-Downtime Plan
+       Detects stale-cache blank screen and auto-heals it.
+       
+       How it works:
+         1. After 8s, checks if React has mounted (initial-loader gone)
+         2. If NOT → cache-bust reload (adds ?v=timestamp)
+         3. If already retried 2x → shows animated "updating" overlay
+         4. On script load error → immediate cache-bust
+       ═══════════════════════════════════════════════════════ -->
+  <script>
+    (function () {
+      var RETRY_KEY = '_bb_r';
+      var MAX_RETRIES = 2;
+      var WATCHDOG_MS = 8000;
+
+      var params = new URLSearchParams(window.location.search);
+      var retries = parseInt(params.get(RETRY_KEY) || '0', 10);
+
+      function cacheBust() {
+        var p = new URLSearchParams(window.location.search);
+        p.set(RETRY_KEY, retries + 1);
+        p.set('_v', Date.now());
+        window.location.replace(window.location.pathname + '?' + p.toString() + window.location.hash);
+      }
+
+      function showDownPage(msg) {
+        var overlay = document.createElement('div');
+        overlay.id = 'bb-down-overlay';
+        overlay.innerHTML = [
+          '<style>',
+          '#bb-down-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:#050505;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,sans-serif;}',
+          '.bb-rings{position:relative;width:80px;height:80px;margin-bottom:32px;}',
+          '.bb-ring{position:absolute;border-radius:50%;border:3px solid transparent;animation:bb-spin linear infinite;}',
+          '.bb-ring:nth-child(1){width:80px;height:80px;border-top-color:#f97316;animation-duration:1.2s;}',
+          '.bb-ring:nth-child(2){width:60px;height:60px;top:10px;left:10px;border-top-color:#fb923c80;animation-duration:0.9s;animation-direction:reverse;}',
+          '.bb-ring:nth-child(3){width:40px;height:40px;top:20px;left:20px;border-top-color:#f9731640;animation-duration:0.6s;}',
+          '.bb-logo{font-size:20px;font-weight:700;color:#fff;letter-spacing:0.05em;margin-bottom:8px;}',
+          '.bb-msg{font-size:14px;color:#888;margin-bottom:28px;text-align:center;max-width:280px;line-height:1.5;}',
+          '.bb-dots{display:flex;gap:8px;}',
+          '.bb-dot{width:8px;height:8px;border-radius:50%;background:#f97316;animation:bb-pulse 1.4s ease-in-out infinite;}',
+          '.bb-dot:nth-child(2){animation-delay:0.2s;}',
+          '.bb-dot:nth-child(3){animation-delay:0.4s;}',
+          '.bb-retry{margin-top:20px;font-size:12px;color:#555;cursor:pointer;text-decoration:underline;}',
+          '@keyframes bb-spin{to{transform:rotate(360deg)}}',
+          '@keyframes bb-pulse{0%,80%,100%{transform:scale(0.6);opacity:0.4}40%{transform:scale(1);opacity:1}}',
+          '</style>',
+          '<div class="bb-rings"><div class="bb-ring"></div><div class="bb-ring"></div><div class="bb-ring"></div></div>',
+          '<div class="bb-logo">Bong Bari</div>',
+          '<div class="bb-msg">' + (msg || 'Site is loading a fresh update.<br>This takes just a moment.') + '</div>',
+          '<div class="bb-dots"><div class="bb-dot"></div><div class="bb-dot"></div><div class="bb-dot"></div></div>',
+          '<div class="bb-retry" onclick="window.location.replace(window.location.pathname)">Click here to reload</div>'
+        ].join('');
+        document.body.appendChild(overlay);
+        // Auto-reload once more after 20s as a final attempt
+        setTimeout(function () {
+          window.location.replace(window.location.pathname);
+        }, 20000);
+      }
+
+      // Trap script load failures — catches the "missing JS bundle" case
+      window.addEventListener('error', function (e) {
+        if (e && e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
+          if (retries < MAX_RETRIES) {
+            cacheBust();
+          } else {
+            showDownPage('Updating...<br>We\'ll be back in a moment.');
+          }
+        }
+      }, true);
+
+      // Watchdog timer — React should mount and hide the initial-loader within 8s
+      var watchdog = setTimeout(function () {
+        var loader = document.getElementById('initial-loader');
+        // If initial-loader still exists and is visible, React never mounted
+        if (loader && loader.offsetParent !== null) {
+          if (retries < MAX_RETRIES) {
+            cacheBust();
+          } else {
+            showDownPage('Updating...<br>We\'ll be back in a moment.');
+          }
+        }
+      }, WATCHDOG_MS);
+
+      // Clear watchdog the moment React removes the initial-loader
+      var observer = new MutationObserver(function () {
+        var loader = document.getElementById('initial-loader');
+        if (!loader || loader.offsetParent === null) {
+          clearTimeout(watchdog);
+          observer.disconnect();
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    })();
+  </script>
+
   <!-- Important: keep entry path EXACT so Vite transforms it during build -->
   <script type="module" src="/src/main.tsx" defer></script>
 </body>

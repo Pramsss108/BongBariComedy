@@ -2070,6 +2070,7 @@
     }
 
     // ==================== Phase 10/16 — DEATH-SCREEN HOOK LINE (rotating, contextual) ====================
+    function buildHookLine() {
       // Phase 16/18d — rotating death-screen hook line.
       // 18d — Wrist-rest detection: a single run > 30 min real time hijacks the line ONCE for player health.
       if (S.runStats && S.runStats.startTs) {

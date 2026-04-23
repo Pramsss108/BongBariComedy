@@ -690,6 +690,34 @@
     }
     // Phase 6 — palette memoization. currentPalette() is called from drawBg + drawPlayer + tint;
     // recompute only when biomeIdx or distanceM (the only inputs) change.
+    // Phase 18c — ANTI-FATIGUE post-cosmic: after 1000m, every 2000m we hue-shift the palette
+    // by a tiny amount so scenery never feels truly repeated across a 3-hour session.
+    function _hueShift(rgb, deg) {
+      // cheap HSL rotate — deg is small (~12°) so no perceptual jolt.
+      var r = rgb[0]/255, g = rgb[1]/255, b = rgb[2]/255;
+      var mx = Math.max(r,g,b), mn = Math.min(r,g,b), d = mx - mn;
+      var h = 0, s = 0, l = (mx + mn) / 2;
+      if (d !== 0) {
+        s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+        if (mx === r) h = ((g - b) / d) % 6;
+        else if (mx === g) h = (b - r) / d + 2;
+        else h = (r - g) / d + 4;
+        h *= 60; if (h < 0) h += 360;
+      }
+      h = (h + deg + 360) % 360;
+      // back to RGB
+      var c = (1 - Math.abs(2*l - 1)) * s;
+      var hp = h / 60, x2 = c * (1 - Math.abs(hp % 2 - 1));
+      var r2=0,g2=0,b2=0;
+      if (hp < 1) { r2=c; g2=x2; }
+      else if (hp < 2) { r2=x2; g2=c; }
+      else if (hp < 3) { g2=c; b2=x2; }
+      else if (hp < 4) { g2=x2; b2=c; }
+      else if (hp < 5) { r2=x2; b2=c; }
+      else { r2=c; b2=x2; }
+      var m = l - c/2;
+      return [Math.round((r2+m)*255), Math.round((g2+m)*255), Math.round((b2+m)*255)];
+    }
     var _palCache = { key: -1, val: null };
     function currentPalette() {
       var key = S.biomeIdx * 1000000 + (S.distanceM | 0);
@@ -710,6 +738,20 @@
           ground2: lerpHex(p1.ground2, p2.ground2, blend),
           stars: blend > 0.5 ? p2.stars : p1.stars
         };
+      }
+      // Phase 18c — anti-fatigue hue rotation. Only past cosmic biome (1000m+).
+      // Tiny shift (max ±15°) every 2000m so 3-hour sessions never feel visually identical.
+      if (S.distanceM > 1000) {
+        var hueDeg = Math.sin(S.distanceM / 2000 * Math.PI * 2) * 15;
+        if (Math.abs(hueDeg) > 0.5) {
+          out = {
+            skyTop:  _hueShift(out.skyTop, hueDeg),
+            skyBot:  _hueShift(out.skyBot, hueDeg),
+            ground1: out.ground1,
+            ground2: out.ground2,
+            stars:   out.stars
+          };
+        }
       }
       _palCache.val = out; _palCache.key = key;
       return out;
@@ -818,7 +860,11 @@
         spawnObstacle(spawnType);
         S.patternQueue.shift();
         if (S.patternQueue.length === 0) {
-          var gap = CFG.PATTERN_GAP_BASE_FRAMES / S.densityMult;
+          // Phase 18a — TRUE INFINITE DIFFICULTY. Density climbs logarithmically forever after speed plateau.
+          // At 5000m gaps are ~60% of base; at 20000m gaps cap at ~45%. Pure pattern density, not speed.
+          var infMult = 1 + Math.log10(Math.max(1, S.distanceM / 500)) * 0.55;
+          if (infMult > 2.2) infMult = 2.2; // hard cap so it stays playable
+          var gap = CFG.PATTERN_GAP_BASE_FRAMES / (S.densityMult * infMult);
           if (S.biomeIdx === 1) gap *= 0.85;
           else if (S.biomeIdx === 2) gap *= 0.72;
           else if (S.biomeIdx === 3) gap *= 0.65;
@@ -842,7 +888,7 @@
       ".bb-score-minimal { color:#fff; font-size:18px; font-weight:700; letter-spacing:1px; text-shadow:0 1px 3px rgba(0,0,0,0.6); pointer-events:auto; cursor:pointer; transition:transform 0.18s, color 0.18s; }",
       ".bb-score-minimal.pop { transform:scale(1.2); color:#f97316; transition:transform 0.15s; }",
       ".bb-score-minimal.tier-up { color:#f4c430; transform:scale(1.35); }",
-      ".bb-daily-badge { display:inline-block; font-size:10px; font-weight:700; letter-spacing:1px; padding:3px 8px; border-radius:100px; background:rgba(244,196,48,0.16); border:1px solid rgba(244,196,48,0.4); color:#f4c430; margin-left:8px; vertical-align:middle; }",
+      ".bb-daily-badge { display:inline-block; font-size:9px; font-weight:700; letter-spacing:1px; padding:2px 7px; border-radius:100px; background:rgba(244,196,48,0.14); border:1px solid rgba(244,196,48,0.35); color:#f4c430; vertical-align:middle; }",
       ".bb-skin-swatch { width:18px; height:18px; border-radius:50%; display:inline-block; vertical-align:middle; border:2px solid rgba(255,255,255,0.15); }",
       ".bb-lives-minimal { display:flex; gap:6px; align-items:center; pointer-events:auto; }",
       ".bb-dot { width:7px; height:7px; border-radius:50%; background:#fff; transition:background 0.3s; }",
@@ -867,15 +913,16 @@
       "@keyframes bbP { 0%,80%,100%{transform:scale(0.55);opacity:0.5} 40%{transform:scale(1);opacity:1} }",
       "@keyframes bbCombo { 0%{transform:scale(0.7);opacity:0} 100%{transform:scale(1);opacity:1} }",
       ".bb-bottom { display:none; }",
-      // Phase 41 — Settings panel + Phase 49 stats card extras
-      ".bb-sheet { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(0.92); opacity:0; background:rgba(15,15,15,0.96); -webkit-backdrop-filter:blur(28px); backdrop-filter:blur(28px); border:1px solid rgba(255,255,255,0.1); border-radius:22px; padding:24px; width:320px; max-width:90vw; pointer-events:auto; box-shadow:0 22px 70px rgba(0,0,0,0.75); transition:opacity 0.3s ease-out, transform 0.3s cubic-bezier(0.34,1.56,0.64,1); z-index:2; }",
+      // Phase 17/41 — SLIM PREMIUM Settings panel (user demand: "very slim very small premium").
+      // Width 280, padding 18, tight rows. Stats + achievements moved OFF this sheet (per Phase 17 spec).
+      ".bb-sheet { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(0.94); opacity:0; background:rgba(12,12,14,0.94); -webkit-backdrop-filter:blur(24px); backdrop-filter:blur(24px); border:1px solid rgba(255,255,255,0.08); border-radius:18px; padding:16px 18px 14px; width:260px; max-width:88vw; pointer-events:auto; box-shadow:0 18px 50px rgba(0,0,0,0.7); transition:opacity 0.25s ease-out, transform 0.25s cubic-bezier(0.34,1.56,0.64,1); z-index:2; }",
       ".bb-sheet.in { transform:translate(-50%,-50%) scale(1); opacity:1; }",
-      ".bb-sheet h3 { font-size:18px; margin:0 0 14px; font-weight:800; color:#fff; }",
-      ".bb-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.06); }",
-      ".bb-row:last-child { border-bottom:0; }",
-      ".bb-row label { color:#bbb; font-size:13px; font-weight:600; }",
-      ".bb-row .bb-seg { display:flex; gap:4px; background:rgba(255,255,255,0.06); padding:3px; border-radius:100px; }",
-      ".bb-row .bb-seg button { background:transparent; color:#aaa; border:0; padding:5px 11px; border-radius:100px; font-size:11px; font-weight:700; cursor:pointer; transition:all 0.15s; font-family:inherit; }",
+      ".bb-sheet h3 { font-size:13px; margin:0 0 10px; font-weight:600; color:rgba(255,255,255,0.9); letter-spacing:1.5px; text-transform:uppercase; display:flex; align-items:center; justify-content:space-between; }",
+      ".bb-row { display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.04); }",
+      ".bb-row:last-of-type { border-bottom:0; }",
+      ".bb-row label { color:rgba(255,255,255,0.65); font-size:11px; font-weight:600; letter-spacing:0.5px; }",
+      ".bb-row .bb-seg { display:flex; gap:2px; background:rgba(255,255,255,0.05); padding:2px; border-radius:100px; }",
+      ".bb-row .bb-seg button { background:transparent; color:rgba(255,255,255,0.55); border:0; padding:4px 9px; border-radius:100px; font-size:10px; font-weight:700; cursor:pointer; transition:all 0.15s; font-family:inherit; }",
       ".bb-row .bb-seg button.on { background:#f4c430; color:#1a0f00; }",
       ".bb-stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:14px 0; }",
       ".bb-stat-cell { background:rgba(255,255,255,0.04); padding:10px; border-radius:12px; }",
@@ -927,13 +974,23 @@
       var el = document.getElementById('bb-stamina'); if (el) el.innerHTML = html;
     }
     // Phase 7 — DOM thrash kill: only touch textContent on actual change.
+    // Phase 26 — score number ease-in: tween displayed value toward S.score over ~180ms instead of
+    // step-jumping. Feels rich on combo bursts. Pure DOM textContent — no layout cost since width is fixed.
     var lastDisplayedScore = -1;
+    var displayedScore = 0;
     var lastPopScore = 0;
     var scoreEl = document.getElementById('bb-score');
     function updateHUD() {
-      if (scoreEl && S.score !== lastDisplayedScore) {
-        scoreEl.textContent = S.score;
-        lastDisplayedScore = S.score;
+      if (!scoreEl) return;
+      // Ease displayedScore toward S.score (12% per frame ≈ 180ms to settle)
+      if (displayedScore !== S.score) {
+        var diff = S.score - displayedScore;
+        if (Math.abs(diff) <= 1) displayedScore = S.score;
+        else displayedScore += Math.sign(diff) * Math.max(1, Math.ceil(Math.abs(diff) * 0.12));
+      }
+      if (displayedScore !== lastDisplayedScore) {
+        scoreEl.textContent = displayedScore;
+        lastDisplayedScore = displayedScore;
         // Phase 27 — pop animation when score crosses 10s digit
         if (S.score - lastPopScore >= 10) {
           scoreEl.classList.add('pop');
@@ -990,7 +1047,7 @@
     function showSettings() {
       // Pause game while settings open if mid-run
       var wasPaused = S.paused;
-      if (S.started && !S.gameOver) S.paused = true;
+      if (S.started && !S.gameOver) { S.paused = true; S.pauseStartedAt = performance.now(); }
       var sheet = document.createElement('div');
       sheet.className = 'bb-sheet';
       function seg(label, options, current, onPick) {
@@ -1010,22 +1067,16 @@
         return { v: s.id, l: s.name };
       });
       var dailyBadge = '<span class="bb-daily-badge">' + T('daily') + ' ✓</span>';
+      // Phase 17 — settings sheet is SLIM. Only: Sound, Quality, Motion, Lang, Skin (when unlocked) + Close.
+      // Stats + achievements live on the death screen / silent toasts — NOT here.
       sheet.innerHTML = [
-        '<h3>' + T('settings') + dailyBadge + '</h3>',
-        seg(T('language'), [{v:'en',l:'EN'},{v:'bn',l:'বাংলা'}], LANG, null),
+        '<h3><span>' + T('settings') + '</span>' + dailyBadge + '</h3>',
         seg(T('sound'),    [{v:'on',l:'ON'},{v:'off',l:'OFF'}], S.muted ? 'off' : 'on', null),
         seg(T('quality'),  [{v:'auto',l:'Auto'},{v:'high',l:'High'},{v:'low',l:'Low'}], QUALITY.mode, null),
         seg(T('motion'),   [{v:'on',l:'ON'},{v:'off',l:'OFF'}], REDUCED_MOTION ? 'off' : 'on', null),
+        seg(T('language'), [{v:'en',l:'EN'},{v:'bn',l:'বাংলা'}], LANG, null),
         skinOptions.length > 1 ? seg(T('skin'), skinOptions, PROFILE.activeSkin || 'brown', null) : '',
-        '<div class="bb-stats-grid">',
-        '  <div class="bb-stat-cell"><div class="bb-k">' + T('best') + '</div><div class="bb-v">' + PROFILE.best + '</div></div>',
-        '  <div class="bb-stat-cell"><div class="bb-k">Total Runs</div><div class="bb-v">' + PROFILE.totalRuns + '</div></div>',
-        '  <div class="bb-stat-cell"><div class="bb-k">Total ' + T('chai') + '</div><div class="bb-v">' + PROFILE.totalChai + '</div></div>',
-        '  <div class="bb-stat-cell"><div class="bb-k">Streak</div><div class="bb-v">' + PROFILE.dailyStreak + ' 🔥</div></div>',
-        '</div>',
-        '<div class="bb-k" style="font-size:10px;color:#888;letter-spacing:0.06em;margin-top:8px;">' + T('achievements') + ' (' + unlockedAchv + '/' + ACHIEVEMENTS.length + ')</div>',
-        '<div class="bb-achv-list">' + achvHtml + '</div>',
-        '<button class="bb-btn" id="bb-close" style="margin-top:18px;width:100%;">' + T('close') + '</button>'
+        '<button class="bb-btn" id="bb-close" style="margin-top:14px;width:100%;padding:9px 0;font-size:12px;">' + T('close') + '</button>'
       ].join('');
       hud.appendChild(sheet);
       requestAnimationFrame(function () { sheet.classList.add('in'); });
@@ -1063,10 +1114,12 @@
       });
       sheet.querySelector('#bb-close').addEventListener('click', function () {
         sheet.classList.remove('in');
-        setTimeout(function () { sheet.remove(); }, 300);
+        setTimeout(function () { sheet.remove(); }, 250);
         if (!wasPaused && S.started && !S.gameOver) {
-          // Phase 44 — Resume countdown 3-2-1
-          showResumeCountdown();
+          // Phase 18 — only show resume countdown after long idle (>60s real). Else instant resume.
+          var idleSec = (performance.now() - (S.pauseStartedAt || performance.now())) / 1000;
+          if (idleSec > 60) showResumeCountdown();
+          else S.paused = false;
         } else if (wasPaused) {
           S.paused = wasPaused;
         } else {
@@ -1391,11 +1444,12 @@
           ctx.fillRect(-sp.w/2, -sp.h/2, sp.w, sp.h);
           ctx.globalCompositeOperation = 'source-over';
         }
-        // Phase 25 tint
+        // Phase 25 tint — USER FIX: dropped 0.18 → 0.05 alpha. Was washing the cup body to look
+        // like a white box behind the chai. Cup must read as warm cream — sky tint is now whisper.
         if (!REDUCED_MOTION) {
           var pa = currentPalette();
           ctx.globalCompositeOperation = 'source-atop';
-          ctx.fillStyle = 'rgba(' + pa.skyTop[0] + ',' + pa.skyTop[1] + ',' + pa.skyTop[2] + ',0.18)';
+          ctx.fillStyle = 'rgba(' + pa.skyTop[0] + ',' + pa.skyTop[1] + ',' + pa.skyTop[2] + ',0.05)';
           ctx.fillRect(-sp.w/2, -sp.h/2, sp.w, sp.h);
           ctx.globalCompositeOperation = 'source-over';
         }
@@ -1546,6 +1600,8 @@
     }
     function drawTrail() {
       if (REDUCED_MOTION || QUALITY.level === 'low') return;
+      // USER FIX — don't render stale trail while paused/dead. Was leaving a ghost square behind the cup.
+      if (S.paused || S.gameOver) { S.trail.length = 0; return; }
       var sp = sprites.player; if (!sp) return;
       for (var i = 0; i < S.trail.length; i++) {
         var t = S.trail[i];
@@ -1985,7 +2041,15 @@
     }
 
     // ==================== Phase 10/16 — DEATH-SCREEN HOOK LINE (rotating, contextual) ====================
-    function buildHookLine() {
+      // Phase 16/18d — rotating death-screen hook line.
+      // 18d — Wrist-rest detection: a single run > 30 min real time hijacks the line ONCE for player health.
+      if (S.runStats && S.runStats.startTs) {
+        var minsThisRun = (performance.now() - S.runStats.startTs) / 60000;
+        if (minsThisRun >= 30 && !PROFILE._wristShownThisSession) {
+          PROFILE._wristShownThisSession = true;
+          return Math.round(minsThisRun) + ' min straight 👀 stretch?';
+        }
+      }
       var bestM = PROFILE.best | 0;
       var sc = S.score | 0;
       var distM = S.distanceM | 0;
@@ -2033,7 +2097,7 @@
       S.milestonesHit = [];
       S.runStats = { chai: 0, hearts: 0, bishesh: 0, nearMiss: 0, hits: 0, startTs: performance.now(), endReason: 'fall', finalized: false };
       // endlessMode + Profile (best, totalRuns, etc.) persist across retries — by design.
-      lastDisplayedScore = -1; lastPopScore = 0;
+      lastDisplayedScore = -1; displayedScore = 0; lastPopScore = 0;
       // Clear lingering banners / toasts from previous run
       var lb = document.getElementById('bb-level'); if (lb) lb.classList.remove('show');
       var tip = document.getElementById('bb-tip'); if (tip) tip.classList.remove('show');

@@ -15,8 +15,8 @@
     COYOTE_FRAMES: 5.4, JUMP_BUFFER_FRAMES: 7.2,
     HITBOX_W: 0.60, HITBOX_H: 0.80,
 
-    // Speed — Phase 14 (capped, plateaus gracefully)
-    SPEED_BASE: 4.5, SPEED_GAIN: 3.5, SPEED_TAU_M: 250,
+    // Speed — Phase 5 polish (top ~9.5, 90% of plateau by ~330m, exponential)
+    SPEED_BASE: 5.0, SPEED_GAIN: 4.5, SPEED_TAU_M: 180,
     METERS_PER_PX: 0.1,
 
     // Biomes — B
@@ -212,8 +212,8 @@
       en: {
         title: 'চা Runner',
         startBtn: 'Start Running',
-        startDesc: "Site is updating — help our chai cup escape!\nTap / Click / Space to jump.\nHold for higher · Tap mid-air for double-jump 💎",
-        startTip: 'Dodge 404s, sad clouds, spikes 🚧 · Catch chai for +25 🍵',
+        startDesc: 'Tap to jump.',
+        startTip: '',
         gameOver: 'চা শেষ!',
         tryAgain: 'Try Again',
         share: 'Share',
@@ -233,8 +233,8 @@
       bn: {
         title: 'চা Runner',
         startBtn: 'শুরু করো',
-        startDesc: 'সাইট আপডেট হচ্ছে — চায়ের কাপটা বাঁচাও!\nট্যাপ / ক্লিক / Space দিয়ে লাফ।\nধরে রাখলে উঁচু · উপরে আবার ট্যাপ করলে ডবল জাম্প 💎',
-        startTip: '৪০৪, দুঃখের মেঘ, কাঁটা এড়াও 🚧 · চা ধরো +২৫ 🍵',
+        startDesc: 'ট্যাপ করো লাফাতে।',
+        startTip: '',
         gameOver: 'চা শেষ!',
         tryAgain: 'আবার',
         share: 'শেয়ার',
@@ -386,6 +386,7 @@
 
       patternQueue: [], nextPatternFrame: 0,
       framesSinceHit: 9999, postHitSafeUntil: 0,
+      milestonesHit: [],          // Phase 1 — silent milestone toasts (1km, 2.5km, 5km, ...)
 
       deathTimes: [], cleanRunSinceSec: 0, densityMult: 1.0,
 
@@ -461,7 +462,7 @@
         if (S.onboarding && !S.onboardJumped) {
           S.onboardJumped = true;
           S.onboardPauseFrames = 30; // 0.5s
-          showTip('💡 Hold to jump higher · Release for short hop');
+          // Phase 1b — instructional tip removed; player learns by playing.
         }
         return true;
       }
@@ -666,20 +667,31 @@
       var c = lerpColor(h(a), h(b), t);
       return 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')';
     }
+    // Phase 6 — palette memoization. currentPalette() is called from drawBg + drawPlayer + tint;
+    // recompute only when biomeIdx or distanceM (the only inputs) change.
+    var _palCache = { key: -1, val: null };
     function currentPalette() {
+      var key = S.biomeIdx * 1000000 + (S.distanceM | 0);
+      if (_palCache.key === key && _palCache.val) return _palCache.val;
       var b = CFG.BIOMES[S.biomeIdx];
       var p1 = BIOME_PALETTES[b.id];
       var blend = getBiomeBlend(S.distanceM, S.biomeIdx);
-      if (blend === 0) return p1;
-      var nextB = CFG.BIOMES[Math.min(S.biomeIdx + 1, CFG.BIOMES.length - 1)];
-      var p2 = BIOME_PALETTES[nextB.id];
-      return {
-        skyTop: lerpColor(p1.skyTop, p2.skyTop, blend),
-        skyBot: lerpColor(p1.skyBot, p2.skyBot, blend),
-        ground1: lerpHex(p1.ground1, p2.ground1, blend),
-        ground2: lerpHex(p1.ground2, p2.ground2, blend),
-        stars: blend > 0.5 ? p2.stars : p1.stars
-      };
+      var out;
+      if (blend === 0) {
+        out = p1;
+      } else {
+        var nextB = CFG.BIOMES[Math.min(S.biomeIdx + 1, CFG.BIOMES.length - 1)];
+        var p2 = BIOME_PALETTES[nextB.id];
+        out = {
+          skyTop: lerpColor(p1.skyTop, p2.skyTop, blend),
+          skyBot: lerpColor(p1.skyBot, p2.skyBot, blend),
+          ground1: lerpHex(p1.ground1, p2.ground1, blend),
+          ground2: lerpHex(p1.ground2, p2.ground2, blend),
+          stars: blend > 0.5 ? p2.stars : p1.stars
+        };
+      }
+      _palCache.val = out; _palCache.key = key;
+      return out;
     }
 
     // ==================== PATTERN LIBRARY ====================
@@ -786,13 +798,14 @@
       ".bb-dot { width:7px; height:7px; border-radius:50%; background:#fff; transition:background 0.3s; }",
       ".bb-dot.empty { background:rgba(255,255,255,0.2); }",
       ".bb-pause-btn { background:transparent; border:none; color:rgba(255,255,255,0.8); font-size:14px; cursor:pointer; padding:4px 8px; margin-left:8px; line-height:1; }",
-      // Hidden elements to preserve logic references
-      ".bb-hidden-logic { display:none !important; }",
+
       // Phase 30 — instant card with 0.4s ease-in
       ".bb-card { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) scale(0.92); opacity:0; background:rgba(15,15,15,0.94); -webkit-backdrop-filter:blur(28px); backdrop-filter:blur(28px); border:1px solid rgba(255,255,255,0.1); border-radius:22px; padding:28px 30px; text-align:center; max-width:88vw; width:340px; pointer-events:auto; box-shadow:0 22px 70px rgba(0,0,0,0.75); transition:opacity 0.4s ease-out, transform 0.4s cubic-bezier(0.34,1.56,0.64,1); }",
       ".bb-card.in { transform:translate(-50%,-50%) scale(1); opacity:1; }",
       ".bb-card h2 { font-size:16px; font-weight:600; margin:0 0 12px; color:rgba(255,255,255,0.5); letter-spacing:2px; text-transform:uppercase; }",
       ".bb-card p { font-size:44px; font-weight:300; color:#fff; margin:0 0 24px; letter-spacing:1px; line-height:1; }",
+      ".bb-card.bb-start p { font-size:18px; font-weight:400; letter-spacing:0.5px; margin:0 0 22px; line-height:1.4; color:rgba(255,255,255,0.85); }",
+      ".bb-best-line { font-size:11px; color:rgba(255,255,255,0.4); letter-spacing:1.5px; text-transform:uppercase; margin:-14px 0 20px; font-weight:600; }",
       ".bb-btn { background:#fff; color:#000; border:none; border-radius:100px; padding:12px 32px; font-size:15px; font-weight:600; cursor:pointer; transition:transform 0.15s; letter-spacing:0.02em; font-family:inherit; width:100%; max-width:200px; }",
       ".bb-btn:hover { transform:scale(1.04); }",
       ".bb-btn:active { transform:scale(0.96); }",
@@ -841,14 +854,6 @@
       '      <button class="bb-pause-btn" id="bb-gear">❚❚</button>',
       '    </div>',
       '  </div>',
-      '  <div class="bb-hidden-logic">',
-      '    <div id="bb-best">0</div>',
-      '    <div id="bb-dist">0m</div>',
-      '    <div id="bb-combo"></div>',
-      '    <div id="bb-stamina"></div>',
-      '    <button id="bb-mute">🔊</button>',
-      '    <button id="bb-quality">⚡</button>',
-      '  </div>',
       '  <div class="bb-level-banner" id="bb-level"></div>',
       '  <div class="bb-poptip" id="bb-tip"></div>',
       '  <div class="bb-bottom" id="bb-bottom"><a id="bb-now">Refresh</a></div>',
@@ -871,57 +876,37 @@
       }
       var el = document.getElementById('bb-stamina'); if (el) el.innerHTML = html;
     }
-    var lastDisplayedScore = 0;
+    // Phase 7 — DOM thrash kill: only touch textContent on actual change.
+    var lastDisplayedScore = -1;
+    var lastPopScore = 0;
+    var scoreEl = document.getElementById('bb-score');
     function updateHUD() {
-      var sEl = document.getElementById('bb-score');
-      if (sEl) {
-        sEl.textContent = S.score;
+      if (scoreEl && S.score !== lastDisplayedScore) {
+        scoreEl.textContent = S.score;
+        lastDisplayedScore = S.score;
         // Phase 27 — pop animation when score crosses 10s digit
-        if (S.score - lastDisplayedScore >= 10) {
-          sEl.classList.add('pop');
-          setTimeout(function () { sEl.classList.remove('pop'); }, 200);
-          lastDisplayedScore = S.score;
+        if (S.score - lastPopScore >= 10) {
+          scoreEl.classList.add('pop');
+          setTimeout(function () { scoreEl.classList.remove('pop'); }, 200);
+          lastPopScore = S.score;
         }
       }
-      var bEl = document.getElementById('bb-best');   if (bEl) bEl.textContent = S.best;
-      var dEl = document.getElementById('bb-dist');   if (dEl) dEl.textContent = S.distanceM + 'm';
     }
-    renderHearts(); renderStamina(); updateHUD();
+    renderHearts(); updateHUD();
 
-    var muteBtn = document.getElementById('bb-mute');
-    muteBtn.addEventListener('click', function (e) {
-      e.stopPropagation();
-      S.muted = !S.muted;
-      muteBtn.textContent = S.muted ? '🔇' : '🔊';
-      PROFILE.settings.muted = S.muted; saveProfile();
-      if (!S.muted) { ensureAudio(); startAmbientPad(); }
-      else stopAmbientPad();
-    });
+    // Phase 3 — mute/quality buttons live in pause sheet only. Stub `muteBtn` so legacy refs are no-ops.
+    var muteBtn = { textContent: '' };
     var IS_MOBILE = window.matchMedia('(max-width:640px)').matches;
     if (PROFILE.settings.muted !== null && PROFILE.settings.muted !== undefined) {
       S.muted = !!PROFILE.settings.muted;
-      muteBtn.textContent = S.muted ? '🔇' : '🔊';
     } else if (IS_MOBILE) {
       // Phase 26: ambient pad off by default on mobile (mute on)
-      S.muted = true; muteBtn.textContent = '🔇';
+      S.muted = true;
     }
-    // Phase 32 — Quality toggle button
-    var qBtn = document.getElementById('bb-quality');
-    function refreshQualityBtn() {
-      qBtn.textContent = QUALITY.mode === 'auto' ? '⚡' : (QUALITY.mode === 'low' ? '◯' : '●');
-      qBtn.title = 'Quality: ' + QUALITY.mode + (QUALITY.mode === 'auto' ? ' (' + QUALITY.level + ')' : '');
-    }
-    refreshQualityBtn();
-    qBtn.addEventListener('click', function (e) {
-      e.stopPropagation();
-      QUALITY.mode = QUALITY.mode === 'auto' ? 'high' : (QUALITY.mode === 'high' ? 'low' : 'auto');
-      if (QUALITY.mode !== 'auto') { QUALITY.level = QUALITY.mode; QUALITY.probing = false; }
-      else { QUALITY.probing = true; QUALITY.probeFrames = 0; QUALITY.probeStart = performance.now(); }
-      try { localStorage.setItem('bb_chai_quality', QUALITY.mode); } catch (er) {}
-      refreshQualityBtn();
-      initWeather();
-    });
-    document.getElementById('bb-now').addEventListener('click', function () {
+    // Phase 32 — Quality auto-detect persists. Toggle UI lives in pause sheet (Phase 17).
+    function refreshQualityBtn() { /* phantom button removed in Phase 3 */ }
+    var nowBtn = document.getElementById('bb-now');
+    if (nowBtn) nowBtn.addEventListener('click', function () {
       window.location.replace(window.location.pathname);
     });
 
@@ -1030,24 +1015,11 @@
       });
     }
 
-    // ==================== Phase 44 — PAUSE MENU + COUNTDOWN ====================
+    // ==================== Phase 2 — PAUSE / RESUME ====================
+    // User-initiated resume is instant. The 96px takeover countdown is gone.
+    // Long-idle resume (>60s real time) is reserved for Phase 18.
     function showResumeCountdown() {
-      S.paused = true;
-      var n = 3;
-      var el = document.createElement('div');
-      el.className = 'bb-countdown';
-      el.textContent = String(n);
-      hud.appendChild(el);
-      var iv = setInterval(function () {
-        n--;
-        if (n <= 0) {
-          clearInterval(iv);
-          el.remove();
-          S.paused = false;
-        } else {
-          el.textContent = String(n);
-        }
-      }, 700);
+      S.paused = false;
     }
     function showPauseMenu() {
       if (!S.started || S.gameOver) return;
@@ -1193,33 +1165,11 @@
       el.classList.add('show');
       setTimeout(function(){ el.classList.remove('show'); }, 3500);
     }
-    function maybeShowTipForScore(score) {
-      var tips = [
-        { at: 30,  key: 't1', text: 'Hold to jump higher · Double-tap mid-air for double jump 💎' },
-        { at: 60,  key: 't2', text: 'Catch chai cups for +25 bonus 🍵' },
-        { at: 100, key: 't3', text: 'Swipe down to fast-fall · 3 chai = combo! ✨' }
-      ];
-      for (var i = 0; i < tips.length; i++) {
-        var t = tips[i];
-        if (score >= t.at && S.tipsShown.indexOf(t.key) === -1) {
-          S.tipsShown.push(t.key);
-          try { localStorage.setItem('bb_chai_runner_tips_v1', JSON.stringify(S.tipsShown)); } catch (e) {}
-          showTip(t.text);
-          return;
-        }
-      }
-    }
+    // Phase 1b — in-play tutorial banners deleted. Player teaches themself.
+    function maybeShowTipForScore(_score) { /* removed */ }
 
     // ==================== Phase 38 — landscape suggestion (one-time, mobile portrait) ====================
-    function maybeLandscapeToast() {
-      if (S.landscapeToastShown) return;
-      if (!IS_MOBILE) return;
-      if (window.innerHeight < window.innerWidth) return; // already landscape
-      if (window.innerWidth >= 600) return;
-      S.landscapeToastShown = true;
-      try { localStorage.setItem('bb_chai_landscape_v1', '1'); } catch (e) {}
-      setTimeout(function () { showTip('💡 Rotate for landscape — bigger view!'); }, 2200);
-    }
+    function maybeLandscapeToast() { /* Phase 1b — instructional toast removed. */ }
 
     // ==================== Phase 33 — SPRITE CACHE ====================
     // Pre-render player + obstacles + chai to off-screen canvases. Massive perf win on mobile.
@@ -1357,6 +1307,8 @@
 
     // ==================== DRAW FROM SPRITES ====================
     function drawPlayer(x, y) {
+      // Phase 4 — pixel-snap at draw site only. Physics positions stay float.
+      x = Math.round(x); y = Math.round(y);
       var w = player.width, h = player.height;
       var sx = player.squash, sy = 2 - sx;
       ctx.save();
@@ -1366,14 +1318,7 @@
       if (player.hitImmuneSec > 0 && Math.floor(player.hitImmuneSec * 10) % 2 === 0) {
         ctx.globalAlpha = 0.4;
       }
-      // Phase 25 — dynamic player tint (blend with sky color, max 30%)
-      var tintApplied = false;
-      if (!REDUCED_MOTION) {
-        var p = currentPalette();
-        var tintR = p.skyTop[0], tintG = p.skyTop[1], tintB = p.skyTop[2];
-        // Use a temporary tint via composite — but cheaper: just draw the cup, then overlay translucent rect
-        // We'll do it post-blit with source-atop
-      }
+      // Phase 6 — palette lookup memoized via _palCache; safe to call freely.
       // Blit cached sprite (Phase 33)
       var sp = sprites.player;
       if (sp) {
@@ -1453,7 +1398,8 @@
       var sp = sprites['obs_' + o.type];
       if (!sp) return;
       ctx.save();
-      ctx.translate(o.x, o.y + Math.sin(o.bob) * 3);
+      // Phase 4 — pixel-snap draw position (kills 1px shimmer)
+      ctx.translate(Math.round(o.x), Math.round(o.y + Math.sin(o.bob) * 3));
       if (o.type === '404') ctx.rotate(o.rot);
       ctx.drawImage(sp.canvas, -sp.w/2, -sp.h/2, sp.w, sp.h);
       ctx.restore();
@@ -1462,7 +1408,7 @@
       var sp = sprites.chai;
       if (!sp) return;
       ctx.save();
-      ctx.translate(c.x, c.y + Math.sin(c.bob) * 5);
+      ctx.translate(Math.round(c.x), Math.round(c.y + Math.sin(c.bob) * 5));
       ctx.drawImage(sp.canvas, -sp.w/2, -sp.h/2, sp.w, sp.h);
       ctx.restore();
     }
@@ -1470,7 +1416,7 @@
     function drawHeart(h) {
       var bob = Math.sin(h.bob) * 4;
       ctx.save();
-      ctx.translate(h.x, h.y + bob);
+      ctx.translate(Math.round(h.x), Math.round(h.y + bob));
       ctx.fillStyle = '#ef4444';
       ctx.shadowColor = 'rgba(239,68,68,0.6)';
       ctx.shadowBlur = 12;
@@ -1491,7 +1437,7 @@
       var bob = Math.sin(b.bob) * 6;
       var pulse = 0.7 + 0.3 * Math.sin(b.glow);
       ctx.save();
-      ctx.translate(b.x, b.y + bob);
+      ctx.translate(Math.round(b.x), Math.round(b.y + bob));
       // Glow halo
       var grad = ctx.createRadialGradient(0, 0, 5, 0, 0, 30);
       grad.addColorStop(0, 'rgba(244,196,48,' + (0.6 * pulse) + ')');
@@ -1879,15 +1825,13 @@
 
     // ==================== CARDS ====================
     function showStart() {
+      // Phase 1a — minimal start: heading + one-line subtitle + one button. Fits 320×480.
       var card = document.createElement('div');
-      card.className = 'bb-card';
-      var onboardLine = S.onboarding ? '<div class="bb-tip" style="color:#f4c430">✨ First run — easy mode active</div>' : '';
+      card.className = 'bb-card bb-start';
       card.innerHTML = [
         '<h2>' + T('title') + ' ☕</h2>',
-        '<p>' + T('startDesc').replace(/\n/g, '<br>') + '</p>',
-        '<button class="bb-btn" id="bb-start">' + T('startBtn') + '</button>',
-        '<div class="bb-tip">' + T('startTip') + '<br>3 biomes await: পাড়া → বাজার → রাত</div>',
-        onboardLine
+        '<p>' + T('startDesc') + '</p>',
+        '<button class="bb-btn" id="bb-start">' + T('startBtn') + '</button>'
       ].join('');
       hud.appendChild(card);
       requestAnimationFrame(function () { card.classList.add('in'); });
@@ -1920,47 +1864,56 @@
         try { localStorage.setItem('bb_chai_runner_best', String(S.best)); } catch (e) {}
         updateHUD();
       }
-      var newBest = S.score === S.best && S.score > 0;
-      // Phase 49 — bar vs personal avg
-      var avg = PROFILE.telemetry.avgRunDistance || 1;
-      var barPct = Math.min(100, Math.round((S.distanceM / avg) * 100));
+      // Phase 1c — death card LOCKED to 4 elements: heading, score, one small Best line, button.
       var card = document.createElement('div');
       card.className = 'bb-card';
+      var bestM = PROFILE.best || 0;
       card.innerHTML = [
         '<h2>' + T('gameOver') + '</h2>',
         '<p>' + S.score + '</p>',
+        '<div class="bb-best-line">' + T('best') + ' ' + bestM + '</div>',
         '<button class="bb-btn" id="bb-again">' + T('tryAgain') + '</button>'
       ].join('');
       hud.appendChild(card);
-      requestAnimationFrame(function () {
-        card.classList.add('in');
-        setTimeout(function () { var b = card.querySelector('#bb-barfill'); if (b) b.style.width = barPct + '%'; }, 120);
-      });
+      requestAnimationFrame(function () { card.classList.add('in'); });
       card.querySelector('#bb-again').addEventListener('click', function () {
-        S.score = 0; S.bonusScore = 0; S.lives = 3; S.distancePx = 0;
-        S.speed = CFG.SPEED_BASE;
-        S.obstacles = []; S.chais = []; S.particles = []; S.floaters = []; S.trail = [];
-        S.hearts = []; S.bishesh = [];
-        S.gameOver = false; S.paused = false; S.won = false;
-        S.patternQueue = []; S.nextPatternFrame = 0;
-        S.stormState = 'idle'; S.lastStormScore = 0;
-        S.biomeIdx = 0; S.lastBiomeIdx = 0;
-        S.framesSinceHit = 9999; S.postHitSafeUntil = 0;
-        S.comboChain = 0; S.comboActive = false; S.comboTimer = 0;
-        S.lastHeartScore = 0; S.lastBisheshDistM = 0;
-        S.specialActive = false; S.specialTimer = 0;
-        S.runStats = { chai: 0, hearts: 0, bishesh: 0, nearMiss: 0, hits: 0, startTs: performance.now(), endReason: 'fall', finalized: false };
-        // endlessMode persists across retries within session
-        var combo = document.getElementById('bb-combo'); if (combo) combo.classList.remove('show');
-        lastDisplayedScore = 0;
-        player.y = player.baseY; player.vy = 0; player.onGround = true;
-        player.hitImmuneSec = 0; player.stamina = CFG.STAMINA_MAX;
-        player.jumpsUsed = 0; player.coyoteFrames = 0; player.bufferedJumpFrames = 0;
-        renderHearts(); renderStamina(); updateHUD();
-        if (!S.muted) { startAmbientPad(); updateAmbientPadForBiome(0); }
+        resetRunState();
         card.classList.remove('in');
         setTimeout(function(){ card.remove(); }, 350);
       });
+    }
+
+    // ==================== Phase 8 — RESET RUN STATE (single source of truth) ====================
+    function resetRunState() {
+      S.score = 0; S.bonusScore = 0; S.lives = 3; S.distancePx = 0;
+      S.speed = CFG.SPEED_BASE;
+      S.obstacles = []; S.chais = []; S.particles = []; S.floaters = []; S.trail = [];
+      S.hearts = []; S.bishesh = [];
+      S.gameOver = false; S.paused = false; S.won = false;
+      S.patternQueue = []; S.nextPatternFrame = 0;
+      S.stormState = 'idle'; S.stormTimer = 0; S.stormSpawnInterval = 0; S.stormSpawned = 0;
+      S.lastStormScore = 0;
+      S.biomeIdx = 0; S.lastBiomeIdx = 0;
+      S.framesSinceHit = 9999; S.postHitSafeUntil = 0;
+      S.comboChain = 0; S.comboActive = false; S.comboTimer = 0;
+      S.lastHeartScore = 0; S.lastBisheshDistM = 0;
+      S.specialActive = false; S.specialTimer = 0;
+      S.cameraShake = 0; S.hitFlash = 0; S.nearMissTint = 0;
+      S.milestonesHit = [];
+      S.runStats = { chai: 0, hearts: 0, bishesh: 0, nearMiss: 0, hits: 0, startTs: performance.now(), endReason: 'fall', finalized: false };
+      // endlessMode + Profile (best, totalRuns, etc.) persist across retries — by design.
+      lastDisplayedScore = -1; lastPopScore = 0;
+      // Clear lingering banners / toasts from previous run
+      var lb = document.getElementById('bb-level'); if (lb) lb.classList.remove('show');
+      var tip = document.getElementById('bb-tip'); if (tip) tip.classList.remove('show');
+      if (hud) hud.querySelectorAll('.bb-achv').forEach(function (el) { el.remove(); });
+      // Player reset
+      player.y = player.baseY; player.vy = 0; player.onGround = true;
+      player.hitImmuneSec = 0; player.stamina = CFG.STAMINA_MAX;
+      player.jumpsUsed = 0; player.coyoteFrames = 0; player.bufferedJumpFrames = 0;
+      player.fastFall = false; player.jumpHeld = false; player.jumpHoldFrames = 0;
+      renderHearts(); updateHUD();
+      if (!S.muted) { startAmbientPad(); updateAmbientPadForBiome(0); }
     }
 
     // ==================== HEALTHCHECK ====================
@@ -2009,10 +1962,8 @@
       if (S.comboChain >= CFG.COMBO_THRESHOLD && !S.comboActive) {
         S.comboActive = true;
         S.comboTimer = CFG.COMBO_DURATION_FRAMES;
-        var el = document.getElementById('bb-combo');
-        if (el) el.classList.add('show');
         sfxCombo();
-        showTip('×2 COMBO active for 5s! ⚡');
+        // Phase 1b — combo tip removed. Score ticks 2× faster — that IS the feedback.
       } else if (S.comboActive) {
         // Refresh timer on additional chai
         S.comboTimer = CFG.COMBO_DURATION_FRAMES;
@@ -2066,7 +2017,7 @@
         S.specialTimer--;
         if (S.specialTimer <= 0) {
           S.specialActive = false;
-          showTip('Bishesh ended ✨');
+          // Phase 1b — "Bishesh ended" tip removed; gold halo simply stops.
         }
       }
 
@@ -2099,7 +2050,7 @@
         S.stormState = 'warn';
         S.stormTimer = CFG.STORM_PRE_WARN_FRAMES;
         sfxStorm();
-        showTip('☔ Chai storm incoming! 🍵🍵🍵');
+        // Phase 1b — instructional tip removed. The gold flash (storm warn) + sfx is the cue.
       } else if (S.stormState === 'warn') {
         S.stormTimer -= 1;
         if (S.stormTimer <= 0) {
@@ -2307,22 +2258,34 @@
           sfxLevelUp();
           sparkleBurst(bb.x, bb.y, [244,196,48], 22);
           floater('+×3 BISHESH! ✨', bb.x, bb.y - 25, '#f4c430');
-          showTip('☀️ Bishesh chai · ×3 + invincible 3s!');
+          // Phase 1b — instructional tip removed; gold halo + score×3 is the feedback.
           S.bishesh.splice(bi, 1);
           continue;
         }
         if (bb.x < -50) S.bishesh.splice(bi, 1);
       }
 
-      // Phase 50 — Win check (Tea Master)
-      if (!S.won && !S.endlessMode && S.distanceM >= CFG.WIN_DISTANCE_M) {
-        showWinCard();
+      // Phase 1 — silent milestone toasts. NO forced win-stop. Game is endless from second one.
+      // First crossing of 1km silently flips the Tea Master profile flag (achievement still unlocks).
+      var MS = [1000, 2500, 5000, 10000, 25000, 50000, 100000];
+      for (var msi = 0; msi < MS.length; msi++) {
+        var ms = MS[msi];
+        if (S.distanceM >= ms && S.milestonesHit.indexOf(ms) < 0) {
+          S.milestonesHit.push(ms);
+          var label = ms >= 1000 ? (ms / 1000) + 'km ✓' : ms + 'm ✓';
+          showTip(label);
+          if (ms === 1000 && !PROFILE.teaMaster) {
+            PROFILE.teaMaster = true;
+            PROFILE.teaMasterCount++;
+            saveProfile();
+          }
+          break; // only one milestone per logic step
+        }
       }
 
-      // Phase 53 — Mark first-run done after 200m on onboarding
+      // Phase 53 — Mark first-run done after 200m on onboarding (silent)
       if (S.onboarding && S.distanceM >= 200) {
         S.onboarding = false;
-        showTip('🎓 Onboarding complete · Full speed unlocked!');
       }
 
       // Phase 42 — Periodic achievement check (every 30 frames)

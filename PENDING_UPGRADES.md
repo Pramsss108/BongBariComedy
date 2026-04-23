@@ -12,7 +12,7 @@
 | A | UptimeRobot monitor setup | ⏳ PENDING |
 | A | Telegram alert integration | ⏳ PENDING |
 | B | `status.bongbari.com` DNS + status page | ⏳ PENDING |
-| C | Spline 3D sad robot in down page | ⏳ PENDING |
+| C | Spline 3D sad robot in down page | ✅ DONE |
 | D | Service Worker / vite-plugin-pwa | ⏳ PENDING |
 
 ---

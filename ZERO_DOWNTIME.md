@@ -145,10 +145,36 @@ Added two changes to the workflow:
 - Search for any `_bb_r` in the URL bar (should NOT be there on a healthy load)
 - If you ever see `?_bb_r=1` in the URL — the watchdog triggered and fixed a stale cache hit
 
-**2. Animated down page works:**
-- Open `https://www.bongbari.com` in DevTools
-- In console run: `document.getElementById('initial-loader').style.display = 'flex'`
-- Wait 10 seconds → should see the orange animated overlay appear
+**2. How to see the animated down page (Developer Test)**
+
+Option A — DevTools Console (fastest):
+```js
+// Paste this in browser console on bongbari.com
+// It hides the React app, then the 8-second watchdog fires and shows the page
+document.getElementById('root').style.display = 'none';
+```
+Wait 8 seconds → the orange animated overlay appears automatically.
+
+Option B — Force retry overflow:
+```js
+// Set retry count to max so next watchdog fire shows the down page directly
+localStorage.setItem('_test', '1');
+// Then navigate to:
+// https://www.bongbari.com?_bb_r=2&_v=1
+// React won't mount (because no real white screen) but you'll see the overlay trigger
+```
+
+Option C — Simplest, no side effects:
+```js
+// Directly call the overlay function (after page loads)
+// In DevTools, paste:
+var s = document.createElement('script');
+// Then manually trigger the showDownPage logic by running:
+document.getElementById('initial-loader').style.display = 'flex';
+// Wait 8 seconds → watchdog fires → overlay appears
+```
+
+> The down page shows: 3-ring orange spinner, "Bong Bari" title, pulsing dots, "Click here to reload" link, and auto-reloads after 20 seconds.
 
 **3. Proxy Reaper no longer sends failure emails:**
 - Go to GitHub → Actions → "Proxy Reaper + Source Hunter"
@@ -157,16 +183,119 @@ Added two changes to the workflow:
 
 ---
 
-## Phase 5 — Future Upgrades (Optional)
+## Phase 5 — Upgrade Roadmap (Batch Implementation Plan)
 
-| Upgrade | Benefit | Effort |
+> **Rule**: No coding until each batch is researched and you give the green light. This is the plan doc — implementation happens batch by batch.
+
+---
+
+### Batch A — Monitoring (Effort: Low, Impact: High)
+**Goal**: Know when site is down BEFORE users do. Get alerted on phone within 1 minute.
+
+| Tool | Free Tier | What it does |
 |---|---|---|
-| **Service Worker Cache** | Pre-cache assets; zero CDN race on future deploys | Medium |
-| **Uptime Robot / BetterUptime** | External monitoring pings site every 1 min, alerts Telegram | Low |
-| **Status Page** | `status.bongbari.com` shows live uptime history to users | Low |
-| **Cloudflare Pages** | Move frontend to Cloudflare Pages — instant global propagation vs 90s GitHub CDN | Medium |
+| **UptimeRobot** | ✅ 50 monitors free | Pings `www.bongbari.com` every 5 min (free) / every 1 min (paid) |
+| **BetterUptime** | ✅ 3 monitors free | Same pings + beautiful status page included |
+| **Telegram Bot Alert** | ✅ Always free | Sends "🔴 Site is DOWN" / "🟢 Site is BACK" to your Telegram |
 
-> The current 3-layer solution handles 99.9% of cases. Service Worker is the path to 100%.
+**Plan for Batch A**:
+1. Sign up at `uptimerobot.com` — free account
+2. Add monitor: HTTP(S), URL = `https://www.bongbari.com`, interval = 5 min
+3. Add Telegram notification channel (UptimeRobot supports Telegram natively)
+4. Add a second monitor for `https://api.bongbari.com` (Hetzner backend)
+5. Test by blocking DNS temporarily → confirm Telegram alert fires
+
+**No code changes needed** — this is a SaaS setup only.
+
+---
+
+### Batch B — Status Page (Effort: Low, Impact: Medium)
+**Goal**: When site is down, users can check `status.bongbari.com` to see if it's a known outage.
+
+| Option | Free | Notes |
+|---|---|---|
+| **UptimeRobot Status Page** | ✅ Free | Auto-generated from your monitors, hosted by them |
+| **Freshping** | ✅ Free | Cleaner UI, also auto-generated |
+| **Instatus** | ✅ Free tier | Custom domain support, beautiful animated UI |
+
+**Plan for Batch B**:
+1. After Batch A is done, go to UptimeRobot → "Status Pages" tab
+2. Create a status page → add both monitors (frontend + backend)
+3. Set custom domain to `status.bongbari.com`
+4. In Cloudflare DNS: add CNAME record `status` → UptimeRobot's CNAME target
+5. Test: manually pause a monitor → status page shows red
+
+**No code changes needed** — DNS + SaaS only.
+
+---
+
+### Batch C — High-End Animated Down Page (Effort: Medium, Impact: High)
+**Goal**: The current down page is functional but basic. Upgrade it to a cinematic, brand-worthy experience.
+
+**Your research direction** (what to look for before implementation):
+- **Lottie animations** (`lottiefiles.com`) — free JSON animation files, 0 runtime dependency needed (Lottie player is ~40KB)
+  - Search: "maintenance", "server down", "loading", "coming soon" on LottieFiles
+  - Pick one that fits the Bong Bari orange/dark aesthetic
+- **Three.js particle effect** — animated floating particles background, very lightweight
+- **GSAP text animation** — typewriter effect for the status message
+
+**Plan for Batch C**:
+1. You find a Lottie animation on `lottiefiles.com` that you like (search: "server sleep" or "maintenance")
+2. Share the Lottie JSON URL or download it
+3. Agent integrates it into the `showDownPage()` function in `client/index.html`
+4. Adds GSAP typewriter text: "বং বাড়ি এখন আসছে..." / "Back in a moment..."
+5. Dark glassmorphism card over particle background
+6. No external CDN dependency in the final version (Lottie JSON baked in as base64 if small enough)
+
+**Trigger for Batch C**: You share the Lottie animation pick → agent implements in one shot.
+
+---
+
+### Batch D — Service Worker Cache (Effort: Medium, Impact: Highest)
+**Goal**: Eliminate the CDN race condition permanently. Pre-cache all JS/CSS assets on first visit so future deploys never cause a white screen, ever.
+
+**How it works**:
+```
+First visit:
+  Browser downloads JS bundle → Service Worker intercepts → caches it
+
+Next visit (even during deploy):
+  Service Worker serves cached assets instantly (no CDN race)
+  Background: checks for new version silently
+  When new version found: shows "Update available — click to reload" banner
+  User clicks → gets new version
+```
+
+**Plan for Batch D**:
+1. Create `client/public/sw.js` — Workbox-based service worker (Google's battle-tested library)
+2. Register it in `client/index.html` with version stamp
+3. Cache strategy: `StaleWhileRevalidate` for HTML, `CacheFirst` for JS/CSS assets
+4. Add "New version available" banner component in React
+5. Test: deploy new version → confirm old cached version still works → banner appears → user updates
+
+**Research needed before implementation**:
+- Check if current Vite config has any existing service worker setup (`vite-plugin-pwa` ?)
+- Decide: manual `sw.js` vs `vite-plugin-pwa` (recommended — fully automatic)
+
+**Trigger for Batch D**: After Batch A+B are confirmed working. Service Worker is the nuclear option.
+
+---
+
+### Implementation Order (Recommended)
+
+```
+TODAY (5 min setup, no code):
+  └── Batch A: UptimeRobot + Telegram alert
+
+THIS WEEK (10 min, no code):
+  └── Batch B: status.bongbari.com
+
+WHEN READY (you pick Lottie animation):
+  └── Batch C: Cinematic animated down page
+
+FINAL PHASE (eliminates white screen at root):
+  └── Batch D: Service Worker Cache
+```
 
 ---
 

@@ -2,6 +2,9 @@
 
 Purpose: Make AI agents productive fast by documenting how this repo is organized, how it builds/tests/deploys, and the project-specific patterns to follow.
 
+## 🔒 Chai Runner HUD — MINIMAL LOCK (do not violate)
+On-screen during play in `client/src/games/chai-runner/ChaiRunner.tsx` is **score + 3 lives dots + tiny pause** ONLY. Banned: stamina dots, biome labels, live distance, combo pills, quality badges, heart emojis, gold colors, bg pills behind HUD, long control-hint blocks, stats grids on death, win screen. Engine logic stays advanced; UI stays bare. Full rules: `/memories/repo/chai-runner-hud-lock.md`. When extending the game (skins, persistence, etc.), surface state via canvas `stylePops` or the death screen — never the in-play HUD.
+
 ## 🚀 AUTO-START SERVERS (MANDATORY — every chat session)
 **Before doing ANY work**, the agent MUST ensure dev servers are running:
 1. Run `npm run dev:live` in a **background** terminal at the start of every new chat/session.

@@ -272,11 +272,12 @@
       // e.g. https://www.bongbari.com?__bb_preview=down
       // Nobody can guess this — keep the param name private.
       if (params.get('__bb_preview') === 'down') {
+        window.__bbIsPreview = true;
         // Wait for DOM to be ready, then show overlay
         window.addEventListener('DOMContentLoaded', function () {
           // Slight delay so the page renders first (looks more realistic)
           setTimeout(function () {
-            showDownPage('🛠️ Dev Preview — Down Page Test<br><small style="font-size:11px;color:#666">This is what users see during an outage.</small>');
+            showDownPage();
           }, 400);
         });
       }
@@ -294,37 +295,66 @@
         overlay.id = 'bb-down-overlay';
         overlay.innerHTML = [
           '<style>',
-          '#bb-down-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:#050505;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,sans-serif;}',
-          '.bb-rings{position:relative;width:80px;height:80px;margin-bottom:32px;}',
-          '.bb-ring{position:absolute;border-radius:50%;border:3px solid transparent;animation:bb-spin linear infinite;}',
-          '.bb-ring:nth-child(1){width:80px;height:80px;border-top-color:#f97316;animation-duration:1.2s;}',
-          '.bb-ring:nth-child(2){width:60px;height:60px;top:10px;left:10px;border-top-color:#fb923c80;animation-duration:0.9s;animation-direction:reverse;}',
-          '.bb-ring:nth-child(3){width:40px;height:40px;top:20px;left:20px;border-top-color:#f9731640;animation-duration:0.6s;}',
-          '.bb-logo{font-size:20px;font-weight:700;color:#fff;letter-spacing:0.05em;margin-bottom:8px;}',
-          '.bb-msg{font-size:14px;color:#888;margin-bottom:28px;text-align:center;max-width:280px;line-height:1.5;}',
-          '.bb-dots{display:flex;gap:8px;}',
-          '.bb-dot{width:8px;height:8px;border-radius:50%;background:#f97316;animation:bb-pulse 1.4s ease-in-out infinite;}',
-          '.bb-dot:nth-child(2){animation-delay:0.2s;}',
-          '.bb-dot:nth-child(3){animation-delay:0.4s;}',
-          '.bb-retry{margin-top:20px;font-size:12px;color:#555;cursor:pointer;text-decoration:underline;}',
-          '@keyframes bb-spin{to{transform:rotate(360deg)}}',
-          '@keyframes bb-pulse{0%,80%,100%{transform:scale(0.6);opacity:0.4}40%{transform:scale(1);opacity:1}}',
+          '#bb-down-overlay { position:fixed; inset:0; z-index:99999; font-family:-apple-system,BlinkMacSystemFont,sans-serif; overflow:hidden; background-color:#050505; background-image: radial-gradient(ellipse 90% 40% at 50% 0%, rgba(244,196,48,0.05) 0%, transparent 55%), radial-gradient(ellipse 60% 30% at 80% 25%, rgba(139,92,246,0.04) 0%, transparent 55%), radial-gradient(ellipse 70% 25% at 20% 55%, rgba(244,196,48,0.04) 0%, transparent 50%), radial-gradient(ellipse 50% 30% at 75% 75%, rgba(139,92,246,0.03) 0%, transparent 50%); }',
+          '#bb-canvas { position:absolute; inset:0; width:100%; height:100%; display:block; z-index:2; }',
+          '.bb-vignette { position:absolute; inset:0; z-index:3; pointer-events:none; background: radial-gradient(circle at 50% 50%, transparent 40%, rgba(5,5,5,0.5) 80%, rgba(5,5,5,0.85) 100%); }',
+          
+          /* Cinematic Layout — pill anchored bottom-center so 3D core takes the stage */
+          '.bb-ui-layer { position:absolute; bottom:60px; left:50%; transform:translateX(-50%); z-index:100001; display:flex; flex-direction:column; align-items:center; width:90%; pointer-events:none; }',
+          
+          /* Sleek Glassmorphism Pill */
+          '.bb-pill { background:rgba(15,15,15,0.7); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); border:1px solid rgba(255,255,255,0.06); border-radius:100px; padding:16px 36px; display:flex; align-items:center; gap:20px; box-shadow:0 12px 40px rgba(0,0,0,0.6); pointer-events:auto; }',
+          
+          '.bb-pill-logo { font-size:17px; font-weight:800; color:#fff; letter-spacing:0.06em; margin:0; pointer-events:none; }',
+          '.bb-pill-divider { width:1px; height:22px; background:rgba(255,255,255,0.15); pointer-events:none; }',
+          '.bb-pill-text { font-size:13px; color:#aaa; font-weight:500; white-space:nowrap; pointer-events:none; }',
+          
+          '.bb-dots { display:flex; gap:6px; margin-top:2px; pointer-events:none; }',
+          '.bb-dot { width:6px; height:6px; border-radius:50%; background:#f97316; animation:bb-pulse 1.4s ease-in-out infinite; }',
+          '.bb-dot:nth-child(2) { animation-delay:0.2s; }',
+          '.bb-dot:nth-child(3) { animation-delay:0.4s; }',
+          
+          '.bb-retry { margin-top:24px; font-size:12px; color:#555; cursor:pointer; text-decoration:underline; font-weight:500; transition:color 0.2s; background:transparent; border:none; padding:8px; pointer-events:auto; }',
+          '.bb-retry:hover { color:#888; }',
+          
+          '@keyframes bb-pulse { 0%,80%,100%{transform:scale(0.6);opacity:0.4} 40%{transform:scale(1);opacity:1} }',
           '</style>',
-          '<div class="bb-rings"><div class="bb-ring"></div><div class="bb-ring"></div><div class="bb-ring"></div></div>',
-          '<div class="bb-logo">Bong Bari</div>',
-          '<div class="bb-msg">' + (msg || 'Site is loading a fresh update.<br>This takes just a moment.') + '</div>',
-          '<div class="bb-dots"><div class="bb-dot"></div><div class="bb-dot"></div><div class="bb-dot"></div></div>',
-          '<div class="bb-retry" onclick="window.location.replace(window.location.pathname)">Click here to reload</div>'
+          '<canvas id="bb-canvas"></canvas>',
+          '<div class="bb-vignette"></div>',
+          '<div class="bb-ui-layer">',
+          '  <div class="bb-pill">',
+          '    <div class="bb-pill-logo">Bong Bari</div>',
+          '    <div class="bb-pill-divider"></div>',
+          '    <div class="bb-pill-text">Building update</div>',
+          '    <div class="bb-dots"><div class="bb-dot"></div><div class="bb-dot"></div><div class="bb-dot"></div></div>',
+          '  </div>',
+          '  <button class="bb-retry" onclick="window.location.replace(window.location.pathname)">Force reload page</button>',
+          '</div>'
         ].join('');
         document.body.appendChild(overlay);
-        // Auto-reload once more after 20s as a final attempt
-        setTimeout(function () {
-          window.location.replace(window.location.pathname);
-        }, 20000);
+
+        // PREVIEW MODE: kill background video + audio, no auto-reload
+        if (window.__bbIsPreview) {
+          try {
+            document.querySelectorAll('video, audio').forEach(function (m) {
+              try { m.pause(); m.muted = true; m.removeAttribute('autoplay'); m.src = ''; m.load && m.load(); } catch (_) {}
+            });
+            var rootEl = document.getElementById('root');
+            if (rootEl) rootEl.style.display = 'none';
+          } catch (_) {}
+        }
+
+        // Inject চা Runner game (Canvas 2D, zero deps)
+        var bbCoreScript = document.createElement('script');
+        bbCoreScript.src = '/bb-cosmic-core.js?v=' + Date.now();
+        document.head.appendChild(bbCoreScript);
+
+        // Game owns its own healthcheck + retry; no auto-reload here
       }
 
       // Trap script load failures — catches the "missing JS bundle" case
       window.addEventListener('error', function (e) {
+        if (window.__bbIsPreview) return; // never reload in preview mode
         if (e && e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
           if (retries < MAX_RETRIES) {
             cacheBust();
@@ -336,6 +366,7 @@
 
       // Watchdog timer — React should mount and hide the initial-loader within 8s
       var watchdog = setTimeout(function () {
+        if (window.__bbIsPreview) return; // never reload in preview mode
         var loader = document.getElementById('initial-loader');
         // If initial-loader still exists and is visible, React never mounted
         if (loader && loader.offsetParent !== null) {

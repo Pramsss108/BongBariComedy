@@ -442,6 +442,15 @@
       onboarding: !PROFILE.firstRunDone,
       onboardJumped: false,
       onboardPauseFrames: 0,
+
+      // Phase 23 — hit slowdown (0.15s visual offset on hit)
+      hitSlowSec: 0,
+
+      // Phase 27 — 100m distance signs
+      distMarkers: [], lastMarkerM: 0,
+
+      // Phase 28 — death camera zoom
+      deathZoom: 1.0,
     };
 
     // ==================== PLAYER ====================
@@ -460,6 +469,17 @@
     resize();
     window.addEventListener('resize', resize);
     window.addEventListener('orientationchange', resize);
+
+    // Phase 24 — Tilt parallax via DeviceOrientation (±5° → far layer ±3px)
+    var _tiltOffset = 0;
+    (function () {
+      if (typeof window.DeviceOrientationEvent === 'undefined') return;
+      window.addEventListener('deviceorientation', function (e) {
+        if (e.gamma == null) return;
+        var g = Math.max(-5, Math.min(5, e.gamma));
+        _tiltOffset = g * 0.6; // ±3px at ±5°
+      }, { passive: true });
+    })();
 
     // Phase 34 — visibility pause
     document.addEventListener('visibilitychange', function () {
@@ -1035,9 +1055,16 @@
         scoreTapTimer = setTimeout(function () { scoreTapCount = 0; }, 1500);
         if (scoreTapCount >= 7) {
           scoreTapCount = 0;
-          // Reward: spawn instant bishesh chai
-          spawnBishesh();
-          showTip('🎁 Easter egg! Bishesh chai inbound...');
+          // Phase 30 — unlock Robot Cup skin permanently
+          if (!PROFILE.unlockedSkins) PROFILE.unlockedSkins = ['brown'];
+          if (PROFILE.unlockedSkins.indexOf('robot') < 0) {
+            PROFILE.unlockedSkins.push('robot');
+            PROFILE.activeSkin = 'robot';
+            saveProfile();
+            achievementToast('🤖 Robot Cup unlocked!');
+          } else {
+            showTip('🤖 Robot Cup already active!');
+          }
           sfxLevelUp();
         }
       });
@@ -1722,7 +1749,7 @@
       // Phase 23 — mountains (slowest)
       var mScroll = (S.distancePx * 0.12) % 220;
       ctx.save();
-      ctx.translate(-mScroll, 0);
+      ctx.translate(-mScroll + _tiltOffset, 0); // Phase 24 tilt offset on far layer
       var mountainColor = p.stars ? 'rgba(35,28,55,0.85)' : 'rgba(95,80,110,0.55)';
       ctx.fillStyle = mountainColor;
       for (var mi = 0; mi < mountains.length; mi++) {
@@ -2015,7 +2042,9 @@
       { id: 'doodh',  name: 'White Doodh',   tint: 'rgba(255,255,255,0.40)',   test: function () { return PROFILE.totalRuns >= 10; } },
       { id: 'masala', name: 'Golden Masala', tint: 'rgba(244,196,48,0.50)',    test: function () { return PROFILE.totalChai >= 100; } },
       { id: 'lebu',   name: 'Lemon Lebu',    tint: 'rgba(212,255,80,0.45)',    test: function () { return (PROFILE.best | 0) >= 1500 || S.distanceM >= 1500; } },
-      { id: 'boba',   name: 'Purple Boba',   tint: 'rgba(168,85,247,0.50)',    test: function () { return (PROFILE.best | 0) >= 5000 || S.distanceM >= 5000; } }
+      { id: 'boba',   name: 'Purple Boba',   tint: 'rgba(168,85,247,0.50)',    test: function () { return (PROFILE.best | 0) >= 5000 || S.distanceM >= 5000; } },
+      // Phase 30 — secret robot cup (easter egg only, never auto-unlocks)
+      { id: 'robot',  name: '🤖 Robot Cup',  tint: 'rgba(150,220,255,0.55)',  test: function () { return false; } }
     ];
     function getActiveSkin() {
       var id = PROFILE.activeSkin || 'brown';
@@ -2094,6 +2123,9 @@
       S.lastHeartScore = 0; S.lastBisheshDistM = 0;
       S.specialActive = false; S.specialTimer = 0;
       S.cameraShake = 0; S.hitFlash = 0; S.nearMissTint = 0;
+      S.hitSlowSec = 0;
+      S.distMarkers = []; S.lastMarkerM = 0;
+      S.deathZoom = 1.0;
       S.milestonesHit = [];
       S.runStats = { chai: 0, hearts: 0, bishesh: 0, nearMiss: 0, hits: 0, startTs: performance.now(), endReason: 'fall', finalized: false };
       // endlessMode + Profile (best, totalRuns, etc.) persist across retries — by design.
@@ -2351,6 +2383,7 @@
         player.blinkTimer = player.blink ? 6 : 60 + freeRng()*120;
       }
       if (player.hitImmuneSec > 0) player.hitImmuneSec -= 1/60;
+      if (S.hitSlowSec > 0) S.hitSlowSec -= 1/60;
 
       // Spawn
       updateSpawnScheduler(frameCounter);
@@ -2385,6 +2418,7 @@
             player.hitImmuneSec = CFG.I_FRAMES_SEC;
             S.postHitSafeUntil = frameCounter + CFG.POST_HIT_SAFE_FRAMES;
             S.framesSinceHit = 0;
+            S.hitSlowSec = 0.15; // Phase 23 — visual hit recoil
             S.cleanRunSinceSec = 0;
             breakCombo();
             sparkleBurst(player.x, player.y, [239,68,68], 14);
@@ -2551,6 +2585,39 @@
       ctx.save();
       ctx.translate(shakeX, shakeY);
       drawTrail(); // Phase 22
+
+      // Phase 27 — 100m distance signs: spawn + draw ground-level markers
+      var _curM = S.distanceM;
+      if (S.started && !S.gameOver) {
+        var _nextMark = (Math.floor(S.lastMarkerM / 100) + 1) * 100;
+        while (_curM >= _nextMark) {
+          S.distMarkers.push({ x: W + 30, m: _nextMark, alpha: 0 });
+          S.lastMarkerM = _nextMark;
+          _nextMark += 100;
+        }
+      }
+      for (var _mi = S.distMarkers.length - 1; _mi >= 0; _mi--) {
+        var _mk = S.distMarkers[_mi];
+        _mk.x -= S.speed;
+        if (_mk.alpha < 1) _mk.alpha = Math.min(1, _mk.alpha + 0.08);
+        if (_mk.x < W * 0.7 && _mk.alpha === 1) _mk.alpha = Math.max(0, _mk.alpha - 0.025);
+        if (_mk.x < -60 || _mk.alpha <= 0) { S.distMarkers.splice(_mi, 1); continue; }
+        ctx.save();
+        ctx.globalAlpha = _mk.alpha * 0.85;
+        ctx.fillStyle = 'rgba(255,255,255,0.12)';
+        var _mLabel = _mk.m + 'm';
+        ctx.font = 'bold 11px -apple-system, sans-serif';
+        var _mW = ctx.measureText(_mLabel).width + 10;
+        var _mX = Math.round(_mk.x), _mY = GROUND_Y - 18;
+        ctx.beginPath();
+        ctx.roundRect(_mX - _mW/2, _mY - 9, _mW, 18, 4);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.fillText(_mLabel, _mX, _mY + 4);
+        ctx.restore();
+      }
+
       for (var di = 0; di < S.obstacles.length; di++) drawObstacle(S.obstacles[di]);
       for (var dc = 0; dc < S.chais.length; dc++) drawChai(S.chais[dc]);
       for (var dh = 0; dh < S.hearts.length; dh++) drawHeart(S.hearts[dh]);
@@ -2572,7 +2639,25 @@
           });
         }
       }
-      drawPlayer(player.x, player.y);
+      // Phase 23 — hit slowdown: nudge draw x left for 0.15s after hit
+      var _hitSlowOff = 0;
+      if (S.hitSlowSec > 0) {
+        _hitSlowOff = (S.hitSlowSec / 0.15) * -8;
+      }
+      // Phase 28 — death camera zoom centred on cup
+      if (S.gameOver && S.deathZoom < 1.15) {
+        S.deathZoom += (1.15 - S.deathZoom) * 0.06;
+      }
+      if (S.gameOver && S.deathZoom > 1.001) {
+        ctx.save();
+        ctx.translate(player.x, player.y);
+        ctx.scale(S.deathZoom, S.deathZoom);
+        ctx.translate(-player.x, -player.y);
+        drawPlayer(player.x + _hitSlowOff, player.y);
+        ctx.restore();
+      } else {
+        drawPlayer(player.x + _hitSlowOff, player.y);
+      }
       drawParticles();
       drawFloaters();
       ctx.restore();

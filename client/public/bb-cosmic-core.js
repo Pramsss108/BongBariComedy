@@ -44,10 +44,16 @@
     SHAKE_SOFT: 3, SHAKE_MED: 5, SHAKE_HARD: 8,
     NEARMISS_PX: 28, NEARMISS_BONUS: 5,
 
-    // Phase 28 — Combo
+    // Phase 28 — Combo (Phase 9: tier ladder — 3=×2, 7=×3, 12=×4, 20=×5)
     COMBO_THRESHOLD: 3,        // 3 consecutive chais without hit
     COMBO_DURATION_FRAMES: 300, // 5s
-    COMBO_MULT: 2,
+    COMBO_MULT: 2,             // legacy default — dynamic tier multiplier lives in S.comboMult
+    COMBO_TIERS: [             // Phase 9 — silent tier ladder; tier resets on hit
+      { chain: 3,  mult: 2 },
+      { chain: 7,  mult: 3 },
+      { chain: 12, mult: 4 },
+      { chain: 20, mult: 5 }
+    ],
 
     // Phase 24 — Weather
     PETAL_COUNT_HIGH: 14, PETAL_COUNT_LOW: 6,
@@ -65,10 +71,10 @@
     HEART_EVERY_SCORE: 600,     // chance window every 600 score
     HEART_SPAWN_CHANCE: 0.6,    // 60% chance once eligible
 
-    // Phase 48 — Bishesh chai (special)
+    // Phase 48/12 — Bishesh chai (special). Phase 12 polish: 6s active + 0.5 spawn + gold vignette.
     BISHESH_EVERY_DIST_M: 250,  // eligibility window every 250m
-    BISHESH_SPAWN_CHANCE: 0.35,
-    BISHESH_DURATION_FRAMES: 180, // 3s
+    BISHESH_SPAWN_CHANCE: 0.5,
+    BISHESH_DURATION_FRAMES: 360, // 6s @ 60Hz
     BISHESH_MULT: 3,
 
     // Phase 50 — Win at 1000m
@@ -155,6 +161,9 @@
       teaMaster: false,           // Phase 50
       teaMasterCount: 0,
       achievements: [],            // Phase 42 — list of unlocked ids
+      // Phase 14 — cosmetic cup skins. Brown is the default; others unlock silently via SKINS[].test.
+      unlockedSkins: ['brown'],
+      activeSkin: 'brown',
       settings: { lang: null, muted: null, debug: false },
       dailyStreak: 0,
       lastPlayedISO: null,
@@ -225,10 +234,16 @@
         resume: 'Resume',
         settings: 'Settings',
         sound: 'Sound', quality: 'Quality', language: 'Language', motion: 'Motion',
+        skin: 'Skin', daily: 'Daily',
         close: 'Close',
         score: 'Score', best: 'Best', distance: 'Distance', chai: 'Chai',
         achievements: 'Achievements',
         levelWelcome: 'Welcome to', biomeIntroJoin: ' · ',
+        // Phase 16 — rotating death-screen hook lines (4 framings)
+        hookBest:        'Best {best}m',
+        hookCloseToBest: '{gap}m from new best',
+        hookCloseToMs:   '{gap}m to {ms}',
+        hookChaiStreak:  'Chai streak {n} — try for {goal}?'
       },
       bn: {
         title: 'চা Runner',
@@ -246,10 +261,15 @@
         resume: 'চালু করো',
         settings: 'সেটিংস',
         sound: 'সাউন্ড', quality: 'কোয়ালিটি', language: 'ভাষা', motion: 'মোশন',
+        skin: 'কাপ', daily: 'আজকের',
         close: 'বন্ধ',
         score: 'স্কোর', best: 'সেরা', distance: 'দূরত্ব', chai: 'চা',
         achievements: 'অর্জন',
         levelWelcome: 'স্বাগতম', biomeIntroJoin: ' · ',
+        hookBest:        'সেরা {best}ম',
+        hookCloseToBest: 'নতুন সেরা থেকে {gap}ম',
+        hookCloseToMs:   '{ms} পৌঁছাতে {gap}ম',
+        hookChaiStreak:  'চা চেইন {n} — {goal} চালাও?'
       }
     };
     var LANG = (function () {
@@ -397,8 +417,9 @@
 
       tipsShown: JSON.parse(localStorage.getItem('bb_chai_runner_tips_v1') || '[]'),
 
-      // Phase 28 — combo
+      // Phase 28/9 — combo (tier ladder, silent)
       comboChain: 0, comboActive: false, comboTimer: 0,
+      comboMult: 1, comboTier: 0,
 
       // Phase 22 — afterimage trail (only during rise)
       trail: [],
@@ -713,6 +734,20 @@
         [{type:'spike', dx:0}, {type:'spike', dx:140}, {type:'spike', dx:280}],
         [{type:'sad', dx:0}, {type:'spike', dx:130}, {type:'404', dx:260}],
         [{type:'404', dx:0}, {type:'spike', dx:120}, {type:'sad', dx:240}],
+      ],
+      // Phase 11 — 5 hand-authored set-pieces, gated by score thresholds (300/600/1000/2000/5000).
+      // Each unlocks silently. They progressively shorten gaps and stack triple-jumps.
+      expert: [
+        // 300m — "Picket Fence": tight spike row demanding rhythm timing
+        [{type:'spike', dx:0}, {type:'spike', dx:120}, {type:'spike', dx:240}, {type:'spike', dx:360}],
+        // 600m — "Cloud Trap": low-high alt swap (sad cloud forces fast-fall, then spike)
+        [{type:'sad', dx:0}, {type:'spike', dx:150}, {type:'sad', dx:300}, {type:'spike', dx:420}],
+        // 1000m — "404 Wall": three 404s in a stairstep — needs apex hold
+        [{type:'404', dx:0}, {type:'404', dx:130}, {type:'404', dx:260}, {type:'spike', dx:380}],
+        // 2000m — "Glass Floor": alternating spike-sad-spike-sad rapid fire
+        [{type:'spike', dx:0}, {type:'sad', dx:140}, {type:'spike', dx:260}, {type:'sad', dx:380}, {type:'spike', dx:500}],
+        // 5000m — "Endgame": brutal mixed wall — only viable post-plateau
+        [{type:'404', dx:0}, {type:'spike', dx:120}, {type:'sad', dx:230}, {type:'spike', dx:340}, {type:'404', dx:450}, {type:'spike', dx:560}]
       ]
     };
     function pickPattern() {
@@ -722,6 +757,18 @@
       else if (bId === 'bazar') pool = PATTERNS.easy.concat(PATTERNS.medium, PATTERNS.medium);
       else if (bId === 'raat')  pool = PATTERNS.medium.concat(PATTERNS.medium, PATTERNS.hard);
       else                       pool = PATTERNS.medium.concat(PATTERNS.hard, PATTERNS.hard);
+      // Phase 11 — splice in expert set-pieces as score milestones unlock them.
+      // Weight stays low (1 expert per 3 base) so the player still gets variety.
+      var sc = S.distanceM | 0;
+      var unlockedExpert = 0;
+      if (sc >= 300)  unlockedExpert = 1;
+      if (sc >= 600)  unlockedExpert = 2;
+      if (sc >= 1000) unlockedExpert = 3;
+      if (sc >= 2000) unlockedExpert = 4;
+      if (sc >= 5000) unlockedExpert = 5;
+      if (unlockedExpert > 0) {
+        for (var ei = 0; ei < unlockedExpert; ei++) pool.push(PATTERNS.expert[ei]);
+      }
       return pool[Math.floor(dailyRng() * pool.length)];
     }
     function queuePattern() {
@@ -792,8 +839,11 @@
       "  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }",
       ".bb-ui-container { position:absolute; inset:0; z-index:100001; pointer-events:none; font-family:-apple-system,BlinkMacSystemFont,'Inter','Hind Siliguri',sans-serif; }",
       ".bb-hud-minimal { position:absolute; top:12px; left:16px; right:16px; display:flex; justify-content:space-between; align-items:center; }",
-      ".bb-score-minimal { color:#fff; font-size:18px; font-weight:700; letter-spacing:1px; text-shadow:0 1px 3px rgba(0,0,0,0.6); pointer-events:auto; cursor:pointer; }",
+      ".bb-score-minimal { color:#fff; font-size:18px; font-weight:700; letter-spacing:1px; text-shadow:0 1px 3px rgba(0,0,0,0.6); pointer-events:auto; cursor:pointer; transition:transform 0.18s, color 0.18s; }",
       ".bb-score-minimal.pop { transform:scale(1.2); color:#f97316; transition:transform 0.15s; }",
+      ".bb-score-minimal.tier-up { color:#f4c430; transform:scale(1.35); }",
+      ".bb-daily-badge { display:inline-block; font-size:10px; font-weight:700; letter-spacing:1px; padding:3px 8px; border-radius:100px; background:rgba(244,196,48,0.16); border:1px solid rgba(244,196,48,0.4); color:#f4c430; margin-left:8px; vertical-align:middle; }",
+      ".bb-skin-swatch { width:18px; height:18px; border-radius:50%; display:inline-block; vertical-align:middle; border:2px solid rgba(255,255,255,0.15); }",
       ".bb-lives-minimal { display:flex; gap:6px; align-items:center; pointer-events:auto; }",
       ".bb-dot { width:7px; height:7px; border-radius:50%; background:#fff; transition:background 0.3s; }",
       ".bb-dot.empty { background:rgba(255,255,255,0.2); }",
@@ -954,12 +1004,19 @@
         var unlocked = PROFILE.achievements.indexOf(a.id) >= 0;
         return '<span class="bb-achv-pill ' + (unlocked ? '' : 'locked') + '" title="' + a.desc + '">' + (unlocked ? '✓ ' : '🔒 ') + a.name + '</span>';
       }).join('');
+      // Phase 14 — skin row (only show unlocked skins). Phase 15 — daily badge in header.
+      var unlockedSkins = (PROFILE.unlockedSkins || ['brown']);
+      var skinOptions = SKINS.filter(function (s) { return unlockedSkins.indexOf(s.id) >= 0; }).map(function (s) {
+        return { v: s.id, l: s.name };
+      });
+      var dailyBadge = '<span class="bb-daily-badge">' + T('daily') + ' ✓</span>';
       sheet.innerHTML = [
-        '<h3>' + T('settings') + '</h3>',
+        '<h3>' + T('settings') + dailyBadge + '</h3>',
         seg(T('language'), [{v:'en',l:'EN'},{v:'bn',l:'বাংলা'}], LANG, null),
         seg(T('sound'),    [{v:'on',l:'ON'},{v:'off',l:'OFF'}], S.muted ? 'off' : 'on', null),
         seg(T('quality'),  [{v:'auto',l:'Auto'},{v:'high',l:'High'},{v:'low',l:'Low'}], QUALITY.mode, null),
         seg(T('motion'),   [{v:'on',l:'ON'},{v:'off',l:'OFF'}], REDUCED_MOTION ? 'off' : 'on', null),
+        skinOptions.length > 1 ? seg(T('skin'), skinOptions, PROFILE.activeSkin || 'brown', null) : '',
         '<div class="bb-stats-grid">',
         '  <div class="bb-stat-cell"><div class="bb-k">' + T('best') + '</div><div class="bb-v">' + PROFILE.best + '</div></div>',
         '  <div class="bb-stat-cell"><div class="bb-k">Total Runs</div><div class="bb-v">' + PROFILE.totalRuns + '</div></div>',
@@ -998,6 +1055,9 @@
             initWeather();
           } else if (label === T('motion')) {
             REDUCED_MOTION = v === 'off';
+          } else if (label === T('skin')) {
+            // Phase 14 — swap active cup skin (cosmetic only; takes effect next frame)
+            PROFILE.activeSkin = v; saveProfile();
           }
         });
       });
@@ -1323,6 +1383,14 @@
       var sp = sprites.player;
       if (sp) {
         ctx.drawImage(sp.canvas, -sp.w/2, -sp.h/2, sp.w, sp.h);
+        // Phase 14 — active cup skin tint (source-atop overlay; null tint = brown default)
+        var skinTint = getActiveSkinTint();
+        if (skinTint) {
+          ctx.globalCompositeOperation = 'source-atop';
+          ctx.fillStyle = skinTint;
+          ctx.fillRect(-sp.w/2, -sp.h/2, sp.w, sp.h);
+          ctx.globalCompositeOperation = 'source-over';
+        }
         // Phase 25 tint
         if (!REDUCED_MOTION) {
           var pa = currentPalette();
@@ -1864,14 +1932,16 @@
         try { localStorage.setItem('bb_chai_runner_best', String(S.best)); } catch (e) {}
         updateHUD();
       }
-      // Phase 1c — death card LOCKED to 4 elements: heading, score, one small Best line, button.
+      // Phase 1c — death card LOCKED to 4 elements: heading, score, one small line, button.
+      // Phase 10/16 — the small line rotates between 4 hook framings (best, close-to-best, close-to-milestone, chai-streak).
+      // Phase 14 — also re-check skin unlocks based on this run's totals.
+      maybeUnlockSkin();
       var card = document.createElement('div');
       card.className = 'bb-card';
-      var bestM = PROFILE.best || 0;
       card.innerHTML = [
         '<h2>' + T('gameOver') + '</h2>',
         '<p>' + S.score + '</p>',
-        '<div class="bb-best-line">' + T('best') + ' ' + bestM + '</div>',
+        '<div class="bb-best-line">' + buildHookLine() + '</div>',
         '<button class="bb-btn" id="bb-again">' + T('tryAgain') + '</button>'
       ].join('');
       hud.appendChild(card);
@@ -1881,6 +1951,66 @@
         card.classList.remove('in');
         setTimeout(function(){ card.remove(); }, 350);
       });
+    }
+
+    // ==================== Phase 14 — SKINS (silent cosmetic unlock loop) ====================
+    var SKINS = [
+      { id: 'brown',  name: 'Brown',         tint: null,                       test: function () { return true; } },
+      { id: 'doodh',  name: 'White Doodh',   tint: 'rgba(255,255,255,0.40)',   test: function () { return PROFILE.totalRuns >= 10; } },
+      { id: 'masala', name: 'Golden Masala', tint: 'rgba(244,196,48,0.50)',    test: function () { return PROFILE.totalChai >= 100; } },
+      { id: 'lebu',   name: 'Lemon Lebu',    tint: 'rgba(212,255,80,0.45)',    test: function () { return (PROFILE.best | 0) >= 1500 || S.distanceM >= 1500; } },
+      { id: 'boba',   name: 'Purple Boba',   tint: 'rgba(168,85,247,0.50)',    test: function () { return (PROFILE.best | 0) >= 5000 || S.distanceM >= 5000; } }
+    ];
+    function getActiveSkin() {
+      var id = PROFILE.activeSkin || 'brown';
+      for (var i = 0; i < SKINS.length; i++) if (SKINS[i].id === id) return SKINS[i];
+      return SKINS[0];
+    }
+    function getActiveSkinTint() { return getActiveSkin().tint; }
+    function maybeUnlockSkin() {
+      if (!PROFILE.unlockedSkins) PROFILE.unlockedSkins = ['brown'];
+      var changed = false;
+      for (var i = 0; i < SKINS.length; i++) {
+        var sk = SKINS[i];
+        if (PROFILE.unlockedSkins.indexOf(sk.id) >= 0) continue;
+        try {
+          if (sk.test()) {
+            PROFILE.unlockedSkins.push(sk.id);
+            achievementToast('Skin: ' + sk.name);
+            changed = true;
+          }
+        } catch (e) {}
+      }
+      if (changed) saveProfile();
+    }
+
+    // ==================== Phase 10/16 — DEATH-SCREEN HOOK LINE (rotating, contextual) ====================
+    function buildHookLine() {
+      var bestM = PROFILE.best | 0;
+      var sc = S.score | 0;
+      var distM = S.distanceM | 0;
+      // Pick the most contextually meaningful framing first:
+      // 1. Within 15% of new best (and not already broke it) — "close to best"
+      if (bestM > 100 && sc < bestM && sc >= bestM * 0.85) {
+        return T('hookCloseToBest').replace('{gap}', String(bestM - sc));
+      }
+      // 2. Closing on next km milestone — "close to 5km"
+      var milestones = [1000, 2500, 5000, 10000, 25000, 50000, 100000];
+      for (var mi = 0; mi < milestones.length; mi++) {
+        var ms = milestones[mi];
+        if (distM < ms && (ms - distM) <= 250) {
+          var label = ms >= 1000 ? (ms / 1000) + 'km' : ms + 'm';
+          return T('hookCloseToMs').replace('{ms}', label).replace('{gap}', String(ms - distM));
+        }
+      }
+      // 3. Solid chai streak — "streak X, try for Y"
+      if (S.runStats && S.runStats.chai >= 5) {
+        var n = S.runStats.chai | 0;
+        var goal = n + Math.max(3, Math.round(n * 0.4));
+        return T('hookChaiStreak').replace('{n}', String(n)).replace('{goal}', String(goal));
+      }
+      // 4. Default — "Best Xm"
+      return T('hookBest').replace('{best}', String(bestM));
     }
 
     // ==================== Phase 8 — RESET RUN STATE (single source of truth) ====================
@@ -1896,6 +2026,7 @@
       S.biomeIdx = 0; S.lastBiomeIdx = 0;
       S.framesSinceHit = 9999; S.postHitSafeUntil = 0;
       S.comboChain = 0; S.comboActive = false; S.comboTimer = 0;
+      S.comboMult = 1; S.comboTier = 0;
       S.lastHeartScore = 0; S.lastBisheshDistM = 0;
       S.specialActive = false; S.specialTimer = 0;
       S.cameraShake = 0; S.hitFlash = 0; S.nearMissTint = 0;
@@ -1956,26 +2087,42 @@
     buildAllSprites();
     showStart();
 
-    // ==================== Phase 28 — COMBO ====================
+    // ==================== Phase 28/9 — COMBO TIER LADDER (silent) ====================
+    // 3 chai = ×2, 7 = ×3, 12 = ×4, 20 = ×5. Tier resets on hit.
+    // No UI badge. Score ticks faster + brief gold flash on score number = the feedback.
+    function computeComboTier(chain) {
+      var tiers = CFG.COMBO_TIERS;
+      var idx = 0, mult = 1;
+      for (var i = 0; i < tiers.length; i++) {
+        if (chain >= tiers[i].chain) { idx = i + 1; mult = tiers[i].mult; }
+      }
+      return { tierIdx: idx, mult: mult };
+    }
     function bumpCombo() {
       S.comboChain++;
+      var t = computeComboTier(S.comboChain);
+      var prevTier = S.comboTier;
+      S.comboTier = t.tierIdx;
+      S.comboMult = t.mult;
       if (S.comboChain >= CFG.COMBO_THRESHOLD && !S.comboActive) {
         S.comboActive = true;
         S.comboTimer = CFG.COMBO_DURATION_FRAMES;
         sfxCombo();
-        // Phase 1b — combo tip removed. Score ticks 2× faster — that IS the feedback.
       } else if (S.comboActive) {
-        // Refresh timer on additional chai
-        S.comboTimer = CFG.COMBO_DURATION_FRAMES;
+        S.comboTimer = CFG.COMBO_DURATION_FRAMES; // refresh on additional chai
+      }
+      // Phase 9 — silent tier-up signal: brief gold flash on score + soft chime.
+      if (S.comboTier > prevTier && scoreEl) {
+        scoreEl.classList.add('tier-up');
+        setTimeout(function () { scoreEl.classList.remove('tier-up'); }, 220);
+        sfxCombo();
       }
     }
     function breakCombo() {
       S.comboChain = 0;
-      if (S.comboActive) {
-        S.comboActive = false;
-        var el = document.getElementById('bb-combo');
-        if (el) el.classList.remove('show');
-      }
+      S.comboTier = 0;
+      S.comboMult = 1;
+      if (S.comboActive) S.comboActive = false;
     }
 
     // ==================== Phase 40b — FIXED-TIMESTEP LOOP ====================
@@ -2204,7 +2351,8 @@
         ch.x -= S.speed;
         ch.bob += 0.05;
         if (Math.abs(player.x - ch.x) < 40 && Math.abs(player.y - ch.y) < 40) {
-          var gainMult = (S.comboActive ? CFG.COMBO_MULT : 1) * (S.specialActive ? CFG.BISHESH_MULT : 1) * (S.endlessMode ? S.endlessMult : 1);
+          // Phase 9 — dynamic combo multiplier from tier ladder (S.comboMult). Default 1.
+          var gainMult = (S.comboActive ? S.comboMult : 1) * (S.specialActive ? CFG.BISHESH_MULT : 1) * (S.endlessMode ? S.endlessMult : 1);
           var gain = 25 * gainMult;
           S.bonusScore += gain;
           S.runStats.chai++;
@@ -2266,7 +2414,7 @@
       }
 
       // Phase 1 — silent milestone toasts. NO forced win-stop. Game is endless from second one.
-      // First crossing of 1km silently flips the Tea Master profile flag (achievement still unlocks).
+      // Phase 14 — each milestone also re-checks skin unlocks silently.
       var MS = [1000, 2500, 5000, 10000, 25000, 50000, 100000];
       for (var msi = 0; msi < MS.length; msi++) {
         var ms = MS[msi];
@@ -2279,6 +2427,7 @@
             PROFILE.teaMasterCount++;
             saveProfile();
           }
+          maybeUnlockSkin();
           break; // only one milestone per logic step
         }
       }
@@ -2382,6 +2531,15 @@
       if (S.stormState === 'warn') {
         var pulse = 0.15 + Math.sin(frameCounter * 0.4) * 0.1;
         ctx.fillStyle = 'rgba(244,196,48,' + pulse + ')';
+        ctx.fillRect(0, 0, W, H);
+      }
+      // Phase 12 — GOLD BISHESH VIGNETTE while special is active (transform-friendly canvas radial)
+      if (S.specialActive) {
+        var bvPulse = 0.18 + Math.sin(now * 0.006) * 0.08;
+        var bvGrad = ctx.createRadialGradient(W/2, H/2, Math.min(W,H)*0.30, W/2, H/2, Math.max(W,H)*0.75);
+        bvGrad.addColorStop(0, 'rgba(244,196,48,0)');
+        bvGrad.addColorStop(1, 'rgba(244,196,48,' + bvPulse + ')');
+        ctx.fillStyle = bvGrad;
         ctx.fillRect(0, 0, W, H);
       }
       // Phase 29 — DAMAGE VIGNETTE when lives <= 1

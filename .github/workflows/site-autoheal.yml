@@ -1,17 +1,16 @@
 name: Site Auto-Heal Watchdog
 
-# Runs every 15 minutes. Verifies that the live site's index.html
-# references assets that actually return 200 with a JS/CSS content type.
-# If any reference is broken (the classic "white screen forever" bug),
-# it triggers the Deploy workflow with a FORCE flag, which rebuilds
-# from latest main and republishes to GitHub Pages.
+# Runs every 5 minutes. Verifies that the live site's index.html
+# references assets that actually return 200 with a JS/CSS content type,
+# AND that the backend API responds. If anything is broken, it triggers
+# the Deploy workflow which rebuilds from latest main and republishes.
 #
 # Manual run is allowed via the "Run workflow" button.
 
 on:
   schedule:
-    # Every 15 minutes, 24/7
-    - cron: '*/15 * * * *'
+    # Every 5 minutes, 24/7
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -44,13 +43,16 @@ jobs:
           echo "::endgroup::"
 
           BROKEN_DETAILS=""
+          FRONTEND_BROKEN="false"
           if [ "$INDEX_HTTP" != "200" ]; then
             BROKEN_DETAILS="index.html returned HTTP $INDEX_HTTP"
+            FRONTEND_BROKEN="true"
           else
             # Extract every /assets/<hash>.{js,css,mjs} reference
             ASSETS=$(grep -oE '/assets/[A-Za-z0-9_.\-]+\.(js|css|mjs)' /tmp/index.html | sort -u)
             if [ -z "$ASSETS" ]; then
               BROKEN_DETAILS="index.html contains no /assets/ references — build template likely broken"
+              FRONTEND_BROKEN="true"
             else
               echo "::group::Verifying $(echo "$ASSETS" | wc -l) referenced assets"
               while IFS= read -r path; do
@@ -58,26 +60,35 @@ jobs:
                 # GET (not HEAD) because GH Pages 404s sometimes only show via body
                 read CODE CTYPE BYTES < <(curl -sS -A "$UA" -o /tmp/asset.bin \
                   -w "%{http_code} %{content_type} %{size_download}" "$URL")
-                # Expect JS or CSS; anything returning text/html means we got the SPA fallback
-                EXPECT_TYPE="application/javascript"
-                case "$path" in
-                  *.css)  EXPECT_TYPE="text/css" ;;
-                  *.mjs)  EXPECT_TYPE="application/javascript" ;;
-                esac
                 STATUS="OK"
                 if [ "$CODE" != "200" ]; then STATUS="BAD_STATUS"; fi
                 if echo "$CTYPE" | grep -qi 'text/html'; then STATUS="HTML_FALLBACK"; fi
-                printf '  %-7s %s -> http=%s ctype=%s bytes=%s\n' "$STATUS" "$path" "$CODE" "$CTYPE" "$BYTES"
+                printf '  %-14s %s -> http=%s ctype=%s bytes=%s\n' "$STATUS" "$path" "$CODE" "$CTYPE" "$BYTES"
                 if [ "$STATUS" != "OK" ]; then
                   BROKEN_DETAILS="${BROKEN_DETAILS}${BROKEN_DETAILS:+\n}$path -> http=$CODE ctype=$CTYPE status=$STATUS"
+                  FRONTEND_BROKEN="true"
                 fi
               done <<< "$ASSETS"
               echo "::endgroup::"
             fi
           fi
 
-          if [ -n "$BROKEN_DETAILS" ]; then
-            echo "::error::Site is broken — heal required"
+          echo "::group::Backend API probe"
+          API_HTTP=$(curl -sS -A "$UA" --max-time 15 -o /tmp/api.json \
+            -w "%{http_code}" "https://api.bongbari.com/api/version?_cb=$(date +%s)" || echo "000")
+          echo "api/version HTTP=$API_HTTP"
+          BACKEND_BROKEN="false"
+          if [ "$API_HTTP" != "200" ]; then
+            BROKEN_DETAILS="${BROKEN_DETAILS}${BROKEN_DETAILS:+\n}backend api/version -> http=$API_HTTP (frontend redeploy will NOT fix this; check Hetzner PM2)"
+            BACKEND_BROKEN="true"
+          fi
+          echo "::endgroup::"
+
+          echo "frontend_broken=$FRONTEND_BROKEN" >> "$GITHUB_OUTPUT"
+          echo "backend_broken=$BACKEND_BROKEN"  >> "$GITHUB_OUTPUT"
+
+          if [ "$FRONTEND_BROKEN" = "true" ] || [ "$BACKEND_BROKEN" = "true" ]; then
+            echo "::error::Site has issues — alert (and heal frontend if applicable)"
             echo "broken=true" >> "$GITHUB_OUTPUT"
             {
               echo 'details<<EOF'
@@ -90,8 +101,8 @@ jobs:
             echo "broken=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Trigger deploy workflow (heal)
-        if: steps.probe.outputs.broken == 'true'
+      - name: Trigger deploy workflow (heal frontend)
+        if: steps.probe.outputs.frontend_broken == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}

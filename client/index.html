@@ -253,16 +253,19 @@
        Detects stale-cache blank screen and auto-heals it.
        
        How it works:
-         1. After 8s, checks if React has mounted (initial-loader gone)
+         1. After 18s, checks if React has mounted (initial-loader gone)
          2. If NOT → cache-bust reload (adds ?v=timestamp)
          3. If already retried 2x → shows animated "updating" overlay
-         4. On script load error → immediate cache-bust
+         4. On script load error → immediate cache-bust (prod only)
        ═══════════════════════════════════════════════════════ -->
   <script>
     (function () {
       var RETRY_KEY = '_bb_r';
       var MAX_RETRIES = 2;
-      var WATCHDOG_MS = 8000;
+      var WATCHDOG_MS = 18000; // 18s — plenty of time for lazy-load heavy bundles
+
+      // Only run on production (bongbari.com). Dev server errors are transient.
+      var isProd = location.host.endsWith('bongbari.com');
 
       var params = new URLSearchParams(window.location.search);
       var retries = parseInt(params.get(RETRY_KEY) || '0', 10);
@@ -328,7 +331,7 @@
           '    <div class="bb-pill-text">Building update</div>',
           '    <div class="bb-dots"><div class="bb-dot"></div><div class="bb-dot"></div><div class="bb-dot"></div></div>',
           '  </div>',
-          '  <button class="bb-retry" onclick="window.location.replace(window.location.pathname)">Force reload page</button>',
+          '  <button class="bb-retry" onclick="window.location.replace(\'/\')">← Back to Homepage</button>',
           '</div>'
         ].join('');
         document.body.appendChild(overlay);
@@ -345,48 +348,64 @@
         }
 
         // Inject চা Runner game (Canvas 2D, zero deps)
-        var bbCoreScript = document.createElement('script');
-        bbCoreScript.src = '/bb-cosmic-core.js?v=' + Date.now();
-        document.head.appendChild(bbCoreScript);
+        // Load shared model renderers FIRST (exposes window.BBModels) so the
+        // game's sprite bakers can use the approved DevModels designs.
+        var bbModelsScript = document.createElement('script');
+        bbModelsScript.src = '/bb-cr-models.js?v=' + Date.now();
+        function loadChaiRunnerCore() {
+          var bbCoreScript = document.createElement('script');
+          bbCoreScript.src = '/bb-cosmic-core.js?v=' + Date.now();
+          document.head.appendChild(bbCoreScript);
+        }
+        bbModelsScript.onload = loadChaiRunnerCore;
+        bbModelsScript.onerror = loadChaiRunnerCore;
+        document.head.appendChild(bbModelsScript);
 
         // Game owns its own healthcheck + retry; no auto-reload here
       }
 
-      // Trap script load failures — catches the "missing JS bundle" case
-      window.addEventListener('error', function (e) {
-        if (window.__bbIsPreview) return; // never reload in preview mode
-        if (e && e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
-          if (retries < MAX_RETRIES) {
-            cacheBust();
-          } else {
-            showDownPage('Updating...<br>We\'ll be back in a moment.');
+      // Trap script load failures — catches the "missing JS bundle" case.
+      // Only active on production; dev server hiccups should not trigger reloads.
+      if (isProd) {
+        window.addEventListener('error', function (e) {
+          if (window.__bbIsPreview) return; // never reload in preview mode
+          if (e && e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
+            if (retries < MAX_RETRIES) {
+              cacheBust();
+            } else {
+              showDownPage('Updating...<br>We\'ll be back in a moment.');
+            }
           }
-        }
-      }, true);
+        }, true);
+      }
 
-      // Watchdog timer — React should mount and hide the initial-loader within 8s
-      var watchdog = setTimeout(function () {
-        if (window.__bbIsPreview) return; // never reload in preview mode
-        var loader = document.getElementById('initial-loader');
-        // If initial-loader still exists and is visible, React never mounted
-        if (loader && loader.offsetParent !== null) {
-          if (retries < MAX_RETRIES) {
-            cacheBust();
-          } else {
-            showDownPage('Updating...<br>We\'ll be back in a moment.');
+      // Watchdog timer — React should mount and hide the initial-loader within WATCHDOG_MS.
+      // Only active on production; dev builds are compiled on-demand and can be slow.
+      if (isProd) {
+        var watchdog = setTimeout(function () {
+          if (window.__bbIsPreview) return; // never reload in preview mode
+          var loader = document.getElementById('initial-loader');
+          // position:fixed elements always have offsetParent===null, so check
+          // whether the loader is still in the DOM and not hidden via display.
+          if (loader && getComputedStyle(loader).display !== 'none') {
+            if (retries < MAX_RETRIES) {
+              cacheBust();
+            } else {
+              showDownPage('Updating...<br>We\'ll be back in a moment.');
+            }
           }
-        }
-      }, WATCHDOG_MS);
+        }, WATCHDOG_MS);
 
-      // Clear watchdog the moment React removes the initial-loader
-      var observer = new MutationObserver(function () {
-        var loader = document.getElementById('initial-loader');
-        if (!loader || loader.offsetParent === null) {
-          clearTimeout(watchdog);
-          observer.disconnect();
-        }
-      });
-      observer.observe(document.body, { childList: true, subtree: true });
+        // Clear watchdog when React removes the initial-loader from the DOM.
+        var observer = new MutationObserver(function () {
+          var loader = document.getElementById('initial-loader');
+          if (!loader) { // React removed it — page mounted successfully
+            clearTimeout(watchdog);
+            observer.disconnect();
+          }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+      }
     })();
   </script>
 

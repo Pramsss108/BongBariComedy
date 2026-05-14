@@ -19,14 +19,14 @@
     SPEED_BASE: 5.0, SPEED_GAIN: 4.5, SPEED_TAU_M: 180,
     METERS_PER_PX: 0.1,
 
-    // Biomes — B
+    // Biomes — 30-minute arc (Para→Bazar→Raat→Mahakash)
     BIOMES: [
-      { id: 'para',   name: 'Para',     bn: 'পাড়া',     start: 0,    end: 300 },
-      { id: 'bazar',  name: 'Bazar',    bn: 'বাজার',    start: 300,  end: 700 },
-      { id: 'raat',   name: 'Raat',     bn: 'রাত',      start: 700,  end: 1000 },
-      { id: 'cosmic', name: 'Mahakash', bn: 'মহাকাশ',   start: 1000, end: Infinity }
+      { id: 'para',   name: 'Para',     bn: 'পাড়া',     start: 0,     end: 1500 },
+      { id: 'bazar',  name: 'Bazar',    bn: 'বাজার',    start: 1500,  end: 4000 },
+      { id: 'raat',   name: 'Raat',     bn: 'রাত',      start: 4000,  end: 7000 },
+      { id: 'cosmic', name: 'Mahakash', bn: 'মহাকাশ',   start: 7000,  end: Infinity }
     ],
-    BIOME_CROSSFADE_M: 8,
+    BIOME_CROSSFADE_M: 300,
 
     // Spawn
     POST_HIT_SAFE_FRAMES: 72, I_FRAMES_SEC: 1.5,
@@ -77,8 +77,28 @@
     BISHESH_DURATION_FRAMES: 360, // 6s @ 60Hz
     BISHESH_MULT: 3,
 
-    // Phase 50 — Win at 1000m
-    WIN_DISTANCE_M: 1000,
+    // Batch 3 — Jhal Chanachur pickup (Bazar+): +x2 score for 4s.
+    CHANACHUR_START_M: 3000,
+    CHANACHUR_EVERY_DIST_M: 1000,
+    CHANACHUR_SPAWN_CHANCE: 0.4,
+    CHANACHUR_DURATION_FRAMES: 240,
+    CHANACHUR_MULT: 2,
+
+    // Bonus pickups — fast-read green reward language (not enemies).
+    BONUS_PICKUP_START_M: 1500,
+    BONUS_PICKUP_EVERY_DIST_M: 420,
+    BONUS_PICKUP_SPAWN_CHANCE: 0.78,
+
+    // Mahakash set-piece — free corridor before the final boss.
+    AKASHGANGA_START_M: 7500,
+    AKASHGANGA_END_M: 7800,
+    AKASHGANGA_CHAI_EVERY_M: 80,
+
+    // Boss engine — scripted, fair attacks. No random boss deaths.
+    BOSS_INTRO_FRAMES: 90,
+
+    // Phase 50 — Win at 8,000m (final boss: Mashala Deb)
+    WIN_DISTANCE_M: 8000, // Tea Master — reach the final boss at 8,000m
     ENDLESS_MULT: 2,
 
     // Phase 53 — First-run onboarding
@@ -107,6 +127,11 @@
     // Phase 39 — reduced motion
     var REDUCED_MOTION = false;
     try { REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+    var DEV_MAP = false;
+    try {
+      var qs = new URLSearchParams(window.location.search);
+      DEV_MAP = qs.has('__bb_devmap') || qs.get('__bb_devmap') === '1';
+    } catch (e) {}
 
     // ==================== CANVAS ====================
     var canvas = document.createElement('canvas');
@@ -132,6 +157,7 @@
       }
       // Re-init weather counts for new size
       initWeather();
+      if (DEV_MAP && devMapReady) setDevMapDistance(S.distanceM, false);
     }
 
     // ==================== QUALITY (Phase 31, 32) ====================
@@ -170,7 +196,7 @@
       firstRunDone: false,         // Phase 53
       // Phase 55 — telemetry (local only)
       telemetry: {
-        runsByEnding: { fall: 0, hit404: 0, hitSad: 0, hitSpike: 0, win: 0 },
+        runsByEnding: { fall: 0, hit404: 0, hitSad: 0, hitSpike: 0, hitSingara: 0, hitBiscuit: 0, hitGhost: 0, hitDark: 0, hitRock: 0, win: 0 },
         biomeReached: [0, 0, 0, 0],
         avgRunDistance: 0,
       }
@@ -227,7 +253,7 @@
         tryAgain: 'Try Again',
         share: 'Share',
         win: 'Tea Master! 🏆',
-        winDesc: 'You reached 1000m. Cash out the badge or continue endless ×2?',
+        winDesc: 'You reached 8,000m. Cash out the badge or continue endless ×2?',
         cashOut: 'Cash Out',
         continueEndless: 'Continue Endless',
         pauseTitle: 'Paused',
@@ -254,7 +280,7 @@
         tryAgain: 'আবার',
         share: 'শেয়ার',
         win: 'চা মাস্টার! 🏆',
-        winDesc: '১০০০ মিটার পেরিয়েছ! ব্যাজ নাও নাকি অন্তহীন ×২ চালাও?',
+        winDesc: '৮০০০ মিটার পেরিয়েছ! ব্যাজ নাও নাকি অন্তহীন ×২ চালাও?',
         cashOut: 'ব্যাজ নাও',
         continueEndless: 'চালিয়ে যাও',
         pauseTitle: 'বিরতি',
@@ -286,10 +312,10 @@
     var ACHIEVEMENTS = [
       { id: 'first_chai',  name: 'First Sip',       desc: 'Catch your first chai',           test: function(){ return PROFILE.totalChai >= 1; } },
       { id: 'chai_50',     name: 'Chai Lover',      desc: 'Catch 50 chai total',             test: function(){ return PROFILE.totalChai >= 50; } },
-      { id: 'dist_500',    name: 'Half Way',        desc: 'Reach 500m in one run',           test: function(){ return S.distanceM >= 500; } },
-      { id: 'tea_master',  name: 'Tea Master',      desc: 'Reach 1000m and win',             test: function(){ return PROFILE.teaMaster; } },
-      { id: 'bishesh_1',   name: 'Special Brew',    desc: 'Catch a Bishesh chai',            test: function(){ return PROFILE.totalBishesh >= 1; } },
-      { id: 'no_hit_300',  name: 'Untouchable',     desc: 'Reach 300m without taking a hit', test: function(){ return S.distanceM >= 300 && S.lives === 3; } },
+      { id: 'dist_500',    name: 'Para Hero',       desc: 'Reach 500m in one run',            test: function(){ return S.distanceM >= 500; } },
+      { id: 'tea_master',  name: 'Tea Master',      desc: 'Reach 8,000m and defeat Mashala Deb', test: function(){ return PROFILE.teaMaster; } },
+      { id: 'bishesh_1',   name: 'Special Brew',    desc: 'Catch a Bishesh chai',             test: function(){ return PROFILE.totalBishesh >= 1; } },
+      { id: 'no_hit_300',  name: 'Untouchable',     desc: 'Reach 900m without taking a hit',  test: function(){ return S.distanceM >= 900 && S.lives === 3; } },
       { id: 'streak_3',    name: 'Daily Habit',     desc: 'Play 3 days in a row',            test: function(){ return PROFILE.dailyStreak >= 3; } },
       { id: 'runs_10',     name: 'Persistent',      desc: 'Play 10 runs total',              test: function(){ return PROFILE.totalRuns >= 10; } },
     ];
@@ -399,7 +425,7 @@
       muted: false,
       retrySecs: 20,
       obstacles: [], chais: [], particles: [], floaters: [],
-      hearts: [], bishesh: [],   // Phase 47, 48
+      hearts: [], bishesh: [], chanachur: [], bonusPickups: [],   // Phase 47, 48 + Batch 3/7
       petals: [], fireflies: [],   // Phase 24
       cameraShake: 0, hitFlash: 0, nearMissTint: 0,
       perfFrames: [], perfLastCheck: 0,
@@ -431,6 +457,15 @@
       lastHeartScore: 0,
       lastBisheshDistM: 0,
       specialActive: false, specialTimer: 0,   // Phase 48 invincibility window
+      lastChanachurDistM: 0,
+      chanachurActive: false, chanachurTimer: 0,
+      lastBonusPickupDistM: 0,
+      lastAkashChaiM: 0,
+      akashShown: false,
+
+      // Boss state — active boss owns the spawn queue until defeated.
+      boss: null,
+      bossesDone: {},
 
       // Phase 49 — per-run stats
       runStats: { chai: 0, hearts: 0, bishesh: 0, nearMiss: 0, hits: 0, startTs: 0, endReason: 'fall', finalized: false },
@@ -451,6 +486,9 @@
 
       // Phase 28 — death camera zoom
       deathZoom: 1.0,
+
+      // Q2 — double jump ring flash
+      djRing: null, // { x, y, r, alpha }
     };
 
     // ==================== PLAYER ====================
@@ -496,6 +534,7 @@
         player.jumpHoldFrames = 0;
         player.jumpsUsed = 1;
         sfxJump();
+        haptic(8); // Q5
         recordInput('jump');
         for (var i = 0; i < 6; i++) puff(player.x - 12, GROUND_Y, true);
         player.bufferedJumpFrames = 0;
@@ -507,13 +546,16 @@
         }
         return true;
       }
-      if (player.jumpsUsed === 1 && player.stamina > 0) {
+      if (!player.onGround && player.jumpsUsed < 2) {
         player.vy = CFG.DOUBLE_JUMP_VEL;
         player.jumpHoldFrames = 0;
         player.jumpsUsed = 2;
-        player.stamina--;
+        if (player.stamina > 0) player.stamina--;
         player.staminaRegenSec = 0;
         sfxDouble();
+        haptic(18); // Q5
+        // Q2 — double jump ring flash at cup position
+        S.djRing = { x: player.x, y: player.y, r: 4, alpha: 1.0 };
         for (var j = 0; j < 8; j++) {
           S.particles.push({
             x: player.x + (freeRng()-0.5)*30, y: player.y + 8,
@@ -530,12 +572,28 @@
     }
     function jumpPress() { tryJump(); player.jumpHeld = true; }
     function jumpRelease() { player.jumpHeld = false; }
+    // Q5 — haptic helper (silent on iOS / unsupported browsers)
+    function haptic(pattern) {
+      try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {}
+    }
 
     // Pointer tracking + Phase 36 (two-finger pause)
     var pointerDownY = null;
     var activePointers = {};
+    // E-1 — flush stale pointer IDs older than 600ms to prevent jump lock after OS interrupts
+    function _flushStalePointers() {
+      var now = Date.now();
+      var keys = Object.keys(activePointers);
+      for (var _pi = 0; _pi < keys.length; _pi++) {
+        if (now - activePointers[keys[_pi]].ts > 600) delete activePointers[keys[_pi]];
+      }
+    }
     canvas.addEventListener('pointerdown', function (e) {
-      activePointers[e.pointerId] = { x: e.clientX, y: e.clientY };
+      e.preventDefault();
+      try { canvas.setPointerCapture(e.pointerId); } catch (captureErr) {}
+      if (DEV_MAP) return;
+      _flushStalePointers();
+      activePointers[e.pointerId] = { x: e.clientX, y: e.clientY, ts: Date.now() };
       // Phase 36: two-finger tap toggles pause
       if (Object.keys(activePointers).length >= 2 && S.started && !S.gameOver) {
         if (S.paused) {
@@ -552,13 +610,16 @@
       jumpPress();
     });
     canvas.addEventListener('pointermove', function (e) {
-      if (activePointers[e.pointerId]) activePointers[e.pointerId] = { x: e.clientX, y: e.clientY };
+      if (activePointers[e.pointerId]) activePointers[e.pointerId].x = e.clientX, activePointers[e.pointerId].y = e.clientY;
       if (pointerDownY !== null && e.clientY - pointerDownY > 36 && Object.keys(activePointers).length === 1) {
         if (!player.onGround) player.fastFall = true;
       }
     });
     function clearPointer(e) {
+      try { canvas.releasePointerCapture(e.pointerId); } catch (releaseErr) {}
       delete activePointers[e.pointerId];
+      // E-1 — also flush any remaining stale IDs
+      _flushStalePointers();
       if (Object.keys(activePointers).length === 0) {
         pointerDownY = null;
         jumpRelease();
@@ -567,8 +628,29 @@
     }
     canvas.addEventListener('pointerup', clearPointer);
     canvas.addEventListener('pointercancel', clearPointer);
+    // E-1 — catch lostpointercapture (fires when OS interrupts touch)
+    canvas.addEventListener('lostpointercapture', clearPointer);
+    canvas.addEventListener('pointerleave', clearPointer);
+    canvas.addEventListener('wheel', function (e) {
+      if (!DEV_MAP) return;
+      e.preventDefault();
+      setDevMapPlaying(false);
+      var step = e.shiftKey ? 400 : 80;
+      setDevMapDistance(S.distanceM + (e.deltaY > 0 ? step : -step), true);
+    }, { passive: false });
     window.addEventListener('keydown', function (e) {
+      if (DEV_MAP) {
+        if (e.code === 'Space') { if (!e.repeat) setDevMapPlaying(!devMapPlaying); e.preventDefault(); return; }
+        if (e.code === 'ArrowRight') { e.preventDefault(); setDevMapPlaying(false); setDevMapDistance(S.distanceM + 100, true); return; }
+        if (e.code === 'ArrowLeft') { e.preventDefault(); setDevMapPlaying(false); setDevMapDistance(S.distanceM - 100, true); return; }
+        if (e.code === 'PageDown') { e.preventDefault(); setDevMapPlaying(false); devMapNextStop(); return; }
+        if (e.code === 'PageUp') { e.preventDefault(); setDevMapPlaying(false); devMapPrevStop(); return; }
+        if (e.code === 'Home') { e.preventDefault(); setDevMapPlaying(false); setDevMapDistance(0, true); return; }
+        if (e.code === 'End') { e.preventDefault(); setDevMapPlaying(false); setDevMapDistance(DEV_MAP_MAX_M, true); return; }
+        if (e.code === 'ArrowUp' || e.code === 'ArrowDown' || e.key === 'w' || e.key === 'W' || e.key === 's' || e.key === 'S') { e.preventDefault(); return; }
+      }
       if (e.code === 'Space' || e.code === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+        if (e.repeat) return;
         e.preventDefault(); jumpPress();
       } else if (e.code === 'ArrowDown' || e.key === 's' || e.key === 'S') {
         e.preventDefault(); player.fastFall = true;
@@ -680,6 +762,7 @@
     function sfxLevelUp() { sfx(660, 990, 0.20, 'triangle', 0.1); }
     function sfxStorm()   { sfx(440, 1100, 0.30, 'sine', 0.09); }
     function sfxCombo()   { sfx(523, 1568, 0.18, 'triangle', 0.11); }
+    function sfxCue()     { sfx(320, 520, 0.12, 'sine', 0.05); }
 
     // ==================== BIOMES ====================
     var BIOME_PALETTES = {
@@ -759,9 +842,9 @@
           stars: blend > 0.5 ? p2.stars : p1.stars
         };
       }
-      // Phase 18c — anti-fatigue hue rotation. Only past cosmic biome (1000m+).
-      // Tiny shift (max ±15°) every 2000m so 3-hour sessions never feel visually identical.
-      if (S.distanceM > 1000) {
+      // Phase 18c — anti-fatigue hue rotation. Tiny shift (max ±15°)
+      // every 2000m so long Mahakash runs never feel visually identical.
+      if (S.distanceM >= 7000) {
         var hueDeg = Math.sin(S.distanceM / 2000 * Math.PI * 2) * 15;
         if (Math.abs(hueDeg) > 0.5) {
           out = {
@@ -778,6 +861,69 @@
     }
 
     // ==================== PATTERN LIBRARY ====================
+    var OBSTACLE_META = {
+      '404':        { size: 42, y: 'ground', draw: 'drawChili',      hit: 'hit404',    input: 'tap' },
+      'cosmic_rock':{ size: 42, y: 'ground', draw: 'drawCosmicRock', hit: 'hitRock',   input: 'tap' },
+      'sad':        { size: 50, y: 'air',    yOffset: 95,  draw: 'drawFly',        hit: 'hitSad',    input: 'tap_or_hold' },
+      'sad_high':   { size: 50, y: 'air',    yOffset: 130, draw: 'drawFly',        hit: 'hitSad',    input: 'hold_or_double' },
+      'spike':      { size: 38, y: 'ground', draw: 'drawPotty',      hit: 'hitSpike',  input: 'hold' },
+      'ghost_404':  { size: 42, y: 'ground', draw: 'drawChiliGhost', hit: 'hitGhost',  input: 'tap' },
+      'dark_spike': { size: 38, y: 'ground', draw: 'drawPottyDark',  hit: 'hitDark',   input: 'hold', cue: true }
+    };
+
+    var BONUS_PICKUP_META = {
+      marie:   { draw: 'drawBiscuit',    value: 20, label: '+20', color: [34,197,94],  yOffset: 112 },
+      singara: { draw: 'drawSingara',    value: 30, label: '+30', color: [16,185,129], yOffset: 142 },
+      slice:   { draw: 'drawBreadSlice', value: 50, label: '+50', color: [20,184,166], yOffset: 172 }
+    };
+    var BONUS_PICKUP_ORDER = ['marie', 'singara', 'slice'];
+
+    var BOSS_DEFS = [
+      {
+        id: 'bhoot_mama', distance: 1000, name: 'Bhoot Mama', bn: 'ভূত মামা', draw: 'drawBhootMama', reward: 500,
+        defeated: 'Bhoot Mama fled! +500', gapFrames: 92, recoveryFrames: 120,
+        waves: [
+          [{type:'ghost_404', dx:0}],
+          [{type:'ghost_404', dx:0}],
+          [{type:'ghost_404', dx:0}, {type:'404', dx:220}]
+        ]
+      },
+      {
+        id: 'bazar_raja', distance: 2500, name: 'Bazar Raja', bn: 'বাজার রাজা', draw: 'drawBazarRaja', reward: 800,
+        defeated: 'Bazar Raja down! +800', gapFrames: 96, recoveryFrames: 150,
+        waves: [
+          [{type:'404', dx:0}, {type:'spike', dx:230}],
+          [{type:'sad_high', dx:0}, {type:'404', dx:190}],
+          [{type:'404', dx:0}, {type:'sad_high', dx:160}, {type:'spike', dx:330}]
+        ]
+      },
+      {
+        id: 'bhoot_jolokia', distance: 5000, name: 'Bhoot Jolokia', bn: 'ভূত জলোকিয়া', draw: 'drawBhootJolokia', reward: 1200,
+        defeated: 'Jolokia defeated! +1200', gapFrames: 104, recoveryFrames: 180,
+        waves: [
+          [{type:'ghost_404', dx:0}, {type:'dark_spike', dx:220}],
+          [{type:'sad_high', dx:0}, {type:'ghost_404', dx:180}],
+          [{type:'ghost_404', dx:0}, {type:'sad_high', dx:150}, {type:'dark_spike', dx:330}],
+          [{type:'sad_high', dx:0}, {type:'ghost_404', dx:170}, {type:'sad_high', dx:340}]
+        ]
+      },
+      {
+        id: 'mashala_deb', distance: 8000, name: 'Mashala Deb', bn: 'মশলা দেব', draw: 'drawMashalaDeb', reward: 3000,
+        defeated: 'Tea Master! Endless x2 unlocked', gapFrames: 112, recoveryFrames: 240, final: true,
+        waves: [
+          [{type:'404', dx:0}, {type:'cosmic_rock', dx:220}],
+          [{type:'sad_high', dx:0}, {type:'404', dx:180}],
+          [{type:'dark_spike', dx:0}, {type:'sad_high', dx:220}],
+          [{type:'ghost_404', dx:0}, {type:'sad_high', dx:150}, {type:'dark_spike', dx:340}],
+          [{type:'cosmic_rock', dx:0}, {type:'sad_high', dx:170}, {type:'ghost_404', dx:360}]
+        ]
+      }
+    ];
+
+    function obstacleMeta(type) {
+      return OBSTACLE_META[type] || OBSTACLE_META['404'];
+    }
+
     var PATTERNS = {
       easy: [
         [{type:'404', dx:0}],
@@ -792,10 +938,32 @@
         [{type:'404', dx:0}, {type:'404', dx:140}, {type:'404', dx:280}],
         [{type:'spike', dx:0}, {type:'spike', dx:170}],
       ],
+      bazar: [
+        [{type:'404', dx:0}, {type:'sad_high', dx:150}],
+        [{type:'spike', dx:0}, {type:'404', dx:220}],
+        [{type:'404', dx:0}, {type:'sad', dx:190}, {type:'spike', dx:250}],
+        [{type:'sad_high', dx:0}, {type:'404', dx:190}],
+        [{type:'404', dx:0}, {type:'spike', dx:170}, {type:'sad_high', dx:300}]
+      ],
       hard: [
         [{type:'spike', dx:0}, {type:'spike', dx:140}, {type:'spike', dx:280}],
         [{type:'sad', dx:0}, {type:'spike', dx:130}, {type:'404', dx:260}],
         [{type:'404', dx:0}, {type:'spike', dx:120}, {type:'sad', dx:240}],
+      ],
+      raat: [
+        [{type:'ghost_404', dx:0}],
+        [{type:'ghost_404', dx:0}, {type:'dark_spike', dx:220}],
+        [{type:'ghost_404', dx:0}, {type:'sad_high', dx:150}],
+        [{type:'ghost_404', dx:0}, {type:'dark_spike', dx:190}, {type:'sad', dx:240}],
+        [{type:'sad_high', dx:0}, {type:'dark_spike', dx:220}],
+        [{type:'ghost_404', dx:0}, {type:'dark_spike', dx:170}, {type:'sad_high', dx:240}]
+      ],
+      cosmic: [
+        [{type:'cosmic_rock', dx:0}],
+        [{type:'cosmic_rock', dx:0}, {type:'sad_high', dx:170}],
+        [{type:'ghost_404', dx:0}, {type:'cosmic_rock', dx:220}],
+        [{type:'cosmic_rock', dx:0}, {type:'dark_spike', dx:220}, {type:'sad_high', dx:390}],
+        [{type:'sad_high', dx:0}, {type:'cosmic_rock', dx:180}, {type:'ghost_404', dx:360}]
       ],
       // Phase 11 — 5 hand-authored set-pieces, gated by score thresholds (300/600/1000/2000/5000).
       // Each unlocks silently. They progressively shorten gaps and stack triple-jumps.
@@ -816,18 +984,18 @@
       var bId = CFG.BIOMES[S.biomeIdx].id;
       var pool;
       if (bId === 'para')   pool = PATTERNS.easy.concat(PATTERNS.easy, PATTERNS.medium);
-      else if (bId === 'bazar') pool = PATTERNS.easy.concat(PATTERNS.medium, PATTERNS.medium);
-      else if (bId === 'raat')  pool = PATTERNS.medium.concat(PATTERNS.medium, PATTERNS.hard);
-      else                       pool = PATTERNS.medium.concat(PATTERNS.hard, PATTERNS.hard);
-      // Phase 11 — splice in expert set-pieces as score milestones unlock them.
-      // Weight stays low (1 expert per 3 base) so the player still gets variety.
+      else if (bId === 'bazar') pool = PATTERNS.easy.concat(PATTERNS.medium, PATTERNS.bazar, PATTERNS.bazar);
+      else if (bId === 'raat')  pool = PATTERNS.medium.concat(PATTERNS.hard, PATTERNS.raat, PATTERNS.raat);
+      else                       pool = PATTERNS.medium.concat(PATTERNS.hard, PATTERNS.raat, PATTERNS.cosmic, PATTERNS.cosmic);
+      // Phase 11 — splice in expert set-pieces as distance milestones unlock them.
+      // Scaled to the 30-minute arc — patterns unlock at Para-mid, Bazar-early, Bazar-mid, Raat-early, Mahakash.
       var sc = S.distanceM | 0;
       var unlockedExpert = 0;
-      if (sc >= 300)  unlockedExpert = 1;
-      if (sc >= 600)  unlockedExpert = 2;
-      if (sc >= 1000) unlockedExpert = 3;
-      if (sc >= 2000) unlockedExpert = 4;
-      if (sc >= 5000) unlockedExpert = 5;
+      if (sc >= 900)   unlockedExpert = 1;  // Para mid — Picket Fence
+      if (sc >= 1500)  unlockedExpert = 2;  // Bazar start — Cloud Trap
+      if (sc >= 3000)  unlockedExpert = 3;  // Bazar mid — 404 Wall
+      if (sc >= 5000)  unlockedExpert = 4;  // Raat start — Glass Floor
+      if (sc >= 7000)  unlockedExpert = 5;  // Mahakash — Endgame
       if (unlockedExpert > 0) {
         for (var ei = 0; ei < unlockedExpert; ei++) pool.push(PATTERNS.expert[ei]);
       }
@@ -835,17 +1003,21 @@
     }
     function queuePattern() {
       var p = pickPattern();
+      queuePatternSteps(p);
+    }
+    function queuePatternSteps(p) {
       for (var i = 0; i < p.length; i++) {
         S.patternQueue.push({ type: p[i].type, dxRemaining: p[i].dx });
       }
     }
 
     function obstacleSize(type) {
-      return type === 'sad' ? 50 : (type === 'spike' ? 38 : 42);
+      return obstacleMeta(type).size;
     }
     function spawnObstacle(type) {
       var size = obstacleSize(type);
-      var y = type === 'sad' ? GROUND_Y - 95 : GROUND_Y - size/2 - 2;
+      var meta = obstacleMeta(type);
+      var y = meta.y === 'air' ? GROUND_Y - (meta.yOffset || 95) : GROUND_Y - size/2 - 2;
       S.obstacles.push({
         x: W + 60, y: y, size: size, type: type,
         rot: 0, bob: dailyRng() * Math.PI * 2, nearMissed: false
@@ -865,21 +1037,109 @@
       var y = GROUND_Y - 130 - freeRng() * 80;
       S.bishesh.push({ x: W + 40, y: y, bob: freeRng()*Math.PI*2, glow: 0 });
     }
+    function spawnChanachur() {
+      var y = GROUND_Y - 120 - freeRng() * 80;
+      S.chanachur.push({ x: W + 40, y: y, bob: freeRng()*Math.PI*2, glow: 0 });
+    }
+    function bonusPickupMeta(type) {
+      return BONUS_PICKUP_META[type] || BONUS_PICKUP_META.marie;
+    }
+    function chooseBonusPickupType() {
+      if (S.distanceM >= 3500 && freeRng() < 0.24) return 'slice';
+      if (S.distanceM >= 2000 && freeRng() < 0.45) return 'singara';
+      return 'marie';
+    }
+    function spawnBonusPickup(type) {
+      var meta = bonusPickupMeta(type);
+      S.bonusPickups.push({ x: W + 44, y: GROUND_Y - meta.yOffset, type: type, bob: freeRng()*Math.PI*2, glow: 0 });
+    }
+    function isAkashganga() {
+      return S.distanceM >= CFG.AKASHGANGA_START_M && S.distanceM < CFG.AKASHGANGA_END_M;
+    }
+    function nextDueBoss() {
+      for (var i = 0; i < BOSS_DEFS.length; i++) {
+        var def = BOSS_DEFS[i];
+        if (!S.bossesDone[def.id] && S.distanceM >= def.distance) return def;
+      }
+      return null;
+    }
+    function startBoss(def) {
+      S.boss = { def: def, waveIndex: 0, introFrames: CFG.BOSS_INTRO_FRAMES, nextWaveFrame: 0 };
+      S.patternQueue = [];
+      S.obstacles = [];
+      S.postHitSafeUntil = frameCounter + 45;
+      showLevelBanner(def.name + ' · ' + def.bn);
+      sfxStorm();
+      haptic([10, 8, 24]);
+    }
+    function finishBoss(frameNow) {
+      if (!S.boss) return;
+      var def = S.boss.def;
+      S.bossesDone[def.id] = true;
+      S.boss = null;
+      S.patternQueue = [];
+      S.bonusScore += def.reward;
+      S.postHitSafeUntil = frameNow + (def.recoveryFrames || 120);
+      sparkleBurst(player.x + 70, player.y - 30, def.final ? [244,196,48] : [34,197,94], 26);
+      floater('+' + def.reward, player.x + 74, player.y - 52, def.final ? '#f4c430' : '#22c55e');
+      showTip(def.defeated);
+      sfxLevelUp();
+      if (def.final) {
+        PROFILE.teaMaster = true;
+        PROFILE.teaMasterCount++;
+        S.endlessMode = true;
+        S.endlessMult = CFG.ENDLESS_MULT;
+        saveProfile();
+      }
+      maybeUnlockSkin();
+    }
+    function updateBossQueue(frameNow) {
+      if (!S.boss) {
+        var due = nextDueBoss();
+        if (due) startBoss(due);
+      }
+      if (!S.boss) return false;
+      if (S.boss.introFrames > 0) {
+        S.boss.introFrames--;
+        return true;
+      }
+      if (S.patternQueue.length === 0) {
+        var def = S.boss.def;
+        if (S.boss.waveIndex >= def.waves.length) {
+          if (frameNow >= S.boss.nextWaveFrame) finishBoss(frameNow);
+          return true;
+        }
+        if (frameNow >= S.boss.nextWaveFrame) {
+          queuePatternSteps(def.waves[S.boss.waveIndex]);
+          S.boss.waveIndex++;
+          S.boss.nextWaveFrame = frameNow + (def.gapFrames || 90);
+          if (S.patternQueue.length > 0) S.patternQueue[0].dxRemaining = 0;
+          sfxCue();
+        }
+      }
+      return true;
+    }
     function updateSpawnScheduler(frameNow) {
       if (frameNow < S.postHitSafeUntil) return;
+      if (isAkashganga()) return;
       if (S.stormState !== 'idle') return;
-      if (S.patternQueue.length === 0 && frameNow >= S.nextPatternFrame) {
+      var bossMode = updateBossQueue(frameNow);
+      if (!bossMode && S.patternQueue.length === 0 && frameNow >= S.nextPatternFrame) {
         queuePattern();
         if (S.patternQueue.length > 0) S.patternQueue[0].dxRemaining = 0;
       }
       if (S.patternQueue.length === 0) return;
       var head = S.patternQueue[0];
+      if (head.type === 'dark_spike' && !head.cueFired && head.dxRemaining <= Math.max(S.speed * 18, 1)) {
+        head.cueFired = true;
+        sfxCue();
+      }
       if (head.dxRemaining <= 0) {
         // Phase 53 — onboarding: only spawn 404 obstacles
         var spawnType = (S.onboarding && head.type !== '404') ? '404' : head.type;
         spawnObstacle(spawnType);
         S.patternQueue.shift();
-        if (S.patternQueue.length === 0) {
+        if (!bossMode && S.patternQueue.length === 0) {
           // Phase 18a — TRUE INFINITE DIFFICULTY. Density climbs logarithmically forever after speed plateau.
           // At 5000m gaps are ~60% of base; at 20000m gaps cap at ~45%. Pure pattern density, not speed.
           var infMult = 1 + Math.log10(Math.max(1, S.distanceM / 500)) * 0.55;
@@ -942,8 +1202,11 @@
       ".bb-row:last-of-type { border-bottom:0; }",
       ".bb-row label { color:rgba(255,255,255,0.65); font-size:11px; font-weight:600; letter-spacing:0.5px; }",
       ".bb-row .bb-seg { display:flex; gap:2px; background:rgba(255,255,255,0.05); padding:2px; border-radius:100px; }",
-      ".bb-row .bb-seg button { background:transparent; color:rgba(255,255,255,0.55); border:0; padding:4px 9px; border-radius:100px; font-size:10px; font-weight:700; cursor:pointer; transition:all 0.15s; font-family:inherit; }",
+      ".bb-row .bb-seg button { background:transparent; color:rgba(255,255,255,0.55); border:0; padding:4px 9px; border-radius:100px; font-size:10px; font-weight:700; cursor:pointer; transition:all 0.15s; font-family:inherit; max-width:72px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }",
       ".bb-row .bb-seg button.on { background:#f4c430; color:#1a0f00; }",
+      ".bb-skin-row { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.04); }",
+      ".bb-skin-row label { color:rgba(255,255,255,0.65); font-size:11px; font-weight:600; letter-spacing:0.5px; }",
+      ".bb-skin-select { min-width:0; width:142px; border:0; border-radius:999px; padding:6px 30px 6px 10px; background:#f4c430; color:#1a0f00; font:800 10px -apple-system,BlinkMacSystemFont,'Inter','Hind Siliguri',sans-serif; outline:0; cursor:pointer; }",
       ".bb-stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:14px 0; }",
       ".bb-stat-cell { background:rgba(255,255,255,0.04); padding:10px; border-radius:12px; }",
       ".bb-stat-cell .bb-k { font-size:10px; color:#888; letter-spacing:0.06em; text-transform:uppercase; }",
@@ -962,6 +1225,18 @@
       ".bb-win { background:linear-gradient(135deg,#fff 0%,#f1f1f1 100%); color:#000; }",
       ".bb-win h2 { color:#000; }",
       ".bb-win p { color:rgba(0,0,0,0.8); }",
+      ".bb-devmap { position:absolute; left:50%; bottom:calc(18px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); width:min(680px,calc(100vw - 28px)); padding:12px 14px; border-radius:16px; background:rgba(8,12,18,0.84); border:1px solid rgba(255,255,255,0.14); box-shadow:0 16px 50px rgba(0,0,0,0.38); pointer-events:auto; color:#fff; font-family:inherit; }",
+      ".bb-devmap-top { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:9px; }",
+      ".bb-devmap-title { min-width:0; }",
+      ".bb-devmap-kicker { font-size:9px; font-weight:900; letter-spacing:1.6px; text-transform:uppercase; color:#5eead4; }",
+      ".bb-devmap-name { font-size:15px; font-weight:900; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }",
+      ".bb-devmap-meter { font-size:22px; font-weight:900; color:#fff; font-variant-numeric:tabular-nums; }",
+      ".bb-devmap input[type=range] { width:100%; accent-color:#10b981; cursor:pointer; }",
+      ".bb-devmap-actions { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; }",
+      ".bb-devmap-actions button { border:1px solid rgba(255,255,255,0.16); background:rgba(255,255,255,0.08); color:#fff; border-radius:999px; padding:6px 10px; font:800 11px -apple-system,BlinkMacSystemFont,'Inter','Hind Siliguri',sans-serif; cursor:pointer; }",
+      ".bb-devmap-actions button:hover { background:rgba(255,255,255,0.16); }",
+      ".bb-devmap-hint { font-size:10px; color:rgba(255,255,255,0.58); text-align:right; white-space:nowrap; }",
+      "@media (max-width:520px){ .bb-devmap { bottom:10px; padding:10px; } .bb-devmap-name { font-size:13px; } .bb-devmap-meter { font-size:18px; } .bb-devmap-hint { display:none; } }",
       '</style>',
       '<div class="bb-ui-container">',
       '  <div class="bb-hud-minimal">',
@@ -1002,8 +1277,10 @@
     var scoreEl = document.getElementById('bb-score');
     function updateHUD() {
       if (!scoreEl) return;
-      // Ease displayedScore toward S.score (12% per frame ≈ 180ms to settle)
-      if (displayedScore !== S.score) {
+      // E-2: REDUCED_MOTION = snap instantly, no tween
+      if (REDUCED_MOTION) {
+        displayedScore = S.score;
+      } else if (displayedScore !== S.score) {
         var diff = S.score - displayedScore;
         if (Math.abs(diff) <= 1) displayedScore = S.score;
         else displayedScore += Math.sign(diff) * Math.max(1, Math.ceil(Math.abs(diff) * 0.12));
@@ -1055,16 +1332,7 @@
         scoreTapTimer = setTimeout(function () { scoreTapCount = 0; }, 1500);
         if (scoreTapCount >= 7) {
           scoreTapCount = 0;
-          // Phase 30 — unlock Robot Cup skin permanently
-          if (!PROFILE.unlockedSkins) PROFILE.unlockedSkins = ['brown'];
-          if (PROFILE.unlockedSkins.indexOf('robot') < 0) {
-            PROFILE.unlockedSkins.push('robot');
-            PROFILE.activeSkin = 'robot';
-            saveProfile();
-            achievementToast('🤖 Robot Cup unlocked!');
-          } else {
-            showTip('🤖 Robot Cup already active!');
-          }
+          showTip('Secret found');
           sfxLevelUp();
         }
       });
@@ -1082,6 +1350,12 @@
           return '<button data-v="' + o.v + '" class="' + (o.v === current ? 'on' : '') + '">' + o.l + '</button>';
         }).join('');
         return '<div class="bb-row"><label>' + label + '</label><div class="bb-seg" data-group="' + label + '">' + btns + '</div></div>';
+      }
+      function skinSelect(label, options, current) {
+        var opts = options.map(function (o) {
+          return '<option value="' + o.v + '"' + (o.v === current ? ' selected' : '') + '>' + o.l + '</option>';
+        }).join('');
+        return '<div class="bb-skin-row"><label>' + label + '</label><select id="bb-skin-select" class="bb-skin-select" aria-label="' + label + '">' + opts + '</select></div>';
       }
       var unlockedAchv = PROFILE.achievements.length;
       var achvHtml = ACHIEVEMENTS.map(function (a) {
@@ -1102,11 +1376,43 @@
         seg(T('quality'),  [{v:'auto',l:'Auto'},{v:'high',l:'High'},{v:'low',l:'Low'}], QUALITY.mode, null),
         seg(T('motion'),   [{v:'on',l:'ON'},{v:'off',l:'OFF'}], REDUCED_MOTION ? 'off' : 'on', null),
         seg(T('language'), [{v:'en',l:'EN'},{v:'bn',l:'বাংলা'}], LANG, null),
-        skinOptions.length > 1 ? seg(T('skin'), skinOptions, PROFILE.activeSkin || 'brown', null) : '',
+        skinOptions.length > 1 ? skinSelect(T('skin'), skinOptions, PROFILE.activeSkin || 'brown') : '',
+        skinOptions.length > 1 ? '<div style="display:flex;justify-content:center;padding:6px 0 2px;"><canvas id="bb-skin-preview" width="56" height="64" style="border-radius:10px;background:rgba(255,255,255,0.06);"></canvas></div>' : '',
+        seg('Dev Mode', [{v:'on',l:'ON'},{v:'off',l:'OFF'}], DEV_MAP ? 'on' : 'off', null),
         '<button class="bb-btn" id="bb-close" style="margin-top:14px;width:100%;padding:9px 0;font-size:12px;">' + T('close') + '</button>'
       ].join('');
       hud.appendChild(sheet);
       requestAnimationFrame(function () { sheet.classList.add('in'); });
+      // Q3 — draw skin preview mini canvas
+      function drawSkinPreview(skinId) {
+        var pc = sheet.querySelector('#bb-skin-preview');
+        if (!pc || !sprites.player) return;
+        var px = pc.getContext('2d');
+        px.clearRect(0, 0, 56, 64);
+        var sp = sprites.player;
+        // Draw sprite scaled to fit 56x64
+        var scale = Math.min(56 / sp.w, 64 / sp.h) * 0.82;
+        var dx = (56 - sp.w * scale) / 2, dy = (64 - sp.h * scale) / 2;
+        px.drawImage(sp.canvas, dx, dy, sp.w * scale, sp.h * scale);
+        // Apply tint if skin has one
+        var skinObj = null;
+        for (var si = 0; si < SKINS.length; si++) if (SKINS[si].id === skinId) { skinObj = SKINS[si]; break; }
+        if (skinObj && skinObj.tint) {
+          px.globalCompositeOperation = 'source-atop';
+          px.fillStyle = skinObj.tint;
+          px.fillRect(dx, dy, sp.w * scale, sp.h * scale);
+          px.globalCompositeOperation = 'source-over';
+        }
+      }
+      requestAnimationFrame(function () { drawSkinPreview(PROFILE.activeSkin || 'brown'); });
+      var skinSelectEl = sheet.querySelector('#bb-skin-select');
+      if (skinSelectEl) {
+        skinSelectEl.addEventListener('change', function () {
+          PROFILE.activeSkin = skinSelectEl.value;
+          saveProfile();
+          drawSkinPreview(PROFILE.activeSkin || 'brown');
+        });
+      }
       // Wire seg buttons
       sheet.querySelectorAll('.bb-seg').forEach(function (grp) {
         grp.addEventListener('click', function (e) {
@@ -1136,6 +1442,12 @@
           } else if (label === T('skin')) {
             // Phase 14 — swap active cup skin (cosmetic only; takes effect next frame)
             PROFILE.activeSkin = v; saveProfile();
+            drawSkinPreview(v); // Q3 — update preview canvas immediately
+          } else if (label === 'Dev Mode') {
+            var u = new URL(window.location.href);
+            if (v === 'on') { u.searchParams.set('__bb_devmap', '1'); }
+            else { u.searchParams.delete('__bb_devmap'); }
+            window.location.replace(u.toString());
           }
         });
       });
@@ -1322,6 +1634,18 @@
       return { canvas: c, ctx: x, w: w, h: h };
     }
     function buildPlayerSprite() {
+      var BBM = (typeof window !== 'undefined') ? window.BBModels : null;
+      if (BBM && typeof BBM.drawChai === 'function') {
+        var heroW = 118, heroH = 132;
+        var hero = makeSpriteCanvas(heroW, heroH);
+        try {
+          BBM.drawChai(hero.ctx, 0.7, heroW, heroH);
+          sprites.player = hero;
+          sprites.playerFullModel = true;
+          return;
+        } catch (e) { sprites.playerFullModel = false; }
+      }
+      sprites.playerFullModel = false;
       var pad = 22, w = player.width + pad*2, h = player.height + pad*2;
       var s = makeSpriteCanvas(w, h);
       var x = s.ctx;
@@ -1363,6 +1687,27 @@
     }
     function buildObstacleSprite(type) {
       var size = obstacleSize(type);
+      // Approved DevModels designs (chili/fly/potty) are drawn for ~280px viewports
+      // and self-scale via Math.min(w,h)/280. We give them a generously sized
+      // canvas (~3.5x hitbox) so the silhouette breathes without clipping. The
+      // game logic still uses size/obstacleSize for hitbox — only the visual is bigger.
+      var BBM = (typeof window !== 'undefined') ? window.BBModels : null;
+      var modelKey = null;
+      if (BBM) {
+        modelKey = obstacleMeta(type).draw;
+      }
+      if (BBM && modelKey && typeof BBM[modelKey] === 'function') {
+        var spriteW = Math.round(size * 2.6);
+        var spriteH = Math.round(size * 3.2);
+        var s = makeSpriteCanvas(spriteW, spriteH);
+        try { BBM[modelKey](s.ctx, 0.7, spriteW, spriteH); } catch (e) {
+          // Fall through to legacy renderer below
+          modelKey = null;
+        }
+        if (modelKey) { sprites['obs_' + type] = s; return; }
+      }
+
+      // ---- Legacy fallback art (used if BBModels script failed to load) ----
       var w = size + 16, h = size * 1.4 + 16;
       var s = makeSpriteCanvas(w, h);
       var x = s.ctx;
@@ -1411,7 +1756,69 @@
       }
       sprites['obs_' + type] = s;
     }
+    function buildChanachurSprite() {
+      var BBM = (typeof window !== 'undefined') ? window.BBModels : null;
+      var spriteW = 74, spriteH = 74;
+      var s = makeSpriteCanvas(spriteW, spriteH);
+      if (BBM && typeof BBM.drawChanachur === 'function') {
+        try {
+          BBM.drawChanachur(s.ctx, 0.7, spriteW, spriteH);
+          sprites.chanachur = s;
+          return;
+        } catch (e) {}
+      }
+      var x = s.ctx;
+      x.translate(spriteW / 2, spriteH / 2);
+      x.fillStyle = '#f97316';
+      x.strokeStyle = '#7c2d12';
+      x.lineWidth = 3;
+      x.beginPath(); x.ellipse(0, 8, 24, 14, 0, 0, Math.PI * 2); x.fill(); x.stroke();
+      x.fillStyle = '#fde68a';
+      for (var i = 0; i < 14; i++) {
+        var a = i * 2.39996;
+        var r = 5 + (i % 4) * 4;
+        x.beginPath(); x.arc(Math.cos(a) * r, 2 + Math.sin(a) * r * 0.5, 2.3, 0, Math.PI * 2); x.fill();
+      }
+      sprites.chanachur = s;
+    }
+    function buildBonusPickupSprite(type) {
+      var meta = bonusPickupMeta(type);
+      var BBM = (typeof window !== 'undefined') ? window.BBModels : null;
+      var spriteW = 76, spriteH = 76;
+      var s = makeSpriteCanvas(spriteW, spriteH);
+      if (BBM && meta.draw && typeof BBM[meta.draw] === 'function') {
+        try {
+          BBM[meta.draw](s.ctx, 0.7, spriteW, spriteH);
+          sprites['bonus_' + type] = s;
+          return;
+        } catch (e) {}
+      }
+      var x = s.ctx;
+      x.translate(spriteW / 2, spriteH / 2);
+      x.fillStyle = 'rgb(' + meta.color.join(',') + ')';
+      x.strokeStyle = 'rgba(5,40,30,0.8)';
+      x.lineWidth = 3;
+      x.beginPath(); x.arc(0, 0, 24, 0, Math.PI * 2); x.fill(); x.stroke();
+      x.fillStyle = '#fff';
+      x.font = 'bold 16px -apple-system, sans-serif';
+      x.textAlign = 'center'; x.textBaseline = 'middle';
+      x.fillText(meta.label, 0, 1);
+      sprites['bonus_' + type] = s;
+    }
     function buildChaiSprite() {
+      // Bhar Cha is the hero. Chai pickups use a simple point-token cup language.
+      var BBM = (typeof window !== 'undefined') ? window.BBModels : null;
+      if (BBM && typeof BBM.drawChaiToken === 'function') {
+        var spriteW = 74, spriteH = 74;
+        var s2 = makeSpriteCanvas(spriteW, spriteH);
+        try {
+          BBM.drawChaiToken(s2.ctx, 0.7, spriteW, spriteH);
+          sprites.chai = s2;
+          return;
+        } catch (e) { /* fall through to legacy below */ }
+      }
+
+      // ---- Legacy fallback (simple cup sprite) ----
       var w = 60, h = 64;
       var s = makeSpriteCanvas(w, h);
       var x = s.ctx;
@@ -1441,8 +1848,14 @@
       buildPlayerSprite();
       buildObstacleSprite('404');
       buildObstacleSprite('sad');
+      buildObstacleSprite('sad_high');
       buildObstacleSprite('spike');
+      buildObstacleSprite('ghost_404');
+      buildObstacleSprite('dark_spike');
+      buildObstacleSprite('cosmic_rock');
       buildChaiSprite();
+      buildChanachurSprite();
+      for (var bp = 0; bp < BONUS_PICKUP_ORDER.length; bp++) buildBonusPickupSprite(BONUS_PICKUP_ORDER[bp]);
     }
 
     // ==================== DRAW FROM SPRITES ====================
@@ -1459,27 +1872,32 @@
         ctx.globalAlpha = 0.4;
       }
       // Phase 6 — palette lookup memoized via _palCache; safe to call freely.
-      // Blit cached sprite (Phase 33)
+      // Blit cached sprite. Skin tint is pre-baked into offscreen canvas (getTintedPlayerSprite)
+      // to AVOID the source-atop box artifact that appears when compositing on the main canvas.
       var sp = sprites.player;
+      var BBM = (typeof window !== 'undefined') ? window.BBModels : null;
+      if (DEV_MAP && devMapReady && sprites.playerFullModel && sp && BBM) {
+        var liveT = player.runFrame / 4;
+        ctx.save();
+        ctx.translate(-sp.w / 2, -sp.h / 2);
+        try {
+          if (typeof BBM.drawCharacterCup === 'function') {
+            BBM.drawCharacterCup(ctx, liveT, sp.w, sp.h, { label: 'Bhar Cha', tint: getActiveSkinTint() || 'rgba(210,105,40,0.55)', stripes: true });
+          } else if (typeof BBM.drawChai === 'function') {
+            BBM.drawChai(ctx, liveT, sp.w, sp.h);
+          }
+        } catch (e) {
+          ctx.drawImage(sp.canvas, 0, 0, sp.w, sp.h);
+        }
+        ctx.restore();
+        ctx.restore();
+        return;
+      }
       if (sp) {
-        ctx.drawImage(sp.canvas, -sp.w/2, -sp.h/2, sp.w, sp.h);
-        // Phase 14 — active cup skin tint (source-atop overlay; null tint = brown default)
-        var skinTint = getActiveSkinTint();
-        if (skinTint) {
-          ctx.globalCompositeOperation = 'source-atop';
-          ctx.fillStyle = skinTint;
-          ctx.fillRect(-sp.w/2, -sp.h/2, sp.w, sp.h);
-          ctx.globalCompositeOperation = 'source-over';
-        }
-        // Phase 25 tint — USER FIX: dropped 0.18 → 0.05 alpha. Was washing the cup body to look
-        // like a white box behind the chai. Cup must read as warm cream — sky tint is now whisper.
-        if (!REDUCED_MOTION) {
-          var pa = currentPalette();
-          ctx.globalCompositeOperation = 'source-atop';
-          ctx.fillStyle = 'rgba(' + pa.skyTop[0] + ',' + pa.skyTop[1] + ',' + pa.skyTop[2] + ',0.05)';
-          ctx.fillRect(-sp.w/2, -sp.h/2, sp.w, sp.h);
-          ctx.globalCompositeOperation = 'source-over';
-        }
+        var _tsp = getTintedPlayerSprite();
+        var _drawSp = _tsp || sp;
+        ctx.drawImage(_drawSp.canvas, -_drawSp.w/2, -_drawSp.h/2, _drawSp.w, _drawSp.h);
+        // Phase 25 sky tint removed — was creating a visible rectangle artifact at all alpha levels
       }
       // Eyes (drawn live so they can blink)
       var eyeY = -h*0.05;
@@ -1543,13 +1961,110 @@
       }
       ctx.restore();
     }
+    function rgba(color, alpha) {
+      return 'rgba(' + color[0] + ',' + color[1] + ',' + color[2] + ',' + alpha + ')';
+    }
+    function drawCollectibleCue(x, y, color, label, strong) {
+      var pulse = 0.55 + 0.45 * Math.sin(frameCounter * 0.18);
+      ctx.save();
+      ctx.translate(Math.round(x), Math.round(y));
+      ctx.strokeStyle = rgba(color, (strong ? 0.72 : 0.45) * pulse);
+      ctx.lineWidth = strong ? 3 : 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, strong ? 34 : 27, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = rgba(color, strong ? 0.18 : 0.10);
+      ctx.beginPath();
+      ctx.arc(0, 0, strong ? 28 : 21, 0, Math.PI * 2);
+      ctx.fill();
+      if (label) {
+        ctx.font = 'bold ' + (strong ? 15 : 12) + 'px -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.strokeStyle = 'rgba(0,0,0,0.62)';
+        ctx.lineWidth = 4;
+        ctx.strokeText(label, 0, strong ? -34 : -27);
+        ctx.fillStyle = '#fff';
+        ctx.fillText(label, 0, strong ? -34 : -27);
+      }
+      ctx.restore();
+    }
+    function drawDangerCue(o) {
+      var dist = o.x - player.x;
+      var alpha = dist < 420 ? Math.max(0.15, Math.min(0.78, 1 - dist / 460)) : 0.13;
+      var meta = obstacleMeta(o.type);
+      ctx.save();
+      ctx.translate(Math.round(o.x), Math.round(GROUND_Y + 4));
+      ctx.fillStyle = 'rgba(239,68,68,' + alpha + ')';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, o.size * 0.78, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,' + (alpha * 0.6) + ')';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-o.size * 0.46, -8);
+      ctx.lineTo(0, -20);
+      ctx.lineTo(o.size * 0.46, -8);
+      ctx.stroke();
+      if (dist < 280 || meta.cue) {
+        ctx.font = 'bold 18px -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = 'rgba(255,255,255,' + Math.min(1, alpha + 0.22) + ')';
+        ctx.fillText('!', 0, -32);
+      }
+      ctx.restore();
+    }
+    function drawBossPresence(t) {
+      if (!S.boss) return;
+      var def = S.boss.def;
+      var animT = devMapFrozen() ? frameCounter * CFG.FIXED_DT_MS : t;
+      var size = Math.min(210, Math.max(138, W * 0.18));
+      var x = W * 0.77;
+      var y = Math.max(110, GROUND_Y - 210);
+      var pulse = 0.5 + 0.5 * Math.sin(frameCounter * 0.11);
+      ctx.save();
+      var aura = ctx.createRadialGradient(x, y, 10, x, y, size * 0.72);
+      aura.addColorStop(0, def.final ? 'rgba(244,196,48,0.22)' : 'rgba(239,68,68,0.20)');
+      aura.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = aura;
+      ctx.fillRect(x - size, y - size, size * 2, size * 2);
+      ctx.globalAlpha = 0.42 + pulse * 0.12;
+      var BBM = (typeof window !== 'undefined') ? window.BBModels : null;
+      if (BBM && def.draw && typeof BBM[def.draw] === 'function') {
+        ctx.save();
+        ctx.translate(x - size / 2, y - size / 2);
+        try { BBM[def.draw](ctx, animT * 0.001, size, size); } catch (e) {}
+        ctx.restore();
+      } else {
+        ctx.fillStyle = def.final ? 'rgba(244,196,48,0.85)' : 'rgba(239,68,68,0.75)';
+        ctx.beginPath();
+        ctx.arc(x, y, size * 0.28, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 0.75;
+      ctx.font = 'bold 13px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#fff';
+      ctx.strokeStyle = 'rgba(0,0,0,0.65)';
+      ctx.lineWidth = 4;
+      ctx.strokeText(def.name, x, y + size * 0.58);
+      ctx.fillText(def.name, x, y + size * 0.58);
+      ctx.restore();
+    }
     function drawObstacle(o) {
       var sp = sprites['obs_' + o.type];
       if (!sp) return;
+      drawDangerCue(o);
       ctx.save();
       // Phase 4 — pixel-snap draw position (kills 1px shimmer)
       ctx.translate(Math.round(o.x), Math.round(o.y + Math.sin(o.bob) * 3));
-      if (o.type === '404') ctx.rotate(o.rot);
+      // Legacy 404 cube was designed to tumble. The new chili character (BBModels)
+      // has its own bob/sway built in and must stay upright — only spin the
+      // fallback cube art when BBModels failed to load.
+      if (o.type === '404' && !(typeof window !== 'undefined' && window.BBModels && window.BBModels.drawChili)) {
+        ctx.rotate(o.rot);
+      }
       ctx.drawImage(sp.canvas, -sp.w/2, -sp.h/2, sp.w, sp.h);
       ctx.restore();
     }
@@ -1558,6 +2073,7 @@
       if (!sp) return;
       ctx.save();
       ctx.translate(Math.round(c.x), Math.round(c.y + Math.sin(c.bob) * 5));
+      drawCollectibleCue(0, 0, [34,197,94], '+25', false);
       ctx.drawImage(sp.canvas, -sp.w/2, -sp.h/2, sp.w, sp.h);
       ctx.restore();
     }
@@ -1566,6 +2082,16 @@
       var bob = Math.sin(h.bob) * 4;
       ctx.save();
       ctx.translate(Math.round(h.x), Math.round(h.y + bob));
+      var BBM = (typeof window !== 'undefined') ? window.BBModels : null;
+      if (BBM && typeof BBM.drawHeartPickup === 'function') {
+        drawCollectibleCue(0, 0, [244,63,94], '+1', true);
+        ctx.save();
+        ctx.translate(-38, -38);
+        try { BBM.drawHeartPickup(ctx, frameCounter / 60, 76, 76); } catch (e) {}
+        ctx.restore();
+        ctx.restore();
+        return;
+      }
       ctx.fillStyle = '#ef4444';
       ctx.shadowColor = 'rgba(239,68,68,0.6)';
       ctx.shadowBlur = 12;
@@ -1587,6 +2113,16 @@
       var pulse = 0.7 + 0.3 * Math.sin(b.glow);
       ctx.save();
       ctx.translate(Math.round(b.x), Math.round(b.y + bob));
+      var BBM = (typeof window !== 'undefined') ? window.BBModels : null;
+      if (BBM && typeof BBM.drawBisheshChai === 'function') {
+        drawCollectibleCue(0, 0, [250,204,21], 'x3', true);
+        ctx.save();
+        ctx.translate(-40, -40);
+        try { BBM.drawBisheshChai(ctx, frameCounter / 60, 80, 80); } catch (e) {}
+        ctx.restore();
+        ctx.restore();
+        return;
+      }
       // Glow halo
       var grad = ctx.createRadialGradient(0, 0, 5, 0, 0, 30);
       grad.addColorStop(0, 'rgba(244,196,48,' + (0.6 * pulse) + ')');
@@ -1615,6 +2151,32 @@
         ctx.arc(Math.cos(sa) * 22, Math.sin(sa) * 22, 2.5, 0, Math.PI*2);
         ctx.fill();
       }
+      ctx.restore();
+    }
+    function drawChanachur(c) {
+      var sp = sprites.chanachur;
+      if (!sp) return;
+      var bob = Math.sin(c.bob) * 6;
+      var pulse = 0.75 + 0.25 * Math.sin(c.glow || 0);
+      ctx.save();
+      ctx.translate(Math.round(c.x), Math.round(c.y + bob));
+      var grad = ctx.createRadialGradient(0, 0, 5, 0, 0, 28);
+      grad.addColorStop(0, 'rgba(249,115,22,' + (0.42 * pulse) + ')');
+      grad.addColorStop(1, 'rgba(249,115,22,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(-30, -30, 60, 60);
+      ctx.drawImage(sp.canvas, -sp.w/2, -sp.h/2, sp.w, sp.h);
+      ctx.restore();
+    }
+    function drawBonusPickup(pickup) {
+      var meta = bonusPickupMeta(pickup.type);
+      var sp = sprites['bonus_' + pickup.type];
+      if (!sp) return;
+      var bob = Math.sin(pickup.bob) * 7;
+      ctx.save();
+      ctx.translate(Math.round(pickup.x), Math.round(pickup.y + bob));
+      drawCollectibleCue(0, 0, meta.color, meta.label, true);
+      ctx.drawImage(sp.canvas, -sp.w/2, -sp.h/2, sp.w, sp.h);
       ctx.restore();
     }
 
@@ -1658,8 +2220,10 @@
         clouds.push({ x: freeRng()*W, y: 50 + freeRng()*120, w: 70 + freeRng()*60, speed: 0.3 + freeRng()*0.4 });
       }
       buildings = [];
+      // Fixed 110px spacing so strip total is exactly 14*110=1540 — wrap lands perfectly.
+      // Size/type still randomised per building so they look varied.
       for (var b = 0; b < 14; b++) {
-        buildings.push({ x: b * 110, w: 60 + freeRng()*50, h: 80 + freeRng()*120, type: Math.floor(freeRng()*3) });
+        buildings.push({ x: b * 110, w: 55 + freeRng()*55, h: 80 + freeRng()*120, type: Math.floor(freeRng()*3) });
       }
       stars = [];
       for (var sIdx = 0; sIdx < 60; sIdx++) {
@@ -1703,12 +2267,25 @@
     initWeather();
 
     function drawBg(t) {
+      if (devMapFrozen()) t = frameCounter * CFG.FIXED_DT_MS;
       var p = currentPalette();
       var grad = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
       grad.addColorStop(0, 'rgb(' + p.skyTop.join(',') + ')');
       grad.addColorStop(1, 'rgb(' + p.skyBot.join(',') + ')');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, W, GROUND_Y);
+
+      if (isAkashganga()) {
+        var akMid = (CFG.AKASHGANGA_START_M + CFG.AKASHGANGA_END_M) / 2;
+        var akSpan = (CFG.AKASHGANGA_END_M - CFG.AKASHGANGA_START_M) / 2;
+        var akPulse = 1 - Math.min(1, Math.abs(S.distanceM - akMid) / akSpan);
+        var akGrad = ctx.createRadialGradient(W * 0.5, GROUND_Y * 0.36, 10, W * 0.5, GROUND_Y * 0.36, Math.max(W, H) * 0.72);
+        akGrad.addColorStop(0, 'rgba(255,255,255,' + (0.62 + akPulse * 0.18) + ')');
+        akGrad.addColorStop(0.36, 'rgba(180,245,255,0.34)');
+        akGrad.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = akGrad;
+        ctx.fillRect(0, 0, W, GROUND_Y);
+      }
 
       if (p.stars) {
         ctx.fillStyle = '#fff';
@@ -1772,20 +2349,31 @@
       ctx.fillStyle = 'rgba(255,255,255,' + (p.stars ? 0.4 : 0.85) + ')';
       for (var ci = 0; ci < clouds.length; ci++) {
         var cl = clouds[ci];
-        cl.x -= cl.speed;
-        if (cl.x + cl.w < -50) cl.x = W + 50;
+        if (!devMapFrozen()) {
+          cl.x -= cl.speed;
+          if (cl.x + cl.w < -50) cl.x = W + 50;
+        }
         drawCloud(cl.x, cl.y, cl.w);
       }
 
-      // Buildings (faster parallax)
-      var buildingScroll = (S.distancePx * 0.4) % 110;
+      // Buildings — seamless infinite scroll.
+      // When a building exits left, place it immediately after the rightmost building
+      // so the chain is always gapless regardless of varying widths.
+      var _bSpeed = devMapFrozen() ? 0 : S.speed * 0.4;
       ctx.save();
-      ctx.translate(-buildingScroll, 0);
       for (var bi = 0; bi < buildings.length; bi++) {
         var bl = buildings[bi];
-        var bx2 = bl.x;
-        if (bx2 + bl.w + buildingScroll < 0) bl.x += buildings.length * 110;
-        drawBuilding(bx2, GROUND_Y - bl.h, bl.w, bl.h, bl.type, !p.stars);
+        bl.x -= _bSpeed;
+        if (bl.x + bl.w < 0) {
+          // Find rightmost x + w among all buildings
+          var _maxRight = 0;
+          for (var _bj = 0; _bj < buildings.length; _bj++) {
+            var _r = buildings[_bj].x + buildings[_bj].w;
+            if (_r > _maxRight) _maxRight = _r;
+          }
+          bl.x = _maxRight + 18 + freeRng() * 20; // small random gap keeps it organic
+        }
+        drawBuilding(Math.round(bl.x), GROUND_Y - bl.h, bl.w, bl.h, bl.type, !p.stars);
       }
       ctx.restore();
 
@@ -1832,14 +2420,17 @@
 
     function drawWeather(t, palette) {
       var bId = CFG.BIOMES[S.biomeIdx].id;
+      var weatherMoving = !devMapFrozen();
       // Petals — Para
       if (bId === 'para') {
         ctx.fillStyle = 'rgba(255,182,193,0.7)';
         for (var i = 0; i < S.petals.length; i++) {
           var pe = S.petals[i];
-          pe.x += pe.vx; pe.y += pe.vy; pe.rot += pe.vr;
-          if (pe.y > GROUND_Y) { pe.y = -10; pe.x = W + freeRng()*100; }
-          if (pe.x < -20) { pe.x = W + 20; pe.y = freeRng()*H*0.5; }
+          if (weatherMoving) {
+            pe.x += pe.vx; pe.y += pe.vy; pe.rot += pe.vr;
+            if (pe.y > GROUND_Y) { pe.y = -10; pe.x = W + freeRng()*100; }
+            if (pe.x < -20) { pe.x = W + 20; pe.y = freeRng()*H*0.5; }
+          }
           ctx.save();
           ctx.translate(pe.x, pe.y);
           ctx.rotate(pe.rot);
@@ -1861,10 +2452,12 @@
       else {
         for (var f = 0; f < S.fireflies.length; f++) {
           var fl = S.fireflies[f];
-          fl.phase += 0.05;
-          fl.x += fl.driftX; fl.y += fl.driftY + Math.sin(fl.phase)*0.3;
-          if (fl.x < 0) fl.x = W; if (fl.x > W) fl.x = 0;
-          if (fl.y < H*0.2) fl.y = H*0.2; if (fl.y > GROUND_Y - 30) fl.y = GROUND_Y - 30;
+          if (weatherMoving) {
+            fl.phase += 0.05;
+            fl.x += fl.driftX; fl.y += fl.driftY + Math.sin(fl.phase)*0.3;
+            if (fl.x < 0) fl.x = W; if (fl.x > W) fl.x = 0;
+            if (fl.y < H*0.2) fl.y = H*0.2; if (fl.y > GROUND_Y - 30) fl.y = GROUND_Y - 30;
+          }
           var glow = 0.5 + Math.sin(fl.phase)*0.5;
           ctx.fillStyle = 'rgba(255,240,140,' + (0.4 + glow*0.5) + ')';
           ctx.beginPath();
@@ -2037,21 +2630,57 @@
     }
 
     // ==================== Phase 14 — SKINS (silent cosmetic unlock loop) ====================
+    // Map-locked hero forms only. Old drink/robot variants are intentionally not part of Chai Runner.
     var SKINS = [
-      { id: 'brown',  name: 'Brown',         tint: null,                       test: function () { return true; } },
-      { id: 'doodh',  name: 'White Doodh',   tint: 'rgba(255,255,255,0.40)',   test: function () { return PROFILE.totalRuns >= 10; } },
-      { id: 'masala', name: 'Golden Masala', tint: 'rgba(244,196,48,0.50)',    test: function () { return PROFILE.totalChai >= 100; } },
-      { id: 'lebu',   name: 'Lemon Lebu',    tint: 'rgba(212,255,80,0.45)',    test: function () { return (PROFILE.best | 0) >= 1500 || S.distanceM >= 1500; } },
-      { id: 'boba',   name: 'Purple Boba',   tint: 'rgba(168,85,247,0.50)',    test: function () { return (PROFILE.best | 0) >= 5000 || S.distanceM >= 5000; } },
-      // Phase 30 — secret robot cup (easter egg only, never auto-unlocks)
-      { id: 'robot',  name: '🤖 Robot Cup',  tint: 'rgba(150,220,255,0.55)',  test: function () { return false; } }
+      { id: 'brown',      name: 'Brown Tea',      tint: null,                        test: function () { return true; } },
+      { id: 'claypot',    name: 'Clay Pot',        tint: 'rgba(210,105,40,0.42)',     test: function () { return (PROFILE.best | 0) >= 500 || S.distanceM >= 500; } },
+      { id: 'marketpot',  name: 'Market Pot',      tint: 'rgba(245,158,11,0.48)',     test: function () { return (PROFILE.best | 0) >= 3500 || S.distanceM >= 3500; } },
+      { id: 'moonpot',    name: 'Moonlight Pot',   tint: 'rgba(190,220,255,0.48)',    test: function () { return (PROFILE.best | 0) >= 6000 || S.distanceM >= 6000; } },
+      { id: 'mashalaform',name: 'Mashala Form',    tint: 'rgba(255,210,80,0.58)',     test: function () { return !!PROFILE.teaMaster; } }
     ];
+    function normalizeProfileSkins() {
+      var allowed = {};
+      for (var ai = 0; ai < SKINS.length; ai++) allowed[SKINS[ai].id] = true;
+      var existing = PROFILE.unlockedSkins || ['brown'];
+      var clean = ['brown'];
+      for (var ui = 0; ui < existing.length; ui++) {
+        var id = existing[ui];
+        if (id !== 'brown' && allowed[id] && clean.indexOf(id) < 0) clean.push(id);
+      }
+      var activeValid = allowed[PROFILE.activeSkin] && clean.indexOf(PROFILE.activeSkin) >= 0;
+      var changed = clean.join('|') !== existing.join('|') || !activeValid;
+      PROFILE.unlockedSkins = clean;
+      if (!activeValid) PROFILE.activeSkin = 'brown';
+      if (changed) saveProfile();
+    }
+    normalizeProfileSkins();
     function getActiveSkin() {
       var id = PROFILE.activeSkin || 'brown';
       for (var i = 0; i < SKINS.length; i++) if (SKINS[i].id === id) return SKINS[i];
       return SKINS[0];
     }
     function getActiveSkinTint() { return getActiveSkin().tint; }
+    // E-box-fix: offscreen tinted sprite cache — keyed by skin id, rebuilt only on skin change.
+    // Applying source-atop on the main canvas (which has a painted BG) colors the entire rect.
+    // Solution: composite the tint onto a separate offscreen canvas where only sprite pixels exist.
+    var _tintedSpriteCache = {};
+    function getTintedPlayerSprite() {
+      var skin = getActiveSkin();
+      if (!skin.tint) return null; // brown = no tint, use base sprite directly
+      if (_tintedSpriteCache[skin.id]) return _tintedSpriteCache[skin.id];
+      var sp = sprites.player;
+      if (!sp) return null;
+      var c = document.createElement('canvas');
+      c.width = sp.canvas.width; c.height = sp.canvas.height;
+      var x = c.getContext('2d');
+      x.drawImage(sp.canvas, 0, 0);
+      x.globalCompositeOperation = 'source-atop';
+      x.fillStyle = skin.tint;
+      x.fillRect(0, 0, c.width, c.height);
+      var result = { canvas: c, w: sp.w, h: sp.h };
+      _tintedSpriteCache[skin.id] = result;
+      return result;
+    }
     function maybeUnlockSkin() {
       if (!PROFILE.unlockedSkins) PROFILE.unlockedSkins = ['brown'];
       var changed = false;
@@ -2112,7 +2741,7 @@
       S.score = 0; S.bonusScore = 0; S.lives = 3; S.distancePx = 0;
       S.speed = CFG.SPEED_BASE;
       S.obstacles = []; S.chais = []; S.particles = []; S.floaters = []; S.trail = [];
-      S.hearts = []; S.bishesh = [];
+      S.hearts = []; S.bishesh = []; S.chanachur = []; S.bonusPickups = [];
       S.gameOver = false; S.paused = false; S.won = false;
       S.patternQueue = []; S.nextPatternFrame = 0;
       S.stormState = 'idle'; S.stormTimer = 0; S.stormSpawnInterval = 0; S.stormSpawned = 0;
@@ -2123,6 +2752,9 @@
       S.comboMult = 1; S.comboTier = 0;
       S.lastHeartScore = 0; S.lastBisheshDistM = 0;
       S.specialActive = false; S.specialTimer = 0;
+      S.lastChanachurDistM = 0; S.chanachurActive = false; S.chanachurTimer = 0;
+      S.lastBonusPickupDistM = 0; S.lastAkashChaiM = 0; S.akashShown = false;
+      S.boss = null; S.bossesDone = {};
       S.cameraShake = 0; S.hitFlash = 0; S.nearMissTint = 0;
       S.hitSlowSec = 0;
       S.distMarkers = []; S.lastMarkerM = 0;
@@ -2142,6 +2774,459 @@
       player.fastFall = false; player.jumpHeld = false; player.jumpHoldFrames = 0;
       renderHearts(); updateHUD();
       if (!S.muted) { startAmbientPad(); updateAmbientPadForBiome(0); }
+    }
+
+    // ==================== DEV MAP WALKTHROUGH (query: __bb_devmap=1) ====================
+    var DEV_MAP_MAX_M = 8500;
+    var devMapReady = false;
+    var devMapPlaying = true;
+    var devMapLastPopulateM = -9999;
+    var devMapEls = null;
+    var devMapFiredBeats = {};
+    var DEV_MAP_BEATS = [
+      { m: 200,  text: '⚡ Storm event — collect free chai (per map @200m)' },
+      { m: 300,  text: '🪰 Fly introduced — short jump' },
+      { m: 500,  text: '🏆 Para Hero · Skin #2 (Clay Pot) unlocked' },
+      { m: 550,  text: '✨ Bishesh Chai eligible (×3 score · 6s shield)' },
+      { m: 600,  text: '🪣 Potty introduced — hold-jump' },
+      { m: 700,  text: '❤️ Heart pickup eligible (restore life)' },
+      { m: 750,  text: '🔥 Combo intro · 3 chais → ×2 multiplier' },
+      { m: 900,  text: '⭐ Expert pattern unlocked · Picket Fence' },
+      { m: 1500, text: '🏪 Bazar begins · gaps tighten 15%' },
+      { m: 2000, text: '🥟 Singara reward pickup live (+30)' },
+      { m: 2750, text: '🍪 Marie biscuit reward (+20)' },
+      { m: 3000, text: '🌶 Jhal Chanachur · score ×2 for 4s' },
+      { m: 3500, text: '🏆 Bazar Conquered · Skin #3 (Gold Market)' },
+      { m: 3700, text: '⭐⭐⭐⭐⭐ Endgame expert pattern unlocked' },
+      { m: 4000, text: '🌙 Raat begins · gaps tighten 28%' },
+      { m: 4500, text: '👻🌶 Ghost Chili — trust timing not eyes' },
+      { m: 5000, text: '🖤🪣 Dark Potty — listen for cue' },
+      { m: 6000, text: '🏆 Night Warrior · Skin #4 (Moonlight Silver)' },
+      { m: 7000, text: '🌌 Mahakash begins · cosmic hue rotation' },
+      { m: 7200, text: '☄️ Cosmic Rock live' },
+      { m: 7500, text: '🌌 Akashganga · safe corridor for 300m' },
+      { m: 7800, text: '⚠️ Final Wall · max density before boss' }
+    ];
+    function devMapFireMilestones(m) {
+      for (var i = 0; i < DEV_MAP_BEATS.length; i++) {
+        var beat = DEV_MAP_BEATS[i];
+        if (m >= beat.m && !devMapFiredBeats[beat.m]) {
+          devMapFiredBeats[beat.m] = true;
+          if (typeof showTip === 'function') showTip(beat.text);
+        }
+      }
+    }
+    function devMapResetBeats(m) {
+      devMapFiredBeats = {};
+      // Pre-mark beats strictly before m as already fired so we don't spam-fire on scrub.
+      // Beats AT m or AFTER m will fire as the player walks past them.
+      for (var i = 0; i < DEV_MAP_BEATS.length; i++) {
+        if (DEV_MAP_BEATS[i].m < m) devMapFiredBeats[DEV_MAP_BEATS[i].m] = true;
+      }
+    }
+    function devMapFrozen() {
+      return DEV_MAP && devMapReady && !devMapPlaying;
+    }
+    var DEV_MAP_STOPS = [
+      { m: 0, name: 'Start · Para warm-up', kicker: 'Para' },
+      { m: 500, name: 'Para Hero · clay skin unlock', kicker: 'Milestone' },
+      { m: 1000, name: 'Boss 1 · Bhoot Mama', kicker: 'Boss test' },
+      { m: 1500, name: 'Bazar begins · reward pickups', kicker: 'Bazar' },
+      { m: 2500, name: 'Boss 2 · Bazar Raja', kicker: 'Boss test' },
+      { m: 3000, name: 'Jhal Chanachur x2 zone', kicker: 'Pickup test' },
+      { m: 4000, name: 'Raat begins · ghost/dark reads', kicker: 'Raat' },
+      { m: 5000, name: 'Boss 3 · Bhoot Jolokia', kicker: 'Boss test' },
+      { m: 7000, name: 'Mahakash begins · cosmic rock', kicker: 'Mahakash' },
+      { m: 7500, name: 'Akashganga · free chai corridor', kicker: 'Set-piece' },
+      { m: 8000, name: 'Final Boss · Mashala Deb', kicker: 'Final test' },
+      { m: 8500, name: 'Endless Mahakash preview', kicker: 'Endless' }
+    ];
+    function devMapClamp(m) {
+      m = Number(m) || 0;
+      return Math.max(0, Math.min(DEV_MAP_MAX_M, Math.round(m)));
+    }
+    function devMapStopFor(m) {
+      var stop = DEV_MAP_STOPS[0];
+      for (var i = 0; i < DEV_MAP_STOPS.length; i++) {
+        if (m >= DEV_MAP_STOPS[i].m) stop = DEV_MAP_STOPS[i];
+      }
+      return stop;
+    }
+    function devMapBossFor(m) {
+      for (var i = 0; i < BOSS_DEFS.length; i++) {
+        var def = BOSS_DEFS[i];
+        var before = def.final ? 170 : 130;
+        var after = def.final ? 430 : 280;
+        if (m >= def.distance - before && m <= def.distance + after) return def;
+      }
+      return null;
+    }
+    function devMapObstacle(type, x) {
+      var meta = obstacleMeta(type);
+      var size = obstacleSize(type);
+      var y = meta.y === 'air' ? GROUND_Y - (meta.yOffset || 95) : GROUND_Y - size / 2 - 2;
+      return { x: x, y: y, size: size, type: type, rot: 0, bob: (frameCounter || 0) * 0.04, nearMissed: false };
+    }
+    function devMapBonus(type, x, y) {
+      return { x: x, y: y, type: type, bob: (frameCounter || 0) * 0.05, glow: (frameCounter || 0) * 0.08 };
+    }
+    function devMapActorCount() {
+      return S.obstacles.length + S.chais.length + S.hearts.length + S.bishesh.length + S.chanachur.length + S.bonusPickups.length;
+    }
+    function updateDevMapUi(syncRange) {
+      if (!devMapEls) return;
+      var m = S.distanceM;
+      var stop = devMapStopFor(m);
+      devMapEls.meter.textContent = m + 'm';
+      devMapEls.name.textContent = stop.name;
+      devMapEls.kicker.textContent = (devMapPlaying ? 'DEV MAP · WALKING' : 'DEV MAP · PAUSED') + ' · ' + CFG.BIOMES[S.biomeIdx].name;
+      if (devMapEls.play) devMapEls.play.textContent = devMapPlaying ? 'Pause' : 'Play';
+      if (syncRange !== false) devMapEls.range.value = String(m);
+    }
+    function setDevMapPlaying(playing) {
+      if (!DEV_MAP) return;
+      devMapPlaying = !!playing;
+      S.paused = !devMapPlaying;
+      if (!devMapPlaying) S.speed = 0;
+      updateDevMapUi(true);
+    }
+    function devMapMoveActors(speed) {
+      var i, item;
+      for (i = S.obstacles.length - 1; i >= 0; i--) {
+        item = S.obstacles[i];
+        item.x -= speed;
+        item.bob += 0.06;
+        item.rot += 0.025;
+        if (item.x < -100) S.obstacles.splice(i, 1);
+      }
+      for (i = S.chais.length - 1; i >= 0; i--) {
+        item = S.chais[i];
+        item.x -= speed;
+        item.bob += 0.05;
+        if (item.x < -50) S.chais.splice(i, 1);
+      }
+      for (i = S.hearts.length - 1; i >= 0; i--) {
+        item = S.hearts[i];
+        item.x -= speed;
+        item.bob += 0.06;
+        if (item.x < -50) S.hearts.splice(i, 1);
+      }
+      for (i = S.bishesh.length - 1; i >= 0; i--) {
+        item = S.bishesh[i];
+        item.x -= speed;
+        item.bob += 0.07;
+        item.glow = (item.glow || 0) + 0.15;
+        if (item.x < -50) S.bishesh.splice(i, 1);
+      }
+      for (i = S.chanachur.length - 1; i >= 0; i--) {
+        item = S.chanachur[i];
+        item.x -= speed;
+        item.bob += 0.08;
+        item.glow = (item.glow || 0) + 0.16;
+        if (item.x < -50) S.chanachur.splice(i, 1);
+      }
+      for (i = S.bonusPickups.length - 1; i >= 0; i--) {
+        item = S.bonusPickups[i];
+        item.x -= speed;
+        item.bob += 0.08;
+        item.glow = (item.glow || 0) + 0.16;
+        if (item.x < -60) S.bonusPickups.splice(i, 1);
+      }
+    }
+    function devMapTick(dt) {
+      if (!devMapPlaying) {
+        frameCounter -= 1;
+        return;
+      }
+      player.blinkTimer -= dt;
+      if (player.blinkTimer <= 0) {
+        player.blink = player.blink > 0 ? 0 : 1;
+        player.blinkTimer = player.blink ? 6 : 80 + freeRng()*120;
+      }
+
+      var targetSpeed = CFG.SPEED_BASE + CFG.SPEED_GAIN * (1 - Math.exp(-S.distanceM / CFG.SPEED_TAU_M));
+      S.speed += (targetSpeed - S.speed) * 0.05;
+      if (S.speed < CFG.SPEED_BASE) S.speed = CFG.SPEED_BASE;
+      if (S.speed > 7.2) S.speed = 7.2;
+
+      S.distancePx += S.speed;
+      if (S.distanceM >= DEV_MAP_MAX_M) {
+        S.distancePx = DEV_MAP_MAX_M / CFG.METERS_PER_PX;
+        setDevMapPlaying(false);
+      }
+      S.bonusScore = 0;
+      S.score = Math.floor(S.distancePx / 10);
+      updateHUD();
+
+      var newBiome = getActiveBiomeIdx(S.distanceM);
+      if (newBiome !== S.lastBiomeIdx) {
+        var bm = CFG.BIOMES[newBiome];
+        showLevelBanner('Level ' + (newBiome + 1) + ' · ' + bm.name + ' · ' + bm.bn + ' ✨');
+        if (typeof updateAmbientPadForBiome === 'function') updateAmbientPadForBiome(newBiome);
+      }
+      S.biomeIdx = newBiome;
+      S.lastBiomeIdx = newBiome;
+      S.lastMarkerM = S.distanceM;
+      S.gameOver = false;
+      S.won = false;
+      devMapFireMilestones(S.distanceM);
+
+      player.runFrame += 0.32;
+      player.bobPhase += 0.18;
+      player.y = player.baseY + Math.sin(player.bobPhase) * 1.2;
+      player.vy = 0;
+      player.onGround = true;
+      player.rotation = 0;
+
+      devMapMoveActors(S.speed);
+      // Real-game pacing: only queue the next pattern when the furthest existing obstacle
+      // has scrolled back close to the right edge — exactly how the live pattern queue works.
+      // Hard cap at 5 obstacles so the screen never looks cluttered.
+      var furthest = devMapFurthestX();
+      if (furthest < W + 120 && S.obstacles.length < 5) {
+        devMapAppendAhead(S.distanceM, W + 120);
+        devMapLastPopulateM = S.distanceM;
+      }
+      updateDevMapUi(true);
+    }
+    function devMapPopulateActors(m) {
+      devMapLastPopulateM = m;
+      S.obstacles = [];
+      S.chais = [];
+      S.hearts = [];
+      S.bishesh = [];
+      S.chanachur = [];
+      S.bonusPickups = [];
+      S.particles = [];
+      S.floaters = [];
+      S.trail = [];
+      S.distMarkers = [];
+      S.patternQueue = [];
+      S.boss = null;
+      S.bossesDone = {};
+      S.stormState = 'idle';
+      S.cameraShake = 0;
+      S.hitFlash = 0;
+      S.nearMissTint = 0;
+      S.specialActive = false;
+      S.chanachurActive = false;
+
+      var boss = devMapBossFor(m);
+      if (boss) {
+        S.boss = { def: boss, waveIndex: 0, introFrames: 0, nextWaveFrame: 0 };
+        var wave = boss.waves[Math.min(boss.waves.length - 1, Math.max(0, Math.floor((m - boss.distance + 120) / 110)))] || boss.waves[0];
+        for (var wi = 0; wi < wave.length; wi++) {
+          S.obstacles.push(devMapObstacle(wave[wi].type, W * 0.48 + wave[wi].dx));
+        }
+        S.bishesh.push({ x: W * 0.36, y: GROUND_Y - 155, bob: 0, glow: (frameCounter || 0) * 0.08 });
+        return;
+      }
+
+      if (isAkashganga()) {
+        for (var ak = 0; ak < 5; ak++) {
+          S.chais.push({ x: W * (0.34 + ak * 0.12), y: GROUND_Y - 118 - Math.sin(ak * 0.9) * 46, bob: ak });
+        }
+        return;
+      }
+
+      if (m < 1500) {
+        devMapSpawnFromPatterns(m, ['easy', 'easy', 'medium']);
+        // Always have at least one chai visible.
+        S.chais.push({ x: W * 0.42, y: GROUND_Y - 120, bob: 0 });
+      } else if (m < 4000) {
+        devMapSpawnFromPatterns(m, ['easy', 'medium', 'bazar', 'bazar']);
+        S.chais.push({ x: W * 0.36, y: GROUND_Y - 110, bob: 0 });
+      } else if (m < 7000) {
+        devMapSpawnFromPatterns(m, ['medium', 'hard', 'raat', 'raat']);
+      } else {
+        devMapSpawnFromPatterns(m, ['hard', 'raat', 'cosmic', 'cosmic']);
+      }
+    }
+    function devMapSeededRng(seed) {
+      var s = (seed | 0) || 1;
+      return function () {
+        s = (s * 1664525 + 1013904223) | 0;
+        return ((s >>> 0) % 100000) / 100000;
+      };
+    }
+    // Per CHAI_RUNNER_CONTENT_MAP.md: which obstacle/pickup types are allowed at meter m.
+    function devMapTypeUnlocked(type, m) {
+      // Obstacles
+      if (type === 'fly')         return m >= 300;
+      if (type === 'potty')       return m >= 600;
+      if (type === 'ghost_chili' || type === 'ghostChili') return m >= 4500;
+      if (type === 'dark_potty'  || type === 'darkPotty')  return m >= 5000;
+      if (type === 'cosmic_rock' || type === 'cosmicRock' || type === 'rock') return m >= 7200;
+      // Pickups
+      if (type === 'bishesh')     return m >= 550;
+      if (type === 'heart')       return m >= 700;
+      if (type === 'singara')     return m >= 2000;
+      if (type === 'marie')       return m >= 2750;
+      if (type === 'slice')       return m >= 2000; // bazar fruit
+      if (type === 'chanachur')   return m >= 3000;
+      return true; // chai, plain steps, etc. always allowed
+    }
+    function devMapSpawnFromPatterns(m, bucketNames) {
+      devMapAppendFromPatterns(m, bucketNames, W * 0.46);
+    }
+    function devMapAppendFromPatterns(m, bucketNames, startX) {
+      var rng = devMapSeededRng((m | 0) + 1);
+      // Build pool from named buckets in real PATTERNS table, filtered by unlock map.
+      var pool = [];
+      for (var bi = 0; bi < bucketNames.length; bi++) {
+        var bucket = PATTERNS[bucketNames[bi]];
+        if (!bucket) continue;
+        for (var pi = 0; pi < bucket.length; pi++) {
+          var pat = bucket[pi];
+          var ok = true;
+          for (var ti = 0; ti < pat.length; ti++) {
+            if (!devMapTypeUnlocked(pat[ti].type, m)) { ok = false; break; }
+          }
+          if (ok) pool.push(pat);
+        }
+      }
+      // Splice in expert set-pieces unlocked by distance, just like pickPattern().
+      var unlockedExpert = 0;
+      if (m >= 900)  unlockedExpert = 1;
+      if (m >= 1500) unlockedExpert = 2;
+      if (m >= 3000) unlockedExpert = 3;
+      if (m >= 5000) unlockedExpert = 4;
+      if (m >= 7000) unlockedExpert = 5;
+      if (unlockedExpert > 0 && (rng() < 0.18)) {
+        var ex = PATTERNS.expert[Math.floor(rng() * unlockedExpert)];
+        var exOk = true;
+        for (var ei = 0; ei < ex.length; ei++) {
+          if (!devMapTypeUnlocked(ex[ei].type, m)) { exOk = false; break; }
+        }
+        if (exOk) pool.push(ex);
+      }
+      if (pool.length === 0) return;
+      // ONE pattern per call — keeps density true to the content map.
+      var chosen = pool[Math.floor(rng() * pool.length)];
+      for (var pj = 0; pj < chosen.length; pj++) {
+        S.obstacles.push(devMapObstacle(chosen[pj].type, startX + chosen[pj].dx));
+      }
+    }
+    function devMapBucketsFor(m) {
+      if (m < 1500) return ['easy', 'easy', 'medium'];
+      if (m < 4000) return ['easy', 'medium', 'bazar', 'bazar'];
+      if (m < 7000) return ['medium', 'hard', 'raat', 'raat'];
+      return ['hard', 'raat', 'cosmic', 'cosmic'];
+    }
+    function devMapFurthestX() {
+      var max = -Infinity;
+      for (var i = 0; i < S.obstacles.length; i++) if (S.obstacles[i].x > max) max = S.obstacles[i].x;
+      return max === -Infinity ? -1 : max;
+    }
+    function devMapAppendAhead(m, baseX) {
+      // Skip during boss / akashganga, those are handled by full populate.
+      if (devMapBossFor(m) || isAkashganga()) return;
+      var startX = Math.max(baseX, W + 60);
+      var rng = devMapSeededRng((m | 0) + 7);
+      devMapAppendFromPatterns(m, devMapBucketsFor(m), startX);
+      // One chai per corridor — only if we don't already have too many on screen.
+      var pickX = startX + 60 + rng() * 80;
+      if (S.chais.length < 2) {
+        S.chais.push({ x: pickX, y: GROUND_Y - 120, bob: 0 });
+      }
+      // Sparse bonus pickup — at most ONE of each type on screen at once.
+      if (devMapTypeUnlocked('bishesh', m) && S.bishesh.length < 1 && rng() < 0.20) {
+        S.bishesh.push({ x: pickX + 200, y: GROUND_Y - 175, bob: 1, glow: (frameCounter || 0) * 0.08 });
+      }
+      if (devMapTypeUnlocked('heart', m) && S.hearts.length < 1 && rng() < 0.14) {
+        S.hearts.push({ x: pickX + 340, y: GROUND_Y - 165, bob: 0 });
+      }
+      if (S.bonusPickups.length < 1 && rng() < 0.20) {
+        if (devMapTypeUnlocked('singara', m)) S.bonusPickups.push(devMapBonus('singara', pickX + 140, GROUND_Y - 142));
+        else if (devMapTypeUnlocked('marie', m)) S.bonusPickups.push(devMapBonus('marie', pickX + 140, GROUND_Y - 112));
+        else if (devMapTypeUnlocked('slice', m)) S.bonusPickups.push(devMapBonus('slice', pickX + 140, GROUND_Y - 168));
+      }
+      if (devMapTypeUnlocked('chanachur', m) && S.chanachur.length < 1 && rng() < 0.12) {
+        S.chanachur.push({ x: pickX + 280, y: GROUND_Y - 155, bob: 2, glow: (frameCounter || 0) * 0.08 });
+      }
+    }
+    function setDevMapDistance(m, syncRange) {
+      if (!DEV_MAP) return;
+      m = devMapClamp(m);
+      S.distancePx = m / CFG.METERS_PER_PX;
+      S.bonusScore = 0;
+      S.score = Math.floor(S.distancePx / 10);
+      S.lives = 3;
+      S.started = false;
+      S.paused = true;
+      S.gameOver = false;
+      S.won = false;
+      S.onboarding = false;
+      S.paused = !devMapPlaying;
+      S.biomeIdx = getActiveBiomeIdx(S.distanceM);
+      S.lastBiomeIdx = S.biomeIdx;
+      S.lastMarkerM = m;
+      S.deathZoom = 1;
+      player.y = player.baseY;
+      player.vy = 0;
+      player.onGround = true;
+      player.rotation = 0;
+      player.fastFall = false;
+      player.jumpHeld = false;
+      player.jumpsUsed = 0;
+      player.stamina = CFG.STAMINA_MAX;
+      displayedScore = S.score;
+      lastDisplayedScore = -1;
+      renderHearts();
+      updateHUD();
+      devMapResetBeats(m);
+      devMapPopulateActors(m);
+      updateDevMapUi(syncRange);
+    }
+    function devMapNextStop() {
+      var cur = S.distanceM;
+      for (var i = 0; i < DEV_MAP_STOPS.length; i++) {
+        if (DEV_MAP_STOPS[i].m > cur + 5) { setDevMapDistance(DEV_MAP_STOPS[i].m, true); return; }
+      }
+      setDevMapDistance(DEV_MAP_MAX_M, true);
+    }
+    function devMapPrevStop() {
+      var cur = S.distanceM;
+      for (var i = DEV_MAP_STOPS.length - 1; i >= 0; i--) {
+        if (DEV_MAP_STOPS[i].m < cur - 5) { setDevMapDistance(DEV_MAP_STOPS[i].m, true); return; }
+      }
+      setDevMapDistance(0, true);
+    }
+    function setupDevMap() {
+      devMapReady = true;
+      S.started = false;
+      S.paused = true;
+      stopAmbientPad();
+      var card = hud.querySelector('.bb-card');
+      if (card) card.remove();
+      var panel = document.createElement('div');
+      panel.className = 'bb-devmap';
+      panel.innerHTML = [
+        '<div class="bb-devmap-top">',
+        '  <div class="bb-devmap-title"><div class="bb-devmap-kicker" id="bb-devmap-kicker">DEV MAP</div><div class="bb-devmap-name" id="bb-devmap-name">Start</div></div>',
+        '  <div class="bb-devmap-meter" id="bb-devmap-meter">0m</div>',
+        '</div>',
+        '<input id="bb-devmap-range" type="range" min="0" max="' + DEV_MAP_MAX_M + '" step="10" value="0" aria-label="Chai Runner map distance">',
+        '<div class="bb-devmap-actions">',
+        '  <div><button id="bb-devmap-play" type="button">Pause</button> <button id="bb-devmap-prev" type="button">Prev Stop</button> <button id="bb-devmap-next" type="button">Next Stop</button></div>',
+        '  <div class="bb-devmap-hint">Space play/pause · wheel/drag scrub · ←/→ ±100m · PgUp/PgDn stops</div>',
+        '</div>'
+      ].join('');
+      hud.appendChild(panel);
+      devMapEls = {
+        range: document.getElementById('bb-devmap-range'),
+        meter: document.getElementById('bb-devmap-meter'),
+        name: document.getElementById('bb-devmap-name'),
+        kicker: document.getElementById('bb-devmap-kicker'),
+        play: document.getElementById('bb-devmap-play')
+      };
+      devMapEls.range.addEventListener('pointerdown', function () { setDevMapPlaying(false); });
+      devMapEls.range.addEventListener('input', function () { setDevMapDistance(devMapEls.range.value, false); });
+      document.getElementById('bb-devmap-play').addEventListener('click', function () { setDevMapPlaying(!devMapPlaying); });
+      document.getElementById('bb-devmap-prev').addEventListener('click', function () { setDevMapPlaying(false); devMapPrevStop(); });
+      document.getElementById('bb-devmap-next').addEventListener('click', function () { setDevMapPlaying(false); devMapNextStop(); });
+      window.BBDevMap = { set: function (m) { setDevMapDistance(m, true); }, play: function () { setDevMapPlaying(true); }, pause: function () { setDevMapPlaying(false); }, next: devMapNextStop, prev: devMapPrevStop, stops: DEV_MAP_STOPS };
+      setDevMapDistance(0, true);
     }
 
     // ==================== HEALTHCHECK ====================
@@ -2182,7 +3267,8 @@
 
     // Build sprite cache, then start
     buildAllSprites();
-    showStart();
+    if (DEV_MAP) setupDevMap();
+    else showStart();
 
     // ==================== Phase 28/9 — COMBO TIER LADDER (silent) ====================
     // 3 chai = ×2, 7 = ×3, 12 = ×4, 20 = ×5. Tier resets on hit.
@@ -2234,6 +3320,11 @@
       var dt = 1; // unit: "frames" (since CFG values are tuned for 60Hz frames)
       frameCounter += 1;
 
+      if (DEV_MAP && devMapReady) {
+        devMapTick(dt);
+        return;
+      }
+
       if (!S.started || S.paused || S.gameOver) {
         // Still tick blink so cup blinks idle
         player.blinkTimer -= dt;
@@ -2264,10 +3355,28 @@
           // Phase 1b — "Bishesh ended" tip removed; gold halo simply stops.
         }
       }
+      if (S.chanachurActive) {
+        S.chanachurTimer--;
+        if (S.chanachurTimer <= 0) S.chanachurActive = false;
+      }
 
       S.distancePx += S.speed;
       S.score = Math.floor(S.distancePx / 10) + S.bonusScore;
       updateHUD();
+
+      if (isAkashganga()) {
+        if (!S.akashShown) {
+          S.akashShown = true;
+          S.patternQueue = [];
+          S.obstacles = [];
+          S.postHitSafeUntil = frameCounter + 30;
+          showLevelBanner('Akashganga · Free Chai');
+        }
+        if ((S.distanceM - S.lastAkashChaiM) >= CFG.AKASHGANGA_CHAI_EVERY_M) {
+          spawnChai(GROUND_Y - 115 - Math.sin(S.distanceM * 0.02) * 70);
+          S.lastAkashChaiM = S.distanceM;
+        }
+      }
 
       // Biomes
       var newBiome = getActiveBiomeIdx(S.distanceM);
@@ -2290,7 +3399,7 @@
       else S.densityMult = 1.0;
 
       // Storm
-      if (S.stormState === 'idle' && S.score - S.lastStormScore >= CFG.STORM_EVERY_SCORE) {
+      if (S.stormState === 'idle' && !S.boss && !isAkashganga() && S.score - S.lastStormScore >= CFG.STORM_EVERY_SCORE) {
         S.stormState = 'warn';
         S.stormTimer = CFG.STORM_PRE_WARN_FRAMES;
         sfxStorm();
@@ -2365,13 +3474,13 @@
         player.runFrame += 0.32;
         player.bobPhase += 0.18;
         player.y = player.baseY + Math.sin(player.bobPhase) * 1.2;
-        if (player.stamina < CFG.STAMINA_MAX) {
-          player.staminaRegenSec += 1/60;
-          if (player.staminaRegenSec >= CFG.STAMINA_REGEN_SEC) {
-            player.stamina++;
-            player.staminaRegenSec = 0;
-            renderStamina();
-          }
+      }
+      if (player.stamina < CFG.STAMINA_MAX) {
+        player.staminaRegenSec += 1/60;
+        if (player.staminaRegenSec >= CFG.STAMINA_REGEN_SEC) {
+          player.stamina++;
+          player.staminaRegenSec = 0;
+          renderStamina();
         }
       }
       if (player.squash !== 1) {
@@ -2412,8 +3521,9 @@
             }
             S.lives--;
             S.runStats.hits++;
-            S.runStats.endReason = o.type === '404' ? 'hit404' : (o.type === 'sad' ? 'hitSad' : 'hitSpike');
+            S.runStats.endReason = obstacleMeta(o.type).hit;
             sfxHit();
+            haptic([12, 6, 18]); // Q5
             S.cameraShake = REDUCED_MOTION ? 0 : CFG.SHAKE_HARD;
             S.hitFlash = REDUCED_MOTION ? 0 : 1;
             player.hitImmuneSec = CFG.I_FRAMES_SEC;
@@ -2432,7 +3542,7 @@
           if (!o.nearMissed && dx < (pw + ow)/2 + CFG.NEARMISS_PX && dy < (ph + oh)/2 + CFG.NEARMISS_PX && o.x < player.x + 10) {
             o.nearMissed = true;
             S.runStats.nearMiss++;
-            var nmMult = (S.comboActive ? CFG.COMBO_MULT : 1) * (S.specialActive ? CFG.BISHESH_MULT : 1) * (S.endlessMode ? S.endlessMult : 1);
+            var nmMult = (S.comboActive ? CFG.COMBO_MULT : 1) * (S.specialActive ? CFG.BISHESH_MULT : 1) * (S.chanachurActive ? CFG.CHANACHUR_MULT : 1) * (S.endlessMode ? S.endlessMult : 1);
             S.bonusScore += CFG.NEARMISS_BONUS * nmMult;
             S.cameraShake = Math.max(S.cameraShake, REDUCED_MOTION ? 0 : CFG.SHAKE_SOFT);
             S.nearMissTint = REDUCED_MOTION ? 0 : 1;
@@ -2451,7 +3561,7 @@
         ch.bob += 0.05;
         if (Math.abs(player.x - ch.x) < 40 && Math.abs(player.y - ch.y) < 40) {
           // Phase 9 — dynamic combo multiplier from tier ladder (S.comboMult). Default 1.
-          var gainMult = (S.comboActive ? S.comboMult : 1) * (S.specialActive ? CFG.BISHESH_MULT : 1) * (S.endlessMode ? S.endlessMult : 1);
+          var gainMult = (S.comboActive ? S.comboMult : 1) * (S.specialActive ? CFG.BISHESH_MULT : 1) * (S.chanachurActive ? CFG.CHANACHUR_MULT : 1) * (S.endlessMode ? S.endlessMult : 1);
           var gain = 25 * gainMult;
           S.bonusScore += gain;
           S.runStats.chai++;
@@ -2467,7 +3577,7 @@
       }
 
       // Phase 47 — Hearts (health pickup)
-      if (S.lives < 3 && (S.score - S.lastHeartScore) >= CFG.HEART_EVERY_SCORE && S.stormState === 'idle' && S.patternQueue.length === 0) {
+      if (S.lives < 3 && !S.boss && (S.score - S.lastHeartScore) >= CFG.HEART_EVERY_SCORE && S.stormState === 'idle' && S.patternQueue.length === 0) {
         if (freeRng() < CFG.HEART_SPAWN_CHANCE) spawnHeart();
         S.lastHeartScore = S.score;
       }
@@ -2489,7 +3599,7 @@
       }
 
       // Phase 48 — Bishesh chai (power-up)
-      if (!S.specialActive && (S.distanceM - S.lastBisheshDistM) >= CFG.BISHESH_EVERY_DIST_M && S.stormState === 'idle' && S.patternQueue.length === 0) {
+      if (!S.specialActive && !S.boss && (S.distanceM - S.lastBisheshDistM) >= CFG.BISHESH_EVERY_DIST_M && S.stormState === 'idle' && S.patternQueue.length === 0) {
         if (freeRng() < CFG.BISHESH_SPAWN_CHANCE) spawnBishesh();
         S.lastBisheshDistM = S.distanceM;
       }
@@ -2512,20 +3622,62 @@
         if (bb.x < -50) S.bishesh.splice(bi, 1);
       }
 
+      // Batch 3 — Jhal Chanachur: Bazar+ x2 score burst, spawned between patterns only.
+      if (!S.chanachurActive && !S.boss && S.distanceM >= CFG.CHANACHUR_START_M && (S.distanceM - S.lastChanachurDistM) >= CFG.CHANACHUR_EVERY_DIST_M && S.stormState === 'idle' && S.patternQueue.length === 0) {
+        if (freeRng() < CFG.CHANACHUR_SPAWN_CHANCE) spawnChanachur();
+        S.lastChanachurDistM = S.distanceM;
+      }
+      for (var cpi = S.chanachur.length - 1; cpi >= 0; cpi--) {
+        var cp = S.chanachur[cpi];
+        cp.x -= S.speed;
+        cp.bob += 0.08;
+        cp.glow = (cp.glow || 0) + 0.16;
+        if (Math.abs(player.x - cp.x) < 42 && Math.abs(player.y - cp.y) < 42) {
+          S.chanachurActive = true;
+          S.chanachurTimer = CFG.CHANACHUR_DURATION_FRAMES;
+          S.bonusScore += 40;
+          sfxCombo();
+          sparkleBurst(cp.x, cp.y, [249,115,22], 18);
+          floater('×2 JHAL!', cp.x, cp.y - 22, '#f97316');
+          S.chanachur.splice(cpi, 1);
+          continue;
+        }
+        if (cp.x < -50) S.chanachur.splice(cpi, 1);
+      }
+
+      // Batch 7 — Bonus point pickups: Marie, Singara, Bread Slice. Green ring = reward, not danger.
+      if (S.distanceM >= CFG.BONUS_PICKUP_START_M && (S.distanceM - S.lastBonusPickupDistM) >= CFG.BONUS_PICKUP_EVERY_DIST_M && S.stormState === 'idle' && S.patternQueue.length === 0 && !S.boss) {
+        if (freeRng() < CFG.BONUS_PICKUP_SPAWN_CHANCE) spawnBonusPickup(chooseBonusPickupType());
+        S.lastBonusPickupDistM = S.distanceM;
+      }
+      for (var bpi = S.bonusPickups.length - 1; bpi >= 0; bpi--) {
+        var bpick = S.bonusPickups[bpi];
+        var bpMeta = bonusPickupMeta(bpick.type);
+        bpick.x -= S.speed;
+        bpick.bob += 0.08;
+        bpick.glow = (bpick.glow || 0) + 0.16;
+        if (Math.abs(player.x - bpick.x) < 42 && Math.abs(player.y - bpick.y) < 42) {
+          var bonusMult = (S.specialActive ? CFG.BISHESH_MULT : 1) * (S.chanachurActive ? CFG.CHANACHUR_MULT : 1) * (S.endlessMode ? S.endlessMult : 1);
+          var bonusGain = bpMeta.value * bonusMult;
+          S.bonusScore += bonusGain;
+          sfxCollect();
+          sparkleBurst(bpick.x, bpick.y, bpMeta.color, 16);
+          floater('+' + bonusGain, bpick.x, bpick.y - 26, '#22c55e');
+          S.bonusPickups.splice(bpi, 1);
+          continue;
+        }
+        if (bpick.x < -60) S.bonusPickups.splice(bpi, 1);
+      }
+
       // Phase 1 — silent milestone toasts. NO forced win-stop. Game is endless from second one.
-      // Phase 14 — each milestone also re-checks skin unlocks silently.
-      var MS = [1000, 2500, 5000, 10000, 25000, 50000, 100000];
+      // Phase 14 — each milestone also re-checks skin unlocks silently. (30-minute arc)
+      var MS = [500, 1500, 3500, 7000, 8000, 15000, 25000];
       for (var msi = 0; msi < MS.length; msi++) {
         var ms = MS[msi];
         if (S.distanceM >= ms && S.milestonesHit.indexOf(ms) < 0) {
           S.milestonesHit.push(ms);
-          var label = ms >= 1000 ? (ms / 1000) + 'km ✓' : ms + 'm ✓';
+          var label = ms >= 1000 ? (ms / 1000).toFixed(0) + 'km ✓' : ms + 'm ✓';
           showTip(label);
-          if (ms === 1000 && !PROFILE.teaMaster) {
-            PROFILE.teaMaster = true;
-            PROFILE.teaMasterCount++;
-            saveProfile();
-          }
           maybeUnlockSkin();
           break; // only one milestone per logic step
         }
@@ -2570,10 +3722,11 @@
       // Drain extra accumulated time if we hit step cap (avoid spiral)
       if (steps >= CFG.MAX_STEPS_PER_FRAME) accumMs = 0;
 
-      steamPhase += 0.1;
+      if (!devMapFrozen()) steamPhase += 0.1;
 
       // ========== RENDER ==========
       drawBg(now);
+      drawBossPresence(now);
 
       // Camera shake
       var shakeX = 0, shakeY = 0;
@@ -2601,17 +3754,22 @@
         var _mk = S.distMarkers[_mi];
         _mk.x -= S.speed;
         if (_mk.alpha < 1) _mk.alpha = Math.min(1, _mk.alpha + 0.08);
-        if (_mk.x < W * 0.7 && _mk.alpha === 1) _mk.alpha = Math.max(0, _mk.alpha - 0.025);
+        if (_mk.x < W * 0.7 && _mk.alpha >= 0.95) _mk.alpha = Math.max(0, _mk.alpha - 0.025); // E-2: was === 1 (float never hit)
         if (_mk.x < -60 || _mk.alpha <= 0) { S.distMarkers.splice(_mi, 1); continue; }
         ctx.save();
         ctx.globalAlpha = _mk.alpha * 0.85;
-        ctx.fillStyle = 'rgba(255,255,255,0.12)';
+        ctx.fillStyle = 'rgba(255,255,255,0.18)';
         var _mLabel = _mk.m + 'm';
-        ctx.font = 'bold 11px -apple-system, sans-serif';
-        var _mW = ctx.measureText(_mLabel).width + 10;
-        var _mX = Math.round(_mk.x), _mY = GROUND_Y - 18;
+        ctx.font = 'bold 12px -apple-system, sans-serif';
+        var _mW = ctx.measureText(_mLabel).width + 12;
+        var _mX = Math.round(_mk.x), _mY = GROUND_Y - 20;
+        // E-2: roundRect fallback for older browsers
         ctx.beginPath();
-        ctx.roundRect(_mX - _mW/2, _mY - 9, _mW, 18, 4);
+        if (ctx.roundRect) {
+          ctx.roundRect(_mX - _mW/2, _mY - 10, _mW, 20, 5);
+        } else {
+          ctx.rect(_mX - _mW/2, _mY - 10, _mW, 20);
+        }
         ctx.fill();
         ctx.fillStyle = '#fff';
         ctx.textAlign = 'center';
@@ -2623,6 +3781,8 @@
       for (var dc = 0; dc < S.chais.length; dc++) drawChai(S.chais[dc]);
       for (var dh = 0; dh < S.hearts.length; dh++) drawHeart(S.hearts[dh]);
       for (var db = 0; db < S.bishesh.length; db++) drawBishesh(S.bishesh[db]);
+      for (var dcp = 0; dcp < S.chanachur.length; dcp++) drawChanachur(S.chanachur[dcp]);
+      for (var dbp = 0; dbp < S.bonusPickups.length; dbp++) drawBonusPickup(S.bonusPickups[dbp]);
       // Phase 48 — Golden trail + invincibility shimmer when special active
       if (S.specialActive) {
         var pulse = 0.6 + 0.4 * Math.sin(frameCounter * 0.3);
@@ -2639,6 +3799,15 @@
             life: 1, size: 3 + freeRng()*2, color: [244,196,48]
           });
         }
+      }
+      if (S.chanachurActive) {
+        var jhalPulse = 0.55 + 0.45 * Math.sin(frameCounter * 0.35);
+        ctx.save();
+        ctx.fillStyle = 'rgba(249,115,22,' + (0.10 * jhalPulse) + ')';
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, 34, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
       }
       // Phase 23 — hit slowdown: nudge draw x left for 0.15s after hit
       var _hitSlowOff = 0;
@@ -2661,6 +3830,19 @@
       }
       drawParticles();
       drawFloaters();
+      // Q2 — double jump ring flash (expands + fades)
+      if (S.djRing && !REDUCED_MOTION) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(180,240,255,' + S.djRing.alpha.toFixed(2) + ')';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(Math.round(S.djRing.x), Math.round(S.djRing.y), S.djRing.r, 0, Math.PI * 2);
+        ctx.stroke();
+        S.djRing.r += 4;
+        S.djRing.alpha -= 0.07;
+        if (S.djRing.alpha <= 0) S.djRing = null;
+        ctx.restore();
+      }
       ctx.restore();
 
       // Hit flash

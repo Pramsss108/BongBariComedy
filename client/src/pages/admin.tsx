@@ -194,22 +194,31 @@ const Admin = () => {
         description="Admin panel to view collaboration requests and brand partnership inquiries for Bong Bari."
       />
       
-      <main className="pb-16 bg-gray-50 min-h-screen">
+      <main className="pt-24 pb-16 bg-gray-50 min-h-screen">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
-            <div className="flex justify-between items-center mb-12">
-              <div className="flex-1">
-                <h1 className="text-4xl font-bold text-center text-brand-blue mb-4" data-testid="page-title">
+            {/* Title row */}
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-bold text-brand-blue" data-testid="page-title">
                   Admin Panel
                 </h1>
-                <h2 className="text-2xl font-bold text-center text-brand-blue bangla-text" data-testid="page-title-bengali">
+                <h2 className="text-xl sm:text-2xl font-bold text-brand-blue/80 bangla-text mt-1" data-testid="page-title-bengali">
                   অ্যাডমিন প্যানেল
                 </h2>
-                <p className="text-center text-gray-600 mt-2">
-                  Welcome, {user?.username}!
-                </p>
               </div>
-              <div className="flex gap-2">
+              <div className="inline-flex items-center gap-2 self-start sm:self-end px-3 py-1.5 rounded-full bg-white border border-gray-200 shadow-sm">
+                <div className="w-7 h-7 rounded-full bg-brand-blue/10 text-brand-blue flex items-center justify-center text-sm font-semibold">
+                  {((user as any)?.username || (user as any)?.email || 'A').charAt(0).toUpperCase()}
+                </div>
+                <span className="text-sm text-gray-700">
+                  Welcome, <span className="font-medium text-brand-blue">{(user as any)?.username || (user as any)?.email || 'Admin'}</span>
+                </span>
+              </div>
+            </div>
+
+            {/* Action bar */}
+            <div className="flex flex-wrap gap-2 mb-8 p-3 rounded-xl bg-white border border-gray-200 shadow-sm">
                 <Button
                   onClick={handleLogout}
                   variant="outline"
@@ -234,6 +243,15 @@ const Admin = () => {
                   aria-label="Open community feed"
                 >
                   Community Feed
+                </Button>
+                <Button
+                  onClick={() => setLocation('/dev/models')}
+                  variant="outline"
+                  className="border-emerald-500 text-emerald-700 hover:bg-emerald-50"
+                  aria-label="Open dev models page"
+                  data-testid="button-dev-models"
+                >
+                  🧪 Dev Models
                 </Button>
                 <Dialog open={isCreateBlogOpen} onOpenChange={setIsCreateBlogOpen}>
                   <DialogTrigger asChild>
@@ -420,7 +438,6 @@ const Admin = () => {
                     </Form>
                   </DialogContent>
                 </Dialog>
-              </div>
             </div>
             
             <Tabs defaultValue="requests" className="w-full">

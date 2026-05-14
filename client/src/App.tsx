@@ -38,6 +38,7 @@ const NotFound = lazy(() => import("@/pages/not-found"));
 const AdminChatbot = lazy(() => import("@/pages/AdminChatbot"));
 const AdminHomepage = lazy(() => import("@/pages/AdminHomepage").then(m => ({ default: m.AdminHomepage })));
 const AdminModeration = lazy(() => import("@/pages/AdminModeration"));
+const DevModels = lazy(() => import("@/pages/DevModels"));
 const CommunityFeed = lazy(() => import("@/pages/community-feed"));
 const PrivacyPolicy = lazy(() => import("@/pages/PrivacyPolicy"));
 const TermsPage = lazy(() => import("@/pages/TermsPage"));
@@ -287,6 +288,11 @@ function Router() {
           <Route path="/admin/moderation">
             <Suspense fallback={<LoadingFallback />}>
               <AdminModeration />
+            </Suspense>
+          </Route>
+          <Route path="/dev/models">
+            <Suspense fallback={<LoadingFallback />}>
+              <DevModels />
             </Suspense>
           </Route>
           <Route path="/login">

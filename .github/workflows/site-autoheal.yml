@@ -27,6 +27,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: Checkout (needed to push heal commit)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          persist-credentials: true
+
       - name: Probe live site
         id: probe
         shell: bash
@@ -107,8 +113,20 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
         run: |
-          gh workflow run deploy.yml --repo "$REPO" --ref main
-          echo "Deploy workflow dispatched at $(date -u +%FT%TZ)."
+          # deploy.yml's "decide" step skips unless the head commit message
+          # contains FORCE_PAGES_DEPLOY. workflow_dispatch alone is therefore
+          # a no-op. Push an empty commit with FORCE_PAGES_DEPLOY so the next
+          # deploy.yml run is guaranteed to rebuild + republish.
+          git config user.name  "bongbari-autoheal[bot]"
+          git config user.email "autoheal@users.noreply.github.com"
+          # Make sure we have full history & latest main
+          git fetch origin main --depth=2
+          git checkout main
+          git pull --ff-only origin main || true
+          MSG="chore(autoheal): force Pages republish $(date -u +%FT%TZ) FORCE_PAGES_DEPLOY"
+          git commit --allow-empty -m "$MSG"
+          git push origin main
+          echo "Pushed empty FORCE_PAGES_DEPLOY commit at $(date -u +%FT%TZ)."
 
       - name: Open / update tracking issue
         if: steps.probe.outputs.broken == 'true'

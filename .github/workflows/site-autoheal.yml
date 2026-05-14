@@ -94,22 +94,20 @@ jobs:
         if: steps.probe.outputs.broken == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
         run: |
-          gh workflow run deploy.yml --ref main \
-            -f reason="autoheal: $(date -u +%FT%TZ)" \
-            || gh workflow run deploy.yml --ref main
-          echo "Deploy workflow dispatched."
+          gh workflow run deploy.yml --repo "$REPO" --ref main
+          echo "Deploy workflow dispatched at $(date -u +%FT%TZ)."
 
       - name: Open / update tracking issue
         if: steps.probe.outputs.broken == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
         run: |
-          TITLE="🩹 Auto-heal triggered: white-screen / missing bundles detected"
+          TITLE="Auto-heal triggered: white-screen / missing bundles detected"
           BODY=$(cat <<EOF
-          The watchdog (\`site-autoheal.yml\`) detected that **www.bongbari.com** is serving \
-          an \`index.html\` whose referenced \`/assets/*.js\` or \`/assets/*.css\` returned \
-          a non-200 response (or HTML fallback).
+          The watchdog (site-autoheal.yml) detected that **www.bongbari.com** is serving an \`index.html\` whose referenced \`/assets/*.js\` or \`/assets/*.css\` returned a non-200 response (or HTML fallback).
 
           A redeploy via \`deploy.yml\` has been dispatched automatically.
 
@@ -122,13 +120,12 @@ jobs:
           Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           EOF
           )
-          # Try to find an open auto-heal issue and append a comment, else create one
-          NUM=$(gh issue list --state open --label autoheal --limit 1 --json number -q '.[0].number')
+          # Try to find an open auto-heal issue and append a comment, else create one (label optional)
+          NUM=$(gh issue list --repo "$REPO" --state open --search "Auto-heal triggered in:title" --limit 1 --json number -q '.[0].number' 2>/dev/null || true)
           if [ -n "$NUM" ] && [ "$NUM" != "null" ]; then
-            gh issue comment "$NUM" --body "$BODY"
+            gh issue comment "$NUM" --repo "$REPO" --body "$BODY" || true
           else
-            gh issue create --title "$TITLE" --label autoheal --body "$BODY" || \
-              gh issue create --title "$TITLE" --body "$BODY"
+            gh issue create --repo "$REPO" --title "$TITLE" --body "$BODY" || true
           fi
 
       - name: Done

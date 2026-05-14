@@ -1,0 +1,140 @@
+name: Site Auto-Heal Watchdog
+
+# Runs every 15 minutes. Verifies that the live site's index.html
+# references assets that actually return 200 with a JS/CSS content type.
+# If any reference is broken (the classic "white screen forever" bug),
+# it triggers the Deploy workflow with a FORCE flag, which rebuilds
+# from latest main and republishes to GitHub Pages.
+#
+# Manual run is allowed via the "Run workflow" button.
+
+on:
+  schedule:
+    # Every 15 minutes, 24/7
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write          # needed to push the empty heal commit
+  actions: write           # needed to dispatch the deploy workflow
+  issues: write            # needed to open an issue when something heals
+
+concurrency:
+  group: site-autoheal
+  cancel-in-progress: false
+
+jobs:
+  check-and-heal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Probe live site
+        id: probe
+        shell: bash
+        run: |
+          set +e
+          SITE="https://www.bongbari.com"
+          UA="BongBari-Autoheal/1.0 (+github-actions)"
+
+          echo "::group::Fetching index.html"
+          # cache-bust to bypass any CDN caching
+          INDEX_URL="$SITE/?_cb=$(date +%s)"
+          INDEX_HTTP=$(curl -sS -A "$UA" -o /tmp/index.html -w "%{http_code}" "$INDEX_URL")
+          echo "index.html HTTP=$INDEX_HTTP"
+          echo "::endgroup::"
+
+          BROKEN_DETAILS=""
+          if [ "$INDEX_HTTP" != "200" ]; then
+            BROKEN_DETAILS="index.html returned HTTP $INDEX_HTTP"
+          else
+            # Extract every /assets/<hash>.{js,css,mjs} reference
+            ASSETS=$(grep -oE '/assets/[A-Za-z0-9_.\-]+\.(js|css|mjs)' /tmp/index.html | sort -u)
+            if [ -z "$ASSETS" ]; then
+              BROKEN_DETAILS="index.html contains no /assets/ references — build template likely broken"
+            else
+              echo "::group::Verifying $(echo "$ASSETS" | wc -l) referenced assets"
+              while IFS= read -r path; do
+                URL="$SITE$path"
+                # GET (not HEAD) because GH Pages 404s sometimes only show via body
+                read CODE CTYPE BYTES < <(curl -sS -A "$UA" -o /tmp/asset.bin \
+                  -w "%{http_code} %{content_type} %{size_download}" "$URL")
+                # Expect JS or CSS; anything returning text/html means we got the SPA fallback
+                EXPECT_TYPE="application/javascript"
+                case "$path" in
+                  *.css)  EXPECT_TYPE="text/css" ;;
+                  *.mjs)  EXPECT_TYPE="application/javascript" ;;
+                esac
+                STATUS="OK"
+                if [ "$CODE" != "200" ]; then STATUS="BAD_STATUS"; fi
+                if echo "$CTYPE" | grep -qi 'text/html'; then STATUS="HTML_FALLBACK"; fi
+                printf '  %-7s %s -> http=%s ctype=%s bytes=%s\n' "$STATUS" "$path" "$CODE" "$CTYPE" "$BYTES"
+                if [ "$STATUS" != "OK" ]; then
+                  BROKEN_DETAILS="${BROKEN_DETAILS}${BROKEN_DETAILS:+\n}$path -> http=$CODE ctype=$CTYPE status=$STATUS"
+                fi
+              done <<< "$ASSETS"
+              echo "::endgroup::"
+            fi
+          fi
+
+          if [ -n "$BROKEN_DETAILS" ]; then
+            echo "::error::Site is broken — heal required"
+            echo "broken=true" >> "$GITHUB_OUTPUT"
+            {
+              echo 'details<<EOF'
+              printf '%b' "$BROKEN_DETAILS"
+              echo
+              echo 'EOF'
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "Site healthy. No heal needed."
+            echo "broken=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Trigger deploy workflow (heal)
+        if: steps.probe.outputs.broken == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run deploy.yml --ref main \
+            -f reason="autoheal: $(date -u +%FT%TZ)" \
+            || gh workflow run deploy.yml --ref main
+          echo "Deploy workflow dispatched."
+
+      - name: Open / update tracking issue
+        if: steps.probe.outputs.broken == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TITLE="🩹 Auto-heal triggered: white-screen / missing bundles detected"
+          BODY=$(cat <<EOF
+          The watchdog (\`site-autoheal.yml\`) detected that **www.bongbari.com** is serving \
+          an \`index.html\` whose referenced \`/assets/*.js\` or \`/assets/*.css\` returned \
+          a non-200 response (or HTML fallback).
+
+          A redeploy via \`deploy.yml\` has been dispatched automatically.
+
+          ### Probe details
+          \`\`\`
+          ${{ steps.probe.outputs.details }}
+          \`\`\`
+
+          Detected at: \`$(date -u +%FT%TZ)\`
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EOF
+          )
+          # Try to find an open auto-heal issue and append a comment, else create one
+          NUM=$(gh issue list --state open --label autoheal --limit 1 --json number -q '.[0].number')
+          if [ -n "$NUM" ] && [ "$NUM" != "null" ]; then
+            gh issue comment "$NUM" --body "$BODY"
+          else
+            gh issue create --title "$TITLE" --label autoheal --body "$BODY" || \
+              gh issue create --title "$TITLE" --body "$BODY"
+          fi
+
+      - name: Done
+        run: |
+          if [ "${{ steps.probe.outputs.broken }}" = "true" ]; then
+            echo "Heal dispatched. Next watchdog run will verify recovery."
+          else
+            echo "Site is healthy."
+          fi
